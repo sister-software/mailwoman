@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The graded-arc protocol as ONE call: self-control, then null, then candidate — in that order, and with the first
+ *   The graded-arc protocol as one call: self-control, then null, then candidate — in that order, and with the first
  *   two able to stop the third from being reported.
  *
  *   The order is the whole point. On 2026-08-23 eight training runs were graded candidate-against-shipped and every one
@@ -22,7 +22,7 @@
  *     candidate path disagrees with itself, no candidate number from that rig means anything, and reporting one
  *     anyway is how a harness bug becomes a model finding.
  *
- *   So `runArc` REFUSES to attribute when the self-control is dirty. It reports the candidate's raw numbers, marks
+ *   So `runArc` refuses to attribute when the self-control is dirty. It reports the candidate's raw numbers, marks
  *   them unattributable, and says which control failed. That refusal is the feature.
  */
 
@@ -147,13 +147,13 @@ export interface ArcOptions {
 	candidate: string
 	shape?: RunShape
 	/**
-	 * A staged copy of the SHIPPED weights, run through the identical candidate path. Dereference the symlinks when
+	 * A staged copy of the shipped weights, run through the identical candidate path. Dereference the symlinks when
 	 * staging it — a directory that points back at the shipped artifacts grades the shipped model under the candidate's
 	 * name and the control passes for the wrong reason.
 	 */
 	control?: string
 	/**
-	 * The null arm: same base, same steps, same seed, same brake, NO added extract.
+	 * The null arm: same base, same steps, same seed, same brake, no added extract.
 	 */
 	null?: string
 	inputs?: unknown

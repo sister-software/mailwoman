@@ -1,9 +1,9 @@
-# v3.10.0-span-ship-probe — #727 STAGE 2, STEP 4 (plan #1134): the span-scorer head on the SHIPPED
-# v381 recipe. 2k probe. TWO variables vs v3.8.1 (v381), each with its OWN pre-registered read leg:
+# v3.10.0-span-ship-probe — #727 STAGE 2, STEP 4 (plan #1134): the span-scorer head on the shipped
+# v381 recipe. 2k probe. Two variables vs v3.8.1 (v381), each with its own pre-registered read leg:
 #
 #   1. model.use_span_scorer + train.span_head_learning_rate 1.0e-3 — the stage-2 semi-CRF span head
-#      (span_loss_weight/span_dim/max_span VERBATIM v3.0.1), fresh-initialized on the shipped v381
-#      weights. The phase-1 lesson is baked in: a FRESH head gets its OWN param group at 1e-3 while
+#      (span_loss_weight/span_dim/max_span verbatim from v3.0.1), fresh-initialized on the shipped v381
+#      weights. The phase-1 lesson is baked in: a fresh head gets its own param group at 1e-3 while
 #      the pretrained encoder stays at 1e-5 (v3.0.0 was mis-specified without it — span NLL never
 #      converged at 2k).
 #   2. data.augment_upper_case_prob 0.15 — P3 (#829/#690): ALL-CAPS training copies mirroring
@@ -13,15 +13,15 @@
 # PRE-REGISTERED READS (2k):
 #   LEG 1 (span) — span NLL converging toward O(1) (v301 precedent: 26.4 -> ~2 by 2k with the LR
 #     group); seg@1 > token@1 on the starved python check (scripts/eval_seg_at_1.py — RELATIVE read,
-#     both heads share the starved encoder; absolutes are NOT the JS harness numbers).
+#     both heads share the starved encoder; absolutes are not the JS harness numbers).
 #   LEG 2 (all-caps) — uppercase-perturbed golden-us subset (n>=200), exact-match with
-#     normalizeCase OFF, package-shaped int8: probe must BEAT v381 on the same rows by >=5pp
+#     normalizeCase off, package-shaped int8: probe must beat v381 on the same rows by >=5pp
 #     (v381 has zero all-caps training signal; anything less says the augment is inert -> drop it
 #     and keep the #690 shim).
 #   GUARDS (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381; FR fragment
 #     board + digit board no worse than -2pp; BIO decode quality unchanged on presets (the span head
 #     is an ADDITIONAL output — the token path must stay byte-stable-ish under the shared encoder).
-#   NOT a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
+#   Not a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
 #   gauntlet, metamorphic, fragment boards) + oracle@5 / seg@1 on the JS harness via the PR #1154
 #   decode surface + the isotonic ambiguity-check fit (plan req 4).
 #
@@ -31,7 +31,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -55,7 +55,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # v3.1.0 weights + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+  source_weights: # v3.1.0 weights + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -86,12 +86,12 @@ data:
     synth-nl-postcode: 6.0
     # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -101,7 +101,7 @@ data:
   augment_glue_prob: 0.25
   # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
+  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
   augment_punct_drop_prob: 0.3
   # P3 (#829): ALL-CAPS copies, mirroring lowercase_row (skip-row on multi-char case-folds, tokens too).
   augment_upper_case_prob: 0.15
@@ -114,9 +114,9 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
-  # #727 stage-2: the semi-CRF span scorer (VERBATIM v3.0.1 keys) on the ship recipe.
+  # #727 stage-2: the semi-CRF span scorer (the v3.0.1 keys verbatim) on the ship recipe.
   use_span_scorer: true
   span_loss_weight: 0.5
   span_dim: 128
@@ -144,10 +144,11 @@ model: # VERBATIM v2.4.1.
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -186,7 +187,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
   # route the cue; the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v3100-span-ship-probe-s42/checkpoints

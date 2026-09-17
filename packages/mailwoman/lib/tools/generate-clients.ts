@@ -14,7 +14,7 @@
  *   PyPI and crates.io), the Python module layout (`mailwoman_client.{photon,nominatim,libpostal}`,
  *   now with a fourth `mailwoman` module for the native `/v1/*` surface), and the Rust crate pattern
  *   (progenitor `generate_api!` per vendored spec + thin `*_local()`/`*_hosted()` constructors in
- *   `src/lib.rs`). What's NEW here: specs come from the emitters (`mailwoman openapi`,
+ *   `src/lib.rs`). What's new here: specs come from the emitters (`mailwoman openapi`,
  *   `mailwoman-{photon,nominatim,libpostal} openapi`), not a checked-in `openapi.yaml`; the Rust
  *   vendor step reads the emitter's own `--flavor 3.0` diet instead of the old `downgrade-spec.py`
  *   down-convert (openapiv3, which progenitor depends on, only understands 3.0.x); and the client
@@ -160,7 +160,7 @@ function fail(message: string): never {
 }
 
 /**
- * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output IS the progress
+ * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is the progress
  * log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {

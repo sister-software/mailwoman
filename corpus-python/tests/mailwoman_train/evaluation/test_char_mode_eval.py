@@ -3,7 +3,7 @@
 ``char_mode: char`` skips SentencePiece entirely, so ``train.py`` hands ``_eval_val`` a None tokenizer and
 ``iter_batches`` encodes per character. A type-narrowing guard once refused that None at the first scheduled
 eval and stopped every char-mode run at step ``eval_every_steps`` (the v8-cjk-full-2k probe, app
-ap-qwf1Im1GBSEAQchY85qNtE, at step 250). This test drives the SHIPPED probe config over a two-row corpus so
+ap-qwf1Im1GBSEAQchY85qNtE, at step 250). This test drives the shipped probe config over a two-row corpus so
 the eval path is exercised the way the trainer calls it.
 """
 

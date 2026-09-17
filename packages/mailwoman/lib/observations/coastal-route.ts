@@ -95,7 +95,7 @@ export interface CoastalErosionObservation {
 	 */
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no claim that a location is NOT at risk.
+	 * Why this layer's coverage licenses no claim that a location is not at risk.
 	 */
 	coverageLimit: string
 	layer: ObservationLayerRecord
@@ -113,7 +113,7 @@ export const COASTAL_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * The authority's mapping assigns no erosion zone here under the scenario asked about. NOT an absence claim: the
+	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the
 	 * location may be inland, or on the coast outside the mapped risk area, and NCERM publishes nothing that tells those
 	 * apart.
 	 */
@@ -214,7 +214,7 @@ function toObservation(
 }
 
 /**
- * What the authority's mapping assigns, in ONE wording — shared by the one-line description and the marker message.
+ * What the authority's mapping assigns, in one wording — shared by the one-line description and the marker message.
  */
 export function coastalErosionAssignmentClause(observation: CoastalErosionObservation): string {
 	const first = observation.designations[0]

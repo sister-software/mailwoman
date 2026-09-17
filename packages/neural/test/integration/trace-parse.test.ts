@@ -121,7 +121,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
 		// The span proposer is default-ON; whether it fires depends on the text. The contract is
-		// EVERY kind, in application order — asserted against the exported constant, so a new prior
+		// every kind, in application order — asserted against the exported constant, so a new prior
 		// added to #decode without its participation record fails here instead of silently vanishing
 		// from traces.
 		expect(bare.priors.map((p) => p.kind)).toEqual([...TRACE_PRIOR_KINDS])
@@ -292,7 +292,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 			return row
 		})
 
-		// WITHOUT the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
+		// Without the pin (pre-#1275 en-gb reality): the eval never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
 		// The subject here is the POSTCODE check: unpinned, the codex gb row is never consulted, so the snap
@@ -305,7 +305,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(clipped.postcode).not.toBe("SK11 9PD")
 		expect("SK11 9PD".endsWith(clipped.postcode!)).toBe(true)
 
-		// WITH the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
+		// With the pin (what the en-gb card now declares): pinned system → codex gb row → repair check
 		// opens → the snap path relabels the whole raw-text match as one postcode span.
 		const pinned = new NeuralAddressClassifier({
 			tokenizer,

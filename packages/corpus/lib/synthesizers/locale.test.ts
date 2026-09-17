@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the German synthesizer (night-shift 2026-06-02, DE-1). Validates the {raw, components}
- *   contract AND the BIO output via the real `alignRow`: the model must see German order — street →
- *   house_number (house AFTER street) and postcode → locality (postcode BEFORE city) — the
+ *   contract and the BIO output via the real `alignRow`: the model must see German order — street →
+ *   house_number (house after street) and postcode → locality (postcode before city) — the
  *   convention the US/FR-trained model never learned.
  */
 
@@ -29,8 +29,8 @@ describe("synthesizeGermanRow", () => {
 	it("renders idiomatic German order (street, then house#; postcode before city)", () => {
 		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
 		expect(row).not.toBeNull()
-		expect(row.raw).toContain("Straußstraße 27") // house number AFTER street
-		expect(row.raw).toContain("12623 Berlin") // postcode BEFORE city
+		expect(row.raw).toContain("Straußstraße 27") // house number after street
+		expect(row.raw).toContain("12623 Berlin") // postcode before city
 		expect(row.raw.indexOf("Straußstraße")).toBeLessThan(row.raw.indexOf(" 27"))
 		expect(row.raw.indexOf("12623")).toBeLessThan(row.raw.indexOf("Berlin"))
 	})
@@ -110,8 +110,8 @@ describe("synthesizeLocaleRow (generic)", () => {
 		const row = synthesizeLocaleRow(madrid, "ES", { random: keepAll })!
 		expect(row).not.toBeNull()
 		expect(row.locale).toBe("es-ES")
-		// ES renders "Calle Mayor, 12, 28013 Madrid" — house AFTER street (a comma between them,
-		// unlike German), postcode BEFORE city. The order is what the recipe teaches.
+		// ES renders "Calle Mayor, 12, 28013 Madrid" — house after street (a comma between them,
+		// unlike German), postcode before city. The order is what the recipe teaches.
 		expect(row.raw.indexOf("Calle Mayor")).toBeLessThan(row.raw.indexOf("12"))
 		expect(row.raw).toContain("28013 Madrid")
 	})
@@ -137,8 +137,8 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 		// "27 Straußstraße, Berlin, Berlin 12623" (the layout the eval feeds; v0.9.3 / #327).
 		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
 		expect(row).not.toBeNull()
-		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house BEFORE street
-		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode AFTER city
+		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house before street
+		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode after city
 		expect(row.components.region).toBe("Berlin") // region carried for international (dropped for native)
 	})
 
@@ -183,7 +183,7 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 })
 
 describe("NZ dependent_locality (suburb below city)", () => {
-	// NZ envelopes carry BOTH a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA DISTRICT
+	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA DISTRICT
 	// column holds the city (Auckland), CITY the suburb (Birkenhead) — see `readTuples` districtAsLocality.
 	const AUCKLAND: LocaleBaseTuple = {
 		house_number: "31",

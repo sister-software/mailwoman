@@ -1,7 +1,7 @@
 """Per-register acceptability on the JP board — and proof the pre-registered eval is untouched.
 
 The full JP corpus (#1458) writes a ``register`` column on every board row (``native`` /
-``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in ZERO
+``arabic_chome`` / ``compact_folded`` / ``designator``). Two of those four surfaces appear in zero
 source rows and exist only because the JP corpus builder synthesizes them, and they are a small
 minority of the board — so a blended average is exactly the statistic that would hide them failing.
 ``score_jp_probe_board.score_board`` splits the same per-row outcomes by that column.
@@ -12,7 +12,7 @@ What these tests pin, in order of how badly a regression would hurt:
    as unacceptable, and the bar is 0.70 — the 2026-07-18 pre-registration, unchanged. The
    per-register split is diagnostic and must not be able to move it: the board in
    ``test_check_is_the_blended_number_even_when_a_register_is_wiped_out`` has one register at 0.0000
-   and still reads PASS, because the blend clears 0.70.
+   and still reads pass, because the blend clears 0.70.
 2. The split is a partition of those same outcomes — per-register rows/acceptable/unresolved sum
    back to the blended totals. A bucketing bug that double-counted or dropped rows would otherwise
    be invisible in a report that prints both.

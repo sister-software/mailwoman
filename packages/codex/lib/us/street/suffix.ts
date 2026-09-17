@@ -39,7 +39,7 @@ export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
  * Pub-28 canonicals that are also common head nouns in street/place names ("Menlo PARK Road", "Blue HILL Rd") — the
- * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), NOT part of the USPS publication; see
+ * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), not part of the USPS publication; see
  * `nameProneCanonicals` in `./street-suffix.json`.
  */
 export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
@@ -47,7 +47,7 @@ export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
 )
 
 /**
- * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key. Built once at module load,
+ * Inverse lookup: every variant abbreviation or full canonical word → its canonical key. Built once at module load,
  * lowercase-keyed for case-insensitive matching (`street` → `"STREET"`, `st` → `"STREET"`, `strt` → `"STREET"`, …).
  */
 export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() => {

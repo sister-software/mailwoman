@@ -130,7 +130,7 @@ interface ContainerState {
 	name: string
 	/**
 	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`), or `absent` when no container
-	 * by that name exists — which is a DIFFERENT fact from a stopped one: absent means the rig was never built here, and
+	 * by that name exists — which is a different fact from a stopped one: absent means the rig was never built here, and
 	 * building it is the manual half this module refuses to do.
 	 */
 	status: string
@@ -153,7 +153,7 @@ export interface RigStatus {
 
 /**
  * One result as this tool reports it — engine-neutral, so a reader compares two engines without learning two payload
- * shapes. `sourceID` is the thing worth reading: Pelias's `gid` says WHICH dataset supplied the answer
+ * shapes. `sourceID` is the thing worth reading: Pelias's `gid` says which dataset supplied the answer
  * (`whosonfirst:locality:101750331` vs `geonames:locality:2639268`), which is how a coverage question gets settled.
  */
 export interface RigResult {

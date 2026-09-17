@@ -155,7 +155,7 @@ describe("the positive half", () => {
 
 		const row = result.agreement[0]!
 
-		// The distance rides on EVERY row, not only the tolerated ones — measured to the EDGE, which for a point beside a
+		// The distance rides on every row, not only the tolerated ones — measured to the EDGE, which for a point beside a
 		// long edge is orders of magnitude smaller than the distance to the nearest vertex.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)

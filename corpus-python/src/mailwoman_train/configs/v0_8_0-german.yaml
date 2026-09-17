@@ -8,7 +8,7 @@
 #
 # SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add `synth-german: 0.2` (real OpenAddresses
 # Berlin/Saxony tuples rendered German-order via the OpenCage DE template) + `DE: 1.0` to
-# country_weights (REQUIRED — the loader rejects rows whose country isn't weighted). Synthesis-as-
+# country_weights (required — the loader rejects rows whose country isn't weighted). Synthesis-as-
 # supplement discipline: weight < 0.25, one-and-done.
 #
 # CONTINUE-TRAIN: same output_dir as v0.7.2 (resume=auto from step-100000) → +40k steps to 140000 at
@@ -28,7 +28,7 @@ data:
   country_weights:
     US: 1.0
     FR: 1.0
-    DE: 1.0 # REQUIRED — the loader rejects any row whose country isn't weighted (data_loader.py:164)
+    DE: 1.0 # Required — the loader rejects any row whose country isn't weighted (data_loader.py:164)
   source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0

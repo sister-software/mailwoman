@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The conformance-law fixture contract's refusals. Every case here is a row that must NOT load, because
+ *   The conformance-law fixture contract's refusals. Every case here is a row that must not load, because
  *   the alternative to a refusal is a row that grades under a default nobody wrote and reports as authored.
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:

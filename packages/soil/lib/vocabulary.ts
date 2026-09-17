@@ -7,7 +7,7 @@
  *   the acknowledgement it asks for, and the caveats that decide what a reading may claim.
  *
  *   THE RATING VOCABULARY IS NOT HERE, BECAUSE THE AUTHORITY SHIPS IT. `msdomdet.txt` inside each survey
- *   area's tabular export carries the declared domain for every `Choice` column, WITH the authority's own
+ *   area's tabular export carries the declared domain for every `Choice` column, with the authority's own
  *   prose definition of each member — capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28
  *   farmland classifications, the six component kinds. So the layer reads the domain out of the file it
  *   ingested rather than transcribing it from the National Soil Survey Handbook, and an out-of-domain value
@@ -85,7 +85,7 @@ export const SSURGO_USE_CONSTRAINTS =
 	"responsible for the appropriate application."
 
 /**
- * What a reading is NOT, in the authority's own words. Carried on every reading, because a caller cannot see from a
+ * What a reading is not, in the authority's own words. Carried on every reading, because a caller cannot see from a
  * capability class that the survey declines to speak about a specific site.
  *
  * The first two sentences are why §3.1 of the survey forbids a point-level determination: the map is authoritative
@@ -102,7 +102,7 @@ export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * The coverage statement a `designated` basis rests on: what NRCS declares complete inside a published survey area.
  *
- * It is the mapping at the survey's own scale, NOT a site-specific determination — which is why the observation reports
+ * It is the mapping at the survey's own scale, not a site-specific determination — which is why the observation reports
  * what the survey assigns to the map unit covering a location and never whether the land can be farmed.
  */
 export const SSURGO_COVERAGE_STATEMENT =

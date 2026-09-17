@@ -267,7 +267,7 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// NOT `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
+		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
 		// question with a different answer. Inclusion first, exclusions after — a later glob wins.
 		"--glob",
 		"*.ts",
@@ -321,7 +321,7 @@ export interface SelectReportableOptions {
  * rule from export status instead means the generic names — `main`, `run`, `visit`, `load` — fall out on their own,
  * because none of them is importable, while a name with a real home always survives.
  *
- * A name with no exported declaration is NOT necessarily fine. It may be a utility that deserves a home and does not
+ * A name with no exported declaration is not necessarily fine. It may be a utility that deserves a home and does not
  * have one yet. Reporting those belongs to a census, not to a write-time hint, because there is nothing here for the
  * author to import.
  */

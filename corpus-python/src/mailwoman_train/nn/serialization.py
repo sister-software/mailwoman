@@ -80,7 +80,7 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
         "country_ambiguous_scale": float(model.country_ambiguous_scale),
         "use_affix_head": bool(model.use_affix_head),
-        # Separate dep-loc head (P-B): MUST serialize so export/from_pretrained rebuild the head and
+        # Separate dep-loc head (P-B): must serialize so export/from_pretrained rebuild the head and
         # load its trained weights — else the dep-loc columns silently fall back to the classifier.
         "use_deploc_head": bool(getattr(model, "use_deploc_head", False)),
         "use_conventions_loss_mask": bool(model.use_conventions_loss_mask),
@@ -117,7 +117,7 @@ def _constructor_kwargs(cfg: dict[str, Any]) -> dict[str, Any]:
     Every `.get` default is the behaviour of the release that predates the key, so a checkpoint
     written before a channel existed rebuilds without it rather than with today's default.
     """
-    # v8 CJK Phase 2: restore THIS checkpoint's own label map (JSON stringifies int keys).
+    # v8 CJK Phase 2: restore this checkpoint's own label map (JSON stringifies int keys).
     # Pre-Phase-2 checkpoints persisted the STAGE3 map, so the fallback is only for configs
     # that predate the id2label key entirely.
     persisted_id2label = cfg.get("id2label")

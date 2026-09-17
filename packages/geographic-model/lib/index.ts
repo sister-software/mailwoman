@@ -14,7 +14,7 @@
  *   runtime consumer reads it through (`./lookup.ts`). All five are re-exported here and all five are
  *   reachable as curated subpaths.
  *
- *   The authoring loader (`./load.ts`, the `./load` subpath) is deliberately NOT re-exported here. It
+ *   The authoring loader (`./load.ts`, the `./load` subpath) is deliberately not re-exported here. It
  *   is the only module in the package that touches a filesystem, and it belongs to the build step that
  *   produces an artifact rather than to the consumers that read one. The first authored document
  *   arrives with #1927; this entry point carries no data.
@@ -28,7 +28,7 @@
  *      observations; it never overrides learned interpretation.
  *   2. **A second POI vocabulary.** External and curated POI categories, their containment
  *      hierarchy, the Overture-leaf translation, the query-phrase lexicon and the brand table all
- *      belong to `@mailwoman/poi-taxonomy`. This package maps INTO those identifiers.
+ *      belong to `@mailwoman/poi-taxonomy`. This package maps into those identifiers.
  *   3. **A second coverage register.** Dataset identity and coverage epistemics belong to
  *      `@mailwoman/core/layers`. An expected-but-absent observation becomes negative evidence only
  *      where `supportsExclusion` permits it there.

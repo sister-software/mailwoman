@@ -30,7 +30,7 @@ const docsDir = resolvePackagePath("@mailwoman/docs")
 const NODE_BACKED_BARRELS = ["@mailwoman/resolver-wof-sqlite/fst", "@mailwoman/resolver-wof-sqlite/street"]
 
 function browserSources(directory: string): AsyncIterable<string> {
-	return Globerator.files(["ts", "tsx"], { cwd: directory })
+	return Globerator.files(["ts", "tsx"], { cwd: directory, absolute: true })
 }
 
 describe("docs webpack policy", () => {

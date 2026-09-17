@@ -62,7 +62,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 		expect(names).toContain("62701")
 		expect(names).toContain("62702")
 		expect(names).toContain("62721")
-		// 90210 starts with 9; should NOT match
+		// 90210 starts with 9; should not match
 		expect(names).not.toContain("90210")
 	})
 
@@ -78,7 +78,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	})
 
 	test('phrase + prefix in one query (mixed): `Pari* TX` is `Pari* AND "TX"`', async () => {
-		// The fixture has Paris (FR) but no TX; the AND of `Pari*` (matches Paris) AND `"TX"` (matches
+		// The fixture has Paris (FR) but no TX; the `AND` of `Pari*` (matches Paris) with `"TX"` (matches
 		// nothing in the fixture) returns empty.
 		const r = await lookup.findPlace({ text: "Pari* TX", placetype: "locality" })
 		expect(r).toEqual([])

@@ -11,7 +11,7 @@
  *   Same posture as the rest of the package: not truth, not a check. A share link points at whatever pin its author
  *   clicked, which may be a car park, a mall's centroid, or the wrong branch.
  *
- *   ## `!3d`/`!4d` is the pin. `@lat,lng` is NOT.
+ *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
  *
  *   A resolved link carries two coordinate pairs and they are different quantities:
  *
@@ -20,7 +20,7 @@
  *
  *   The `@` pair is where the camera sits — offset from the pin by however the view was framed, and carrying a zoom
  *   suffix. Reading it instead of `!3d`/`!4d` is a silent accuracy loss of tens to hundreds of metres, which is the
- *   whole tolerance budget of a rooftop case. So the viewport is used ONLY as a labelled fallback, and a row that
+ *   whole tolerance budget of a rooftop case. So the viewport is used only as a labelled fallback, and a row that
  *   fell back says so in `source` rather than blending in.
  *
  *   ## A link that does not resolve is REPORTED
@@ -34,7 +34,7 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
  * Default pacing, in milliseconds between dispatches.
  *
  * This reads a public redirect on somebody else's service for the sake of authoring OUR test data, so the interval is
- * deliberately unhurried rather than tuned. `requestsPerMinute` alone does NOT hold a rate — its cooldown subtracts the
+ * deliberately unhurried rather than tuned. `requestsPerMinute` alone does not hold a rate — its cooldown subtracts the
  * elapsed gap, so N alone dispatches N requests every 60/N seconds — which is why the interval is set directly.
  */
 export const MAP_LINK_MIN_INTERVAL_MS = 1200

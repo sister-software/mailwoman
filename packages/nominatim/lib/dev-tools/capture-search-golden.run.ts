@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Phase-0: golden `/search` wire responses from the CURRENT nominatim drop-in (neural geocode +
- *   rules streetParts recovery). Spawns its own server child on a scratch port and kills ONLY that
+ *   rules streetParts recovery). Spawns its own server child on a scratch port and kills only that
  *   PID (house rule: never kill by pattern). Needs the lab data-root (weights + gazetteer).
- *   Run from the repo root AFTER `yarn compile`:
+ *   Run from the repo root after `yarn compile`:
  *   `node nominatim/dev-tools/capture-search-golden.run.ts`
  */
 

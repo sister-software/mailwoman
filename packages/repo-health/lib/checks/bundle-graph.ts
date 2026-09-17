@@ -10,7 +10,7 @@
  *   bundler config.
  *
  *   Dynamic imports stay external, which is webpack's view of a `webpackIgnore` import and the view every bundler gets
- *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated ONLY when a
+ *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated only when a
  *   row lists it with a reason; the list is the whole allowance, and a new one is an error until it is removed or
  *   listed.
  *

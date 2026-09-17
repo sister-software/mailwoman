@@ -21,7 +21,7 @@ torch = pytest.importorskip("torch")
 from mailwoman_train.labels import ACTIVE_BIO_LABELS  # noqa: E402
 from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:
@@ -54,7 +54,7 @@ SEQ_LEN = 8
 
 
 def build_reference_encoder() -> MailwomanCoarseEncoder:
-    """A small encoder with EVERY optional channel and head on, built from a fixed seed.
+    """A small encoder with every optional channel and head on, built from a fixed seed.
 
     Every flag is on deliberately. Each channel's `nn.Linear` draws from the RNG as it is
     constructed, so the initial weights encode the construction ORDER — reordering two channels,
@@ -112,7 +112,7 @@ def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
 
 
 def reference_inputs(model: MailwomanCoarseEncoder) -> dict[str, torch.Tensor]:
-    """A forward call that reaches EVERY channel, with seeded features.
+    """A forward call that reaches every channel, with seeded features.
 
     Passing no channel features is what let a reordered channel pass a logit comparison: a
     projection the forward never invokes cannot change a logit. Each channel gets a real tensor at
@@ -174,7 +174,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
 
 #: How far a rebuilt value may sit from the committed one and still count as unmoved.
 #:
-#: NOT exact equality, which is what this compared first and why these two tests failed on CI while
+#: Not exact equality, which is what this compared first and why these two tests failed on CI while
 #: passing on the machine that wrote the reference: the same fp32 graph over four transformer blocks
 #: lands on a different last digit under a different CPU's kernels and vectorization (0.637875 here,
 #: 0.637876 on the runner). Exact equality therefore pins the HOST as well as the code, and the

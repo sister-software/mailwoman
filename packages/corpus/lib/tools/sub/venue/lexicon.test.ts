@@ -144,7 +144,7 @@ test("SHIPPED_MODIFIER_SEED mirrors VENUE_STRUCTURE_MODIFIERS", () => {
 })
 
 test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
-	// Mirrors `fetch/wikidata-subvenue.ts`'s SUBVENUE_CONCEPTS. `wing` is absent from BOTH on purpose:
+	// Mirrors `fetch/wikidata-subvenue.ts`'s SUBVENUE_CONCEPTS. `wing` is absent from both on purpose:
 	// Wikidata has no clean "wing of a building" concept.
 	expect(Object.keys(CONCEPT_QIDS).toSorted()).toEqual([
 		"arcade",

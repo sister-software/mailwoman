@@ -321,7 +321,7 @@ export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 }
 
 /**
- * Parse the address ONCE and answer both the components and the geocode. Use this when the parse is the expensive step
+ * Parse the address once and answer both the components and the geocode. Use this when the parse is the expensive step
  * you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s
  * `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */

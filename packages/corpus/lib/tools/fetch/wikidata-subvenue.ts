@@ -29,7 +29,7 @@
  *   are ATTESTED USAGE — evidence of how a designator combines with a modifier or an identifier in
  *   running text. 775 rows is small, and it is a validation set, not a vocabulary.
  *
- *   ## What a caller must NOT do with the output
+ *   ## What a caller must not do with the output
  *
  *   A class label is a CONCEPT NAME, not a designator as written in an address. Q849706's Spanish
  *   label is `terminal aeroportuaria` and its French is `terminal d'aéroport`; nobody writes either on
@@ -47,7 +47,7 @@
  *   retry, response caching and `ResourceError` mapping all warrant their keep, so it extends
  *   {@link APIClient}. `ourairports.ts` is four static file transfers off a CDN and correctly does not.
  *
- *   WDQS also REQUIRES a descriptive `User-Agent` naming the tool and a contact — an anonymous or
+ *   WDQS also requires a descriptive `User-Agent` naming the tool and a contact — an anonymous or
  *   library-default agent is blocked outright by the Wikimedia user-agent policy. See
  *   {@link WIKIDATA_USER_AGENT}.
  *
@@ -74,7 +74,7 @@ export const WDQS_ENDPOINT = "https://query.wikidata.org/sparql"
 /**
  * The `User-Agent` every request carries.
  *
- * NOT decoration. The Wikimedia user-agent policy blocks requests whose agent is absent, generic, or a library default,
+ * Not decoration. The Wikimedia user-agent policy blocks requests whose agent is absent, generic, or a library default,
  * and WDQS enforces it — an unidentified client gets a 403 that no amount of retrying fixes. The policy asks for a tool
  * name, a URL, and a contact address, all three of which are here.
  */
@@ -121,7 +121,7 @@ const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
  * against the entity's English description (recorded below) on 2026-08-04 — a QID picked by search alone is how you end
  * up pulling the labels of a Bronx neighbourhood called Concourse.
  *
- * `wing` is ABSENT and that is a finding, not an oversight: Wikidata has no clean concept for "wing of a building".
+ * `wing` is absent and that is a finding, not an oversight: Wikidata has no clean concept for "wing of a building".
  * `wbsearchentities` for "wing" returns a surname, two English villages, a rugby position and a drone company. Since
  * `wing` is the single most valuable designator in the arc — `West Wing` is the one modifier case that already parses,
  * and `East Wing` is the one that does not — its localized surfaces have to come from somewhere else. See the wave-1

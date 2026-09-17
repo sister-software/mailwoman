@@ -63,11 +63,11 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 
 /**
  * The script families a component value can be written in, for the dual-script comparison below. Grouped, not
- * per-Unicode-script: Han, the two kana and Hangul are ONE family, because a single Japanese rendering routinely mixes
+ * per-Unicode-script: Han, the two kana and Hangul are one family, because a single Japanese rendering routinely mixes
  * Han and kana within one word (`表参道ヒルズ`) and splitting on that boundary would shred one rendering into three.
  * Latin/Cyrillic — the pair the Mongolian rows are written in — is the case this exists for.
  *
- * Anything not listed collapses to `"other"`: an unlisted script still forms ONE run, so a value written in it is never
+ * Anything not listed collapses to `"other"`: an unlisted script still forms one run, so a value written in it is never
  * shredded, it only cannot be told apart from another unlisted script. Adding a family here is safe; the only effect is
  * that two renderings previously fused into one `"other"` run become two.
  */
@@ -100,8 +100,8 @@ function scriptFamilyOf(char: string): string | null {
 /**
  * Split a component value into one rendering per script family, in source order.
  *
- * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry the SAME address twice — a
- * Cyrillic/Mongolian rendering and a Latin/English one, slash-joined — so a parse that correctly tags BOTH produces one
+ * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry the same address twice — a
+ * Cyrillic/Mongolian rendering and a Latin/English one, slash-joined — so a parse that correctly tags both produces one
  * span holding both. Each maximal run of one script family, with the neutral characters BETWEEN two letters of that
  * family absorbed into it, is one rendering; the neutrals that sit at a family BOUNDARY are the joiner and belong to
  * neither (`" / "`, `", "`, `" — "` all fall out the same way).
@@ -152,12 +152,12 @@ export function scriptRenderings(value: string): string[] {
 }
 
 /**
- * Does `got` satisfy the asserted `expected`? EXACT case-folded equality, nothing else — the whole of the contract for
+ * Does `got` satisfy the asserted `expected`? Exact case-folded equality, nothing else — the whole of the contract for
  * every ordinary `expect_components` key.
  *
  * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly (2026-08-10 → 2026-08-11) so a
  * dual-script span could satisfy a truth freezing one of its renderings. Its cost was a cross-tag bleed grading as a
- * pass — the value alone cannot say whether its two renderings are two writings of the SAME element or two DIFFERENT
+ * pass — the value alone cannot say whether its two renderings are two writings of the same element or two different
  * elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`. Review converted the
  * relaxation into the per-row `expect_component_renderings` OPT-IN: a case that genuinely carries a span in two scripts
  * lists the renderings it requires, a key so listed supersedes the same key here, and every other assertion stays this
@@ -168,7 +168,7 @@ export function componentMatches(got: string, expected: string): boolean {
 }
 
 /**
- * Grade one `expect_component_renderings` entry: which of the required renderings are ABSENT from
+ * Grade one `expect_component_renderings` entry: which of the required renderings are absent from
  * {@linkcode scriptRenderings}`(got)`, case-folded? Empty = the contract is satisfied. Nothing else about `got` is
  * asserted — neutral separators between renderings, and any EXTRA rendering, ride along free.
  */
@@ -206,7 +206,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    25 km bar of its impostor would have had nothing at all. The corpus stored both columns from the first migration
  *    and no branch read them, so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
  * 4. COMPONENTS, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
- *    because a corrupt `expect_components` JSON short-circuits the rest of ITS check, and the place check must still
+ *    because a corrupt `expect_components` JSON short-circuits the rest of its check, and the place check must still
  *    have run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings`
  *    — `{ tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got
  *    value must CONTAIN EVERY listed rendering, case-folded (both scripts required when the case defines both). Nothing
@@ -216,7 +216,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
-	// The ABSTAIN contract (#1585): the row's expected outcome is NO coordinate, so the grade inverts —
+	// The ABSTAIN contract (#1585): the row's expected outcome is no coordinate, so the grade inverts —
 	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate; a row carrying both
 	// is an authoring bug that must be loud, not a precedence question.
 	if (c.expect_abstain) {

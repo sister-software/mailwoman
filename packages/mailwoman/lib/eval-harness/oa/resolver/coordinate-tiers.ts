@@ -36,7 +36,7 @@ export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode")
 export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
 	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
-	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
+	// The postcode anchor supplies the postcode's own centroid, the finer tier between admin-centroid and
 	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
 	// row isolates exactly what the anchor sharpens: where, not which place.
@@ -65,8 +65,8 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 
 	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
-	// per-row, per-state situs + interpolation databases via RegionDatabaseProvider — so the eval reports the SHIPPED
-	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
+	// per-row, per-state situs + interpolation databases via RegionDatabaseProvider — so the eval reports the shipped
+	// coordinate (address_point > interpolated > admin) across all states, not the admin centroid the
 	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
 	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
 	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
@@ -84,7 +84,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		cascadeProvider = await RegionDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
 
-	// The addrpt + interp arms run when EITHER a single-state database was given OR --cascade is on.
+	// The addrpt + interp arms run when either a single-state database was given or --cascade is on.
 	const runAddrPt = !!addressPoints || cascadeOn
 	const runInterp = !!interpolation || cascadeOn
 	const useAnchor = options.postcodeAnchor ?? false
@@ -158,7 +158,7 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 		const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
 
 		if (!placed.length) continue
-		// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
+		// When the eval fixes a country, accept only a placed candidate from it — never fall back to
 		// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
 		// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
 		const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]

@@ -17,7 +17,7 @@
  *   THE VOCABULARY IS A CENSUS, NOT A CHECK. The declared generic-type domain is closed and the source
  *   already breaks it — `N/A` appears on 4 rows and in no domain — so an undeclared value is RECORDED as
  *   observed-but-undeclared rather than throwing. That is the opposite of the sibling layers' rule and it is
- *   the publisher's own doing: refusing here would refuse the Department's own data. What DOES throw is a
+ *   the publisher's own doing: refusing here would refuse the Department's own data. What does throw is a
  *   blank local code, because the local code is the claim.
  *
  *   THE CROSSWALK PAIRS ARE COUNTED HERE BECAUSE THEY ARE THE ARGUMENT FOR THE SCHEMA. If a local code
@@ -91,7 +91,7 @@ export interface ZoningChunkResult {
 	observedByCoverageCell: Array<[number, number]>
 	/**
 	 * Square metres. `signed` is the raw ring sum as published; `nested` is the per-polygon hole-aware reading;
-	 * `allExterior` is what the same rings say read WITHOUT their holes.
+	 * `allExterior` is what the same rings say read without their holes.
 	 */
 	area: { signedM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -181,7 +181,7 @@ export async function ingestZoningChunk(
 	let adjacentHoles = 0
 
 	/**
-	 * Record one observed vocabulary value. The FIRST label wins, because a later row's description is the publisher's
+	 * Record one observed vocabulary value. The first label wins, because a later row's description is the publisher's
 	 * word for the same code and choosing between them would be this package editing the publisher's vocabulary.
 	 */
 	const observe = (scheme: string, code: string, label: string): void => {
@@ -225,7 +225,7 @@ export async function ingestZoningChunk(
 				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
-				// ONE GRADE PER CLAIM. Every row of THIS artifact is `authoritative` — a government department republishing
+				// ONE GRADE PER CLAIM. Every row of this artifact is `authoritative` — a government department republishing
 				// local authorities' adopted plans — and an observed land-use layer is a different database with a different
 				// `layer_manifest.name`, never a row with a second grade in this table.
 				GZT_PROVENANCE_GRADE,

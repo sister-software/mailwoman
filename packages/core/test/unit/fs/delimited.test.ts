@@ -54,7 +54,7 @@ describe("reading an unquoted delimited file", () => {
 
 	/**
 	 * The defect this module exists for, pinned as the behaviour it must not have. A quote-aware reader over this input
-	 * answers TWO rows and neither of them is Türkmenabat — and two rows is indistinguishable from a two-row file at
+	 * answers two rows and neither of them is Türkmenabat — and two rows is indistinguishable from a two-row file at
 	 * every later boundary.
 	 */
 	it("differs from the default, which swallows the rows between one quote and the next", async () => {

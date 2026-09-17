@@ -1,8 +1,8 @@
 # === v4.0.0-base-60k — THE FROM-SCRATCH BASE RETRAIN (v8.3.0 Arc 1, Phase 2; model 7.0.0 candidate). ===
-# (Claude-owned; ROAD_TO_MAILWOMAN_V8_3_0 + the three merged Phase-0 memos ARE the pre-registration:
+# (Claude-owned; ROAD_TO_MAILWOMAN_V8_3_0 + the three merged Phase-0 memos are the pre-registration:
 # recipe-assembly D1-D3, Fisher-capture D4, operator sign-off = the #1348 merge, 2026-07-29.)
 #
-# WHAT THIS RUN IS: the golden master — every shipped capability from ONE recipe with one
+# What this run is: the golden master — every shipped capability from one recipe with one
 # provenance, zero named watches at ship. The base the B11 fine-tune template starts every
 # engagement from; the run where the Fisher artifact is captured at the only cheap point.
 #
@@ -18,11 +18,11 @@
 #      WITH it — from-scratch re-runs that decision, it does not inherit it).
 #   6. classifier_learning_rate: none — everything is fresh; the hot-LR carveouts are fine-tune
 #      implementation for fresh-heads-on-frozen-bases.
-#   Everything else VERBATIM v3.24: feed weights (deploc passengers stay out), augmentations incl.
+#   Everything else verbatim from v3.24: feed weights (deploc passengers stay out), augmentations incl.
 #   ordinal 0.3 + punct_drop 0.3, both bundle channels + digit-guard street v3, evidence curriculum
 #   + 0.15 false-evidence noise, country softener 0.5, class weights, phrase priors.
 #
-# #1349 CONTEXT (the addendum in the recipe memo): this run is the locality channel's FIRST actual
+# #1349 context (the addendum in the recipe memo): this run is the locality channel's first actual
 # training — every prior "trained" locality receipt was a frozen random marker (trainer fix #1350).
 # G1's locality bars are therefore floors against the MARKER's own measured readings, not against a
 # trained channel; a G1 miss is read against the addendum before any iteration.
@@ -33,25 +33,25 @@
 #      lower+heal (the marker's number to beat); house-number classes >= -0.020 asis raw;
 #      lowercase-heal ALL >= +0.015; bare-locality damage class ~0 (the curriculum now actually
 #      reaches the channel — its first real test).
-#   G2 ablation vs the SHIPPED 6.7.0 same-grader reference.
+#   G2 ablation vs the shipped 6.7.0 same-grader reference.
 #   G3 invariance (int8, --baseline 6.7.0): zero new classes.
 #   G4 gauntlet x3 layers.
-#   G5 golden ABLATED: **match-or-beat 6.7.0 with ZERO waivers** — including fr.cedex against the
+#   G5 golden ablated: **match-or-beat 6.7.0 with zero waivers** — including fr.cedex against the
 #      unwaived 85.6-class shipped-same-harness reading (the entire point of from-scratch; the
-#      82.2 waived floor is DEAD for this run). Floors rebuilt noise-honest (max(1.0pp, 2xSE)) from
-#      the candidate's own readings at promote. G5b golden FED recorded (misroute-cost input).
+#      82.2 waived floor is dead for this run). Floors rebuilt noise-honest (max(1.0pp, 2xSE)) from
+#      the candidate's own readings at promote. G5b golden fed recorded (misroute-cost input).
 #   G6 canary zero-flip, formatted mode.
-#   G7 the FULL pre-ship gauntlet on the dev-linked flip (the 8.2.0 instrument): Fifth-Ave
+#   G7 the full pre-ship gauntlet on the dev-linked flip (the 8.2.0 instrument): Fifth-Ave
 #      INV/BAND clears natively (ordinal augmentation is in the base), world-city fixtures clear
 #      under the street-context check.
-#   G8 DE legs (NEW — the v7 fold's value check): DE golden at the current de.native_locality floor
+#   G8 DE legs (new — the v7 fold's value check): DE golden at the current de.native_locality floor
 #      + the DE fragment leg. INSTRUMENT PREREQUISITE: the DE P0-style fragment board must exist
-#      before the 40k grading window opens; if the fold shows no win, the reduce reverts to lexicon v6
+#      before the 40k grading window opens; if the fold shows no gain, the shipped lexicon reverts to v6
 #      (per-ingredient D-rule) without indicting the run.
 #   FISHER sanity (mechanical): fisher-diag-v1.npz written beside the final checkpoint, loads, and
 #      covers every trainable parameter; sidecar provenance complete.
 #   STOP RULES (D1): this is run 1 of a 2-run envelope. Any G-miss => the named single-delta
-#      contingency and ONE re-run; a second miss is an operator conversation, never a third launch.
+#      contingency and one re-run; a second miss is an operator conversation, never a third launch.
 #      No knob iteration inside the run.
 #
 # Launch checklist: locality-surface-lexicon-v7.json synced to the volume (R2 gazetteer/ -> /data/
@@ -62,7 +62,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -88,7 +88,7 @@ data:
     AU: 1.0
     CA: 1.0 # Overture — live locality.
     MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
-  source_weights: # VERBATIM v3.24 EXCEPT synth-po-box-cedex (the D2 revert).
+  source_weights: # Verbatim from v3.24 except synth-po-box-cedex (the D2 revert).
     overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
@@ -138,7 +138,7 @@ data:
   anchor_value_mode: posterior_latlon
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json # D2: the DE fold (#1355).
-model: # VERBATIM v3.24 (v2.4.1 geometry + the shipped channel set).
+model: # Verbatim from v3.24 (v2.4.1 geometry + the shipped channel set).
   hidden_size: 384
   use_span_boundary_head: true
   use_deploc_head: false

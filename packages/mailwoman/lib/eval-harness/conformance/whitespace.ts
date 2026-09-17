@@ -36,7 +36,7 @@
  *   space in the middle; doubling it or turning it into a tab writes a string outside that grammar, and
  *   recognizing it is not an invariance this law may demand. The run-level transformations therefore skip
  *   those runs — detected through {@link "@mailwoman/codex"}'s own postcode shapes, never a local pattern —
- *   and a query whose ONLY run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s
+ *   and a query whose only run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s
  *   `structural-identifier-space` rather than the identity reading, because "this query has no spacing" and
  *   "this query's spacing is required" are different absences.
  *
@@ -68,7 +68,7 @@ export const WHITESPACE_LAW = "whitespace-invariance"
  *
  * - `leading` / `trailing` — the pasted-cell registers: one ASCII space bolted onto an end. Separate names because Stage
  *   1 reaches them through separate code — the leading trim takes whitespace only, the trailing trim takes whitespace
- *   AND the sentence punctuation a user appends — so one can regress without the other.
+ *   and the sentence punctuation a user appends — so one can regress without the other.
  * - `repeated` — every safe internal run doubled: the concatenated-column register.
  * - `tabbed` — every safe internal run replaced by one tab: the TSV-export register, and the arm that states the collapse
  *   still shields the segmentation grammar (see the module docstring).
@@ -128,7 +128,7 @@ function isPostcodeShape(candidate: string): boolean {
 }
 
 /**
- * The indices — into {@linkcode splitOnWhitespaceRuns}'s parts — of the whitespace runs that sit INSIDE a structured
+ * The indices — into {@linkcode splitOnWhitespaceRuns}'s parts — of the whitespace runs that sit inside a structured
  * identifier, i.e. whose two flanking tokens together read as one postcode.
  */
 function structuralRunIndices(parts: readonly string[]): Set<number> {
@@ -199,7 +199,7 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
  * The whitespace-blind identity of a string — equal keys mean the two differ by whitespace and by nothing else.
  *
  * Every non-whitespace character survives, in its original order, so this is the strongest available statement of the
- * scope rule: a whitespace transformation preserves token content AND token order. `\s` rather than `[ \t]` on purpose
+ * scope rule: a whitespace transformation preserves token content and token order. `\s` rather than `[ \t]` on purpose
  * — the key is a comparison surface, not a transformation, and a pair that swapped a space for a newline must still
  * come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
  */
@@ -224,7 +224,7 @@ export function classifyWhitespaceTransformation(base: string, variant: string):
 }
 
 /**
- * The declared reasons a whitespace transformation is NOT stateable over a given row.
+ * The declared reasons a whitespace transformation is not stateable over a given row.
  *
  * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
  *   it acts on: no comma for a separator transformation, no whitespace at all for a run one. Such a row is the IDENTITY
@@ -240,7 +240,7 @@ export type WhitespaceApplicabilityRule = (typeof WHITESPACE_APPLICABILITY_RULES
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on BOTH verdicts, for the same reason the case-folding law populates it on both — a row
+ * The reason is populated on both verdicts, for the same reason the case-folding law populates it on both — a row
  * silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface WhitespaceApplicability {
@@ -325,8 +325,8 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
  * package rather than its own overlay, so a whitespace violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *
- * {@linkcode whitespaceApplicability} is deliberately NOT re-checked here, and the case-folding audit's parallel check
- * is not an oversight in this one. A pair classifies only when its transformation MOVED something, which is the whole
+ * {@linkcode whitespaceApplicability} is deliberately not re-checked here, and the case-folding audit's parallel check
+ * is not an oversight in this one. A pair classifies only when its transformation moved something, which is the whole
  * of what applicability asks of a whitespace transformation, so an inapplicable row cannot reach this function — it
  * fails classification first, naming the transformation set. The rules are required one layer out, where the suite's
  * COMPLETENESS test reads them: an arm absent from a committed row must name the rule that refuses it.

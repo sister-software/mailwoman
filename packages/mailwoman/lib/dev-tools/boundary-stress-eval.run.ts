@@ -9,15 +9,15 @@
  *   table and a single PROMOTE / NO-PROMOTE line; exit 0 = all targets met, exit 1 = any miss.
  *
  *   Unlike the baseline (which hard-codes the dev weights), this accepts an explicit model so it can
- *   grade a freshly-trained checkpoint WITHOUT touching the neural-weights symlink (which yarn test
+ *   grade a freshly-trained checkpoint without touching the neural-weights symlink (which yarn test
  *   re-creates). The classifier is built via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
  *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block —
  *   and the eval FAILS CLOSED if a declared channel can't be fed. This closes the #566/#685 trap
- *   the eval previously walked into: it built the classifier via `loadFromWeights` with NO
+ *   the eval previously walked into: it built the classifier via `loadFromWeights` with no
  *   anchor/gazetteer/conventions, so the anchor-trained STAGE3 model was scored ANCHOR-OFF
  *   (out-of-distribution on exactly the admin- adjacent boundary shapes this eval measures). The
- *   model-card is therefore MANDATORY for a custom model (`createScorer` reads its label vocab AND
+ *   model-card is therefore required for a custom model (`createScorer` reads its label vocab and
  *   `requires`); without it the eval now throws rather than silently mis-decoding the 33-label
  *   STAGE3 model.
  *
@@ -68,7 +68,7 @@ const STREET_SPAN_FLOOR = 65
 
 // Route through the canonical ProductionScorer (#718): feed the model the full SHIP-CONFIG it was
 // TRAINED against (anchor + gazetteer + conventions, per the model-card's `requires` block). The
-// prior loadFromWeights construction fed NO anchor/gazetteer/conventions, so this anchor-trained
+// prior loadFromWeights construction fed no anchor/gazetteer/conventions, so this anchor-trained
 // STAGE3 model was scored ANCHOR-OFF — out-of-distribution on exactly the admin-adjacent boundary
 // shapes this eval measures (the #566/#685 trap). createScorer in `strict` mode FAILS CLOSED if a
 // declared channel can't actually be fed, so a silent OOD re-grade can't recur.

@@ -16,7 +16,7 @@
  *   Wave 1 measured `hall` at 3,274 hits in the Great Britain extract and stopped there, which reads as
  *   a verdict on the word. It is not. Re-censused per region 2026-08-05, the same token is a British
  *   disaster and a German designator, and no single global flag can express that. The rule this file
- *   enforces: a promotion names a designator, a phrase, AND a locale, and it is earned by a count taken
+ *   enforces: a promotion names a designator, a phrase, and a locale, and it is earned by a count taken
  *   in that locale's own data.
  *
  *   ── What "real" and "confound" mean in the numbers below ─────────────────────────────────────────
@@ -25,7 +25,7 @@
  *   - **real** — the phrase sits in a name that is genuinely venue-interior structure, judged by the
  *     rule designator of the feature carrying it (`terminal`, `gate`, `campus`) and by the name taking a
  *     `<designator> <identifier>` or `<modifier> <designator>` shape.
- *   - **confound** — everything else, and the `confoundNote` says WHAT it is. A count with no note is
+ *   - **confound** — everything else, and the `confoundNote` says what it is. A count with no note is
  *     not a census; "3,274 hits" told nobody that 3,205 of them were bus stops named after a village
  *     hall.
  *
@@ -56,9 +56,9 @@ export interface SubVenuePromotion {
 	locale: string
 	decision: "promote" | "reject"
 	/**
-	 * Set when the board's verdict is valid ONLY under a syntactic shape — the machine-readable half of a shape-separable
+	 * Set when the board's verdict is valid only under a syntactic shape — the machine-readable half of a shape-separable
 	 * confound. `identifier-required` means the phrase is promoted solely in `<phrase> <identifier>` position (Halle 8);
-	 * bare occurrences stay unpromoted. A consumer that reads promotions MUST honour this field: the de-DE `halle` board
+	 * bare occurrences stay unpromoted. A consumer that reads promotions must honour this field: the de-DE `halle` board
 	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the CITY Halle (Saale), and the
 	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-bearing shape, not of the
 	 * phrase. Absent = the promotion holds in any shape.
@@ -86,7 +86,7 @@ export interface SubVenuePromotion {
  * The ledger. Sorted by designator, then locale, then phrase in the emitted artifact; source order here is grouped by
  * designator for reading.
  *
- * ── A rejection of a SHIPPED designator is ADVISORY ──────────────────────────────────────────────
+ * ── A rejection of a shipped designator is advisory ──────────────────────────────────────────────
  * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a FLAT English vocabulary with no
  * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a recipe author which
  * locale to exclude from a generated line, and does not stop the span proposer from firing on "Red Wing". Giving the
@@ -141,7 +141,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 
 	// ── hall ────────────────────────────────────────────────────────────────────────────────────────
 	// Wave 1 flagged `hall` as per-locale poison on a GB number alone. Two locales measured; both
-	// reject, and for DIFFERENT reasons, which is the part worth keeping.
+	// reject, and for different reasons, which is the part worth keeping.
 	{
 		designatorID: "hall",
 		phrase: "hall",
@@ -205,7 +205,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	},
 
 	// ── gate ────────────────────────────────────────────────────────────────────────────────────────
-	// The English surface ships and is deliberately NOT modifier-eligible. These decide its localized
+	// The English surface ships and is deliberately not modifier-eligible. These decide its localized
 	// forms, and the two land on opposite sides for a reason worth keeping.
 	{
 		designatorID: "gate",

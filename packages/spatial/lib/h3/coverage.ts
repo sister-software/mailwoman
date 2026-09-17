@@ -6,7 +6,7 @@
  *   The coverage probe every polygon layer's reader repeats: an index cell's parent at the coverage
  *   resolution, read through the layer contract's shared row mapping.
  *
- *   NOT exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`, and the
+ *   Not exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`, and the
  *   barrel serves browser bundles that must not carry the layer contract's Kysely graph. Import it from the
  *   `@mailwoman/spatial/h3/coverage` subpath.
  */

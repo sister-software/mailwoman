@@ -5,8 +5,8 @@
  *
  *   Street-level (situs + interpolation) lookups over a sql.js-httpvfs worker — the browser twins of
  *   `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` (#476) and `StreetInterpolator`
- *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
- *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
+ *   (#483). They run the same SQL + the same shared normalizer (`street-normalize.ts`) as the node
+ *   classes, just async over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
  *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
  *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline

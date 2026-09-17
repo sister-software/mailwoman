@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stage 2 of the confidence-calibration pipeline (task #59). Runs the SHIPPED model over the
+ *   Stage 2 of the confidence-calibration pipeline (task #59). Runs the shipped model over the
  *   calibration set (`build-calibration-set.py`) and emits one record per PREDICTED span pairing
  *   its raw softmax confidence with a correct/incorrect label — the `(score, correct?)` pairs the
  *   isotonic fitter (`fit-isotonic-calibration.py`) consumes.
@@ -28,7 +28,7 @@
  *       tag the address lacks is a hallucination → wrong.
  *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's
  *       street decomposition isn't penalized against the corpus's coarse `street` gold.
- *   - Value match is normalized exact OR either-direction substring (handles fragmentation like "Saint"
+ *   - Value match is normalized exact or either-direction substring (handles fragmentation like "Saint"
  *       vs "Saint Paul" and decomposition like "Ave" vs "Elm Ave").
  *
  *   Run: node packages/mailwoman/lib/dev-tools/collect-span-confidences.run.ts\

@@ -63,7 +63,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 
 				if (!trace) throw new Error("expected a trace from a session opened with trace: true")
 
-				// The trace is about the SAME text the tree was built from (post Stage-1 normalize).
+				// The trace is about the same text the tree was built from (post Stage-1 normalize).
 				expect(trace.parse.text).toBe(withTrace.tree.raw)
 				expect(trace.parse.pieces.length).toBeGreaterThan(0)
 				expect(trace.parse.tokens).toHaveLength(trace.parse.pieces.length)

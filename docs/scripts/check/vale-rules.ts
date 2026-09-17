@@ -116,6 +116,8 @@ const LEGS: StyleLeg[] = [
 			"Mailwoman.AmbiguousShorthand",
 			"Mailwoman.Anthropomorphism",
 			"Mailwoman.BannedWords",
+			"Mailwoman.EmphasisCapitals",
+			"Mailwoman.ReifiedShorthand",
 			"Mailwoman.Spelling",
 			"Mailwoman.StockPhrases",
 			"Mailwoman.Terms",
@@ -129,9 +131,9 @@ const LEGS: StyleLeg[] = [
 		dirtyFixture: "scripts/vale-fixtures/dirty.ts",
 		cleanFixture: "scripts/vale-fixtures/clean.ts",
 		minDirtyErrors: 7,
-		ruleChecks: ["Mailwoman.AmbiguousShorthandCode"],
-		// The Code rule is error-severity and it is the only rule this config runs, so the exit
-		// code carries the whole verdict.
+		ruleChecks: ["Mailwoman.AmbiguousShorthandCode", "Mailwoman.EmphasisCapitals", "Mailwoman.ReifiedShorthand"],
+		// Both rules this config runs are error-severity, so the exit code carries the whole
+		// verdict.
 		cleanCountsEverySeverity: false,
 	},
 	{
@@ -142,6 +144,8 @@ const LEGS: StyleLeg[] = [
 		minDirtyErrors: 100,
 		ruleChecks: [
 			"Mailwoman.AmbiguousShorthand",
+			"Mailwoman.EmphasisCapitals",
+			"Mailwoman.ReifiedShorthand",
 			"MailwomanChat.AgreementOpeners",
 			"MailwomanChat.AssertiveFiller",
 			"MailwomanChat.ChatStockForms",

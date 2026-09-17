@@ -253,7 +253,7 @@ describe("the conjunction's other half — the artifact", () => {
 	})
 
 	// The committed artifact affords `obtain_medication` from both wave-1 classes; the pilot layer surveys `pharmacy`.
-	// So `drugstore` is a class the artifact CAN speak about and the layer cannot, which is a different refusal from
+	// So `drugstore` is a class the artifact can speak about and the layer cannot, which is a different refusal from
 	// a class the artifact never heard of.
 	it("refuses a category the artifact affords but the layer never surveyed", async () => {
 		const route = await routeOver()

@@ -15,8 +15,8 @@
  *   (postcode-proximity + name-match) → pick. It supplies the COORDINATE candidate the FTS
  *   name-match can't generate when a small town isn't well-indexed.
  *
- *   BUILD-FROM-SOURCE per the standing rule: locality polygons from the whosonfirst-data-admin-<cc>
- *   GeoJSON repos; postcode centroids from our own custom-built postalcode-intl.db (NOT a prebuilt
+ *   Build-from-source per the standing rule: locality polygons from the whosonfirst-data-admin-<cc>
+ *   GeoJSON repos; postcode centroids from our own custom-built postalcode-intl.db (not a prebuilt
  *   dump).
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
@@ -253,7 +253,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 async function geojsonFiles(dir: string): Promise<string[]> {
 	if (!(await pathExists(dir))) return []
 
-	return Globerator.files("geojson", { cwd: dir }).toArray()
+	return Globerator.files("geojson", { cwd: dir, absolute: true }).toArray()
 }
 
 export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOptions): Promise<void> {

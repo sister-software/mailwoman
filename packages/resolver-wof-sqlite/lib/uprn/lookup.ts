@@ -97,7 +97,7 @@ interface UPRNRow {
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -164,7 +164,7 @@ export class UPRNLookup implements Disposable {
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
 
-			// gridDisk(origin, ring) returns the WHOLE disk out to `ring`; diffing against what's already been
+			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's already been
 			// probed derives just this ring's new cells (the POILookup pattern).
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells: number[] = []

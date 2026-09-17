@@ -1,15 +1,15 @@
-# v2.5.6-dynamics-probe — fork option (a), #1102: SAME composition as v2.5.5 (the corpus that both
-# repaired US recall AND re-broke the Dublin pin), gentler dynamics only: lr 5e-5 -> 1e-5, warmup
-# 200 -> 500, 8000 -> 2000 steps. The 2k diagnostic (diagnostic-before-fix): if BOTH the Dublin pin
+# v2.5.6-dynamics-probe — fork option (a), #1102: same composition as v2.5.5 (the corpus that both
+# repaired US recall and re-broke the Dublin pin), gentler dynamics only: lr 5e-5 -> 1e-5, warmup
+# 200 -> 500, 8000 -> 2000 steps. The 2k diagnostic (diagnostic-before-fix): if both the Dublin pin
 # and the flip repair survive, the twin<->recall bind was SCHEDULE, not capacity — the campaign
 # resumes on data changes at gentle dynamics; if the trade persists, it's capacity -> the #727 arc
-# (runbook: docs/superpowers/plans/2026-07-13-727-span-head-runbook.md). Grade ONLY: gauntlet
+# (runbook: docs/superpowers/plans/2026-07-13-727-span-head-runbook.md). Grade only: gauntlet
 # regression layer (Dublin/Melbourne pins) + us-recall-flip-census + parity floors sanity.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -33,7 +33,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -77,7 +77,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -132,7 +132,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v241 (fresh optimizer; --resume auto on a
+train: # Same-vocab init_from fine-tune off the shipped v241 (fresh optimizer; --resume auto on a
   # fresh output_dir honors init_from, weights only).
   output_dir: /data/output-v256-dynamics-probe-s42/checkpoints
   seed: 42

@@ -208,8 +208,8 @@ export const NominatimReverseResponseSchema = z
 
 /**
  * The real `/lookup` 200 response union (#1052 doc accuracy): a jsonv2/json result array by default, or a
- * `format=geojson` FeatureCollection. NO `jsonld` branch — a legacy quirk preserved verbatim by `routes.ts`'s lookup
- * handler (`format=jsonld` falls through to the raw jsonv2 array there), so this union stays two-wide, unlike
+ * `format=geojson` FeatureCollection. There is no `jsonld` branch — a legacy quirk preserved verbatim by `routes.ts`'s
+ * lookup handler (`format=jsonld` falls through to the raw jsonv2 array there), so this union stays two-wide, unlike
  * `/search`'s three-wide union.
  */
 export const NominatimLookupResponseSchema = z

@@ -54,7 +54,7 @@ export async function md5File(path: PathBuilderLike): Promise<string> {
 /**
  * MD5 of in-memory content, hex-encoded — the {@link md5File} counterpart for a string that never becomes a file. Same
  * provenance-only rationale, and the same non-security caveat: it exists so a query text, a manifest line or a config
- * blob can be fingerprinted with the SAME algorithm as the files recorded beside it in one `meta` table.
+ * blob can be fingerprinted with the same algorithm as the files recorded beside it in one `meta` table.
  */
 
 export function md5Hex(data: string | NodeJS.ArrayBufferView): string {

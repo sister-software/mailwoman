@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch Korea's local-government permit registry (지방행정인허가데이터): one CSV per permit category,
- *   every business a local authority has licensed, about 195 categories. Each row carries BOTH address
+ *   every business a local authority has licensed, about 195 categories. Each row carries both address
  *   forms of the same premises — `소재지전체주소` (the lot-number form, 지번) and `도로명전체주소` (the
  *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, EPSG:5174). That
  *   pairing is the cheapest dual-format signal Korean addresses offer, and the coordinate is the

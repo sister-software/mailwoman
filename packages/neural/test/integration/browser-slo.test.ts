@@ -78,7 +78,7 @@ const MODEL_RAW_BYTES_BUDGET = 56_000_000
 const TOKENIZER_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`. WHICH variant it asks for is ORT's
+ * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`. Which variant it asks for is ORT's
  * decision at load time, not ours — the first run fetched the 22,867,301 B asyncify build — so the budget covers the
  * family rather than one file name. Compresses ~4× on the wire (5,580,159 B measured, against the live demo's 5.66 MB
  * brotli figure).
@@ -112,7 +112,7 @@ const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
- * Session init on the WebGPU arm. Asserted only when the browser granted a WebGPU adapter AND the runner's diagnostics
+ * Session init on the WebGPU arm. Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics
  * report `webgpu` — the runner falls back to WASM silently, so without that check the arm would measure the other arm
  * under a WebGPU name. Headless Chromium grants a SOFTWARE adapter (SwiftShader) where no GPU is reachable, which is
  * why the receipt prints the adapter's identity beside the number: 2,997 ms on SwiftShader is not a claim about
@@ -141,7 +141,7 @@ const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
 /**
  * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and WASM
- * linear memory OUTSIDE the JS heap, so this number does NOT include the ~53 MB of artifact bytes the session holds nor
+ * linear memory outside the JS heap, so this number does not include the ~53 MB of artifact bytes the session holds nor
  * ORT's own arena — it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
  * Measured at ~10 MiB on the first run; the budget is the "something is retaining objects per parse" regression check,
  * not a memory target.
@@ -875,9 +875,9 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 	const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
 
-	// The byte table is snapshotted HERE, not after the explicit fetches: onnxruntime-web pulls its
+	// The byte table is snapshotted here, not after the explicit fetches: onnxruntime-web pulls its
 	// `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm when the gazetteer
-	// page opens, so an earlier snapshot reports both classes as ZERO — which reads as "this
+	// page opens, so an earlier snapshot reports both classes as zero — which reads as "this
 	// session downloads no WASM" rather than "the snapshot was early". Everything after this line
 	// is deliberately excluded: a second session on the WebGPU arm re-fetches artifacts a cold user
 	// session pays for once.

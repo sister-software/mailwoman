@@ -67,7 +67,7 @@ model:
   # Label smoothing disabled. With 21 classes, the smoothed target of 0.1/20 = 0.005
   # on non-gold classes is gradient noise that fights against discriminative learning,
   # especially in combination with CRF NLL (which also wants discriminative emissions).
-  # Calibration is regained from the CRF structural prior + the source_weights win
+  # Calibration is regained from the CRF structural prior + the source_weights table
   # carried over from v0.2.0.
   label_smoothing: 0.0
   # CRF down-weighted to 0.05 (was 1.0 → 0.1 → 0.05 across the three iteration runs).

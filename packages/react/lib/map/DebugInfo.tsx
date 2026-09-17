@@ -7,7 +7,7 @@
  *   loaded, and which backend actually executed it.
  *
  *   The backend is the one worth naming twice. `web/onnx-runner.ts` asks for `["webgpu", "wasm"]` and falls through
- *   to a WASM-only session inside a bare `catch`, so a page that works is NOT evidence that WebGPU ran — the two
+ *   to a WASM-only session inside a bare `catch`, so a page that works is not evidence that WebGPU ran — the two
  *   outcomes look identical from the outside. This row is the difference, which matters because the int8 graph's
  *   mobile-Safari invariant is about the WebGPU execution provider specifically.
  *
@@ -73,7 +73,7 @@ export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: 
 	)
 
 	useEffect(() => {
-		// eslint-disable-next-line no-console -- this IS the feature: the record has to reach the console a reporter copies.
+		// eslint-disable-next-line no-console -- this is the feature: the record has to reach the console a reporter copies.
 		console.info("[mailwoman] debug info", record)
 	}, [record])
 

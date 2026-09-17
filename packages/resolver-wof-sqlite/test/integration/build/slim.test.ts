@@ -7,8 +7,8 @@
  *   localities (varying populations) + postcodes + a non-US locality, then asserts that the slim
  *   output keeps only what the selection policy promises.
  *
- *   The fixture mirrors the PRODUCTION source shape: `spr` + `names` + a pre-built `place_population`
- *   aux table, and NO `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
+ *   The fixture mirrors the production source shape: `spr` + `names` + a pre-built `place_population`
+ *   aux table, and no `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
  *   into `place_population` at ingest and never persists geojson, so the slim builder reads
  *   population straight from that table.
  */
@@ -199,7 +199,7 @@ describe("buildSlimWOFDatabase", () => {
 		const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
 		expect(namesExists).toBeUndefined()
 
-		// place_search is a self-contained FTS5, so name MATCH still works with names gone.
+		// place_search is a self-contained FTS5, so name `MATCH` still works with names gone.
 		const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
 			| { wof_id: number }
 			| undefined

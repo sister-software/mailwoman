@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
- *   the rows injection point directly against `poi-schema.ts` — the SAME idiom
+ *   the rows injection point directly against `poi-schema.ts` — the same idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
@@ -17,8 +17,8 @@
  *
  *   - Two rows a few hundred meters from a Springfield, IL center (`TELECOM_EXCHANGE_NEAR` closer,
  *     `TOWER_COMMS_NEAR` further).
- *   - One `telecom_exchange` row at EXACTLY res-9 gridDistance 20 from the center — inside this module's
- *     32-ring default (covers gridDistance ≤ 31) but OUTSIDE `POILookup`'s own internal default of 16
+ *   - One `telecom_exchange` row at exactly res-9 gridDistance 20 from the center — inside this module's
+ *     32-ring default (covers gridDistance ≤ 31) but outside `POILookup`'s own internal default of 16
  *     rings (covers gridDistance ≤ 15). This is the direct acceptance test for this module's `maxRings`
  *     default of 32 overriding `POILookup`'s own — see `nearest-infrastructure.ts`'s docstring.
  *   - A `cafe` row (non-telecom) right next to the near rows, proving `categoryIDs` filtering isn't
@@ -272,7 +272,7 @@ describe("nearestInfrastructure", () => {
 		using poiLookup = new POILookup({ databasePath: poiDBPath })
 		using contractDB = await openEmptyContractDB()
 
-		// Discover which res-6 cells the hits land in (via the SAME reconstruction nearestInfrastructure
+		// Discover which res-6 cells the hits land in (via the same reconstruction nearestInfrastructure
 		// itself uses), then write coverage for exactly those cells — robust regardless of whether the
 		// fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
 		const uncoveredHits = await nearestInfrastructure(poiLookup, contractDB, {

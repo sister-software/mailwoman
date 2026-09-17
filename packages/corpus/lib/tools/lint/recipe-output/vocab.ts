@@ -17,11 +17,11 @@
  *   (the recipe output) loses. This reads a recipe output's own (token -> tag) and checks each token
  *   against the base.
  *
- *   WHY v2 IS COUNTRY-SCOPED + FULL-COUNT (the night-2026-06-18 lesson, learned the hard way over
- *   three tries): a token's correct tag is COUNTRY-specific — "Paris" is locality in FR data and
- *   street in US "Paris Ave"; "Marion" is a US town AND many US "Marion" streets. So:
+ *   Why v2 is country-scoped + full-count (the night-2026-06-18 lesson, learned the hard way over
+ *   three tries): a token's correct tag is country-specific — "Paris" is locality in FR data and
+ *   street in US "Paris Ave"; "Marion" is a US town and many US "Marion" streets. So:
  *
- *   1. A cross-COUNTRY aggregate mis-judges any country-specific token (v1 uniform AND a proportional
+ *   1. A cross-country aggregate mis-judges any country-specific token (v1 uniform and a proportional
  *        retry both false-flagged FR cities as "street" from US street-contexts).
  *   2. A SMALL sample is street-BIASED regardless, because the street sources (tiger 39 + nad 378 parts)
  *        dwarf the locality sources (a small US-scoped spot-check read Indianapolis 54% street vs

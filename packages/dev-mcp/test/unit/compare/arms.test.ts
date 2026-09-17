@@ -6,7 +6,7 @@
  *   The two arm kinds that are not a live geocoder: a metered reference oracle, and a stored past run.
  *
  *   Separate from `compare.test.ts` because neither touches the HTTP transport, and because both are about the same
- *   thing — a comparison that must NOT produce a verdict, for two different reasons.
+ *   thing — a comparison that must not produce a verdict, for two different reasons.
  */
 
 import { createPostalAddressID } from "@mailwoman/address-id"
@@ -115,7 +115,7 @@ const BOARD_AD = { kind: "board", country: "AD" }
 
 describe("mwdev_compare — an oracle arm", () => {
 	it("refuses to grade even when every row carries a truth coordinate", async () => {
-		// The board's AD rows all pin expectLat/expectLon, so this comparison COULD be graded on distance. It is not,
+		// The board's AD rows all pin expectLat/expectLon, so this comparison could be graded on distance. It is not,
 		// because the board's coordinates were pinned by hand with these same geocoders open as a second opinion.
 		const oracle = oracleAt(ANDORRA_LA_VELLA)
 

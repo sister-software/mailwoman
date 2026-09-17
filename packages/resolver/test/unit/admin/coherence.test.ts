@@ -236,14 +236,14 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		expect(tb?.lat).toBeCloseTo(41.69, 2)
 		expect(tb?.metadata?.["admin_coherence_repicked"]).toBe(true)
 
-		// Atlanta IS under the US state → it resolves in the walk; no country fall-through.
+		// Atlanta is under the US state → it resolves in the walk; no country fall-through.
 		const at = localityOf(await resolver.resolveTree(tree("Atlanta"), { adminCoherence: true }))
 		expect(at?.lat).toBeCloseTo(33.76, 2)
 	})
 
 	it("re-picks via matchCountry when the gazetteer has NO country node + the locality is orphaned (#1023 — flattened GE hierarchy)", async () => {
 		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only: no `country`-placetype
-		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup AND the `parentID`
+		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup and the `parentID`
 		// descendant test miss it — the exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km).
 		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` COLUMN, which is still set.
 		const usGeorgia = {

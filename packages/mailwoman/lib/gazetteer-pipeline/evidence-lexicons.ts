@@ -8,7 +8,7 @@
  *   from the probe-era diagnostic scripts (Phase 1 of
  *   `docs/superpowers/plans/2026-07-27-option-a-productionization-plan.md`).
  *
- *   BOTH lexicons follow the anchor-lexicon JSON schema (feature_dim/slots/bits/entries/
+ *   Both lexicons follow the anchor-lexicon JSON schema (feature_dim/slots/bits/entries/
  *   code_entries + rules) so the Python painter (`gazetteer_anchor.py`) and the future TS painter
  *   consume them identically — train and inference share one computation.
  *
@@ -31,7 +31,7 @@
  *      vocabulary, never locality evidence (v3.19: homograph-flagged state-name surfaces taught a
  *      locality-evidence→REGION rotation — "Washington, DC" parsed region="Washington"
  *      locality=null; "Missouri Break Ln, WY" region="Missouri"; "Frannie, Wyoming" lost its
- *      locality). Washington-the-city rows parse correctly WITHOUT evidence — withholding beats
+ *      locality). Washington-the-city rows parse correctly without evidence — withholding beats
  *      corrupting. Scoped to US while US is the only covered country with single-word region names
  *      colliding this way; revisit per-country at each locale fold.
  *
@@ -82,10 +82,10 @@ export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 
 /**
- * THE PAINTER FOLD (word_norm) — the rule BOTH painters apply at lookup (`gazetteer_anchor.py` /
+ * THE PAINTER FOLD (word_norm) — the rule both painters apply at lookup (`gazetteer_anchor.py` /
  * `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing non-letter/digit chars (KEEP internal —
- * "saint-thomas", "d'azur"), lowercase, single-space join. Lexicon entry keys MUST use this fold or they are
- * unreachable at paint time. NOT the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
+ * "saint-thomas", "d'azur"), lowercase, single-space join. Lexicon entry keys must use this fold or they are
+ * unreachable at paint time. Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
  * worlds fold differently by design; caught at Phase 2 when the locality builder briefly used the FST fold
  * ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
  */
@@ -173,7 +173,7 @@ export function loadUSRegionVocabulary(fold: (surface: string) => string[] = pai
 }
 
 /**
- * The three German city-states: Land and Stadt are the SAME coextensive place, and the locality reading dominates user
+ * The three German city-states: Land and Stadt are the same coextensive place, and the locality reading dominates user
  * text ("10115 berlin", "hamburg altona") — see {@link loadDERegionVocabulary}.
  */
 const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
@@ -184,8 +184,8 @@ const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
  * Thueringen, …) — are region vocabulary, never locality evidence; painting "bayern" as a locality teaches the same
  * evidence→REGION rotation the v3.19 US flip census measured for state names.
  *
- * The city-states (Berlin, Hamburg, Bremen) are deliberately ABSENT from the exclusion: the US analogy does not
- * transfer — Washington-the-state and Washington-the-city are DIFFERENT places (a rotation hazard), while
+ * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion: the US analogy does not
+ * transfer — Washington-the-state and Washington-the-city are different places (a rotation hazard), while
  * Berlin-the-Land and Berlin-the-Stadt are one coextensive place whose dominant reading in user text is the locality.
  * Withholding evidence there would gut the DE fold's value on the three largest cities; the model owns the residual
  * region/locality call (model-first).
@@ -293,7 +293,7 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  *
  * `ownImportance` = the surface's max importance across places NAMED it; `parentImportance` = the max PARENT-locality
  * importance across neighbourhoods named it (the v4 parent-prominence proxy). LAW-3 GUARD: person-name surfaces may
- * only clear via OWN importance — a neighbourhood named after a person inside a metropolis is exactly the "Rue Joseph"
+ * only clear via own importance — a neighbourhood named after a person inside a metropolis is exactly the "Rue Joseph"
  * street-interior hazard, and parent prominence must never launder it (the v3.17→v3.18 tuition).
  */
 export function clearsProminenceFloor(
@@ -356,7 +356,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	// Painter-fold the curation sets so they compare against painter-folded entry keys.
 	const { surfaces: degenerate, stopwordTokens } = await loadDegenerateSurfaces(undefined, painterFold)
 
-	// Law-1 directional closure (v5): union the directionals in WITHOUT touching the shared FST policy set.
+	// Law-1 directional closure (v5): union the directionals in without touching the shared FST policy set.
 	for (const s of await loadDirectionalSurfaces()) {
 		degenerate.add(s)
 	}

@@ -17,7 +17,7 @@
  *      it graded."
  *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran
  *      proves nothing — but only postcode-country coherence reports its own firing rate, so this field is named for
- *      THAT pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
+ *      that pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
  *      participated; the `unparsed` note says so rather than letting the coherence number stand in for it.
  *
  *   Every field is EXTRACTED, so every field can be absent. A pattern that does not match yields `null` and a note
@@ -35,7 +35,7 @@ interface GauntletLayerReport {
 export interface GauntletReport {
 	/**
 	 * `PASS` / `FAIL` as the run printed it, or `null` when no verdict line appeared — a crash, or a run killed before it
-	 * finished. Never defaulted to FAIL: "did not finish" and "finished and failed" are different facts.
+	 * finished. Never defaulted to `FAIL`: "did not finish" and "finished and failed" are different facts.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -141,9 +141,9 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
-		// `+ <id> now PASSES — promote to status=pass`. Located by index rather than matched by pattern: the id can
-		// contain anything, and expressing "everything up to the marker" as a regex needs a lazy quantifier followed by
-		// `\s+`, which is the quadratic shape.
+		// A line of `+ <id>`, then `NOW_PASSING_MARK`, then `— promote to status=pass`. Located by index rather than
+		// matched by pattern: the id can contain anything, and expressing "everything up to the marker" as a regex
+		// needs a lazy quantifier followed by `\s+`, which is the quadratic shape.
 		if (trimmed.startsWith(NOW_PASSING_PREFIX)) {
 			const marker = trimmed.indexOf(NOW_PASSING_MARK)
 

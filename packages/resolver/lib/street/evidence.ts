@@ -48,8 +48,8 @@ export function foldStreetSurface(surface: string): string {
 }
 
 /**
- * FR street-type + particle vocabulary — the G1 guard. A street surface made ONLY of these words carries no NAME (bare
- * `rue`/`chemin` is a truncation, and it IS in the index), so it warrants no evidence credit. Folded forms (particles
+ * FR street-type + particle vocabulary — the G1 guard. A street surface made only of these words carries no name (bare
+ * `rue`/`chemin` is a truncation, and it is in the index), so it warrants no evidence credit. Folded forms (particles
  * are pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact, not a tuned weight (the anti-Pelias
  * line).
  */
@@ -109,7 +109,7 @@ export interface StreetCandidate<T = unknown> {
 	 */
 	streetSurface: string
 	/**
-	 * The parse score, comparable to its siblings from the SAME input. Higher is better.
+	 * The parse score, comparable to its siblings from the same input. Higher is better.
 	 */
 	score: number
 	/**
@@ -151,7 +151,7 @@ export interface StreetEvidencePick<T = unknown> {
 	 */
 	index: number
 	/**
-	 * True when evidence MOVED the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
+	 * True when evidence moved the pick off rank-1 (a rank-2-beats-rank-1 correction — loggable training signal).
 	 */
 	moved: boolean
 	/**
@@ -162,8 +162,8 @@ export interface StreetEvidencePick<T = unknown> {
 }
 
 /**
- * The measured v2 rerank policy. Given candidates in PARSE-SCORE order (rank-1 first) and an evidence probe, return the
- * first candidate whose street surface passes ALL of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
+ * The measured v2 rerank policy. Given candidates in parse-score order (rank-1 first) and an evidence probe, return the
+ * first candidate whose street surface passes all of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
  * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only; the model's
  * order is preserved among equal-evidence candidates. This is the `resolver/rerank.ts` anti-Pelias discipline applied
  * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed

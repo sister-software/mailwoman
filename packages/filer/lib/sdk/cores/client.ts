@@ -9,7 +9,7 @@
  *   BRAND), a full postal address, an entity type, and registration/update timestamps.
  *
  *   **Why this is worth a client at all.** Form 499 gives one name per filer, free-text and inconsistently
- *   cased. CORES gives a SECOND, independently-maintained name and address for the same FRN. Record
+ *   cased. CORES gives a second, independently-maintained name and address for the same FRN. Record
  *   linkage across FCC data failed historically because there was one name surface and it was dirty; two
  *   surfaces keyed on the same identifier is corroboration. FRN `0001753557` is the worked example that
  *   makes the case: it registers as `"Knology Total Communications, Inc."`, its contact organization is
@@ -23,7 +23,7 @@
  *   answers 200 from the same host with an ordinary descriptive User-Agent, no browser spoofing and no
  *   credentials. That is what this client uses.
  *
- *   **What it does NOT give, correcting the 3a plan.** That plan justified CORES as a FAMILY-edge source
+ *   **What it does not give, correcting the 3a plan.** That plan justified CORES as a FAMILY-edge source
  *   because the JSON API returns parent and subsidiary names. This HTML page carries no parent,
  *   subsidiary, related or affiliate field of any kind. CORES is a CORROBORATION source here — a second
  *   name, a brand, an address — not a source of ownership edges. Do not write a family edge from it.
@@ -95,7 +95,7 @@ const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
 /**
- * The only host this client will send a request to. Matching is EXACT (a `Set` lookup on the hostname), never a suffix
+ * The only host this client will send a request to. Matching is exact (a `Set` lookup on the hostname), never a suffix
  * check — `apps.fcc.gov.attacker.example` must not match, and an `.endsWith(".fcc.gov")` test would admit it. Mirrors
  * `sec-client.ts`'s allowlist rationale.
  */

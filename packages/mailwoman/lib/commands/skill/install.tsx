@@ -27,8 +27,8 @@
  *
  *   PACKAGE-RELATIVE RESOLUTION (source vs. compiled tree — see `core/utils/repo.ts`'s
  *   `__isCompiledTree` note): `skills/mailwoman/` ships as raw markdown via `package.json`'s `files`
- *   array, so tsc never emits a copy of it into `out/` — it sits at the SAME package-relative path
- *   (`<package root>/skills/mailwoman/`) whether this command runs from source or compiled. Only THIS
+ *   array, so tsc never emits a copy of it into `out/` — it sits at the same package-relative path
+ *   (`<package root>/skills/mailwoman/`) whether this command runs from source or compiled. Only this
  *   file's own distance to that root changes between the two trees: source mode is
  *   `mailwoman/commands/skill/install.tsx` (package root two levels up); compiled is
  *   `mailwoman/out/commands/skill/install.js` (package root three levels up, past `out/`). Both
@@ -64,7 +64,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The packaged skill's source directory, resolved relative to THIS package's root. See the module docstring for why two
+ * The packaged skill's source directory, resolved relative to this package's root. See the module docstring for why two
  * candidate distances are tried — exactly one exists on disk in any given tree.
  */
 async function resolveSkillSourceDir(): Promise<string> {

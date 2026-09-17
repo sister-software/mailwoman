@@ -217,7 +217,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		if (params.format === "geojson") {
 			return c.json(withEngineStamp(toFeatureCollection(results), stamp), 200)
 		} else if (params.format === "jsonld") {
-			// #1052: re-serialize the SAME results as schema.org `Place[]`; jsonv2 stays the default.
+			// #1052: re-serialize the same results as schema.org `Place[]`; jsonv2 stays the default.
 			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 

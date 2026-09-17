@@ -32,7 +32,7 @@ function stubDeps(): MCPToolDeps {
 		}),
 		// Mirrors the real `plausibilityCheck`'s (`bdc/sdk/plausibility.ts`) own graceful-abstain shape — decision 6
 		//: an absent `bdcDatabasePath`/`poiDatabasePath` degrades to a typed abstain evidence entry in the
-		// returned bundle, NEVER a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
+		// returned bundle, never a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
 		// result, not a throw" against a stub without reaching for a real bdc.db/poi.db.
 		plausibilityCheck: vi.fn(
 			async (query: {
@@ -103,7 +103,7 @@ function stubDeps(): MCPToolDeps {
 				}
 			}
 		),
-		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw AND its
+		// Mirrors the real `familyRollup`'s (`@mailwoman/filer/family-rollup.ts`) own XOR throw and its
 		// always-array return shape (never `null`, never a bare object) so the dispatch tests below can exercise
 		// both without reaching for a real filer.db.
 		filerFamily: vi.fn(async (query: { databasePath: string; familyID?: string; nodeID?: string; asOf?: string }) => {

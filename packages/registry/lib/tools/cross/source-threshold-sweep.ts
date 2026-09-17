@@ -4,17 +4,17 @@
  * @author Teffen Ellis, et al.
  *
  *   #655 measurement — can a RE-THRESHOLDED dedup GBT beat the FS baseline on the cross-SOURCE link
- *   discovery objective? The dedup GBT (#603) is pinned OFF for cross-dataset flows because its
+ *   discovery objective? The dedup GBT (#603) is pinned off for cross-dataset flows because its
  *   over-merge features (`spatial-exact × name/org-disagree`) push true "same facility, different
- *   operational name across sources" pairs NEGATIVE — and the GBT logit REPLACES the FS weight, so
+ *   operational name across sources" pairs negative — and the GBT logit replaces the FS weight, so
  *   a threshold can't trivially separate them. This quantifies that.
  *
- *   Geocode the three sources ONCE (NPPES + FCC-RHC + TX HHSC, TX-scoped), then resolve repeatedly:
+ *   Geocode the three sources once (NPPES + FCC-RHC + TX HHSC, TX-scoped), then resolve repeatedly:
  *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep.
  *   For each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
- *   total entities (an over-merge proxy — fewer = more collapsing), and a LABEL-FREE precision
- *   proxy: PHONE corroboration — the fraction of cross-source entities in which two records from
- *   DIFFERENT sources carry the same phone number (strong same-facility evidence the scorer didn't
+ *   total entities (an over-merge proxy — fewer = more collapsing), and a label-free precision
+ *   proxy: phone corroboration — the fraction of cross-source entities in which two records from
+ *   different sources carry the same phone number (strong same-facility evidence the scorer didn't
  *   directly use as the join key).
  *
  *   Verdict logic: if some GBT threshold matches FS's cross-source link count at ≥ FS phone-corrob,
@@ -93,9 +93,9 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the SAME phone in records from two DIFFERENT sources?
+ * Label-free precision proxy: does this cross-source entity carry the same phone in records from two different sources?
  * (Phone isn't the join key, so a match is independent corroboration of same-facility.) Entities where no two
- * cross-source records both have a phone are "unknown" — we only count corroborated / contradicted among those that CAN
+ * cross-source records both have a phone are "unknown" — we only count corroborated / contradicted among those that can
  * be checked.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
@@ -285,7 +285,7 @@ export async function crossSourceThresholdSweep(
 	}
 
 	// The threshold fix passes only when a GBT arm dominates FS.
-	// cross-source links at ≥ FS phone-corroboration WITHOUT over-merging (entity count must not
+	// cross-source links at ≥ FS phone-corroboration without over-merging (entity count must not
 	// collapse below ~90% of FS, else the "links" are giant-blob artifacts). Otherwise FS is on the
 	// frontier and threshold alone is insufficient. ---
 	const pct = (n: number, d: number) => formatPercent(n, d, 0)

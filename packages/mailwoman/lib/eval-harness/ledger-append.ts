@@ -69,10 +69,10 @@ export interface LedgerAppendOptions {
 	 */
 	replace?: boolean
 	/**
-	 * The check-revision escape (mirrors the no-silent-check-drift discipline): a FAIL verdict may be ledgered ONLY when
-	 * every failing check is named here — i.e. the operator adjudicated the exact miss at a fork (e.g. a per-artifact
-	 * int8-delta exception recorded in the eval spec's $revision comment). The excepted checks are stamped into the row's
-	 * notes; any UNnamed failure still refuses. Repeatable.
+	 * The check-revision escape (mirrors the no-silent-check-drift discipline): a `FAIL` verdict may be ledgered only
+	 * when every failing check is named here — i.e. the operator adjudicated the exact miss at a fork (e.g. a
+	 * per-artifact int8-delta exception recorded in the eval spec's $revision comment). The excepted checks are stamped
+	 * into the row's notes; any UNnamed failure still refuses. Repeatable.
 	 */
 	operatorException?: string[]
 }
@@ -95,7 +95,7 @@ interface Ledger {
 
 /**
  * Append one eval run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
- * un-excepted FAIL verdict), 2 = usage error.
+ * un-excepted `FAIL` verdict), 2 = usage error.
  */
 export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {
 	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"

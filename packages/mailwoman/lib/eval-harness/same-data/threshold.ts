@@ -13,7 +13,7 @@
  *   shipped knob would do.
  *
  *   The signal it thresholds is the arm's own margin — the winner's lead over the runner-up within the set
- *   that arm considered — so a lookup that considered ONE candidate reports 1 and no threshold at or below 1
+ *   that arm considered — so a lookup that considered one candidate reports 1 and no threshold at or below 1
  *   can withhold it. That ceiling is the result worth reading, not a limitation of the sweep.
  *
  *   A withheld row is re-graded into the same {@link ArmRowResult} shape and scored by `armMetrics`, so the
@@ -106,7 +106,7 @@ export function irreducibleFalseSelections(
 }
 
 /**
- * The thresholds that beat a reference arm on BOTH axes at once — selection accuracy at or above its accuracy,
+ * The thresholds that beat a reference arm on both axes at once — selection accuracy at or above its accuracy,
  * false-selection rate at or below its rate. Empty when the trade cannot be won on both.
  *
  * Both axes together, because either one alone is trivially winnable: threshold 0 maximizes accuracy and threshold 1

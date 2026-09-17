@@ -9,12 +9,12 @@
  *   places (WOF, importance-weighted) we can't geocode yet show as gray-fog holes, and postcode/rooftop
  *   coverage clears them. Covered → clear (basemap shows through), uncovered civilization → gray fog.
  *
- *   Each cell carries TWO baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
+ *   Each cell carries two baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
  *   either reading without a rebuild:
  *     • `fog_opt` — optimistic: partial coverage lifted toward clear, so a region "looks covered" when
  *       zoomed out and the gaps only surface on zoom-in.
  *     • `fog`     — honest: true coverage fraction, so the gap is visible even at low zoom.
- *   We expose each as its OWN default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
+ *   We expose each as its own default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
  *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
  *
  *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-v5.pmtiles` (same
@@ -67,7 +67,7 @@ function fogFill(id: string, fogProperty: "fog" | "fog_opt"): FillLayerSpecifica
 		type: "fill",
 		source: CoverageTileSetID,
 		"source-layer": COVERAGE_SOURCE_LAYER,
-		// Default OFF — an overlay, surfaced via the layer toggle, never on by default.
+		// Default off — an overlay, surfaced via the layer toggle, never on by default.
 		layout: { visibility: "none" },
 		paint: {
 			"fill-color": COVERAGE_FOG_COLOR,

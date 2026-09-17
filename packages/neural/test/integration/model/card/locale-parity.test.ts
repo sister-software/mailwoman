@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Locale-parity drift-guard (#721). `publish.yml` copies en-us's `model.onnx` into the fr-fr
- *   weights package ("one multi-locale model serves both"), so the PUBLISHED fr-fr package ships
- *   en-us's EXACT binary. Its model-card must therefore declare the same label geometry +
+ *   weights package ("one multi-locale model serves both"), so the published fr-fr package ships
+ *   en-us's exact binary. Its model-card must therefore declare the same label geometry +
  *   ship-config — a drift (the #721 bug: fr-fr stuck at 21 labels while en-us shipped 33) means the
  *   card mis-describes its own weights and `createScorer` throws `model emits N logits ...
  *   configured with only M labels` at load.
  *
  *   This guard fails the moment en-us's labels / components / requires change without fr-fr
- *   following. Pure JSON (no weights) → CI-safe. If fr-fr ever ships its OWN model, relax this to
+ *   following. Pure JSON (no weights) → CI-safe. If fr-fr ever ships its own model, relax this to
  *   the shared subset and drop the `cp` in publish.yml.
  */
 
@@ -78,10 +78,10 @@ describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model 
  *
  * The subset case is not a smaller claim, it is a WRONG one. A declared block suppresses the graph-inference
  * back-compat path, so a missing channel is not inferred — it is dropped, and `required` defaulting to false means
- * nothing fails closed. That is how en-gb ran the whole bundle OFF on a model trained WITH it (#1511), and the same gap
+ * nothing fails closed. That is how en-gb ran the whole bundle off on a model trained with it (#1511), and the same gap
  * was later found on fr-fr, en-au and en-nz.
  *
- * An overlay with NO block is deliberately exempt: `ProductionScorer` then infers the channels from the ONNX graph,
+ * An overlay with no block is deliberately exempt: `ProductionScorer` then infers the channels from the ONNX graph,
  * which is the base's, so it gets the right set for free.
  */
 const OVERLAYS_WITH_CARDS = ["fr-fr", "en-gb", "en-au", "en-nz", "de-de", "es-es", "it-it", "en-in"] as const

@@ -15,7 +15,7 @@
  *   ODbL — we elect Licence Ouverte; a default-deny on the old `ODbL` stamp would have wrongly
  *   dropped 48M allowed rows).
  *
- *   Tier reference (#26): A = PD/CC0 (allowed); B = CC-BY / Licence Ouverte (allowed WITH attribution
+ *   Tier reference (#26): A = PD/CC0 (allowed); B = CC-BY / Licence Ouverte (allowed with attribution
  *   — the model card must carry it); C = share-alike (ODbL, CC-BY-SA, CC-SA) — exclude for a
  *   proprietary-weights build via `--exclude-share-alike`.
  */

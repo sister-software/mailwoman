@@ -17,7 +17,7 @@
  * first half ends inside the sequence. So the fallback now separates three cases:
  *
  * - A sequence this decoder recognizes is consumed and acted on (arrows, SGR mouse).
- * - A sequence it does NOT recognize is consumed WHOLE and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
+ * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
  *   string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST). Re-scanning their bodies as characters is how a `q`
  *   inside a cursor-position report quit the app.
  * - A chunk that ENDS mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
@@ -103,7 +103,7 @@ const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_
 
 /**
  * A chunk that STOPS inside a sequence. The end-anchors are what make these "incomplete" rather than "unrecognized":
- * each requires the WHOLE remainder of the chunk to be a legal prefix and nothing more. The first covers both a lone
+ * each requires the whole remainder of the chunk to be a legal prefix and nothing more. The first covers both a lone
  * trailing ESC and an `ESC O` still waiting for its final byte.
  */
 const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /\u001B[P\]X^_][^\u0007]*$/y] as const

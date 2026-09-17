@@ -79,22 +79,22 @@ class DataConfig:
     # relabel still applies — label policy and augmentation policy are independent.
     augment_exclude_sources: list[str] = field(default_factory=list)
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
-    # (built by scripts/build-pilot-anchor-lookup.ts). When set AND model.use_postcode_anchor is on,
+    # (built by scripts/build-pilot-anchor-lookup.ts). When set and model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
     anchor_lookup_path: str | None = None
     # Gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). Path to the codex-generated
     # candidate-tag-set lexicon JSON (built by scripts/build-gazetteer-anchor-lexicon.mjs). When set
-    # AND model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
-    # from the RAW SURFACE (never gold labels — same computation at train + inference). None → off.
+    # and model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
+    # from the raw surface (never gold labels — same computation at train + inference). None → off.
     gazetteer_lexicon_path: str | None = None
     # Country-lexicon channel (#1104). Path to the codex-generated country-surface lexicon JSON (built
-    # by codex/tools/build-country-surface-lexicon.ts). When set AND model.use_country_anchor is on,
-    # the loader paints per-piece [country_surface, country_ambiguous] clues from the RAW SURFACE
+    # by codex/tools/build-country-surface-lexicon.ts). When set and model.use_country_anchor is on,
+    # the loader paints per-piece [country_surface, country_ambiguous] clues from the raw surface
     # (never gold labels — same computation at train + inference). None → the country channel is off.
     country_lexicon_path: str | None = None
     # Street-type channel (P-A / Option A probe). Path to the codex-generated street-type lexicon JSON
-    # (built by scripts/build-street-type-lexicon.ts). When set AND model.use_street_type_anchor is on,
-    # the loader paints a per-piece street_type clue from the RAW SURFACE (never gold labels — same
+    # (built by scripts/build-street-type-lexicon.ts). When set and model.use_street_type_anchor is on,
+    # the loader paints a per-piece street_type clue from the raw surface (never gold labels — same
     # computation at train + inference). None → the street-type channel is off.
     street_type_lexicon_path: str | None = None
     # Locality-surface channel (v3.16.0 evidence-bundle probe). Path to the locality-surface lexicon
@@ -104,7 +104,7 @@ class DataConfig:
     # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
     # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
-    # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
+    # Inference must mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
     # --- CharCNN input path (#825 / v8 CJK). The D1 contract: char_ids (B, S, W), S = label units,
     # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
@@ -126,13 +126,13 @@ class DataConfig:
     max_units: int | None = None
     # Label vocabulary (v8 CJK Phase 2 — labels.resolve_label_set). "stage3" (default, the Latin 33)
     # keeps every existing recipe byte-identical; "stage3-jp" is the JP char model's 47-label head.
-    # Non-default sets are supported ONLY on the char path — the SP path raises (loud, per #1349's
+    # Non-default sets are supported only on the char path — the SP path raises (loud, per #1349's
     # silent-mismatch lesson) until it grows its own threading.
     label_set: str = "stage3"
     # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
     # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
     # relabeled with the affix recipe's exact split semantics (trailing USPS suffix ->
-    # street_suffix, leading directional -> street_prefix), AFTER augmentation — ending the
+    # street_suffix, leading directional -> street_prefix), after augmentation — ending the
     # base-vs-affix-recipe label contradiction the #492 ladder measured at >=1,000:1. None -> off.
     affix_relabel_lexicon_path: str | None = None
     # --- #220/#723 anchor-absorption knobs. Defaults preserve v1.9.2 behavior exactly. ---
@@ -142,9 +142,9 @@ class DataConfig:
     #                        paints on SHAPE, so it faceplants on "12345 Main St").
     #   "shaped"           — on postcode-SHAPED spans (the per-country POSTCODE_PATTERNS, mirroring
     #                        inference's neural/postcode-anchor.ts), so the model sees + learns to
-    #                        override the anchor on house-numbers-that-look-like-postcodes. THE fix.
+    #                        override the anchor on house-numbers-that-look-like-postcodes. This is the fix.
     anchor_paint_mode: str = "gold"
-    # WHAT the anchor encodes:
+    # What the anchor encodes:
     #   "posterior_latlon"        (default) — the v1.9.2 country-posterior + normalized centroid vector.
     #   "region_agnostic_mindist"           — DEMOTE to a weak scalar log(1 + min_km from the token's
     #                                         postcode centroid to the NEAREST gazetteer region centroid),
@@ -155,7 +155,7 @@ class DataConfig:
     #                                         input). The model learns congruence INTERNALLY (model-first).
     anchor_value_mode: str = "posterior_latlon"
     # Region-centroid table {region_key: [lat, lon]} for region_agnostic_mindist. None -> mode unavailable.
-    # NOTE: anchor DROPOUT is NOT a new field — it's the EXISTING train.py curriculum
+    # NOTE: anchor dropout is not a new field — it's the existing train.py curriculum
     # (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX). To probe a harder mask, bump that constant; do
     # not add a parallel knob (the review's no-reinvent conclusion).
     region_centroids_path: str | None = None
@@ -253,7 +253,7 @@ class ModelConfig:
     # ``country`` field) and FiLM-modulates the per-token representations by it before the BIO
     # head — the model infers "which country" globally, then conditions its own labeling on it.
     # The head is exported as the LocalePosterior the resolver consumes. Default False keeps
-    # v0.8.x numerics for back-compat. ``num_locales`` is NOT a yaml knob — build_model derives
+    # v0.8.x numerics for back-compat. ``num_locales`` is not a yaml knob — build_model derives
     # it from labels.NUM_LOCALES so the head width and the target vocabulary can never drift.
     use_locale_conditioning: bool = False
     # Weight on the auxiliary locale cross-entropy leg (loss = BIO_CE + crf + locale_loss_weight ×
@@ -268,9 +268,9 @@ class ModelConfig:
     # global FiLM lacked). Robustness is the confidence curriculum applied corpus-side (see the data
     # loader). Default False keeps existing numerics. Composes with ``use_locale_conditioning``.
     use_postcode_anchor: bool = False
-    # Dual-injection (#327, v0.9.4): when the anchor is on, ALSO inject the pooled postcode anchor at
-    # position 0 — an order-INDEPENDENT global cue the locality can attend back to regardless of where
-    # the postcode sits. Fixes the anchor's positional harm on international word order (postcode AFTER
+    # Dual-injection (#327, v0.9.4): when the anchor is on, also inject the pooled postcode anchor at
+    # position 0 — an order-independent global cue the locality can attend back to regardless of where
+    # the postcode sits. Fixes the anchor's positional harm on international word order (postcode after
     # the city), where the per-token-only injection fired on the wrong side of the locality. Default
     # False (no change); requires use_postcode_anchor.
     inject_first_token: bool = False
@@ -315,21 +315,21 @@ class ModelConfig:
     gazetteer_feature_dim: int = 5
     # Country-lexicon channel (#1104). When on (with data.country_lexicon_path set), the encoder takes
     # a per-token [country_surface, country_ambiguous] clue painted from the raw surface by the codex
-    # country lexicon and injects ``c·(W_c·features + v_CTRY)`` at the input embedding — its OWN
-    # projection, independent of the gazetteer's shared 5-hot slot and NOT zeroed near a postcode. The
+    # country lexicon and injects ``c·(W_c·features + v_CTRY)`` at the input embedding — its own
+    # projection, independent of the gazetteer's shared 5-hot slot and not zeroed near a postcode. The
     # clue informs; the model decides (model-first). Default False keeps existing numerics bit-identical.
     use_country_anchor: bool = False
     # Must match the country lexicon JSON's feature_dim (emitted [country_surface, country_ambiguous]).
     country_feature_dim: int = 2
     # #1104 homograph-guard softener. Scales the country_ambiguous dim (index 1) of country_features
-    # BEFORE country_projection — 1.0 = the v263 behavior (hard ambiguous guard); <1.0 softens the
+    # before country_projection — 1.0 = the v263 behavior (hard ambiguous guard); <1.0 softens the
     # suppression of homograph countries (Georgia/Jordan) that over-fired on the country-homograph
     # probe (89.8→82.6). The scale is a registered buffer, so it BAKES INTO the exported ONNX — no
     # lexicon or inference change; inference feeds the raw [surface, ambiguous] and the graph scales it.
     country_ambiguous_scale: float = 1.0
     # Street-type channel (P-A / Option A probe). When on (with data.street_type_lexicon_path set), the
     # encoder takes a per-token street_type clue painted from the raw surface by the codex street-type
-    # lexicon and injects ``c·(W_s·features + v_STREET)`` at the input embedding — its OWN projection,
+    # lexicon and injects ``c·(W_s·features + v_STREET)`` at the input embedding — its own projection,
     # a separate channel from the gazetteer (so v385 loads clean). Default False keeps numerics identical.
     use_street_type_anchor: bool = False
     # Must match the street-type lexicon JSON's feature_dim (emitted single street_type slot).
@@ -413,7 +413,7 @@ class TrainConfig:
     # v0.9.12-style always-on runs reproducible. Requires model.use_gazetteer_anchor.
     gazetteer_curriculum: bool = False
     # Evidence-bundle anti-over-trust curriculum (v3.16.0 probe — the P-A decay's measured requirement).
-    # When True, the trainer applies the SAME ramped per-row zero-out schedule to the street_type AND
+    # When True, the trainer applies the same ramped per-row zero-out schedule to the street_type and
     # locality_surface confidences, so the model keeps its label competence with and without the bundle
     # (the retrieval-ablation training the RAG over-trust literature prescribes). The ablation check
     # (evidence-zeroed parse ≥ baseline on unaffected spans) is the corresponding eval-side check.
@@ -430,7 +430,7 @@ class TrainConfig:
     # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is BERT-classic; the
     # small-encoder literature favors ~0.4 — tune per experiment. Ignored unless objective == "mlm".
     mlm_mask_prob: float = 0.15
-    # Initialize MODEL weights from this checkpoint dir at the start of a SUPERVISED run, WITHOUT
+    # Initialize model weights from this checkpoint dir at the start of a supervised run, without
     # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
     # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
     init_from: str = ""
@@ -440,13 +440,13 @@ class TrainConfig:
     # competition — see issue #492's pre-registered ladder.
     freeze_encoder: bool = False
     # #901 v2.1.3: freeze the token-embedding table during fine-tune. The no-added-source control
-    # (`v2.1.2-zeroslice-control`) proved ANY 2k init_from fine-tune of a mean-init surgery base breaks
+    # (`v2.1.2-zeroslice-control`) proved any 2k init_from fine-tune of a mean-init surgery base breaks
     # the same SI short-village rows (4/4 casualty row-identity, no recipe output attached) — gradient through the
     # never-trained mean-init rows is the mechanism. Freezing removes it while the encoder
-    # layers learn the boundary rules (the multi-word wins were encoder-layer learning).
+    # layers learn the boundary rules (the multi-word F1 gains came from encoder-layer learning).
     freeze_token_embeddings: bool = False
     # cRT-style probe (classifier-only retraining, frozen encoder — 2026-07-22 census-bias plan
-    # "Parallel training-side experiment"): every param NOT starting with one of these prefixes
+    # "Parallel training-side experiment"): every param not starting with one of these prefixes
     # gets requires_grad=False; matches stay trainable. Empty (default) = no-op, byte-identical
     # to every prior recipe. Mutually exclusive with freeze_encoder/freeze_token_embeddings — the
     # three settings overlap in intent (encoder-representation exclusion) and combining them would

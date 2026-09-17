@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link WOFCandidateTableLookup} — the Node {@link PlaceLookup} over the byte-range
- *   candidate.db (the SAME backend + ranking the browser demo uses). Builds a tiny fixture admin
+ *   candidate.db (the same backend + ranking the browser demo uses). Builds a tiny fixture admin
  *   WOF with a HOMONYM (Moscow RU vs Moscow ID) + a postcode extract via the real
  *   {@link buildCandidateTable}, then asserts the resolver disciplines the CLI/server depend on:
  *
@@ -264,7 +264,7 @@ describe("WOFCandidateTableLookup", () => {
 		expect(idahoView[0]!.country).toBe("US")
 		expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
 
-		// A DISTANT view must NOT flip a far-more-populous city: a Chicago-area view (near neither
+		// A distant view must not flip a far-more-populous city: a Chicago-area view (near neither
 		// Moscow) leaves population-first order intact — the sharp decay keeps out-of-view namesakes out.
 		const chicagoView = await lk.findPlace({
 			text: "Moscow",
@@ -434,7 +434,7 @@ describe("WOFCandidateTableLookup", () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
-		// The same input WITHOUT the postcode placetype may fuzz (it is a name then) — the guard is
+		// The same input without the postcode placetype may fuzz (it is a name then) — the guard is
 		// placetype-scoped, not a global fuzzy kill.
 		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 	})
@@ -556,9 +556,9 @@ describe("rankByPrimaryPreference #1893 firing mark (variantExempted)", () => {
 	})
 
 	test("an exempted variant that still loses keeps its candidate-level mark below the winner", () => {
-		// The variant is LESS populous than the foreign primary, so it loses on population alone. The
+		// The variant is less populous than the foreign primary, so it loses on population alone. The
 		// candidate-level mark stays (the exemption did change its treatment); the winner-level receipt's
-		// absence is the resolver pick's job — it stamps only when the marked candidate IS the winner.
+		// absence is the resolver pick's job — it stamps only when the marked candidate is the winner.
 		const ranked = rankByPrimaryPreference([row(-6.4, 1, 1), row(-4.9, 0, 2, "variant")], 5, undefined, undefined, true)
 
 		expect(ranked[0]!.is_primary).toBe(1)
@@ -635,7 +635,7 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	// NOTABILITY — the refinement to a true notability signal is tracked as a follow-up.
 	//
 	// The band the reviewer characterized on the real gazetteer, reproduced with synthetic fixtures so the
-	// class is pinned WITHOUT the 3.9 GB live db: "Cancun" → Cancún MX (~5x, flips to the primary);
+	// class is pinned without the 3.9 GB live db: "Cancun" → Cancún MX (~5x, flips to the primary);
 	// "Florence" → Florence US (Firenze only ~9.5x, under the bar → primary); "Naples" → Napoli IT (~50x)
 	// and "Vienna" → Wien AT (~118x) stay foreign. Non-vacuous by construction: a naive unbounded
 	// `is_primary DESC` fails the >10x + same-country cases (it would force the primary); a pure-population
@@ -661,7 +661,7 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	})
 
 	test("cross-country alias WELL OVER 10x still wins (Naples → Napoli / Vienna → Wien class)", () => {
-		// primary US 20k vs foreign alias AT ~1.9M → ratio ~95x > 10x → the dominant alias wins, NOT demoted.
+		// primary US 20k vs foreign alias AT ~1.9M → ratio ~95x > 10x → the dominant alias wins, not demoted.
 		const ranked = rankByPrimaryPreference([pop(1_900_000, 0, AT), pop(20_000, 1, US)], 5)
 		expect(ranked[0]!.is_primary).toBe(0)
 		expect(ranked[0]!.country_id).toBe(AT)
@@ -707,7 +707,7 @@ describe("rankByPrimaryPreference — variant-alias exemption (#1882, opt-in)", 
 	test("an own-name variant alias escapes the penalty when the exemption is ON (Brest → Belarus)", () => {
 		// Брэст BY 340,521 (alias keyed `brest`, stamped `variant` by the build) vs Brest FR 144,899
 		// (primary). OFF: the 2.35x gap is under the 10x margin → FR wins and BY is demoted. ON: the
-		// stamp says the alias IS the holder's own name → population order stands.
+		// stamp says the alias is the holder's own name → population order stands.
 		const rows = [pop(340_521, 0, BY, "variant"), pop(144_899, 1, FR)]
 
 		const off = rankByPrimaryPreference(rows, 5)
@@ -836,7 +836,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const bare = await lk.findPlace(sansomeQuery())
 		expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the check).
+		// A postcode without the flag is byte-identical to no postcode (the flag is the check).
 		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
@@ -904,8 +904,8 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const a = tagged(withConsistency.roots, "locality")[0]!
 		const b = tagged(withoutConsistency.roots, "locality")[0]!
 
-		// The containment rung picks small; the consistency pass (default-ON) is already satisfied and
-		// must NOT re-pick with a different tie-break — both arms land on the same locality.
+		// The containment rung picks small; the consistency pass (default-on) is already satisfied and
+		// must not re-pick with a different tie-break — both arms land on the same locality.
 		expect(a.placeID).toBe("wof:722")
 		expect(b.placeID).toBe(a.placeID)
 		expect(a.lat).toBeCloseTo(37.76, 2)
@@ -919,7 +919,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
  * them as evidence:
  *
  * 1. The artifact scored this place → the field is present;
- * 2. The artifact has the column but no measurement for this place → the field is ABSENT (not 0);
+ * 2. The artifact has the column but no measurement for this place → the field is absent (not 0);
  * 3. The artifact predates the column entirely → the field is absent, and nothing throws.
  */
 describe("WOFCandidateTableLookup — importance (#28)", () => {
@@ -1015,7 +1015,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 })
 
 describe("rankByPrimaryPreference — seat preference on a coincident same-name duplicate", () => {
-	// A district and its identically-named seat town carry the SAME population, so `neg_rank` ties to the
+	// A district and its identically-named seat town carry the same population, so `neg_rank` ties to the
 	// bit and the pair's order falls out of the SQL scan. Turkey's `Of` is the measured case: locality
 	// 8114738869649 and its parent county 8837168432019 both hold population 44212 in
 	// `admin-global-priority.db`; 358 locality/parent-county pairs across 15 countries share the shape.
@@ -1086,11 +1086,11 @@ describe("seat preference through findPlace — where the term can and cannot re
 
 		const hits = await lk.findPlace({ text: "Seatley", placetype: "locality", limit: 5 })
 
-		// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so BOTH rows are in the set…
+		// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so both rows are in the set…
 		expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
 		// …and the seat tiebreak orders the town over its district even though the district is
 		// fetched first (its region id sorts lower in the clustered key). This ordering is the
-		// term's ONLY corridor to an end-to-end answer — the resolver's downstream sorts are
+		// term's only corridor to an end-to-end answer — the resolver's downstream sorts are
 		// stable on equal keys (toponym-prior.ts house rule 3) — so it is the mechanism's reach,
 		// not a cosmetic preference.
 		expect(hits[0]!.placetype).toBe("locality")
@@ -1116,9 +1116,9 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// The fixture is the Weimar shape: 'Marwei' DE (60 k, under region Thuria) vs a MORE-populous US
 	// namesake (2.0 M). Population-first answers the US one; a country=US scope hides the DE one; the
 	// qualifier must answer the DE one in both postures. The board-measured mechanism (2026-08-18):
-	// the locale-inferred hard filter partitions the true instance out of the list BEFORE any
+	// the locale-inferred hard filter partitions the true instance out of the list before any
 	// comparator, so a reorder-only setting would be inert — the #1729 class, which is why these
-	// fixtures pin INJECTION, not just ordering.
+	// fixtures pin injection, not just ordering.
 
 	test("#1731: a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
@@ -1265,7 +1265,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 
 		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-		// Population-first, unmoved — and NO stamp, so the walk reports the setting `unavailable`
+		// Population-first, unmoved — and no stamp, so the walk reports the setting `unavailable`
 		// rather than reading the absence as "not contained" (meaning-of-zero).
 		expect(hits.map((h) => h.id)).toEqual([902, 901])
 		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)

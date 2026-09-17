@@ -9,16 +9,16 @@
  *   `app.request()`.
  *
  *   `test/resolve-router.test.ts` (the `/api/resolve` XML-tree-viewer endpoint, `ResolveRouter.ts`)
- *   does NOT port — that endpoint retires with the debug pages, and its coverage is unrelated
- *   to `resolveTreeHandler`/`/v1/resolve` (a DIFFERENT express router, `GeocodeRouter.ts`), which this
- *   file DOES cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
+ *   does not port — that endpoint retires with the debug pages, and its coverage is unrelated
+ *   to `resolveTreeHandler`/`/v1/resolve` (a different express router, `GeocodeRouter.ts`), which this
+ *   file does cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
  *
  *   The generic timing-metrics algorithm (percentiles, tier partition, reservoir) also does not
  *   re-port here — `api-kit/metrics.test.ts` already exhaustively covers the identical
  *   `recordTimed`/`metricsSnapshot` logic this engine delegates to. This file only exercises the
  *   `/metrics` HTTP surface reflecting a real wired call (the integration behavior, not the algorithm).
  *
- *   The engine is built ONCE (`beforeAll`) and reused across every test in this file — unlike
+ *   The engine is built once (`beforeAll`) and reused across every test in this file — unlike
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
  *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
  *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
@@ -122,7 +122,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 
-	// `readModelCard`'s FIRST non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
+	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
 	// resolver itself, not just the observable: the third candidate is a CWD-relative dev-tree path
 	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
 	// /health assertion below would survive a broken resolution. This one would not.
@@ -132,7 +132,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		)
 	})
 
-	// The `model` block is `readModelCard`'s only observable. Deterministic in a checkout WITHOUT dev weights linked:
+	// The `model` block is `readModelCard`'s only observable. Deterministic in a checkout without dev weights linked:
 	// the card is one of the metadata files the weights workspace commits (the binaries are not).
 	test("GET /health: the model block comes from the resolved weights package's card", async () => {
 		const res = await app.request("/health")

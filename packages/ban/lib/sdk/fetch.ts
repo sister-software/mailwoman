@@ -16,7 +16,7 @@
 export const BAN_CSV_BASE = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
- * Licence Ouverte / Etalab 2.0 — attribution, NO share-alike (unlike ODbL).
+ * Licence Ouverte / Etalab 2.0 — attribution, no share-alike (unlike ODbL).
  */
 export const BAN_LICENSE = "Licence Ouverte / Open Licence 2.0 (Etalab)"
 

@@ -2,7 +2,7 @@
 
     modal run -d -m launch.train_remote --config <recipe>.yaml --resume auto
 
-Stage what the recipe reads FIRST, with `launch/syncs.py`; this module trains against whatever is
+Stage what the recipe reads first, with `launch/syncs.py`; this module trains against whatever is
 already on the volume. Two preflights run before the GPU is billed — the corpus receipts on CPU, and
 the wall-clock estimate against this function's timeout — because both failures are otherwise found
 hours in, after the spend.
@@ -19,7 +19,7 @@ from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 # at the measured throughput 60k optimizer steps alone need ~3h55m, before image boot, volume
 # reload, loader init, validation, checkpointing, and the final save/commit. 21,600 s (6h)
 # covers the 60k A100 recipe with real headroom, and `_required_train_seconds` preflights any
-# recipe against the ceiling INSIDE train() — a config that cannot fit fails in minute one,
+# recipe against the ceiling inside train() — a config that cannot fit fails in minute one,
 # not at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
 # Measured on the v4.3.3 A100 run (2026-08-09): ~4.25 optimizer steps/s at batch 128.
@@ -109,7 +109,7 @@ def _train_gpu(
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    # Corpus existence is verified AFTER the config loads (below), against cfg.data.corpus_dir — the
+    # Corpus existence is verified after the config loads (below), against cfg.data.corpus_dir — the
     # corpus version travels in the config, not hardcoded here. (Was pinned to v0.3.0, which silently
     # blocked every later corpus once v0.3.0 was cleaned off the volume. 2026-06-12.)
 
@@ -157,7 +157,7 @@ def _train_gpu(
         print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
 
     # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
-    # this function's timeout must fail HERE, not die at the wire like the 60k predecessor
+    # this function's timeout must fail here, not die at the wire like the 60k predecessor
     # that Modal killed at step 59,900.
     required = _required_train_seconds(cfg.train.max_steps)
     if required > TRAIN_TIMEOUT_SECONDS:
@@ -194,7 +194,7 @@ def _train_gpu(
         run_train(cfg, resume_from="auto")
     elif resume and resume != "none":
         # Explicit checkpoint path — the branch-run mechanism (e.g. the linear_cooldown read of
-        # a mid-cosine checkpoint under a NEW output dir). Previously silently dropped, which
+        # a mid-cosine checkpoint under a new output dir). Previously silently dropped, which
         # made every non-auto resume a fresh run.
         run_train(cfg, resume_from=resume)
     else:
@@ -221,7 +221,7 @@ def main(
     """
     Run the mailwoman training pipeline on Modal.
 
-    Stage what the recipe reads FIRST, with its own sync; this entry point trains against whatever
+    Stage what the recipe reads first, with its own sync; this entry point trains against whatever
     is already on the volume and stages nothing.
 
     --config         Training config YAML filename

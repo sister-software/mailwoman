@@ -31,7 +31,7 @@ const PID_FILE = join(LOCK_DIR, "pid")
 
 /**
  * How long to wait for the lock before giving up and running anyway. Deliberately generous relative to a spawn (~6 s)
- * and deliberately NOT infinite: a wedged lock must degrade to the old contended behaviour, never to a hang that reads
+ * and deliberately not infinite: a wedged lock must degrade to the old contended behaviour, never to a hang that reads
  * as a mysterious suite timeout.
  */
 const ACQUIRE_TIMEOUT_MS = 120_000

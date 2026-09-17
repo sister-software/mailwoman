@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `german` recipe — German coverage rows from REAL OpenAddresses tuples (Berlin + Saxony,
- *   cached zips). Each sampled tuple is rendered via {@link synthesizeGermanRow} in BOTH orders —
+ *   `german` recipe — German coverage rows from real OpenAddresses tuples (Berlin + Saxony,
+ *   cached zips). Each sampled tuple is rendered via {@link synthesizeGermanRow} in both orders —
  *   `--intl-fraction` (default 0.4) in international order (house-first / postcode-after-city), the
  *   rest in idiomatic German order — then aligned to BIO. Generate-mode: it builds a tuple pool
  *   from the cached zips, then draws `--count` rows from it with the passed `random` (so the emit
@@ -15,7 +15,7 @@
  *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
  *
  *   TWO REGISTERS THE OA TUPLES DO NOT CARRY (#1946). A comma-free single line — `Neusser Str. 12 Nippes
- *   50733 Köln`, the dictation / one-field-form register — segments as ONE unit at stage 2, and with one
+ *   50733 Köln`, the dictation / one-field-form register — segments as one unit at stage 2, and with one
  *   segment the placetype-pair prior never fires, so the model reads `Nippes` as a second street and the
  *   one-value-per-tag projection deletes it. `--comma-free-fraction` renders that many native-order rows
  *   with `" "` as the line separator. And OA rows have no district at all, so `--ortsteil-fraction` rows
@@ -259,7 +259,7 @@ export const germanRecipe: CorpusRecipe = {
 
 			for (const x of t) {
 				pool.push(x)
-			} // NOT pool.push(...t) — spreading ~840K args overflows the stack
+			} // not pool.push(...t) — spreading ~840K args overflows the stack
 		}
 
 		if (!pool.length) {

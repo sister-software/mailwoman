@@ -96,7 +96,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
 	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table. Read in chunked `IN (…)`
-	// batches ONCE — the point-query version fired per orphan row, and on a global build the orphans
+	// batches once — the point-query version fired per orphan row, and on a global build the orphans
 	// run to six figures. Ordering is county → region → country, preserved by the same CASE the
 	// per-row query used, with `id` leading so one pass groups the rows.
 	const ancestorsByID = new Map<number, number[]>()
@@ -172,9 +172,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return chain
 	}
 
-	// Phase 3: Load BOTH scores (ROAD_TO_V9 §2 R1, the two-score split).
+	// Phase 3: Load both scores (ROAD_TO_V9 §2 R1, the two-score split).
 	//
-	// Referential is ALWAYS population-anchored and never read out of a legacy `place_importance`
+	// Referential is always population-anchored and never read out of a legacy `place_importance`
 	// column, because a legacy row that got a Wikipedia score overwrote whatever population would have
 	// said and the two are indistinguishable afterwards. Encyclopedic rides along for consumers and is
 	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations; the
@@ -227,7 +227,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	progress("trie", "Building trie")
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
-	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces). Applied to the WHOLE normalized
+	// Degenerate-surface curation (see BuildFSTOpts.excludeSurfaces). Applied to the whole normalized
 	// surface only — a multi-token name containing a function word ("los angeles") is never affected.
 	const excludeSurfaces = opts.excludeSurfaces
 	const excludeAllTokensOf = opts.excludeAllTokensOf
@@ -300,7 +300,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned: a place with no Wikipedia article must carry NO field, not a
+			// Spread rather than assigned: a place with no Wikipedia article must carry no field, not a
 			// zero. The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,

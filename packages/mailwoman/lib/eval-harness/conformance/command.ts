@@ -8,7 +8,7 @@
  *   code, matching `eval invariance` and `eval promote`.
  *
  *   EVERY COMMITTED SUITE RUNS BY DEFAULT. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
- *   is all of it: a default that named ONE suite would leave every later law executable only by someone who
+ *   is all of it: a default that named one suite would leave every later law executable only by someone who
  *   remembered to point `--suite` at it, and a law nobody runs reports as an absence rather than a failure.
  *   `--suite` narrows to a single file for an author iterating on one.
  *
@@ -28,7 +28,7 @@
  *
  *   AN UNMEASURED ROW IS NOT A QUIET PASS. It is printed in its own section with the window that stopped the
  *   reading, and it is removed from the row count the verdict is stated over — so the headline is a ratio of
- *   rows that were actually DECIDED, and a suite that stops being able to decide anything reports FAIL.
+ *   rows that were actually decided, and a suite that stops being able to decide anything reports a failure.
  *
  *   A LAW MAY REPORT ITS OWN BREADTH. A hold count answers "did the rows the suite states hold", never "how
  *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
@@ -114,7 +114,7 @@ export interface ConformanceLawMeasurement {
 /**
  * What one conformance run measured.
  *
- * `measured` is ABSENT exactly when `problems` is non-empty — a refused run has no findings, and reporting it as zero
+ * `measured` is absent exactly when `problems` is non-empty — a refused run has no findings, and reporting it as zero
  * findings would read as a suite that passed nothing rather than a suite that ran nothing.
  */
 export interface ConformanceMeasurement {
@@ -159,7 +159,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
-	// The corpus is read only when a law in THIS run registers a coverage reading. It is the population every law
+	// The corpus is read only when a law in this run registers a coverage reading. It is the population every law
 	// draws from, so a law whose eligibility is a property of the query text measures its own breadth against it —
 	// see `ConformanceSuite.coverage`.
 	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
@@ -234,8 +234,8 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 	)
 
-	// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
-	// WHICH law stopped holding, and the pooled count moves whenever either suite grows.
+	// Per law as well as pooled: a run that merges two suites into one verdict says whether something broke and not
+	// which law stopped holding, and the pooled count moves whenever either suite grows.
 	for (const law of perLaw) {
 		console.log(
 			`  ${law.law}: ${law.holds}/${law.decided} decided hold, ${law.tracked} tracked, ${law.unmeasured} unmeasured`

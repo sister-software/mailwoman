@@ -6,7 +6,7 @@
  *   CLI `--benchmark` flag tests. Validates the schema and exercises the runner end-to-end against
  *   the compiled CLI with `--degraded`, so no encoder loads and the run stays deterministic + fast.
  *
- *   This used to pass `--no-neural`, which did NOT skip the load: `parse.tsx` declared both `neural`
+ *   This used to pass `--no-neural`, which did not skip the load: `parse.tsx` declared both `neural`
  *   and `noNeural`, Commander derived `--no-neural` from the FORMER (its `attributeName()` is
  *   `neural`), and `options.noNeural` was therefore never settable from the command line. The
  *   benchmark reported `classifier: loaded (en-US)` throughout. `noNeural` is gone; `--degraded` is

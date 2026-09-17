@@ -55,7 +55,7 @@ export const WEIGHT_LATTICE_DEPTH = 2
 /**
  * Class shares below this are folded into `other_share` rather than stored.
  *
- * One percent, which sits BELOW the lattice's own 2.04% granularity, so nothing a single child cell produces is
+ * One percent, which sits below the lattice's own 2.04% granularity, so nothing a single child cell produces is
  * truncated — what lands here is the long tail that component percentages create inside a child (a 1%-weight component
  * inside one child cell contributes 0.02%). Truncating a long tail is legitimate; doing it silently is not, which is
  * why the remainder is stored explicitly and the shares still sum to 1.
@@ -92,7 +92,7 @@ export interface MapUnitProfile {
 /**
  * Turn one map unit and its components into the per-unit-area profile the reduction folds in.
  *
- * A `no_mapping` map unit contributes wholly to `nodata` and NEVER to a class: it is a polygon the authority drew with
+ * A `no_mapping` map unit contributes wholly to `nodata` and never to a class: it is a polygon the authority drew with
  * no soil mapping behind it, and reading it as a low class would be the reassuring wrong number §3.2 of the survey is
  * about.
  *
@@ -138,7 +138,7 @@ export function mapUnitProfile(
 			continue
 		}
 
-		// A NULL rating means the survey did not rate this component, and WHY it did not is what separates the two buckets.
+		// A NULL rating means the survey did not rate this component, and why it did not is what separates the two buckets.
 		// A miscellaneous area is a non-soil area — rock outcrop, water — that the capability rating does not apply to; a
 		// named soil with no rating is one the survey chose not to rate. Read as one number they would both say "not
 		// arable", which neither of them says.
@@ -209,7 +209,7 @@ export function reduceCell(
 		}
 
 		if (!covered) {
-			// Every child centre fell outside every delineation reaching the cell. The cell IS touched — the index says so —
+			// Every child centre fell outside every delineation reaching the cell. The cell is touched — the index says so —
 			// but no lattice point landed inside, which happens when a sliver clips a corner. Reporting shares over nothing
 			// would divide by zero; reporting a mapped share of zero is the truthful answer, and the row is dropped by the
 			// caller rather than stored as an all-zero distribution.

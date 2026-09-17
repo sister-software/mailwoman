@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gold-set P3 (#625) — sample the HARD stratum for adjudication. The programmatic entity truth
+ *   Gold-set P3 (#625) — sample the hard stratum for adjudication. The programmatic entity truth
  *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-FLAGGED subparts (Is-Subpart + parent
  *   LBN/TIN); it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one
- *   address with near-identical names that are NOT flagged subparts of the same parent. Those are
+ *   address with near-identical names that are not flagged subparts of the same parent. Those are
  *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
  *   gold set must cover.
  *
  *   This finds them (over the full TX registry, geocode-free — the shared co-location scan
- *   `dedup-ceiling.ts` also runs) and writes each as a JSONL row carrying BOTH records' fields (org
+ *   `dedup-ceiling.ts` also runs) and writes each as a JSONL row carrying both records' fields (org
  *   name, address, authorized official, taxonomy, subpart/parent flags) plus the programmatic
  *   verdict, so an adjudicator (human or LLM-as-judge, flagged as such) can label "same real-world
- *   entity? yes/no" and we can MEASURE how often the programmatic truth matches judgment.
+ *   entity? yes/no" and we can measure how often the programmatic truth matches judgment.
  *
  *   Run: `mailwoman registry gold-set-sample [--cap 200000] [--state TX] [--tau 0.7] [--n 300]
  *   [--out-jsonl <path>]`
@@ -72,7 +72,7 @@ interface HardPair {
 }
 
 /**
- * Gold-set P3 (#625) — sample the HARD co-located name-collision stratum for adjudication.
+ * Gold-set P3 (#625) — sample the hard co-located name-collision stratum for adjudication.
  */
 export async function goldSetSample(
 	options: GoldSetSampleOptions = {},
@@ -90,8 +90,8 @@ export async function goldSetSample(
 	const { byAddr, kept } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
-	// Hard pairs: co-located, name-similar (≥τ), DISTINCT NPIs that programmatic truth can't confidently
-	// collapse (NOT subparts of the same parent). Tag the programmatic verdict so adjudication can grade it.
+	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic truth can't confidently
+	// collapse (not subparts of the same parent). Tag the programmatic verdict so adjudication can grade it.
 	const hard: HardPair[] = []
 
 	for (const { a, b } of colocatedDistinctPairs(byAddr)) {
@@ -114,7 +114,7 @@ export async function goldSetSample(
 			sameAuthorizedOfficial: sameAuth,
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
-			// Programmatic heuristic verdict (what an entity-level rule WOULD say, beyond the flagged
+			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged
 			// subparts): same authorized official ⇒ likely one org; different official + different
 			// specialty ⇒ likely distinct. The whole point is to ADJUDICATE whether this is right.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",

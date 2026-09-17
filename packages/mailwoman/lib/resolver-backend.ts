@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Shared resolver-backend selector for the CLI commands + server routers. Picks the byte-range
- *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the SAME backend + population-first,
+ *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the same backend + population-first,
  *   country-agnostic ranking the browser demo uses — when a `candidate.db` is reachable, else the
  *   FTS admin lookup ({@link WOFSQLitePlaceLookup}).
  *
@@ -201,11 +201,11 @@ export function conventionCapitalsPath(): string {
  * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file; the repo's
  * `data/gazetteer/capitals-v1.json` is the dev fallback.
  *
- * When NEITHER source exists, `missing` decides. `"throw"` (the default) is for an EXPLICIT `capital_tier: true` — a
+ * When neither source exists, `missing` decides. `"throw"` (the default) is for an EXPLICIT `capital_tier: true` — a
  * config key the caller asked for that silently no-ops grades as "inert" when it never ran. `"degrade"` returns
  * `undefined` with one stderr line and is for the default-ON path: a consumer running an older artifact keeps working
  * with no capital promotion rather than failing at session construction (positive evidence only). A reference that
- * EXISTS but is malformed throws under both modes — a corrupt file is a defect, never an absence.
+ * exists but is malformed throws under both modes — a corrupt file is a defect, never an absence.
  */
 export async function loadCapitalIndex(opts: {
 	candidateDB?: string
@@ -217,7 +217,7 @@ export async function loadCapitalIndex(opts: {
 
 		const points = readCapitalPoints(db)
 
-		// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
+		// `null` = the artifact predates the table (fall through to the repo file); an empty table is a
 		// built fact and is served as such.
 		if (points) {
 			console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)

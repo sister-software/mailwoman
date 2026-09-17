@@ -7,10 +7,10 @@
  *
  *   Reads the `--out-resolved` dump from oa-resolver-eval.ts (per row: gold OA lat/lon + the
  *   neural-resolved locality's WOF id + the old name-match flag) and tests the NON-GAMEABLE truth:
- *   does the gold point lie INSIDE the polygon of the resolved WOF locality? This is
+ *   does the gold point lie inside the polygon of the resolved WOF locality? This is
  *   name-surface-independent — it rewards a geographically-correct resolve even when WOF's
  *   canonical name ("Plauen") differs from OA's gold ("Plauen Vogtl"). Compares
- *   containment-accuracy vs the old name-match on the SAME rows.
+ *   containment-accuracy vs the old name-match on the same rows.
  *
  *   Ported faithfully from the retired Python implementation (pure JSON + filesystem geojson, no
  *   numpy).
@@ -38,7 +38,7 @@ const WOF_REPOS = dataRootPath("wof", "repos")
 
 async function adminRoots(): Promise<string[]> {
 	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")
-	const matched = await Globerator.from(pattern).toSorted()
+	const matched = await Globerator.from(pattern, { absolute: true }).toSorted()
 
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
 }
@@ -96,8 +96,8 @@ function line(label: string, c: Counter): string {
 
 	if (!n) return `  ${label}: n=0`
 
-	// PIP-containment is reported two ways: over ALL rows (strict) and over rows
-	// that HAVE a polygon (coverage-adjusted), since WOF point-geometry localities
+	// PIP-containment is reported two ways: over all rows (strict) and over rows
+	// that have a polygon (coverage-adjusted), since WOF point-geometry localities
 	// can never PIP-contain and would otherwise count as silent failures.
 	return (
 		`  ${padL(label, 10)} n=${padL(String(n), 5)} name-match=${padL(pct(get(c, "name"), n), 7)} ` +

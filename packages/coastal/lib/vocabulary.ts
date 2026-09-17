@@ -88,7 +88,7 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
  *
  * TAKEN FROM THE STRUCTURED FIELD, NEVER FROM THE ABSTRACT. The abstract ends with a doubled and malformed pair — "…©
  * Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or
- * database right 2025. All rights reserved. " — whose FIRST copy is inherited from the superseded 2018–2021 record and
+ * database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and
  * carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is
  * the reader that refuses the yearless copy.
  */
@@ -110,7 +110,7 @@ export const NCERM_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-g
 export const NCERM_DATASET_URL = `https://environment.data.gov.uk/dataset/${NCERM_DATASET_ID}`
 
 /**
- * The projected CRS every published layer declares. The file is NOT in WGS84 — it is OSGB36 / British National Grid, in
+ * The projected CRS every published layer declares. The file is not in WGS84 — it is OSGB36 / British National Grid, in
  * metres — so the ingest reprojects and the builder refuses a source that declares anything else.
  */
 export const NCERM_SOURCE_EPSG = 27_700
@@ -388,7 +388,7 @@ export const NCERM_SCENARIO_TERMS: ReadonlyArray<CoastalTermDefinition> = NCERM_
 }))
 
 /**
- * What the product does NOT cover, in the authority's own words.
+ * What the product does not cover, in the authority's own words.
  *
  * Carried onto every reading, because a caller cannot see from an erosion distance that the answer is silent about
  * flooding, about foreshore features, or about any individual property. The first of these is the sharpest constraint

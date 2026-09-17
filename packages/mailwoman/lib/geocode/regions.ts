@@ -26,7 +26,7 @@ export interface RegionDatabases {
 	 * Derived street-centroid tier (#1042) — a `GROUP BY street` roll-up of a national register's rooftop points, keyed
 	 * for a street-only query (no house number). Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider`
 	 * for FR (the US per-state {@link RegionDatabaseProvider} never opens one), so the tier is FR-only in practice and
-	 * every non-FR path stays byte-stable. Consulted BELOW the address-point/interpolation tiers, ABOVE admin.
+	 * every non-FR path stays byte-stable. Consulted below the address-point/interpolation tiers, above admin.
 	 */
 	streetCentroids?: StreetCentroidLookup
 }
@@ -50,7 +50,7 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
 /**
  * Lowercase 2-letter state slug from a parsed region value / resolver name, else null. Accepts the abbreviation
  * register ("MI") and the full-name register ("Michigan", "New York") — a user spells the state however they spell it,
- * and a null here silently drops the WHOLE per-state street tier (situs + interpolation), which is how "…, Fraser MI"
+ * and a null here silently drops the whole per-state street tier (situs + interpolation), which is how "…, Fraser MI"
  * reached the register while "…, Brooklyn New York" never loaded a database.
  */
 export function regionToStateSlug(
@@ -93,7 +93,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 		}
 	}
 
-	// A slug names a US database and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign
+	// A slug names a US database and nothing else, but `regionToStateSlug` accepts any two-letter region, so a foreign
 	// subnational code that happens to spell a US state selects that state's rooftop database. Measured against the databases
 	// on disk: 8 of 16 Italian province codes reach one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia,
 	// CA→California, MO→Missouri, AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
@@ -156,9 +156,9 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
  * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
  * when a new version is published. Call {@link close} when done to release every cached handle.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
+ * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
  * the #2029-async manifest read + `resolveDatabasePath` for every US state/territory slug and records what exists;
- * `for` then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs AND warms before
+ * `for` then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs and warms before
  * answering — the constructor itself is private because it cannot await those probes.
  */
 export class RegionDatabaseProvider implements Disposable {
@@ -166,7 +166,7 @@ export class RegionDatabaseProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
 	/**
-	 * Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace).
+	 * Previous-generation handles, retired by reload() and closed on the next reload (one-gen grace).
 	 */
 	#retired: Disposable[] = []
 	#manifest: DataReleaseManifest | null

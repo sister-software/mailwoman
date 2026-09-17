@@ -8,7 +8,7 @@
  *   This mechanizes a hazard the repo already documents rather than inventing a rule.
  *   `docs/engineering/reference/resolver-backends.mdx` states it outright: *"Any comparison between backends must pin
  *   `--country-scope` to `locale` or `none` across both arms, or run the full 2×2."* Under the default
- *   `--country-scope auto`, switching backend ALSO switches country scoping, and that document's own table shows
+ *   `--country-scope auto`, switching backend also switches country scoping, and that document's own table shows
  *   `12 Rue de Rivoli, 75001 Paris` landing in Texas or in France depending on which of the two variables actually
  *   moved. A caller declaring `variable: ["backend"]` in that situation is measuring two things and attributing the
  *   result to one.
@@ -94,7 +94,7 @@ export function checkConfounds(
 ): ConfoundReading {
 	const moved = differingKeys(effectiveA, effectiveB)
 	// Declared keys arrive in the CLI's snake_case (the vocabulary the tool schema documents); `effective*` keys are
-	// camelCase. Compared raw, one correctly-declared change reads as TWO findings — declared-but-unmoved under one
+	// camelCase. Compared raw, one correctly-declared change reads as two findings — declared-but-unmoved under one
 	// spelling, moved-but-undeclared under the other — and every honest single-change comparison grades itself ambiguous.
 	const declaredSet = new Set(declared.map(effectiveKeyFor))
 	const movedSet = new Set(moved)
@@ -183,7 +183,7 @@ export interface WorktreeTreeDelta {
 }
 
 /**
- * The reading for a comparison whose two arms are BOTH worktree arms with clean commits.
+ * The reading for a comparison whose two arms are both worktree arms with clean commits.
  *
  * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
  * nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a
@@ -223,7 +223,7 @@ export function worktreePairReading(
  *
  * `resolver_score` is bm25-derived on FTS (≈19–41) and population-derived on the candidate table (≈5–7), so a
  * cross-backend comparison of it is a unit error wearing a number. Worse, `resolver-backends.mdx:162-170` measured that
- * WITHIN either backend the wrong answers' score range sits inside the correct answers' range with a HIGHER mean — so
+ * within either backend the wrong answers' score range sits inside the correct answers' range with a higher mean — so
  * it cannot be thresholded on either, which is why this is a refusal rather than a warning.
  */
 const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])

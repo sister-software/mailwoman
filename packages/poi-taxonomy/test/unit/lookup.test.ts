@@ -82,8 +82,8 @@ describe("taxonomy integrity", () => {
 
 	it("every osmTag present is well-formed, and every mailwoman-infra category carries one", () => {
 		for (const category of getAllCategories()) {
-			// The full Overture snapshot ships ~2k categories with NO osmTag (the CSV has no OSM mapping); osmTag is a
-			// curated field. Assert it's well-formed WHEN present, and required on the infra classes the Overpass
+			// The full Overture snapshot ships ~2k categories with no osmTag (the CSV has no OSM mapping); osmTag is a
+			// curated field. Assert it's well-formed when present, and required on the infra classes the Overpass
 			// emitter must be able to render.
 			if (category.osmTag !== undefined) {
 				expect(category.osmTag, `malformed osmTag on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
@@ -113,7 +113,7 @@ describe("resolveOvertureCategories", () => {
 	it("fans a mismatched seed id out over its Overture leaves", () => {
 		const supermarket = resolveOvertureCategories("supermarket")
 		expect(supermarket).toContain("grocery_store")
-		// The curated seed id itself is NOT a stored Overture leaf — it must not leak into the probe list.
+		// The curated seed id itself is not a stored Overture leaf — it must not leak into the probe list.
 		expect(supermarket).not.toContain("supermarket")
 
 		const trail = resolveOvertureCategories("trail")
@@ -174,7 +174,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(getPOICategory("supermarket")?.overtureCategories).toContain("grocery_store")
 		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
 
-		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`) are NOT
+		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`) are not
 		// emitted as standalone categories — otherwise their id-phrase would shadow the curated synonym in the index.
 		expect(getPOICategory("coffee_shop")).toBeUndefined()
 		expect(getPOICategory("grocery_store")).toBeUndefined()

@@ -18,7 +18,7 @@
  *
  *   - Input area height is a fixed {@link INPUT_ROW_HEIGHT} (9): two border rows plus seven content rows — the input
  *     line, the span ribbon, then the five evidence rows (system, locale head, tokens, channels, decode). Each
- *     evidence row is ONE `<Text wrap="truncate">`: a row that wrapped would push the box past its declared height,
+ *     evidence row is one `<Text wrap="truncate">`: a row that wrapped would push the box past its declared height,
  *     which Ink resolves by silently dropping a row (see the marker-fill note below), so truncation is what keeps the
  *     arithmetic true at any width.
  *   - The footer takes {@link FOOTER_ROW_HEIGHT} (1) off the bottom.
@@ -29,8 +29,8 @@
  *     pane's usable CONTENT cell budget: pane width minus its own two border columns
  *     ({@link MAP_PANE_CHROME_COLUMNS}); pane height minus MapPane's own four chrome rows — top+bottom border, the
  *     title line, and the attribution line ({@link MAP_PANE_CHROME_ROWS}) — so a frame built to exactly these
- *     dimensions fills MapPane without any row getting clipped. Measured 2026-08-13: Ink does NOT grow a `Box` past a
- *     fixed `height` when its children need more room — it silently DROPS rows (observed: the title line disappeared
+ *     dimensions fills MapPane without any row getting clipped. Measured 2026-08-13: Ink does not grow a `Box` past a
+ *     fixed `height` when its children need more room — it silently drops rows (observed: the title line disappeared
  *     first, then a trailing frame line) rather than overflowing the terminal output, so an undercounted chrome budget
  *     is invisible to a plain output-line-count check. Verified in `DebugFrame.test.tsx` by filling every frame cell
  *     with a marker character and counting marked lines against `cellSize.rows`, plus asserting the title and
@@ -284,7 +284,7 @@ function confidenceColor(confidence: number): string {
 //#region Input area
 
 /**
- * One evidence row: a dim fixed-width label and the value, truncated as ONE text so the row can never wrap.
+ * One evidence row: a dim fixed-width label and the value, truncated as one text so the row can never wrap.
  */
 const EVIDENCE_LABEL_WIDTH = 12
 
@@ -372,7 +372,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 	const { line } = props
 
 	if (line.kind === "error") {
-		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately NOT used: its message `<Text>`
+		// `@inkjs/ui`'s StatusMessage would be the natural fit and is deliberately not used: its message `<Text>`
 		// carries no wrap mode, so a long resolver error wraps to a second row and pushes a row out of a
 		// fixed-height pane — the silent-drop failure this file's header measures. Same figure, one row, truncated.
 		return (

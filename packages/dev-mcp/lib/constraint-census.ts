@@ -48,7 +48,7 @@ interface ConstraintMiss {
 	band: string
 	checks: string[]
 	/**
-	 * Bands holding this key OTHER than the one probed, measured with no constraint applied at all. Empty means the key
+	 * Bands holding this key other than the one probed, measured with no constraint applied at all. Empty means the key
 	 * exists nowhere in the gazetteer, which is a coverage fact rather than a retrieval failure.
 	 */
 	elsewhere: string[]

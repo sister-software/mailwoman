@@ -42,7 +42,7 @@ identity pairs (suburb == town, e.g. "Mangawhai, Mangawhai") — which is why
 bundle's index is that rule's data source.
 
 Unlike the en-gb sibling, **no postcode-anchor binary ships** — no WOF NZ
-postcode database exists yet, so the postcode-anchor channel resolves OFF for
+postcode database exists yet, so the postcode-anchor channel resolves off for
 en-nz (a loud one-time warning, not a crash). Building that database is the
 tracked follow-up in `model-card.json`.
 
@@ -62,7 +62,7 @@ fed. Do not hand-wire the raw ONNX session with the anchor input zero-filled.
 
 ## Evaluation
 
-**en-nz battery, 2026-07-24 — all 6 pre-registered bars PASS.** Prior ON at
+**en-nz battery, 2026-07-24 — all 6 pre-registered bars pass.** Prior on at
 the calibrated δ=10, on the shipped v385 base: NZ suburb board (246 rows)
 as-written **246/246 emission, 246/246 tag-correct (100%)**; comma-stripped
 **244/246 (99.2%)**; curated no-suburb board **0/54 false positives**. The
@@ -74,7 +74,7 @@ repeated-name-convention story: `model-card.json`'s `eval` and `notes` blocks.
 ## Limitations
 
 - **Expects its channels** — see _Ship-config requirement_.
-- **No NZ postcode anchor yet** — the anchor channel is OFF for en-nz until a
+- **No NZ postcode anchor yet** — the anchor channel is off for en-nz until a
   WOF NZ postcode database is built (model-card follow-up).
 - **Venue-confound specificity is interim** — measured 0 FP on a synthetic
   board only; real NZ venue-name data is an open acquisition (issue #1279).

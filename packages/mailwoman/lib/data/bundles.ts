@@ -35,7 +35,7 @@ export interface BundleArtifact {
 	 */
 	md5Sidecar: boolean
 	/**
-	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. NOT a integrity
+	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. Not a integrity
 	 * check target (a rebuild at the same dated path would be a bug, since these paths are meant to be immutable, but
 	 * this field is not how a mismatch would be caught — the HEAD `Content-Length` at pull time is).
 	 */
@@ -155,9 +155,9 @@ function usStreetArtifacts(): BundleArtifact[] {
 }
 
 /**
- * The bundle registry. Every artifact here was CONFIRMED against the live bucket on 2026-08-03 (see the module
- * docstring) — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose:
- * nothing under `mailwoman/` in the bucket serves it.
+ * The bundle registry. Every artifact here was checked against the live bucket on 2026-08-03 (see the module docstring)
+ * — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose: nothing
+ * under `mailwoman/` in the bucket serves it.
  */
 export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
@@ -208,7 +208,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 
 /**
  * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
- * bucket; `data pull --host` passes a mirror or private registry serving the SAME object keys (the catalog schema is
+ * bucket; `data pull --host` passes a mirror or private registry serving the same object keys (the catalog schema is
  * host-independent — an air-gapped install mirrors the key space, not a rewritten layout). A missing trailing slash is
  * repaired rather than concatenated into a mangled key.
  */
@@ -285,9 +285,9 @@ export interface RemoteArtifactState {
 
 /**
  * Decide whether an artifact needs downloading: absent locally → yes. An available md5 (sidecar present) is the
- * authoritative signal once local exists — mismatch → yes, match → no, checked BEFORE content-length so a bundle that
+ * authoritative signal once local exists — mismatch → yes, match → no, checked before content-length so a bundle that
  * publishes a sidecar can't be short-circuited by a coincidentally-matching size. With no md5 to compare, fall back to
- * a `Content-Length` size comparison. With NEITHER signal available, the artifact is treated as up to date (the caller
+ * a `Content-Length` size comparison. With neither signal available, the artifact is treated as up to date (the caller
  * is expected to surface a "couldn't verify" warning in that case, not force a redundant multi-GB re-fetch).
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {

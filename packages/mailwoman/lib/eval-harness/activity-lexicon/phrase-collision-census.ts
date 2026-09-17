@@ -6,7 +6,7 @@
  *   The phrase-collision census for `@mailwoman/activity-lexicon` (#1962).
  *
  *   WHAT IT MEASURES. An activity route is asked last: `createRuntimePipeline` consults it only where the committed
- *   category lexicon AND the POI name lookup have both returned nothing. So a declared phrase whose subject either of
+ *   category lexicon and the POI name lookup have both returned nothing. So a declared phrase whose subject either of
  *   those already claims never reaches the route at all, and the shortfall reads as the activity being unreachable
  *   rather than as the phrase being taken. `sem-act-fr-01` is the worked example: `Somewhere` is a venue name in the
  *   shipped `poi.db`, `matchPOISubject` probes the prefix before ` to `, the name rung claims it, and the answer is a
@@ -234,7 +234,7 @@ export interface CensusVenue {
 }
 
 /**
- * The POI reader the census needs, and it is deliberately NOT the shipped name rung's reader.
+ * The POI reader the census needs, and it is deliberately not the shipped name rung's reader.
  *
  * `createPOINameLookup` asks FTS for eight candidates ranked by bm25 and keeps an exact match among them. Measured
  * against a complete scan, that reads 149 of the 375 distinct names containing `prescription` — so a census built on it
@@ -292,7 +292,7 @@ function containsTokens(haystack: string[], needle: string[]): boolean {
  * Classify one colliding venue name against the probe string it collided with.
  *
  * The rule is stated in the module header and implemented here in the same order: an explicit query marker determines
- * the result; otherwise a name that IS the probe adds nothing and is query-shaped, on whichever of the two remaining
+ * the result; otherwise a name that is the probe adds nothing and is query-shaped, on whichever of the two remaining
  * tells applies; otherwise the name carries something the probe does not, and is an ordinary name.
  */
 export function classifyVenueName(name: string, probe: string): VenueNameVerdict {
@@ -346,7 +346,7 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 
 		if (!(await pathExists(root))) continue
 
-		const paths = await Globerator.files("jsonl", { cwd: root }).toSorted()
+		const paths = await Globerator.files("jsonl", { cwd: root, absolute: true }).toSorted()
 
 		for (const path of paths) {
 			files++

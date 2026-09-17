@@ -31,7 +31,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * Every exports entry carries a `node` condition pointing at the source `.ts` (the first-class-TS migration), which is
  * precisely what the alias list used to restate by hand. Restating it meant the two could disagree, and they did: the
  * generic `@mailwoman/core/(.+) -> core/$1/index.ts` rule assumed every subpath was a directory, so each bare-file
- * subpath needed its own earlier entry (`objects`, `fs`, `crypto`, `api/disk-storage`, …) and a NEW one was a silent
+ * subpath needed its own earlier entry (`objects`, `fs`, `crypto`, `api/disk-storage`, …) and a new one was a silent
  * `Cannot find package` in unrelated suites until someone added it. The mirror-image gap on `@mailwoman/corpus/(.+) ->
  * corpus/src/$1.ts` mis-resolved the exported `./tools` DIRECTORY subpath (#1523).
  *
@@ -123,13 +123,13 @@ export default defineConfig({
 		//
 		// The shared-graph contract: `vi.mock` factories are only consulted at module EVALUATION,
 		// so a module already cached by an earlier file in the same fork is returned as-is — mocks
-		// declared against it silently never apply. Any file that mocks a shared module MUST call
+		// declared against it silently never apply. Any file that mocks a shared module must call
 		// `vi.resetModules()` before importing the module under test (reference:
 		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
 		coverage: {
-			// `reportOnFailure` defaults to false, which means ONE failing test suppresses the entire report — and the
+			// `reportOnFailure` defaults to false, which means one failing test suppresses the entire report — and the
 			// symptom is an empty coverage directory, which reads as "coverage is broken" rather than "a test failed".
 			// A run that measured 64.45% statements on the unit leg is worth keeping when a suite goes red.
 			reportOnFailure: true,

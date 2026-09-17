@@ -133,10 +133,10 @@ export async function assertUnsealedForWrite(path: PathBuilderLike): Promise<voi
  *
  * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`. This moves any
  * prior version aside, slots the new one in, then drops the old — the previous file stays intact until the replacement
- * is committed, and the `-wal`/`-shm` siblings of BOTH paths are cleared so a stale journal can never be paired with a
+ * is committed, and the `-wal`/`-shm` siblings of both paths are cleared so a stale journal can never be paired with a
  * new main file.
  *
- * Sealing (`sealDatabase`) happens on the temp file BEFORE the swap: a sealed artifact is what gets published, and 0444
+ * Sealing (`sealDatabase`) happens on the temp file before the swap: a sealed artifact is what gets published, and 0444
  * does not prevent a rename.
  */
 export async function swapDatabaseIntoPlace(tmpPath: PathBuilderLike, finalPath: PathBuilderLike): Promise<void> {

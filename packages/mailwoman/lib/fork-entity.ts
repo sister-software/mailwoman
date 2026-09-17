@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The declared_fork marker's first consumer (#1585's entity half): when the decoder declares that a
- *   surface reads two ways and the incumbent resolution produced NO coordinate, ask the ENTITY layer
+ *   surface reads two ways and the incumbent resolution produced no coordinate, ask the entity layer
  *   whether it simply knows the thing — positive evidence only, per the registry doctrine (registries
  *   are soft priors that add candidates; they never veto). `COMER parís.méxico` is the worked case:
  *   structure cannot decide it, no gazetteer row bears the name, and poi.db holds the exact
@@ -17,9 +17,9 @@
  *   2. **No token of the query is a street generic** (the street-morphology FST — libpostal's
  *      thoroughfare vocabulary). The fork population's street-flavored surfaces (`Savile Row`,
  *      `Kärntner Straße`, `Gran Vía`) belong to the street tier, and poi.db holds exactly one poi
- *      NAMED `savile row` — without this check the famous street would resolve to a shop
+ *      named `savile row` — without this check the famous street would resolve to a shop
  *      (`gb-fork-entity-savile-row-guard` is the live regression check).
- *   3. **Exactly one entity worldwide bears the name** (name-key EXACT equality, duplicate rows of
+ *   3. **Exactly one entity worldwide bears the name** (name-key exact equality, duplicate rows of
  *      the same physical venue collapsed by proximity). Zero is a miss; two is an ambiguity the
  *      query gave no anchor to break — both abstain. The uniqueness bar is what lets an anchorless
  *      query resolve at all.
@@ -35,7 +35,7 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 import type { POIExecutorLookup } from "#poi/executor"
 
 /**
- * Two poi rows closer than this are the SAME physical venue (door + terrace, or a chain's duplicate ingest of one
+ * Two poi rows closer than this are the same physical venue (door + terrace, or a chain's duplicate ingest of one
  * location), not two entities. Overture duplicates of one venue measure meters apart; distinct same-name venues (a
  * franchise) are city-scale apart.
  */
@@ -87,13 +87,13 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 	// Over-fetch: FTS ranks by bm25, and the exact-name row is not guaranteed first.
 	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
 
-	// Condition 3a — name-key EXACT equality only. An FTS partial ("comer" matching "Comer Park") is not
+	// Condition 3a — name-key exact equality only. An FTS partial ("comer" matching "Comer Park") is not
 	// the entity bearing this name.
 	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
 
 	if (!exact.length) return null
 
-	// Condition 3b — collapse duplicate rows of one physical venue, then require exactly ONE entity.
+	// Condition 3b — collapse duplicate rows of one physical venue, then require exactly one entity.
 	const entities: Array<(typeof exact)[number]> = []
 
 	for (const hit of exact) {
@@ -199,10 +199,10 @@ export interface VenueAnchor {
 
 /**
  * How far the venue tier may reach from the answer it is replacing. A unit-grade postcode hit
- * ({@link isUnitGradePostcodeHit}) whose coordinate IS the answer resolved the walk to a handful of doors, so the venue
+ * ({@link isUnitGradePostcodeHit}) whose coordinate is the answer resolved the walk to a handful of doors, so the venue
  * must sit within {@link VENUE_UNIT_ANCHOR_THRESHOLD_M}; every other admin or street answer is a centroid and keeps
  * {@link VENUE_ANCHOR_THRESHOLD_M}. The coordinate equality is exact on purpose: result assembly copies the winning
- * node's coordinate verbatim, so a postcode node that is NOT the answer never narrows the bound.
+ * node's coordinate verbatim, so a postcode node that is not the answer never narrows the bound.
  */
 export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: readonly AddressNode[]): number {
 	const postcode = collectNodes(
@@ -220,10 +220,10 @@ export function venueAnchorRadiusM(anchor: { lat: number; lon: number }, roots: 
 }
 
 /**
- * Probe the entity layer for a parsed VENUE near a resolved anchor — the #1684 POI-half's first mechanism, and the
- * anchored sibling of {@link probeForkEntity}. The fork probe requires WORLDWIDE uniqueness because a bare fork surface
- * has no other evidence; a venue-led address DOES — the walk already resolved its admin anchor — so the discipline here
- * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within the anchor's reach
+ * Probe the entity layer for a parsed venue near a resolved anchor — the #1684 POI-half's first mechanism, and the
+ * anchored sibling of {@link probeForkEntity}. The fork probe requires worldwide uniqueness because a bare fork surface
+ * has no other evidence; a venue-led address does — the walk already resolved its admin anchor — so the discipline here
+ * is local uniqueness: exact name-key entities only, and exactly one of them within the anchor's reach
  * ({@link VenueAnchor}, {@link VENUE_ANCHOR_THRESHOLD_M} unless the caller tightened it). Two same-named venues in one
  * metro is a genuine ambiguity and abstains; entities beyond the check are other cities' bearers and never contest.
  */
@@ -282,12 +282,12 @@ export function probeVenueNearAnchor(
  *
  * 1. The fork→entity probe (#1585's entity half): a DECLARED fork whose incumbent resolution produced no coordinate takes
  *    the worldwide-unique entity. Default-on under the D-rule — a null is the only thing that can change.
- * 2. The VENUE TIER (#1684's POI half) — OPT-IN, default OFF: a venue-led address that resolved only to its admin anchor
+ * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that resolved only to its admin anchor
  *    upgrades to the entity bearing the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
  *    local-uniqueness discipline). Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows name a
  *    poi.db-visible venue, 15 of them tracked failures; measured effect at first light: 7 of 57 rows upgrade
  *    admin→venue, all within 0.14 km of their anchors. Never fires over an address_point/interpolated answer — a
- *    street+number that resolved rooftop IS the venue's address — and the flag stays opt-in until a full-board battery
+ *    street+number that resolved rooftop is the venue's address — and the flag stays opt-in until a full-board battery
  *    warrants the D-rule promotion.
  */
 export function applyEntityTiers(
@@ -400,7 +400,7 @@ export function probeVenueNearAnchorFolded(
 
 	if (exact) return exact
 
-	// The fold can land on EITHER side: the query's head against a bare row, or the query against a
+	// The fold can land on either side: the query's head against a bare row, or the query against a
 	// decorated row's head — so the comparison folds both, and the leg runs even when only the hit
 	// side can differ.
 	const queryHead = venueHeadSegment(venueRaw) ?? venueRaw.trim()

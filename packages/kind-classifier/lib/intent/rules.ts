@@ -11,7 +11,7 @@
  *
  *   ## Why two of these three deliberately lose
  *
- *   `bare_toponym` and `route_pair` are scored BELOW the structural kind that already owns their
+ *   `bare_toponym` and `route_pair` are scored below the structural kind that already owns their
  *   population (`locality_only`, 0.85). They therefore surface in `QueryKindResult.alternatives` and
  *   never as the top kind. That is not timidity — it is the D-rule discharge. The top kind is the
  *   only thing the coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so
@@ -19,7 +19,7 @@
  *   which is the single largest population in map search. The intent they carry travels on the
  *   marker instead, where it is advisory by construction.
  *
- *   `near_me` DOES win its top slot (0.91), because there is no incumbent worth preserving: a query
+ *   `near_me` does win its top slot (0.91), because there is no incumbent worth preserving: a query
  *   ending "near me" is not a locality and answering it as one is the bug.
  */
 
@@ -52,7 +52,7 @@ const NEAR_ME_CONFIDENCE = 0.91
 const MAX_BARE_TOPONYM_WORDS = 4
 
 /**
- * Toponymic HEAD particles — the bounded linguistic category that makes a multi-token string ONE place name.
+ * Toponymic HEAD particles — the bounded linguistic category that makes a multi-token string one place name.
  *
  * Same justification, and the same boundary, as `@mailwoman/phrase-grouper`'s `PLACE_NAME_PARTICLES` (which covers the
  * INFIX glue: `de`, `am`, `aan den`). This set covers the PREFIX heads, and it exists for exactly one job: keeping
@@ -136,7 +136,7 @@ const TOPONYM_HEAD_PARTICLES: ReadonlySet<string> = new Set([
 
 /**
  * Generic toponymic TAIL nouns — the other half of the same bounded morphological class. "Belize City", "George Town",
- * "Cape Town", "Palm Springs": a place name whose last token is a settlement/landform generic is ONE name, not two.
+ * "Cape Town", "Palm Springs": a place name whose last token is a settlement/landform generic is one name, not two.
  *
  * Measured additions, same as the heads above: `city`, `town` and `valley` each came off a real corpus row that was
  * forking wrongly.
@@ -171,7 +171,7 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
  *
  * The class is `preposition + a reference to the ASKER`, which is why it is bounded and why it is safe: `me`, `here`,
  * `my <noun>` are function words, not places. Anchored to the END of the string (`$`) on purpose — the whole point of
- * the kind is that the query names no anchor, so anything AFTER the locator is an anchor and disqualifies it.
+ * the kind is that the query names no anchor, so anything after the locator is an anchor and disqualifies it.
  *
  * Linear by construction: every alternative begins with a required literal, and the only quantifiers are bounded `\s+`
  * runs BETWEEN two required literals or trailing before `$`. No unbounded-whitespace-then-literal prefix, which is the
@@ -187,7 +187,7 @@ const DEICTIC_ADVERB_TAIL =
 	/\b(?:nearby|near\s?by|close\s+by|around\s+here|in\s+my\s+(?:area|neighborhood|neighbourhood))\s*$/
 
 /**
- * True when the input carries a deictic locator tail in EITHER form.
+ * True when the input carries a deictic locator tail in either form.
  */
 function hasDeicticTail(lowercased: string): boolean {
 	return DEICTIC_LOCATOR_TAIL.test(lowercased) || DEICTIC_ADVERB_TAIL.test(lowercased)
@@ -206,7 +206,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 
 	if (!text || text.length > MAX_LOCALITY_ONLY_LENGTH) return null
 
-	// A recognized postcode/known format IS address grammar. Nothing bare survives this.
+	// A recognized postcode/known format is address grammar. Nothing bare survives this.
 	if (shape.knownFormats.length) return null
 
 	// `alpha` excludes every house number and every postcode by construction — the cheapest available statement of
@@ -234,7 +234,7 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 /**
  * `bare_toponym` rule: a single coherent place-name carrying no address grammar.
  *
- * Feeds the declared-ambiguity path. The rule itself asserts nothing about WHICH place — that is the resolver's
+ * Feeds the declared-ambiguity path. The rule itself asserts nothing about which place — that is the resolver's
  * question, and `mailwoman/query-intent.ts` is where the answer's dominance margin decides whether the ambiguity gets
  * declared.
  */
@@ -252,7 +252,7 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
  * is the reason ROAD_TO_V9 §4.3 specifies **classification + a declared fork, never a router**: both readings are named
  * in the marker, neither wins, and the resolver keeps answering exactly as it did.
  *
- * The one class that IS separable structurally is the two-token SINGLE name — "New York", "Fort Worth", "San Francisco"
+ * The one class that is separable structurally is the two-token SINGLE name — "New York", "Fort Worth", "San Francisco"
  * — because those carry a toponymic head particle. That guard is what keeps the fork off the common case.
  */
 export function scoreRoutePair(input: NormalizedInputLite, shape: QueryShapeLike): number {

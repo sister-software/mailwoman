@@ -7,7 +7,8 @@
  *   failure classes with confidence intervals, sampled from BAN (Tier A). The second of the two
  *   standing boards; `eval parity` is the first (the global "do no harm" floor).
  *
- *   A change ships when parity HOLDS and this board MOVES. Neither is a verdict alone.
+ *   A change ships when the `eval parity` floors still pass and this board's failure-class rates
+ *   improve. Neither is a verdict alone.
  *   Informational (always exits 0) — the standing floors stay on `eval parity`.
  */
 

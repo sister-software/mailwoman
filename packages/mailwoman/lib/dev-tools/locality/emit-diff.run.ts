@@ -3,9 +3,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
  *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) REGRESSED EU resolve. For each
- *   golden row, parse with TWO models (baseline + candidate), extract the emitted `locality` span, and
- *   resolve each tree → record whether it resolved + the emitted locality. Lets us SEE whether the
- *   candidate emits a DIFFERENT locality string (grain mismatch) or the SAME string that stopped
+ *   golden row, parse with two models (baseline + candidate), extract the emitted `locality` span, and
+ *   resolve each tree → record whether it resolved + the emitted locality. Lets us see whether the
+ *   candidate emits a different locality string (grain mismatch) or the same string that stopped
  *   resolving (boundary/anchor), or drops the locality entirely. Verify-before-verdict, not assurance.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/locality/emit-diff.run.ts \

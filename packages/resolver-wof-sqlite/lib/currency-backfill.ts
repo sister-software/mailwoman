@@ -139,7 +139,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Dead rows FIRST: a country with no deprecated-no-successor localities needs no attestors at all, and
+		// Dead rows first: a country with no deprecated-no-successor localities needs no attestors at all, and
 		// loading a national dump to judge zero rows is pure heap pressure on a build already near its ceiling
 		// (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
 		const dead = deadStmt.all(cc, ...deadPlacetypes)
@@ -209,7 +209,7 @@ export async function resurrectCurrencyHoles(ctx: {
 			if (!pkey || seen.has(pkey)) continue
 			seen.add(pkey)
 			// Read from the row: the query admits whatever `deadPlacetypes` names, and the rank comparison below must
-			// judge each candidate against ITS dead rung, never a hardcoded one.
+			// judge each candidate against its dead rung, never a hardcoded one.
 			const deadPlacetype = String(d.placetype ?? "locality")
 
 			count(deadPlacetype, "judged")
@@ -230,7 +230,7 @@ export async function resurrectCurrencyHoles(ctx: {
 					return false
 				}
 
-				// Blocks UNLESS the live row is strictly finer. The equal rung must still block — a live `locality`
+				// Blocks unless the live row is strictly finer. The equal rung must still block — a live `locality`
 				// covers a dead `locality` — and an unranked placetype blocks too, since this check's failure mode
 				// is inventing a place.
 				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true

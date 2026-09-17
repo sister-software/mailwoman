@@ -30,7 +30,7 @@ def test_pyproject_and_modal_pins_agree():
     md = vt._pins_from_modal()
     # Every invariant dep is pinned in pyproject...
     assert set(py) == set(vt.INVARIANT_DEPS), f"pyproject missing pins: {set(vt.INVARIANT_DEPS) - set(py)}"
-    # ...and the Modal image pins it to the SAME version.
+    # ...and the Modal image pins it to the same version.
     for dep in vt.INVARIANT_DEPS:
         assert py[dep] == md.get(dep), f"{dep}: pyproject {py[dep]} != modal {md.get(dep)}"
 

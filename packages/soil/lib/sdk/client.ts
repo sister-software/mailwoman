@@ -59,7 +59,7 @@ export const SDA_MIN_REQUEST_INTERVAL_MS = 500
 /**
  * How long a cached Soil Data Access response stays fresh.
  *
- * Twelve hours, chosen against the product's cadence rather than a wall-clock intuition: NRCS performs ONE coordinated
+ * Twelve hours, chosen against the product's cadence rather than a wall-clock intuition: NRCS performs one coordinated
  * Annual Soils Refresh, on October 1. Grouping `sacatalog` by year of `saverest` returns 2016: 1, 2025: 3,323, 2026: 56
  * — 98.3% of survey areas carry a single version date from one refresh rather than a per-area drift. A shorter TTL buys
  * nothing.
@@ -104,7 +104,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 
 		const parsed = parseJSONStrict<{ Table?: unknown }>(data)
 
-		// An answer with NO rows is `{}` rather than `{"Table":[]}`, so an absent `Table` is a real empty result and not a
+		// An answer with no rows is `{}` rather than `{"Table":[]}`, so an absent `Table` is a real empty result and not a
 		// read failure — the exception check above has already separated the two.
 		if (parsed.Table === undefined) return []
 
@@ -146,7 +146,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * Which map unit the service's OWN geometry assigns at a point, or `undefined` where it assigns none.
+	 * Which map unit the service's own geometry assigns at a point, or `undefined` where it assigns none.
 	 *
 	 * This is the second path the built artifact is checked against: same authority, different distribution channel, and
 	 * geometry this package has never touched. Measured at 1.807 s per point, so a few hundred points is minutes.

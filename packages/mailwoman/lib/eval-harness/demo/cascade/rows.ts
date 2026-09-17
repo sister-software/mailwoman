@@ -12,7 +12,7 @@
  *   Exactly one of `expect.id` (a verified WOF id) or `expect.anchor_centroid` (postcode-only dead
  *   ends where the slim DB has no row and the demo synthesizes an anchor-centroid hit) per row.
  *
- *   RESTORED 2026-08-06. The 2026-07-10 probe triage (c61159ef) swept this file into the gitignored
+ *   Restored 2026-08-06. The 2026-07-10 probe triage (c61159ef) swept this file into the gitignored
  *   `scripts/diagnostic/` drawer while leaving its only importer — `demo-cascade-smoke.ts`, a
  *   promotion-eval battery leg — behind in `scripts/eval/`. The commit message's "check spawn targets
  *   verified present post-move" was true of the spawn TARGET and false of its dependency, so the
@@ -79,7 +79,7 @@ class SmokeRowError extends Error {
 
 /**
  * Parse + validate a JSONL smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row number (and echoing the
- * offending line) on ANY malformed row. Returns at least one row — an empty file is an error, not a vacuous pass.
+ * offending line) on any malformed row. Returns at least one row — an empty file is an error, not a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 	// The row NUMBER is the point of this parser: every error names the 1-based line a human would

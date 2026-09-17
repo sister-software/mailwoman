@@ -153,6 +153,12 @@ backticked CLI command are contracts, not prose, so neither may match.)
 
 This paragraph names the thing you already read, which is filler in a reply.
 
+The probe confirmed the guard and the guard held, so the win holds; the cost was
+carried entirely by the postcode rows, 3-digit is the reduce, and we take this to 8k.
+
+The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
+by default, and the run was a PURE WIN.
+
 We launched a full training run at seed 42, and the overlay is v0.29.0 plus one
 file. An overlay run would have reused the checkpoint instead. (OverlaySense:
 three tokens — the duration-sounding name for the from-scratch case, a bare

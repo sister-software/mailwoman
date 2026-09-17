@@ -127,7 +127,7 @@ export interface RecordInputs {
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row DENOTING the gold place, not only the ids the concordance linked. OFF by default, and the
+	 * Withhold every row DENOTING the gold place, not only the ids the concordance linked. Off by default, and the
 	 * default is what keeps `same-data-resolver-v1` and `prominence-floor-v1` byte-stable on a re-record.
 	 *
 	 * Why it exists: the gold identity set is built from the `gn:id` concordance, and the gazetteer carries **285,478 of
@@ -137,7 +137,7 @@ export interface RecordInputs {
 	 * `same-data-resolver-v1`: 10 of 100 withheld-gold rows, and three of the five rows published as exemplars of
 	 * confident failure — `Langfang` 2.8 km, `Matsusaka` 1.3 km, `Troyes` 0.6 km.
 	 *
-	 * Turning it ON changes what the stratum MEANS, so it belongs to a successor definition rather than a version bump of
+	 * Turning it on changes what the stratum means, so it belongs to a successor definition rather than a version bump of
 	 * a benchmark whose arms have run. `benchmark-freeze.json` states the reason: a rule editable after a result is
 	 * visible asserts nothing.
 	 */
@@ -157,7 +157,7 @@ export interface RecordResult {
 const SAME_SETTLEMENT_KM = 5
 
 /**
- * The diacritic-folded comparison surface. Deliberately NOT the resolver's `foldName`: that one empties a non-Latin
+ * The diacritic-folded comparison surface. Deliberately not the resolver's `foldName`: that one empties a non-Latin
  * name, so `東京` and `Москва` would fold equal to each other and to every other non-Latin row.
  */
 function settlementKey(name: string): string {

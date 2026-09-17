@@ -17,7 +17,7 @@
  *   Unicode-normalization drift out of this law, since any of those move the key. {@linkcode
  *   caseApplicability} decides whether a case change of that kind is a SEMANTIC equivalent in the row's own
  *   locale, which the key cannot say: `İstanbul` and `ISTANBUL` have matching fold keys and are different
- *   words in Turkish. A pair that clears the first guard and fails the second is excluded BEFORE it runs, per
+ *   words in Turkish. A pair that clears the first guard and fails the second is excluded before it runs, per
  *   this law's own tradeoff — an invalid transformation must never be tolerated as a failure, because a
  *   failure invites someone to fix the pipeline for an input that was never a case variant.
  *
@@ -78,7 +78,7 @@ function titleCaseToken(token: string): string {
 /**
  * The transformation each name applies. Pure, total, and the source the suite's variants are re-derived from.
  *
- * `mixed` splits on the whitespace RUNS themselves (the capturing split keeps them), so the transformation cannot
+ * `mixed` splits on the whitespace runs themselves (the capturing split keeps them), so the transformation cannot
  * collapse or insert whitespace — which would take the pair out of this law and into the whitespace one.
  */
 export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: string) => string> = {
@@ -121,7 +121,7 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
 }
 
 /**
- * The declared reasons a case transformation is NOT a semantic equivalent for a given row.
+ * The declared reasons a case transformation is not a semantic equivalent for a given row.
  *
  * - `identity-transformation` — the transformation returns the text unchanged, either because the script has no case
  *   (Japanese, Chinese, Thai, Hebrew, Arabic) or because the text is already written in the target case (`N7 0BT`
@@ -152,7 +152,7 @@ const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on BOTH verdicts. An exclusion that says only "not applicable" makes the reader re-derive the
+ * The reason is populated on both verdicts. An exclusion that says only "not applicable" makes the reader re-derive the
  * rule from the text, and a row silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface CaseApplicability {
@@ -171,7 +171,7 @@ export interface CaseApplicability {
  * through, so the locale the applicability rule reads and the locale the pipeline runs under are one value rather than
  * two that can disagree.
  *
- * The identity rule is tested FIRST, and a row both rules bear on reports that one: a transformation that moves nothing
+ * The identity rule is tested first, and a row both rules bear on reports that one: a transformation that moves nothing
  * cannot have changed a letter's identity either, so the reading that says the pair could never have tested anything is
  * the more useful of the two.
  */

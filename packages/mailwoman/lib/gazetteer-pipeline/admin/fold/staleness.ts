@@ -31,7 +31,7 @@ export interface FoldStaleness {
 }
 
 /**
- * The staleness verdict for a fold output: the admin database it derives from was modified AFTER the fold was written.
+ * The staleness verdict for a fold output: the admin database it derives from was modified after the fold was written.
  * Null when the fold is at least as new as its source, or when `adminModified` is absent (no source found).
  */
 export function foldStaleness(

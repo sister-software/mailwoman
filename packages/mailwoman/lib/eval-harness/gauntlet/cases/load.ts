@@ -17,7 +17,7 @@
  *   regression runner grades per row.
  *
  *   What the prose migration cost, stated directly: JSONL carries no comments, so the 16 batch headers and 18
- *   per-case margin notes that lived between the array literals moved VERBATIM to `batch-notes.md`, keyed by
+ *   per-case margin notes that lived between the array literals moved verbatim to `batch-notes.md`, keyed by
  *   the `source` value their rows carry. They are not lost, but they are no longer adjacent to their rows.
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
@@ -101,7 +101,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
 			throw new CorpusRowError(path, line, `does not match SeedCase — ${detail}`)
 		}
 
-		// The dir IS the country claim. A row filed under the wrong `cc` still loads and still runs, so nothing
+		// The dir is the country claim. A row filed under the wrong `cc` still loads and still runs, so nothing
 		// downstream would ever notice; the listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(

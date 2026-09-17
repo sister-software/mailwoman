@@ -87,7 +87,7 @@ describe("classifyFeatureCells", () => {
 	})
 
 	it("still indexes a ring collapsed to a single point, because overlapping containment touches its cell", () => {
-		// Recorded rather than assumed: the zero-cell guard above does NOT fire on a degenerate ring, so a source that
+		// Recorded rather than assumed: the zero-cell guard above does not fire on a degenerate ring, so a source that
 		// published one would be indexed to the cell containing it rather than dropped.
 		const collapsed = [
 			[

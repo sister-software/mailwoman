@@ -5,10 +5,10 @@
  *
  *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
  *   libpostal), nothing here is a vendor contract — this surface is ours to design, so request
- *   bodies are REQUIRED and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
+ *   bodies are required and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
  *   on the app maps validation failures through the shared `APIErrorSchema` envelope
  *   (`errorResponse(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
- *   surface holds to: where no legacy contract exists, the validator MAY speak, but only in
+ *   surface holds to: where no legacy contract exists, the validator may speak, but only in
  *   our envelope.
  *
  *   `APIErrorSchema` itself is owned by `@mailwoman/api-kit` (plumbing shared by every native
@@ -87,7 +87,7 @@ const GeocodeHierarchyEntrySchema = z
 		lon: z.number().optional(),
 		placeID: z.string().optional(),
 		// #1731 tri-state lineage provenance: true = the winner's ancestor chain vouches for this entry, false =
-		// resolved independently OUTSIDE the winner's lineage, absent = unverifiable. Absence is not false.
+		// resolved independently outside the winner's lineage, absent = unverifiable. Absence is not false.
 		in_winner_lineage: z.boolean().optional(),
 	})
 	.openapi("GeocodeHierarchyEntry")
@@ -109,7 +109,7 @@ const GeocodeCandidateSchema = z
 
 /**
  * The `ComponentTag` union at this engine-agnostic boundary, named once so every schema that speaks about a tag speaks
- * about the SAME list. Two hand-copied enums would agree on the day they were written and diverge on the day a tag is
+ * about the same list. Two hand-copied enums would agree on the day they were written and diverge on the day a tag is
  * added — the shape of defect `feedback-parity-needs-shared-function-not-shared-constants` describes.
  */
 const ComponentTagSchema = z.enum([
@@ -290,16 +290,16 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	countryCode: z.string().nullable(),
 	hierarchy: z.array(GeocodeHierarchyEntrySchema),
 	candidates: z.array(GeocodeCandidateSchema),
-	// The register row's OWN scope tags when the address_point tier answered and its extract carries
-	// them (normalized locality key + postcode of the ROOFTOP) — see geocode-core's GeocodeResult.rooftop.
+	// The register row's own scope tags when the address_point tier answered and its extract carries
+	// them (normalized locality key + postcode of the rooftop) — see geocode-core's GeocodeResult.rooftop.
 	rooftop: z
 		.object({
 			localityNorm: z.string().optional(),
 			postcode: z.string().optional(),
 		})
 		.optional(),
-	// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
-	// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
+	// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null only when it
+	// overrode the request's country prior — so a caller who asked for US and got an FR answer can see which
 	// evidence bought the change instead of reading it as a bug.
 	postcode_country_scope: z.string().nullable(),
 	// #1880: the capital promotion's firing receipt — the promoted candidate's country, present only when the
@@ -309,7 +309,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// the top because the exemption spared it the cross-country alias penalty. Advisory, same posture again.
 	variant_alias_exemption: z.literal(true).optional(),
 	// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
-	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
+	// say. Advisory only — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
 	// #1717 stage 1: flag-only admin-coherence verdicts — did the winning candidate's resolved ancestry confirm,
 	// contradict, or fail to speak to the PARSED region/country qualifiers? Nothing ranks or filters on these; present
@@ -325,7 +325,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// the PROVIDER'S assertion, hand-modeled here to match `mailwoman/authoritative.ts`'s wire shape (the
 	// engine-agnosticism boundary forbids importing it). Absent when no provider is configured; `refused` is the
 	// provider declining (distinct from a parse failure or a gazetteer miss); `transport_error` is the provider
-	// being unreachable, reported rather than silently dropped. An `ambiguous` status carries EVERY candidate.
+	// being unreachable, reported rather than silently dropped. An `ambiguous` status carries every candidate.
 	authoritative: z
 		.object({
 			provider: z.string(),

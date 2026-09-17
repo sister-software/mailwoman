@@ -7,7 +7,7 @@
  *   cleanup path, then `VACUUM` → seal → atomic swap.
  *
  *   THE INGEST AND THE FINISH PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does
- *   not need them separated. The batched path DOES: its children open the same file, so the parent's handle
+ *   not need them separated. The batched path does: its children open the same file, so the parent's handle
  *   has to be closed across them, and a single shared handle silently becomes a closed one by the time the
  *   finish phase runs. Doing it one way in both paths is what puts the fixture suites on the same sequence a
  *   national build takes.
@@ -29,17 +29,17 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	 */
 	createTables: (database: DatabaseClient<DB>) => Promise<void>
 	/**
-	 * The in-process ingest, run under the FIRST handle. Return `undefined` to defer to {@link batched}; any writes made
+	 * The in-process ingest, run under the first handle. Return `undefined` to defer to {@link batched}; any writes made
 	 * before deferring (attribute preloads) are kept.
 	 */
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | undefined>
 	/**
-	 * The bounded child-process ingest, run while the parent holds NO handle. Each child opens the temp file and appends;
+	 * The bounded child-process ingest, run while the parent holds no handle. Each child opens the temp file and appends;
 	 * chunks run one at a time, so there is exactly one writer at every instant.
 	 */
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
-	 * Post-ingest work under the SECOND handle: assertions over what was streamed, index/coverage/manifest writes,
+	 * Post-ingest work under the second handle: assertions over what was streamed, index/coverage/manifest writes,
 	 * dropping any scratch table. `VACUUM`, the seal and the swap follow; the artifact's on-disk size is measurable only
 	 * after this returns and the swap lands.
 	 */

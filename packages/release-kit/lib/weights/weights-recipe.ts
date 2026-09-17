@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the ONE reader of
+ *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the one reader of
  *   the dev/release weights recipe.
  *
  *   This file exists because the recipe had three homes. `release.config.json` names the artifacts and
@@ -48,7 +48,7 @@ export interface LinkableArtifact {
  * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
  * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`. A consumer that treated either as linkable
  * would place a database where the resolver expects a binary — and since every sibling degrades `existsSync →
- * undefined`, the resolver would then report the artifact ABSENT rather than wrong, which is the harder failure to
+ * undefined`, the resolver would then report the artifact as missing rather than wrong, which is the harder failure to
  * see.
  */
 export interface BuildableArtifact {
@@ -127,7 +127,7 @@ export async function readWeightsRecipe(
 
 		// The FSTs are DEV-ONLY: `release.config.json` does not name them and `copy-weights.ts` does not ship
 		// them, so they exist in a weights directory only because a dev linker put them there. Their absence is
-		// therefore not a lean install — it silently resolves the gazetteer and street-context priors OFF, which
+		// therefore not a lean install — it silently resolves the gazetteer and street-context priors off, which
 		// is a scoring change with no error. Named here so one reader knows the whole dev set.
 		out.push(
 			{

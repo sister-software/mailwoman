@@ -7,7 +7,7 @@
  *   straight against the layer schema (`poi` + `poi_category_codes` + the `poi_search` FTS5 table): 3
  *   cafes at increasing distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
  *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
- *   ring budget, including the ONLY `museum`-category rows in the fixture), and one uncategorized
+ *   ring budget, including the only `museum`-category rows in the fixture), and one uncategorized
  *   named row ("Pier 39") for the FTS name path. All twelve rows land in the FINAL `poi` table via
  *   typed Kysely inserts — not the `poi_stage` mirror, which is the builder's concern, not the
  *   reader's.
@@ -56,7 +56,7 @@ interface FixtureRow {
 
 const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3, supermarket: 4, trail: 5 }
 
-// A SPARSE-category instance placed at EXACTLY gridDistance 13 from the Springfield origin cell — the nm-04 boundary. A
+// A sparse-category instance placed at exactly gridDistance 13 from the Springfield origin cell — the nm-04 boundary. A
 // res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings` rings covers gridDistance ≤
 // `maxRings - 1`; so this cell first appears at maxRings 14 and is MISSED by the old 12-ring default (covers ≤ 11). The
 // coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded — same discipline as `cellFor`. This
@@ -119,7 +119,7 @@ const MCDONALDS_CHICAGO: FixtureRow = {
 }
 
 // Costco (Q715583): one near Springfield, one ~2,800 km away in San Francisco. The SF one is past the 500 km sanity
-// radius, so a Costco brand search from Springfield returns ONLY the near one.
+// radius, so a Costco brand search from Springfield returns only the near one.
 const COSTCO_NEAR: FixtureRow = {
 	name: "Costco Springfield",
 	category: "supermarket",
@@ -137,7 +137,7 @@ const COSTCO_FAR: FixtureRow = {
 }
 
 // 7 rows ~280 km away in Chicago — a distinct res-9 cell, well outside the default ~4 km ring budget.
-// Includes the fixture's ONLY `museum` rows, so a museum search from Springfield must come back empty.
+// Includes the fixture's only `museum` rows, so a museum search from Springfield must come back empty.
 const CHICAGO_ROWS: FixtureRow[] = [
 	{ name: "Windy City Cafe", category: "cafe", brandWikidata: null, latitude: 41.8781, longitude: -87.6298 },
 	{ name: "Loop Cafe", category: "cafe", brandWikidata: null, latitude: 41.88, longitude: -87.63 },
@@ -212,7 +212,7 @@ async function buildFixture(path: string): Promise<void> {
 		kdb.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
 	}
 
-	// Index-after-load: builders create the name_key + brand_wikidata indexes AFTER the bulk materialize.
+	// Index-after-load: builders create the name_key + brand_wikidata indexes after the bulk materialize.
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
 }
@@ -253,7 +253,7 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-		// Both Q38076 rows surface: the near Springfield one AND the ~280 km Chicago one — the brand path is a
+		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one — the brand path is a
 		// brand-wide fetch, not a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
 		expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
 		expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
@@ -326,7 +326,7 @@ describe("POILookup", () => {
 		using lk = new POILookup({ databasePath: dbPath })
 
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
-		// The OLD 12-ring budget (covers gridDistance ≤ 11) does NOT — this is the exact boundary miss nm-04 exposed.
+		// The old 12-ring budget (covers gridDistance ≤ 11) does not — this is the exact boundary miss nm-04 exposed.
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
 		// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
 		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])

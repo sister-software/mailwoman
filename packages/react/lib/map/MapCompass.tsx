@@ -18,7 +18,7 @@
  *   a snap-to-north lands a fraction off zero, and a compass that lingers over that fraction never goes away.
  *
  *   Under `prefers-reduced-motion` it appears and disappears with no transition, and the dial still rotates —
- *   rotation IS the information, not decoration.
+ *   rotation is the information, not decoration.
  *
  *   NODE-SAFE: pure React, no maplibre. The host reads the bearing off its own map and passes it in.
  */

@@ -6,7 +6,7 @@
  *   `<AppIdentity>` — the left half of the footer strip: the app's name, a link to the documentation, and the commit
  *   the build was made from.
  *
- *   ONE home for all three sites. Earth, Moon and Mars mount the same `<MapFooter>` and differ only in a display name
+ *   One home for all three sites. Earth, Moon and Mars mount the same `<MapFooter>` and differ only in a display name
  *   and their credits, so a commit link written into any one of them would be a copy the other two either lack or
  *   grow separately.
  *

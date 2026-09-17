@@ -18,7 +18,7 @@
  *   `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`. The spin made it worse: 1000 tight
  *   `setImmediate` turns compete with the very I/O they are waiting for.
  *
- *   The budget is real elapsed time now, measured with `performance.now()`. NOT `Date.now()` —
+ *   The budget is real elapsed time now, measured with `performance.now()`, not `Date.now()` —
  *   consumers run under `vi.useFakeTimers({ toFake: ["Date"] })`, which freezes `Date` but leaves
  *   `performance` and `setTimeout` real, so a Date-based budget would never expire and the guard
  *   would hang exactly where it is supposed to report.

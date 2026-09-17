@@ -5,7 +5,7 @@
  *
  * The critical properties: the LONG leading form ("united states of america") paints every word as an UNAMBIGUOUS
  * country surface (the whole point — this is the WOF-admin case the tagger reads as a street); homographs ("georgia",
- * "CA") fire `country_surface` AND `country_ambiguous` symmetrically (the model disambiguates via context); short codes
+ * "CA") fire `country_surface` and `country_ambiguous` symmetrically (the model disambiguates via context); short codes
  * match uppercase-only ("us" the word ≠ "US"); and the char→piece projection mirrors the anchor's first-non-ws rule.
  */
 

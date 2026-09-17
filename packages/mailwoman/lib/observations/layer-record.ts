@@ -35,7 +35,7 @@ export interface ObservationLayerRecord {
  * The coverage side of a designation, flattened for a marker's evidence.
  *
  * `basis` travels as a plain string because a marker's evidence is JSON a caller reads rather than a typed value it
- * branches on — but it is NEVER omitted: `completeness` alone is a magnitude, and the whole point of the contract's
+ * branches on — but it is never omitted: `completeness` alone is a magnitude, and the whole point of the contract's
  * `basis` column is that a magnitude cannot be acted on without it.
  */
 export interface ObservationCoverageRecord {

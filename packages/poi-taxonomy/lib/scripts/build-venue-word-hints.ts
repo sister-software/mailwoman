@@ -24,9 +24,9 @@
  *     sits in the measured gap.
  *
  *   Measured at these bars: 2,249 tokens (food 997, retail 904, civic 187, health 52, lodging 48,
- *   transit 45, burial 16), ZERO of the falsifier's street-fork false positives ('augusta',
+ *   transit 45, burial 16), zero of the falsifier's street-fork false positives ('augusta',
  *   'catherine', 'savile', …) and none of the toponym family ('paris', 'mexico'). `comer` — the
- *   torture entry that motivated the survey — does NOT pass: its category mass splits across
+ *   torture entry that motivated the survey — does not pass: its category mass splits across
  *   food/retail/other (top class share 0.46), which is exactly the composed-measure honesty the
  *   trained-channel design needs; it stays with that deferred change, not in this table.
  *

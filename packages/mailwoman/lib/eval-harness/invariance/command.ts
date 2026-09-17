@@ -20,7 +20,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	 */
 	maxDegraded?: number
 	/**
-	 * `--baseline` regression mode (probe-grading shape, e.g. v385): a baseline candidate ONNX graded on the SAME suite.
+	 * `--baseline` regression mode (probe-grading shape, e.g. v385): a baseline candidate ONNX graded on the same suite.
 	 * Requires `baselineTokenizer` + `baselineModelCard`, or pass `baselineWeightsCache` instead for a package-shaped
 	 * dir.
 	 */

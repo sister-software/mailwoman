@@ -17,7 +17,7 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale a BAN extract was built with. FR-only: BAN is the
  * French national register. Adding a country here means shipping that country's national register on the shared schema
- * AND having a matching branch in `normalizeStreetForKeyLocale` — never a silent fold with the wrong rules.
+ * and having a matching branch in `normalizeStreetForKeyLocale` — never a silent fold with the wrong rules.
  */
 const BAN_COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([["fr", "fr"]])
 

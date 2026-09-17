@@ -20,7 +20,7 @@
  *   and a street with a comma or more than eight words is skipped as a line rather than a name. A comma in `addr:city`
  *   is the neighborhood ahead of the city (`Mirpur 10, Dhaka` in Bangladesh): the last comma-separated part is the
  *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
- *   `place`. `addr:district` is NOT mapped on its
+ *   `place`. `addr:district` is not mapped on its
  *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
  *   so a mapped district with a city would be a component with no span to align to and the row would quarantine.
  *

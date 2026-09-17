@@ -14,16 +14,16 @@
  *
  *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
  *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families
- *       feed train/val/test(indist); HELDOUT families go ONLY to the dedicated test file.
+ *       feed train/val/test(indist); HELDOUT families go only to the dedicated test file.
  *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align; assemble to the SAME format the in-map rows use (build-outlier-latin's
+ *       schemas align; assemble to the same format the in-map rows use (build-outlier-latin's
  *       assemble).
- *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so OTHER isn't
+ *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so `OTHER` isn't
  *       "mostly Polish".
  *   - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
  *
- *   Run AFTER build-dataset + the exposure outliers (it APPENDS). Re-runnable: rewrites the
- *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
+ *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: rewrites the
+ *   dedicated test file and appends fresh `OTHER` rows — rebuild train/val before re-running.
  *
  *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
  *   6000]`
@@ -60,7 +60,7 @@ export interface BuildOutlierOAOptions {
 	 */
 	perCountry?: number
 	/**
-	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `OTHER` rows append to. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -77,7 +77,7 @@ export interface BuildOutlierOAResult {
 }
 
 /**
- * The in-map countries the coarse-placer routes to — never appear in OTHER.
+ * The in-map countries the coarse-placer routes to — never appear in `OTHER`.
  */
 const IN_MAP = new Set<string>(COUNTRIES)
 
@@ -102,7 +102,7 @@ const FAMILIES: Record<string, string[]> = {
 }
 
 /**
- * Leave-one-language-FAMILY-out probe (DeepSeek): hold out WHOLE families the model never sees a row from — Baltic
+ * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row from — Baltic
  * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])

@@ -13,12 +13,12 @@ Measured over a 1,486,679-row sample (12 of the row groups): street ends in 巷 
 (``三樓`` … ``七樓``) or a floor plus sub-number in the rest. No row carries a postcode (Chunghwa Post's 3+3 codes
 carry no distribution grant, so none is built here either).
 
-Labels, under the ``stage3-cjk`` head with NO new tag, mirroring the Korean choice of one tag per WOF placetype:
+Labels, under the ``stage3-cjk`` head with no new tag, mirroring the Korean choice of one tag per WOF placetype:
 
     縣市      → region              (WOF ``region``, 22 of 22 keyed)
     鄉鎮市區  → subregion           (WOF ``county`` for 234 of them, ``localadmin`` for 111 — the resolver ladder reads both)
     村里      → dependent_locality
-    street    → street              (路 / 段 / 巷 / 弄 stay INSIDE the span: they are the street's own name)
+    street    → street              (路 / 段 / 巷 / 弄 stay inside the span: they are the street's own name)
     number + 之N sub-number → house_number, with the 號 designator inside the span (``298之1號``)
     floor     → unit                (``四樓``, ``四樓之2``)
 

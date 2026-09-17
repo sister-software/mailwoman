@@ -1,5 +1,5 @@
 # === v8-cjk-kr — v8-cjk-kana plus the Korean source (the KR spec §5), 24,000 steps. =================================#
-# ONE change against v8-cjk-kana (the CJK base, 0.9924 blended / 0.9821 municipality macro on the JP board): the corpus
+# One change against v8-cjk-kana (the CJK base, 0.9924 blended / 0.9821 municipality macro on the JP board): the corpus
 # is `v8-cjk-kr-2026-09-06`, the same JP + CN parts plus the Korean road-name-address corpus `v8-kr-2026-09-06`
 # (2,000,000 train / 20,000 val / 20,000 board rows over 27 held-out 시군구, five registers, `juso-kr`; KOGL Type 1,
 # attribution 행정안전부) at source share 0.38, and the vocabulary re-sealed over the union (2,239 JP + 842 KR
@@ -15,7 +15,7 @@
 #   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, the same scorer): blended ≥ 0.9924 − 0.005 and municipality
 #     macro ≥ 0.9821 − 0.005 — the KR rows must not cost JP; `かすみがうら市` failed rows ≤ 5 and `中新川郡上市町` beside it.
 #   * CN board: `locality_unit` ≥ 11 of 14.
-#   * Score BOTH arms (this run and v8-cjk-kana) on the same scorer in the same session; a scorer patch between two
+#   * Score both arms (this run and v8-cjk-kana) on the same scorer in the same session; a scorer patch between two
 #     reads is a comparison of scorers.
 #
 # Launch (after the probe clears its bar):
@@ -40,7 +40,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11 + KR val 20,000.
   val_rows: 40011
-  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-kr-2026-09-06/char-vocab-cjk.json

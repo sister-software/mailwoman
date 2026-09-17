@@ -16,14 +16,14 @@
  *        first use, which is a worse failure mode than failing at construction.
  *     2. The 10 req/s ceiling, expressed as {@linkcode APIClientConfig.minRequestIntervalMs} and
  *        clamped regardless of a caller-supplied rate, so a misconfigured caller cannot push past the
- *        policy limit. NOT a token bucket: capacity C admits `C + rate * 1s` inside a sliding second,
- *        so no non-zero capacity honors a FLAT cap — see `core/api/pacer.ts`.
+ *        policy limit. Not a token bucket: capacity C admits `C + rate * 1s` inside a sliding second,
+ *        so no non-zero capacity honors a flat cap — see `core/api/pacer.ts`.
  *     3. The immutable-archive-vs-TTL cache rule — see {@linkcode isImmutableArchiveURL}.
  *     4. A host allowlist, https-only. This is the designated SEC client; it refuses to send the
  *        configured UA (a real contact address) to an arbitrary caller-supplied host, or in cleartext.
  *     5. The 403 explanation. A bare 403 from sec.gov means "you didn't identify yourself":
  *        reproduced by hitting the same URL with and without a compliant UA — no UA is a 403, a
- *        descriptive one is a 200. It does NOT mean the resource is missing or that this client/IP is
+ *        descriptive one is a 200. It does not mean the resource is missing or that this client/IP is
  *        blocked, and retrying it would only burn the 10 req/s budget, so 403 is non-retryable
  *        (`core/api/retry.ts`) and the thrown error says all of this explicitly. This project already
  *        lost a debugging cycle to a generic "403 Forbidden" on an FCC endpoint.
@@ -36,7 +36,7 @@
  *   retry policy, same {@linkcode ResourceError} mapping — the only difference is a per-request `responseType:
  *   "text"` override, which makes Axios return the body as-is rather than attempt `JSON.parse`. The on-disk
  *   cache is keyed by URL alone (method/URL/params/body — never `responseType`), so a document fetched once
- *   is served from the SAME cache entry on a later `getDocument` call for that URL; `get`/`getDocument` are
+ *   is served from the same cache entry on a later `getDocument` call for that URL; `get`/`getDocument` are
  *   never called against the same URL in practice (JSON endpoints vs. `/Archives/` documents are disjoint
  *   host paths), so this sharing is never observed to disagree. The cache's `validate` predicate (below) was
  *   widened to admit a non-empty STRING body alongside the existing non-null-object rule, so a document isn't
@@ -150,7 +150,7 @@ const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
 /**
  * EDGAR archive documents (10-Ks, Exhibit 21 subsidiary lists, and every other filing exhibit) live at a path of this
  * shape once submitted, e.g. `https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/aapl-20230930.htm`. SEC
- * does not revise a filed document in place — a correction is a NEW filing at a new path — so a document fetched today
+ * does not revise a filed document in place — a correction is a new filing at a new path — so a document fetched today
  * reads identically a year from now. Caching these effectively forever is the correct, deliberate choice: it saves a
  * network round-trip (and rate-limit budget) on every re-run with zero staleness risk.
  *
@@ -171,8 +171,8 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * point it (or in cleartext) would leak it outside SEC's fair-access program for no benefit.
  *
  * `sec.gov` (the apex) and `efts.sec.gov` (EDGAR full-text search — the Exhibit 21 discovery path) are included
- * alongside the two hosts decision 5 names. Matching is EXACT (a `Set` lookup on `url.hostname`), not a suffix check —
- * `www.sec.gov.attacker.example` must NOT match, and an `.endsWith(".sec.gov")`-style check would let it through.
+ * alongside the two hosts decision 5 names. Matching is exact (a `Set` lookup on `url.hostname`), not a suffix check —
+ * `www.sec.gov.attacker.example` must not match, and an `.endsWith(".sec.gov")`-style check would let it through.
  * `url.hostname` (from the WHATWG URL parser) already lower-cases, strips userinfo, and percent/punycode-decodes, so
  * those bypasses need no extra handling.
  */
@@ -231,7 +231,7 @@ export interface CreateSECClientOptions {
 	maxAttempts?: number
 	/**
 	 * Base delay for the exponential backoff between retry attempts, in milliseconds. Attempt `n`'s wait is
-	 * `baseRetryDelayMs * 2^(n-1)`, UNLESS the response carried a `Retry-After` header, which is honored instead.
+	 * `baseRetryDelayMs * 2^(n-1)`, unless the response carried a `Retry-After` header, which is honored instead.
 	 */
 	baseRetryDelayMs?: number
 	/**
@@ -363,7 +363,7 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
 }
 
 /**
- * The cache's `validate` predicate — decides whether a response body is worth persisting at all, BEFORE it reaches
+ * The cache's `validate` predicate — decides whether a response body is worth persisting at all, before it reaches
  * disk. Two shapes are worth caching, and the SAME EDGAR host serves both depending on the endpoint:
  *
  * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`). Axios already
@@ -372,7 +372,7 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *   than what it claimed.
  * - A non-empty string (every `getDocument` call — a filing document is HTML/text, never JSON): admits the body
  *   `getDocument`'s `responseType: "text"` override actually produces. A `typeof === "object"` test alone would reject
- *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on THIS shape —
+ *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on this shape —
  *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the only
  *   check standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
  *   self-healing path short of hand-deleting a hash-named file.
@@ -392,7 +392,7 @@ function isCacheableSECBody(value: { data?: { data?: unknown } }): boolean {
 /**
  * Create a SEC EDGAR HTTP client. See the file header for the full rationale.
  *
- * Throws immediately, before any request is made, when constructed without an explicit `userAgent` AND without
+ * Throws immediately, before any request is made, when constructed without an explicit `userAgent` and without
  * `SEC_EDGAR_USER_AGENT` set.
  */
 export function createSECClient(options: CreateSECClientOptions = {}): SECClient {
@@ -427,7 +427,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 		caching: {
 			storage: buildDiskStorage({
 				directory: options.cacheDir ?? dataRootPath("sec", "cache"),
-				// Validate BEFORE writing — see isCacheableSECBody's own docstring for the JSON-object-or-
+				// Validate before writing — see isCacheableSECBody's own docstring for the JSON-object-or-
 				// non-empty-string rule. A JSON-object-only rule would reject getDocument's text bodies.
 				validate: isCacheableSECBody,
 			}),

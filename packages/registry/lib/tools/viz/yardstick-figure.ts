@@ -5,12 +5,12 @@
  *
  *   The yardstick figure — "the dedup F1 climbs as the entity-truth gets honest."
  *
- *   The #625 finding, made visual: the matcher's MEASURED dedup quality depends almost entirely on
- *   which ruler you grade it against, not on the model. NPI-as-truth OVER-SEGMENTS (one org holds
+ *   The #625 finding, made visual: the matcher's measured dedup quality depends almost entirely on
+ *   which ruler you grade it against, not on the model. NPI-as-truth over-segments (one org holds
  *   many NPIs), so the matcher's correct co-located same-org merges are scored as errors. Grade the
- *   IDENTICAL clusters against a gold-set-validated org-name truth and the F1 climbs — the ruler
+ *   identical clusters against a gold-set-validated org-name truth and the F1 climbs — the ruler
  *   ceasing to charge for correct merges, not the model changing — peaking when the ruler keys on
- *   the geocoded BUILDING (the geocode-first coordinate) rather than the address string (+14.5pp
+ *   the geocoded building (the geocode-first coordinate) rather than the address string (+14.5pp
  *   NPI → coord).
  *
  *   A slope chart over four rulers (NPI → site → org-name → org-name-coord) for the shipped GBT

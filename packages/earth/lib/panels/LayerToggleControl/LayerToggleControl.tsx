@@ -37,7 +37,7 @@ const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }> = [
 	{ name: "TIGER (tracts)", match: /^tiger-tracts/ },
 	{ name: "TIGER (blocks)", match: /^tiger-blocks/ },
 	// Address-coverage fog overlay (#coverage). Two separate groups so each fog reading gets its own
-	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR the measured fraction.
+	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) or the measured fraction.
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · measured fog", match: /^coverage-honest/ },
 	// Race-by-dot-density overlay (#race-dots). Per-category default-off layers → one checkbox each, so
@@ -73,7 +73,7 @@ function readGroups(map: MapInstance): LayerGroup[] {
 
 		bucket.layerIDs.push(layer.id)
 
-		// A group reads visible when ANY of its layers is: the per-layer default is "visible", stated only when a
+		// A group reads visible when any of its layers is: the per-layer default is "visible", stated only when a
 		// layer opts out.
 		if ((layer.layout && "visibility" in layer.layout ? layer.layout.visibility : "visible") !== "none") {
 			bucket.visible = true

@@ -48,7 +48,7 @@ export interface DecodedPlusCode {
 }
 
 /**
- * A syntactically-valid FULL plus code: exactly 8 digits, `+`, then 2 or 3 digits. (The spec allows padded and longer
+ * A syntactically-valid full plus code: exactly 8 digits, `+`, then 2 or 3 digits. (The spec allows padded and longer
  * forms; addresses carry the 10–11 digit register, which is all this reader accepts.)
  */
 export function isFullPlusCode(token: string): boolean {
@@ -64,7 +64,7 @@ export function isShortPlusCode(token: string): boolean {
 }
 
 /**
- * Decode a FULL plus code to its cell. Returns null on anything `isFullPlusCode` rejects.
+ * Decode a full plus code to its cell. Returns null on anything `isFullPlusCode` rejects.
  */
 export function decodePlusCode(code: string): DecodedPlusCode | null {
 	if (!isFullPlusCode(code)) return null

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `intersection` recipe — the REAL-pair intersection training recipe (#487). The model scored
- *   0.0 on intersection_a/b because the training mix had ZERO intersection-labeled rows. This is
+ *   0.0 on intersection_a/b because the training mix had zero intersection-labeled rows. This is
  *   the missing data. Ported from the root build script it replaced.
  *
  *   STREET PAIRS ARE REAL: the same TIGER 2023 EDGES extraction as the eval builder
@@ -15,9 +15,9 @@
  *   LEAKAGE POLICY (mirrors the affix recipe's VT discipline):
  *
  *   - TRAIN counties: Cook IL (grid city) + Morris NJ (suburb).
- *   - GOLDEN (`--golden`) county: Washington VT (rural) ONLY — the corpus defaultHoldout state.
- *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from BOTH modes, by node
- *       id AND by order-insensitive name pair (the eval shares all three counties).
+ *   - GOLDEN (`--golden`) county: Washington VT (rural) only — the corpus defaultHoldout state.
+ *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes, by node
+ *       id and by order-insensitive name pair (the eval shares all three counties).
  *
  *   RENDERING: junction-format variety — padded/TIGHT `&` and `/`, `and`, `at`, `@`, leading-phrase
  *   `corner of` / `intersection of` — crossed with tails (bare / `, ST` / `, ST ZIP` / `, City, ST
@@ -25,7 +25,7 @@
  *   tail comes from the OA Cook-county ZIP→city majority map.
  *
  *   AUDIT: every emitted row is label-checked on the RAW SURFACE via the #519 char-offset span
- *   triple. Any violation FAILS the build (throws). A JSON audit report lands next to the output.
+ *   triple. Any violation fails the build (throws). A JSON audit report lands next to the output.
  *
  *   External inputs (`--edges-dir`, opts.edgesDir; both already on disk — do not re-download):
  *

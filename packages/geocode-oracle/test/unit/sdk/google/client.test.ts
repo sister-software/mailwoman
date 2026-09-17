@@ -26,7 +26,7 @@ import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
-// real `.env` once at module load — which on this machine DOES carry a `GOOGLE_MAPS_API_KEY`. A
+// real `.env` once at module load — which on this machine does carry a `GOOGLE_MAPS_API_KEY`. A
 // `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
 // test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
 // anything. (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
@@ -37,7 +37,7 @@ vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./google-client.ts` may already
-// sit in the worker's cache — evaluated WITHOUT this file's env mock by an earlier file. Reset on the
+// sit in the worker's cache — evaluated without this file's env mock by an earlier file. Reset on the
 // way in so the chain re-evaluates against the mock, and on the way out so the next file in this fork
 // does not inherit it.
 vi.resetModules()
@@ -46,7 +46,7 @@ afterAll(() => vi.resetModules())
 const { createGoogleGeocoderClient, geocodeCacheKey, isCacheableGoogleBody } =
 	await import("@mailwoman/geocode-oracle/sdk/google-client")
 
-// Also imported AFTER the reset, so the `ResourceError` this file compares against is the same class
+// Also imported after the reset, so the `ResourceError` this file compares against is the same class
 // identity the client under test throws — a `vi.resetModules()` mints a fresh module registry, and a
 // statically-imported class from the old one would fail every `toBeInstanceOf`.
 const { isTransientResourceError } = await import("@mailwoman/core/api")

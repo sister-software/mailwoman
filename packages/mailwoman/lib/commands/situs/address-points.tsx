@@ -19,7 +19,7 @@
  *   parquet carries one row placed in Alaska, and a mis-keyed source point served as a rooftop is the
  *   highest-confidence wrong answer the pipeline can give.
  *
- *   Keying uses THE shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
+ *   Keying uses the shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
  *   function the lookup tier applies at query time. Provenance per row (epic #470 rules): source
  *   dataset + release pinned in-table.
  *
@@ -29,7 +29,7 @@
  *   county-scoped gold comparable to a county-scoped segment table.
  *
  *   Alternate source: --oa-csv builds from OpenAddresses conformed CSV(s) instead of the Overture
- *   parquet, for states Overture's US addresses theme does NOT carry (HI, NH).
+ *   parquet, for states Overture's US addresses theme does not carry (HI, NH).
  *
  *   Maintainer-only: needs the local parquet/CSV inputs + the @duckdb/node-api dev dep + the optional
  * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr;
@@ -232,7 +232,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		// Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS drop).
+		// Provenance accounting: per-dataset counts across all rows returned by DuckDB (pre-JS drop).
 		// When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects the
 		// kept set. `totalReturned` feeds the kept-vs-dropped summary below.
 		const datasetCounts = new Map<string, number>()
@@ -410,7 +410,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			tier: LayerTier.BuildLocal,
 			// The manifest admits only an SPDX expression the obligations table knows. The US build records Overture's
 			// theme license; which source datasets it kept is the attribution beside it, since a database built with a
-			// different allow-list carries different per-dataset terms. A national build records the theme license AND
+			// different allow-list carries different per-dataset terms. A national build records the theme license and
 			// the register's own.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",
 			attribution: `Overture addresses (${(allowedDatasets.size ? [...allowedDatasets] : sortedDatasets.map(([dataset]) => dataset)).toSorted().join(", ")})`,

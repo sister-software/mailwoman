@@ -14,7 +14,7 @@
  *
  *   - **`postalcode-intl.db`** carries a real `parent_id` that resolves in the admin gazetteer. Measured share of rows
  *     with a parent: NL 97.5%, FR 90.7%, DE 66.1%, ES 34.9%, IT 27.4%; of those, 93.8–100% land on a `locality` or
- *     `localadmin`, and the region comes from that place's own ancestry. It is the ONLY postcode database with this —
+ *     `localadmin`, and the region comes from that place's own ancestry. It is the only postcode database with this —
  *     every
  *     `postalcode-geonames-*` and `postalcode-<cc>-overture.db` row reads `parent_id = 0`.
  *   - **GeoNames postal exports** carry the place and admin1 NAMES in columns 3 and 4, so there is nothing to join.
@@ -63,7 +63,7 @@ export interface PostcodeTriple {
 	postcode: string
 	/**
 	 * The segment before the locality, when the source has one. A recipe output whose every row begins with the locality
-	 * teaches that the first named segment IS the locality, and that flips the model's default. Measured on the v4.8.0
+	 * teaches that the first named segment is the locality, and that flips the model's default. Measured on the v4.8.0
 	 * candidate, which had no such segment — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye
 	 * Three Lords"` with the venue and the street both gone, and 11 of its 25 regressions were venue-led rows across
 	 * seven countries.
@@ -125,7 +125,7 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	// placement is what makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows, and `AGENTS.md` says the same
-	// ("en-IN is absent BECAUSE the PIN goes last"). The one trailing placement with real data behind it.
+	// ("en-IN is absent because the PIN goes last"). The one trailing placement with real data behind it.
 	["IN", { placement: "after_region", locale: "en-IN" }],
 	// `Washington, DC 20003` — the #2303 class, and the same placement as IN. Attested by the four
 	// `us_city_state_postcode` board rows, which is the bar this table sets; the US had no entry here at all, so no
@@ -172,7 +172,7 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
  * Take at most `budget` tuples per COUNTRY, in the order they arrive.
  *
  * A per-locality quota bounds how often one place repeats; it cannot bound a country. IN has 128,152 distinct
- * localities, so even at a quota of ONE it contributes 63,533 rows against 39,790 from the other seven combined — the
+ * localities, so even at a quota of one it contributes 63,533 rows against 39,790 from the other seven combined — the
  * recipe would teach the trailing surface as an Indian fact rather than a general one, and at 103,323 rows it would
  * take 30% of an 8,000-step run's sample budget at three reps per row.
  *
@@ -254,12 +254,12 @@ interface PreferredNames {
  * `spr.name` is the English-preferred, diacritic-stripped label, and reading it alone is the defect #1673 measured:
  * 53,078 ES rows teaching `Balearic Islands` (2,872 `Andalusia`, 5,680 `Castile and Leon`) against 4 rows of `Illes
  * Balears`, and every province with its accent gone (`Cordoba`, `Leon`). A Spanish user writes `Islas Baleares` or
- * `Illes Balears`; the exonym stays as ONE surface among them because a user may write it too.
+ * `Illes Balears`; the exonym stays as one surface among them because a user may write it too.
  *
- * A {@link BILINGUAL_JOINED} `spr.name` yields BOTH halves. Nine regions carry one — `New Brunswick /
+ * A {@link BILINGUAL_JOINED} `spr.name` yields both halves. Nine regions carry one — `New Brunswick /
  * Nouveau-Brunswick`, `Koper / Capodistria`, `Naannoo Hararii / ሐረሪ ሕዝብ ክልል` — and the joined string is a label the
  * gazetteer composes rather than a name an address is written in, so taking it whole attests a surface nobody writes
- * AND withholds the two that everybody does.
+ * and withholds the two that everybody does.
  */
 export function regionWrittenForms(sprName: string, names: PreferredNames): string[] {
 	const out: string[] = []
@@ -305,7 +305,7 @@ export function localityWrittenForm(sprName: string, names: PreferredNames): str
  * Read triples out of `postalcode-intl.db` by following each postcode's `parent_id` into the admin gazetteer and that
  * place's ancestry to a region.
  *
- * A postcode whose parent does not resolve, or whose parent has no region ancestor, is DROPPED rather than emitted with
+ * A postcode whose parent does not resolve, or whose parent has no region ancestor, is dropped rather than emitted with
  * a blank — the recipe already skips a tuple with no region, and a blank here would hide how much of the source is
  * actually reachable.
  *
@@ -464,7 +464,7 @@ export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
  * reader yields a single CA tuple, so `trailing-region`'s Canadian region-code surface has never had one to act on.
  *
  * The admin gazetteer answers the pair without a postcode — 12,995 CA localities carry a region ancestor — and the
- * recipe's BARE form needs no postcode. That form is what the failure reads on: `St. John's, NL, Canada` answers
+ * recipe's bare form needs no postcode. That form is what the failure reads on: `St. John's, NL, Canada` answers
  * `country: NL` (the Netherlands) with `Canada` dropped, because `NL` is a curated country surface form and no row
  * attests it as a region.
  *
@@ -581,15 +581,15 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  * | ID         | 81,058    | **0%** | 0%     | NO — no region either           |
  * | ZA         | 3,920     | **0%** | —      | NO                              |
  *
- * A country in the NO rows yields zero from this reader, and that is the correct outcome rather than a gap to route
- * around: taking column 3 as the locality is what made the v4.8.0 recipe output train `Mahatma Gandhi Road` as a city.
- * If one of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
+ * A country whose row above reads `NO` yields zero from this reader, and that is the correct outcome rather than a gap
+ * to route around: taking column 3 as the locality is what made the v4.8.0 recipe output train `Mahatma Gandhi Road` as
+ * a city. If one of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
  *
  * NOT PUBLISHED AT ALL by GeoNames, checked the same day: VE, VN, NP, MM, KH. Those are acquisition questions, and for
  * VE specifically OpenAddresses 404s too — see the arc retrospective.
  *
  * Three source properties a caller cannot see from a row count, all handled here. Hyphen-format countries publish each
- * code TWICE (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
+ * code twice (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
  * is dropped. Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields nothing
  * this recipe can use, so those rows are dropped rather than emitted with a blank region. And the "place name" is often
  * a SUB-locality, which {@link createKnownLocalityCheck} filters.
@@ -623,7 +623,7 @@ export async function readTriplesFromGeonames(
 		if (!postcode || !locality || !region) continue
 
 		// The check applies to the LOCALITY, not to the other column — which for PT/MX/IN is expected to be a street or a
-		// colonia and is emitted as the dependent locality rather than dropped. A US county is NOT emitted as a dependent
+		// colonia and is emitted as the dependent locality rather than dropped. A US county is not emitted as a dependent
 		// locality: it is an administrative tier the address line does not write, and teaching it as one would attest a
 		// segment nobody types.
 		if (!isKnownLocality(locality)) continue

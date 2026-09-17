@@ -6,8 +6,8 @@
  *   Capability-manifest generator (#718 / #719) — the measurement half of the load-time delta check.
  *
  *   The structural fix for the D2/#719 bug-class (a conventions mask destroying a capability the
- *   model demonstrably HAS): the model card declares, PER TIER × PER address-system × PER tag, the
- *   model's measured per-tag F1 with the conventions mask OFF, plus the mask-ON F1 for any tag a
+ *   model demonstrably has): the model card declares, PER TIER × PER address-system × PER tag, the
+ *   model's measured per-tag F1 with the conventions mask off, plus the mask-on F1 for any tag a
  *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
  *   this `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model
  *   is CERTIFIED to emit — conditional by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
@@ -16,8 +16,8 @@
  *
  *   Tiers (the two SHIP-CONFIGs the model is fed under):
  *
- *   - `server`: anchor + gazetteer channels ON (the production default — what `createScorer` builds).
- *   - `pocket`: anchor ON, gazetteer OFF (the lighter on-device feed; not yet a serving target).
+ *   - `server`: anchor + gazetteer channels on (the production default — what `createScorer` builds).
+ *   - `pocket`: anchor on, gazetteer off (the lighter on-device feed; not yet a serving target).
  *
  *   For each tier × locale × {mask-off, mask-on} we run the model and compute UNFOLDED exact-match
  *   per-tag F1 (same implementation as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
@@ -102,8 +102,8 @@ const TIERS: Record<string, ScorerOverrides> = {
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
 /**
- * The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta check reads, so the ONLY
- * tags that NEED a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
+ * The union of every tag any codex conventions row forbids — the only tags the loader's delta check reads, so the only
+ * tags that need a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
  * next time it's regenerated.
  */
 const FORBIDDEN_TAGS: Set<string> = new Set(
@@ -166,9 +166,9 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			const perTag: Record<string, TagCapability> = {}
 
 			for (const t of TAGS) {
-				// Skip tags the model never emits AND never sees in gold under either mask — a 0/0 F1 is
+				// Skip tags the model never emits and never sees in gold under either mask — a 0/0 F1 is
 				// not a capability claim, just noise. (maskOffF1 0 with the tag genuinely present in gold
-				// IS a real claim and is kept.)
+				// is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }
 
@@ -231,7 +231,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		// SURGICAL insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
 		// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously reordering a
-		// shipped artifact. Instead, append ONE new top-level key, byte-preserving everything else. The
+		// shipped artifact. Instead, append one new top-level key, byte-preserving everything else. The
 		// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
 		// before that final brace, one indent level deep (each block line tab-prefixed).
 		const original = await readLocalTextFile(paths.modelCard)

@@ -5,7 +5,7 @@
 //
 // WHAT THIS MEASURES, AND WHAT IT DOES NOT
 //
-// The French rooftop tier IS the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
+// The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
 // built from BAN, and this panel grades Mailwoman's answer against the same register the answer was
 // looked up in. That is circular, and it is stated on the published page beside every number it
 // touches. What survives the circularity is still worth measuring: whether the pipeline PARSES the

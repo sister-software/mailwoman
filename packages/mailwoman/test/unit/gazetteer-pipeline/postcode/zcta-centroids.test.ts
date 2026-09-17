@@ -190,7 +190,7 @@ describe("fillGeonamesPlaceholders", () => {
 		// Fill 90210 via ZCTA (lat=34.100517).
 		fillPlaceholderCentroids(db, parseZCTACentroids(GAZETTEER_FIXTURE))
 
-		// GeoNames has a different coord for 90210 (lat=34.0736). Must NOT overwrite.
+		// GeoNames has a different coord for 90210 (lat=34.0736). Must not overwrite.
 		fillGeonamesPlaceholders(db, parseGeonamesCentroids(GEONAMES_FIXTURE))
 
 		const r = db

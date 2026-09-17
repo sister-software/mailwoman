@@ -23,7 +23,7 @@
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * Sweep rows lifted VERBATIM. `class` is assigned by the curator; everything else — input, coordinate, tolerance —
+ * Sweep rows lifted verbatim. `class` is assigned by the curator; everything else — input, coordinate, tolerance —
  * comes from the corpus row so the two artifacts cannot disagree.
  */
 export const SWEEP_ROWS: Array<{
@@ -106,7 +106,7 @@ export const SWEEP_ROWS: Array<{
 		note: "PH barangay structure — 'San Antonio' is also a major US city, and the sweep landed 13,532 km away on it.",
 	},
 
-	// fst_out_of_reach — family-C namesake rows whose country NO shipped FST covers. These pin the reach
+	// fst_out_of_reach — family-C namesake rows whose country no shipped FST covers. These pin the reach
 	// limit itself: they cannot discriminate, and reporting them separately is what stops "the arms tied"
 	// from being read as "the change is harmless".
 	{

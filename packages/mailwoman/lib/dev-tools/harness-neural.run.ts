@@ -423,7 +423,7 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 //#region Comparison — case-insensitive superset match
 
 /**
- * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality, case-folded, trimmed)
+ * Pass if every tag in `expected` is present in `actual` and the actual value (string-equality, case-folded, trimmed)
  * contains the expected value. We accept `actual` being a superset because the neural parser may emit extra components
  * the test doesn't pin down (e.g. it labels a country when the test only asserted street).
  */
@@ -433,7 +433,7 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 
 		if (!actualValues || !expectedValues) return false
 
-		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require ALL of the
+		// For multi-value tags (intersection: ["Main St", "Second Ave"]) we require all of the
 		// expected values to appear in actual, order-sensitive.
 		if (expectedValues.length !== actualValues.length) return false
 
@@ -488,7 +488,7 @@ async function runAssertion(
 	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
 	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
-	// neural — one tree, loose semantics: pass if ANY of the expected solutions is matched by
+	// neural — one tree, loose semantics: pass if any of the expected solutions is matched by
 	// the top-1 neural output. This is the natural reading for a single-result parser; the
 	// fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
@@ -719,7 +719,7 @@ async function main(): Promise<void> {
 			ONNXRunner.create(args.modelPath),
 		])
 
-		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
+		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
 		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined

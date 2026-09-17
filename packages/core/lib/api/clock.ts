@@ -10,7 +10,7 @@
  *   clock — a rate-limit test that actually waits 100ms per grant costs 4s for a 40-call fan-out and
  *   is flaky under CI load; the same test against an injected clock is exact and instant.
  *
- *   Deliberately NOT `node:timers/promises`: `core/api` reaches a browser bundle (`docs`'s
+ *   Deliberately not `node:timers/promises`: `core/api` reaches a browser bundle (`docs`'s
  *   `DashboardMap` imports `@mailwoman/cartographer`, which barrels `tiles/api.ts`, which imports
  *   `@mailwoman/core/api`), and webpack 5 refuses to resolve a `node:`-prefixed specifier for the
  *   web target. The global `setTimeout` is available on every runtime this package ships to.

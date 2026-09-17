@@ -1,7 +1,7 @@
 """The 주소DB and the permit registry in the shapes the readers expect, at a size a test can build.
 
 The portal delivers pipe-delimited CP949 text inside a ZIP whose member names are CP949 bytes
-WITHOUT the UTF-8 flag, and CP949 CSVs for the permits. Every one of those is a place a reader can
+without the UTF-8 flag, and CP949 CSVs for the permits. Every one of those is a place a reader can
 be wrong in a way a UTF-8 fixture would never show, so the fixture meets the real encoding rather
 than a convenient one.
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 class CP949MemberInfo(zipfile.ZipInfo):
-    """A member whose name is stored as CP949 bytes WITHOUT the UTF-8 flag, the way the portal writes them. `zipfile`
+    """A member whose name is stored as CP949 bytes without the UTF-8 flag, the way the portal writes them. `zipfile`
     itself always stores a non-ASCII name as UTF-8 with the flag, so a reader test needs this to meet the real shape."""
 
     def _encodeFilenameFlags(self) -> tuple[bytes, int]:  # noqa: N802 — zipfile's own hook name
@@ -73,7 +73,7 @@ def _members(region: JusoRegion) -> tuple[str, str, str]:
 def write_juso_zip(path: Path, regions: list[JusoRegion]) -> None:
     """An edition of the 주소DB in the portal's shape: CP949 members named without the UTF-8 flag.
 
-    The portal ships ONE file per 시도, so entries sharing a 시도 name — several 시군구 of one
+    The portal ships one file per 시도, so entries sharing a 시도 name — several 시군구 of one
     province — are concatenated into that province's member rather than overwriting it.
     """
     road_codes = "\n".join(

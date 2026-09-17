@@ -12,14 +12,14 @@
  *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-ABSENT
  *        negatives (teach O-emission, the precision floor).
  *   2. Homograph CONTRAST pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
- *        Peru, Turkey) rendered BOTH ways: as `country` (foreign-city context) AND as the US
+ *        Peru, Turkey) rendered both ways: as `country` (foreign-city context) and as the US
  *        `region`/`locality` (US-ZIP context). Teaches that the label is CONTEXTUAL, not
  *        positional.
  *   3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country code
  *        (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
  *
  *   `--golden` emits a held-out synthetic val over the VT (US) + Berlin (DE) holdouts. This is a
- *   `generate`-mode recipe that still reads REAL tuples off disk — `--count` bounds the OUTPUT, not
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output, not
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  */
@@ -51,7 +51,7 @@ const COUNTRY_FORM_POOL = (() => {
 })()
 
 /**
- * Negatives: rows with NO country token → teach golden precision.
+ * Negatives: rows with no country token → teach golden precision.
  */
 const COUNTRY_ABSENT_PROB = 0.3
 
@@ -219,8 +219,8 @@ function renderCountry(
 	}
 
 	if (!country) {
-		// Negative: a normal address, NO country token/component. Teaches that a trailing region/city/
-		// postcode is NOT a country (counters the v1 golden over-firing).
+		// Negative: a normal address, no country token/component. Teaches that a trailing region/city/
+		// postcode is not a country (counters the v1 golden over-firing).
 		return { fmt: "negative", raw: body, components }
 	}
 
@@ -240,8 +240,8 @@ function renderCountry(
 }
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
-// True country-name homographs: the surface form is BOTH a country AND a US state/locality. Rendering
-// each BOTH ways (foreign-city → country; US-ZIP → region/locality) is what teaches the CONTEXTUAL
+// True country-name homographs: the surface form is both a country and a US state/locality. Rendering
+// each both ways (foreign-city → country; US-ZIP → region/locality) is what teaches the CONTEXTUAL
 // distinction. role: how the surface reads in US context.
 interface Homograph {
 	surface: string
@@ -289,7 +289,7 @@ const HOMOGRAPHS: readonly Homograph[] = [
 	},
 ]
 
-// 2-letter codes that are BOTH a US state abbrev AND an ISO country code → must read as region in US ctx.
+// 2-letter codes that are both a US state abbrev and an ISO country code → must read as region in US ctx.
 interface AbbrevRegion {
 	code: string
 	localities: readonly string[]

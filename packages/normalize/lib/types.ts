@@ -26,7 +26,7 @@ export type NormalizationTransform =
  * Result of running `normalize()` on a raw input string.
  *
  * `offsetMap[i]` is the index in `raw` from which `normalized[i]` came. For multi-character source sequences (NFC
- * composition, whitespace collapse, abbreviation expansion), each output char points to the FIRST source char by
+ * composition, whitespace collapse, abbreviation expansion), each output char points to the first source char by
  * convention.
  */
 export interface NormalizedInput {

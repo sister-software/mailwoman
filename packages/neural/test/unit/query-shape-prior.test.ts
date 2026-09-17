@@ -130,8 +130,8 @@ describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", ()
 	// The original backward-walk locality bias was retired after the M1 stack ablation attributed the
 	// prior's entire −7.8pp golden-us locality cost to it (venue/org absorption: "DANVILLE HEALTH
 	// CENTER, 26 Cedar Lane, Danville VT" → locality "danville health center"). The gauntlet regression
-	// layer then caught the over-correction: bare "New York, NY" (us-new-york-nyc) NEEDS the bias — the
-	// model alone drops the locality. This scoped rebuild fires ONLY on that bare admin doubleton:
+	// layer then caught the over-correction: bare "New York, NY" (us-new-york-nyc) needs the bias — the
+	// model alone drops the locality. This scoped rebuild fires only on that bare admin doubleton:
 	// no digits, abbreviation last, ≤4 preceding tokens, name ≠ the region's own name.
 	const bLoc = LABELS.indexOf("B-locality")
 	const iLoc = LABELS.indexOf("I-locality")
@@ -249,7 +249,7 @@ describe("addEmissionMatrix", () => {
 
 /**
  * A format the detector produces and this prior has no label for contributes zero bias and raises nothing, so the two
- * lists can disagree for as long as nobody reads a board row that needed the bias. Driving the REAL detector is what
+ * lists can disagree for as long as nobody reads a board row that needed the bias. Driving the real detector is what
  * makes the assertion hold for formats added later: a hardcoded list here would be the second list all over again.
  */
 describe("format coverage", () => {
@@ -265,7 +265,7 @@ describe("format coverage", () => {
 			expect(shape.knownFormats.length).toBeGreaterThan(0)
 
 			for (const hit of shape.knownFormats) {
-				// ONE hit per call. `100 00` produces four, and passing the whole shape lets a mapped sibling
+				// One hit per call. `100 00` produces four, and passing the whole shape lets a mapped sibling
 				// supply the bias an unmapped format did not.
 				const matrix = buildEmissionPriors(
 					{ knownFormats: [hit] },

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The dispatch half of `mwdev_lookup`: which artifact each source resolves, and what it says when that artifact is
- *   not there. Every case here pins the same rule — an absent artifact returns `unavailable_reason` and NO rows, never
+ *   not there. Every case here pins the same rule — an absent artifact returns `unavailable_reason` and no rows, never
  *   a row per query saying "no", which is the shape a genuine absence has.
  */
 

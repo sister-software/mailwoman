@@ -30,10 +30,10 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
  * versions ship no pair indexes at all, and the prior is a soft decode channel, not a required model input.
  *
- * **Phase 2 (#1278): NO load-time country restriction.** Every successfully-fetched index is constructed into a live
+ * **Phase 2 (#1278): no load-time country restriction.** Every successfully-fetched index is constructed into a live
  * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection
  * ({@link resolvePairIndexForText}) chooses among them at decode time from the input text's detected country — a load
- * that serves a US and a GB address in one session needs BOTH resolvers live. (#1300 constructed only the single
+ * that serves a US and a GB address in one session needs both resolvers live. (#1300 constructed only the single
  * matching index; that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them all,
  * and a handful of small pair maps is cheap.)
  */
@@ -65,7 +65,7 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
  * `@mailwoman/locale-hint`'s `detectLocale` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to its
  * country subtag ("gb") via {@link resolvePairIndexCountry}.
  *
- * The detection is bitter-lesson-safe by construction: locale-hint keys ONLY off universal cues (postcode format,
+ * The detection is bitter-lesson-safe by construction: locale-hint keys only off universal cues (postcode format,
  * script class), never place-name dictionaries. So "10 Downing St, London SW1A 2AA" detects `gb` (UK postcode), but a
  * bare "Shoreditch London" — no postcode, Latin script — falls through to locale-hint's `en-US` fallback → `us`. The
  * pair prior is a soft, additive channel, so a conservative miss (no bias) is the safe failure mode.

@@ -19,7 +19,7 @@ Two readings — and the one that is **missing** is the point of this layer exis
 
 **There is no `designated_absence` here, and that is the inversion of the flood layer.** For flood
 zones the Environment Agency states England-wide coverage and the Planning Practice Guidance defines
-Zone 1 as "all land outside Zones 2, 3a and 3b" — so an empty answer inside England IS a
+Zone 1 as "all land outside Zones 2, 3a and 3b" — so an empty answer inside England is a
 designation. NCERM publishes no coverage statement at all. A location in England with no erosion
 polygon is either **inland** — most of the country, about which the product says nothing — or **on
 the coast and outside the mapped risk area**, which is the designation a caller wants; and
@@ -135,7 +135,7 @@ Each is encoded in the code rather than written down somewhere else:
 
 `coastal_zone_area` holds the authority's unsimplified rings with a precomputed bounding box — the
 truth table. `coastal_zone_cell` is the H3 containment index above it, classifying each cell `whole`
-or `partial` **per polygon** rather than per class: an erosion answer IS the polygon, because the
+or `partial` **per polygon** rather than per class: an erosion answer is the polygon, because the
 distance, the policy and the defence are per feature. A `whole` cell answers in primary-key probes
 alone; only a `partial` cell falls through to the ray cast, against only the polygons the cell names
 for that scenario.

@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Regenerate every version-stamped generated document after a release bump (#1891): the man page
- *   (which embeds `mailwoman <version>` in its `.TH` line, so EVERY bump stales it) and the docs CLI
+ *   (which embeds `mailwoman <version>` in its `.TH` line, so every bump stales it) and the docs CLI
  *   reference (no version stamp today, but generated from the same help tree — regenerating both
  *   keeps one sequence). v9.2.0's release PR failed its `test` run on exactly this: the freshness
  *   guard compared the committed man page's 9.1.0 stamp against the bumped tree.
  *
- *   Runs AFTER `mwops release prepare-version` and REQUIRES a compiled tree — the generators
+ *   Runs after `mwops release prepare-version` and requires a compiled tree — the generators
  *   spawn the compiled CLI (the Ink commands cannot run under bare type-stripping), and the caller
  *   compiles rather than trusting whatever `out/` a runner left behind. Reports each generated file's
  *   changed/unchanged state so the prepare job can stage exactly what moved; a second run on the

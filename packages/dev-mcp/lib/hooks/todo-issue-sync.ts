@@ -11,12 +11,12 @@
  *   `## Task list` section carries a marker-delimited block; this hook rewrites that block on every `TodoWrite`, so
  *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
  *
- *   It NEVER blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
- *   itself runs in a DETACHED worker so the hook adds no latency to the turn. Three conditions check the worker, each
+ *   It never blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
+ *   itself runs in a detached worker so the hook adds no latency to the turn. Three conditions check the worker, each
  *   making a no-op explicit rather than accidental:
  *
  *   - `.claude/state/linked-issue` must exist (the skill writes it; no link, no sync — most sessions have none).
- *   - The tool must be `TodoWrite`, whose payload carries the WHOLE list. `TaskCreate`/`TaskUpdate` carry deltas a
+ *   - The tool must be `TodoWrite`, whose payload carries the whole list. `TaskCreate`/`TaskUpdate` carry deltas a
  *     stateless hook cannot fold into a list, so those sessions keep the issue current by hand at milestones.
  *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape;
  *     absent markers mean the issue was not created by the skill, and rewriting it would clobber someone's prose.

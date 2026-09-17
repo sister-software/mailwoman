@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The live half of the semantic-utility probe (#1928): load the frozen pre-registration, run its target
- *   and control rows through the SAME pipeline construction the POI board uses, and emit a receipt.
+ *   and control rows through the same pipeline construction the POI board uses, and emit a receipt.
  *
  *   THIS MODULE DECIDES NOTHING IT DID NOT READ. Every row, every threshold and the baseline it compares
  *   against come from `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over

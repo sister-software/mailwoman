@@ -53,7 +53,7 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The live FST artifact held a place literally named "Chic" — the typed prefix is BOTH a
+		// The live FST artifact held a place literally named "Chic" — the typed prefix is both a
 		// complete edge and a partial of "chicago", and letting the successful walk short-circuit
 		// silently dropped every longer completion.
 		const shadowed = seal([

@@ -66,7 +66,7 @@ def score_row(
     gold_spans = [(t, raw[s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)]
     tag_totals = [t for t, _ in gold_spans]
     tag_hits = [t for t, g in gold_spans if g in predicted.get(t, ())]
-    # The resolve read keys on the FIRST span per tag on both sides, so a two-span tag reads the same way in
+    # The resolve read keys on the first span per tag on both sides, so a two-span tag reads the same way in
     # `pred` and `gold`.
     gold: dict[str, str] = {}
     for t, g in gold_spans:

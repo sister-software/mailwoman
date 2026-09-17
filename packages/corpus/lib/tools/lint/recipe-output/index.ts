@@ -11,13 +11,13 @@
  *
  *   1. **Token-label distribution outliers.** For each token in the new recipe output, compare the
  *        output's majority label to the corpus's majority label. Flag when the corpus has a
- *        confidently-established majority (>66%) AND the output's majority differs AND both have
+ *        confidently-established majority (>66%) and the output's majority differs and both have
  *        non-trivial counts (output ≥ 50, corpus ≥ 200).
- *   2. **Label-vacuum tokens.** Token labeled with a tag that has ZERO instances in the corpus for that
+ *   2. **Label-vacuum tokens.** Token labeled with a tag that has zero instances in the corpus for that
  *        token, despite the token being well-represented in the corpus. Stronger signal than #1 —
  *        we're introducing a novel association, not shifting a distribution.
  *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in the output while
- *        the same token_bigram has a DIFFERENT majority label_bigram in the corpus. The "5th Avenue"
+ *        the same token_bigram has a different majority label_bigram in the corpus. The "5th Avenue"
  *        with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.
  *   4. **Common-form anti-pattern rules.** Applies `lint-rules.json` — token-regex → forbidden-labels
  *        mappings — flagging matches.

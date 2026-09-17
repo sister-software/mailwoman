@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Autocomplete over a sealed ancestrie: prefix walk + BFS expansion collecting ranked suggestions,
- *   each carrying its containment lineage. O(depth × branching) — the trie IS the autocomplete
+ *   each carrying its containment lineage. O(depth × branching) — the trie is the autocomplete
  *   index. Ported and generalized from mailwoman's `fst-autocomplete.ts` (#587 behaviors preserved).
  *
  *   Two query shapes are handled (the trie is over WORD tokens):
@@ -16,7 +16,7 @@
  *       edges (`token.startsWith(partial)`). This is what a char-level typeahead needs; without it
  *       "new yor" returns nothing useful. (#587)
  *
- *   Both interpretations of the last token run, ALWAYS: it can be a complete edge AND a partial of
+ *   Both interpretations of the last token run, always: it can be a complete edge and a partial of
  *   longer edges at once (an entry literally surfaced as "chic" must not shadow "chicago"), and
  *   letting a successful walk short-circuit silently drops every longer completion.
  */

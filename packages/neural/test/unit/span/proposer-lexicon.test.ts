@@ -23,7 +23,7 @@ test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-ser
 
 test("buildCodexSpanLexicon: a building LEVEL is categorized apart from a numbered unit", () => {
 	const lex = buildCodexSpanLexicon(["us"])
-	// FLOOR is a USPS Pub-28 level canonical → goes to levelDesignators, NOT unitDesignators.
+	// FLOOR is a USPS Pub-28 level canonical → goes to levelDesignators, not unitDesignators.
 	expect(lex.levelDesignators.has("floor")).toBe(true)
 	expect(lex.unitDesignators.has("floor")).toBe(false)
 })
@@ -56,7 +56,7 @@ test("buildCodexSpanLexicon: no systems → only the locale-general venue-struct
 		expect(lex.unitDesignators.has(postal), `postal designator "${postal}" leaked with no systems loaded`).toBe(false)
 	}
 
-	// What remains is the venue-INTERIOR vocabulary, which is deliberately NOT system-conditional: a concourse is a
+	// What remains is the venue-INTERIOR vocabulary, which is deliberately not system-conditional: a concourse is a
 	// concourse regardless of which postal authority delivers to the building, and keying it on a codex system would
 	// make "Terminal 5" parse in one country and not another for no defensible reason. Sourced from the WOF placetype
 	// vocabulary + OSM aeroway — see core/resources/whosonfirst/placetypes/venue-structure.ts.

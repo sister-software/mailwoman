@@ -26,7 +26,7 @@
  *      both bearers clear it. The second number is the population of cases where the tiebreak is
  *      required; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
  *   2. **Live query replay** — every board query plus the namesake families, run through the real
- *      `findPlace`, with the returned candidate list re-sorted under BOTH the pre-split key and
+ *      `findPlace`, with the returned candidate list re-sorted under both the pre-split key and
  *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/referential-delta.run.ts [--board <path>]
@@ -125,7 +125,7 @@ if (!wofPaths.length) {
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardCaseBoard(values.board)
 
-	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token
+	// Board inputs and their probe surfaces: the input is what a user types, the surface is the token
 	// whose namesakes are actually in contention. Both go through the ranking.
 	const queries = [...new Set([...board.map((c) => c.input), ...board.map((c) => c.probeSurface)])].toSorted()
 

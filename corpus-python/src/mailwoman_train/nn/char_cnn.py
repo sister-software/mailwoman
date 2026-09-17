@@ -20,7 +20,7 @@ class CharCNNEmbedding(nn.Module):
     downstream (anchor/gazetteer/phrase channels, the blocks, CRF, classifier) changes.
 
     Why this fixes the diacritic problem the SentencePiece path can't: the tokenizer is now
-    word-level, so "Čistá" is ONE token whose embedding is composed from its own characters — the
+    word-level, so "Čistá" is one token whose embedding is composed from its own characters — the
     subword vocab never gets to isolate the diacritic into its own O-tagged piece (the 3.3x Slavic
     fertility tax that broke span boundaries → wrong-city geocoding). The char vocab is small (the
     Unicode chars seen in training, a few thousand), so the embedding table is a fraction of a 48k SP

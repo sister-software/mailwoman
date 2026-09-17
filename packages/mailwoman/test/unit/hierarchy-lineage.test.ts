@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1731 pins. The field is tri-state and the ABSENT states are the contract: a missing sidecar or a place-less entry
+ *   #1731 pins. The field is tri-state and the absent states are the contract: a missing sidecar or a place-less entry
  *   must stay ungraded — `false` is a measured contradiction, never a default.
  */
 

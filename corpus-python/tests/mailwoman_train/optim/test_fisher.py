@@ -186,7 +186,7 @@ def test_fresh_head_params_are_unpenalized(tmp_path: Path) -> None:
             self.body = base  # prefixes every name with "body." — zero overlap with the artifact
             self.fresh_head = torch.nn.Linear(3, 5)
 
-    # A model sharing NO names with the artifact is a wiring error — penalty() refuses loudly
+    # A model sharing no names with the artifact is a wiring error — penalty() refuses loudly
     # (silence would ship an unbraked "protected" fine-tune).
     ewc = EWCPenalty(fisher_path, ref, lam=1.0, device=torch.device("cpu"))
     with pytest.raises(ValueError, match="no parameter names"):

@@ -7,12 +7,12 @@ calls its one load-bearing ordering, and which nothing exercised end to end:
 `test_resume_lr_restamp.py` calls `restamp_resume_lrs` with hand-built inputs, so it never sees
 where the live rates come from, and the trace test never resumes.
 
-The assertion compares the resumed optimizer against the SAME optimizer read before the resume,
+The assertion compares the resumed optimizer against the same optimizer read before the resume,
 which is an independent read of the fresh state rather than a second call to the capture under
 test. Confirmed by inverting it: halving the captured rates in `build_optimization` leaves every
 other test in the suite green, and fails this one.
 
-The config carries TWO rates — `train.learning_rate` and the `classifier_learning_rate` carve-out —
+The config carries two rates — `train.learning_rate` and the `classifier_learning_rate` carve-out —
 so the check is per group. A single-group assertion would have read the carve-out as a failure.
 """
 

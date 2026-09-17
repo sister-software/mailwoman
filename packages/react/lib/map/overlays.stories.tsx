@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stories for the declarative resolved-place overlays, over the SAME offline stub style as `MapCanvas`
+ *   Stories for the declarative resolved-place overlays, over the same offline stub style as `MapCanvas`
  *   (one `background` layer, zero network — never hits `tiles.mailwoman.ai`). Each story feeds a fake
  *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<MapCanvas>`,
  *   covering every branch of the render cascade: bbox circle, crisp polygon, street-radius circle,

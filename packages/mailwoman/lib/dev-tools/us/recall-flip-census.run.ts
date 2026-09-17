@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1102 diagnostic: class the US region/locality recall flips between the SHIPPED weights and a
+ *   #1102 diagnostic: class the US region/locality recall flips between the shipped weights and a
  *   candidate (package-shaped cache dir). A "flip" = baseline extracted the gold value, candidate
  *   did not. Buckets name the mechanism so the counterweight change is one variable.
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/us/recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`

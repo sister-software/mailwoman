@@ -6,12 +6,12 @@
  *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE CRITERIA this whole phase
  *   is judged by. See `filing-landscape.test.ts` for the criterion tests; this module is only the reader.
  *
- *   Coverage check (the meaning-of-zero rule): a queried block counts as SURVEYED only when its res-6
+ *   Coverage check (the meaning-of-zero rule): a queried block counts as surveyed only when its res-6
  *   coverage cell is present in `layer_coverage` (via `readLayerCoverage`) — `undefined` means the area
- *   was never surveyed, and the block is reported in `unknown_block_count`, NEVER folded into a
+ *   was never surveyed, and the block is reported in `unknown_block_count`, never folded into a
  *   zero-filing claim.
  *
- *   - For a `geoids` query, the candidate res-9 cell is read off the block's OWN `bdc_availability`
+ *   - For a `geoids` query, the candidate res-9 cell is read off the block's own `bdc_availability`
  *     rows — a geoid with zero rows has no derivable cell at all (never guessed, matching the builder's
  *     "unknown geoid" discipline in `build-bdc.ts`), so it falls straight to unknown.
  *   - For an `h3Cells` query, the caller supplies the res-9 cell directly, so coverage can be checked
@@ -22,14 +22,14 @@
  *   back to a full index, then `cellToParent`) rather than recomputed from the block centroid. See
  *   {@link res9ShortCellToRes6Parent}.
  *
- *   This same formula is exactly what `build-bdc.ts` MUST use (and does) to derive the
+ *   This same formula is exactly what `build-bdc.ts` must use (and does) to derive the
  *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
  *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
  *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over CONUS). Builder and
  *   reader deriving the res-6 parent differently is a self-contradiction waiting to happen: a
  *   genuinely-surveyed block (real rows, real `layer_coverage` entry) reads back as
  *   `unknown_block_count` while its own rows still populate `filings`. `filings` is scoped to units that
- *   PASS the coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen: a
+ *   pass the coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen: a
  *   block excluded from `surveyed_block_count` never contributes to `filings` either.
  */
 
@@ -51,10 +51,10 @@ export interface FilingLandscapeQuery {
 /**
  * One provider/technology/speed-bucket group's block count within the query — `block_count` is the number of DISTINCT
  * queried blocks carrying this exact combination, never a raw row count. A block can carry multiple `bdc_availability`
- * rows for the SAME (provider_id, technology_code) pair even in the DEFAULT (non-`includeLocationIDs`) build mode:
+ * rows for the same (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`) build mode:
  * `build-bdc.ts`'s materialize-time collapse merges to one row per distinct (geoid, provider_id, technology_code,
  * speeds, low_latency, business_residential_code) tuple, not one row per (geoid, provider_id, technology_code) triple —
- * so Broadband Serviceable Locations at the same triple with DIFFERING speeds/flags survive as separate rows and can
+ * so Broadband Serviceable Locations at the same triple with differing speeds/flags survive as separate rows and can
  * land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s DISTINCT is exactly what
  * keeps that from double-counting the block itself when it does.
  */
@@ -66,7 +66,7 @@ export interface ProviderFilingSummary {
 }
 
 /**
- * The queried landscape: ALWAYS vintage-stamped (from `layer_manifest.sourceVintage`) and ALWAYS reports its unknown
+ * The queried landscape: always vintage-stamped (from `layer_manifest.sourceVintage`) and always reports its unknown
  * blocks — `unknown_block_count` is reported, never zeroed, and never evidence of "no providers file here."
  */
 export interface FilingLandscape {
@@ -139,9 +139,9 @@ const speedBucketCaseSQL = sql<string>`CASE
 END`
 
 /**
- * Reconstruct the res-6 ancestor of a res-9 short-cell int WITHOUT a centroid — see the module docstring for why the
+ * Reconstruct the res-6 ancestor of a res-9 short-cell int without a centroid — see the module docstring for why the
  * centroid is the wrong input. Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
- * coverage-cell derivation (the two MUST share this derivation — see that file's docstring).
+ * coverage-cell derivation (the two must share this derivation — see that file's docstring).
  */
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 	return shortCellToParentInt(h3CellShortInt, BDC_H3_RESOLUTION, BDC_COVERAGE_H3_RESOLUTION)
@@ -170,7 +170,7 @@ export async function filingLandscape(
 		throw new Error("filingLandscape: `geoids`/`h3Cells` must not be an empty array")
 	}
 
-	// Read (and validate) the manifest FIRST — a broken/missing manifest must throw before any block is
+	// Read (and validate) the manifest first — a broken/missing manifest must throw before any block is
 	// classified, never fall through to an "unstamped" answer (criterion 4).
 	const manifest = await readLayerManifest(db)
 
@@ -178,7 +178,7 @@ export async function filingLandscape(
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
 
 	// Candidate res-9 cell per requested unit. `h3Cells` queries already carry the cell directly;
-	// `geoids` queries can only derive one from the block's OWN rows — a geoid with none has no
+	// `geoids` queries can only derive one from the block's own rows — a geoid with none has no
 	// candidate at all (never guessed), so it falls straight to unknown below.
 	const candidateCellByUnit = new Map<string | number, number>()
 
@@ -201,7 +201,7 @@ export async function filingLandscape(
 
 	let surveyedBlockCount = 0
 	let unknownBlockCount = 0
-	// Only units that PASS the coverage check feed the census below — a unit with rows but no coverage evidence
+	// Only units that pass the coverage check feed the census below — a unit with rows but no coverage evidence
 	// (a corrupted/inconsistent db — see filing-landscape.test.ts's "coverage row deleted" case) is `unknown`, and
 	// its rows must not leak into `filings` either: `surveyed_block_count` and the blocks backing `filings` must
 	// always agree, or a caller cross-referencing the two gets a contradiction (an "unknown" block whose filings

@@ -148,7 +148,7 @@ export async function loadClassifierFromWeights(
 			// Cap the intra-op pool. Left unset, ORT sizes it to the core count, so N concurrent processes
 			// each claim the whole machine — the multiplier behind the CLI spawn-test timeouts. Measured
 			// 2026-08-03 over 120 parses: 1 thread costs 18.3 ms/parse against 9.3 for all-cores (a 97%
-			// regression — the parallelism IS doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
+			// regression — the parallelism is doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
 			// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
 			// do not "simplify" it downward without re-running that curve.
 			// Explicit opt > deployment env > compromise default. The env layer exists because the right
@@ -160,17 +160,17 @@ export async function loadClassifierFromWeights(
 	// Feed the channels the shipped model was trained against.
 	// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
 	// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
-	// channels from URLs; this is the Node-side mirror so EVERY consumer (ResolveRouter,
+	// channels from URLs; this is the Node-side mirror so every consumer (ResolveRouter,
 	// GeocodeRouter, geocode.tsx, the CLI) transparently gains them with no callsite change.
 	//
 	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
-	// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
-	// (mirroring the web loader's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
+	// the model-card declares a channel required but the package didn't ship its data, we warn once
+	// (mirroring the web loader's `warnOnUnfedTrainedChannels`) and run that channel off — never crash.
 	const declared = await readRequiredChannels(resolved.modelCardPath)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
-	// Bound to THIS package, because the channel name alone is not enough: one process routinely loads several
+	// Bound to this package, because the channel name alone is not enough: one process routinely loads several
 	// (the gauntlet grades six locale overlays), and a warning naming none of them is read as being about
 	// whichever package the reader has in mind — see `unfedChannelWarner`.
 	const warnUnfedChannel = unfedChannelWarner(`${opts.locale ?? "en-us"} (${resolved.packageDir ?? resolved.source})`)
@@ -183,7 +183,7 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
-	// #1516: what this warning may speak about is what THIS package's OWN card declares it ships — not what the
+	// #1516: what this warning may speak about is what this package's own card declares it ships — not what the
 	// shared encoder `requires`, which every overlay inherits. `unfedAnchorDetail` owns that decision (and
 	// returns undefined for the packages that ship no binary on purpose, e.g. en-gb under #1476).
 	const anchorDetail =
@@ -256,10 +256,10 @@ export async function loadClassifierFromWeights(
 	// case here — the prior is opt-in plumbing, so a missing/mismatched index degrades silently to the
 	// byte-stable no-prior default, loud only via the eval warning.
 	//
-	// Header peek before construction: the country check reads ONLY the magic +
+	// Header peek before construction: the country check reads only the magic +
 	// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
 	// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
-	// DOES walk every entry) only runs once the eval has already confirmed the country match.
+	// does walk every entry) only runs once the eval has already confirmed the country match.
 	let placetypePair: PlacetypePairPriorOpts | undefined
 
 	if (resolved.pairIndexPath) {

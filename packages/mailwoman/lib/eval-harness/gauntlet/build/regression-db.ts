@@ -76,7 +76,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 			insert.run(...GAUNTLET_CASE_COLUMNS.map((column) => row[column]))
 		}
 
-		// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be
+		// The stamp goes in last and inside the same handle: an artifact that reached the swap without one would be
 		// exactly the unattributable DB this guard exists to abolish.
 		await writeCorpusStamp(kdb, cases)
 	}

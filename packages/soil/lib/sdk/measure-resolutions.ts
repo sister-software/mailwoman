@@ -10,7 +10,7 @@
  *   is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *
  *   THIS INSTRUMENT REPORTS THE FIRST OF THE TWO NUMBERS §4.7 NAMES — the `partial` cell share, plus the mean
- *   delineations per cell that drives it. The SECOND number, the share of cells whose top class holds less
+ *   delineations per cell that drives it. The second number, the share of cells whose top class holds less
  *   than half the cell, is not measurable here: it needs the attribute join and the area weighting, which
  *   are the build. So it comes off the SHIPPING ARTIFACT instead — {@linkcode buildSoilDatabase} counts it
  *   while it writes the rows, and the build receipt reports it. That is the flood layer's lesson applied:

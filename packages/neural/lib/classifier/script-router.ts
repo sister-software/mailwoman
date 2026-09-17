@@ -35,7 +35,7 @@ import type { ParseOpts } from "#classifier/options"
 import type { NeuralParseTrace } from "#trace"
 
 /**
- * The scripts the character-path family reads. Japanese, Chinese and Korean are ONE weights package (`cjk`), so the
+ * The scripts the character-path family reads. Japanese, Chinese and Korean are one weights package (`cjk`), so the
  * four scripts name one family rather than three.
  */
 export const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Kana", "Hira", "Hang"])

@@ -8,7 +8,7 @@
  *
  *   THE LABELS ARE A READING OF THE SUFFIX, NOT A GUESS. Every generic that ends an ordinal unit (`分场`, `大队`, `队`,
  *   `连`, `团`, `组`, `场部`) is in `@mailwoman/core/locale/zh-cn-units`' one table, and the same table reads the span back
- *   after decode. The whole ordinal chain is ONE `locality_unit` span; the named head it belongs to (`赵光`, `孟定农场`) is
+ *   after decode. The whole ordinal chain is one `locality_unit` span; the named head it belongs to (`赵光`, `孟定农场`) is
  *   `dependent_locality`; a province, city or county written in front of it takes `region`, `locality`, `subregion`; a
  *   Latin admin tail (`, Heilongjiang, China`) takes `region` and `country`. A row with no chain is skipped, not labeled:
  *   `红卫大队` is a village name whose generic carries no ordinal, and `苗辽林场` is a named forest farm.

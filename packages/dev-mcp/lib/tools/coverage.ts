@@ -21,7 +21,7 @@ import type { DevTool, DevToolDeps } from "#tool-kit"
  *
  * Not by filename. The version scheme does not sort lexically and does not sort numerically either — `v8-leg2-sp.yaml`
  * wins both against `v4.8.0-trailing-region-placement-8k.yaml`, because `v8` was a corpus-line experiment and `v4.x` is
- * the current model line. Measured: the filename sort picked `v8-leg2-sp` and reported every country as DROPPED, which
+ * the current model line. Measured: the filename sort picked `v8-leg2-sp` and reported every country as dropped, which
  * reads as a catastrophic finding rather than as the wrong file.
  *
  * Mtime is a proxy and can be wrong after a checkout, so the report always names the config it used. Pass one
@@ -57,7 +57,7 @@ async function newestManifest(): Promise<string> {
 
 	const found: Array<{ path: string; at: number }> = []
 
-	for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: root })) {
+	for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: root, absolute: true })) {
 		found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 	}
 

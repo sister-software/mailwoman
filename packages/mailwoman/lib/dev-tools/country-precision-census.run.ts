@@ -26,12 +26,12 @@
  *   as an ISO alpha-2 code, so the comparison is code to code and a venue's name cannot enter it.
  *
  *   THREE OUTCOMES, kept apart. `agreed` is the parse naming the row's country. `contradicted` is the
- *   parse naming a DIFFERENT one, which is the failure the operator called massive. `dropped` is the
+ *   parse naming a different one, which is the failure the operator called massive. `dropped` is the
  *   parse naming none — a lesser failure and a different one, because a consumer can see an absent
  *   field and cannot see a wrong one. Folding the last two into one miss rate would hide which moved.
  *
  *   THE POPULATION IS THE QUESTION, and it is 361 of the 982 rows: those whose input names a country
- *   AND whose named country is the row's own. The other 621 either name none (`Kabul`, `Al Wasl
+ *   and whose named country is the row's own. The other 621 either name none (`Kabul`, `Al Wasl
  *   Road`) or name a decoy inside a venue, and counting either as a miss measures the board's
  *   composition rather than the parser's behavior.
  *

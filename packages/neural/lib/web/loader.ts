@@ -35,8 +35,8 @@ export { detectPairIndexCountry, resolvePairIndexCountry, resolvePairIndexForTex
  * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.
  *
  * Phase 2 (#1278 locale-hint wiring) changed the load contract: because locale-hint detects the country PER PARSE from
- * the input text (a US and a GB address in the same session need DIFFERENT indexes), the loader can no longer pick one
- * live resolver at load time. So EVERY successfully-fetched index is now constructed into a live
+ * the input text (a US and a GB address in the same session need different indexes), the loader can no longer pick one
+ * live resolver at load time. So every successfully-fetched index is now constructed into a live
  * {@link PairIndexResolver} and retained here, tagged by its header country — the per-parse selection (see
  * {@link LoadResult.selectPairIndexForText}) chooses among them at decode time. (#1300's load-time country restriction —
  * construct only the one matching index — is superseded; the `country` load-option survives as an optional
@@ -57,7 +57,7 @@ export interface LoadedPairIndex {
 	 */
 	country: string
 	/**
-	 * The constructed, live resolver. The SAME instance the per-parse selection returns (and, for a posture-pinned load,
+	 * The constructed, live resolver. The same instance the per-parse selection returns (and, for a posture-pinned load,
 	 * the classifier's config default).
 	 */
 	resolver: PairIndexResolver
@@ -82,7 +82,7 @@ export interface LoadResult {
 	labels: readonly string[] | null
 	/**
 	 * The parsed postcode-anchor lookup (postcode → posterior + centroid), when anchor binaries were loaded. Exposed so
-	 * consumers (the demo's anchor-centroid map fallback) can reuse the SAME artifact the model channel feeds from — WOF
+	 * consumers (the demo's anchor-centroid map fallback) can reuse the same artifact the model channel feeds from — WOF
 	 * ships placeholder (0,0) for ~22% of US postcodes; this lookup has a real centroid for every covered ZIP.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
@@ -154,9 +154,9 @@ export interface LoadFromURLsOptions {
 	 * `postcodeBinaryURLs` contract): a 404/network failure/corrupt file is skipped with a loud `console.warn` and never
 	 * blocks the classifier load — older HF release versions ship no pair indexes at all.
 	 *
-	 * **Phase 2 (#1278 locale-hint wiring) — load ALL, select per parse.** Every fetched index is constructed into a live
+	 * **Phase 2 (#1278 locale-hint wiring) — load all, select per parse.** Every fetched index is constructed into a live
 	 * {@link PairIndexResolver} and retained ({@link LoadResult.pairIndexes}), tagged by its header country. The
-	 * selection of WHICH index biases a given parse is a per-parse decision — see
+	 * selection of which index biases a given parse is a per-parse decision — see
 	 * {@link LoadResult.selectPairIndexForText}, which runs locale-hint over the input text — because one loaded
 	 * classifier serves inputs from multiple countries and the country is a property of the text, not the load. (#1300's
 	 * load-time single-index country restriction is superseded; the `country` load-option below survives as an optional
@@ -166,12 +166,12 @@ export interface LoadFromURLsOptions {
 	/**
 	 * OPTIONAL default posture for the placetype-pair prior — a locale ("en-gb") or bare ISO country code ("gb"),
 	 * case-insensitive (reduced to its country subtag via {@link resolvePairIndexCountry}, the node `localeCountry`
-	 * derivation). When provided AND a fetched index carries a matching header country, that index becomes the
-	 * classifier's CONFIG-LEVEL `placetypePair` default — the posture a parse falls back to when the per-parse
+	 * derivation). When provided and a fetched index carries a matching header country, that index becomes the
+	 * classifier's config-level `placetypePair` default — the posture a parse falls back to when the per-parse
 	 * {@link LoadResult.selectPairIndexForText} returns nothing (or the demo never calls it). This is the single-posture
 	 * "default/override" path: it pins one country the way #1300's demo did.
 	 *
-	 * OMITTED (the recommended shape for the multi-locale demo) sets NO config default — every parse's prior comes solely
+	 * Omitted (the recommended shape for the multi-locale demo) sets no config default — every parse's prior comes solely
 	 * from the per-parse selection, and an input that matches no loaded index decodes byte-stable (no prior). Note the
 	 * behavior change from #1300: omission no longer defaults to `"us"` or restricts loading — it means "detect per
 	 * parse."
@@ -187,7 +187,7 @@ export interface LoadFromURLsOptions {
 	 * fallback is the measured train/inference mismatch that wrecks segmentation ("the zero-fill trap",
 	 * CONTRIBUTING_MODEL_WORK.mdx eval invariants).
 	 *
-	 * Defaults to `anchor-lexicon-v1.json` next to `modelURL`. A fetch miss (404 etc.) does NOT throw — older bundles
+	 * Defaults to `anchor-lexicon-v1.json` next to `modelURL`. A fetch miss (404 etc.) does not throw — older bundles
 	 * never shipped the file — but if the loaded model turns out to be gazetteer-trained the loader logs a loud
 	 * `console.error` naming the missing file and the model runs gazetteer-off (structurally valid, quality-degraded).
 	 * Pass `null` to skip the fetch entirely.
@@ -197,7 +197,7 @@ export interface LoadFromURLsOptions {
 	 * URL to the country-surface lexicon JSON (`country-surface-lexicon-v1.json`, #1104 — the in-repo source is
 	 * `data/gazetteer/country-surface-lexicon-v1.json`). Country-channel models (v6.2.0+, whose ONNX declares the
 	 * `country_features`/`country_confidence` inputs) REQUIRE this clue at inference — same zero-fill trap as the
-	 * gazetteer. Defaults to `country-surface-lexicon-v1.json` next to `modelURL`; a fetch miss does NOT throw, but a
+	 * gazetteer. Defaults to `country-surface-lexicon-v1.json` next to `modelURL`; a fetch miss does not throw, but a
 	 * country-trained model with no lexicon runs country-off (loud `console.error`, structurally valid). Pass `null` to
 	 * skip.
 	 */
@@ -206,7 +206,7 @@ export interface LoadFromURLsOptions {
 	 * URL to the street-type evidence lexicon (`street-type-lexicon-v3.json`, Option-A bundle — the in-repo source is
 	 * `data/gazetteer/street-type-lexicon-v3.json`). Bundle-trained models (6.7.0-bundle+, whose ONNX declares the
 	 * `street_type_features` input) feed this in fragmented-register parses. Defaults to a sibling of `modelURL`; a fetch
-	 * miss does NOT throw (channel runs off, loud `console.error`). Pass `null` to skip.
+	 * miss does not throw (channel runs off, loud `console.error`). Pass `null` to skip.
 	 */
 	streetTypeLexiconURL?: string | null
 	/**
@@ -240,15 +240,15 @@ export interface LoadFromURLsOptions {
 /**
  * Fetch + decode the postcode anchor binaries TOLERANTLY, then merge the ones that loaded.
  *
- * Each `postcode-<cc>.bin` is OPTIONAL: the postcode anchor is a soft ranking channel, not a required model input, so a
- * single missing/404 binary must NEVER reject the whole classifier load. This is the fix for the 2026-07 demo outage —
+ * Each `postcode-<cc>.bin` is optional: the postcode anchor is a soft ranking channel, not a required model input, so a
+ * single missing/404 binary must never reject the whole classifier load. This is the fix for the 2026-07 demo outage —
  * `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and the old throwing
  * `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
  * `loadNeuralClassifierFromURLs` → `runtime.ready` never fired → the demo input stayed permanently disabled even though
  * the model, tokenizer, and the other two postcode binaries were all fine.
  *
  * Behavior: fetch each binary independently; SKIP any that fail (404 or network) with a loud `console.warn` naming the
- * URL + the failure; merge the successes via {@link mergeAnchorLookups}. If ALL fail, return `undefined` — identical to
+ * URL + the failure; merge the successes via {@link mergeAnchorLookups}. If all fail, return `undefined` — identical to
  * the no-`postcodeBinaryURLs`-configured path, so the classifier still loads (anchor-off identity, ranking degrades
  * slightly but nothing blocks). A PRESENT-but-corrupt binary (bad magic) throws inside `PostcodeBinaryResolver`; that
  * is caught here too and treated as a skip — a garbage optional asset should degrade, not brick the demo.
@@ -350,8 +350,8 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
-	// The card is fetched FIRST because it does double duty: `labels` for the decoder, and the
-	// `requires.<channel>.lexicon` declarations that name which lexicon GENERATION the model trained
+	// The card is fetched first because it does double duty: `labels` for the decoder, and the
+	// `requires.<channel>.lexicon` declarations that name which lexicon generation the model trained
 	// against. Deriving the lexicon URLs before reading the card is how a generation bump upstream
 	// becomes a silent 404 → channel-off here.
 	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
@@ -406,9 +406,9 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 			: Promise.resolve<LoadedPairIndex[]>([]),
 	])
 
-	// Placetype-pair prior (#1278 phase 2): the loaded indexes are ALL live (see loadPairIndexes) and the WHICH-index
+	// Placetype-pair prior (#1278 phase 2): the loaded indexes are all live (see loadPairIndexes) and the which-index
 	// choice is per parse (`selectPairIndexForText`, below). The `country` load-option survives only as an optional
-	// CONFIG-DEFAULT posture pin: when the caller passed one AND a loaded index matches it, that index becomes the
+	// config-default posture pin: when the caller passed one and a loaded index matches it, that index becomes the
 	// classifier's config-level `placetypePair` default a parse falls back to when the per-parse selection returns nothing.
 	// Omitted country = no config default → the byte-stable no-prior decode when nothing is selected per parse.
 	let configPairIndex: PairIndexResolver | undefined
@@ -495,7 +495,7 @@ function warnOnUnfedTrainedChannels(
 
 	if (!inputNames) return
 
-	// The graph's declared inputs ARE the training-time channel requirements — the same inference the
+	// The graph's declared inputs are the training-time channel requirements — the same inference the
 	// Node scorer's back-compat path runs (`inferRequiredChannelsFromInputs`).
 	const declared = inferRequiredChannelsFromInputs(inputNames)
 

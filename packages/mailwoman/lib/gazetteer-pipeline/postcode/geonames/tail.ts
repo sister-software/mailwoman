@@ -21,7 +21,7 @@
  *   allocates ids from one counter at {@link GEONAMES_POSTAL_ID_BASE}, so
  *   {@link DEFAULT_GEONAMES_TAIL_COUNTRIES} is written in the frozen artifact's own ingest order
  *   (recovered from its per-country id ranges) and reproduces its ids exactly. File-level md5 identity
- *   is NOT expected — VACUUM page ordering and an additive `names.official` column since 2026-07 both
+ *   is not expected — VACUUM page ordering and an additive `names.official` column since 2026-07 both
  *   move bytes without moving a row.
  *
  *   Attribution the frozen artifact never carried, and the reason the `meta` table exists: GeoNames
@@ -58,7 +58,7 @@ export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
  * `meta` is the artifact's own provenance record — a key/value table read at open, so the licence obligation and the
- * source fingerprints travel WITH the database instead of in a document that can drift from it.
+ * source fingerprints travel with the database instead of in a document that can drift from it.
  */
 
 /**
@@ -127,7 +127,7 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 */
 	postalDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db` — a NEW dated path every build;
+	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db` — a new dated path every build;
 	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
@@ -256,7 +256,7 @@ export async function buildPostcodeGeonamesTail(
 }
 
 /**
- * Fingerprint each present source dump. A country whose file is missing gets NO fact row rather than a zeroed one — the
+ * Fingerprint each present source dump. A country whose file is missing gets no fact row rather than a zeroed one — the
  * meaning-of-zero rule: `rows: 0` would read as "measured, empty", which is a different claim from "never present".
  */
 async function collectSourceFacts(

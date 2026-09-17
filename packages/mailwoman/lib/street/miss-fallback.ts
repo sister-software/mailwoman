@@ -64,7 +64,7 @@ export async function applyStreetMissFallback(
 
 /**
  * The lone bare street span the street-miss fallback retries as a locality, or `null` when the tree is anything richer:
- * the check is EXACTLY one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
+ * the check is exactly one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
  * model mis-tags on unfamiliar capitals.
  */
 function loneBareStreetSpan(tree: AddressTree): string | null {

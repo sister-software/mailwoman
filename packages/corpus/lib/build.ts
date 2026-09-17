@@ -119,7 +119,7 @@ export interface BuildCorpusOptions {
 	/**
 	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
 	 * `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license` matches any is dropped at ingest. Default (omitted)
-	 * includes EVERYTHING — exclusion is a deliberate act, not a silent default. A proprietary-weights build passes the
+	 * includes everything — exclusion is a deliberate act, not a silent default. A proprietary-weights build passes the
 	 * share-alike set (`--exclude-share-alike`).
 	 */
 	excludeLicenses?: readonly RegExp[]
@@ -249,9 +249,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		for await (const row of streamJSONL<CanonicalRow>(adapterRun.jsonl_path)) {
 			licenseCounts.set(row.license, (licenseCounts.get(row.license) ?? 0) + 1)
 
-			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
+			// Deliberate license exclusion (#26): drop a row only when the operator named its license
 			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
-			// purposeful act, not a silent default. Counted BEFORE the drop so the manifest's license
+			// purposeful act, not a silent default. Counted before the drop so the manifest's license
 			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was removed.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++

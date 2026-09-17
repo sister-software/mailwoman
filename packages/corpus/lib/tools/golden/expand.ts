@@ -38,7 +38,7 @@
  *   - `DEEPSEEK_API_KEY` — required for provider `deepseek`
  *   - `ANTHROPIC_API_KEY` — required for provider `anthropic`
  *
- *   ## What this module does NOT do
+ *   ## What this module does not do
  *
  *   - Does not commit anything or modify the versioned golden dir. Candidates land in
  *       `data/eval/golden/candidates/` for operator review (skim, prune, then run
@@ -436,7 +436,7 @@ function parseCandidates(text: string): Candidate[] {
 // ── Validator ─────────────────────────────────────────────────────────────
 
 /**
- * Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+ * Components that are never allowed to be dropped — keeps degenerate single-token candidates out.
  */
 const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
 

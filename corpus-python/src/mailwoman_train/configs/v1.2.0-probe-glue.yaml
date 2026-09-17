@@ -2,8 +2,8 @@
 # SINGLE-VARIABLE vs the shipped v1.1.0: data.augment_glue_prob 0.0 -> 0.25 (the #513 glue
 # augmentation, PR #514 — fuse region+postcode in raw, labels stay split via char projection).
 # Resume the v1.1.0 step-040000 (copied to a fresh dir), +4k. PRE-REGISTERED READ: the perturb
-# arena's glue rows (the ~25-30 "NY14201" class) recover at +4k AND affix floors hold (32-row
-# 78/67, v2 85/85) AND US postcode >= 97. Fail -> the change doesn't ride v4.4.0.
+# arena's glue rows (the ~25-30 "NY14201" class) recover at +4k and affix floors hold (32-row
+# 78/67, v2 85/85) and US postcode >= 97. Fail -> the change doesn't ride v4.4.0.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.2.0-probe-glue.yaml --resume auto
 data:
   corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
@@ -38,7 +38,7 @@ data:
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
-  # THE single variable (#513): region+postcode fusion at p=0.25.
+  # The single variable (#513): region+postcode fusion at p=0.25.
   augment_glue_prob: 0.25
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json

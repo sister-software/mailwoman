@@ -123,7 +123,7 @@ export interface CoastalIngestOptions {
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
 	 * This is what makes a bounded build possible: h3's WASM heap cannot be reset from JavaScript, so the classification
-	 * runs one child process per range of the authority's OWN ids. Ranges rather than an offset because `OBJECTID` is the
+	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `OBJECTID` is the
 	 * source's stable key — a range names the same features on every run, which an offset into a result set does not.
 	 * Each layer numbers its own `OBJECTID` from 1, so a range is per layer.
 	 */
@@ -203,7 +203,7 @@ function idBounds(options: CoastalIngestOptions): string {
 }
 
 /**
- * The attribute columns an erosion-zone layer is read for where it HAS them, and as literal `NULL` where it does not.
+ * The attribute columns an erosion-zone layer is read for where it has them, and as literal `NULL` where it does not.
  *
  * THE FOURTEEN LAYERS DO NOT SHARE ONE SCHEMA, AND THE EXCEPTION IS A SINGLE COLUMN ON A SINGLE LAYER.
  * `NCERM_SMP_2105_0CC` carries no `smp_name`; the other eleven scenario layers and both ground-instability layers do. A
@@ -211,11 +211,11 @@ function idBounds(options: CoastalIngestOptions): string {
  * twelfth layer with `ERROR 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because
  * ogr2ogr refuses an unknown column: a source that answered NULL instead would have shipped.
  *
- * The four policy columns are the SAME shape for a different reason: the six NFI layers omit them because under a
+ * The four policy columns are the same shape for a different reason: the six NFI layers omit them because under a
  * no-intervention scenario there is no policy to record, which is a documented property of the product rather than an
  * irregularity in it.
  *
- * The distance column is NOT in this set. Its absence is a product change and throws.
+ * The distance column is not in this set. Its absence is a product change and throws.
  */
 const OPTIONAL_SCENARIO_FIELDS: ReadonlyArray<string> = [
 	"smp_no",
@@ -231,7 +231,7 @@ const OPTIONAL_SCENARIO_FIELDS: ReadonlyArray<string> = [
 ]
 
 /**
- * The erosion-zone `SELECT` for one scenario, built against the layer's OWN field list.
+ * The erosion-zone `SELECT` for one scenario, built against the layer's own field list.
  */
 function scenarioSelectSQL(
 	scenario: CoastalScenario,
@@ -289,7 +289,7 @@ const OPTIONAL_INSTABILITY_FIELDS: ReadonlyArray<string> = [
 ]
 
 /**
- * The ground-instability `SELECT`, built against the layer's OWN field list.
+ * The ground-instability `SELECT`, built against the layer's own field list.
  */
 function instabilitySelectSQL(layer: string, identity: CoastalLayerIdentity, options: CoastalIngestOptions): string {
 	const attributes = OPTIONAL_INSTABILITY_FIELDS.map((field) =>
@@ -464,7 +464,7 @@ export async function* readCoastalInstabilityFeatures(
 /**
  * Where a build's features come from, and what the source declares about itself.
  *
- * The builder takes ONE of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
+ * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
  * with no network and no GDAL still exercises the whole database half — the domain checks, the cell classification, the
  * coverage rows, the manifest and the seal. A fixture rung that could only run through ogr2ogr would test the
  * conversion on the machines that have it and nothing at all on the ones that do not.

@@ -27,7 +27,7 @@ from mailwoman_train.config import DataConfig
 from mailwoman_train.data.loader import collate, iter_encoded, iter_rows, source_row_counts
 from mailwoman_train.tokenizer.char import build_char_vocab, save_char_vocab
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:

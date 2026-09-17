@@ -98,7 +98,7 @@ proprietary-weights training without attribution beyond the model card).
 
 - Standard urban address (Pine Hill Park, NY)
 - Venue + address (White House, DC)
-- ZIP+4 form (Springfield OR with Plus_4)
+- ZIP+4 form (Springfield, Oregon, with Plus_4)
 - Venue-only / no street (Yellowstone NP)
 - Hyphenated NYC house number (40-12 Bell Blvd)
 - St_PreDir + St_PosTyp composition (Saint Petersburg FL)

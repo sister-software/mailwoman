@@ -5,7 +5,7 @@
  *
  *   The inventory's classifications, against a fixture data root.
  *
- *   The property under test throughout is that the FOUR states stay distinct. A report that collapsed
+ *   The property under test throughout is that the four states stay distinct. A report that collapsed
  *   "has no manifest" into "could not be opened", or counted a third party's artifact as our debt, would
  *   still print a number — it would just print one nobody can act on, which is the failure mode this
  *   whole phase exists to fix.
@@ -194,7 +194,7 @@ describe("rebuildHint", () => {
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
 		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`, which
-		// now lives under `packages/osm/`. The literal survived the move INSIDE a built database, where no lint
+		// now lives under `packages/osm/`. The literal survived the move inside a built database, where no lint
 		// reaches it, and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 

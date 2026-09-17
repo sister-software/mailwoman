@@ -118,7 +118,7 @@ A bounded set of universal postcode and well-known-format regexes:
 - JP postcode (\\d{3}-\\d{4})
 - PO Box / BP variants
 
-When a known-format pattern matches with high confidence AND the user-location prior agrees, Stage 2.5 can route directly to **Stage 6 (resolver)**, skipping the encoder entirely. This is a measurable browser-side win — ~5 ms encoder inference + ~25 MB model load saved per call for the trivial cases.
+When a known-format pattern matches with high confidence and the user-location prior agrees, Stage 2.5 can route directly to **Stage 6 (resolver)**, skipping the encoder entirely. This is a measurable browser-side win — ~5 ms encoder inference + ~25 MB model load saved per call for the trivial cases.
 
 ⚠ **Fast paths are advisory, not authoritative.** `"10118"` could be a partial typed input (`"10118 Maple St"` mid-keystroke). Every fast path must:
 

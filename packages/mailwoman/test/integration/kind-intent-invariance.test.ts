@@ -14,7 +14,7 @@
  *   The kind classifier's verdict influences the rest of the pipeline through exactly three doors,
  *   and this file walks all three:
  *
- *   1. `deriveInputMode(kind)` — the register handed to `classifier.parse` on EVERY geocode
+ *   1. `deriveInputMode(kind)` — the register handed to `classifier.parse` on every geocode
  *       (`geocode-core.ts`'s `deriveGeocodeRegister`) and every `runPipeline` full-path parse. This
  *       is the one that would silently change a parse, because the evidence-bundle channels feed in
  *       `fragmented` and not in `formatted`.
@@ -24,7 +24,7 @@
  *       `poi_category`.
  *
  *   A verdict whose top `kind` and `confidence` are unchanged cannot move any of the three. So the
- *   pin below is over `(kind, confidence, inputMode)` for EVERY committed corpus row (the size test pins the count) in BOTH
+ *   pin below is over `(kind, confidence, inputMode)` for every committed corpus row (the size test pins the count) in both
  *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
  *   receipt than a sample of parses would be — it is every row, it is exact rather than
  *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
@@ -253,7 +253,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		}
 
 		// Both registers of each row, and nothing else. Compared as SETS of inputs: the corpus may
-		// legitimately carry the same surface in two boards ('Rua Augusta' is a Lisbon case AND a
+		// legitimately carry the same surface in two boards ('Rua Augusta' is a Lisbon case and a
 		// São Paulo case), and the population claim is about distinct inputs, not case rows.
 		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()

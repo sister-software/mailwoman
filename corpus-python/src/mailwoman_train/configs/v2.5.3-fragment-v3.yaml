@@ -1,13 +1,13 @@
-# v2.5.3-fragment-v3 — fragment recipe v3 iteration: ONE variable off v2.5.2 (the recipe output gains 11k GLOBAL
+# v2.5.3-fragment-v3 — fragment recipe v3 iteration: one variable off v2.5.2 (the recipe output gains 11k GLOBAL
 # bare-locality twins from corpus locality spans across 11 countries — the gauntlet
 # global-dublin-bare regression: famous cities outside the recipe output's 16 OA locales lost their locality
-# reading as fragment street-mass grew). Check bars: v252 non-regression (street >= .5433, pc PASS
-# .9861, hn >= .7597) + gauntlet regression layer GREEN (the Dublin pin) + fragment-dev.
+# reading as fragment street-mass grew). Check bars: v252 non-regression (street >= .5433, pc passes
+# at .9861, hn >= .7597) + gauntlet regression layer GREEN (the Dublin pin) + fragment-dev.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.4-fragment-v3/corpus-v0.10.4-fragment-v3
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -31,7 +31,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -75,7 +75,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -130,7 +130,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v241 (fresh optimizer; --resume auto on a
+train: # Same-vocab init_from fine-tune off the shipped v241 (fresh optimizer; --resume auto on a
   # fresh output_dir honors init_from, weights only).
   output_dir: /data/output-v253-fragment-v3-s42/checkpoints
   seed: 42

@@ -101,7 +101,7 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 - **Word tokenizer (rules):** the v1 core, around `core/tokenization/`
 - **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `neural-weights-en-us/tokenizer.model`
-- **Training:** `corpus-python/src/mailwoman_train/tokenizer_splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab, not a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
+- **Training:** `corpus-python/src/mailwoman_train/tokenizer/splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab, not a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
 
 ## See it in action
 

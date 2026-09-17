@@ -167,7 +167,7 @@ export interface QuarantinedRow {
  * URL. Each adapter documents its own expected shape in its README.
  *
  * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country
- * data (OSM PBF, OpenAddresses) MUST honor this; single-country adapters (BAN) may ignore it but should reject
+ * data (OSM PBF, OpenAddresses) must honor this; single-country adapters (BAN) may ignore it but should reject
  * mismatches.
  *
  * `limit` is a soft cap on rows emitted; useful for fixture-driven tests and smoke runs.
@@ -230,7 +230,7 @@ export interface CorpusAdapter {
 	/**
 	 * Async iterable of canonical rows.
 	 *
-	 * Implementations MUST:
+	 * Implementations must:
 	 *
 	 * - Honor `opts.country` (filter or reject mismatches).
 	 * - Honor `opts.limit` (stop after N rows).

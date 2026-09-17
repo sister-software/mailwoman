@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Affix-aware per-tag scorer. `per-locale-f1`'s `foldToComponents` joins
- *   `street_prefix`+`street`+`street_suffix` into one `street`, so it CANNOT measure the affix
+ *   `street_prefix`+`street`+`street_suffix` into one `street`, so it cannot measure the affix
  *   split. This scores the UNFOLDED `decodeAsJSON` output against split ground truth: exact-match
  *   (case-insensitive) P/R/F1 per tag.
  *
@@ -42,7 +42,7 @@ export interface ScoreAffixOptions {
 	 */
 	file?: string
 	/**
-	 * A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference, else the
+	 * A gazetteer-trained model must be fed the lexicon (+ the paired postcode suppression) at inference, else the
 	 * zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
 	 */
 	gazetteerLexicon?: string

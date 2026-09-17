@@ -10,7 +10,7 @@
  *
  *   ## The prefix rule, and the trap it walks around
  *
- *   A GB outward code is "the compact form minus its last three characters", NEVER a greedy
+ *   A GB outward code is "the compact form minus its last three characters", never a greedy
  *   `^([A-Z]{1,2}\d{1,2})`. The greedy form reads `BT4 1NY` as district `BT41`, which deletes BT1–BT9
  *   from a census and invents nine districts that do not exist. That is a measured trap, not a
  *   hypothetical: the arc's M-2b measurement hit it first. {@link outwardOf} is the one place the
@@ -25,7 +25,7 @@
  *   thinnest districts land BT68 at 4 observed units with a sampled p95 radius of 0.27 km — a number
  *   that would tell a consumer the whole district fits in a 270 m circle.
  *
- *   So the builder reads the database's OWN coverage declaration rather than trusting a flag: a database
+ *   So the builder reads the database's own coverage declaration rather than trusting a flag: a database
  *   that publishes a `coverage_meaning_of_zero` meta key is declaring itself partial (that key is the
  *   repo's marker for "a miss here means NOT ATTESTED"), and a partial database gets the ANCESTRY-ONLY
  *   tier — nodes with ancestors, `unitCount`, and no coordinate at all. `postalcode-gb-codepoint.db`
@@ -36,7 +36,7 @@
  *   ## Ancestry
  *
  *   Neither postcode database carries admin ancestry — `spr.parent_id` is `-1` and the `ancestors` table
- *   holds a self-row only, in BOTH. GB ancestry therefore comes from the Royal Mail AREA→constituent
+ *   holds a self-row only, in both. GB ancestry therefore comes from the Royal Mail AREA→constituent
  *   country table in `@mailwoman/codex/gb` joined to the WOF admin DB for the IDs. The two areas the
  *   codex documents as majority calls across a national border (TD, SY —
  *   `GB_BORDER_STRADDLING_AREAS`) assert the United Kingdom and nothing finer, because at OUTWARD
@@ -44,7 +44,7 @@
  *
  *   ## The US arm answers a different question, because it has a different problem
  *
- *   `postalcode-us.db` has NO `meta` table, so the coverage rule above cannot run — and inferring
+ *   `postalcode-us.db` has no `meta` table, so the coverage rule above cannot run — and inferring
  *   "complete" from a table that does not exist is the meaning-of-zero error the rule was written to
  *   avoid. The US arm therefore never consults it. Its database is a per-unit enumeration (42,318
  *   distinct names over 42,319 rows), so thin sampling is not the failure mode; contaminated
@@ -70,7 +70,7 @@
  *   WOF parentage contradicts it on 8.46% of placed units and point-in-polygon on 0.69%. PIP also
  *   needs no licensed USPS product, which a delivery-area boundary otherwise would.
  *
- *   A prefix asserts its region only when EVERY clean unit under it lands in the same one. That is
+ *   A prefix asserts its region only when every clean unit under it lands in the same one. That is
  *   GB's border-straddle rule under a different name: 25 SCFs span two or three states and assert the
  *   country alone. Twenty-four of those pair adjacent states (035 ME/NH, 205 DC/MD/VA, 576 ND/SD);
  *   the twenty-fifth, 602, splits IL/NY on the strength of one unit — `60290`, a Chicago code the
@@ -253,7 +253,7 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 	const hasMeta =
 		db.prepare(`select name from sqlite_master where type = 'table' and name = 'meta'`).get() !== undefined
 
-	// A database with no `meta` table has made no declaration, which is NOT the same as declaring itself complete. The GB
+	// A database with no `meta` table has made no declaration, which is not the same as declaring itself complete. The GB
 	// coverage rule keys off the ABSENCE of one specific key, so it can only be applied to a database that has the table to
 	// be missing a key from; `postalcode-us.db` does not, and the US arm never asks.
 	if (!hasMeta) return {}
@@ -469,8 +469,8 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 		db.destroy()
 	}
 
-	// A coordinate carrying units from DIFFERENT prefixes is a placeholder the source reached for when it had no
-	// location — never a real one, since two sectional centres do not share a point. Units of the SAME prefix sharing a
+	// A coordinate carrying units from different prefixes is a placeholder the source reached for when it had no
+	// location — never a real one, since two sectional centres do not share a point. Units of the same prefix sharing a
 	// point are ordinary (a city's PO-box codes all sit downtown), so the test is deliberately cross-prefix only.
 	const byCoordinate = new Map<string, Set<string>>()
 

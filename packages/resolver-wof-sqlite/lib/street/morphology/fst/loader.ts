@@ -7,7 +7,7 @@
  *   source, previously rebuilt from the libpostal dictionaries per process at three duplicate call
  *   sites (runtime pipeline / parity eval / neural harness). The sealed artifact
  *   (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`) replaces
- *   those per-process builds; this loader is the ONE resolution ladder every node call site shares:
+ *   those per-process builds; this loader is the one resolution ladder every node call site shares:
  *
  *   1. An explicit `artifactPath` (e.g. the weights-package sibling surfaced by
  *      `NeuralAddressClassifier.streetMorphologyPath`). When given, it is the only artifact probed.
@@ -45,7 +45,7 @@ export function defaultStreetMorphologyArtifactPath(): PathBuilder {
 
 export interface LoadStreetMorphologyFSTOpts {
 	/**
-	 * Explicit artifact path (e.g. a weights-package sibling). When given it is the ONLY artifact probed — missing or
+	 * Explicit artifact path (e.g. a weights-package sibling). When given it is the only artifact probed — missing or
 	 * unreadable degrades straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike

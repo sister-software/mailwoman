@@ -84,7 +84,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	// DELIBERATELY OMITTED: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
 	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
 	// tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit
-	// postcode isn't a distinctive format), so ONLY the preset pin selects the nz index — free-typed NZ stays unfired.
+	// postcode isn't a distinctive format), so only the preset pin selects the nz index — free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
 
@@ -134,13 +134,13 @@ export interface ClassifyStageResult {
 }
 
 /**
- * The neural classify front-half, shared by BOTH demo parse paths (the `/demo` map's `runParseWithBias` and the
+ * The neural classify front-half, shared by both demo parse paths (the `/demo` map's `runParseWithBias` and the
  * MDX-embed `PipelineExplorer`'s `runParse`): the 4-way pipeline import, the query-shape + kind pass, the neural
  * `runPipeline`, and the tree flatten — with the two front-half timings captured. The caller owns resolution
  * (`runCascade`, plus the map path's street tier / anchor fallback) and the staged `onStage` progress ticks.
  *
  * #1278: this is the single point the locale-check pre-parse plugs into. A future per-parse country / conventions hint
- * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call HERE — one insertion point for both paths.
+ * is threaded through {@link ClassifyStageDeps} into the `runPipeline` call here — one insertion point for both paths.
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape the web loader's
@@ -163,7 +163,7 @@ export interface ClassifyStageDeps {
 	fst?: FSTMatcherLike | null
 	/**
 	 * The optional street-morphology matcher — the #1315 street-context check's signal source. The check only fires when
-	 * BOTH this and `fst` are wired (core's `streetContextRequirementFor`), matching the node runtime pipeline's default;
+	 * both this and `fst` are wired (core's `streetContextRequirementFor`), matching the node runtime pipeline's default;
 	 * a `null`/omitted matcher parses with the check off, exactly the pre-artifact demo behavior.
 	 */
 	streetMorphology?: FSTMatcherLike | null

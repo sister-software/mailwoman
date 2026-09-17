@@ -55,7 +55,7 @@ export interface CopyWeightsOptions {
 	repoRoot: string
 	/**
 	 * Where the weights workspaces are written — the source checkout (the release path), or a #1894 preflight's staging
-	 * tree. Sources always resolve against THIS checkout's data root and release.config.json; only destinations move.
+	 * tree. Sources always resolve against this checkout's data root and release.config.json; only destinations move.
 	 */
 	destRoot?: string
 	log: (line: string) => void
@@ -73,7 +73,7 @@ interface MaterializationContext {
 	repoRoot: string
 	dataRoot: string
 	/**
-	 * The derived-artifact store for THIS checkout's inputs. Computed once — the key is a hash over files that do not
+	 * The derived-artifact store for this checkout's inputs. Computed once — the key is a hash over files that do not
 	 * change mid-run.
 	 */
 	derivedStore: string
@@ -419,9 +419,9 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 		return
 	}
 
-	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
+	// Inputs resolve against different roots, and conflating them is a real failure mode (it broke CI once):
 	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
-	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). `resolvePath` lets an absolute entry pass
+	// checked into the repository (`data/gazetteer/london-pairs-v2.jsonl`). `resolvePath` lets an absolute entry pass
 	// through untouched either way.
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
 	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined

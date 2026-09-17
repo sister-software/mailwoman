@@ -28,7 +28,7 @@ const CASE_ID_LENGTH = 16
 const MINIMUM_SALT_LENGTH = 16
 
 /**
- * Refuse a salt that cannot do its job, BEFORE any row is read.
+ * Refuse a salt that cannot do its job, before any row is read.
  *
  * Checked once at the start of a run rather than per row, so an operator who forgot to export the secret is told so
  * immediately instead of after the licensed file has been opened.

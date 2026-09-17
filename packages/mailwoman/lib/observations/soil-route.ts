@@ -5,8 +5,8 @@
  *
  *   The soil-capability designation route, observation-only: after the resolver has produced a coordinate,
  *   the soil survey's own reading for that coordinate is recorded beside the answer — the capability class
- *   the survey assigns WITH the share of the cell it covers, the farmland classification as published
- *   including its condition, the survey area with BOTH its dates, and the coverage record stating that the
+ *   the survey assigns with the share of the cell it covers, the farmland classification as published
+ *   including its condition, the survey area with both its dates, and the coverage record stating that the
  *   authority mapped there.
  *
  *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
@@ -31,7 +31,7 @@
  *
  *   THE PROVENANCE CARRIES THE SURVEY VINTAGE, NOT ONLY THE REFRESH. A polygon republished in the 2025
  *   Annual Soils Refresh can rest on a field survey published in 1960 — that is `IA153`, measured — and the
- *   dataset's own time-period-of-content ends at the refresh, so a consumer reading THAT as survey currency
+ *   dataset's own time-period-of-content ends at the refresh, so a consumer reading that as survey currency
  *   reads it wrong by sixty-five years. Both dates reach the caller, apart, with the source title the older
  *   one came from.
  *
@@ -89,7 +89,7 @@ export interface SoilCapabilityObservation {
 	 */
 	distribution: SoilCapabilityDistribution
 	/**
-	 * The survey area covering the location, with the refresh date AND the far older field-survey date.
+	 * The survey area covering the location, with the refresh date and the far older field-survey date.
 	 */
 	surveyArea?: SoilSurveyAreaRecord
 	/**
@@ -204,7 +204,7 @@ function toObservation(
 }
 
 /**
- * What the survey assigns, in ONE wording — the class never travels without the share it rests on — shared by the
+ * What the survey assigns, in one wording — the class never travels without the share it rests on — shared by the
  * one-line description and the marker message.
  */
 export function soilCapabilityAssignmentClause(observation: SoilCapabilityObservation): string {

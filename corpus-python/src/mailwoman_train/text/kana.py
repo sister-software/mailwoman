@@ -17,7 +17,7 @@ def fold_halfwidth_kana(text: str) -> str:
 
     Targeted, not blanket NFKC: NFKC would also fold full-width digits to ASCII, and the two-register
     chōme convention needs those registers kept apart. The fold is LENGTH-CHANGING (ﾃﾞ → デ, 2 chars
-    → 1), which is safe here only because it runs on field values BEFORE they are concatenated and
+    → 1), which is safe here only because it runs on field values before they are concatenated and
     their spans recorded. 14,739 ``number`` values in the source need it.
     """
     if not any(0xFF61 <= ord(c) <= 0xFF9F for c in text):

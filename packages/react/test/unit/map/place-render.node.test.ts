@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PURE render-spec tests — bare node, no map. They pin the decision cascade that replaces the demo's
+ *   Pure render-spec tests — bare node, no map. They pin the decision cascade that replaces the demo's
  *   imperative redraw effect: which outline + camera each resolved-place shape produces, the tier-over-
  *   polygon precedence, the postcode-with/without-bbox split, the bare-point fallthrough, and the
  *   declarative `cameraToViewState` path. A fake `ResolvedMapPlace` stands in for the runtime result.

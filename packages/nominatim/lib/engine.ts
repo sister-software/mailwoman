@@ -54,7 +54,7 @@ export interface NominatimResult {
 }
 
 /**
- * Parsed `/search` parameters (free-text OR structured; never both).
+ * Parsed `/search` parameters (free-text or structured; never both).
  */
 export interface NominatimSearchParams {
 	q?: string
@@ -127,7 +127,7 @@ export interface NominatimStatusArtifact {
 	 */
 	version?: string
 	/**
-	 * What it was built FROM: the manifest's source, then its source vintage.
+	 * What it was built from: the manifest's source, then its source vintage.
 	 */
 	sources?: string[]
 }

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the US verified-coord held-out pool for the Gauntlet (C6). FDIC BankFind publishes every insured
- *   bank branch (~78k) with a real street address AND a geocoded LAT/LON — a clean US truth source that is
- *   NOT in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
+ *   bank branch (~78k) with a real street address and a geocoded LAT/LON — a clean US truth source that is
+ *   not in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
  *   complement to the FR/BAN draw. Public domain (US Government work).
  *
  *   Writes a semicolon CSV pool (address;city;state;zip;lat;lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
@@ -69,7 +69,7 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is ON because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
+ * Retry is on because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
  * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
  * rather than published, so the cost of a transient failure was the entire download, not a corrupt artifact.
  *

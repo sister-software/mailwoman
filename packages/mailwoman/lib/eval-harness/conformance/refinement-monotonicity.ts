@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The refinement-monotonicity law: a query that says MORE must not make a candidate the coarser query could
+ *   The refinement-monotonicity law: a query that says more must not make a candidate the coarser query could
  *   reach unreachable, unless the added information contradicts it. Pure — no model, no I/O beyond reading the
  *   committed suite. The reading itself lives in `candidate-admissibility.ts`; this module owns the row
  *   vocabulary and the refusal.
@@ -11,8 +11,8 @@
  *   WHY IT IS A PRODUCT COMMITMENT. Refinement is what a person does when the answer was wrong: they type
  *   `Springfield`, get Missouri, and add `IL`. If adding the state can push the Illinois Springfield out of
  *   reach, the one repair a user knows how to make is the one that cannot be relied on. Every other law in
- *   this directory states that a rewrite of the SAME information changes nothing; this one is the only law
- *   about information being ADDED and the axis those four cannot see.
+ *   this directory states that a rewrite of the same information changes nothing; this one is the only law
+ *   about information being added and the axis those four cannot see.
  *
  *   THE BASE IS DERIVED, NOT AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a
  *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the FULLEST
@@ -104,7 +104,7 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
  * Derived from the pair rather than stored on the fixture, on the canonical-form law's own reasoning: a stored step
  * name is a second copy of something the two strings already say, and the copy is what goes stale.
  *
- * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the FIRST match wins. Two steps can agree on a pair — a
+ * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins. Two steps can agree on a pair — a
  * two-token single-segment query is reachable by both a segment step and the numeric one — and the order determines the
  * result rather than leaving the name to whichever branch ran last.
  */
@@ -225,7 +225,7 @@ export interface RefinementCoverage {
 	 */
 	links: number
 	/**
-	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do NOT
+	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do not
 	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state, not how the
 	 * rows partition.
 	 */

@@ -236,7 +236,7 @@ describe("findPlace — backwards compat", () => {
 	})
 
 	test("near + bbox without R*Tree (legacy DB) is silently ignored; no crash, no proximity filter", async () => {
-		// Simulate an older DB that has FTS5 but NOT the R*Tree bbox index (built before this PR).
+		// Simulate an older DB that has FTS5 but not the R*Tree bbox index (built before this PR).
 		const db = buildFixtureDB()
 
 		db.exec(`

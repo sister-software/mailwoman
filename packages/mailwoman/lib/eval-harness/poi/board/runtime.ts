@@ -45,7 +45,7 @@ export interface POIBoardOptions {
 	 * An additional positive-evidence phrase rung for the constructed pipeline, consulted only after the committed
 	 * lexicon and the POI name lookup have both returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`).
 	 *
-	 * Carried on the board's own options so a probe measuring an injected route runs through the SAME construction the
+	 * Carried on the board's own options so a probe measuring an injected route runs through the same construction the
 	 * board does. Absent — the default — constructs the pipeline the board has always constructed.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
@@ -128,7 +128,7 @@ export interface POIBoardPipelineHandle extends Disposable {
  * (`NeuralAddressClassifier.loadFromWeights` + the shared resolver-backend selector + `createRuntimePipeline({
  * poiQueryKind: { poiDatabasePath } })`).
  *
- * Extracted so a probe that grades with {@link gradeCase} runs against the SAME construction the board does. A second
+ * Extracted so a probe that grades with {@link gradeCase} runs against the same construction the board does. A second
  * copy of these four calls would let the two drift — a different backend or a different weights locale would change
  * what the probe measures while the grader stayed identical, and the difference would read as a pipeline result.
  */
@@ -141,7 +141,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 	})
 
 	const resolverHandle = await loadResolver(options)
-	// A caller-supplied rung wins: the probe hands one in AND drains it afterwards, so building a second here would give
+	// A caller-supplied rung wins: the probe hands one in and drains it afterwards, so building a second here would give
 	// it a route whose firings nobody reads.
 	const semanticLookup = options.poiSemanticLookup ?? (await buildBoardSemanticLookup(options.semanticObservation))
 

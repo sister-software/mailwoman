@@ -12,7 +12,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aliasBagExactMatch, foldQueryText } from "#fts/index"
 
 /**
- * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
+ * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively — the exact-match tier for
  * ranking. One indexed query over `<schema>.names`. When the extract has no `names` table (a slim DB built with
  * `dropNames`, or a postcode-only extract), fall back to the self-contained `place_search` FTS content: its `alt_names`
  * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`

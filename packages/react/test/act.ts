@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ONE act() change for the browser-mode suite.
+ *   The one act() change for the browser-mode suite.
  *
  *   The components under test do async state updates (autocomplete debounce timers, runtime-load and
  *   parse promises, the clipboard write + its transient "copied" flag). A test triggers an interaction
@@ -11,18 +11,18 @@
  *   `act()` scope — so React logs "An update to <X> inside a test was not wrapped in act(...)".
  *
  *   Rather than sprinkle `await act(async () => …)` across ~150 call sites, we wrap the two APIs every
- *   test already routes through, ONCE, in place:
+ *   test already routes through, once, in place:
  *
  *     • `userEvent` (from `vitest/browser`) — the interaction surface. Each method now runs its
  *       DOM event inside `act()` and then drains one macrotask tick, still inside the same `act()` scope,
  *       so a fire-and-forget `onClick` handler (e.g. `useClipboard`'s `copy()`, whose `setCopied(true)`
  *       lands after the click promise resolves — decoupled from the click) is captured too.
  *
- *     • `vi.waitFor` (from `vitest`) — the settle surface. Reimplemented as a poll that completes ONE
+ *     • `vi.waitFor` (from `vitest`) — the settle surface. Reimplemented as a poll that completes one
  *       full `act()` per iteration and checks the assertion synchronously between iterations. Completing
  *       a fresh act each round is what lets an effect CHAIN advance (a held-open act swallows the passive
  *       effect flushes between steps — e.g. `useReleaseRuntime`'s manifest → assets → ready effects would
- *       stall). Because the ONLY code outside act is the synchronous callback invocation (no await, so
+ *       stall). Because the only code outside act is the synchronous callback invocation (no await, so
  *       no microtask/timer can interleave there), every async `setState` — a debounce firing, a runtime
  *       promise resolving, a parse completing — lands inside an act tick.
  *
@@ -135,7 +135,7 @@ async function actWaitFor<T>(
 
 			// The condition is met, but an intermediate assertion (wait for X while Y is still resolving —
 			// a parse that fills components before the place resolves, a runtime whose subject lands before a
-			// follow-on) can leave a promise in flight. Drain one more tick INSIDE act so that trailing
+			// follow-on) can leave a promise in flight. Drain one more tick inside act so that trailing
 			// setState settles in-scope instead of firing during the caller's `await` resume gap.
 			await act(async () => {
 				await new Promise((resolve) => {
@@ -174,7 +174,7 @@ function wrapWaitFor(): void {
 }
 
 /**
- * Advance `ms` of real time INSIDE act(). For the rare "wait, then assert nothing happened" case a negative assertion
+ * Advance `ms` of real time inside act(). For the rare "wait, then assert nothing happened" case a negative assertion
  * can't route through `vi.waitFor` (which waits for a condition to BECOME true): the digit-leading autocomplete test
  * waits past the debounce to prove the fetcher never fired, and the debounce's own `setDebouncedValue` + the abstaining
  * effect still run during that wait — so the wait itself must hold an act scope. Use this instead of a bare `await new

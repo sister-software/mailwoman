@@ -12,7 +12,7 @@
  *   Of those, 1,210 nest their holes inside one polygon part the way RFC 7946 expects, and the rest put every
  *   ring in its own `MultiPolygon` part — the largest feature in the country, Meath's `RA - Rural Area`,
  *   arrives as 107 single-ring parts of which 5 are clockwise and 102 counter-clockwise. So the source uses
- *   BOTH encodings, the orientation is the only signal common to them, and a reader that took the nesting at
+ *   both encodings, the orientation is the only signal common to them, and a reader that took the nesting at
  *   face value would read 102 holes as 102 separate zoned areas.
  *
  *   CLOCKWISE IS EXTERIOR, WHICH IS THE INVERSE OF RFC 7946, AND THE PUBLISHER'S OWN ARITHMETIC PROVES IT.
@@ -59,7 +59,7 @@ export interface ResolvedRingRoles {
 	 */
 	nestedHoles: number
 	/**
-	 * Holes NO exterior contains a majority of, placed under the smallest exterior of the same feature and counted here.
+	 * Holes no exterior contains a majority of, placed under the smallest exterior of the same feature and counted here.
 	 *
 	 * Measured at 9 of 3,516 nationally, every one a sliver under 1.7 m² sitting on its parent's boundary. They are
 	 * carried rather than dropped: the publisher's own area accounting subtracts them, so dropping one would add ground
@@ -135,7 +135,7 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
  * @param featureID Named in every refusal, so a build log says which feature rather than only that one failed.
  * @throws {Error} When the feature carries no ring at all. That is the one case with no reading: a feature reduced to
  *   nothing reads downstream as an absence of zoning, which is the one answer this layer must never invent. A feature
- *   whose rings all read as holes DOES have a reading — see {@link ResolvedRingRoles.exteriorByMagnitude}.
+ *   whose rings all read as holes does have a reading — see {@link ResolvedRingRoles.exteriorByMagnitude}.
  */
 export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string): ResolvedRingRoles {
 	const rings = flattenRings(polygons)
@@ -212,7 +212,7 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 			continue
 		}
 
-		// A hole no exterior contains a majority of sits ON its parent's boundary — measured at 9 of 3,516 nationally, all
+		// A hole no exterior contains a majority of sits on its parent's boundary — measured at 9 of 3,516 nationally, all
 		// under 1.7 m². It goes to the smallest exterior of the same feature, which is the only exterior at all on 8 of the
 		// 9, and is counted so a receipt can carry the number rather than imply it is zero.
 		bySize[0]!.holes.push(hole)

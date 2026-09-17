@@ -20,7 +20,7 @@ This module ships a thin, ONNX-friendly ``MailwomanCoarseEncoder`` that:
 - Linear classifier head over ``num_labels``.
 
 Compatibility with the older ``BertForTokenClassification.from_pretrained`` checkpoints is
-intentionally NOT preserved — the smoke artifacts from the previous (CPU) iteration are
+intentionally not preserved — the smoke artifacts from the previous (CPU) iteration are
 replaced wholesale.
 """
 
@@ -258,7 +258,7 @@ class MailwomanCoarseEncoder(
 
         h = self.final_ln(h)
 
-        # PR3 self-conditioning: infer a locale posterior from the WHOLE sequence, then let it
+        # PR3 self-conditioning: infer a locale posterior from the whole sequence, then let it
         # reshape the per-token reps before the BIO head. This is the "globally, before per-token
         # labels" step the design calls for — and the reason it warrants its keep is the probe: the
         # postcode alone settles the country <50% of the time, so the model has to read the city

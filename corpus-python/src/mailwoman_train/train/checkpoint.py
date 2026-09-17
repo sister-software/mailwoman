@@ -63,7 +63,7 @@ def save_checkpoint(
             torch.save(scheduler.state_dict(), tmp / "scheduler.pt")
         if rng_state is not None:
             torch.save(rng_state, tmp / "rng_state.pt")
-        # Written LAST: its presence is the completeness marker find_latest_checkpoint trusts.
+        # Written last: its presence is the completeness marker find_latest_checkpoint trusts.
         (tmp / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
     except BaseException:
         shutil.rmtree(tmp, ignore_errors=True)

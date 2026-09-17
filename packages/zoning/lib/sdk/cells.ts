@@ -8,7 +8,7 @@
  *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/zoning/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-PART
  *   zero-cell guard and the allocator-avoiding shortcuts around it are properties of h3-js rather than of
- *   this product — the layer contract's polygon-builder section states them as requirements on EVERY polygon
+ *   this product — the layer contract's polygon-builder section states them as requirements on every polygon
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
  *   WHAT THIS LAYER ADDS IS THE NUMBER THE RESOLUTION IS ACTUALLY CHOSEN FROM, AND IT IS NOT THE `partial`
@@ -21,7 +21,7 @@
  *   the `partial` share is reported beside them rather than in place of them.
  *
  *   THE ZERO-CELL COUNT IS A MEASUREMENT OF THE ALTERNATIVE, NOT OF THIS INDEX. `classifyFeatureCells` takes
- *   overlapping containment and REFUSES a feature that reaches no cell, so this index's own zero-cell count is
+ *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
  *   zero by construction. What the column reports is what `polygonToCells` — the centre-in-polygon polyfill a
  *   builder reaches for first — would have returned nothing for, and every one of those would have read
  *   downstream as an absence of zoning.
@@ -71,7 +71,7 @@ export interface CellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. Reported, and NOT what the resolution is chosen on — see this file's header.
+	 * `partialCells / touchedCells`. Reported, and not what the resolution is chosen on — see this file's header.
 	 */
 	partialShare: number
 	/**
@@ -93,7 +93,7 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned NOTHING for — see {@link polyfillFindsNothing}.
+	 * Features a centre-in-polygon polyfill would have returned nothing for — see {@link polyfillFindsNothing}.
 	 * `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number

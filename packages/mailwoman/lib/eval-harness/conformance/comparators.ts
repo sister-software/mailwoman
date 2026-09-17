@@ -14,13 +14,13 @@
  *
  *   THE AXES ARE DISJOINT ON PURPOSE. `resolution_identity` never reads a coordinate and
  *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
- *   closed: an identity law that could fall back to distance would pass whenever two DIFFERENT places
+ *   closed: an identity law that could fall back to distance would pass whenever two different places
  *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
  *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
  *   and only a coordinate 8,045 km away to say so, and a namesake inside a 25 km bar would have had nothing
  *   at all.
  *
- *   AN AXIS ABSENT ON BOTH SIDES IS `undecidable`, NEVER `equivalent`. Two runs that resolved no place agree
+ *   An axis absent on both sides is `undecidable`, never `equivalent`. Two runs that resolved no place agree
  *   about nothing; two empty parses agree about nothing; two outcomes carrying no mechanism account agree
  *   about nothing. Reporting agreement there would let a law pass on a pair of total failures, and the
  *   reading would be indistinguishable from a law that genuinely holds. The reading says what it read, and
@@ -53,7 +53,7 @@ export interface ConformanceOutcome {
 	/**
 	 * The mechanism-account shapes this run matched, in the account's own stage order.
 	 *
-	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately NOT imported here: dev-mcp is a
+	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately not imported here: dev-mcp is a
 	 * private maintainer workspace that depends on `mailwoman`, so the dependency can only run in that direction, and a
 	 * second copy of the vocabulary would drift from the predicates that define it. The observer supplies the labels;
 	 * this module compares them and reports what it was given.
@@ -337,7 +337,7 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 
 	// The invariance suite's severity reading, carried WHATEVER branch is taken below. Its critical-tag rule
 	// (house_number / street / postcode) is the judgment this module must not re-invent, and a law that fails
-	// still wants to know whether the drift was DEGRADED or LOST.
+	// still wants to know whether the drift was `DEGRADED` or `LOST`.
 	const { verdict, diff } = compareComponents(a, b)
 	const basis = `compareComponents verdict ${verdict} · base {${aKeys.toSorted().join(", ") || "empty"}} · variant {${bKeys.toSorted().join(", ") || "empty"}}`
 
@@ -347,11 +347,11 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 
 	const added = bKeys.filter((tag) => a[tag] === undefined)
 
-	// A refinement law's variant carries MORE information, so `compareComponents`'s hallucination rule does not
-	// apply to it: that rule reads a gained critical tag as LOST because its premise is that both sides were fed
+	// A refinement law's variant carries more information, so `compareComponents`'s hallucination rule does not
+	// apply to it: that rule reads a gained critical tag as `LOST` because its premise is that both sides were fed
 	// the same information. Containment plus at least one new component is the refinement reading, and the
 	// severity verdict above still travels with it — an invariance law reaches this branch too, sees `refines`
-	// where it expected `equivalent`, and fails with LOST printed beside the gained tag.
+	// where it expected `equivalent`, and fails with `LOST` printed beside the gained tag.
 	if (added.length && containsAll(a, b)) {
 		return {
 			comparator: "component_map",

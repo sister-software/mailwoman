@@ -192,7 +192,7 @@ def test_user_defined_postcode_kept_whole(tmp_path: Path):
     pieces = sp.encode_as_pieces("Paris 75008")
     assert "75008" in pieces
 
-    # UDS literal that did NOT appear in training data — should still be guaranteed-whole.
+    # UDS literal that did not appear in training data — should still be guaranteed-whole.
     pieces2 = sp.encode_as_pieces("Tokyo 100-0005")
     assert "100-0005" in pieces2
 

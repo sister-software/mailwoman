@@ -8,13 +8,13 @@
  *   monolithic `street`). Mirrors the PO box synthesizer pattern.
  *
  *   Why this exists: TIGER/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
- *   components from raw source data, but the v0.4.0 parquet files on Modal were built BEFORE those
+ *   components from raw source data, but the v0.4.0 parquet files on Modal were built before those
  *   changes. Rebuilding the full corpus requires downloading raw TIGER/NAD/BAN data and re-running
  *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
  *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
  *   the PO box pipeline.
  *
- *   Note: uses the SAME decomposition logic as TIGER's `decomposeStreet()` so the synthetic
+ *   Note: uses the same decomposition logic as TIGER's `decomposeStreet()` so the synthetic
  *   distribution matches what the model would see if/when the TIGER parquet files are rebuilt with the new
  *   adapter.
  */
@@ -34,7 +34,7 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -184,7 +184,7 @@ export interface StreetSynthesisOpts {
 	 */
 	includeHouseNumberProb?: number
 	/**
-	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/ postcode components
+	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/ postcode components
 	 * (just `street_prefix`/`street`/`street_suffix` + optional `house_number`). Default 0 (preserves the original
 	 * full-address behavior exactly, including the RNG sequence). Set >0 to teach the model that a bare `10th Ave` /
 	 * `Main St` is a STREET, not a locality — the functional-test failure cluster (bare streets mislabeled `locality`),

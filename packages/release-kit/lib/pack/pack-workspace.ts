@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ONE way to produce a consumer-grade tarball from a workspace: inject the derived
+ *   The one way to produce a consumer-grade tarball from a workspace: inject the derived
  *   `publishConfig.exports` (rewrite every `.ts` target to emitted JavaScript — Node refuses
  *   type-stripping under node_modules, so a source target must never reach a consumer), refuse the pack outright if
- *   one survives, `yarn pack`, restore the manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
+ *   one survives, `yarn pack`, restore the manifest. Used by both the release path (`publish-workspace.ts`) and the CI smoke test
  *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps, which
  *   let the v7.2.0 ship-break class through untested.
  */
@@ -24,7 +24,7 @@ import { assertNoSourceTargets, transformExportsForPublish, transformImportsForP
  * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
  * the tarball — the registry rejects those outright (YN0035 / HTTP 415), and npm's local-tarball extraction handles
  * them no better, so a smoke install of a packed weights workspace whose `model.onnx` is a `link-dev-weights` symlink
- * breaks the same way. Single-sourced here (2026-07-23) so BOTH pack callers get it: `publish-workspace.ts` keeps its
+ * breaks the same way. Single-sourced here (2026-07-23) so both pack callers get it: `publish-workspace.ts` keeps its
  * own pre-pack invocation as the documented safety net (see AGENTS.md "symlinks in the publish tarball"), and
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */

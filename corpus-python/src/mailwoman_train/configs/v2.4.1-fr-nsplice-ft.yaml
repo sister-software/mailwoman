@@ -1,7 +1,7 @@
 # v2.4.1-fr-nsplice-ft (#444) — THE PRINCIPLED FR-DIACRITIC FIX: an init_from FINE-TUNE that gives the
 # merged FR diacritic pieces gradient steps, the retrain the #1047 falsification specified.
 #
-# WHY (the #1047 mechanism finding): the training-free vocab-splice that fixed CZ/PL/SK/SI (#884) and
+# Why (the #1047 mechanism finding): the training-free vocab-splice that fixed CZ/PL/SK/SI (#884) and
 # Nordic (#912 change-4) is FALSIFIED for FR STREETS. The en-US line was trained FROM SCRATCH on v0.7.1
 # with abundant FR `é→O`, so `é` carries a strong, well-trained O-signal. FVT mean-init of a merged FR
 # piece — E(▁René) = mean(E[▁Ren], E[é]) — INHERITS that O pull, so the whole merged token tags O and
@@ -9,34 +9,34 @@
 # (mangle 23.5%→26.4%). Mean-init-only can't teach the merged pieces; that needs GRADIENT STEPS. This
 # config supplies them: init_from the mean-init candidate, fine-tune on the v0.8.0-fr-nsplice vocab.
 #
-# THE RECIPE = v2.3.0-nl-postcode-full (the shipped v5.4.0 lineage) VERBATIM, with EXACTLY these deltas:
+# THE RECIPE = v2.3.0-nl-postcode-full (the shipped v5.4.0 lineage) verbatim, with exactly these deltas:
 #   1. tokenizer_dir  → v0.8.0-fr-nsplice (v0.7.1's 63913 + 2406 FR diacritic pieces; md5 04995524…,
-#      #900 overlap check PASS, US byte-identical by construction).
+#      #900 overlap check passed, US byte-identical by construction).
 #   2. init_from      → /data/models/fr-nsplice-expanded — the v230-nl-postcode (v5.4.0) step-005000
 #      checkpoint's token_embeddings FVT mean-init-expanded 63913→66319 (mean_init_fr_nsplice, the
 #      pytorch-checkpoint twin of the onnx-mean-init that produced the staged v240 candidate; same FVT
 #      math, so the init is numerically the v240 mean-init candidate as a trainable checkpoint).
 #   3. SCHEDULE → the vocab-splice fine-tune schedule established across v1.9.7/v1.9.8/v1.9.9/v2.1.0
 #      (init_from a mean-init-expanded ckpt, fresh optimizer): constant lr 5.0e-5, warmup 200, 12000
-#      steps, eval/save every 2000. NOT v230's same-vocab lr 1e-5 (that fine-tune had no new rows to
-#      move); the new FR rows must overcome the inherited O-signal, and 5e-5 is THE splice-adaptation LR.
-#   4. output_dir/run name → v241 (FRESH dir; init_from READS v230's checkpoints, never overwrites).
+#      steps, eval/save every 2000. Not v230's same-vocab lr 1e-5 (that fine-tune had no new rows to
+#      move); the new FR rows must overcome the inherited O-signal, and 5e-5 is the splice-adaptation LR.
+#   4. output_dir/run name → v241 (fresh dir; init_from reads v230's checkpoints, never overwrites).
 # Everything else — the v0.10.1-nl-postcode corpus (699 parquet files), all source/country weights, the model
 # config (crf_loss_weight 0.0; conventions loss-mask absent=OFF), anchor/gaz knobs, class_weights, seed
 # 42, batch 128, bf16 — is v230-VERBATIM, so the SPLICED VOCAB + its gradient steps are the only variable.
 #
-# CHECK when it lands (operator reviews; do NOT auto-promote): mangle rate < 23.5% baseline (the #444
+# CHECK when it lands (operator reviews; do not auto-promote): mangle rate < 23.5% baseline (the #444
 # metric, scripts/eval/fr-accent-mangle-rate.ts); Honoré + René repros flip to HIT; gauntlet held-out FR
 # + US z-tests via --candidate + --candidate-tokenizer v0.8.0-fr-nsplice (a model-only swap leaves the
 # new rows dormant); non-FR byte-stability. NaN protocol: if the first checkpoints are NaN/inf, stop.
 data:
-  # v230's corpus VERBATIM (v0.10.1-nl-postcode = the v0.10.0 boundary-family base + synth-nl-postcode,
+  # v230's corpus verbatim (v0.10.1-nl-postcode = the v0.10.0 boundary-family base + synth-nl-postcode,
   # 699 parquet files). Stored as raw text + char-offset spans → RE-TOKENIZED through the spliced tokenizer at
   # load, so the FR diacritic pieces actually fire and receive gradient. No corpus rebuild needed.
   corpus_dir: /data/corpus/versioned/v0.10.1-nl-postcode/corpus-v0.10.1-nl-postcode
   tokenizer_dir: /data/models/tokenizer/v0.8.0-fr-nsplice
   max_length: 128
-  country_weights: # VERBATIM from v1.9.3a3 (22 countries) — no new locales (surgical).
+  country_weights: # Verbatim from v1.9.3a3 (22 countries) — no new locales (surgical).
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -60,7 +60,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street source.
+  source_weights: # Verbatim from v1.9.3a3 + the one new fr-bare-street source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -103,7 +103,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM from v1.9.3a3.
+model: # Verbatim from v1.9.3a3.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -160,7 +160,7 @@ model: # VERBATIM from v1.9.3a3.
 
 train: # #444 vocab-splice INIT_FROM FINE-TUNE (the v1.9.7/v2.1.0 idiom: fresh optimizer over the
   # mean-init-expanded checkpoint; --resume auto on a FRESH output_dir resolves to no checkpoint → honors
-  # init_from, loading model weights only). NOT a from-scratch run and NOT a resume.
+  # init_from, loading model weights only). Not a from-scratch run and not a resume.
   output_dir: /data/output-v241-fr-nsplice-ft-s42/checkpoints
   seed: 42
   # The v230 (v5.4.0) step-005000 embeddings FVT mean-init-expanded to the v0.8.0-fr-nsplice vocab

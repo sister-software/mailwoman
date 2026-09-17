@@ -5,7 +5,7 @@
  *
  *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is
  *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its check is
- *   REGRESSION-ONLY — "must not break what already passed" — and its pass-RATE is NEVER a ship gauge (that
+ *   REGRESSION-ONLY — "must not break what already passed" — and its pass-rate is never a ship gauge (that
  *   would re-invent the Pelias acceptance-test false-trust pass-list). Generalization is conditional elsewhere:
  *   the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which
  *   need no stored expected values and so can't be over-fit.
@@ -65,7 +65,7 @@ export interface GauntletCaseTable {
 	expect_components: string | null
 	/**
 	 * OPT-IN multi-script rendering contract as JSON `{ tag: [rendering, …] }` (null = no contract). For a listed key the
-	 * grader asserts that `scriptRenderings(got)` contains EVERY listed rendering, case-folded, and the same key in
+	 * grader asserts that `scriptRenderings(got)` contains every listed rendering, case-folded, and the same key in
 	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
 	 * refuses an empty one; the grader throws on one that reaches a built DB anyway).
 	 */
@@ -74,14 +74,14 @@ export interface GauntletCaseTable {
 	 * Expected resolved place id (null = place not asserted).
 	 *
 	 * Graded against `hierarchy[0].placeID` — see `check-case.ts`. Stored from the corpus's first migration and read by
-	 * NOTHING until 2026-08-06 (#1507), which is worth knowing about any expectation column: it can sit in the schema,
+	 * nothing until 2026-08-06 (#1507), which is worth knowing about any expectation column: it can sit in the schema,
 	 * the builder and the DDL, look asserted, and assert nothing.
 	 */
 	expect_place_id: string | null
 	/**
 	 * Expected resolved place canonical name (null = not asserted), case-insensitive against `hierarchy[0].name`.
 	 *
-	 * NOT `GauntletResult.locality`, which echoes the parsed query span — see `check-case.ts`'s `resolvedPlace`.
+	 * Not `GauntletResult.locality`, which echoes the parsed query span — see `check-case.ts`'s `resolvedPlace`.
 	 */
 	expect_place_name: string | null
 	/**
@@ -135,7 +135,7 @@ export interface GauntletCaseTable {
 	/**
 	 * 1 = this row's expected outcome is NO COORDINATE — the resolver abstains rather than answering. The grade inverts:
 	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must
-	 * abstain, not fall through to a world-fuzzy candidate; the abstain pin IS the contract, and lands re-pinned to real
+	 * abstain, not fall through to a world-fuzzy candidate; the abstain pin is the contract, and lands re-pinned to real
 	 * coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null

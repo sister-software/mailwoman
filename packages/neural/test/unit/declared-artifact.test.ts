@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `readDeclaredArtifactFile` — what a weights package's OWN card says it ships, and whether it does.
+ *   `readDeclaredArtifactFile` — what a weights package's own card says it ships, and whether it does.
  *
  *   This reader decides whether an unfed anchor channel is a broken package or a supported posture (#1516), so
  *   its tail matters more than its happy path: the shipped cards keep `$comment_*` siblings inside `files` to
- *   record a DELIBERATE absence, and reading one of those as a filename would turn en-gb's documented
+ *   record a deliberate absence, and reading one of those as a filename would turn en-gb's documented
  *   mitigation into a hard failure at every load.
  */
 

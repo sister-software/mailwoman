@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation the
- *   reader and the build share. A country ABSENT from a coverage map was never measured — never measured and
+ *   reader and the build share. A country absent from a coverage map was never measured — never measured and
  *   failed; the failed case is present with `hardFilterSafe: false`.
  */
 
@@ -13,8 +13,8 @@
  * live IN the artifact (the `country_coverage` table the gazetteer build emits) — code constants are only the fallback
  * for artifacts that predate the manifest.
  *
- * Meaning-of-zero discipline: a country ABSENT from the coverage map was never measured — never "measured and failed".
- * A measured-and-failed country is PRESENT with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve), so the
+ * Meaning-of-zero discipline: a country absent from the coverage map was never measured — never "measured and failed".
+ * A measured-and-failed country is present with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve), so the
  * negative result is a first-class record, distinguishable from ignorance.
  */
 export interface CountryCoverageFact {
@@ -87,7 +87,7 @@ export interface GazetteerArtifactCoverage {
 }
 
 /**
- * Derive the hard-country safelist from coverage facts — the ONE derivation both the reader and the build share.
+ * Derive the hard-country safelist from coverage facts — the one derivation both the reader and the build share.
  */
 export function hardCountrySafelistFromCoverage(facts: Iterable<CountryCoverageFact>): ReadonlySet<string> {
 	const out = new Set<string>()

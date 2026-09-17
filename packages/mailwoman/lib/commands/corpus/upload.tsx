@@ -6,7 +6,7 @@
  *   `mailwoman corpus upload` — push a corpus version, the tokenizer, or the training code to R2.
  *
  *   R2 IS THE ONLY WAY IN. `modal volume put` writes to the training volume are visible to
- *   `modal volume ls/get` and NOT to containers — `train_remote.py` documents that in its own source,
+ *   `modal volume ls/get` and not to containers — `train_remote.py` documents that in its own source,
  *   and it is why every remote artifact travels local → R2 → container-side rclone. A corpus that never
  *   reaches R2 cannot reach a GPU.
  *

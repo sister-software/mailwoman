@@ -12,7 +12,7 @@
  *   type) and this port's first version (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
  *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
  *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
- *   remove — and it was worse than what replaced it: it had NO expiry, so a machine that resolved a
+ *   remove — and it was worse than what replaced it: it had no expiry, so a machine that resolved a
  *   vintage once would never see the next one FCC published without an explicit `skipCache`. The
  *   client's cache has a TTL chosen against the filing cadence, and `skipCache` now maps onto a
  *   per-request cache bypass with the same meaning it always had.

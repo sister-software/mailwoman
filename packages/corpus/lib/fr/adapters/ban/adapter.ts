@@ -23,7 +23,7 @@
  *   allowed for training with attribution; the ODbL option's share-alike obligation would defeat
  *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — NOT the older
  *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
- *   The model card MUST carry the BAN attribution (Tier B obligation).
+ *   The model card must carry the BAN attribution (Tier B obligation).
  *
  *   The adapter is streaming-aware: `CSVSpliterator.fromAsync` reads the `;`-delimited dump row by
  *   row, so a 25M-row file never sits in memory. Honors `opts.limit` for fixture / smoke runs,

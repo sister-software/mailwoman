@@ -1,6 +1,6 @@
 # v5.0.0 — FROM-SCRATCH BASE, every tail convention at once (#1748 / #1821)
 #
-# This is v4.4.0's own base recipe — the one that produced the SHIPPED model — pointed at a corpus
+# This is v4.4.0's own base recipe — the one that produced the shipped model — pointed at a corpus
 # that contains the trailing tails, and admitting 134 countries instead of 25. No init_from, no EWC.
 #
 # WHY FROM SCRATCH, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
@@ -17,7 +17,7 @@
 #
 # The NULL is the best arm. A plain fine-tune of that base costs ten rows before any data is involved,
 # and the tax is paid in the first 1,000 steps and flat to 4,000 — it is not proportional to distance
-# travelled, it is a fixed cost of touching the base. It is charged BEFORE the added source is read, so no
+# travelled, it is a fixed cost of touching the base. It is charged before the added source is read, so no
 # corpus-side change can avoid it, and every arm that adds data is worse than adding none.
 #
 # The harness was verified before trusting any of that: the shipped model staged through the identical
@@ -27,8 +27,8 @@
 # So the surface has to be LEARNED rather than grafted, which means a base that sees every tail at
 # once. That is this run.
 #
-# WHAT CHANGES from v4.4.0's base recipe, and nothing else:
-#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue INTL: 18,000 IN/PT/MX rows, REAL postcodes,
+# What changes from v4.4.0's base recipe, and nothing else:
+#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue INTL: 18,000 IN/PT/MX rows, real postcodes,
 #                    venue 100% / street 100% / house_number 100%, under the existing
 #                    synth-house-venue source at its established weight 2.0)
 #   country_weights  25 -> 134 (the shipped 25 + IN + every gauntlet-board country + KR/TW). Measured
@@ -38,14 +38,14 @@
 # Everything else — 60,000 steps, batch 128, lr 5e-4, warmup 1,000, no init, no brake — is the recipe
 # that produced the model currently in production.
 #
-# CHECK, against the SHIPPED model on the 649-row board:
+# Check, against the shipped model on the 649-row board:
 #   1. net improved-minus-regressed >= 0;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows the fine-tunes broke must hold — gb-venue-ye-three-lords,
 #      gb-lex-cafe-st-marys, gb-op2-four-seasons-cjk;
 #   4. IMPROVEMENT metric, not check: the 4 ve_city_postcode_trailing_state rows and in_structured.
 #
-# A from-scratch run is not guaranteed to beat a tuned production model, and this one has ONE seed and
+# A from-scratch run is not guaranteed to beat a tuned production model, and this one has one seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the
 # corpus cannot supply, and that is a scoping answer rather than another recipe.
 

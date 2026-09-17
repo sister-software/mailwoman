@@ -42,7 +42,7 @@ import type { IdentifierShape, SubVenueSurface } from "#tools/sub/venue/table"
  * One row of a harvestable source, as read back off JSONL or out of a layer database.
  *
  * SOURCE-NEUTRAL by design, and verified so in wave 2: an Overture Places row from the `airport_terminal` category is
- * `{ designatorID, name }` and fits unchanged. What did NOT fit was the harvest function's hardcoded `osm:name` source
+ * `{ designatorID, name }` and fits unchanged. What did not fit was the harvest function's hardcoded `osm:name` source
  * stamp — see `overture-subvenue.ts`'s docstring. Declared locally so the builder does not import `@mailwoman/osm`
  * (which `@mailwoman/corpus` does not depend on) just to name a shape it reads from a file.
  */

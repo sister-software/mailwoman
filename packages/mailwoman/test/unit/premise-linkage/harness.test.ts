@@ -264,7 +264,7 @@ describe("#1902: the report prints every numerator and denominator", () => {
 		// Abstention permitted: the open arm's refusals leave the denominator entirely.
 		expect(permittedOpen.overall.exactOverEligible).toEqual({ n: 0, of: 0 })
 
-		// A unique answer required: the same refusals count against it — and are STILL recorded as refusals.
+		// A unique answer required: the same refusals count against it — and are still recorded as refusals.
 		expect(requiredOpen.overall.exactOverEligible.of).toBeGreaterThan(0)
 		expect(requiredOpen.overall.refusedOverAll).toEqual(permittedOpen.overall.refusedOverAll)
 

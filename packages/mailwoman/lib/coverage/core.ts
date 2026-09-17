@@ -13,7 +13,7 @@
  *   boundaries stream to NDJSON → `tippecanoe` bakes one `coverage` source-layer into a single
  *   PMTiles. Publish the result with `mailwoman tiles publish`.
  *
- *   FOG MODEL — each cell carries TWO baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
+ *   FOG MODEL — each cell carries two baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
  *   fine cell: fog = 1 − blended coverage score (address-point density, plus a weaker
  *   street-segment interpolation signal so a street-only cell reads as partial coverage, never a
  *   full gap). • coarse cell: fog = 1 − the MEAN child coverage — "on average, how covered are the
@@ -279,7 +279,7 @@ export async function buildCoverageTiles(
 	}
 
 	// data_pt: res-FINE address-point counts. UNION ALL the RAW (lat, lon) across states and bin + count
-	// ONCE in the outer query. Do NOT pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
+	// once in the outer query. Do not pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
 	// aggregating sqlite subqueries to the first ATTACHed DB, collapsing every state onto the first one's
 	// cells. Raw-then-aggregate is correct.
 	onProgress("aggregate", "address points → fine cells…")
@@ -310,7 +310,7 @@ export async function buildCoverageTiles(
 		await duck.run("CREATE TEMP TABLE data_seg (cell UBIGINT, cnt BIGINT)")
 	}
 
-	// domain9: every fine child of a domain-res parent holding EITHER signal, with the address-point count
+	// domain9: every fine child of a domain-res parent holding either signal, with the address-point count
 	// (pt), segment count (seg), and a blended coverage score cov ∈ [0,1] (points strong, segments weak).
 	onProgress("domain", "expanding fog neighborhood + blending signals…")
 
@@ -400,7 +400,7 @@ export async function buildCoverageTiles(
 	}
 
 	// Build the global civilization-minus-coverage holes layer.
-	// The map's job worldwide: make it obvious where human civilization is AND whether we cover it. A
+	// The map's job worldwide: make it obvious where human civilization is and whether we cover it. A
 	// SALIENT place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
 	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
 	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
@@ -430,7 +430,7 @@ export async function buildCoverageTiles(
 
 		// sal: CIVILIZATION salience per domain cell — WOF settlement places weighted by IMPORTANCE
 		// (Wikipedia notability via place_importance, with a population fallback baked in by
-		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it IS the
+		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the
 		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal
 		// count as "civilization" (the unknown long tail is dropped, not flagged as work-to-do). Each
 		// place spreads to a 1-ring halo; a cell's salience is the strongest place touching it.

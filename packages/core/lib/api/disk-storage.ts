@@ -5,7 +5,7 @@
  * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable HTTP cache by
  *   CONFIGURATION rather than by hand-rolling one.
  *
- *   NODE ONLY, and deliberately NOT re-exported from `./index.ts`: `core/api` reaches a browser bundle
+ *   Node only, and deliberately not re-exported from `./index.ts`: `core/api` reaches a browser bundle
  *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`),
  *   and webpack refuses to resolve `node:fs/promises` for the web target. Import this through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
@@ -42,7 +42,7 @@ export interface DiskStorageOptions {
 	 */
 	directory: PathBuilderLike
 	/**
-	 * An additional, domain-specific check run against every entry BEFORE it is written. Return `false` (or throw) to
+	 * An additional, domain-specific check run against every entry before it is written. Return `false` (or throw) to
 	 * drop the write; the entry is removed rather than persisted, so the next request re-fetches.
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return". Some upstreams (SEC EDGAR among
@@ -189,7 +189,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				return
 			}
 
-			// Publish to the overlay BEFORE the write and clear it only once the rename has landed, so the
+			// Publish to the overlay before the write and clear it only once the rename has landed, so the
 			// key is continuously visible: the `loading` marker is replaced by the real value in the same
 			// synchronous step, never by a gap.
 			overlay.set(key, value)
@@ -210,10 +210,10 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`, so throwing
 				// from here rejects a request whose HTTP response ALREADY SUCCEEDED — the body is discarded.
 				// Worse, it escapes as a bare `Error`: no `status`, so `isTransientResourceError` reads it as
-				// FALSE and a caller following the documented contract is told never to retry. ANY
+				// FALSE and a caller following the documented contract is told never to retry. Any
 				// filesystem failure does this: `EACCES` on a directory whose mode changed (reproduced with
 				// a `0o500` parent, which also showed three concurrent gets yielding one rejection and two
-				// successes for the SAME response), `EMFILE` under a concurrent crawl, a rename race, a
+				// successes for the same response), `EMFILE` under a concurrent crawl, a rename race, a
 				// transient I/O error. Not being able to cache is a cache miss.
 				logger.warn(`Could not persist ${key} (continuing as a cache miss): ${errorMessage(error)}`)
 

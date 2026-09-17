@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The admin build's Freeze phase, extracted from `scripts/build-unified-wof.ts`: WAL checkpoint →
- *   journal freeze → ancestors closure → `ancestors(id)` index (BEFORE the −4 backfill — without it
+ *   journal freeze → ancestors closure → `ancestors(id)` index (before the −4 backfill — without it
  *   the backfill's per-candidate lookups full-scan the 13M-row table each time and the build stalls
  *   for hours, #1015) → `wof:hierarchy` −4 backfill (WOF ids only) → coincident_roles → indexes →
  *   ANALYZE → integrity check. Runs IN PLACE on the staging DB; the caller `VACUUM INTO`s the final
@@ -19,7 +19,7 @@ import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit ONLY in
+	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit only in
 	 * fixture tests; a real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
 	dataDir?: string
@@ -71,8 +71,8 @@ export async function freezeAdmin(
 	const ancestorRows = populateAncestors(db)
 
 	// Index `ancestors(id)` NOW — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
-	// index, but it runs AFTER the backfill; without it here the backfill's per-candidate lookups full-scan the
-	// closure table EACH time (#1015). `IF NOT EXISTS` keeps the later createUnifiedIndexes a no-op.
+	// index, but it runs after the backfill; without it here the backfill's per-candidate lookups full-scan the
+	// closure table each time (#1015). `IF NOT EXISTS` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
 

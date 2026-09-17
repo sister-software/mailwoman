@@ -68,7 +68,7 @@ export const US_UNIT_DESIGNATOR_VARIANTS = {
 export type USUnitDesignator = keyof typeof US_UNIT_DESIGNATOR_VARIANTS
 
 /**
- * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key, built once at module load,
+ * Inverse lookup: every variant abbreviation or full canonical word → its canonical key, built once at module load,
  * lowercase-keyed for case-insensitive matching (`apt` → `"APARTMENT"`, `ste` → `"SUITE"`, `suite` → `"SUITE"`).
  */
 export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, USUnitDesignator> = (() => {
@@ -129,7 +129,7 @@ export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator
 } as const satisfies Record<USUnitDesignator, boolean>
 
 /**
- * If the FIRST whitespace-separated word of `unit` is a known USPS designator variant, return the canonical key and the
+ * If the first whitespace-separated word of `unit` is a known USPS designator variant, return the canonical key and the
  * matched word. Returns null if the leading word isn't a known designator (e.g. a bare `"4B"` or `"#210"`).
  * Leading-word-only — designators introduce the unit, unlike street suffixes which trail.
  */

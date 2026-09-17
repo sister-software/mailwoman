@@ -12,7 +12,7 @@
  *   It exists to answer the abstention #1480 introduced. A unit postcode the gazetteer has never
  *   seen contributes nothing today; with PFX1 the UNIT still abstains and the PREFIX still speaks.
  *
- *   This file owns BOTH ends of the format — `serializePostcodePrefixIndex` (Node, build tooling)
+ *   This file owns both ends of the format — `serializePostcodePrefixIndex` (Node, build tooling)
  *   and `PostcodePrefixIndexResolver` (browser and server alike) — the same single-file discipline
  *   as `pair-index-resolver.ts`, `postcode-binary-resolver.ts` and `placetype-census.ts`, so the
  *   layout can never drift between writer and reader. The reader imports nothing from Node.
@@ -130,7 +130,7 @@ export interface PostcodePrefixNode {
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 	/**
-	 * Centroid latitude. ABSENT (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier. Never `0`-as-absent.
+	 * Centroid latitude. Absent (with {@link PostcodePrefixNode.lon}) for the ancestry-only tier. Never `0`-as-absent.
 	 */
 	lat?: number
 	lon?: number
@@ -173,7 +173,7 @@ export interface PostcodePrefixHeader {
 	 */
 	levels: readonly string[]
 	/**
-	 * The NUMBERING AUTHORITY the prefixes came from, NOT the gazetteer they were joined to. M-3 is the receipt: 7.9% of
+	 * The numbering authority the prefixes came from, not the gazetteer they were joined to. M-3 is the receipt: 7.9% of
 	 * US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's mail
 	 * processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution in.
 	 */
@@ -202,9 +202,9 @@ export interface PostcodePrefixHeader {
 	 */
 	coverageNote: string
 	/**
-	 * OPTIONAL soft-prior bias magnitude. ABSENT until a calibration task measures one — a defaulted number here would
+	 * Optional soft-prior bias magnitude. Absent until a calibration task measures one — a defaulted number here would
 	 * let an uncalibrated bias reach the decoder unnoticed (PCN1's rule, verbatim). B3-1 ships data + loader + offline
-	 * probe with NO decode wiring, so nothing reads this yet.
+	 * probe with no decode wiring, so nothing reads this yet.
 	 */
 	delta?: number
 }

@@ -5,9 +5,9 @@
  *
  *   Reading an HTML `<table>` as a grid of cells, for documents that state tabular data as markup and
  *   nothing more — no schema, no column meanings, no domain vocabulary. What a caller gets back is the
- *   grid the document states; deciding what a column MEANS is the caller's, in the caller's package.
+ *   grid the document states; deciding what a column means is the caller's, in the caller's package.
  *
- *   The whole document is parsed ONCE, with `htmlparser2`, and every question below is answered against
+ *   The whole document is parsed once, with `htmlparser2`, and every question below is answered against
  *   that tree. The regex readings this module replaced could not answer any of the three questions that
  *   actually decide a grid — is this table nested inside a cell, does this row belong to this table, does
  *   this cell belong to this row — because each is a question about ANCESTRY, and a depth counter over a
@@ -89,7 +89,7 @@ export function extractTableRows(html: string): TableCell[][][] | null {
 
 	if (!tables.length) return null
 
-	// Assigned by ONE pass each rather than a nested scan: a filing that states 33 sibling tables over a
+	// Assigned by one pass each rather than a nested scan: a filing that states 33 sibling tables over a
 	// thousand rows makes "for each table, filter every row" quadratic, and the ancestor walk is the inner term.
 	const cellsByRow = new Map<Element, TableCell[]>()
 	const rowsByTable = new Map<Element, TableCell[][]>(tables.map((table) => [table, []]))
@@ -135,7 +135,7 @@ export function widestRow(rows: readonly TableCell[][]): number {
 }
 
 /**
- * Right-pads every row to the table's widest row, then drops each column index that is blank in EVERY row. Per table,
+ * Right-pads every row to the table's widest row, then drops each column index that is blank in every row. Per table,
  * and column-wise — never per row. A row-by-row "filter out the blanks" loses the fact that a row's LEADING cell was
  * blank, which is often the difference between a top-level row and an indented child row, and no single row carries
  * enough evidence to tell those apart.

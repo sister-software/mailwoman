@@ -35,7 +35,7 @@ What lives where:
 | `volume.py`    | what the container sees and what the image actually holds                 |
 
 This file defines nothing. It imports each module so that the one `app` carries every function,
-because `modal run -m launch.train_remote::<name>` resolves `<name>` against THIS module's
+because `modal run -m launch.train_remote::<name>` resolves `<name>` against this module's
 namespace — a function whose module is never imported is a function nobody can launch.
 """
 

@@ -21,7 +21,7 @@
  *   2. **Count.** At most {@link RETENTION_MAX_RUNS} are kept, newest first, regardless of age. This is the backstop for
  *      a busy day — the age rule alone permits an unbounded number of runs inside the window.
  *
- *   A run whose `tree_fingerprint` no longer matches the working tree is NOT pruned automatically. It is still evidence
+ *   A run whose `tree_fingerprint` no longer matches the working tree is not pruned automatically. It is still evidence
  *   about that tree, and deleting it silently would be worse than keeping it: `{kind:"recorded"}` refuses to compare
  *   across fingerprints anyway, and says which two it saw.
  */
@@ -54,7 +54,7 @@ export const RETENTION_MAX_RUNS = 200
 /**
  * What one arm answered for one row, kept in a shape a later run can replay without re-deriving it.
  *
- * Deliberately the SAME shape a live arm produces (`ExternalAnswer`), so a recorded arm and a live one are
+ * Deliberately the same shape a live arm produces (`ExternalAnswer`), so a recorded arm and a live one are
  * indistinguishable downstream. A replay that had its own row type would need its own grading path, and a second
  * grading path is how the two stop agreeing.
  */
@@ -165,7 +165,7 @@ export async function getRun(runID: string, dir: PathBuilderLike = RUN_STORE_DIR
 /**
  * The replay index for one arm of a stored run, keyed by row id.
  *
- * @throws When that arm was not recorded. Naming what WAS recorded is the useful half of the error: the common mistake
+ * @throws When that arm was not recorded. Naming what was recorded is the useful half of the error: the common mistake
  *   is asking for `mailwoman` on a run whose two arms were `mailwoman` and `photon` under different labels, and a bare
  *   "not found" sends the caller looking for the wrong thing.
  */
@@ -251,7 +251,7 @@ export async function pruneRuns(
 	for (const entry of all) {
 		const created = Date.parse(entry.created_at)
 
-		// An unparseable timestamp is treated as OLD. A run that cannot say when it happened cannot be trusted to
+		// An unparseable timestamp is treated as old. A run that cannot say when it happened cannot be trusted to
 		// describe a current tree, and keeping it forever is the worse failure.
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run_id)

@@ -34,7 +34,7 @@ export interface StratumFillCensus {
 	eligible: number
 	selected: number
 	/**
-	 * Rows skipped because the identity join produced no coherent gold set. The gold reader's own census says WHICH part
+	 * Rows skipped because the identity join produced no coherent gold set. The gold reader's own census says which part
 	 * of the guard refused them.
 	 */
 	droppedUngradeableGold: number
@@ -140,7 +140,7 @@ export interface PanelSubject {
 /**
  * Rows grouped by their lowercased ASCII name, which is how both builders ask whether a name is borne once.
  *
- * Built ONCE per build and passed down: the question is asked per candidate row, and re-deriving the grouping for each
+ * Built once per build and passed down: the question is asked per candidate row, and re-deriving the grouping for each
  * would walk the whole register every time.
  */
 export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {

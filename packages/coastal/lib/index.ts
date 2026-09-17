@@ -14,9 +14,9 @@
  *   2. `unknown` — no polygon of that scenario contains the point. THAT IS NOT AN ABSENCE READING, and this
  *      layer has none.
  *
- *   THERE IS NO `designated_absence` HERE, AND ITS ABSENCE IS THE INVERSION THE SIBLING FLOOD LAYER TAUGHT.
+ *   There is no `designated_absence` here, and its absence is the inversion the sibling flood layer taught.
  *   For flood zones the Environment Agency states England-wide coverage and the Planning Practice Guidance
- *   defines Zone 1 as the land outside Zones 2 and 3, so an empty answer inside England IS a designation.
+ *   defines Zone 1 as the land outside Zones 2 and 3, so an empty answer inside England is a designation.
  *   NCERM publishes no coverage statement at all. A location in England with no erosion polygon is either
  *   inland — most of the country, about which the product says nothing — or on the coast and outside the
  *   mapped risk area, which is the designation a caller actually wants; and the published layers cannot tell
@@ -90,7 +90,7 @@ export const CoastalReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * No erosion polygon of that scenario contains the point. NEVER an absence reading — see this file's header.
+	 * No erosion polygon of that scenario contains the point. Never an absence reading — see this file's header.
 	 */
 	Unknown: "unknown",
 } as const
@@ -156,7 +156,7 @@ export interface CoastalDesignation {
 export interface CoastalErosionReading {
 	kind: CoastalReadingKind
 	/**
-	 * The scenario this reading answered under. Present on EVERY reading, including `unknown`: an answer whose scenario a
+	 * The scenario this reading answered under. Present on every reading, including `unknown`: an answer whose scenario a
 	 * reader cannot see is an answer to an unknown question.
 	 */
 	scenario: CoastalScenario
@@ -222,7 +222,7 @@ export interface CoastalLayerIdentity {
 	 */
 	scenarioKeys: string[]
 	/**
-	 * The authority's footprint statements. EMPTY in this edition, which is what makes `source_present` the only basis
+	 * The authority's footprint statements. Empty in this edition, which is what makes `source_present` the only basis
 	 * the coverage may carry — see `schema.ts`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
@@ -292,7 +292,7 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT area_id, containment FROM coastal_zone_cell WHERE h3_cell = ? AND scenario_key = ?"
 		)
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read WITHOUT the blob, because the
+		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read without the blob, because the
 		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon
 		// on a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob
 		// at all.
@@ -538,7 +538,7 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 	}
 
 	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. NCERM publishes no coverage statement, so no
-	// row of this layer may license a claim that a location is NOT at risk. A stronger basis reaching a caller would let
+	// row of this layer may license a claim that a location is not at risk. A stronger basis reaching a caller would let
 	// an absent polygon be read as a designation of safety over the whole of inland England. The check itself is the
 	// contract's rather than this product's; the SENTENCE saying why is this product's.
 	assertCoverageLicensesNoExclusion(

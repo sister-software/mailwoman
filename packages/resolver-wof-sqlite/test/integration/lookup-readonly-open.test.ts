@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression guard for the OPEN MODE `WOFSQLitePlaceLookup` chooses on the `databasePath` branch: read-only by
- *   default (every serve/query path), read-write ONLY when `buildFTS` is requested (the FTS5 index build — the sole
+ *   Regression guard for the open mode `WOFSQLitePlaceLookup` chooses on the `databasePath` branch: read-only by
+ *   default (every serve/query path), read-write only when `buildFTS` is requested (the FTS5 index build — the sole
  *   writer). Shipped extracts are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
  *
  *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently DOWNGRADES a write-mode open to
@@ -47,24 +47,24 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
-// vi.resetModules() BEFORE importing the module under test: the root vitest config runs
+// vi.resetModules() before importing the module under test: the root vitest config runs
 // `isolate: false` (one shared module graph per worker), so `node:sqlite` / `./lookup.ts` may
-// already sit in the shared cache — evaluated with the REAL DatabaseSync by an earlier file. A
+// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file. A
 // cached module is never re-evaluated, so this file's vi.mock factory would never run and the
 // construction spy would stay empty (the failure this guards against reads as "expected [] to
 // have a length of 1"). Reset on the way in so the chain re-evaluates against the mock, and on the
-// way out so the NEXT file in this fork never inherits our RecordingDatabaseSync from the cache.
+// way out so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
+// Dynamic imports after the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
 // oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
 await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
- * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
+ * Seed a minimal on-disk WOF fixture (schema + one place), without the FTS index. Writable.
  */
 function seedFixture(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

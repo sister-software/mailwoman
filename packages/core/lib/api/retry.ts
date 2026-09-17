@@ -37,8 +37,8 @@ const HTTP_SERVER_ERROR_MAX = 599
  * A hard ceiling on how long a single retry wait is ever allowed to be, REGARDLESS of what a server-supplied
  * `Retry-After` asks for. Honoring `Retry-After` is the right side of most fair-access policies, but an unbounded
  * honor-anything policy would let a pathological (or misconfigured) server hang a bulk crawl for hours; 60s is generous
- * for anything a real rate limiter would plausibly ask for. Also the fallback used when `Retry-After` is PRESENT but
- * unparseable — a malformed header is still the server asking us to back off, and guessing LONG is the safe failure
+ * for anything a real rate limiter would plausibly ask for. Also the fallback used when `Retry-After` is present but
+ * unparseable — a malformed header is still the server asking us to back off, and guessing long is the safe failure
  * mode; guessing short (the exponential default) risks hammering a server that explicitly asked for space.
  */
 export const MAX_RETRY_AFTER_MS = 60_000
@@ -55,7 +55,7 @@ export const DEFAULT_BASE_RETRY_DELAY_MS = 500
 
 /**
  * RFC 9110 §10.2.3: `Retry-After` is either `delay-seconds` (`1*DIGIT` — one or more ASCII digits, no sign, no decimal
- * point, no hex) or an HTTP-date. `Number("0x10")` and `Number("1.5")` both parse as valid JS numbers but are NOT valid
+ * point, no hex) or an HTTP-date. `Number("0x10")` and `Number("1.5")` both parse as valid JS numbers but are not valid
  * `delay-seconds`, so the numeric branch matches the RFC grammar directly instead of delegating to `Number()`.
  */
 const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
@@ -65,7 +65,7 @@ const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
  * lenient than RFC 9110's HTTP-date grammar and will parse plausible-looking garbage — `Date.parse("1.5")` returns a
  * valid timestamp (~Jan 2001, some locale-ish `M.D` reading), which very nearly slipped a bare fractional-seconds typo
  * through as an accepted HTTP-date instead of falling back to the long ceiling. Every valid RFC 9110 HTTP-date form
- * (the preferred IMF-fixdate AND the obsolete RFC 850 form) ends in the literal `GMT`; requiring that suffix rejects
+ * (the preferred IMF-fixdate and the obsolete RFC 850 form) ends in the literal `GMT`; requiring that suffix rejects
  * `Date.parse`'s stray non-date parses without needing a full HTTP-date grammar implementation.
  */
 const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
@@ -91,12 +91,12 @@ export interface RetryDirective {
  * Parse a `Retry-After` header value — numeric `delay-seconds` or an HTTP-date, per RFC 9110 — into a clamped wait
  * duration in ms.
  *
- * Returns `null` only when the header is ABSENT. When the header IS present, this always returns a number: the parsed
+ * Returns `null` only when the header is absent. When the header is present, this always returns a number: the parsed
  * (and {@linkcode MAX_RETRY_AFTER_MS}-clamped) value on success, or `MAX_RETRY_AFTER_MS` itself when the value is
  * present but matches neither valid form — see the constant's docstring for why unparseable fails open toward caution
  * rather than speed.
  *
- * The HTTP-date branch compares against REAL wall-clock time (`Date.now()`), not an injectable clock — an HTTP-date is
+ * The HTTP-date branch compares against real wall-clock time (`Date.now()`), not an injectable clock — an HTTP-date is
  * an absolute calendar timestamp, which only means something relative to the actual current time.
  */
 export function parseRetryAfterMs(header: string | null | undefined): number | null {
@@ -124,7 +124,7 @@ export function parseRetryAfterMs(header: string | null | undefined): number | n
  * every other 4xx, every 2xx/3xx that still produced an error — is terminal.
  *
  * The 4xx exclusion prevents retries that cannot succeed. A 403 from a rate-limited public API means the request failed
- * to identify itself (for SEC EDGAR, a missing or non-descriptive `User-Agent`); it does NOT mean the resource is gone
+ * to identify itself (for SEC EDGAR, a missing or non-descriptive `User-Agent`); it does not mean the resource is gone
  * or that this client is banned. Retrying it cannot succeed and burns rate budget on a request that was never going to
  * be served. An earlier revision spelled this out as a redundant `if (status === 403) return false` ahead of the range
  * check — no mutation could kill it, because the range check already excluded 403, so it was removed rather than left
@@ -159,7 +159,7 @@ function retryAfterFrom(error: AxiosError): number | null {
  * mid-transfer — is retryable. This is the case a bulk crawler hits most: fetching multi-MB documents, a dropped socket
  * is far more common than a 503, and the standalone SEC client shipped a version that treated it as terminal.
  *
- * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is NOT retryable — the caller
+ * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable — the caller
  * asked us to stop, and retrying would defy that. Axios reports its own `timeout` config as `ECONNABORTED`/`ETIMEDOUT`,
  * so the two are distinguishable.
  */
@@ -189,7 +189,7 @@ export interface RetryOptions {
 	 */
 	maxAttempts?: number
 	/**
-	 * Base delay for the exponential backoff, in milliseconds. Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, UNLESS the
+	 * Base delay for the exponential backoff, in milliseconds. Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the
 	 * response carried a `Retry-After` header, which is honored instead. Default
 	 * {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
 	 */

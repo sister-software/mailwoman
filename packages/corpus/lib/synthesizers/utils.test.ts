@@ -545,7 +545,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(aligned.kind, `${id} copy should align (got ${stringifyJSON(aligned.row)})`).toBe("labeled")
 
 		if (aligned.kind !== "labeled") throw new Error("unreachable")
-		// Every span must address the augmented raw exactly: its substring IS the component surface.
+		// Every span must address the augmented raw exactly: its substring is the component surface.
 		const { raw, span_starts, span_ends, span_tags } = aligned.row
 
 		for (let i = 0; i < span_tags!.length; i++) {
@@ -731,7 +731,7 @@ describe("composeAdversarialRow", () => {
 		// The venue prefix: three tokens, all venue-labeled.
 		expect(result.row.tokens.slice(0, 3)).toEqual(["Buffalo", "Health", "Clinic"])
 		expect(result.row.labels.slice(0, 3)).toEqual(["B-venue", "I-venue", "I-venue"])
-		// The address half: the second "Buffalo" must be the locality, NOT venue.
+		// The address half: the second "Buffalo" must be the locality, not venue.
 		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
 		expect(buffaloIndices).toHaveLength(2)
 		expect(result.row.labels[buffaloIndices[0]!]).toBe("B-venue")
@@ -1002,7 +1002,7 @@ describe("composeAdversarialRow", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		// The whole venue — apostrophe, period, accent included — is ONE span.
+		// The whole venue — apostrophe, period, accent included — is one span.
 		expect(result.row.span_tags![0]).toBe("venue")
 
 		expect(result.row.raw.slice(result.row.span_starts![0]!, result.row.span_ends![0]!)).toBe(

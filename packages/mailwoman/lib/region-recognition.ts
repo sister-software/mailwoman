@@ -15,7 +15,7 @@
  *   nodes into `region → locality` NESTING, which the resolver's existing parent-scoping then
  *   constrains correctly (no resolver change). Two shapes are handled:
  *
- *   - A `locality` whose WHOLE value is a US state → it becomes a `region`, and sibling `locality`
+ *   - A `locality` whose whole value is a US state → it becomes a `region`, and sibling `locality`
  *       (city) nodes are nested under it;
  *   - A `locality` whose value is a merged `"City, ST"` → split into `region(ST) → locality(City)`.
  *
@@ -90,7 +90,7 @@ const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 /**
  * Is `value` exactly a US state — its full name (e.g. "Texas") or 2-letter abbreviation (e.g. "TX")? Returns the
  * canonical 2-letter slug, else null. Whitespace/case-insensitive; rejects anything with extra tokens (so a city
- * literally named after a state is only matched when it's the WHOLE value).
+ * literally named after a state is only matched when it's the whole value).
  */
 export function usStateSlug(value: string): string | null {
 	const v = value.trim().toLowerCase()
@@ -167,7 +167,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 }
 
 /**
- * Split a `locality` whose value is `"City, ST"` (state in the LAST comma segment) into region(ST) → locality(City).
+ * Split a `locality` whose value is `"City, ST"` (state in the last comma segment) into region(ST) → locality(City).
  * Returns null when the tail isn't a US state.
  */
 function splitMergedCityState(node: AddressNode): AddressNode | null {

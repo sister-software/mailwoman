@@ -72,7 +72,7 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
  * One country the D-rule protects, and the reason it is protected.
  *
  * The reason travels with the country because the arc reports a D-rule block at the moment a reader is deciding whether
- * to believe it, and "GB" alone does not answer "why is GB on this list". Tier-1 membership IS the reason for a tier-1
+ * to believe it, and "GB" alone does not answer "why is GB on this list". Tier-1 membership is the reason for a tier-1
  * country, so those entries say so.
  */
 export interface ProtectedCountry {

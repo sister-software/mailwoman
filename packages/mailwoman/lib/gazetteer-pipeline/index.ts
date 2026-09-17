@@ -11,7 +11,7 @@
  *
  *   `fold` and `build` reuse the CANONICAL package functions (`ingestGeonamesAliases`,
  *   `buildPlaceSearchFTS`, `buildCandidateTable`) so the CLI, the standalone scripts, and a future
- *   `build-unified-wof --geonames-countries` all share ONE implementation. `publish` shells out to
+ *   `build-unified-wof --geonames-countries` all share one implementation. `publish` shells out to
  *   the proven `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas) and
  *   bumps the demo's `ADMIN_GAZETTEER_VERSION` — the only repo-coupled step, so its repo paths are
  *   passed in.
@@ -32,7 +32,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
-// DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
+// DYNAMICALLY inside the functions (the geocode.tsx convention), not at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
 // when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
@@ -73,7 +73,7 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  * `pickExtractsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A database
  * added here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then
  * unreachable to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
- * `postcode-locality-<cc>.db` family is the deliberate exception and is NOT a member of this list: those hold a
+ * `postcode-locality-<cc>.db` family is the deliberate exception and is not a member of this list: those hold a
  * `postcode_locality` relation table and no `spr`, so they are never routed as place databases at all.
  */
 export const DEFAULT_POSTCODE_DATABASES = [
@@ -83,7 +83,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit
 	// postcodes, England+Scotland+Wales — NO Northern Ireland (excluded from every permissive UK
 	// grant; see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
-	// 2026-08-05 parity check measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
+	// 2026-08-05 parity check measured as the same survey (max coordinate delta 6.6 m over 1.75M
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
@@ -93,7 +93,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
 	// published to npm, R2 or the demo. It is present only on a machine that built it, and the
-	// `pathExists` filter in `resolvePostcodeDatabases` IS that tier's mechanism: a deployment without the
+	// `pathExists` filter in `resolvePostcodeDatabases` is that tier's mechanism: a deployment without the
 	// file simply has no NI coverage, exactly as before.
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
@@ -105,7 +105,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// pass on the code. The fold arrives with the next candidate rebuild.
 	"postalcode-jp.db",
 	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
-	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
+	// (57,221 rows; Belgium joined 2026-08-12 with 1,146 codes after the Overture Belgium parquet measured too thin —
 	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
 	// Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical
 	// (56,075 rows, worst coordinate delta 0).
@@ -233,7 +233,7 @@ export interface FoldOptions {
 	 */
 	adminIn: string
 	/**
-	 * Destination admin DB carrying the folded GeoNames names. MUST differ from `adminIn`.
+	 * Destination admin DB carrying the folded GeoNames names. Must differ from `adminIn`.
 	 */
 	adminOut: string
 	/**
@@ -245,7 +245,7 @@ export interface FoldOptions {
 	 */
 	geonamesDir?: string
 	/**
-	 * #267: the countries to ALSO fold A-class admin (PCLI + ADM1) for, linking the locality→region→country ancestry.
+	 * #267: the countries to also fold A-class admin (PCLI + ADM1) for, linking the locality→region→country ancestry.
 	 * ZERO-COVERAGE gap countries only (the coverage-expansion targets) — a country that already has WOF admin would
 	 * double up, so the EU alias set is left off. Without it the gap localities are orphans and "Tbilisi, GE" can't
 	 * resolve.
@@ -257,8 +257,8 @@ export interface FoldOptions {
 	 */
 	alternateDir?: string
 	/**
-	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does NOT list. The
-	 * fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
+	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The
+	 * fold owns its whole id range and rewrites it wholesale, so those countries are dropped. Only pass this when
 	 * shrinking the fold is the point.
 	 */
 	allowCoverageLoss?: boolean
@@ -290,7 +290,7 @@ export interface FoldResult {
  *
  * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it WHOLESALE — the synthetic id is a position in the
  * run, so a partial rewrite binds one run's names to another run's places. Folding a country set narrower than what
- * `adminIn` already carries therefore DROPS the difference, and since `buildAdmin` bakes the full
+ * `adminIn` already carries therefore drops the difference, and since `buildAdmin` bakes the full
  * `DEFAULT_GEONAMES_COUNTRIES` fold into every admin artifact it builds, that is the normal case here rather than an
  * exotic one. The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
@@ -334,8 +334,8 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
 	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo
-	// stamps the source mode onto a fresh copy — or writes THROUGH an existing destination keeping
-	// ITS mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
+	// stamps the source mode onto a fresh copy — or writes through an existing destination keeping
+	// its mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
 	await removePathIfPresent(opts.adminOut)
 	await copyFileTo(opts.adminIn, opts.adminOut)
@@ -435,7 +435,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 
 	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact — bake the
 	// measured hard-filter coverage record + guard-B bboxes so consumers read them at open instead of
-	// falling back to the code constants. MUST run pre-seal (a shipped DB is never patched — rebuild).
+	// falling back to the code constants. Must run pre-seal (a shipped DB is never patched — rebuild).
 	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
 	await emitCoverageManifest({ dbPath: opts.out })
 

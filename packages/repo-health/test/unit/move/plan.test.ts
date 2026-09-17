@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file A module move over a scratch workspace that reproduces the shapes a corpus recipe move meets: a package
  *   whose `imports` map answers `#recipes/*`, an `exports` map a test file reaches through, a relative import from a
- *   third file, and a relative import INSIDE a moved file, whose depth changes under it.
+ *   third file, and a relative import inside a moved file, whose depth changes under it.
  *
  *   The workspace is a real git checkout because `applyModuleMoves` renames with `git mv`, and a rename the index
  *   knows about is the difference between a reviewer reading a moved file and reading a deletion beside an addition.

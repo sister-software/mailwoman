@@ -59,7 +59,7 @@ export type AdminSource = (typeof AdminSource)[keyof typeof AdminSource]
  * The countries measured as two-source on 2026-08-17, with Overture + GeoNames, against both the config lists and the
  * shipped artifact.
  *
- * A baseline, not a permission slip. It exists so a NEW double-listing is distinguishable from the fourteen that were
+ * A baseline, not a permission slip. It exists so a new double-listing is distinguishable from the fourteen that were
  * already there — the difference between a trade someone made and an accident nobody noticed. Removing an entry is a
  * coverage decision (see the overlap table above); adding one is what this module refuses.
  */

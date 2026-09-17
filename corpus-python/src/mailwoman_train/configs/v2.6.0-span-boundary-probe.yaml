@@ -1,4 +1,4 @@
-# v2.6.0-span-boundary-probe — #727 stage 1 (GLiNER-lite). ONE variable vs v2.5.7: a training-only
+# v2.6.0-span-boundary-probe — #727 stage 1 (GLiNER-lite). One variable vs v2.5.7: a training-only
 # span-boundary aux head (use_span_boundary_head, weight 0.5) predicting per-token span START (B-*) +
 # END (entity token whose successor doesn't continue it), supervised from the BIO labels. Hypothesis:
 # boundary-placement pressure shrinks the region->street absorption residual ("05149 VT Tucker Road"
@@ -12,7 +12,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -36,7 +36,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -80,7 +80,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -137,7 +137,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v241 (fresh optimizer; --resume auto on a
+train: # Same-vocab init_from fine-tune off the shipped v241 (fresh optimizer; --resume auto on a
   # fresh output_dir honors init_from, weights only).
   output_dir: /data/output-v260-span-boundary-probe-s42/checkpoints
   seed: 42

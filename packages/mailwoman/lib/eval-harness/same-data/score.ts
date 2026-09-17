@@ -97,7 +97,7 @@ export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed. This is the row count, NOT the denominator of any rate below; each
+	 * Rows scored — after errored rows are removed. This is the row count, not the denominator of any rate below; each
 	 * rate carries its own.
 	 */
 	n: number
@@ -307,7 +307,7 @@ export interface BenchmarkVerdict {
 }
 
 /**
- * Evaluate the frozen decision rule: an 8-point pooled margin AND an exact McNemar rejection at alpha 0.05, with no
+ * Evaluate the frozen decision rule: an 8-point pooled margin and an exact McNemar rejection at alpha 0.05, with no
  * stratum where Mailwoman's wrong-area or false-selection rate is higher than the baseline's.
  */
 export function evaluateVerdict(

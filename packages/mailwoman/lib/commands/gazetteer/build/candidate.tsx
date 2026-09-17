@@ -71,7 +71,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 
 		let adminDB = adminIn
 
-		// A fold output that predates its admin database carries the admin database's OLD coordinates (the Frankfurt
+		// A fold output that predates its admin database carries the admin database's old coordinates (the Frankfurt
 		// read of 2026-09-06): refused unless asked for, since the remedy is `--fold` on this same command.
 		if (!options.fold && !options.allowStaleFold) {
 			const source = foldSourceAdminPath(adminIn)

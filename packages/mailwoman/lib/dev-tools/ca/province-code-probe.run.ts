@@ -5,7 +5,7 @@
  * written in full at the end of the same string. Several province codes collide with an ISO alpha-2 country code, and a
  * code left unattested by the corpus is not merely missing: the model reads it as the country it does know.
  *
- * Two arms per province, because `NL` and `PE` fail under DIFFERENT conditions and one arm cannot show it. `NL`
+ * Two arms per province, because `NL` and `PE` fail under different conditions and one arm cannot show it. `NL`
  * contradicts the country with or without a postal code; `PE` needs the postal code, and then takes the LOCALITY slot
  * rather than the country's, destroying the city. A probe that rendered only one shape would report one of them as
  * passing.
@@ -175,7 +175,7 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 		const input = withPostcode ? `${locality}, ${code} ${pick!.postcode}, Canada` : `${locality}, ${code}, Canada`
 		const result = withPostcode ? await deps.geocode(input, {}) : seatResult
 
-		// The row is correct when the country is Canada AND the region is the code AND the locality survived. A country
+		// The row is correct when the country is Canada and the region is the code and the locality survived. A country
 		// answered as the province's own code is the contradiction; a locality answered as the code is the other failure.
 		report.push({
 			code,

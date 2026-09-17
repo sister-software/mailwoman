@@ -131,7 +131,7 @@ describe("ablationVariants — one variant per attributable component", () => {
 		expect(variants[0]!.component).toBe("postcode")
 	})
 
-	// `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays EMPTY. Counting that as a deletion
+	// `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty. Counting that as a deletion
 	// would manufacture support for a cell nobody measured.
 	it("refuses an empty asserted value rather than counting it as support", () => {
 		const { variants, skips } = ablationVariants("1600 Pennsylvania Ave NW, Washington DC", {
@@ -247,7 +247,7 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 		expect(scored.unresolved).toBe(true)
 	})
 
-	// A row whose OWN anchor never resolved measures nothing. Reporting it as held would be the meaning-of-zero
+	// A row whose own anchor never resolved measures nothing. Reporting it as held would be the meaning-of-zero
 	// trap one level below the renderer.
 	it("returns broken=null when the anchor itself never resolved", () => {
 		const scored = scoreAblation(result({ lat: null, lon: null }), result(), "75013", "postcode", 5)
@@ -444,7 +444,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			minLocaleRows: 1,
 		})
 
-		// street was measured in GB and NOT in FR: the FR column must be the absence marker, not 0/0.
+		// street was measured in GB and not in FR: the FR column must be the absence marker, not 0/0.
 		expect(md).toContain(`| street | 0/1 | ${ABLATION_ABSENT} |`)
 		expect(md).not.toContain("0/0")
 	})
@@ -471,7 +471,7 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 
 /**
  * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the resolver pin: a dropped option does not
- * throw. A dropped `--components` runs the WHOLE corpus and prints a map that looks exactly like the one asked for; a
+ * throw. A dropped `--components` runs the whole corpus and prints a map that looks exactly like the one asked for; a
  * dropped `--limit` turns a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {

@@ -38,8 +38,8 @@ class Optimization:
 
     optimizer: AdamW
     scheduler: LambdaLR
-    #: Captured BEFORE any resume load: `optim.load_state_dict()` overwrites every param-group's
-    #: `lr`/`initial_lr` with the CHECKPOINT's values, so these are the only surviving live ones.
+    #: Captured before any resume load: `optim.load_state_dict()` overwrites every param-group's
+    #: `lr`/`initial_lr` with the checkpoint's values, so these are the only surviving live ones.
     live_group_lrs: list[float]
     live_group_labels: list[str]
 
@@ -158,7 +158,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
             raise RuntimeError("freeze_encoder=True but no affix_head params found — set model.use_affix_head: true")
         print(f"[freeze_encoder] frozen={frozen:,} trainable={trainable:,} (affix head only)")
 
-    # #901 v2.1.3: freeze ONLY the token-embedding table (the mean-init surgery rows). Mirrors
+    # #901 v2.1.3: freeze only the token-embedding table (the mean-init surgery rows). Mirrors
     # the freeze_encoder idiom — explicit filtered param list, loud count print.
     if getattr(cfg.train, "freeze_token_embeddings", False):
         frozen = 0
@@ -172,7 +172,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
         print(f"[freeze_token_embeddings] frozen={frozen:,} trainable={live:,}")
 
     # 2026-07-22 cRT probe (census-bias plan "Parallel training-side experiment"): classifier-only
-    # retraining with a frozen encoder — every param NOT matching a listed prefix is frozen, every
+    # retraining with a frozen encoder — every param not matching a listed prefix is frozen, every
     # match stays trainable. Mirrors the freeze_encoder idiom above (explicit filtered param list,
     # loud count print, raise-if-empty). Mutually exclusive with freeze_encoder/freeze_token_embeddings:
     # all three exclude parts of the encoder from training, and combining them would make "which
@@ -210,8 +210,8 @@ def build_optimization(cfg: Config, model: nn.Module) -> Optimization:
         span_head_learning_rate=getattr(cfg.train, "span_head_learning_rate", None),
         classifier_learning_rate=getattr(cfg.train, "classifier_learning_rate", None),
     )
-    # Captured BEFORE any resume load. `optim.load_state_dict()` (in `restore_training_state`)
-    # silently overwrites every param-group's `lr`/`initial_lr` with the CHECKPOINT's saved values,
+    # Captured before any resume load. `optim.load_state_dict()` (in `restore_training_state`)
+    # silently overwrites every param-group's `lr`/`initial_lr` with the checkpoint's saved values,
     # so these live-config LRs — plus `live_group_labels` above, both sourced directly from
     # `build_optimizer`'s own return — are the only place the live values (and their group
     # attribution) survive resume. See `restamp_resume_lrs`.
@@ -258,7 +258,7 @@ def restore_training_state(cfg: Config, resume_from: str | Path | None, optimiza
         # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
         for _ in range(resume_step):
             scheduler.step()
-    # Re-stamp the live config's LRs — must run AFTER both loads above, since either one
+    # Re-stamp the live config's LRs — must run after both loads above, since either one
     # (optim.load_state_dict or scheduler.load_state_dict) can clobber them back to the
     # checkpoint's saved values. See `restamp_resume_lrs`.
     restamp_resume_lrs(optim, scheduler, optimization.live_group_lrs, optimization.live_group_labels)

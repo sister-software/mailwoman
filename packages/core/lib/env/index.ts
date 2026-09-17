@@ -81,7 +81,7 @@ export function liveEnv<Shape extends z.ZodRawShape, Base extends object = Recor
 export const $public = liveEnv(PublicEnvSchema)
 
 /**
- * Privately accessible environment — secrets and credentials. Do NOT log. Core reads none itself, so this view is
+ * Privately accessible environment — secrets and credentials. Do not log. Core reads none itself, so this view is
  * empty; it is the base a package's private view extends (`liveEnv(PackageSecrets, $private)`), which keeps every
  * credential declared beside the code that sends it.
  *

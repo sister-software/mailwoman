@@ -25,7 +25,7 @@ def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
 
     MEASURED 2026-09-09, and the reason this function exists: the rename changed this reader's key without
     migrating the manifests. `v0.28.0-reviewed-postcode-tail` declares 706 train parquet files under the old key,
-    and the loader resolved ONE — the overlay's own file — because the new key read empty and the glob fallback
+    and the loader resolved one — the overlay's own file — because the new key read empty and the glob fallback
     saw only the overlay directory. A run would have trained on 22 rows and reported success; the `val` split
     raised `FileNotFoundError` instead, which is the only reason it surfaced at all.
     """
@@ -83,8 +83,8 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     The MANIFEST lists a per-file absolute ``path`` + ``split``. Two realities complicate this:
 
     1. **Overlay corpora.** An overlay (e.g. v0.4.0 = synthetic recipe outputs layered on v0.3.0's base)
-       keeps a manifest whose base-file paths deliberately point into the OTHER corpus dir
-       (``/data/.../v0.3.0/...``). Those are correct and must be used VERBATIM — re-rooting them to
+       keeps a manifest whose base-file paths deliberately point into the other corpus dir
+       (``/data/.../v0.3.0/...``). Those are correct and must be used verbatim — re-rooting them to
        ``corpus_dir`` would point at files that don't exist (v0.4.0 only has the overlay's own files).
     2. **Portability.** A non-overlay manifest stores absolute paths from the BUILD machine's data
        root, which do not exist when the corpus is mounted elsewhere (the Modal volume at

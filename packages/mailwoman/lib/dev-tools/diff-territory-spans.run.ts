@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Span-level parse dump for a named row set under ONE weights arm, so two arms can be diffed line for
+ *   Span-level parse dump for a named row set under one weights arm, so two arms can be diffed line for
  *   line. Built for the v4.2.0-base-anchor-v2 (Run B) regression triage: the gauntlet reports a COORD or a
  *   single-tag miss, which cannot distinguish "the parse moved" from "the resolver ranked differently".
  *   This dumps the parse alone (classifier-only pipeline, no resolver, exactly the gauntlet's parse half).
@@ -38,7 +38,7 @@ const { values } = parseArguments({
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
 		 * Parse through the RAW classifier (`classifier.parse`) instead of `createRuntimePipeline`. This is what
-		 * `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does, and the two instruments do NOT agree: the
+		 * `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does, and the two instruments do not agree: the
 		 * raw path skips `@mailwoman/normalize` entirely, so #690 case normalization never runs and the register legs see
 		 * genuinely different text.
 		 */

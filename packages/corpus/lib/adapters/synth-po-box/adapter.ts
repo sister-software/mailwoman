@@ -15,8 +15,8 @@
  *       Synthesizing PO boxes by mutating a street row would teach the model an invalid pattern.
  *       The clean shape is: read just (locality, region, postcode, country) and produce a fresh
  *       PO-box-shaped row.
- *   - Per-DeepSeek (3-turn consult, 2026-05-28): PMB rows that COMBINE a street line with a PMB number
- *       ARE valid (CMRA addresses). Those are produced when `pmbRatio > 0` AND the input tuple
+ *   - Per-DeepSeek (3-turn consult, 2026-05-28): PMB rows that combine a street line with a PMB number
+ *       are valid (CMRA addresses). Those are produced when `pmbRatio > 0` and the input tuple
  *       carries a `street` field.
  */
 
@@ -66,7 +66,7 @@ export interface SynthPoBoxAdapterOptions {
 	 */
 	seed?: number
 	/**
-	 * Probability (0..1), evaluated per input tuple, of ALSO emitting one US military/diplomatic PO-box row
+	 * Probability (0..1), evaluated per input tuple, of also emitting one US military/diplomatic PO-box row
 	 * (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are self-contained — they draw no
 	 * field from the input tuple, so military volume scales with the input stream size. Default 0 (off) — the adapter's
 	 * contract is "one row per input"; the corpus build recipe opts in to seed the rare-but-real military class without

@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage input adapter interface (#1902), plus the ONE implementation this repository ships:
+ *   The premise-linkage input adapter interface (#1902), plus the one implementation this repository ships:
  *   a synthetic fixture whose addresses, coordinates and identifiers are invented.
  *
  *   The interface is an async iterable rather than an array because a controlled file is read under terms
  *   that usually forbid holding it whole, and because a run that streams can be stopped without ever
- *   having materialized the licensed rows. A provider's data populates ONE implementation of this
+ *   having materialized the licensed rows. A provider's data populates one implementation of this
  *   interface; nothing downstream of it changes.
  *
- *   The controlled adapter is deliberately NOT written here. Its file format is the provider's, it is
+ *   The controlled adapter is deliberately not written here. Its file format is the provider's, it is
  *   not known yet, and inventing one now would mean the first real file either fits a guess or forces
  *   a redesign of the thing that was supposed to be fixed in advance.
  *
@@ -69,7 +69,7 @@ const SYNTHETIC_ADMIN_LON = -0.1
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * Substring of the normalized query the provider keys on. Unique per case — the fixture answers with the FIRST rule
+	 * Substring of the normalized query the provider keys on. Unique per case — the fixture answers with the first rule
 	 * that hits, so an overlapping key silently reassigns another case's answer.
 	 */
 	matchOn: string
@@ -261,7 +261,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 			hasHistoricalAlias: false,
 		},
 		matchOn: "hotel terrace",
-		// Committed to a premise and named NO identifier in the graded scheme: ungradable, and never `wrong`.
+		// Committed to a premise and named no identifier in the graded scheme: ungradable, and never `wrong`.
 		response: fixtureExactMatch({
 			providerPlaceID: "synthetic-place-0008",
 			objectIDs: undefined,

@@ -26,7 +26,7 @@
  *
  *   `--cache-root` grades a candidate laid out as a package-shaped weights dir
  *   (`<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`) — the `weightsCacheRoot` posture
- *   `parity-corpus.ts` documents, and the ONLY way to grade a candidate with its sibling channels fed.
+ *   `parity-corpus.ts` documents, and the only way to grade a candidate with its sibling channels fed.
  *   Omit it to grade the installed workspace package.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/score/anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
@@ -60,13 +60,13 @@ const { values } = parseArguments({
 		label: { type: "string", default: "candidate" },
 		"dump-misses": { type: "string" },
 		/**
-		 * Dump the FULL per-row tag serialization. The ablation legs of a saturated board are indistinguishable by score —
+		 * Dump the full per-row tag serialization. The ablation legs of a saturated board are indistinguishable by score —
 		 * diffing this is how you tell "the channel changed nothing" from "the board cannot see it".
 		 */
 		"dump-spans": { type: "string" },
 		/**
 		 * Pin `normalizeCase: false` (#690/#829 OFF) — the register in which the shaped anchor keyer was measured DEAD:
-		 * 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512). With normalization ON (the default) the
+		 * 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512). With normalization on (the default) the
 		 * lowercase leg is rescued before the keyer ever sees it, so this flag is the only way to grade the KEYER's
 		 * register-sensitivity rather than `normalizeInputCase`'s.
 		 */

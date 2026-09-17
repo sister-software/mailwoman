@@ -135,7 +135,7 @@ export function stableSourceIDFromParts(
  * This decides where the house number ends and the street begins for every US CSV adapter, so an edge case fixed here
  * is fixed for all of them.
  *
- * The remainder must stay `(\S.*)` and must NOT become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
+ * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
  * engine split a run of tabs between the two groups every possible way before failing — quadratic backtracking on
  * attacker-shaped input. Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
  * so the two forms are indistinguishable on real input; only the failure cost differs.
@@ -161,7 +161,7 @@ export interface SplitStreetLine {
  * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC
  * 1"`) becomes a single `street` value rather than being mangled — the model sees the original surface form and
  * downstream classifiers pick it up. Callers that need those forms recognized as something other than a street (see
- * `usgov-irs-bmf`) test for them BEFORE calling this.
+ * `usgov-irs-bmf`) test for them before calling this.
  */
 export function splitStreetLine(line: string): SplitStreetLine | null {
 	const trimmed = line.trim()
@@ -180,7 +180,7 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
  * form set. libpostal format: `canonical|abbr|abbr|...` — every form is indexed.
  *
  * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the packaged `out/`
- * tree. The candidate list this replaced named it TWICE and then guessed a third path off `process.cwd()`, and
+ * tree. The candidate list this replaced named it twice and then guessed a third path off `process.cwd()`, and
  * swallowed every error while probing, so a corrupt dictionary reported as a missing one.
  *
  * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.

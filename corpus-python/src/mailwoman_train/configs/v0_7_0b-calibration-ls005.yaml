@@ -1,23 +1,23 @@
 # v0.7.0b calibration — GENTLER label smoothing (iteration 2 of the 2-cap).
 #
-# STAGED, NOT LAUNCHED. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
-# reduced overconfidence-on-wrong 86.3%→66.6% but did NOT improve the primary
+# Staged, not launched. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
+# reduced overconfidence-on-wrong 86.3%→66.6% but did not improve the primary
 # harness pass rate (14.6%→13.8%) and regressed house_number recall −6.0pp and
 # street −2.9pp on the held-out TEST (>2pp check). See the night-3 postmortem §0c.
 #
 # Hypothesis for this iteration: ls=0.1 over-smoothed, flattening the target
 # enough to cost recall on the confident-correct tags (house_number, street).
 # ls=0.05 is a gentler regularizer — test whether it keeps a meaningful
-# overconfidence reduction WITHOUT the per-tag recall cost.
+# overconfidence reduction without the per-tag recall cost.
 #
 # SINGLE-VARIABLE CHANGE vs v0_6_0-stage3.yaml: label_smoothing 0.0 → 0.05.
 # (Identical to the ls=0.1 config except this value + output_dir.)
 #
-# Per the 2-iteration cap: this is the LAST recipe tweak before a methodology
+# Per the 2-iteration cap: this is the last recipe tweak before a methodology
 # rethink / structural pivot (#41). If it also fails to move harness pass rate,
-# do NOT propose a third calibration recipe — escalate to the structural branch.
+# do not propose a third calibration recipe — escalate to the structural branch.
 #
-# Launch (ONLY with operator confirmation — see project-v06x-hold + the fork in
+# Launch (only with operator confirmation — see project-v06x-hold + the fork in
 # the night-3 postmortem §0c):
 #   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_0b-calibration-ls005.yaml --resume none
 

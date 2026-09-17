@@ -93,7 +93,7 @@ describe("decideArc", () => {
 		)
 
 		expect(arc.verdict).toBe("hold")
-		// BOTH tier-1 locales are reported. The list this replaced named FR and not US, so this row read
+		// Both tier-1 locales are reported. The list this replaced named FR and not US, so this row read
 		// `[{ country: "FR", n: 1 }]` and the two US regressions beside it raised nothing (#2278).
 		expect(arc.dRuleViolations.map((entry) => `${entry.country}:${entry.n}`)).toEqual(["FR:1", "US:2"])
 	})
@@ -155,7 +155,7 @@ describe("decideArc", () => {
 		expect(arc.shape).toBe("from-scratch")
 		expect(arc.reasons.some((r) => r.includes("upper bound"))).toBe(false)
 		expect(arc.reasons.some((r) => r.includes("none is applicable"))).toBe(true)
-		// And it can still ship: shipped IS the attributable baseline here.
+		// And it can still ship: shipped is the attributable baseline here.
 		expect(arc.verdict).toBe("ship")
 	})
 

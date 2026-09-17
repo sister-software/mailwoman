@@ -13,9 +13,9 @@
  *      window, with the Department's national generic type BESIDE the local code rather than instead of it.
  *   2. `unknown` — no polygon contains the point. THAT IS NOT AN ABSENCE READING, and this layer has none.
  *
- *   THERE IS NO `designated_absence` HERE, AND ZONING IS THE HARDEST CASE OF THE RULE. For flood zones the
+ *   There is no `designated_absence` here, and zoning is the hardest case of the rule. For flood zones the
  *   Environment Agency states England-wide coverage and the Planning Practice Guidance defines Zone 1 as the
- *   land outside Zones 2 and 3, so an empty answer inside England IS a designation. No such definition exists
+ *   land outside Zones 2 and 3, so an empty answer inside England is a designation. No such definition exists
  *   anywhere for zoning: a location with no zoning polygon is outside any adopted plan area, or inside one on
  *   land the plan does not zone, or in a jurisdiction that has never adopted zoning, or in a jurisdiction
  *   whose records nobody has published — and no product distinguishes them. The source itself proves the
@@ -90,7 +90,7 @@ export const ZoningReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * No zoning polygon contains the point. NEVER an absence reading — see this file's header.
+	 * No zoning polygon contains the point. Never an absence reading — see this file's header.
 	 */
 	Unknown: "unknown",
 } as const
@@ -160,7 +160,7 @@ export interface ZoningDesignation {
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * The publishing authority's OWN crosswalk into a shared scheme, where it publishes one. Beside the local code, never
+	 * The publishing authority's own crosswalk into a shared scheme, where it publishes one. Beside the local code, never
 	 * instead of it: 52 of 795 (authority, local code) pairs take more than one generic type, so this cannot be
 	 * reconstructed from `localCode` and is a per-polygon fact the Department authored.
 	 */
@@ -183,7 +183,7 @@ export interface ZoningDesignation {
 		declared: boolean
 	}
 	/**
-	 * One of {@link ProvenanceGrade}. Every row of THIS artifact is `authoritative`; the column exists because a query
+	 * One of {@link ProvenanceGrade}. Every row of this artifact is `authoritative`; the column exists because a query
 	 * answered from an `inferred` row may never be presented as the authority's designation.
 	 */
 	provenanceGrade: string
@@ -191,7 +191,7 @@ export interface ZoningDesignation {
 	plan: ZoningPlan
 	/**
 	 * The authority states unzoned land POSITIVELY on a handful of rows. `true` here is the authority saying so; an
-	 * ABSENT designation says nothing at all, which is the distinction this layer exists to keep.
+	 * absent designation says nothing at all, which is the distinction this layer exists to keep.
 	 */
 	unzoned: boolean
 	containment: ZoningContainmentPath
@@ -252,7 +252,7 @@ export interface ZoningLayerIdentity {
 	 */
 	crosswalkScheme?: string
 	/**
-	 * The authority's footprint statements. EMPTY in this edition, which is what makes `source_present` the only basis
+	 * The authority's footprint statements. Empty in this edition, which is what makes `source_present` the only basis
 	 * the coverage may carry — see `schema.ts`.
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
@@ -329,7 +329,7 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read WITHOUT the blob, because the
+		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read without the blob, because the
 		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon on
 		// a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob at
 		// all.

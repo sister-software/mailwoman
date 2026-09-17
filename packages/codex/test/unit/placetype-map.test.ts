@@ -97,7 +97,7 @@ describe("isPlacetypeFallback", () => {
 
 describe("DEFAULT_PLACETYPE_MAP", () => {
 	it("omits the tags whose rows live outside the admin gazetteer", () => {
-		// Components absent from the map are NOT queried; their classifier attribution stands.
+		// Components absent from the map are not queried; their classifier attribution stands.
 		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
 		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
 	})

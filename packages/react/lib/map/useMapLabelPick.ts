@@ -8,7 +8,7 @@
  *   A label on a map looks like a link, so a visitor clicks it. Without this the click reaches the map's pan handler
  *   and nothing happens, which reads as the label being decoration.
  *
- *   It reads the label's OWN name from the rendered feature rather than reverse-geocoding the click point: the name
+ *   It reads the label's own name from the rendered feature rather than reverse-geocoding the click point: the name
  *   is what the visitor pointed at, and a lookup by coordinate answers whatever is nearest instead, which on a dense
  *   basemap is regularly not the thing under the cursor.
  *

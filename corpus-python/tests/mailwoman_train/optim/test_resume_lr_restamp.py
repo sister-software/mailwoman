@@ -23,7 +23,7 @@ class TinyModel(torch.nn.Module):
 
 
 class TinySpanClassifierModel(torch.nn.Module):
-    """Adds a `span_scorer.` prefix so both carveouts (`span_head_learning_rate` AND
+    """Adds a `span_scorer.` prefix so both carveouts (`span_head_learning_rate` and
     `classifier_learning_rate`) can be exercised together — the 3-group shape."""
 
     def __init__(self):
@@ -38,7 +38,7 @@ def _scheduler_cfg(*, warmup_steps=10, max_steps=100, lr_schedule="constant"):
 
 
 def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
-    """Trap characterization — NOT testing our fix. Proves the underlying torch behavior the
+    """Trap characterization — not testing our fix. Proves the underlying torch behavior the
     fix exists to correct: a bare `build_optimizer` + `optim.load_state_dict()` round trip
     silently discards a changed `classifier_learning_rate`, with no exception and no signal."""
     # Phase-1 "checkpoint": classifier group at the old hot LR.
@@ -47,11 +47,11 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
     opt_state_path = tmp_path / "optimizer.pt"
     torch.save(optim1.state_dict(), opt_state_path)
 
-    # Phase-2 "resume": build fresh from a DIFFERENT (decayed) classifier LR, per config.
+    # Phase-2 "resume": build fresh from a different (decayed) classifier LR, per config.
     m2 = TinyModel()
     optim2, _labels2 = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
     live_classifier_lr = next(g["lr"] for g in optim2.param_groups if g["lr"] == 1e-4)
-    assert live_classifier_lr == 1e-4  # sanity: the fresh build DID honor the new config
+    assert live_classifier_lr == 1e-4  # sanity: the fresh build did honor the new config
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
 
@@ -63,7 +63,7 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
 
 def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
-    """With the fix applied: after `_restamp_resume_lrs`, param groups AND scheduler.base_lrs
+    """With the fix applied: after `_restamp_resume_lrs`, param groups and scheduler.base_lrs
     reflect the live config's (changed) classifier LR, not the checkpoint's."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
@@ -79,7 +79,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # `labels` is build_optimizer's OWN return, not a hand-typed parallel list — the point of
+    # `labels` is build_optimizer's own return, not a hand-typed parallel list — the point of
     # this fix. See `test_restamp_resume_lrs_labels_are_not_a_hand_built_list` below for the
     # reorder-proofing assertion this buys.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
@@ -129,7 +129,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # SAME classifier_learning_rate as phase 1 — nothing should change on restamp.
+    # Same classifier_learning_rate as phase 1 — nothing should change on restamp.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))
@@ -154,7 +154,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
 
 
 def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_path, capsys):
-    """span_head_learning_rate AND classifier_learning_rate both set — 3 groups. Labels must
+    """span_head_learning_rate and classifier_learning_rate both set — 3 groups. Labels must
     attribute to the group that actually carries that override's LR, not just be the right
     length/set of strings (the original bug: the caller's hand-built if-chain could get the
     STRINGS right while attributing them to the wrong `optim.param_groups` index after a

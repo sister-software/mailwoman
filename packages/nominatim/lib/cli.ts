@@ -107,10 +107,10 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
-	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
-	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
+	// Not a geocode country constraint. The default-on #244 placer already routes the query's country
+	// (Berlin→DE, Boston→US) and `defaultCountry` is a hard override that beats it (geocode-core.ts:102),
 	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
-	// placer decide instead. This is the fallback used ONLY to annotate the flag/currency/calling-code
+	// placer decide instead. This is the fallback used only to annotate the flag/currency/calling-code
 	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
 	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
 	// the fallback never mislabels them.

@@ -219,7 +219,7 @@ describe("the vocabulary decision", () => {
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		// The domain is the publisher's statement of what a value MAY be, not a census of what it is. `SDZ` is the real
+		// The domain is the publisher's statement of what a value may be, not a census of what it is. `SDZ` is the real
 		// product's example: declared as a plan level and used on no row.
 		const row = database
 			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
@@ -352,7 +352,7 @@ describe("the meaning-of-zero rule", () => {
 
 		expect(lookup.lookup(holeCentre.latitude, holeCentre.longitude).kind).toBe(ZoningReadingKind.Unknown)
 
-		// And the ground around the hole IS zoned, so the hole is a hole rather than the whole feature going missing.
+		// And the ground around the hole is zoned, so the hole is a hole rather than the whole feature going missing.
 		expect(lookup.lookup(FIXTURE_ORIGIN.lat + 2.1 * FIXTURE_SIDE, FIXTURE_ORIGIN.lon + FIXTURE_SIDE * 0.1).kind).toBe(
 			ZoningReadingKind.Designated
 		)
@@ -464,7 +464,7 @@ describe("the provenance grade", () => {
 describe("the area cross-check", () => {
 	it("reports the hole-blind reading beside the nested one, and it is larger", () => {
 		expect(result.area.allExteriorKM2).toBeGreaterThan(result.area.nestedKM2)
-		// The signed sum IS the nested reading under this service's convention, which is the receipt that the orientation
+		// The signed sum is the nested reading under this service's convention, which is the receipt that the orientation
 		// was read rather than assumed.
 		expect(result.area.signedKM2).toBeCloseTo(result.area.nestedKM2, 6)
 	})

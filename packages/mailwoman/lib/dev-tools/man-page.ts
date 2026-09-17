@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate `man/mailwoman.1` from the CLI's OWN help tree. The command descriptions already live once, in each
+ *   Generate `man/mailwoman.1` from the CLI's own help tree. The command descriptions already live once, in each
  *   command module — a hand-written man page would be a second copy of every sentence, stale by the first help edit, so
  *   this derives the page instead: root help supplies NAME/SYNOPSIS/COMMANDS, each user-facing command's `--help`
  *   supplies its own section. npm links `package.json#man` on a global install, which is what makes `man mailwoman`
  *   answer.
  *
- *   Committed-artifact discipline: the page is generated INTO the tree and committed (the freshness test under
+ *   Committed-artifact discipline: the page is generated into the tree and committed (the freshness test under
  *   `test/unit/` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
  *   get the artifact, CI proves it fresh.
  *

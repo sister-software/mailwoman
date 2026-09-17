@@ -1,7 +1,7 @@
-# 500-STEP FEED SMOKE for v4.6.0 — validates the v0.23.0 overlay reads + loss descends. NOT a capability probe.
+# 500-STEP FEED SMOKE for v4.6.0 — validates the v0.23.0 overlay reads + loss descends. Not a capability probe.
 # v4.6.0-admin-surfaces — the first-refusal-era from-scratch base (2026-08-15).
 #
-# The v4.4.0 suffix-boundary-v2 recipe VERBATIM (from scratch, 60k cosine, s42) over the
+# The v4.4.0 suffix-boundary-v2 recipe verbatim (from scratch, 60k cosine, s42) over the
 # v0.23.0-admin-surfaces overlay. Four corpus deltas, each carrying a standing board failure:
 #   1. cz-pcfirst v21 + fr-bare-street v22 — the v4.5.x counter-form sources, weights held at their
 #      probe-verified values (fr 6.0 / cz 12.0). The fine-tune arc proved these classes need a
@@ -114,7 +114,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-    # The v4.5.x counter-form vintages (see the header). Superseded vintages NEVER co-feed.
+    # The v4.5.x counter-form vintages (see the header). Superseded vintages never co-feed.
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED by -v22
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
     synth-fr-bare-street-v22: 6.0

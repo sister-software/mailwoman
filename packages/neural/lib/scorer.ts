@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical ProductionScorer (#718) — the ONE place that constructs a `NeuralAddressClassifier`
- *   the way the SHIPPED model expects to be fed. Every eval, harness, and (eventually) the serving
+ *   The canonical ProductionScorer (#718) — the one place that constructs a `NeuralAddressClassifier`
+ *   the way the shipped model expects to be fed. Every eval, harness, and (eventually) the serving
  *   path should route through here instead of re-deriving the anchor/gazetteer/conventions feed
- *   from per-script flags. The history this closes: the #566/#685 trap — a model TRAINED with a
- *   channel, scored WITHOUT it, silently goes out-of-distribution and the eval grades a handicapped
+ *   from per-script flags. The history this closes: the #566/#685 trap — a model trained with a
+ *   channel, scored without it, silently goes out-of-distribution and the eval grades a handicapped
  *   model. The flat per-script construction (`score-country-homograph.ts`, `per-locale-f1.ts`) each
  *   re-invented the feed and each could silently drop a channel.
  *
@@ -46,7 +46,7 @@ import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
  * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask
- * does NOT provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA, not an absolute floor: a
+ * does not provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA, not an absolute floor: a
  * tag the model emits at 0.80 is protected if the mask drops it to 0.0, but a tag the mask leaves intact (small/zero
  * delta) is legal regardless of its absolute F1.
  */
@@ -82,7 +82,7 @@ function createWeightsMemo(locale: string | undefined): () => Promise<ResolvedWe
 /**
  * The default-lexicon ladder (#718 D1), shared by all four channels: prefer the repo-relative codex artifact when one
  * is named and present (the eval default — unchanged when present), else the soft-feed sibling the weights package
- * ships, so eval + serving read the SAME artifact. `undefined` when neither resolves.
+ * ships, so eval + serving read the same artifact. `undefined` when neither resolves.
  */
 async function resolveDefaultLexicon(
 	weightsOnce: () => Promise<ResolvedWeights | null>,
@@ -99,7 +99,7 @@ async function resolveDefaultLexicon(
 /**
  * Resolve the anchor lookup source the scorer feeds (#718 D1). A caller-pinned path wins; otherwise prefer the
  * operator's local pilot JSON (the eval's historical default — unchanged when present), else the soft-feed sibling the
- * weights package SHIPS (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns
+ * weights package ships (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the same artifact. Returns
  * `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as before).
  *
  * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
@@ -116,10 +116,10 @@ async function resolveAnchorSource(
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
 	// A `shaped` card INVERTS the preference below, and this is not a style choice. `pilot-anchor-lookup.json`
-	// holds 67,708 keys, ZERO of them letter-bearing (US/DE/FR five-digit only) — measured, and the whole
+	// holds 67,708 keys, zero of them letter-bearing (US/DE/FR five-digit only) — measured, and the whole
 	// reason the anchor-v2 retrain exists. A model that declares `shaped` was trained against a lookup
 	// with letter-bearing keys, so preferring the pilot file for it grades the candidate against a lookup
-	// that CANNOT carry the spans it learned. Silent, and the failure looks like "the retrain did nothing".
+	// that cannot carry the spans it learned. Silent, and the failure looks like "the retrain did nothing".
 	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
 		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	}
@@ -153,7 +153,7 @@ function fstPathEntry(fstPath: PathBuilderLike | undefined): { fstPath?: PathBui
 }
 
 /**
- * The anchor span mode the card declares (2026-08-05 train-parity fix). Card-declared ONLY — never inferred from the
+ * The anchor span mode the card declares (2026-08-05 train-parity fix). Card-declared only — never inferred from the
  * graph, because the ONNX inputs are identical either way. An undeclared card (every bundle shipped before that date)
  * yields `undefined`, and the channel keeps the alnum-run scan, so those bundles score byte-identically.
  */
@@ -243,7 +243,7 @@ export interface CreateScorerOpts {
 	 * WHY THIS EXISTS (#1497). `loadFromWeights` sets `fstPath` from the resolved weights package; `createScorer` builds
 	 * a classifier from EXPLICIT artifact paths and had no way to say which FST goes with them. Every eval that pins a
 	 * candidate model goes through this constructor, so every one of them was assembling a pipeline whose gazetteer prior
-	 * was silently OFF — which is why an FST change could not be measured by any eval in the tree.
+	 * was silently off — which is why an FST change could not be measured by any eval in the tree.
 	 */
 	fstPath?: PathBuilderLike
 	/**
@@ -327,8 +327,8 @@ class CapabilityViolationError extends Error {
  *
  *     maskOffF1 − (maskOnF1 ?? 0) > CAPABILITY_DELTA_THRESHOLD
  *
- * A forbidden tag with NO capability entry (model not certified there), or one whose `maskOnF1` shows the mask leaves
- * it intact (small/zero/negative delta), is LEGAL. When `maskOnF1` is ABSENT for a certified tag, the mask's effect was
+ * A forbidden tag with no capability entry (model not certified there), or one whose `maskOnF1` shows the mask leaves
+ * it intact (small/zero/negative delta), is legal. When `maskOnF1` is absent for a certified tag, the mask's effect was
  * never measured — and since the mask is a hard −1e9 emission ban, we conservatively assume full destruction (delta =
  * maskOffF1 − 0). That's the #719 shape: FR `street_prefix` certified at maskOff 80.0, no benign mask-on measurement →
  * forbidding it is rejected at load time.
@@ -346,7 +346,7 @@ async function assertConventionsRespectCapabilities(
 	const manifest = await readCapabilityManifest(modelCardPath)
 
 	if (!manifest) {
-		// No certified capabilities → nothing to protect. Old cards still load (warn ONCE per process).
+		// No certified capabilities → nothing to protect. Old cards still load (warn once per process).
 		if (!warnedNoCapabilities) {
 			warnedNoCapabilities = true
 
@@ -421,8 +421,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
 
 	// Check that capability-manifest changes preserve each required tag.
-	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
-	// this model is CERTIFIED to emit (per the card's `capabilities` block for the loaded tier). This
+	// Before wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
+	// this model is certified to emit (per the card's `capabilities` block for the loaded tier). This
 	// is a property of the model-card + codex pairing, independent of any per-instance `overrides` —
 	// an ablation scorer still loads the same shipped conventions table production will use, so the
 	// check runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
@@ -639,7 +639,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
 
 	// The SHIP OBLIGATION fail-closed (A2): a lookup whose keys only the shaped keyer can reach, paired
-	// with a card that does not declare it, is a silently-dead channel. Runs AFTER the lookup is loaded
+	// with a card that does not declare it, is a silently-dead channel. Runs after the lookup is loaded
 	// because the artifact is the observable half — the mode alone is not checkable against the graph.
 	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 

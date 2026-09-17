@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The structural verify step for admin-gazetteer builds — run BEFORE sealing/promoting, refuse the
+ *   The structural verify step for admin-gazetteer builds — run before sealing/promoting, refuse the
  *   swap on any failure. Row/count checks alone are provably insufficient: the 2026-07-07 #1015 rebuild
  *   passed a rows+countries check while ~95 countries lost their country/region NODES (#1023/#1026 —
  *   Tbilisi orphaned, "City, Country" scoping broken). Each check here catches a failure class we
@@ -13,7 +13,7 @@
  *   - `coverage-floor`: gross truncation.
  *   - `region-abbrevs` + `place-abbr` (#440 / the #1015 missed post-build steps): VT→Vermont resolves.
  *   - `fts-bbox`: place_search + place_bbox exist and cover spr (a build that skipped the FTS step).
- *   - `bbox-extents` (#1015): Overture-backfilled regions carry REAL extents, not label points.
+ *   - `bbox-extents` (#1015): Overture-backfilled regions carry real extents, not label points.
  *
  *   The reverse panel (`verifyReversePanel`) is the end-to-end leg: EU capitals + border cities must
  *   land in the right country — border towns are the hard class by construction.
@@ -37,7 +37,7 @@ export interface VerifyResult {
 
 export interface VerifyBaseline {
 	/**
-	 * ISO2 → required node placetypes. A listed country MUST have ≥1 current spr row of each placetype.
+	 * ISO2 → required node placetypes. A listed country must have ≥1 current spr row of each placetype.
 	 */
 	requiredNodes: Record<string, ReadonlyArray<"country" | "region">>
 	minRows: number
@@ -110,7 +110,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 3. region-abbrevs: the #440 class — abbr names present AND the VT→Vermont join resolves.
+	// 3. region-abbrevs: the #440 class — abbr names present and the VT→Vermont join resolves.
 	{
 		const abbrCount = (db.prepare("SELECT COUNT(*) n FROM names WHERE language = 'abbr'").get() as { n: number }).n
 
@@ -155,7 +155,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 6. bbox-extents (#1015): spot countries with region rows must have at least one REAL extent
+	// 6. bbox-extents (#1015): spot countries with region rows must have at least one real extent
 	//    (dLat > 0.05°) — a degenerate label-point bbox is invisible to reverse bbox-containment.
 	{
 		const placeholders = EXTENT_SPOT_COUNTRIES.map(() => "?").join(",")

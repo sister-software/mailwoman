@@ -229,7 +229,7 @@ def resolve_user_defined_symbols(cfg: TrainerConfig) -> tuple[list[str], list[st
             )
         )
     uds = _dedupe_keep_order(uds)
-    # SentencePiece's vocab budget MUST be > UDS count + reserved special-tokens — otherwise
+    # SentencePiece's vocab budget must be > UDS count + reserved special-tokens — otherwise
     # the trainer aborts. Cap UDS at min(uds, vocab_size // 4) defensively so a misconfigured
     # caller (e.g. asking for 30K UDS with vocab=48K) doesn't poison the training pass.
     uds_cap = max(0, cfg.vocab_size // 4)

@@ -9,8 +9,8 @@
  *
  *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
- *   changes, THIS file is the single place the check's parsing breaks — loudly (a floor whose number
- *   can't be found is a FAIL, never a skip).
+ *   changes, this file is the single place the check's parsing breaks — loudly (a floor whose number
+ *   can't be found is a `FAIL`, never a skip).
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -218,7 +218,7 @@ export async function assemblePromotionVerdict(
 		])
 
 		// Capture the anchor-ON native-DE locality (the conditional value) regardless of the anchor-OFF cell —
-		// the OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
+		// the anchor-OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
 		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
 		const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)
 		// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
@@ -251,9 +251,9 @@ export async function assemblePromotionVerdict(
 			// column order changed when #1151 dropped the v0 comparison (see arenaColumn).
 			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
 			// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
-			// hot DB. Like the arena leg it runs ONCE on the ship artifact (no fp32/int8 split); sidecar
+			// hot DB. Like the arena leg it runs once on the ship artifact (no fp32/int8 split); sidecar
 			// only (the leg is new — there are no pre-sidecar out-dirs to replay). Absent sidecar (DB not
-			// staged / runner errored) reads undefined → a floored spec FAILS loudly, an unfloored spec
+			// staged / runner errored) reads undefined → a floored spec fails loudly, an unfloored spec
 			// ignores it.
 			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct,
 		}

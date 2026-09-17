@@ -18,7 +18,7 @@
  *   - All `names` + `place_population` rows for selected place IDs.
  *   - The `coincident_roles` dual-role relation (#402), filtered to surviving spr ids.
  *
- *   No geojson, by design. The upstream WOF GeoJSON bodies live ONLY in the raw `whosonfirst-data-*`
+ *   No geojson, by design. The upstream WOF GeoJSON bodies live only in the raw `whosonfirst-data-*`
  *   repos; `scripts/build-unified-wof.ts` extracts `wof:population` straight into
  *   `place_population` (and the bbox into `spr`) at ingest and never persists a `geojson` table. So
  *   the source admin DB carries population in `place_population`, and this builder consumes it
@@ -166,7 +166,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		await removePath(opts.output)
 	}
 
-	// Open the output DB and create the empty schema. We discover the schema from the FIRST input
+	// Open the output DB and create the empty schema. We discover the schema from the first input
 	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column
 	// ordering / types. `CREATE TABLE AS SELECT` flattens types to dynamic, which would break
 	// callers that rely on column-affinity behavior.
@@ -207,7 +207,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 		// Build the resolver virtual tables on the trimmed row set. Both place_search (FTS5) and
 		// place_bbox (R*Tree) derive purely from spr + names — no geojson needed (see fts.ts). The
-		// population aux table is NOT rebuilt here: it was copied verbatim above, and fts.ts only
+		// population aux table is not rebuilt here: it was copied verbatim above, and fts.ts only
 		// (re)builds it when a `geojson` table is present, which the slim DB intentionally has not.
 		progress("fts", "building place_search / place_bbox on slim DB")
 
@@ -216,7 +216,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})
 
-		// Materialize region/state ABBREVIATIONS into a standalone `place_abbr (id, abbr)` table BEFORE
+		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)` table before
 		// `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev match by
 		// querying `names` (`#exactMatchIDs`), but the slim DB drops `names` for size — so the
 		// browser resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
@@ -231,7 +231,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_abbr ON place_abbr (abbr COLLATE NOCASE)`)
 		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_id ON place_abbr (id)`)
 
-		// Capture the names count BEFORE any drop so the build report stays informative.
+		// Capture the names count before any drop so the build report stays informative.
 		const namesRows = countRows(out, "names")
 
 		// Optionally drop `names` (+ its index) now that the self-contained FTS5 index no longer needs
@@ -299,7 +299,7 @@ async function copyFromSource(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// The SELECT-INSERT queries below go through Kysely. The cross-schema FROM is the only
+		// The SELECT-INSERT queries below go through Kysely. The cross-schema `FROM` clause is the only
 		// "interesting" bit: by declaring `src.spr` / `src.names` / `src.place_population` in
 		// `BuildSchema`, Kysely lets us write `selectFrom("src.spr")` with the same column-type
 		// checking as the regular schema. SQLite parses the dotted identifier as a schema-name
@@ -385,7 +385,7 @@ async function copyFromSource(
 
 		// 6. Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
 		// slim/demo DB supports dual-role hierarchy completion (on by default). Filtered to surviving
-		// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally NOT copied (huge
+		// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally not copied (huge
 		// + build-only), so we copy the derived table rather than rebuild it. Raw SQL — conditional +
 		// not in the Kysely build schema.
 		const relationSchema = out

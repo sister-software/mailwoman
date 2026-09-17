@@ -6,7 +6,7 @@
  *   Harness baseline assertion — an eval refuses to produce a report when its instruments read
  *   wrong (#727 stage-2, Tier 0).
  *
- *   This is NOT a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
+ *   This is not a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
  *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
@@ -23,7 +23,7 @@
  *       no street databases were wired. The instrument was dark and the report read as a finding.
  *       The verdict was VOID; see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
  *
- *   A registered baseline covers BOTH shapes, because instrument-health preconditions register the
+ *   A registered baseline covers both shapes, because instrument-health preconditions register the
  *   same way headline metrics do — `paris.resolver.street_evidence_rate@ban-street-centroids` is a
  *   row like any other, and a dark resolver reading 0.000 deviates from it past its band.
  *
@@ -245,7 +245,7 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		// An absolute tolerance wins when declared. Small-count metrics (a street-evidence rate of
 		// 1/63) have a meaningless relative band — one fixture moves it 100% — so those rows opt out
-		// of relative checking entirely. A zero-valued row MUST declare one; relative is undefined.
+		// of relative checking entirely. A zero-valued row must declare one; relative is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)

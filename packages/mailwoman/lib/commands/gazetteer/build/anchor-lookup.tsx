@@ -8,10 +8,10 @@
  *   (regenerate, don't edit).
  *
  *   `--include` picks the country set. It defaults to the DE/FR/US pilot — the set every shipped
- *   recipe trained against, and the set whose 67,708 keys are ALL five digits, which is why the
+ *   recipe trained against, and the set whose 67,708 keys are all five digits, which is why the
  *   encoder's GB/JP/ES/IT/NL anchor slots never took a gradient
  *   (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Pass `--include DE,FR,US,GB,NL,ES,IT` for
- *   the letter-bearing v2 set. Widening the lookup only pays off on a run that ALSO carries the
+ *   the letter-bearing v2 set. Widening the lookup only pays off on a run that also carries the
  *   inference-side parity fix — see the pipeline module docstring.
  */
 

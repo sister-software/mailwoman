@@ -55,7 +55,7 @@ beforeAll(async () => {
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
-	// Deliberately NO `meta` table — the real database has none, and the coordinate-tier rule must not read a declaration
+	// Deliberately no `meta` table — the real database has none, and the coordinate-tier rule must not read a declaration
 	// out of its absence.
 	source.exec(`
 		CREATE TABLE spr (

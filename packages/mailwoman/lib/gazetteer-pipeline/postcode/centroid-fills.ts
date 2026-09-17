@@ -12,7 +12,7 @@
  *
  *   1. US ONLY — Census ZCTA Gazetteer internal points (public domain), then GeoNames `US.txt` for the
  *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
- *   2. GeoNames postal (`<CC>.txt`) — the postcode's OWN centroid, string-matched (WOF ids stay the
+ *   2. GeoNames postal (`<CC>.txt`) — the postcode's own centroid, string-matched (WOF ids stay the
  *      eval keys; corrects WOF mis-links like the Italian Milan→Liguria case). CC-BY 4.0 — any DB
  *      shipping these rows must attribute "GeoNames (CC-BY 4.0)".
  *   3. WOF admin parent-borrow — the parent locality's centroid from the admin gazetteer.
@@ -64,7 +64,7 @@ export interface CentroidFillResult {
 }
 
 /**
- * Priority-2 fill: for every coordinate-less postcode, take its OWN centroid from the GeoNames postal file for that
+ * Priority-2 fill: for every coordinate-less postcode, take its own centroid from the GeoNames postal file for that
  * country. A postcode on several GeoNames rows is averaged. Matched by the postcode string only — the WOF id is
  * untouched, so the eval keys stay WOF's.
  */
@@ -376,7 +376,7 @@ export async function fillPostcodeCentroids(
 	let geonamesNames = 0
 	let ancestorFixed = 0
 
-	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.
+	// Pass 2: GeoNames postal — runs first so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
 		// Where the US lives. The per-country directory is populated for locales fetched one at a time and
 		// has no US.txt; the combined dump does. Resolved through the data-root builder rather than by

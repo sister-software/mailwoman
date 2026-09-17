@@ -27,9 +27,9 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser nests the
- * directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts), so `street.value` alone
- * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the FULL
- * normalized name. Collect street + its prefix/particle/suffix descendants (NOT house_number/unit, which also nest
+ * directional/suffix as `street_prefix`/`street_suffix` children of `street` (containment.ts), so `street.value` alone
+ * is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the coordinate extracts keyed on the full
+ * normalized name. Collect street + its prefix/particle/suffix descendants (not house_number/unit, which also nest
  * under street), order by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
@@ -69,7 +69,7 @@ const LOCALITY_BBOX_RADIUS_DEG = 0.25
 
 /**
  * Every `(street, house_number)` pair the tree offers, nearest pair first: the house number whose span sits closest to
- * the street's, a number BEFORE the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
+ * the street's, a number before the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
  * 22 Rue Pascal, 75005 Paris, France` carries two house numbers and one street, and `22` is the one written beside `Rue
  * Pascal`. The tiers probe the pairs in this order and stop at the first register hit, and the pair that hit is what
  * the result names; a walk that took "the first node of each tag" paired whatever the traversal met first.
@@ -182,7 +182,7 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 			lon: hit.lon,
 			source: hit.source,
 			release: hit.release,
-			// The register row's OWN scope tags, when carried — a rooftop consumer can decorate the
+			// The register row's own scope tags, when carried — a rooftop consumer can decorate the
 			// commune/postcode the register attests even when the query never named them.
 			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
 			...(hit.postcode ? { postcode: hit.postcode } : {}),
@@ -192,9 +192,9 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 }
 
 /**
- * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point tier
- * ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier === "address_point"`). That check
- * IS the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
+ * House-number interpolation tier (#483): the third rung, consulted only when the exact address-point tier
+ * ({@link applyAddressPoint}) did not already stamp the street node (`resolution_tier === "address_point"`). That check
+ * is the "after the exact-point fall-through" — an estimate never overwrites a real situs point. Postcode-scoped (no
  * locality — the interpolators abstain statewide without a postcode). Stamps a DISTINCT metadata key
  * (`interpolated_point`, never `address_point`). Additive only — admin resolution is untouched.
  */

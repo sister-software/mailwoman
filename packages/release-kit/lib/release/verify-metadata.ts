@@ -4,23 +4,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Release-time fail-fast check: verify the SHIPPED MODEL's metadata has propagated to every human-
- *   facing surface BEFORE a publish goes out. Mirrors the Hugging Face weight-staging preflight in
+ *   Release-time fail-fast check: verify the shipped model's metadata has propagated to every human-
+ *   facing surface before a publish goes out. Mirrors the Hugging Face weight-staging preflight in
  *   `.github/workflows/publish.yml` — HEAD-check the surfaces, and on any miss print the exact
  *   remediation and stop, rather than shipping silently and backfilling a release later.
  *
- *   WHY THIS EXISTS (2026-07-17). When 6.4.0 shipped, THREE metadata surfaces were never updated and
+ *   Why this exists (2026-07-17). When 6.4.0 shipped, three metadata surfaces were never updated and
  *   nobody noticed until 6.5.0 — all three were hand-backfilled during the 6.5.0 ship:
  *
  *   - `evals/scores-by-version.json` — the per-model score ledger (`mailwoman eval ledger-append`
  *       exists but was manual, so it froze).
- *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an OLD `(current)` row.
+ *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an old `(current)` row.
  *   - `docs/articles/developers/status.mdx` — the status info box, citing a superseded release.
  *
  *   THE MODEL-vs-npm DISTINCTION (see the "Two version series" intro of releases.mdx). Two version
  *   series exist: the npm version (what `npm install` gives you, bumped in lockstep across all
- *   workspaces on EVERY release) and the trained-model lineage recorded in the weights bundle's
- *   `model-card.json`. A CODE-ONLY release bumps npm but NOT the model card — the model didn't
+ *   workspaces on every release) and the trained-model lineage recorded in the weights bundle's
+ *   `model-card.json`. A code-only release bumps npm but not the model card — the model didn't
  *   change, so the ledger/docs shouldn't be forced to grow a new MODEL row. This eval therefore keys
  *   off the MODEL version (the `version` field of `neural-weights-en-us/model-card.json`), not npm /
  *   package.json, and asserts the ledger + docs are current FOR THAT MODEL. A code-only npm bump on
@@ -34,10 +34,10 @@
  *      row — OR on a newer row when every release above V is a "model unchanged" (code-only) row.
  *   3. `docs/articles/developers/status.mdx` cites V in its `:::info[Verified as of …]` box.
  *
- *   On any failure: ONE actionable error per surface (the exact command / file+section to fix), then
+ *   On any failure: one actionable error per surface (the exact command / file+section to fix), then
  *   exit 1. On success: one `OK` line per surface, exit 0.
  *
- *   NOT covered here (tracked follow-up): the isotonic calibration tables in the weights bundle are
+ *   Not covered here (tracked follow-up): the isotonic calibration tables in the weights bundle are
  *   still fitted on the v5.3.0 lineage and carried forward — a separate, larger re-fit workstream,
  *   deliberately out of scope for this eval.
  *
@@ -136,8 +136,8 @@ export interface SurfaceResult {
 }
 
 /**
- * Read the shipped MODEL version — the `version` field of the weights bundle's model card. This is the anchor for every
- * check: NOT npm / package.json, so a code-only release (which bumps npm but leaves the card untouched) is judged
+ * Read the shipped model version — the `version` field of the weights bundle's model card. This is the anchor for every
+ * check: not npm / package.json, so a code-only release (which bumps npm but leaves the card untouched) is judged
  * against the model it actually ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
@@ -264,7 +264,7 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 
 	const { versionCell } = rows[currentIndex]!
 
-	// Rows are newest-first. current ABOVE V (smaller index) is fine ONLY if every row strictly newer
+	// Rows are newest-first. current above V (smaller index) is fine only if every row strictly newer
 	// than V is a code-only "model unchanged" bump — then V is still the live model and the marker
 	// rightly sits on the newest npm row.
 	if (currentIndex < vIndex) {
@@ -355,7 +355,7 @@ export async function verifyReleaseMetadata(
 	const paths = {
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
-		// NOT an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
+		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
 		// matrix — AGENTS.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
 		// in `76c08d950`. It is deliberately unpublished, so there is no live page to move this to.
 		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),

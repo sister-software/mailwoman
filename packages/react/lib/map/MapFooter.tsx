@@ -7,11 +7,11 @@
  *   on the right.
  *
  *   Attribution is a licence obligation for every source these apps draw, so it is a first-class slot rather than
- *   something an app remembers to add. It sits behind a button because the strip has to stay ONE line: spelled out, the
+ *   something an app remembers to add. It sits behind a button because the strip has to stay one line: spelled out, the
  *   credits ran three lines deep on a phone and covered the sheet above them. The button names the obligation, and
  *   pressing it shows every credit — which is the treatment the reference map apps use.
  *
- *   The status slot is where the loader says WHAT it is fetching while the bar at the top of the viewport says how far
+ *   The status slot is where the loader says what it is fetching while the bar at the top of the viewport says how far
  *   along it is.
  *
  *   NODE-SAFE: pure React, no maplibre.

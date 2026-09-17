@@ -53,7 +53,7 @@ export interface SeedCase {
 	expectComponents?: Record<string, string>
 	/**
 	 * OPT-IN multi-script rendering contract, per component key — `{ venue: ["Gandantegchinlen Monastery",
-	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains EVERY listed
+	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
 	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
 	 * component check. Only for a row whose INPUT genuinely carries a span in two or more scripts; every list must be
 	 * non-empty (the schema refuses an empty one).
@@ -69,8 +69,8 @@ export interface SeedCase {
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * True = the expected outcome is NO COORDINATE: the resolver abstains rather than answering, and any resolved
-	 * coordinate FAILS the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
+	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
+	 * coordinate fails the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
 	 * #1585 fuzzy-scope contract: a scoped-empty typo correction abstains instead of falling through world-fuzzy; such a
 	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
 	 */
@@ -159,7 +159,7 @@ export const SeedCaseSchema = zod.strictObject({
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
- * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list EVERY key, not merely valid ones.
+ * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key, not merely valid ones.
  *
  * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never reaches the array would
  * be silently dropped from every emitted row and from the content hash. This fails instead.
@@ -194,7 +194,7 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 /**
  * The `gauntlet_case` row a seed case becomes: the camelCase seed keys onto the snake_case columns, every absent
  * expectation an explicit `null`, the JSON-valued expectations serialized. The regression-db builder inserts through
- * this, and a board author grades a candidate row through it BEFORE committing it, so the two cannot disagree about
+ * this, and a board author grades a candidate row through it before committing it, so the two cannot disagree about
  * what a seed field means.
  */
 export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {

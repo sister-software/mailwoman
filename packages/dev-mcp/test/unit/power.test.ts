@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   A 10-input probe saw no differences and published "zero effect".
- * These tests pin the arithmetic AND the sentence because the sentence is the part that travels.
+ * These tests pin the arithmetic and the sentence because the sentence is the part that travels.
  */
 
 import { describeObservedRate, wilsonInterval, zeroEventUpperBound } from "@mailwoman/dev-mcp/power"

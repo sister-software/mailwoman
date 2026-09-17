@@ -47,7 +47,7 @@ describe("readCSVRecords", () => {
 	})
 
 	it("leaves runs of spaces and tabs exactly as the source wrote them", async () => {
-		// The collapse is scoped to \r\n on purpose. Spaces and tabs could ALWAYS appear, and every recipe
+		// The collapse is scoped to \r\n on purpose. Spaces and tabs could always appear, and every recipe
 		// output built to date contains them — widening to \s+ would rewrite values on rows with no line break.
 		const [row] = await read(`${HEADER}-94.8,42.0,120,NORTH   MAIN\tSTREET,,CARROLL,51401\n`)
 

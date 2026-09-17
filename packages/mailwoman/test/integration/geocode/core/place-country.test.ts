@@ -66,7 +66,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		expect(entries.length).toBeGreaterThan(1)
 
 		for (const [c, p] of entries) {
-			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never OTHER)
+			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never `OTHER`)
 			expect(p).toBeGreaterThanOrEqual(0)
 		}
 
@@ -165,14 +165,14 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 		return { resolver, seen }
 	}
 
-	// CONTRACT CHANGE, #1751 narrowing #1738. This test asserted `anchorPosterior` SURVIVED a disagreeing
-	// bearer — "the placer's posterior stays the SOFT anchor the worldwide race weighs". At
+	// CONTRACT CHANGE, #1751 narrowing #1738. This test asserted `anchorPosterior` survived a disagreeing
+	// bearer — "the placer's posterior stays the soft anchor the worldwide race weighs". At
 	// `COARSE_PLACER_ANCHOR_WEIGHT = 1` that anchor is not soft: the within-tier key is
 	// `(prominence ?? score) + w · posterior[country]`, so on `Queen Street, Bristol` a 0.9261 posterior
 	// gap overturned GB Bristol's 0.884776 prominence lead and the answer moved 5,274 km to Connecticut.
 	// A prior that decides is not a prior.
 	//
-	// So a disagreeing bearer now withholds BOTH. The outcome #1738 protects is unchanged — measured
+	// So a disagreeing bearer now withholds both. The outcome #1738 protects is unchanged — measured
 	// end to end, `1001 Boulevard Saint-Laurent, Montréal` still answers 45.5079245, -73.5593271, CA —
 	// and the board is identical on both arms (gauntlet 382/383, 449/591 resolved, same tier tally).
 	//

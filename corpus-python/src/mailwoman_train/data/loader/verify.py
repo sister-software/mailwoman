@@ -20,7 +20,7 @@ def verify_tokenizer_alignment(
     """Assert that the SP tokenizer is *compatible* with the stored whitespace tokens.
 
     The stored ``tokens`` field is whitespace-tokenized, while the model uses SentencePiece
-    sub-tokens. They will not be byte-identical. What we DO need is:
+    sub-tokens. They will not be byte-identical. What we do need is:
 
     1. The whitespace tokens are recoverable from ``raw`` via left-to-right substring scan
        (corpus invariant — if this breaks, the corpus build is corrupt).

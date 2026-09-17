@@ -2,7 +2,7 @@
 
 Authored geographic semantics for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: stable concepts (`pharmacy`, `obtain_medication`), the relations a curator can state between them (`pharmacy affords obtain_medication`), mappings into external vocabularies, source observations, and derived facts — every record carrying provenance, and all of it compiled deterministically into a lookup artifact the runtime reads.
 
-The design problem it exists to solve: a geocoder benefits from knowing that a pharmacy is a place where you obtain medication, but the moment that knowledge becomes a ranking rule, authored opinion starts overriding what the models learned from data. This package holds the knowledge in a shape that CANNOT become ranking policy — no numeric field exists anywhere in the schema, and the compiled artifact answers lookups, never orderings.
+The design problem it exists to solve: a geocoder benefits from knowing that a pharmacy is a place where you obtain medication, but the moment that knowledge becomes a ranking rule, authored opinion starts overriding what the models learned from data. This package holds the knowledge in a shape that cannot become ranking policy — no numeric field exists anywhere in the schema, and the compiled artifact answers lookups, never orderings.
 
 ## Should you install this?
 

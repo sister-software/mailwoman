@@ -7,7 +7,7 @@
  *
  *   Polyfilling a rectangle is right for a rectangular extract and wrong for a region: a region is
  *   clipped to a polygon, so a rectangle polyfilled over it claims survey across whatever the rectangle
- *   overhangs. These helpers answer the narrower question — which cells lie wholly INSIDE the outline —
+ *   overhangs. These helpers answer the narrower question — which cells lie wholly inside the outline —
  *   and they answer conservatively, because the cells they return are the ones a completeness claim will
  *   be written to.
  *

@@ -6,7 +6,7 @@
  *   #1993: the coastal-erosion route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built coastal layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer ABSENT — which is every default construction —
+ *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -14,8 +14,8 @@
  *   THE REST PIN WHAT THIS LAYER SAYS AND, MORE IMPORTANTLY, WHAT IT REFUSES TO. A designation becomes one
  *   additive marker naming the verdict's own top kind, the scenario in the sentence rather than only in the
  *   evidence, and the coverage limit that says an absent polygon is not a reassurance. A location with no
- *   erosion polygon raises NOTHING — the inversion of the flood route, which raises a marker for a designated
- *   ABSENCE because inside England a location with no flood polygon is Flood Zone 1 by definition. NCERM
+ *   erosion polygon raises nothing — the inversion of the flood route, which raises a marker for a designated
+ *   absence because inside England a location with no flood polygon is Flood Zone 1 by definition. NCERM
  *   publishes no such definition, so silence here is a named refusal rather than an advisory.
  */
 

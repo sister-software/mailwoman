@@ -33,7 +33,7 @@ describe("the #1024 shipped-model guard", () => {
 		const source = await readLocalTextFile(HARNESS)
 
 		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position. The card
-		// path is deliberately NOT matched: a model-card IS committed to its package, so reading it there is a fact
+		// path is deliberately not matched: a model-card is committed to its package, so reading it there is a fact
 		// about the repo rather than an assumption about where binaries were materialized.
 		const literals = [...source.matchAll(/["'`][^"'`]*neural-weights-[a-z-]+\/(?:model\.onnx|tokenizer\.model)/g)]
 

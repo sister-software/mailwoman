@@ -125,7 +125,7 @@ def _paint_anchor_chars(
     rule, so token-era and span-era rows cannot diverge here.
 
     GB OUTWARD FALLBACK (2026-08-05). A unit postcode that misses retries its outward district
-    (``SW1A 2AA`` -> ``SW1A``) and paints the WHOLE unit span from it, mirroring
+    (``SW1A 2AA`` -> ``SW1A``) and paints the whole unit span from it, mirroring
     ``neural/anchor-inference.ts``'s ``spanMode: "shaped"`` exactly. It warrants its keep on real
     recipe outputs: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
     codes — Code-Point Open is a 2026-05 snapshot, the tuples are older), and 215 of those 217 have
@@ -181,13 +181,13 @@ def realign_anchor_to_pieces_shaped(
     """Shape-detected sibling of ``realign_anchor_to_pieces`` (#220/#723, ``anchor_paint_mode="shaped"``).
 
     Paints the anchor on postcode-SHAPED spans detected over the RAW text (``postcode_shapes.collect_matches``
-    — the train-side mirror of inference's ``neural/postcode-anchor.ts``), NOT on gold ``postcode`` labels.
-    So at TRAIN the anchor fires on the SAME spans inference paints — INCLUDING a house-number-that-looks-
+    — the train-side mirror of inference's ``neural/postcode-anchor.ts``), not on gold ``postcode`` labels.
+    So at TRAIN the anchor fires on the same spans inference paints — INCLUDING a house-number-that-looks-
     like-a-ZIP ("12345 Main St") — which the gold paths never did (the #723 train/inference mismatch that
-    let the anchor pollute leading-5-digit house numbers). A shaped span that MISSES ``anchor_lookup`` paints
+    let the anchor pollute leading-5-digit house numbers). A shaped span that misses ``anchor_lookup`` paints
     nothing (confidence 0), exactly like inference. Lookup normalization + char->piece projection are SHARED
     with the gold paths via ``_paint_anchor_chars`` / ``_project_anchor_chars_to_pieces`` — so this can only
-    differ from gold in WHERE it paints, never in WHAT it paints or HOW it lands on pieces. (The rare DE
+    differ from gold in WHERE it paints, never in what it paints or how it lands on pieces. (The rare DE
     ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing
     minor gap, not introduced here; the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
     """

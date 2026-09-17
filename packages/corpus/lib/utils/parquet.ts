@@ -414,7 +414,7 @@ export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
+ * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
  * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the file (the "builders
  * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
  */

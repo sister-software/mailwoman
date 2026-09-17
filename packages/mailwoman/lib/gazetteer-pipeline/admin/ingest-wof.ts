@@ -42,7 +42,7 @@ const BBOX_2D_LENGTH = 4
  * localadmin]`. Those rows answer only an UNFILTERED query, which ranks population-first and sorts a hood carrying no
  * population last.
  *
- * `campus` is deliberately NOT here despite being commoner than macrohood in the same sample (1,368). It is a venue
+ * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368). It is a venue
  * tier — universities, hospitals, airports — not an admin one, and it belongs to the sub-venue work, where its
  * terminals and wings are the point.
  */
@@ -111,11 +111,11 @@ async function parseFeature(
 	// Label centroid first, math centroid as the fallback — same preference the postcode-locality builder applies.
 	// The math centroid is wrong exactly where it matters most: a multipolygon spanning overseas territories pulls it
 	// off the mainland entirely (France's geom: point is in Spain; lbl: is metropolitan France). Both coordinates are
-	// taken from the SAME source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
+	// taken from the same source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
 	// centroid.
 	//
 	// The label point carries its own upstream defects (#1905: WOF's lbl: for Washington DC is 7.8 km out), so when
-	// BOTH pairs exist and disagree widely, the record's GeoNames concordance adjudicates — see choosePoint's rule
+	// both pairs exist and disagree widely, the record's GeoNames concordance adjudicates — see choosePoint's rule
 	// and the census in label-point-adjudicator.ts. No anchor, no disagreement, or no decisive separation → the
 	// label preference, byte-identical to before.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
@@ -265,6 +265,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 
 	const filePaths = await Globerator.from("**/data/**/*.geojson", {
 		cwd: opts.dataDir,
+		absolute: true,
 		exclude,
 		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
 		// second source tree: the direct checkout supplies its records once.

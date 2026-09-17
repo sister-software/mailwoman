@@ -27,7 +27,7 @@ from mailwoman_train.countries.kr.corpora import build
 
 from .kr_fixture import JusoAddress, JusoRegion, write_juso_zip, write_permit_csv
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:

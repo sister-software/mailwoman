@@ -26,7 +26,7 @@ from the codex lexicon. The homograph bit explicitly marks "context decides here
 
 **Country lexicon** (#1104) — `[country_surface, country_ambiguous]`. Country is a closed,
 enumerable class of roughly 250 surfaces that the learned grammar mislabels in the WOF-admin
-leading-long-form case. It gets its own projection and cue rather than a gazetteer slot, and is NOT
+leading-long-form case. It gets its own projection and cue rather than a gazetteer slot, and is not
 zeroed near a postcode, so a trailing "…12345 USA" keeps its clue.
 
 **Street type** (the P-A probe) — a multi-hot from the codex street-type lexicon (rue, boulevard,

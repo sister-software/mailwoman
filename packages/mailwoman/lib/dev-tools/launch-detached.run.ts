@@ -6,7 +6,7 @@
  *   Start a long-running command in ITS OWN SESSION and exit, so nothing that kills this process can reach the child.
  *
  *   WHAT THIS IS FOR. A Modal training launch is a local CLIENT talking to a remote container. Modal's `-d` does not
- *   make that client disposable — its own banner says detached mode "only keeps the LAST triggered Modal function alive
+ *   make that client disposable — its own banner says detached mode "only keeps the last triggered Modal function alive
  *   after the parent process has been killed" — and when the client dies Modal cancels the input:
  *
  *       [modal-client] Received a cancellation signal while processing input (…)

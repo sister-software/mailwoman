@@ -17,7 +17,7 @@ export const API_CLIENT_DEFAULTS = {
 	maxAttempts: 3,
 	/**
 	 * Base delay for the exponential backoff between retry attempts, in milliseconds. Attempt `n`'s wait is
-	 * `baseRetryDelayMs * 2^(n-1)`, UNLESS the response carried a `Retry-After` header, which is honored instead.
+	 * `baseRetryDelayMs * 2^(n-1)`, unless the response carried a `Retry-After` header, which is honored instead.
 	 */
 	baseRetryDelayMs: 500,
 	/**

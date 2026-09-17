@@ -15,7 +15,7 @@
  *   `assertEmissionWidth` — so the package is not degraded, it is inoperable, and only at runtime.
  *
  *   Presence-checking the card is not enough, which is how this shipped: `resolveWeights` already fell back to the
- *   base card when the overlay's was ABSENT, but four scaffolded carriers had a card that existed and simply had no
+ *   base card when the overlay's was absent, but four scaffolded carriers had a card that existed and simply had no
  *   `labels` key. Existence and completeness are different questions.
  */
 

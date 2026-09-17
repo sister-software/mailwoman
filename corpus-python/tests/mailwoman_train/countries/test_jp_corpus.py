@@ -2,7 +2,7 @@
 
 Every expected string here is hand-readable Japanese: a reviewer can check 香川県高松市八島町二丁目3-16
 by eye, which is the whole reason the Phase-0 de-risk was cheap. The span assertions are written as
-(tag, span text) pairs rather than raw offsets so a failure says WHAT was mislabeled.
+(tag, span text) pairs rather than raw offsets so a failure says what was mislabeled.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ def test_hyphen_class_is_folded_in_numbers_and_left_alone_in_names() -> None:
 
 
 def test_interior_ideographic_space_is_removed_from_a_name() -> None:
-    # 135 street values carry a U+3000 between the machi and the aza. Left in, it lands INSIDE a
+    # 135 street values carry a U+3000 between the machi and the aza. Left in, it lands inside a
     # district span; the written form closes it up.
     assert normalize_name("西与賀町　字今津乙") == "西与賀町字今津乙"
 
@@ -142,7 +142,7 @@ def test_arabic_chome_register_converts_only_the_chome() -> None:
 
 
 def test_compact_folded_register_is_one_whole_house_number_span() -> None:
-    # D4: the compact form carries no per-part surface evidence, so it is ONE span. This register is
+    # D4: the compact form carries no per-part surface evidence, so it is one span. This register is
     # the only place the 3-part compact number exists — the source has zero of them.
     record = render(URBAN, "compact_folded")
     assert record["raw"] == "香川県高松市八島町2-3-16"
@@ -319,7 +319,7 @@ def kenall(tmp_path) -> object:
 def test_town_level_join_beats_the_municipality_catch_all(tmp_path) -> None:
     index = kenall(tmp_path)
     assert index.lookup("北海道", "札幌市中央区", "旭ケ丘") == ("0640941", "town")
-    # Without a town match the fallback is the NNN-0000 catch-all — the ONLY thing the probe ever got.
+    # Without a town match the fallback is the NNN-0000 catch-all — the only thing the probe ever got.
     assert index.lookup("北海道", "札幌市中央区", "存在しない町") == ("0600000", "municipality")
 
 

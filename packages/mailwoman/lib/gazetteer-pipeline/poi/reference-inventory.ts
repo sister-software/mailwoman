@@ -9,7 +9,7 @@
  *
  *   The category is named, never numbered. `poi.category_id` is a per-build dictionary code — `pharmacy`
  *   is 72 in the 2026-07-22 build and carries no promise of being 72 in the next one — so the lookup goes
- *   through `poi_category_codes` and REFUSES a class the artifact does not hold. A numeric literal would
+ *   through `poi_category_codes` and refuses a class the artifact does not hold. A numeric literal would
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 

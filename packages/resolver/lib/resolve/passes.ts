@@ -61,7 +61,7 @@ export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPEC
 	.map(([placetype]) => placetype)
 
 /**
- * Per-lookup trace bookkeeping (#1721). `#lookupAndPick` talks to ONE of these unconditionally — a real recorder when
+ * Per-lookup trace bookkeeping (#1721). `#lookupAndPick` talks to one of these unconditionally — a real recorder when
  * `ResolveOpts.traceSink` is set, the frozen {@link NOOP_TRACE_RECORDER} otherwise — so the hot path carries no
  * per-event branches and the no-sink walk costs a handful of empty calls per node.
  */
@@ -210,17 +210,17 @@ export interface ResolutionState {
 	postcode?: string
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2) — forwarded to locality lookups so a coordinate-first backend can
-	 * re-rank name candidates by proximity to the postcode's own centroid. Opt-in; OFF by default.
+	 * re-rank name candidates by proximity to the postcode's own centroid. Opt-in; off by default.
 	 */
 	postcodeContainmentCoherence: boolean
 	/**
 	 * Postcode-prefix prior (#31, Mechanism 3) — on a `postalcode` miss, derive the code's prefix and probe
-	 * `postcodePrefixIndex`. Opt-in; OFF by default.
+	 * `postcodePrefixIndex`. Opt-in; off by default.
 	 */
 	postcodePrefixPrior: boolean
 	/**
 	 * #1589 — the countries the parsed postcode's FORMAT implies (the #928 singles plus the shared `NNN NN` family). When
-	 * set AND no country constraint survives, the `postalcode` lookup probes exactly these countries and abstains if all
+	 * set and no country constraint survives, the `postalcode` lookup probes exactly these countries and abstains if all
 	 * miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems (`100 00`
 	 * folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
 	 */
@@ -257,7 +257,7 @@ export interface ResolutionState {
 	 */
 	diagnoseUnreachable?: boolean
 	/**
-	 * #27 locale-country SOFT prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
+	 * #27 locale-country soft prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
 	 * byte-stable. See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
 	 */
 	localeCountryPrior?: string
@@ -270,7 +270,7 @@ export interface ResolutionState {
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
-	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off = undefined.
+	 * #743/#194 confident-placer country as a hard filter (empty→unresolved, no global retry). Off = undefined.
 	 */
 	hardCountry?: string
 	/**
@@ -292,7 +292,7 @@ export interface ResolutionState {
 	 */
 	regionQualifier?: string
 	/**
-	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the completion only
+	 * Set while resolving when any tree node maps to the `locality` placetype (resolved or not) — the completion only
 	 * fires when the parser emitted no locality at all, never to override one.
 	 */
 	localityNodePresent: boolean
@@ -311,7 +311,7 @@ export interface ResolutionState {
  * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). REFERENTIAL
  * likelihood is the PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin
  * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie; a
- * genuine tie (same population AND distance) ABSTAINS rather than guess.
+ * genuine tie (same population and distance) abstains rather than guess.
  *
  * ROAD_TO_V9 §2: `compareReferential` is referential DESC with raw population as its own tiebreak, which is the SAME
  * ORDER as the plain `b.population - a.population` it replaced — referential is strictly increasing in population below
@@ -351,7 +351,7 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 }
 
 /**
- * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs ONLY when the tree resolved NOTHING (the #685
+ * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs only when the tree resolved nothing (the #685
  * brake — never disturb a working coordinate). Enumerates raw-token spans, exact- matches the same-country gazetteer
  * (longest-wins + postcode-consistency check; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
  * decorated exactly like a normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
@@ -384,9 +384,9 @@ export async function applySpanRescore(
 		return
 	}
 
-	// #942 postal-compound recovery, part 2: when NO city span matched, decorate the FAILED postcode
+	// #942 postal-compound recovery, part 2: when no city span matched, decorate the failed postcode
 	// node from its code-shaped token subset ("1382 Kožljek" → the bare "1382" row) — a postcode-tier
-	// coordinate FLOOR, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
+	// coordinate floor, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
 	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
 	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
 	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
@@ -411,7 +411,7 @@ export async function applySpanRescore(
 	}
 
 	// #1537: the same-span namesake runner-ups, not an empty list. A name the model reads as a `street`
-	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the ONLY thing that
+	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the only thing that
 	// resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the
 	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
@@ -423,7 +423,7 @@ export async function applySpanRescore(
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }
 	roots.push(node)
 
-	// #1721 follow-up: this tier answers OFF the walk, and it used to answer off the record too — the famous-name
+	// #1721 follow-up: this tier answers off the walk, and it used to answer off the record too — the famous-name
 	// class ("Frankfurt") returned a coordinate beside an empty resolver trace, blinding every retrieval account.
 	// One record per rescue keeps the trace's promise: no resolved coordinate without a lookup record.
 	if (opts.traceSink) {
@@ -542,7 +542,7 @@ export function applyPostcodeConsistency(
 		if (gapKm <= thresholdKm) continue // already consistent
 
 		// Re-pick: the same-named candidate nearest the postcode, within the radius. `alternatives` is
-		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
+		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they are the
 		// `ResolvedPlace` runner-ups decorateNode attached, so the cast is sound.
 		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []
 

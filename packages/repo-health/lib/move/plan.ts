@@ -11,7 +11,7 @@
  *   and an unresolved specifier refuses the whole plan: this operation has no way to guess that is better than the
  *   author's next reading of the diff.
  *
- *   Text is used for ONE thing, and only to save work: a file whose source contains no spelling of a moved module is
+ *   Text is used for one thing, and only to save work: a file whose source contains no spelling of a moved module is
  *   not parsed. The probes are the moved file's own basename plus every specifier its package's maps can express for
  *   it, so a file that references it through a subpath key is read even when the key hides the filename.
  */
@@ -145,7 +145,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 	const manifests = await readPackageManifests(context)
 	const destinations = new Map(moves.map((move) => [move.from, move.to]))
 
-	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the WHOLE
+	// The manifest edits come first: the overlay the replacements are proven against has to be the tree the whole
 	// plan leaves behind, subpath targets included.
 	const manifestRewrites = await planManifestRewrites(
 		context.repoRoot,

@@ -81,7 +81,7 @@ const STREET_TYPE_SET: ReadonlySet<string> = new Set(GB_STREET_TYPES)
 
 /**
  * True when a token is a British thoroughfare type word (case-insensitive, whole-token match) — `Crescent`, `Mews`,
- * `Close`, `Road`. Matches the WHOLE token, not a suffix, so an unrelated place name (`Tokyo`, `Bordeaux`) is not
+ * `Close`, `Road`. Matches the whole token, not a suffix, so an unrelated place name (`Tokyo`, `Bordeaux`) is not
  * flagged the way an `-endsWith` test might.
  */
 export function isBritishStreetWord(token: unknown): boolean {

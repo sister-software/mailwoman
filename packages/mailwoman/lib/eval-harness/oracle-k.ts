@@ -10,7 +10,7 @@
  *   headroom directly: a semi-Markov Viterbi over the CURRENT model's post-prior emissions (span
  *   score = summed B-/I- log-probs over word-aligned segments, smoothed empirical segment-type
  *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
- *   `oracle@k` = the gold value appears in ANY of the top-k hypotheses' extractions.
+ *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
  *
  *   Baselines are REGISTERED, not restated here — see `baselines.json` (profiles `v264`, `v301`)
  *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
@@ -61,7 +61,7 @@ export interface OracleKOptions {
 	k?: number
 	/**
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`). When set, the harness
-	 * REFUSES to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
+	 * refuses to print a report if any reading deviates from its row — the Tier-0 instrument check. Omit for an
 	 * unregistered candidate.
 	 */
 	assertBaseline?: string
@@ -360,7 +360,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 		}
 
-		// The trace MUST carry the same priors as the parse above: the segment decode scores spans out
+		// The trace must carry the same priors as the parse above: the segment decode scores spans out
 		// of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions while token@1
 		// saw primed ones — comparing two different models and calling it a decode delta.
 		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
@@ -400,7 +400,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		}
 	}
 
-	// Tier-0 instrument check, BEFORE anything prints. A report from a harness reading this far
+	// Tier-0 instrument check, before anything prints. A report from a harness reading this far
 	// off its registered baseline is worse than no report — Phase 1 and Phase 4a both shipped one.
 	if (options.assertBaseline) {
 		const readings: Record<string, number> = {}

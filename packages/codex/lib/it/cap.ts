@@ -5,7 +5,7 @@
  *
  *   Italian postcodes (Codice di Avviamento Postale, CAP): the branded type and the shape.
  *
- *   Five digits like the Spanish, French and German forms, but do NOT infer a province from the
+ *   Five digits like the Spanish, French and German forms, but do not infer a province from the
  *   leading digits the way `es/codigo-postal.ts` documents for Spain. Italy's large cities are
  *   assigned RANGES rather than a single code (Rome spans 00118–00199, Milan 20121–20162), and
  *   several provinces share leading digits, so the CAP narrows geography without identifying a

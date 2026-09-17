@@ -9,15 +9,15 @@
  *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to be whatever the
  *   POSTAL FORMAT carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
  *   "Palais Royal") — cartographic subdivisions that never appear in a French postal address, since
- *   the arrondissement is encoded in the postcode (75001 = 1er). The line that DOES appear is the
+ *   the arrondissement is encoded in the postcode (75001 = 1er). The line that does appear is the
  *   lieu-dit, written alone between the street and the commune (La Poste's line 5). Indexing
  *   quartiers would be technically valid and practically wrong: a prior pushing toward spans real
  *   addresses never contain.
  *
- *   Filtering is NOT reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
+ *   Filtering is not reimplemented here. `@mailwoman/ban/sdk`'s `cleanLieuDit` already owns it
  *   (header leaks, placeholders, `ancienne commune` prefixes, and rows whose lieu-dit merely repeats
  *   the commune — 5.0% of filled values), and it is the same filter the `synth-fr-lieudit` training
- *   database reads through, so the index and the database agree on what a lieu-dit IS by construction.
+ *   database reads through, so the index and the database agree on what a lieu-dit is by construction.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #861 server↔demo parity contract, pinned at the two properties that were NOT held when the Node reader and the
+ *   The #861 server↔demo parity contract, pinned at the two properties that were not held when the Node reader and the
  *   browser byte-range twin each carried their own transcription of this re-rank. Both copies agreed on all four
  *   constants. They disagreed on which field the population term reads and on whether the combined value is written
  *   back — so a test that compares constants would have passed throughout.

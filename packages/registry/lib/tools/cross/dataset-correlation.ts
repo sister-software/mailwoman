@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cross-dataset correlation (#618) — the marquee proof: resolve ONE record set across datasets that
- *   share NO key. NPPES (the national provider registry), FCC Rural Health Care filings, and TX
+ *   Cross-dataset correlation (#618) — the marquee proof: resolve one record set across datasets that
+ *   share no key. NPPES (the national provider registry), FCC Rural Health Care filings, and TX
  *   HHSC facility registries each describe overlapping physical entities under different names,
  *   formats, and schemas. Geo-first blocking is what makes resolving them tractable.
  *
- *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into ONE
+ *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into one
  *   combined record set, geocode every address through mailwoman's real parser + resolver, resolve
  *   to canonical entities, and report the entities whose members span ≥2 sources — those are the
  *   cross-dataset links. We surface the correlation; interpretation is the consumer's.
@@ -63,7 +63,7 @@ export interface CrossDatasetCorrelationOptions {
 	state?: string
 	/**
 	 * The inverse-address-frequency change is a CORPUS statistic — it can't be synthesized from the geocoded sample. By
-	 * default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
+	 * default we scan the full files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
 	 * matcher, so the proven #617 change actually bites on a sub-sampled run. The scan adds a full pass over the 4.8 GB
 	 * NPPES file (~5 min); `--no-corpus-frequency` skips it and falls back to resolveEntities' zero-config input-scoped
 	 * default (#86). Default true.
@@ -153,7 +153,7 @@ export async function crossDatasetCorrelation(
 	const SPECS = [...buildSpecs(`${SOURCES}`, STATE), commitmentsSpec(`${SOURCES}`, STATE)]
 
 	// Stream each source, filter Texas rows, and retain the first capped rows for geocoding.
-	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
+	// (when --corpus-frequency, the default) count every in-state address into a corpus-wide table. The
 	// sample is the matched set; the frequency table reflects the full TX population, so the proven
 	// inverse-frequency change down-weights a genuinely-crowded shared campus even when it appears once in
 	// the geocoded sample. ---
@@ -260,7 +260,7 @@ export async function crossDatasetCorrelation(
 
 	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
 	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
-	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
+	// objective: "same address + different name" is the prototypical signal of the same facility under a
 	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
 	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
 	// FS baseline. (A cross-objective GBT threshold is the documented follow-up — #655.)

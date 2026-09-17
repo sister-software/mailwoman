@@ -329,7 +329,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	}
 
 	test("folds whitespace-adjacent B-locality B-locality into one span", () => {
-		// "Saint Paul, MN" — model emits B-locality on BOTH "Saint" and "Paul".
+		// "Saint Paul, MN" — model emits B-locality on both "Saint" and "Paul".
 		const raw = "Saint Paul, MN"
 
 		const tokens: DecoderToken[] = [

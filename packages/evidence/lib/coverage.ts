@@ -25,7 +25,7 @@
 export const CoverageBasis = {
 	/**
 	 * An authority declares the set complete for this cell — BAN holding every address in a commune, OS declaring OS Open
-	 * UPRN complete for GB. A miss inside a designated cell IS evidence of absence.
+	 * UPRN complete for GB. A miss inside a designated cell is evidence of absence.
 	 */
 	Designated: "designated",
 	/**
@@ -79,12 +79,12 @@ export interface RequireExclusionInput {
 	vintage: string
 	h3Cell: number
 	/**
-	 * The layer's coverage row for this cell. `undefined` means the cell is ABSENT from `layer_coverage`, which is
+	 * The layer's coverage row for this cell. `undefined` means the cell is absent from `layer_coverage`, which is
 	 * unknown — never a zero-completeness record (the meaning-of-zero rule).
 	 */
 	cell: { basis?: CoverageBasis | null } | undefined
 	/**
-	 * Identity of the fold this probe folded its key with. NOT a hand-written label: three packages export a function
+	 * Identity of the fold this probe folded its key with. Not a hand-written label: three packages export a function
 	 * named `foldName` and all three compute different answers (`Ångström` → `a ngstro m` / `angstrom` / `angstrom`), so
 	 * a name is not an identity. Derive it with {@link foldIdentity}.
 	 */
@@ -104,7 +104,7 @@ export interface RequireExclusionInput {
 }
 
 /**
- * The ONLY constructor for an {@link Exclusion}. Returns `null` — never throws — on every refusal, because a refusal is
+ * The only constructor for an {@link Exclusion}. Returns `null` — never throws — on every refusal, because a refusal is
  * the ordinary case and a caller must fail open to whatever ranking it already had.
  */
 export function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null {
@@ -161,8 +161,8 @@ const IDENTITY_SEPARATOR = "\u0001"
  * exclusion check needs: it is asking "was this key built by a fold equivalent to mine", not "were these two functions
  * written in the same file".
  *
- * Deliberately NOT a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a reviewer
- * can see WHICH probe moved when an identity changes.
+ * Deliberately not a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a reviewer
+ * can see which probe moved when an identity changes.
  */
 export function foldIdentity(fold: (s: string) => string): string {
 	return FOLD_PROBE_CORPUS.map((probe) => fold(probe)).join(IDENTITY_SEPARATOR)

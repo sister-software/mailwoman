@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the production learned-scorer model (#603). Builds the SAME NPI-keyed record set the dedup
- *   benchmark + the clustering A/B use (the SHARED `buildNPPESSample`: real registry + name-drift +
- *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the SHARED
+ *   Train the production learned-scorer model (#603). Builds the same NPI-keyed record set the dedup
+ *   benchmark + the clustering A/B use (the shared `buildNPPESSample`: real registry + name-drift +
+ *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the shared
  *   `createMatchFeaturizer` (so train ≡ inference), labels by held-out NPI, and fits the
  *   gradient-boosted-tree model. Writes the model as a committed TS module
  *   (`registry/models/dedup-gbt-en-us.ts`) that ships in the package.
  *
- *   Unlike the eval, this trains on ALL sampled NPIs (no held-out split) — the held-out F1 is the
+ *   Unlike the eval, this trains on all sampled NPIs (no held-out split) — the held-out F1 is the
  *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
  *   then re-measures generalization against the FS baseline.
  *
@@ -115,7 +115,7 @@ export async function trainDedupGBT(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// mapping.id = "npi" → record.id IS the NPI label (multiple records share an NPI, the ground truth).
+	// mapping.id = "npi" → record.id is the NPI label (multiple records share an NPI, the ground truth).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",

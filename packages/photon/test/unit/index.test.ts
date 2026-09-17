@@ -107,7 +107,7 @@ test("forward: a street-primary result names the street and types as street", ()
 })
 
 // #1041 — a rooftop / interpolated result must render HOUSE-GRADE. Upstream komoot/photon labels a bare
-// residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with NO
+// residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no
 // `name` (verified against photon.komoot.io). Without this a rooftop inherits the admin ancestry's `type:city`
 // and a client zooms to city scale on a doorstep match.
 
@@ -221,7 +221,7 @@ test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-o
 	// (county → localadmin → locality → borough → neighbourhood → microhood — keep this list in sync with
 	// resolver-wof-sqlite/reverse.ts). A reverse result can never be address-grade: the ladder caps at
 	// microhood, so the issue's "/reverse parity for address points" checkbox is structurally moot — but
-	// every tier the ladder CAN return must decorate with real tags, never the `place/yes/other` default.
+	// every tier the ladder can return must decorate with real tags, never the `place/yes/other` default.
 	const descentTiers = ["county", "localadmin", "locality", "borough", "neighbourhood", "microhood"]
 
 	for (const tier of descentTiers) {

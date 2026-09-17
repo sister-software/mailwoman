@@ -9,7 +9,7 @@
  *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
  *   allocator-avoiding shortcuts around it are properties of h3-js rather than of this product — the layer
- *   contract's polygon-builder section states them as requirements on EVERY polygon builder — and a second
+ *   contract's polygon-builder section states them as requirements on every polygon builder — and a second
  *   copy of the zero-cell guard is a second place for it to stop guarding.
  *
  *   WHAT STAYS HERE IS WHAT IS ZONE-SHAPED. {@link FloodCellIndex} accumulates per zone code, because the
@@ -136,7 +136,7 @@ export class FloodCellIndex {
 	 *
 	 * Compaction is where the size contract is paid: a zone's uniform interior collapses parent-ward into a handful of
 	 * coarse cells and only the fringe stays fine, which is hierarchy-respecting run-length encoding. It is applied to
-	 * the WHOLE set only — a partial cell's parent is not partial in any useful sense, and compacting it would claim the
+	 * the whole set only — a partial cell's parent is not partial in any useful sense, and compacting it would claim the
 	 * fringe covers ground it does not.
 	 */
 	finish(): {
@@ -212,7 +212,7 @@ export class FloodCellIndex {
 		const candidates: Array<{ h3Cell: number; resolution: number; areaID: string }> = []
 
 		for (const [cell, areas] of this.#candidates) {
-			// A cell that is partial for NO zone was covered wholly by every zone that reached it, so its candidate list
+			// A cell that is partial for no zone was covered wholly by every zone that reached it, so its candidate list
 			// would never be read.
 			if (!partialCellKeys.has(cell)) continue
 

@@ -1,6 +1,6 @@
 """The two passes over one epoch: what the sampler drew, and what the trainer would read.
 
-They open the SAME stream at the SAME seed, which is what makes their counts comparable — with
+They open the same stream at the same seed, which is what makes their counts comparable — with
 every augmentation probability at zero the two consume the rng identically and their counts are
 byte-equal, which the test pins. The emitted pass still skips `iter_rows`' shuffle buffer, which
 reorders rows and cannot change counts.
@@ -150,7 +150,7 @@ def run_emitted_pass(
 ) -> EmittedPass:
     """Pass 2 — emitted level: the same stream expanded through the augmentation policy.
 
-    The SAME emit step the trainer runs, exclusion included (#2243) — the audit reimplemented it
+    The same emit step the trainer runs, exclusion included (#2243) — the audit reimplemented it
     once without the per-source exclusion and reported an excluded source with the count it would
     have had if augmented. The relabel lexicon stays absent: this pass counts rows per source and
     per country, and relabel rewrites labels within a row without adding or removing one.
@@ -220,8 +220,8 @@ def audit_mixture(
 ) -> dict[str, Any]:
     """Run both passes over one epoch of ``draws`` rows and return the report dict.
 
-    ``augment_exclude_sources`` reaches the emitted pass because the TRAINER applies it. Both
-    passes open the stream at the SAME seed, so the emitted counts are byte-equal to the draw
+    ``augment_exclude_sources`` reaches the emitted pass because the trainer applies it. Both
+    passes open the stream at the same seed, so the emitted counts are byte-equal to the draw
     counts when every augmentation is off.
     """
     filled_augment = normalized_augment(augment)

@@ -19,7 +19,7 @@
  *   - **L1 signaled** — it produced nonzero input to the next stage: a channel fed a nonzero feature, a prior's own
  *     `applied` contract ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
  *     traced run.
- *   - **L2 moved an outcome** — needs ablation pairs and is NOT computed here; the gauntlet's ablation layer is the
+ *   - **L2 moved an outcome** — needs ablation pairs and is not computed here; the gauntlet's ablation layer is the
  *     home for it. Reported as explicitly unmeasured so a reader cannot mistake L1 coverage for outcome relevance.
  *
  *   A mechanism at zero L1 across the whole set is reported as INERT with the standing rule attached: every zero needs
@@ -52,7 +52,7 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 }
 
 /**
- * One row's entry in the census — kept so a reader can go from an inert mechanism to the rows that SHOULD have fired
+ * One row's entry in the census — kept so a reader can go from an inert mechanism to the rows that should have fired
  * it, and from a starvation count to the exact inputs.
  */
 export interface CensusRow {
@@ -90,7 +90,7 @@ export interface CensusAggregate {
 	 */
 	evidence_silent_rows: string[]
 	/**
-	 * Mechanisms at zero L1 across every row, minus the allowlist. THE finding.
+	 * Mechanisms at zero L1 across every row, minus the allowlist. The finding.
 	 */
 	inert: Array<{ mechanism: string; l0_present: number; note: string }>
 	/**
@@ -237,7 +237,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 		if (run.trace?.parse) {
 			traced.push({ id: item.id, input: item.input, parse: run.trace.parse })
 		} else {
-			// A row with no trace contributes NOTHING to any tally — counting it as "nothing fired" would manufacture
+			// A row with no trace contributes nothing to any tally — counting it as "nothing fired" would manufacture
 			// inertness out of a bundle that cannot trace.
 			untraced.push(item.id)
 		}

@@ -21,7 +21,7 @@ import type { NUTSDatabase } from "#schema"
  */
 /**
  * NUTS code lengths by level. The code is hierarchical and fixed-width per level — a two-letter country prefix plus one
- * digit per level — so the length IS the level.
+ * digit per level — so the length is the level.
  */
 const NUTS_1_LENGTH = 3
 

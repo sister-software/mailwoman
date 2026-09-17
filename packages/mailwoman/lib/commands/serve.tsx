@@ -12,7 +12,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
-// the process object's OWN properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
+// the process object's own properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
 // `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
 // need `.once`, so this must be the real singleton.
 import { Box, Text } from "ink"
@@ -52,7 +52,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap; refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
-		// Tracks whether ANY worker has ever reached "listening" — distinguishes a genuine boot
+		// Tracks whether any worker has ever reached "listening" — distinguishes a genuine boot
 		// failure (every worker died before one of them opened the port) from an ordinary shutdown
 		// after a healthy run. `cluster.on("listening", …)` mirrors the per-worker wiring in
 		// WorkerStatus, but at the primary, where the exit handler below can see it.

@@ -63,7 +63,7 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 }
 
 /**
- * True when `table` exists in the open database AND carries `column`.
+ * True when `table` exists in the open database and carries `column`.
  *
  * The column-level sibling of {@link hasTable}, and it exists for the same reason one layer down: an artifact built
  * before a column was added is still a VALID artifact, and a reader that unconditionally names the new column in its

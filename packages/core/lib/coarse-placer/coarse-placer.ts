@@ -115,8 +115,8 @@ export interface CoarsePrediction {
 }
 
 /**
- * With the explicit OTHER class, an off-map input is HANDLED when the model routes it to OTHER or abstains — either way
- * it is not a confident mis-placement onto a wrong (trained) country. The shared predicate of the off-map evals.
+ * With the explicit `OTHER` class, an off-map input is handled when the model routes it to `OTHER` or abstains — either
+ * way it is not a confident mis-placement onto a wrong (trained) country. The shared predicate of the off-map evals.
  */
 export function isOffMapHandled(prediction: CoarsePrediction): boolean {
 	return prediction.abstained || prediction.country === "OTHER"
@@ -192,7 +192,7 @@ export class CoarsePlacer {
 
 	/**
 	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`). Node-only — uses the package path
-	 * builder (the #481-corrected `__isCompiledTree` makes this resolve to the shipped `data/` in source, compiled, AND
+	 * builder (the #481-corrected `__isCompiledTree` makes this resolve to the shipped `data/` in source, compiled, and
 	 * installed-package layouts). Override the directory with `$MAILWOMAN_COARSE_PLACER_DIR`. Callers set `abstainBelow`
 	 * per their use (the soft-country-prior wiring passes 0.9 — see
 	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
@@ -244,7 +244,7 @@ export class CoarsePlacer {
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0
-		// argmax + prob over the IN-MAP classes only (excludes OTHER) — used by the open-set rule.
+		// argmax + prob over the in-map classes only (excludes `OTHER`) — used by the open-set rule.
 		let inMapIdx = -1
 		let inMapProb = -1
 		const distribution: Record<string, number> = {}
@@ -294,9 +294,9 @@ export class CoarsePlacer {
 /**
  * The coarse placer's country POSTERIOR, shaped for the resolver: a per-country probability map like `{GB: 0.8, FR:
  * 0.06}` — "given this address text, how likely is each country?" ("posterior" in the Bayesian sense: the model's
- * belief AFTER seeing the input; see the glossary). Every in-map class except `OTHER` is included; returns `null` when
+ * belief after seeing the input; see the glossary). Every in-map class except `OTHER` is included; returns `null` when
  * the model abstained or routed off-map. The resolver consumes it as `anchorPosterior`: each candidate's rank gains
- * `anchorWeight × posterior[candidate.country]`, so EVERY plausible country is boosted proportionally, and
+ * `anchorWeight × posterior[candidate.country]`, so every plausible country is boosted proportionally, and
  * country-ambiguous inputs (mass split DK↔NO) let the resolver's own place evidence break the tie — strictly more
  * informative than committing to the single argmax. Values are raw marginals in [0, 1] (un-renormalized; they sum to
  * the in-map mass `1 − P(OTHER)`), matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.

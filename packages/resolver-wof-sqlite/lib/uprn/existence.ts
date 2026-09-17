@@ -56,7 +56,7 @@ export function uprnCoverageCell(latitude: number, longitude: number): number {
 }
 
 /**
- * An {@link Exclusion} when no UPRN lies within `radiusM` AND the layer's coverage licenses saying so; `null` on a hit
+ * An {@link Exclusion} when no UPRN lies within `radiusM` and the layer's coverage licenses saying so; `null` on a hit
  * (presence is not this probe's business) and on every refusal (unsurveyed cell, `source_present` basis, a country the
  * product does not cover). Never throws on a refusal: the caller falls open to the ranking it already had.
  */

@@ -27,7 +27,7 @@ import type { Form499Lifecycle } from "#sdk/form499/notes"
  * dated cessations, 5,714 postdate the last filing, **3,916 predate it**, and 76 fall on the same day.
  *
  * Writing `valid_to = ceasedAt` unconditionally against `valid_from = lastFiledAt` would produce an inverted or empty
- * window on those 3,992 — and the half-open predicate `valid_from <= t < valid_to` matches NOTHING across one. Every
+ * window on those 3,992 — and the half-open predicate `valid_from <= t < valid_to` matches nothing across one. Every
  * affected filer would vanish from every `asOf` read, silently, with no error and no missing row to notice. That is
  * strictly worse than leaving the window open, which is at least visibly incomplete.
  *

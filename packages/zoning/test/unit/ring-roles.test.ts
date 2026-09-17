@@ -73,7 +73,7 @@ describe("resolveRingRoles", () => {
 		expect(resolved.holeCount).toBe(1)
 		expect(resolved.nestedHoles).toBe(1)
 		expect(resolved.adjacentHoles).toBe(0)
-		// ONE polygon carrying TWO rings — the shape the ring blob's point test needs to answer a hole correctly.
+		// One polygon carrying two rings — the shape the ring blob's point test needs to answer a hole correctly.
 		expect(resolved.polygons).toHaveLength(1)
 		expect(resolved.polygons[0]).toHaveLength(2)
 	})
@@ -105,7 +105,7 @@ describe("resolveRingRoles", () => {
 		const { nested, allExterior } = ringAreaReadings(resolved.polygons)
 
 		expect(allExterior).toBeGreaterThan(nested)
-		// The raw signed sum IS the hole-aware area under this convention, which is what makes the comparison against the
+		// The raw signed sum is the hole-aware area under this convention, which is what makes the comparison against the
 		// publisher's own figure exact rather than approximate.
 		expect(resolved.signedAreaM2).toBeCloseTo(nested, 3)
 	})
@@ -187,7 +187,7 @@ describe("resolveRingRoles", () => {
 
 	it("carries a hole that shares its parent's boundary rather than dropping it, and counts it", () => {
 		// The residual case, measured at 9 of 3,516 holes nationally and every one a sliver under 1.7 m²: a ring whose
-		// vertices sit ON the exterior. Dropping it would add ground the plan carved out; the count is on the receipt so a
+		// vertices sit on the exterior. Dropping it would add ground the plan carved out; the count is on the receipt so a
 		// reader sees the number rather than assuming it is zero.
 		const resolved = resolveRingRoles(
 			[

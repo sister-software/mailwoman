@@ -118,7 +118,7 @@ describe("overture adapter", () => {
 
 		expect(julan?.raw).toContain("38914")
 		expect(julan?.raw).toContain("El Pinar de El Hierro")
-		// street_prefix is NOT split here — that's the downstream affix-relabel's job.
+		// street_prefix is not split here — that's the downstream affix-relabel's job.
 		expect(julan?.components.street_prefix).toBeUndefined()
 	})
 

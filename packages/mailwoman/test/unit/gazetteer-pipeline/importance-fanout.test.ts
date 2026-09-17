@@ -14,7 +14,7 @@ import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "mailwoman/ga
 import { describe, expect, it } from "vitest"
 
 /**
- * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point. NOT an error, and the reason
+ * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point. Not an error, and the reason
  * the guard cannot simply drop every fanned-out id.
  */
 const Q61 = [
@@ -34,7 +34,7 @@ const Q18125 = [
 
 /**
  * Q1794 — Frankfurt am Main, attached to both the city and a neighbourhood 12 km out. Beyond the coincidence radius, so
- * population decides; the city wins, which is also what stops the two from carrying IDENTICAL importance and blurring
+ * population decides; the city wins, which is also what stops the two from carrying identical importance and blurring
  * the placetype signal.
  */
 const Q1794 = [

@@ -110,7 +110,7 @@ describe("resolveEntities", () => {
 	})
 })
 
-// Two distinct people at the SAME practice address — the co-located-providers over-merge case (#617).
+// Two distinct people at the same practice address — the co-located-providers over-merge case (#617).
 function coLocated(id: string, given: string, family: string): SourceRecord {
 	return {
 		id,
@@ -153,7 +153,7 @@ describe("name-or-org corroboration check (A2, #625)", () => {
 	it("suppresses a spatial-only link — a shared address with disagreeing names does not merge", () => {
 		const a = coLocated("1", "Robert", "Smith") // same address...
 		const b = coLocated("2", "Maria", "Garcia") // ...different people
-		// A permissive threshold so the shared address alone WOULD merge them without the check.
+		// A permissive threshold so the shared address alone would merge them without the check.
 		const without = resolveEntities([a, b], { threshold: -100 })
 		expect(without.entities).toHaveLength(1) // over-merge: an address-only link
 
@@ -217,7 +217,7 @@ describe("secondary-identifier discriminators (#625)", () => {
 
 describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 	it("agrees on ANY shared code regardless of slot order/count; never via string similarity", () => {
-		// 207R vs 207Q are near-identical strings but DIFFERENT specialties — string similarity would
+		// 207R vs 207Q are near-identical strings but different specialties — string similarity would
 		// mis-score them "high"; the set-overlap comparator reads them as disjoint (level: different).
 		const a: SourceRecord = {
 			...coLocated("1", "Acme", "Health"),

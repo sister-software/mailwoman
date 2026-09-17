@@ -345,7 +345,7 @@ describe("auditPunctuationSuite", () => {
 
 describe("a seeded punctuation regression", () => {
 	/**
-	 * The pipeline stand-in that fails ONLY on the comma-removed arm: with the separators gone, the dependent locality
+	 * The pipeline stand-in that fails only on the comma-removed arm: with the separators gone, the dependent locality
 	 * joins the street span. Seeding the regression rather than waiting for one is what proves the failure line carries
 	 * enough to diagnose from.
 	 */

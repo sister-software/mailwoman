@@ -1,20 +1,20 @@
 # v2.6.3-country-channel — #1104 country-lexicon soft-feed channel ACTIVATION.
-# ONE variable vs the shipped v261 (v2.6.1-span-boundary-full): the dedicated country channel is turned
-# ON (use_country_anchor + country_lexicon_path). init_from v261 step-008000 so the encoder keeps its
+# One variable vs the shipped v261 (v2.6.1-span-boundary-full): the dedicated country channel is turned
+# on (use_country_anchor + country_lexicon_path). init_from v261 step-008000 so the encoder keeps its
 # span-boundary + street grammar and only learns to ROUTE the new country cue (the same shape the anchor
 # and gazetteer channels were introduced with; fresh optimizer, weights-only). The channel is a 2-dim
-# [country_surface, country_ambiguous] additive feature with its OWN projection + confidence — immune to
+# [country_surface, country_ambiguous] additive feature with its own projection + confidence — immune to
 # suppress_gazetteer_near_postcode, unlike the shared gazetteer country slot (the #1104 signal-salience
-# gap). Corpus UNCHANGED from v261 (the feature is painted on existing rows from the lexicon at encode
+# gap). Corpus unchanged from v261 (the feature is painted on existing rows from the lexicon at encode
 # time — no new source). CHECK (docs/superpowers/plans/2026-07-14-country-lexicon-channel.md): golden
 # country recall recovers toward the 88.6% shipped bar on WOF-admin rows WHILE real-postal recall stays
-# 3/4 + hallucination 0.7%; US/FR coord + parity street/hn/postcode flat vs v261; mask-regression PASS;
+# 3/4 + hallucination 0.7%; US/FR coord + parity street/hn/postcode flat vs v261; mask-regression passes;
 # zero NaN. Grade PACKAGE-SHAPED (--weights-cache), never --model alone (#718 country-OFF trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -38,7 +38,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -84,7 +84,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -146,7 +146,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
   # route the cue; the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v263-country-channel-s42/checkpoints

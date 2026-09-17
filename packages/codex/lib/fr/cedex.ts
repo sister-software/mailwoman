@@ -36,7 +36,7 @@ export interface CedexMatch {
 }
 
 /**
- * Find the CEDEX phrase in a line, if any. Returns the LAST match — a CEDEX line places the phrase terminally (NF Z
+ * Find the CEDEX phrase in a line, if any. Returns the last match — a CEDEX line places the phrase terminally (NF Z
  * 10-011), and any earlier occurrence in pathological input is more likely a venue name fragment.
  */
 export function matchCedex(text: string): CedexMatch | null {

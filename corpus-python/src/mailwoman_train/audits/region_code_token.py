@@ -73,7 +73,7 @@ def audit_rows(rows: Iterable[dict[str, Any]]) -> dict[str, dict[str, int]]:
 
 
 def contested(counts: dict[str, dict[str, int]]) -> list[tuple[str, int, int]]:
-    """Codes carrying BOTH readings, worst first — `(code, country, region)`, ordered by the region deficit."""
+    """Codes carrying both readings, worst first — `(code, country, region)`, ordered by the region deficit."""
     rows = [
         (code, tags.get("country", 0), tags.get("region", 0))
         for code, tags in counts.items()

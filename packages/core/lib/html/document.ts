@@ -19,7 +19,7 @@ import { parseDocument } from "htmlparser2"
 
 export interface DocumentNarrowingOptions {
 	/**
-	 * Narrow to the inner HTML of the FIRST element with this (lower-case) name — an SGML/XML envelope's payload element.
+	 * Narrow to the inner HTML of the first element with this (lower-case) name — an SGML/XML envelope's payload element.
 	 * A document that states no such element is not narrowed, which is the right reading for a bare fragment that never
 	 * had an envelope.
 	 */
@@ -90,7 +90,7 @@ export function elementTexts(markup: string, name: string, options: MarkupQueryO
 }
 
 /**
- * The text of the FIRST element named `name`, or `undefined` when the document states none.
+ * The text of the first element named `name`, or `undefined` when the document states none.
  */
 export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | undefined {
 	return elementTexts(markup, name, options).at(0)

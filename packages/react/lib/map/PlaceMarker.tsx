@@ -8,7 +8,7 @@
  *   `markerRef.current.remove()` teardown) from the demo's redraw effect: mounting/unmounting the marker
  *   is now React's job, keyed on the resolved candidate. Renders as a child of `<MapCanvas>`.
  *
- *   NODE-IMPORT SAFETY: imports `react-map-gl/maplibre` at module scope, so it is reachable ONLY through
+ *   NODE-IMPORT SAFETY: imports `react-map-gl/maplibre` at module scope, so it is reachable only through
  *   the `@mailwoman/react/map` subpath, never the package root.
  */
 

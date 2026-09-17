@@ -194,7 +194,7 @@ export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike
 
 /**
  * {@linkcode spawnProcess} run to completion in a synchronous slot. Unlike {@linkcode runFileSync} a non-zero exit does
- * NOT throw — the status, the signal and both streams come back in the result, for a caller that reads them.
+ * not throw — the status, the signal and both streams come back in the result, for a caller that reads them.
  */
 export function spawnProcessSync(
 	file: PathBuilderLike,

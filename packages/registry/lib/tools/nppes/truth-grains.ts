@@ -46,7 +46,7 @@ function unionAgreeingPairs(
 }
 
 /**
- * An NPI's primary practice coordinate — the FIRST geocoded record it owns, which is its primary row because the sample
+ * An NPI's primary practice coordinate — the first geocoded record it owns, which is its primary row because the sample
  * builder pushes that row before the alternate-name and mailing variants.
  */
 export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map<string, LatLon> {

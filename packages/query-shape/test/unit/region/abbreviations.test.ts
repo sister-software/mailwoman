@@ -51,7 +51,7 @@ describe("detectRegionAbbreviations", () => {
 		const text = "Seattle, WA and Portland, OR"
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
-		// "WA" appears after the first comma; whether BOTH are detected depends on segmentation treating
+		// "WA" appears after the first comma; whether both are detected depends on segmentation treating
 		// "and" as whitespace-separated, so this pins the weaker property: at least one is found.
 		const hits = detectRegionAbbreviations(tokens, segs)
 

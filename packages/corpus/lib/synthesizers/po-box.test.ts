@@ -157,7 +157,7 @@ describe("synthesizePoBoxRow", () => {
 			{ random: () => 0, pickNumber: () => "5" }
 		)
 
-		// po_box component is the WHOLE span ("PO Box 5"), not just "5"
+		// po_box component is the whole span ("PO Box 5"), not just "5"
 		expect(row!.components.po_box!.split(/\s+/).length).toBeGreaterThanOrEqual(2)
 	})
 })
@@ -211,7 +211,7 @@ describe("maybeNoisifyBoxNumber", () => {
 	})
 
 	it("applies noise when random <= 0.1", () => {
-		// Force noise application; verify SOMETHING changes for a non-trivial number
+		// Force noise application; verify something changes for a non-trivial number
 		let attempts = 0
 
 		const rng = (() => {

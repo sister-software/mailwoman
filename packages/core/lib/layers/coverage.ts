@@ -15,7 +15,7 @@ import type { CoverageCell } from "#layers/manifest"
  * and none anywhere else.
  *
  * `observedRows` counts the polygons reaching the cell, which is what the contract's column means. There is no zero-row
- * cell here and there cannot be one: a cell with no polygon gets NO ROW, because a `source_present` layer publishes
+ * cell here and there cannot be one: a cell with no polygon gets no row, because a `source_present` layer publishes
  * nothing that would let an empty cell be distinguished from unmapped ground. A layer whose absence carries meaning
  * (flood's Zone 1) emits its rows from the designated extent instead, and does not use this.
  */

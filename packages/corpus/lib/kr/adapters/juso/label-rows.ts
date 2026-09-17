@@ -16,7 +16,7 @@
  *
  *   A LABEL row is one 주소 record joined to its road code (the admin ladder and the road name), its representative lot
  *   (대표여부 = 1: the 법정동, the 리, and the lot number the 지번 form writes) and its supplement (the postcode — the
- *   기초구역번호 on the 주소 row IS the five-digit postcode — and the building name). The row-count note in the zip
+ *   기초구역번호 on the 주소 row is the five-digit postcode — and the building name). The row-count note in the zip
  *   gives 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
  *
  *   MEMBER NAMES ARE CP949 WITHOUT THE UTF-8 FLAG, so a zip reader that trusts the format's CP437 default finds

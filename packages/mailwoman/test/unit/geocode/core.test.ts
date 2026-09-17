@@ -391,7 +391,7 @@ describe("recognizeBarePostcode (#22)", () => {
 
 describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#977 NL, #22 GB)", () => {
 	/**
-	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves BOTH the locality (the London centroid,
+	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves both the locality (the London centroid,
 	 * 51.5005/-0.1094) and the unit postcode (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin
 	 * ladder returned London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
 	 */
@@ -424,7 +424,7 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 	})
 
 	it("keeps the locality centroid when the resolver only reached the OUTWARD stem", () => {
-		// A stem hit (`N7`) is district-class — coarser than the locality, so it must NOT lead.
+		// A stem hit (`N7`) is district-class — coarser than the locality, so it must not lead.
 		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree("N7"))
 		expect(r.lat).toBeCloseTo(51.500526, 4)
 	})
@@ -583,7 +583,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 		expect(calls).toHaveLength(1)
 		const { text, opts } = calls[0]!
 		expect(opts?.queryShape).toBeDefined()
-		// The shape must be the one computeQueryShape derives from the SAME text handed to the model.
+		// The shape must be the one computeQueryShape derives from the same text handed to the model.
 		expect(opts!.queryShape).toEqual(computeQueryShape(text))
 	})
 
@@ -601,7 +601,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 
 		const qs = calls[0]!.opts!.queryShape!
 		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation, so
-		// buildEmissionPriors returns an all-zeros matrix — the emission prior CANNOT move it. That class needs a
+		// buildEmissionPriors returns an all-zeros matrix — the emission prior cannot move it. That class needs a
 		// lexical country prior, not this belt.
 		expect(qs.knownFormats).toHaveLength(0)
 		expect(qs.regionAbbreviations ?? []).toHaveLength(0)
@@ -659,7 +659,7 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 	/**
 	 * The live shape the issue reports, reduced to a fixture. The model tags a bare `Springfield` / `Berlin` / `Moscow`
 	 * as a `street` (they read as street names), so the admin walk resolves nothing and the #370 span-rescore tier is the
-	 * ONLY thing that recovers the place. It used to decorate the injected node with an EMPTY alternatives list, so
+	 * only thing that recovers the place. It used to decorate the injected node with an empty alternatives list, so
 	 * `candidates` came back holding one entry and `declared_ambiguity` — whose whole trigger is a top-1-vs-top-2 margin
 	 * — could not fire for the very class it exists for.
 	 */

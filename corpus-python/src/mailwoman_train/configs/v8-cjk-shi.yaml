@@ -1,6 +1,6 @@
 # === v8-cjk-shi — v8-cjk-kana with the 市-inside-name municipalities at five times their share (#2178). ============
 #
-# ONE change against v8-cjk-kana (the CJK base: 0.9924 blended / 0.9821 municipality macro on the pre-registered JP
+# One change against v8-cjk-kana (the CJK base: 0.9924 blended / 0.9821 municipality macro on the pre-registered JP
 # board, かすみがうら市 0 of 823 failed, 中新川郡上市町 121 of 136 failed): the JP corpus is `v8-jp-shi-2026-09-06`, the
 # same renderer, registers, sampler and seed, with `--upweight-pattern '市.+[町村]$:5'` — every selected train row whose
 # municipality carries 市 inside a 町 / 村 name (市川三郷町, 市貝町, 余市町, 高市郡高取町, 高市郡明日香村: five municipalities,
@@ -39,7 +39,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
-  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-shi-2026-09-06/char-vocab-cjk.json

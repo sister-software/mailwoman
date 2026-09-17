@@ -198,7 +198,7 @@ export function auditProminenceDefinition(definition: ProminenceFloorDefinition)
 	const ordered = [...definition.populationBands].toSorted((left, right) => left.min - right.min)
 
 	for (const [index, band] of ordered.entries()) {
-		// `bandRule` registers that a row with no recorded population is in NO band. `bandFor` enforces that by refusing
+		// `bandRule` registers that a row with no recorded population is in no band. `bandFor` enforces that by refusing
 		// `undefined`, but a band starting at 0 would admit a row the register counted as zero, which is the same
 		// absence wearing a number — and the reader `readCities` supplies turns an empty column into exactly that.
 		if (band.min < 1) {

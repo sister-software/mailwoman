@@ -4,7 +4,7 @@ One row per version. A new version is a row here, not a new Modal function — t
 versions is which directories move and which files must land afterwards, and that is a manifest
 rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
 
-A version name is written ONCE per transfer. `corpus("v0.12.0-nz")` derives both the bucket path
+A version name is written once per transfer. `corpus("v0.12.0-nz")` derives both the bucket path
 and the volume path, because the name otherwise appears four times in one pair and a corpus version
 ends up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads
 them back off the table for exactly that reason.
@@ -12,9 +12,9 @@ them back off the table for exactly that reason.
 The three layouts differ by when a version was built, not by anything about its contents, so each
 row names which one it uses:
 
-    NESTED   corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/   (22 transfers)
-    FLAT     corpus/<v>/             ->  corpus/versioned/<v>/              (21)
-    WRAPPED  corpus/<v>/             ->  corpus/versioned/<v>/corpus-<v>/   (12)
+    NESTED   (22 transfers)  corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/
+    FLAT     (21 transfers)  corpus/<v>/             ->  corpus/versioned/<v>/
+    WRAPPED  (12 transfers)  corpus/<v>/             ->  corpus/versioned/<v>/corpus-<v>/
 
 `mirror` is a directory that lands at the same path (68), `file_into` a single file into a
 directory (13 into its own, 1 elsewhere). Those six shapes cover all 137 transfers.

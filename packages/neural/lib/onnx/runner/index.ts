@@ -81,9 +81,9 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  * THERE IS NO VALUE THAT IS RIGHT FOR BOTH REGIMES, which is why this is a knob with a compromise default rather than a
  * tuned constant. Measured on a 16-core box:
  *
- * - ONE process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
+ * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
  *   More threads win; the parallelism is doing real work.
- * - FOUR concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
+ * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
  *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
  * Two is the compromise: it costs a single process ~35% latency against its own optimum, and provides a four-process

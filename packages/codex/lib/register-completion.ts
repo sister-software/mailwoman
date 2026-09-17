@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The one read every name register offers a decode-time repair: given the surface a model closed a span on and the
- *   text that follows, the characters that would extend the surface to a register name. A surface that already IS a
+ *   text that follows, the characters that would extend the surface to a register name. A surface that already is a
  *   name and is not the prefix of a longer one answers null.
  */
 

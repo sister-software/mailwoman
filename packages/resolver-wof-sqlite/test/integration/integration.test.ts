@@ -60,7 +60,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 				expect(c.id).toBeGreaterThan(0)
 			}
 
-			// At least one of the candidates IS plain "Paris" (not "Saint Paris" / "South Paris" / etc).
+			// At least one of the candidates is plain "Paris" (not "Saint Paris" / "South Paris" / etc).
 			expect(candidates.some((c) => c.name === "Paris")).toBe(true)
 		})
 

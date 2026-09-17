@@ -8,7 +8,7 @@
  *   `@sister.software/oxlint-config`.
  *
  *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
- *   where an `await` is already legal on the same line. The rule fires ONLY in that position — a sync call inside a
+ *   where an `await` is already legal on the same line. The rule fires only in that position — a sync call inside a
  *   sync function is a cascade, not a defect, and the rule stays silent there.
  *
  *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location; the package's
@@ -632,7 +632,7 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts DOWN from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`, or the same written
+ * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`, or the same written
  * `i >= 1`.
  *
  * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
@@ -666,7 +666,7 @@ function isDescendingFromLength(node: AstNode): boolean {
  * Whether a loop body swaps two computed indices of one array.
  *
  * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`, and the temporary `tmp
- * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index WRITES to the same base.
+ * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index writes to the same base.
  *
  * Reads the body's own statements rather than walking the subtree. A generic walk over an oxlint node's values follows
  * its back-references and never terminates, and depth adds nothing here: a shuffle writes its swap at the top of the
@@ -767,7 +767,7 @@ const preferHomeRule: Rule = {
 	create(context: RuleContext) {
 		/**
 		 * The quasis of tagged templates seen so far. A tagged template is a DSL rather than a string built by hand —
-		 * `addr\`${locality} ${region} ${postcode}`` in codex's layout table IS the order this rule points people at — and
+		 * `addr\`${locality} ${region} ${postcode}`` in codex's layout table is the order this rule points people at — and
 		 * the walk visits the tag before its quasi, so recording it here is enough to skip it below.
 		 */
 		const tagged = new WeakSet<object>()
@@ -854,7 +854,7 @@ const preferHomeRule: Rule = {
  * "@mailwoman/core/resolver"`) gives one declaration two public homes, and a reader can no longer tell from an import
  * which package owns a type. The declaring package is the only public home: a consumer imports `Resolver` from
  * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`. `node:*` and third-party re-exports are not in scope
- * — `@mailwoman/core/fs` re-exporting `node:stream` IS the funnel that keeps the builtin out of every other package —
+ * — `@mailwoman/core/fs` re-exporting `node:stream` is the funnel that keeps the builtin out of every other package —
  * and a package's own `#` map is the module naming its siblings, not a foreign name.
  */
 const noCrossPackageReexportRule: Rule = {

@@ -28,7 +28,7 @@
  *   carries it forward. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
  *   hold exactly 1,747,841 rows.
  *
- *   Extraction is to disk rather than streamed in memory because the dated acquisition directory IS the
+ *   Extraction is to disk rather than streamed in memory because the dated acquisition directory is the
  *   cache — a rebuild re-reads the CSVs instead of re-downloading, and a human debugging a postcode can
  *   `grep` the same bytes the builder saw.
  */

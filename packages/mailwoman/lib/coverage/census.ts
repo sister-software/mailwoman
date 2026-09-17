@@ -91,7 +91,7 @@ export interface CountryCoverage {
 }
 
 /**
- * Whether a country actually TRAINS: admitted by `country_weights` AND holding corpus rows. The Norway-bug predicate,
+ * Whether a country actually trains: admitted by `country_weights` and holding corpus rows. The Norway-bug predicate,
  * shared with `mailwoman data coverage`'s renderer so the two reports cannot disagree about what "trained" means.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
@@ -103,7 +103,7 @@ export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boo
  */
 export interface CoverageMismatches {
 	/**
-	 * Rows in the corpus, NOT admitted by `country_weights` — trains on nothing. The Norway shape.
+	 * Rows in the corpus, not admitted by `country_weights` — trains on nothing. The Norway shape.
 	 */
 	presentButDropped: string[]
 	/**
@@ -260,7 +260,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
  * This exists so a CACHED census can be checked against the corpus the run actually reads. The two are separate
  * artifacts that both look authoritative: the census names the corpus it counted, the config names the corpus it trains
  * on, and nothing made them agree. A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
- * rows as ZERO when the newer corpus added them — an absence indistinguishable from the real thing, which is the
+ * rows as zero when the newer corpus added them — an absence indistinguishable from the real thing, which is the
  * failure this whole file exists to prevent.
  *
  * Returns undefined when the config states no corpus_dir; that is "cannot check", not "they match".
@@ -299,8 +299,8 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
 	const admitted = new Set<string>()
 	let inBlock = false
 
-	// A training config is a few hundred lines, and this reader must stay SYNCHRONOUS: the whole point is to read the
-	// block WITHOUT a YAML parser, so a bare `NO` key stays the string it is rather than becoming the boolean YAML 1.1
+	// A training config is a few hundred lines, and this reader must stay synchronous: the whole point is to read the
+	// block without a YAML parser, so a bare `NO` key stays the string it is rather than becoming the boolean YAML 1.1
 	// makes of it.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by contract
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
@@ -459,7 +459,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// DERIVED from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
 	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists; the check
-	// still holds every OTHER country→locale table against the config, and this one can no longer disagree with it.
+	// still holds every other country→locale table against the config, and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 
 	const all = new Set<string>([

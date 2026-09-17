@@ -5,7 +5,7 @@
 # new, and each fails silently rather than loudly. Read the completeness audit and the per-source row
 # counts in its log; ignore its metrics, which 500 steps cannot inform.
 #
-# WHAT v4.7.0 GOT WRONG, and it was not the exposure. Its recipe emitted the postcode only at the HEAD
+# What v4.7.0 got wrong, and it was not the exposure. Its recipe emitted the postcode only at the HEAD
 # (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
 # correct for its four source countries — FR, DE, ES and IT all write the code first — and it silently
 # decided which countries the recipe output could teach, because the same digits change TAG with position.
@@ -20,16 +20,16 @@
 # `Sandton 2196` vs `2196 Sandton` behaves the same way. No decode-time change moves it:
 # postcodeShapeCoherence=true leaves all eight VE board rows byte-identical. So this is corpus.
 #
-# WHAT IS ADDED: synth-trailing-region-structured v25 — 32,125 rows from 32,435 REAL
-# (postcode, locality, region) triples, in TWO placements, each attested by a gauntlet board row:
+# What is added: synth-trailing-region-structured v25 — 32,125 rows from 32,435 real
+# (postcode, locality, region) triples, in two placements, each attested by a gauntlet board row:
 #   leading       16,435 rows  FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"     (pt_structured)
 #   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
 #
-# The leading arm is NOT filler — it is the counter-distribution. `no-fragment.ts`'s header records
+# The leading arm is not filler — it is the counter-distribution. `no-fragment.ts`'s header records
 # what happens without one: teaching a new surface alone flips the model's default rather than
 # teaching it a distinction. FR/DE/ES/IT pass on the leading form today and must keep passing.
 #
-# VE gets ZERO rows and cannot get any — GeoNames does not publish Venezuela and nothing else on disk
+# VE gets zero rows and cannot get any — GeoNames does not publish Venezuela and nothing else on disk
 # carries a VE postcode. Whether IN's after_region rows generalize to VE's after_locality is the
 # question this run exists to answer, against 4 ve_city_postcode_trailing_state rows already on the board.
 #
@@ -52,17 +52,17 @@
 # Taiwanese toponyms are not places.
 #
 # COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
-# per-row admission check applied INSIDE each source's stream, and the source multinomial fixes each
+# per-row admission check applied inside each source's stream, and the source multinomial fixes each
 # source's draw share — so admitting CN's 11.36M rows does not add CN 1.7% of the run. CN's rows live
 # almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
 #
-# 101 of the 134 codes have ZERO rows in the corpus. They admit nothing today and are declarations of
+# 101 of the 134 codes have zero rows in the corpus. They admit nothing today and are declarations of
 # intent; `country_census_raw`'s completeness audit reports them as "0 rows seen", which is correct and not
-# a failure. The two that matter and are NOT inert: IN (this source's 16,000 rows) and NZ (11,957).
+# a failure. The two that matter and are not inert: IN (this source's 16,000 rows) and NZ (11,957).
 #
 # ADMITTED FOR THE FIRST TIME, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |
 # NZ 11,957 | TR 1,124 | LB 1,117 | JO 1,101 | GE 1,071 | AS 5. All are 0.0% street-level wof-admin
-# toponyms. This is NOT the JP work: #296 and the v8-jp-full corpus teach JP block structure under the
+# toponyms. This is not the JP work: #296 and the v8-jp-full corpus teach JP block structure under the
 # 47-label `stage3-jp` set (STAGE3_TAGS + JP_FINE_TAGS), which needs a wider head and an additive
 # fine-tune. Admitting JP here teaches toponym recognition only.
 #
@@ -248,7 +248,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

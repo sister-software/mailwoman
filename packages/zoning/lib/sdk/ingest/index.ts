@@ -76,7 +76,7 @@ export interface ZoningSourceFeature {
 	localDescription: string | null
 	localCodeURL: string | null
 	/**
-	 * `ZONE_GZT` — the Department's national generic type for THIS polygon.
+	 * `ZONE_GZT` — the Department's national generic type for this polygon.
 	 */
 	crosswalkCode: string | null
 	crosswalkDescription: string | null
@@ -115,7 +115,7 @@ export interface ZoningIngestOptions {
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
 	 * This is what makes a bounded build possible: h3's WASM heap cannot be reset from JavaScript, so the classification
-	 * runs one child process per range of the authority's OWN ids. Ranges rather than an offset because `OBJECTID` is the
+	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `OBJECTID` is the
 	 * source's stable key — a range names the same features on every run, which an offset into a result set does not.
 	 *
 	 * A NARROWER RANGE COSTS A WHOLE PASS. The source is one GeoJSON document rather than an indexed store, so ogr2ogr
@@ -197,7 +197,7 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 
 	const missing = ZONING_SOURCE_FIELDS.filter((field) => field !== "OBJECTID" && !identity.fields.has(field))
 
-	// `-select` on a missing column makes ogr2ogr write an EMPTY column rather than refuse, so a schema change would
+	// `-select` on a missing column makes ogr2ogr write an empty column rather than refuse, so a schema change would
 	// arrive as a stream of nulls: every local code blank, every plan unnamed, and a well-formed artifact describing
 	// nothing. Refused here instead, by name.
 	if (missing.length) {
@@ -349,7 +349,7 @@ function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
 /**
  * Where a build's features come from, and what the source declares about itself.
  *
- * The builder takes ONE of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
+ * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
  * with no network and no GDAL still exercises the whole database half — the domain checks, the ring-role resolution,
  * the cell classification, the coverage rows, the manifest and the seal. A fixture rung that could only run through
  * ogr2ogr would test the conversion on the machines that have it and nothing at all on the ones that do not.

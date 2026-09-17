@@ -8,7 +8,7 @@
  *   The instrument `docs/records/evals/2026-08-05-en-gb-anchor-off.md` used ("anchor fired on 106/120
  *   rows") replayed `buildAnchorFeatures`'s DEFAULT recognizer — alphanumeric run → `lookup.get(UPPER)`.
  *   A model trained against the widened anchor-v2 lookup serves under `span_mode: "shaped"` instead, so
- *   this replays THAT recognizer: `collectMatches` shape spans, keyed
+ *   this replays that recognizer: `collectMatches` shape spans, keyed
  *   `span.replaceAll(" ", "").toUpperCase()`, with `buildAnchorFeatures`'s GB outward fallback.
  *
  *   Reported per register, because the shape detector reads the raw text and the register is the first

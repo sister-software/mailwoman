@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stage a weights cache that carries the base package AND every locale overlay, so a candidate model is graded on
+ *   Stage a weights cache that carries the base package and every locale overlay, so a candidate model is graded on
  *   the path production takes rather than on the base alone.
  *
- *   Why this exists: every candidate cache under `$MAILWOMAN_DATA_ROOT/candidates/` held exactly ONE package,
+ *   Why this exists: every candidate cache under `$MAILWOMAN_DATA_ROOT/candidates/` held exactly one package,
  *   `neural-weights-en-us`. The gauntlet warns when a routed overlay is absent and grades those cases BASE-ONLY, so
  *   every board read taken through an explicit cache has graded DE, ES, GB, IN, IT and NZ without their pair-index and
  *   deploc priors. A base-only pass is not evidence the production path passes — the overlay changes the prior (#2223).

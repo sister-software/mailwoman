@@ -4,11 +4,11 @@
 #   1. glue augmentation 0.25 (PR #514) — probe: fused-row region 52->93 / postcode 57->97, affix flat.
 #   2. intersection source @ 1.0 (PR #515) — probe: intersection-real 100/100, VT golden 94.9/96.1, zero false fires.
 #   3. po_box/cedex recipe output v2 @ 1.5 (PR #516, REBUILT minus the '#' template — probe measured it
-#      colliding with the shipped unit convention) — probe: cedex 94.6 PASS; po_box 57.5 was the
+#      colliding with the shipped unit convention) — probe: cedex 94.6 passed; po_box 57.5 was the
 #      punctuation-truncation class at +4k exposure; this run's 10x exposure answers it UNDER the
 #      check's po_box floor. Bonus banked: the cedex layouts fixed the FR digit-split in-weights (6->2).
 # STATED config decisions (no silent drift):
-#   - synth-po-box (the OLD fixed-layout source) RETIRED — key removed, its rows drop (source filter).
+#   - synth-po-box (the old fixed-layout source) retired — key removed, its rows drop (source filter).
 #     po_box mass now comes from one provenanced source; double-counting was the alternative.
 #   - Train-time conventions pairing DEFERRED: designed but UNPROBED — it does not ride a
 #     consolidation on theory (the discipline that caught Run B's confound). Its own probe next.
@@ -43,7 +43,7 @@ data:
     synth-german: 6.0
     # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
-    # Change 3 (probe: cedex PASS, po_box answered by this run's exposure). OLD synth-po-box retired (see header).
+    # Change 3 (probe: cedex passed, po_box answered by this run's exposure). Old synth-po-box retired (see header).
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0

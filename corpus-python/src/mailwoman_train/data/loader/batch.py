@@ -1,6 +1,6 @@
 """Stacking encoded examples into the batch the trainer feeds the model.
 
-A channel is present in the batch only when the examples carry it, decided from the FIRST example
+A channel is present in the batch only when the examples carry it, decided from the first example
 because every example in a run comes from one config. An absent channel is omitted rather than
 zero-filled, so the trainer's tensor conversion skips it and the model runs without it.
 """

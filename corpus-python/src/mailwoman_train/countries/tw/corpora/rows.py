@@ -1,6 +1,6 @@
 """Reading Overture-TW rows, and rendering one in a register.
 
-The 路 / 段 / 巷 / 弄 designators stay INSIDE the street span: they are the street's own name, not a
+The 路 / 段 / 巷 / 弄 designators stay inside the street span: they are the street's own name, not a
 type suffix beside it. The 號 designator likewise stays inside the house number, so ``298之1號`` is
 one span — which is how the household-registration form writes it.
 """

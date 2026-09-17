@@ -1,6 +1,6 @@
 # v0.5.3 classifier — "diagnostic" iteration.
 #
-# Purpose: identify WHY v0.5.2 only emits region/O despite training on 673M structured
+# Purpose: identify why v0.5.2 only emits region/O despite training on 673M structured
 # addresses. This run keeps v0.5.2's architecture but fixes observability:
 #
 # Changes from v0.5.2:

@@ -63,7 +63,7 @@ export interface APIClientConfig {
 	requestsPerMinute?: number
 
 	/**
-	 * The minimum spacing between two dispatches, in milliseconds — strict pacing with NO burst allowance.
+	 * The minimum spacing between two dispatches, in milliseconds — strict pacing with no burst allowance.
 	 *
 	 * Set this when an upstream publishes a flat rate (SEC EDGAR: 10 requests/second, enforced): `1000 / rate`. Unlike
 	 * {@linkcode requestsPerMinute}, the guarantee holds under arbitrary concurrency — grants are reserved synchronously,
@@ -189,15 +189,15 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * cooldown-conditional when not, retried within the configured ceiling, and — on the final failure — mapped to a
 	 * {@linkcode ResourceError} carrying a numeric `status` and a `(source, kind, reason)` URN.
 	 *
-	 * Error mapping happens HERE rather than in a response interceptor so the retry loop can see the raw `AxiosError`
-	 * (status AND `Retry-After`) before it is summarized. The pacing/cooldown limit deliberately does NOT happen here —
+	 * Error mapping happens here rather than in a response interceptor so the retry loop can see the raw `AxiosError`
+	 * (status and `Retry-After`) before it is summarized. The pacing/cooldown limit deliberately does not happen here —
 	 * it sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing. Every retry attempt
 	 * re-enters `this.axios(...)` and therefore re-enters that limit; a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
-		// A per-request `adapter` would WIN over the instance default in `mergeConfig`, and the pacing/cooldown limit
+		// A per-request `adapter` would win over the instance default in `mergeConfig`, and the pacing/cooldown limit
 		// lives in that instance adapter — so passing one here would dispatch with no grant at all. Reproduced against
 		// the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three concurrent `fetch({ url, adapter })`
 		// calls made 3 dispatches, took 0 grants and slept 0 times.
@@ -236,14 +236,14 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Acquire permission to dispatch one request, clearing BOTH limits. Each reserves SYNCHRONOUSLY with respect to its
+	 * Acquire permission to dispatch one request, clearing both limits. Each reserves synchronously with respect to its
 	 * own state, so concurrency cannot defeat either of them.
 	 *
 	 * The bug this replaced: `fetch()` awaited a single `$cooldown` read and the request was only COUNTED by a response
 	 * interceptor. N callers invoked in the same turn all cleared the limit before any response came back to set a
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
 	 *
-	 * The pacer is re-acquired on every pass of the loop, NOT taken once up front. A grant is a claim on a specific
+	 * The pacer is re-acquired on every pass of the loop, not taken once up front. A grant is a claim on a specific
 	 * instant; blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
 	 * the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms minimum
 	 * when both limits were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
@@ -256,7 +256,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 			const pending = this.#cooldownWithResolvers
 
 			if (!pending) {
-				// Check AND reserve in the same synchronous step. Splitting them — "await the limit, then
+				// Check and reserve in the same synchronous step. Splitting them — "await the limit, then
 				// count" — is the whole bug: every caller queued behind the same microtask turn passes a
 				// limit that only closes once one of them has already counted, so the (N-1) callers behind
 				// the budget-spending one sail straight through.

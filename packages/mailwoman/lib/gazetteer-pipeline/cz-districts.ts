@@ -15,7 +15,7 @@
  *   provenance discipline (`database_meta` + source md5).
  *
  *   Verified against the eu-mixed panel (2026-08-12 test rebuild): `Chabeřická 585, 19016 Praha 9`
- *   moved from a 6,733 km US answer to CZ at ~400 m — the postcode row was ALWAYS in the artifact;
+ *   moved from a 6,733 km US answer to CZ at ~400 m — the postcode row was always in the artifact;
  *   this database supplies the locality half the pair rung needed.
  *
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
@@ -42,7 +42,7 @@ export interface BuildCZDistrictsOptions {
 }
 
 /**
- * Build the sealed CZ-districts database. NOT re-exported from a barrel — the command lazy-imports it (optional-peer
+ * Build the sealed CZ-districts database. Not re-exported from a barrel — the command lazy-imports it (optional-peer
  * discipline, same as the NL PC6 and NZ builders).
  */
 export async function buildCZDistrictsDatabase(

@@ -10,7 +10,7 @@
  *   through the production pipeline, the two arms come back BYTE-IDENTICAL — same span sha256, all
  *   three boards unmoved. That is not evidence of safety: every gb-golden row is a full address, the
  *   kind classifier calls it `formatted`, and the register check (Decision A, `classifier.ts`'s
- *   `evidenceOn`) withholds BOTH evidence channels in that register by design. The board is blind to
+ *   `evidenceOn`) withholds both evidence channels in that register by design. The board is blind to
  *   the change by construction, and reporting its byte-identity as a pass would be reporting the
  *   instrument, not the model.
  *

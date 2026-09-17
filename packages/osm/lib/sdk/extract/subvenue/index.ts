@@ -30,11 +30,11 @@
  *
  *   ── Promoted vs. hstore tag columns, and why the split is PER-LAYER here ──────────────────────────
  *   GDAL's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini`, GDAL 3.8.4 on this box) promotes a
- *   DIFFERENT attribute list per layer, and the two keys this extractor leans on fall on opposite sides
+ *   different attribute list per layer, and the two keys this extractor leans on fall on opposite sides
  *   of that split:
  *
- *   - `aeroway` is promoted on `multipolygons` but NOT on `points`.
- *   - `ref` is promoted on `points` but NOT on `multipolygons`.
+ *   - `aeroway` is promoted on `multipolygons` but not on `points`.
+ *   - `ref` is promoted on `points` but not on `multipolygons`.
  *
  *   So {@link PROMOTED_KEYS_BY_LAYER} is keyed by layer, and `tagSelectExpr` refuses a layer it has no list
  *   for rather than emitting hstore SQL that runs and matches nothing. Verified against the installed `osmconf.ini` and against a hand-authored `.osm`
@@ -43,11 +43,11 @@
  *   changes either `attributes=` line breaks the bare-column assumption; not a concern for the shipped
  *   default.
  *
- *   A promoted key is NOT repeated inside `other_tags` — that is the whole point of promotion — so the
+ *   A promoted key is not repeated inside `other_tags` — that is the whole point of promotion — so the
  *   JS-side re-check reads promoted keys off the feature's own properties and everything else out of
  *   the parsed hstore. {@link toSubVenueSourceRow} merges the two before matching.
  *
- *   ── What this does NOT do ────────────────────────────────────────────────────────────────────────
+ *   ── What this does not do ────────────────────────────────────────────────────────────────────────
  *   No parent linkage. A terminal's containing aerodrome is expressed in OSM by geometry (or an
  *   occasional site relation), not by a parent id, so pairing `Terminal 5` with `Heathrow Airport`
  *   needs a spatial join this module deliberately does not attempt. Both tiers are yielded with their
@@ -161,7 +161,7 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 /**
  * Language codes harvested off `name:<lang>` keys. Deliberately permissive — OSM carries BCP-47-ish subtags (`zh-Hant`,
  * `pt-BR`) alongside bare ISO 639 codes, and the lexicon build downstream is the right place to decide which it trusts.
- * What this rejects is the `name:*` keys that are NOT languages: `name:left`, `name:right`, `name:prefix`,
+ * What this rejects is the `name:*` keys that are not languages: `name:left`, `name:right`, `name:prefix`,
  * `name:signed`, `name:etymology` and friends, which are documented OSM semantics with nothing linguistic about them.
  */
 const NON_LANGUAGE_NAME_SUFFIXES = new Set([
@@ -234,7 +234,7 @@ export interface SubVenueSourceRow {
 
 /**
  * Decode one ogr2ogr GeoJSONSeq feature into a {@link SubVenueSourceRow}, or `null` when it satisfies no rule, carries
- * no usable geometry, or has no name of ANY kind (no `name`, no `ref`, no `name:<lang>`).
+ * no usable geometry, or has no name of any kind (no `name`, no `ref`, no `name:<lang>`).
  *
  * The last condition is the yield filter that matters: unnamed geometry is the majority of `railway=platform` and
  * `aeroway=gate` in OSM, and a lexicon built from names has nothing to learn from a row that has none.
@@ -322,7 +322,7 @@ async function* runSubVenueLayer(
  * Stream every named transport structure matching `rules` (default {@link SUBVENUE_TAG_RULES}) out of a `.osm.pbf`
  * extract's `points` + `multipolygons` layers.
  *
- * A feature mapped as both a node and an area (common for large terminals) yields TWICE, once per layer, with different
+ * A feature mapped as both a node and an area (common for large terminals) yields twice, once per layer, with different
  * coordinates. De-duplication is the consumer's call — the lexicon build counts distinct surfaces and does not care,
  * while a corpus extract would.
  */

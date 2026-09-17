@@ -23,7 +23,7 @@
  *
  *   THE CONTROLS SPLIT THE CONJUNCTION. `outside_coverage` rows put the same query and the same empty
  *   answer outside the surveyed cell set, which is the whole contract: the `[]` there is silence.
- *   `wrong_class` puts a DIFFERENT category at the exact cell a target fires on, so the artifact half of
+ *   `wrong_class` puts a different category at the exact cell a target fires on, so the artifact half of
  *   the conjunction is shown to be required at a cell where the coverage half holds. `cell_populated`
  *   rows sit inside exclusion-grade coverage on cells the layer holds rows in. A control set that could
  *   only fail one way is not a control set.
@@ -71,7 +71,7 @@ export interface AbsenceProbeRow {
 	 */
 	requiresSemanticRoute: boolean
 	/**
-	 * The category set the row is graded on, in code-point order — the union the POI branch searched AFTER the anchor's
+	 * The category set the row is graded on, in code-point order — the union the POI branch searched after the anchor's
 	 * country bound the reached set (#1999). A row's registered outcome binds to the categories the coverage layer
 	 * surveyed, and an activity phrase whose afforded set exceeds them can only be decidable if the binding narrowed it;
 	 * stating the set per row is what lets the runner refuse a row that fired for a set nobody registered. Optional for a
@@ -241,7 +241,7 @@ export interface AbsenceRowOutcome {
 	expectedOutcome: AbsenceExpectedOutcome
 	observedOutcome: AbsenceExpectedOutcome
 	/**
-	 * The registered outcome was observed AND, when the row registers a `searchedCategories`, the POI branch searched
+	 * The registered outcome was observed and, when the row registers a `searchedCategories`, the POI branch searched
 	 * exactly that set.
 	 */
 	holds: boolean

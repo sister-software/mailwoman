@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The subsidiary-name→FRN match: which FRNs a canonical name collects, and what the score says about it.
  *
- *   The score ladder's whole point is that it is NOT flat, and a flattened one is invisible from the outside — every
+ *   The score ladder's whole point is that it is not flat, and a flattened one is invisible from the outside — every
  *   corroboration edge still gets written, still with a number in `match_score`. These pin the three rungs against
  *   the name pairs that produced them.
  */

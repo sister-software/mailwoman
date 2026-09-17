@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the placetype specificity scale. The required case is the one that created the file: a
- *   `neighbourhood` must NOT count as covering a `locality`, because reading a surviving child as covering its own
+ *   `neighbourhood` must not count as covering a `locality`, because reading a surviving child as covering its own
  *   dead parent is what #1746 was.
  */
 
@@ -51,7 +51,7 @@ describe("isAtLeastAsSpecific", () => {
 
 	it("puts a borough BELOW localadmin rather than level with it", () => {
 		// This pair was tied on the reasoning that WOF uses both for the same tier in different countries, which is
-		// true — an Alaska borough IS county-tier — but a tie is not a neutral answer. It made each cover the other,
+		// true — an Alaska borough is county-tier — but a tie is not a neutral answer. It made each cover the other,
 		// and one rung up that same tie let a live NYC-shaped borough cover its own dead parent locality. WOF's own
 		// containment ladder commits to sub-locality; a scale that has to pick one answer picks that one, and the
 		// Alaska reading stays wrong either way.
@@ -73,7 +73,7 @@ describe("isAtLeastAsSpecific", () => {
 describe("isStrictlyFiner", () => {
 	it("separates a child rung from the SAME rung — the distinction a negated isAtLeastAsSpecific loses", () => {
 		expect(isStrictlyFiner("neighbourhood", "locality")).toBe(true)
-		// The equal case is the one that matters: a live locality covers a dead locality, so it is NOT strictly finer.
+		// The equal case is the one that matters: a live locality covers a dead locality, so it is not strictly finer.
 		expect(isStrictlyFiner("locality", "locality")).toBe(false)
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})

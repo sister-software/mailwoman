@@ -102,7 +102,7 @@ export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWei
 /**
  * Country → the locale package that scopes it, DERIVED from {@link shippingLocales} rather than restated.
  *
- * The region subtag of a locale package IS the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
+ * The region subtag of a locale package is the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
  * hand-written table is a second copy of `release.config.json`'s two lists, and the copy is what goes stale when a
  * locale ships. `repo-health`'s `locale-tables` check exists because that copy existed.
  *

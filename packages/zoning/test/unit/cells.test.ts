@@ -6,7 +6,7 @@
  *   The index measurement, and the number it is chosen on.
  *
  *   THE POINT OF THIS FILE IS THE ALTERNATIVE INDEX. `classifyFeatureCells` takes overlapping containment and
- *   refuses a feature that reaches no cell, so this index cannot produce a zero-cell feature. What it CAN
+ *   refuses a feature that reaches no cell, so this index cannot produce a zero-cell feature. What it can
  *   report is how many features the obvious index — `polygonToCells`, cell-centre-in-polygon — would have
  *   returned nothing for, and every one of those would read downstream as an absence of zoning. On the real
  *   national set at resolution 9 that is most of them.
@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest"
 const ORIGIN = { lon: -6.5, lat: 53.4 } as const
 
 /**
- * A square about 1.1 km on a side — several res-10 cells across, so it has a real interior AND a real fringe.
+ * A square about 1.1 km on a side — several res-10 cells across, so it has a real interior and a real fringe.
  */
 const BIG = [[exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + 0.01, ORIGIN.lat + 0.01)]]
 
@@ -103,7 +103,7 @@ describe("ZoningCellIndex", () => {
 
 		unmeasured.add(classifyFeatureCells(SLIVER, 9, "sliver", "zoning cells"))
 
-		// ABSENT rather than zero. A column reporting "0 dropped" when nothing was measured is the meaning-of-zero mistake
+		// Absent rather than zero. A column reporting "0 dropped" when nothing was measured is the meaning-of-zero mistake
 		// in miniature: it reads as the good news the measurement exists to establish.
 		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeUndefined()
 	})

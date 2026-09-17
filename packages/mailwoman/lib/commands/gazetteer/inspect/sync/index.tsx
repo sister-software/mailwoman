@@ -130,7 +130,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 			// WHERE each repo comes from is resolved per repo, not assumed to be upstream. `gh repo list` enumerates the
 			// UPSTREAM org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
-			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
+			// clones are not re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
 			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof/repo-origin")
 

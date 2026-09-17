@@ -47,7 +47,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  *
  * - `gloss` is ANOMALY-based, and stamps only the certain core: key volume at/over the threshold + a non-admin placetype
  *
- *   - NO measured prominence (population absent AND importance unmeasured). Provenance cannot separate a gloss from an
+ *   - No measured prominence (population absent and importance unmeasured). Provenance cannot separate a gloss from an
  *     exonym — WOF imported both as `x_preferred` — and prominence is what rescues New York/Paris.
  * - `abbr` is PROVENANCE-based — the #936 signal: a WOF `variant` name in one of the country's official languages (or
  *   English), measured there at a 13× key-collision rate. A source without a `names` table (fixture-scale admin DBs)
@@ -146,7 +146,7 @@ export function stampNameRoles(ctx: {
 	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion. The verdict
 	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows;
 	// an uncovered script answers no-verdict and stamps nothing (own-name.ts owns the predicate and
-	// its measured threshold). Runs BEFORE gloss on purpose: a surface that IS the place's own name
+	// its measured threshold). Runs before gloss on purpose: a surface that is the place's own name
 	// is not a translation, whatever the key volume says.
 	out.exec(
 		"CREATE TEMP TABLE variant_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"

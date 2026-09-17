@@ -7,7 +7,7 @@
  *   commands. No argv, no `process.exit`: commands own
  *   parsing, rendering, and exit codes. Heavy deps that are core devDependencies
  *   (`@duckdb/node-api`, `@mailwoman/codex`) are lazy-imported inside their entry fns. `country-sets.ts`,
- *   `paths.ts`, and `outlier-rows.ts` are deliberately NOT re-exported — they are internal to the tools;
+ *   `paths.ts`, and `outlier-rows.ts` are deliberately not re-exported — they are internal to the tools;
  *   `fnv-hash.ts` lives at the coarse-placer root because `featurize` hashes through it.
  */
 

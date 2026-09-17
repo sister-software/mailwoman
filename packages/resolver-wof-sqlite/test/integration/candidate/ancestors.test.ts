@@ -14,11 +14,11 @@
  *      key) and `ancestors()` serves them nearest-first, no join;
  *   2. **Interval truth table** — ancestor / descendant / sibling / self / disjoint verdicts from
  *      the pre/post labels via the shared {@link intervalContains};
- *   3. **Enumerate-with-chains** — every candidate under one `name_key` is enumerable WITH its
+ *   3. **Enumerate-with-chains** — every candidate under one `name_key` is enumerable with its
  *      chain from the one artifact (the account-layer probe);
- *   4. **DAG canonicalization** — a multi-parent place keeps EVERY parent in the closure rows while
+ *   4. **DAG canonicalization** — a multi-parent place keeps every parent in the closure rows while
  *      the interval forest commits to the one canonical parent;
- *   5. **Capability honesty** — an artifact without the sidecar reports `ancestors` ABSENT, and a
+ *   5. **Capability honesty** — an artifact without the sidecar reports `ancestors` absent, and a
  *      canonical-parent cycle degrades to unlabeled places, never a hung or corrupt build.
  */
 
@@ -191,7 +191,7 @@ describe("the candidate ancestors sidecar", () => {
 		const hits = await lk.findPlace({ text: "Weimar", placetype: ["locality", "localadmin"], limit: 5 })
 		const byID = new Map(hits.map((hit) => [hit.id, hit]))
 
-		// Each bearer names its OWN nearest ancestor — the DE one a county, the US one a region — which is
+		// Each bearer names its own nearest ancestor — the DE one a county, the US one a region — which is
 		// what lets a consumer holding both rows tell two ids apart from two tiers of one place.
 		expect(byID.get(WEIMAR_DE)?.parent_id).toBe(WEIMARER_LAND)
 		expect(byID.get(WEIMAR_US)?.parent_id).toBe(TEXAS)

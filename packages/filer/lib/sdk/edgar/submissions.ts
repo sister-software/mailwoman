@@ -29,7 +29,7 @@ export interface TenKFiling {
 	accessionNumber: string
 	filingDate: string
 	/**
-	 * The filing's primary document filename (e.g. `"aapl-20230930.htm"`) — the 10-K itself, NOT the Exhibit 21
+	 * The filing's primary document filename (e.g. `"aapl-20230930.htm"`) — the 10-K itself, not the Exhibit 21
 	 * (`exhibit21.ts`'s concern), which is a separate document within the same accession's archive folder.
 	 */
 	primaryDocument: string

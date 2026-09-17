@@ -70,7 +70,7 @@ export interface TreeFingerprint {
 	newestPath: string | null
 	/**
 	 * Source files walked. A zero here would mean the walk found nothing and every fingerprint would agree with every
-	 * other — the emptiness failure `corpus-stamp.ts` names ("an empty loader on BOTH sides agrees with itself"), so
+	 * other — the emptiness failure `corpus-stamp.ts` names ("an empty loader on both sides agrees with itself"), so
 	 * {@link computeTreeFingerprint} throws rather than returning it.
 	 */
 	filesWalked: number
@@ -124,7 +124,7 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
  * Run git and return its stdout with only the TRAILING newline removed.
  *
  * Leading whitespace is required for `--porcelain`, whose first two columns are the index and worktree status: an
- * unstaged modification is `" M path"`, and a full trim eats column one of the FIRST line only — after which a
+ * unstaged modification is `" M path"`, and a full trim eats column one of the first line only — after which a
  * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
  * result.
  */
@@ -181,8 +181,8 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
  * The message a tool returns when the process's imported modules predate the current source.
  *
  * A RESTART is the only remedy, and this message must not offer another. It once ended by suggesting `mwdev_daemon`
- * action `reload`, which drops sessions and rebuilds them around the SAME module graph: the rebuilt engine then
- * reported the NEW fingerprint over the OLD code — a clean-looking success that is the exact failure this guard exists
+ * action `reload`, which drops sessions and rebuilds them around the same module graph: the rebuilt engine then
+ * reported the new fingerprint over the old code — a clean-looking success that is the exact failure this guard exists
  * to prevent, and worse than the staleness because it is now invisible. Node cannot drop a module from its ESM cache,
  * so any claim of an in-process reload is false.
  *

@@ -56,7 +56,7 @@ export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: numb
 }
 
 /**
- * Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific).
+ * Collect all resolver-attributed nodes (we want per-placetype names, not just the most-specific).
  */
 export function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
@@ -125,7 +125,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
  *
  * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns. A flat
  * `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality, which is production's ladder on
- * ONE arm and its opposite on the other.
+ * one arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
 	return mostSpecificResolved(rs, (r) => ({
@@ -137,7 +137,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 
 /**
- * True when the tree carries BOTH a street and a house number — the precondition the street-level tiers need before a
+ * True when the tree carries both a street and a house number — the precondition the street-level tiers need before a
  * miss can be read as a database gap rather than a parse gap.
  */
 export function hasStreetHouseNumber(tree: AddressTree | null): boolean {

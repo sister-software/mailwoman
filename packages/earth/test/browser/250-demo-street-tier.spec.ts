@@ -5,8 +5,8 @@
  *   building) tier — not the DC admin centroid. This is the marquee: a fully client-side geocoder that places an exact
  *   building from a byte-ranged extract, no server. The second test guards the byte-range efficiency: a lookup must
  *   transfer a tiny fraction of the extract, never the whole file. It counts only GET response bodies —
- *   sql.js-httpvfs's `serverMode: "full"` open does ONE `HEAD` to learn the file length (the length-discovery probe),
- *   and a HEAD's `content-length` reports the full size but transfers ZERO bytes; summing it was the #638 false-alarm
+ *   sql.js-httpvfs's `serverMode: "full"` open does one `HEAD` to learn the file length (the length-discovery probe),
+ *   and a HEAD's `content-length` reports the full size but transfers zero bytes; summing it was the #638 false-alarm
  *   (the original report + an earlier version of this guard counted the HEAD as a 114 MB download). Measured against
  *   prod: 1 HEAD (0 bytes) + ~5 ranged 206 reads ≈ 280 KB of the 114 MB extract. There is no full-extract download —
  *   #638 was a measurement artifact, closed not fixed. Ground truth (confirmed against the extract): street_norm
@@ -47,7 +47,7 @@ test.describe("Demo — street tier (#377)", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	// Un-fixme when #638 lands: the open must NOT download the whole extract to learn its length.
+	// Un-fixme when #638 lands: the open must not download the whole extract to learn its length.
 	test("byte-range: a lookup transfers a fraction of the extract, never the whole file (#638)", async ({
 		demo,
 		page,
@@ -59,7 +59,7 @@ test.describe("Demo — street tier (#377)", () => {
 			if (!res.url().includes("/street/us/dc/situs.db")) return
 
 			// Only GET responses transfer a body. A HEAD (sql.js-httpvfs's length probe on open) carries
-			// the full file size in `content-length` but transfers ZERO bytes — counting it would falsely
+			// the full file size in `content-length` but transfers zero bytes — counting it would falsely
 			// read as a whole-extract download (the #638 measurement trap). The 206 page reads are the lookup.
 			if (res.request().method() !== "GET") return
 

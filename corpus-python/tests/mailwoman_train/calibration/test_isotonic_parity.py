@@ -1,7 +1,7 @@
 """One seeded isotonic fit, pinned through both artifacts it writes.
 
 Nothing exercised this. `main` reads a confidences JSONL that only the TypeScript collector
-produces, so the suite has never had one — and the module writes TWO artifacts from one fit: the
+produces, so the suite has never had one — and the module writes two artifacts from one fit: the
 lookup table a decoder loads, and the markdown report whose figures are generated rather than
 hand-typed. A number that drifts in the report and not in the table, or the reverse, is a report
 that no longer describes the table it ships beside.
@@ -24,7 +24,7 @@ import pytest
 
 from mailwoman_train.calibration.isotonic import main
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:

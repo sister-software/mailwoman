@@ -13,7 +13,7 @@
  *   `overture-subvenue.ts`) and emits one committed JSON table.
  *
  *   ── Determinism ──────────────────────────────────────────────────────────────────────────────────
- *   {@link buildSubVenueLexicon} is a PURE function of its inputs with a stable sort on every array, so
+ *   {@link buildSubVenueLexicon} is a pure function of its inputs with a stable sort on every array, so
  *   a regenerate against the same fetch outputs is byte-identical. No timestamp is emitted for the same
  *   reason `taxonomy.json` carries none — a clock in the artifact makes every regenerate a diff.
  *   Vintages live in `sources[]`, taken from the fetch manifests.
@@ -31,7 +31,7 @@
  *
  *   ── What `curated: false` means, and how a surface stops being it ────────────────────────────────
  *   Every machine-derived surface lands `curated: false`, and {@link SubVenueLexiconTable} consumers
- *   that gate parsing MUST filter to `curated: true`. A surface becomes curated ONLY by matching a
+ *   that gate parsing must filter to `curated: true`. A surface becomes curated only by matching a
  *   {@link SubVenuePromotion} in `sub-venue-promotions.ts` — a per-designator, per-LOCALE decision
  *   carrying the census that backs it. Promotion is per-locale because the same token is a designator in
  *   one language and a disaster in another: `hall` is `Halle 2` at Frankfurt and `Village Hall` at 3,205
@@ -74,7 +74,7 @@ export * from "#tools/sub/venue/wikidata"
  * Apply the curation decisions to a surface list, IN PLACE on a copy.
  *
  * A promotion binds `(designatorID, phrase, locale)`. A surface matches when it names the same record with the same
- * phrase and its language is the locale's language OR the untagged `und` — the default `name` tag carries no language,
+ * phrase and its language is the locale's language or the untagged `und` — the default `name` tag carries no language,
  * and a German extract's untagged `Halle 2` is German.
  *
  * REGION is the subtle half. A surface attested in an extract carries that extract's region and matches only its own
@@ -157,16 +157,16 @@ export interface BuildSubVenueLexiconInput {
 }
 
 /**
- * Build the lexicon table. PURE and deterministic — same inputs, byte-identical output.
+ * Build the lexicon table. Pure and deterministic — same inputs, byte-identical output.
  *
  * Order of operations is required in three places:
  *
  * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the `terminal` designator rather than to
  *    whichever Wikidata alias sorts first.
- * 2. Head nouns are derived AFTER Wikidata and BEFORE the harvests, because `ターミナル` has to exist as a surface before a
+ * 2. Head nouns are derived after Wikidata and before the harvests, because `ターミナル` has to exist as a surface before a
  *    Japanese extract can be searched for it. That ordering is the entire reason the Japan harvest finds anything — see
  *    `PROVENANCE.md`.
- * 3. Promotions are applied LAST, over the union, so a decision can promote a surface whichever source produced it.
+ * 3. Promotions are applied last, over the union, so a decision can promote a surface whichever source produced it.
  */
 export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenueLexiconTable {
 	const designators: SubVenueDesignator[] = SHIPPED_DESIGNATOR_SEED.map((seed) => ({
@@ -224,7 +224,7 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 			lang: "en",
 			region: "",
 			source: "seed",
-			// The English designator IS the shipped vocabulary — curated by construction.
+			// The English designator is the shipped vocabulary — curated by construction.
 			curated: d.shipped,
 			observations: 0,
 			context: {},

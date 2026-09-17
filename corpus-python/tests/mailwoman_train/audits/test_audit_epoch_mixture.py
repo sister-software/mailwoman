@@ -127,7 +127,7 @@ def test_emitted_level_counts_augmented_copies_against_the_row_budget(tmp_path: 
     assert report["emitted_level"]["augmented_share"] > 0.3
 
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. The assertions
+#: Committed beside this file, captured from the code as it stood before a split. The assertions
 #: above read shares and ranges, which a reordered draw can satisfy while sampling different rows;
 #: this pins the whole report, every window and every per-source figure included.
 #:

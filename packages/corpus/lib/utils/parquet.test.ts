@@ -271,7 +271,7 @@ describe("writeParquetFiles", () => {
 				span_ends: [11],
 				span_tags: ["po_box"],
 			}),
-			// All-O row: a legitimately EMPTY span triple must survive (not become a missing column).
+			// All-O row: a legitimately empty span triple must survive (not become a missing column).
 			labeled({
 				source_id: "t-all-o",
 				raw: "hello world",

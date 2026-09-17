@@ -9,13 +9,13 @@
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check/docs-structure.ts`
  *   from the repo root).
  *
- *   Four checks:
+ *   Five checks:
  *
  *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
  *        - Strict (`--strict`) — THE LIVE MODE. Both CI (`.github/workflows/docs-build.yml`) and
  *          `yarn workspace @mailwoman/docs lint:structure` pass the flag as of the docs-reorg
  *          Task 5 skeleton cutover. It enforces the six-role contract
- *          (`docs-frontmatter-contract.ts`): `role:` is required on EVERY published page, value ∈
+ *          (`docs-frontmatter-contract.ts`): `role:` is required on every published page, value ∈
  *          {tutorial, guide, reference, explanation, landing, evidence}, with role-conditional
  *          required fields (`validatePage`).
  *        - Legacy (default, no flag): the seven-role vocabulary the contract replaced
@@ -26,10 +26,13 @@
  *          script at that tree remains a way to check them; delete it once nothing does.
  *   2. Exact duplicate `title:` frontmatter across the published site.
  *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
- *   4. Relative links (`./`, `../`) that resolve to nothing, over the WHOLE docs tree rather than the
+ *   4. Relative links (`./`, `../`) that resolve to nothing, over the whole docs tree rather than the
  *      published pages — see `../docs/links.ts` for why that scope differs from the other three.
+ *   5. Backticked repository paths (`packages/core/lib/fs/writers.ts`) that name no file — the other
+ *      spelling a document uses for a path, over living documents only. See `../docs/path-citations.ts`
+ *      for what it refuses before resolving, and why a point-in-time record is out of scope.
  *
- *   Checks 2, 3 and 4 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
+ *   Checks 2 through 5 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
  *   findings live in `docs-structure-allowlist.ts`, each with a reason. The evals/retrospectives
  *   trees are a delegated workstream and are skipped by the frontmatter check (both modes) and by
  *   the legacy `role:` requirement (see `isDelegatedWorkstream`).
@@ -45,6 +48,7 @@ import sidebars from "../../sidebars.ts"
 import { validatePage } from "../docs/frontmatter/contract.ts"
 import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "../docs/frontmatter/index.ts"
 import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.ts"
+import { censusPathCitations } from "../docs/path-citations.ts"
 import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.ts"
 
 const { values: flags } = parseArgs({
@@ -79,7 +83,7 @@ const ROLE_REQUIRED_FIELDS: Record<string, string[]> = {
 const STATUS_VOCABULARY = new Set(["active-decision", "superseded"])
 
 /**
- * Pages that MUST declare `role:` (relative to `docs/articles`): the front door, the entry pages, the four canonical
+ * Pages that must declare `role:` (relative to `docs/articles`): the front door, the entry pages, the four canonical
  * concept pages, the docs policy itself — plus every recipe, matched by directory below.
  */
 const ROLE_REQUIRED_PAGES = [
@@ -294,7 +298,7 @@ function checkOrphans(pages: DocPage[]): string[] {
 //#region Check 4 — relative links resolve
 
 /**
- * Unlike the three checks above, this one reads the WHOLE docs tree rather than the published pages: 62 of the 109
+ * Unlike the three checks above, this one reads the whole docs tree rather than the published pages: 62 of the 109
  * broken links this check was written for sit under `docs/engineering`, which `collectDocPages` never walks and
  * Docusaurus never builds, so nothing had ever resolved a path there.
  */
@@ -302,6 +306,23 @@ async function checkRelativeLinks(): Promise<string[]> {
 	const broken = await findBrokenLinks(await collectMarkdownFiles())
 
 	return broken.map(({ file, line, target }) => `${file}:${line}: relative link \`${target}\` resolves to nothing`)
+}
+
+//#endregion
+
+//#region Check 5 — backticked repository paths resolve
+
+/**
+ * The same tree as check 4, over the other spelling a document uses to name a file.
+ *
+ * Scope stops at living documents: a point-in-time record states what was true when it was written, so a path it names
+ * is evidence rather than a claim about the current tree. `../docs/path-citations.ts` holds that rule and the classes
+ * of text it refuses before resolution.
+ */
+async function checkPathCitations(): Promise<string[]> {
+	const { broken } = await censusPathCitations(await collectMarkdownFiles())
+
+	return broken.map(({ file, line, target }) => `${file}:${line}: \`${target}\` names no file in the repository`)
 }
 
 //#endregion
@@ -317,6 +338,7 @@ const failuresByCheck: [name: string, failures: string[]][] = [
 	["Duplicate titles", checkDuplicateTitles(published)],
 	["Orphan pages", checkOrphans(published)],
 	["Relative links", await checkRelativeLinks()],
+	["Path citations", await checkPathCitations()],
 ]
 
 let failureCount = 0

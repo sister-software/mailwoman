@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Integration tests against a REAL production `wof-hot.db` (the slim DB the live demo serves) — the
+ *   Integration tests against a real production `wof-hot.db` (the slim DB the live demo serves) — the
  *   three resolution bugs measured on the live demo 2026-06-11:
  *
  *   1. "Brooklyn" resolved to Brooklyn Park, MN because the locality placetype filter excluded the
@@ -13,7 +13,7 @@
  *   3. "New York City" has no spr row under that name — it's a WOF ALIAS of the New York locality
  *        (85977539), reachable only through the FTS `alt_names` bag.
  *
- *   The 16 MB DB is NOT committed. Point `MAILWOMAN_WOF_HOT_DB` at a byte-copy of the live DB (e.g.
+ *   The 16 MB DB is not committed. Point `MAILWOMAN_WOF_HOT_DB` at a byte-copy of the live DB (e.g.
  *   `/tmp/v440-stage/en-us/v4.4.0/wof-hot.db`, or any `wof-hot.db` staged by build-demo-assets) and
  *   run `yarn vitest --run resolver-wof-wasm/hot-db.test.ts`. The whole suite SKIPS when the env
  *   var is unset, so CI stays green without the artifact.

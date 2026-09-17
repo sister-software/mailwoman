@@ -5,7 +5,7 @@
  *
  *   Running a conformance-law suite, and saying what a violation was.
  *
- *   NO SECOND HARNESS. A fixture is graded by running the SAME pipeline the Gauntlet runs, through an
+ *   NO SECOND HARNESS. A fixture is graded by running the same pipeline the Gauntlet runs, through an
  *   observer the caller supplies — `gauntletObserver` wraps `buildGauntletDeps`'s own `geocode` and projects
  *   it with `toGauntletResult`, the projection the board's grader and the warm-engine tools already share. A
  *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file, not a parallel runner
@@ -19,7 +19,7 @@
  *   has found nothing, and a suite that counted it as a pass would report the same total as a suite that
  *   genuinely held.
  *
- *   `unmeasured` IS NEITHER, AND LEAVES THE DENOMINATOR. It is the reading of a comparator that DID read its
+ *   `unmeasured` IS NEITHER, AND LEAVES THE DENOMINATOR. It is the reading of a comparator that did read its
  *   axis and found the observation too small to decide — `candidate_admissibility` is the only one that can
  *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
  *   would report the observer's blind spot as the pipeline's defect; counting it as a hold would report a
@@ -38,7 +38,7 @@ import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 /**
  * Produce one side of a law: run `query` under `context` and return what the comparators read.
  *
- * The hook exists so a caller that can say MORE about a run than the assembled result — `@mailwoman/dev-mcp`, which
+ * The hook exists so a caller that can say more about a run than the assembled result — `@mailwoman/dev-mcp`, which
  * holds the trace and the mechanism-account predicates — attaches its shapes here rather than this module reaching for
  * a private workspace it must not depend on.
  */
@@ -146,7 +146,7 @@ export interface ConformanceSummary {
 /**
  * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
  *
- * `pass` is false on an EMPTY findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
+ * `pass` is false on an empty findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
  * suite, and false on a suite with no enforcing rows at all: a run whose every row is tracked has measured nothing that
  * could fail, and reporting it as a pass is how a suite quietly stops holding anything.
  */
@@ -160,7 +160,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	for (const finding of findings) {
 		const blocking = (finding.fixture.status ?? "pass") === "pass"
 
-		// Read BEFORE the status split, and on tracked rows too: a tracked row that went unmeasured has not started
+		// Read before the status split, and on tracked rows too: a tracked row that went unmeasured has not started
 		// holding, and printing it as a promotion instruction would ask someone to promote a row nobody measured.
 		if (finding.reading.observed === "unmeasured") {
 			unmeasured.push(finding)

@@ -43,7 +43,7 @@ export const FIXTURE_ORIGIN = { lon: 1.9, lat: 52.6 } as const
 
 /**
  * Side of a fixture erosion band, in degrees. About 1.1 km at this latitude — several res-9 cells across, so a band has
- * a real interior AND a real fringe.
+ * a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 
@@ -92,10 +92,10 @@ export function fixtureFeature(
 
 /**
  * The fixture erosion set: two adjacent bands in the no-intervention scenario (one of them holed), one band in the
- * with-plan scenario covering the SAME ground as the first, and one band narrower than a res-9 cell.
+ * with-plan scenario covering the same ground as the first, and one band narrower than a res-9 cell.
  *
  * THE OVERLAP BETWEEN SCENARIOS IS THE POINT. A point inside the first band must answer under both scenarios with
- * DIFFERENT distances, which is what proves the twelve layers stay separable rather than pooled.
+ * different distances, which is what proves the twelve layers stay separable rather than pooled.
  */
 export function fixtureFeatures(): CoastalSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
- *   live here — the truth field's absence from the withheld run's input (asserted against the SAME
+ *   live here — the truth field's absence from the withheld run's input (asserted against the same
  *   `buildFilteredEvalInputs()` helper the eval itself calls, not a parallel copy), and reproducibility — plus
- *   a POSITIVE CONTROL: the control run's perfect score is asserted, so stubbing
- *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the REAL
+ *   a positive control: the control run's perfect score is asserted, so stubbing
+ *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the real
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
 
@@ -178,7 +178,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// determined by its own accumulated set, so deleting the roll-up leaves it green. Here A names only P1 while B
 		// names P1 and P2. P1 unions them into one component, so the truth partition says one family — and both labels
 		// must therefore read `P1 + P2`. Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ, and
-		// `groupPredicateFromMap` scores them as DIFFERENT truth families while the union-find says they are one: a truth
+		// `groupPredicateFromMap` scores them as different truth families while the union-find says they are one: a truth
 		// partition that contradicts itself.
 		const base = buildLinkageEvalForm499Rows()
 
@@ -200,7 +200,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 			},
 		]
 
-		// Only the SECOND sibling also names the extra parent.
+		// Only the second sibling also names the extra parent.
 		const providerRows = [
 			...buildLinkageEvalProviderRows(),
 			{ providerID: 700_092, frn: toFRN("9100000092")!, holdingCompany: "Fernbank Partners LLC" },
@@ -218,14 +218,14 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents. Keying the
 		// accumulator on the union-find root as it stood MID-loop dropped whichever id was recorded before a later union
 		// re-rooted the component — the partition stayed correct, the published label silently lost a name.
-		// Both parents are unique to this registrant, so its label depends ONLY on its own accumulated set — no other
+		// Both parents are unique to this registrant, so its label depends only on its own accumulated set — no other
 		// registrant's contribution can put a dropped id back via the component roll-up and mask the bug.
 		//
 		// BOTH ORIENTATIONS are asserted, and that is the whole test. `union` merges toward the lexicographically smaller
 		// root, so exactly one ordering of any two parent names re-roots the component AWAY from the key the first id was
 		// filed under — and only that one orphans anything. The first version of this test fixed the Form 499 parent as
 		// "Northbridge" and the provider parent as "Southgate", which is the safe ordering: the second union re-rooted
-		// ONTO the existing key, nothing was dropped, and the test passed against the unfixed code. Naming both parents
+		// onto the existing key, nothing was dropped, and the test passed against the unfixed code. Naming both parents
 		// per orientation removes the coin-flip.
 		const labelFor = (form499Parent: string, providerParent: string): string | undefined => {
 			const rows = [
@@ -250,11 +250,11 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const northbridgeFirst = labelFor("Northbridge Holdings LLC", "Southgate Capital Partners LLC")
 		const southgateFirst = labelFor("Southgate Capital Partners LLC", "Northbridge Holdings LLC")
 
-		// The FULL joined label, not a substring: the id set is what gets published, and `toContain(":northbridge")`
+		// The full joined label, not a substring: the id set is what gets published, and `toContain(":northbridge")`
 		// would pass just as on a label that had lost the other parent.
 		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
 
-		// Equal to each other AND equal to the full expected set — the label is a property of the registrant, not of
+		// Equal to each other and equal to the full expected set — the label is a property of the registrant, not of
 		// which source happened to be read first.
 		expect(northbridgeFirst).toBe(expected)
 		expect(southgateFirst).toBe(expected)
@@ -500,7 +500,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 
 	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
 		// The injection adds exactly the ownership rows the check refuses. It does not throw, because the check reads the
-		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
+		// census before the probe writes; break that ordering and this test starts throwing instead of scoring.
 		await expect(runInjected()).resolves.toBeDefined()
 	})
 
@@ -547,7 +547,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		})
 
 		// The exhaustiveness refactor briefly folded unrecognized relationships in with `management_company`, because both
-		// simply failed the ownership test. That put the one class the eval cannot reason about on the SILENT side of the
+		// simply failed the ownership test. That put the one class the eval cannot reason about on the silent side of the
 		// check. It gets its own bucket so the check can refuse on it and the published census cannot hide it.
 		expect(injected.census.unrecognizedFamilyRows).toBe(3)
 		expect(injected.census.nonOwnershipFamilyRows).toBe(2)
@@ -596,7 +596,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 			},
 		})
 
-		// The edges ARE in the artifact and the census sees them — this is not a failed injection.
+		// The edges are in the artifact and the census sees them — this is not a failed injection.
 		expect(injected.census.ownershipEdges).toBe(3)
 		// And the score does not budge, because every corporate-family reader answers from `filer_family`.
 		expect(injected.score.truePositivePairs).toBe(0)

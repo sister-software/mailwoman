@@ -152,7 +152,7 @@ interface MergeState {
 	tables: Record<TableField, unknown[]>
 	origins: Map<string, RecordOrigin>
 	/**
-	 * Table → identifier → the file that used it first. The validator reports the SECOND claimant, so this is what names
+	 * Table → identifier → the file that used it first. The validator reports the second claimant, so this is what names
 	 * the other half of the pair.
 	 */
 	firstClaims: Map<string, Map<string, string>>

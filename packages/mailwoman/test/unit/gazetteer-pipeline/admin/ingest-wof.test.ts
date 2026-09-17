@@ -54,7 +54,7 @@ await writeLocalFile(
 // No label centroid: the math centroid remains the fallback.
 await writeLocalFile(feature(2, { "geom:latitude": 10.5, "geom:longitude": 20.25 }), join(DATA_DIR, "2.geojson"))
 
-// A lone lbl:latitude with no longitude must NOT produce a mixed point — geom: wins as a pair.
+// A lone lbl:latitude with no longitude must not produce a mixed point — geom: wins as a pair.
 await writeLocalFile(
 	feature(3, { "geom:latitude": 30, "geom:longitude": 40, "lbl:latitude": 55 }),
 	join(DATA_DIR, "3.geojson")

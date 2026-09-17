@@ -9,7 +9,7 @@
  *
  *   A change ships when board 1 HOLDS and board 2 MOVES. Neither is a verdict alone. The span-head
  *   arc is the cautionary tale: +23.8pp on its target class and ~+0 net overall, which a single
- *   blended number turns into "inside noise, ship it" — hiding both the win and what it cost.
+ *   blended number turns into "inside noise, ship it" — hiding both the +23.8pp and the classes that paid for it.
  *
  *   WHY INTERVALS. The Paris fixture (n=63) reports cells like 3/15. That has a 95% Wilson interval
  *   of roughly 4–48%: not a measurement, an anecdote with a decimal point. This board samples BAN
@@ -26,7 +26,7 @@
  *   compound, and date material included. `12 bis Rue X` ⇒ house_number "12 bis", street "Rue X".
  *
  *   SPLIT: the fixture's street surfaces are reserved in `ban-fragments-fr.surfaces.txt`. A training
- *   database MUST exclude them — source-disjoint by normalized street SURFACE, never by record row.
+ *   database must exclude them — source-disjoint by normalized street SURFACE, never by record row.
  *   Row-disjoint leaks the surface across the boundary and measures memorization.
  */
 
@@ -54,7 +54,7 @@ const STREET_TAGS: ReadonlySet<string> = new Set(STREET_FAMILY_TAGS)
 
 export interface FragmentFixture extends SpanBoardFixture {
 	/**
-	 * Present on the negative class: the parser must emit NO street.
+	 * Present on the negative class: the parser must emit no street.
 	 */
 	expect_no_street?: boolean
 }

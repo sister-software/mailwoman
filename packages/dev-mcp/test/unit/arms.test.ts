@@ -56,7 +56,7 @@ describe("normalizeArmSpec", () => {
 	})
 
 	it("refuses an unknown kind rather than running the default configuration", () => {
-		// The hazard this closes: with the bare-config shorthand in the union, an unhandled `kind` parses as an EMPTY
+		// The hazard this closes: with the bare-config shorthand in the union, an unhandled `kind` parses as an empty
 		// mailwoman config. The caller would get a full comparison against the production defaults and no signal at all
 		// that the arm they asked for was never consulted.
 		expect(() => normalizeArmSpec({ kind: "whatever" }, "b")).toThrow(/unknown kind/)

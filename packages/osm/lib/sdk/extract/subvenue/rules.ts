@@ -16,7 +16,7 @@ import {
 /**
  * Which side of the containment relation a matched feature sits on.
  *
- * The corpus line this feeds is `<sub-venue>, <venue>, <street>, <locality>, <postcode>` — two DIFFERENT tags (`unit`
+ * The corpus line this feeds is `<sub-venue>, <venue>, <street>, <locality>, <postcode>` — two different tags (`unit`
  * and `venue`), so a row has to say which one it is. `Terminal 5` is a {@link SubVenueTier.SubVenue}; `Heathrow
  * Airport` is a {@link SubVenueTier.Venue}.
  */
@@ -34,9 +34,9 @@ export const SubVenueTier = {
 export type SubVenueTier = (typeof SubVenueTier)[keyof typeof SubVenueTier]
 
 /**
- * One match rule: `designatorID` wins when EVERY `[key, value]` pair in `all` is present on the feature (AND within a
- * rule). OR across tags is expressed as multiple rules sharing a `designatorID` — see {@link SUBVENUE_TAG_RULES}'s two
- * `platform` rules and two `station` rules.
+ * One match rule: `designatorID` wins when every `[key, value]` pair in `all` is present on the feature (a conjunction
+ * within a rule). A disjunction across tags is expressed as multiple rules sharing a `designatorID` — see
+ * {@link SUBVENUE_TAG_RULES}'s two `platform` rules and two `station` rules.
  */
 export interface SubVenueTagRule {
 	/**
@@ -49,12 +49,12 @@ export interface SubVenueTagRule {
 }
 
 /**
- * The tag rules, ordered — the FIRST rule a feature satisfies wins.
+ * The tag rules, ordered — the first rule a feature satisfies wins.
  *
- * Order is required in exactly one place: a station platform commonly carries BOTH `public_transport=platform` and
+ * Order is required in exactly one place: a station platform commonly carries both `public_transport=platform` and
  * `railway=platform`, and an aerodrome terminal building sometimes carries both `aeroway=terminal` and
  * `building=terminal`. In every such case the colliding rules share a `designatorID`, so the first-wins resolution is
- * harmless — it picks the same answer either way. There is no pair of rules with DIFFERENT designators that a single
+ * harmless — it picks the same answer either way. There is no pair of rules with different designators that a single
  * real feature can satisfy, because each pair requires a different value for a key a feature carries once.
  *
  * PROVENANCE, per rule, all documented OSM tags:
@@ -71,7 +71,7 @@ export interface SubVenueTagRule {
  *   confidence (no single tag; these three amenities plus `landuse=education`), so treat these rows as the weakest in
  *   the table.
  *
- * NOT here, deliberately: `indoor=*` (Simple Indoor Tagging). `wof-osm-placetype-map.mdx` establishes that concourses
+ * Not here, deliberately: `indoor=*` (Simple Indoor Tagging). `wof-osm-placetype-map.mdx` establishes that concourses
  * and wings live in OSM's indoor scheme rather than its place scheme, which makes it the natural home for the
  * `concourse`/`wing` designators — but indoor features are overwhelmingly unnamed geometry primitives (`indoor=room`,
  * `indoor=corridor`), and this extractor's yield is names. Measure the named fraction before adding it.
@@ -118,7 +118,7 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
  * Build the OGRSQL SELECT+WHERE for one layer.
  *
  * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`), every
- * key the rule table references, and `other_tags` WHOLESALE for the `name:<lang>` harvest. The WHERE is an OR of the
+ * key the rule table references, and `other_tags` WHOLESALE for the `name:<lang>` harvest. The WHERE is an `OR` of the
  * table's AND-groups, pushed down so GDAL scans rather than this process. The pushdown is an optimization only: a GDAL
  * dialect quirk could narrow what it matches but never widen it, and {@link matchSubVenueTagRule} re-checks the same
  * table in JS before any row is yielded, so no false positive survives even if the predicate were imprecise.
@@ -154,7 +154,7 @@ export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[
 }
 
 /**
- * PURE tag-rule matcher: the FIRST rule whose `all` conjunction is fully satisfied by `tags` wins, `null` when none do.
+ * Pure tag-rule matcher: the first rule whose `all` conjunction is fully satisfied by `tags` wins, `null` when none do.
  * `tags` is a plain key → value dict, so this is unit-testable over synthetic dicts with no GDAL involved.
  */
 export function matchSubVenueTagRule(

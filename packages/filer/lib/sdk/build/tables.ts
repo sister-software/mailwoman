@@ -5,8 +5,8 @@
  * @file The table set `buildFilerDatabase` writes into, created in one pass before any row is staged.
  *
  *   Table DDL goes through Kysely's schema builder while the row writes stay on raw prepared statements against the
- *   SAME `DatabaseSync` handle — the house split between modelled schema and the hot bulk-write path.
- *   `filer_cluster` and `filer_family` are created EMPTY here for schema completeness: `cluster-filers.ts`
+ *   same `DatabaseSync` handle — the house split between modelled schema and the hot bulk-write path.
+ *   `filer_cluster` and `filer_family` are created empty here for schema completeness: `cluster-filers.ts`
  *   populates the former in a later build pass, `build-filer.ts`'s own family-membership emission the latter.
  */
 
@@ -24,7 +24,7 @@ import {
 
 /**
  * Create the build-only `filer_attribute_stage` table — see `build-filer.ts`'s module docstring for why `value` is part
- * of the composite PK. Deliberately NOT part of the public {@link FilerDatabase} interface, mirroring `build-bdc.ts`'s
+ * of the composite PK. Deliberately not part of the public {@link FilerDatabase} interface, mirroring `build-bdc.ts`'s
  * `bdc_stage` (dropped before the artifact seals). All reads/writes against it go through raw `.prepare()` on the
  * shared `DatabaseSync`, per the "hot bulk write" carve-out.
  */

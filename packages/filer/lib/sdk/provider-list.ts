@@ -13,19 +13,19 @@
  *   error naming the file and 1-indexed row number the instant a row's column count doesn't match the
  *   header — no partial/truncated row is ever silently yielded.
  *
- *   Decision 6 is the entire point of this file, so it bears repeating exactly what NOT to copy: Nexus's
- *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into ONE `BroadbandProvider` via a
+ *   Decision 6 is the entire point of this file, so it bears repeating exactly what not to copy: Nexus's
+ *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into one `BroadbandProvider` via a
  *   `Map<ProviderID, BroadbandProvider>` — a later row's FRN is added to a `Set` (cardinality preserved
  *   there, incidentally) but its `holdingCompany` silently OVERWRITES the previous value, only warning
  *   to the console when the two strings differ. That fold happens at PARSE time, before anything
  *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
- *   flat streaming pass with NO `Map` keyed by `provider_id`, NO dedup, and NO last-wins — every row in
+ *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins — every row in
  *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
  *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
  *   to mean something; collapsing it here would be unrecoverable downstream.
  *
  *   `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string). Unlike
- *   `Form499Row.frn`, this field is NOT nullable: the provider list — unlike a 499 filing — has no
+ *   `Form499Row.frn`, this field is not nullable: the provider list — unlike a 499 filing — has no
  *   legitimate row without a resolvable FRN, so a row whose `frn` field doesn't parse is treated as
  *   malformed input and throws (decision 8), not silently coerced to `null`.
  */
@@ -49,7 +49,7 @@ const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"]
  */
 export interface ProviderListRow {
 	/**
-	 * The FCC's numeric provider identifier. NOT branded — the task brief specifies a plain `number`, and unlike
+	 * The FCC's numeric provider identifier. Not branded — the task brief specifies a plain `number`, and unlike
 	 * {@link ProviderListRow.frn} there is no leading-zero concern (BDC provider IDs are ordinary small integers, not
 	 * zero-padded strings).
 	 */
@@ -59,7 +59,7 @@ export interface ProviderListRow {
 	 */
 	frn: FRN
 	/**
-	 * The filer's holding company as it appears on THIS row. `null` when the raw CSV field is empty — one `providerID`
+	 * The filer's holding company as it appears on this row. `null` when the raw CSV field is empty — one `providerID`
 	 * can legitimately carry different `holdingCompany` strings across rows (decision 6); do not assume this field is
 	 * stable per `providerID`.
 	 */
@@ -131,7 +131,7 @@ function toProviderListRow(
 /**
  * Streams the BDC provider list CSV at `csvPath` row by row through `CSVSpliterator`, which is quote-aware across
  * physical lines — a line reader splits a quoted `holding_company` containing a newline into two broken rows, and the
- * column-count check below then rejects both. The file is never read into memory whole. Yields EVERY row as a typed
+ * column-count check below then rejects both. The file is never read into memory whole. Yields every row as a typed
  * {@linkcode ProviderListRow}. The first non-blank line is read as the header and used to locate the
  * `frn`/`provider_id`/`holding_company` columns by name; a header missing any of the three throws immediately. A data
  * row whose column count doesn't match the header's throws immediately, naming `csvPath` and the 1-indexed line number

@@ -11,9 +11,9 @@
  *   - US — a trailing word with a USPS-standardized abbreviation (`Main Street` → `ST`).
  *   - German — a fused TRAILING suffix (`Hauptstraße`).
  *   - French — a LEADING standalone word (`Rue de la Paix`).
- *   - Canadian — BOTH at once. An English street puts the type LAST (`Maple Avenue`, `Sunset
- *       Crescent`); a French street puts it FIRST (`Rue Sainte-Catherine`, `Boulevard
- *       René-Lévesque`). So {@link isCanadianStreetWord} matches a whole token against EITHER
+ *   - Canadian — BOTH at once. An English street puts the type last (`Maple Avenue`, `Sunset
+ *       Crescent`); a French street puts it first (`Rue Sainte-Catherine`, `Boulevard
+ *       René-Lévesque`). So {@link isCanadianStreetWord} matches a whole token against either
  *       vocabulary and stays position-agnostic — it cannot assume a side the way the
  *       single-language files do.
  *
@@ -112,7 +112,7 @@ const STREET_WORD_SET: ReadonlySet<string> = (() => {
 })()
 
 /**
- * True when a token is a Canadian street-type word in EITHER language (case- and accent-insensitive) — `Street`,
+ * True when a token is a Canadian street-type word in either language (case- and accent-insensitive) — `Street`,
  * `Crescent`, `Rue`, `Chemin`, `Côte`. Position-agnostic, because an English type trails the name and a French type
  * leads it; the matcher cannot lean on a side.
  */
@@ -126,7 +126,7 @@ export function isCanadianStreetWord(token: unknown): boolean {
 /**
  * Bilingual directional words → canonical compass letter. Covers the bare letters (`N S E W`), the full English words
  * (`North`/`South`/`East`/`West`), and the full French words (`Nord`/`Sud`/`Est`/`Ouest`). The bilingual twist is `O`:
- * French `Ouest` abbreviates to `O`, NOT `W`, so an English-only matcher silently drops the quadrant on a French
+ * French `Ouest` abbreviates to `O`, not `W`, so an English-only matcher silently drops the quadrant on a French
  * address line. Keys are folded (lowercase, accent-free); values are the English compass letter.
  */
 export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {

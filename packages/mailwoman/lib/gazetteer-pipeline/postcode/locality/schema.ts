@@ -6,7 +6,7 @@
  *   Typed schema for the `postcode_locality` databases (`postcode-locality-<cc>.db`) — the postcode →
  *   candidate-locality table the resolver's `postcode_area_resolution` strategy attaches.
  *
- *   ONE table, several builds: the European point-in-polygon build and the CJK name/point-match
+ *   One table, several builds: the European point-in-polygon build and the CJK name/point-match
  *   builds (JP, KR, TW) all emit this shape, which is what lets a single resolver strategy consume
  *   every database. The DDL therefore lives here rather than in any one builder, so a column added to
  *   the row interface is a compile error against the builder that fills it.

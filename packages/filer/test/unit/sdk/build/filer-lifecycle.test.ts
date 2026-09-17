@@ -132,7 +132,7 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window matches NOTHING under `valid_from <= t < valid_to` — the filer would vanish
+		// An inverted window matches nothing under `valid_from <= t < valid_to` — the filer would vanish
 		// from every asOf read with no error to notice. Open is visibly incomplete; inverted is invisible.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)

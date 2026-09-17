@@ -12,7 +12,7 @@
  *   model or tokenizer — it REMOVES any leftover local pair so the base fallback engages (a stale local file would
  *   SHADOW the base fallback and silently serve outdated bytes; the fr-fr manifest's header records the incident).
  *
- *   What en-nz DOES own locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
+ *   What en-nz owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
  *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
@@ -22,12 +22,12 @@
  *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
  *       source md5; sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
  *       at δ=10, identical to 12/15, 0/54 golden-FP throughout) baked into the artifact's header. This locale
- *       deliberately ships WITHOUT a `transitionBeta` (unmeasured there); the parent-bias δ=5 is measured — NZ's own
+ *       deliberately ships without a `transitionBeta` (unmeasured there); the parent-bias δ=5 is measured — NZ's own
  *       shipped board moved 230/246 → 246/246 whole-edge, identical at δ 4/6/8/20 — see
  *       `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  *
- *   UNLIKE en-gb there is NO postcode binary to build: no WOF NZ postcode extract exists (release.config.json's
- *   softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel resolves OFF for en-nz until that extract
+ *   Unlike en-gb there is no postcode binary to build: no WOF NZ postcode extract exists (release.config.json's
+ *   softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel resolves off for en-nz until that extract
  *   is built — the tracked follow-up in this package's model-card.json (`nz_artifacts.no_postcode_bin`).
  */
 

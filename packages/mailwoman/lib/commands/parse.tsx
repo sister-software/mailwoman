@@ -290,13 +290,13 @@ async function resolveWithCandidates(
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// #42: the library default is ON since 2026-08-05; only the explicit --no-postcode-country-coherence
+	// #42: the library default has been on since 2026-08-05; only the explicit --no-postcode-country-coherence
 	// pin needs threading.
 	if (options.postcodeCountryCoherence === false) {
 		opts.postcodeCountryCoherence = false
 	}
 
-	// #31 opt-in mechanisms: library defaults are OFF, so only the explicit opt-in needs threading.
+	// #31 opt-in mechanisms: library defaults are off, so only the explicit opt-in needs threading.
 	if (options.postcodeShapeCoherence === true) {
 		opts.postcodeShapeCoherence = true
 	}
@@ -380,7 +380,7 @@ async function serializeTree(
  * The generic degraded-mode banner (stderr — stdout stays machine-parseable). Emitted when the guard hands back a
  * `declined` outcome (interactive "n" / `--degraded` / a failed download) — the paths that never attempt an encoder
  * load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The attempted-and-failed case is
- * announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT emitted there (it would double
+ * announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately not emitted there (it would double
  * up).
  */
 function emitDegradedBanner(options: ParseOptions): void {
@@ -393,7 +393,7 @@ function emitDegradedBanner(options: ParseOptions): void {
 /**
  * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
  * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
- * with nothing on stdout OR stderr to say so. Same `⚠` register as the encoder-load warnings above; stderr only, so
+ * with nothing on stdout or stderr to say so. Same `⚠` register as the encoder-load warnings above; stderr only, so
  * stdout stays the machine-readable parse.
  */
 function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
@@ -406,7 +406,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
 }
 
 /**
- * Encoder-less structural parse (plan 3), WITHOUT the banner: the REAL pipeline stages (normalize → query-shape →
+ * Encoder-less structural parse (plan 3), without the banner: the real pipeline stages (normalize → query-shape →
  * locale-hint → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
  * prove (postcode_only / locality_only fast-paths populate it; free-form addresses may yield an empty tree). The caller
  * owns the degraded notice — either {@link emitDegradedBanner} or the precise absent/load-error warning `tryLoadNeural`
@@ -424,7 +424,7 @@ async function runStructuralPipeline(input: string, options: ParseOptions): Prom
 }
 
 /**
- * Structural parse fronted by the generic degraded banner — the guard's `declined` entry point (the caller here did NOT
+ * Structural parse fronted by the generic degraded banner — the guard's `declined` entry point (the caller here did not
  * attempt an encoder load, so it owns the notice).
  */
 async function runDegraded(input: string, options: ParseOptions): Promise<string> {
@@ -440,7 +440,7 @@ async function runDegraded(input: string, options: ParseOptions): Promise<string
  */
 async function runPipeline(input: string, options: ParseOptions): Promise<string> {
 	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning when the load
-	// fails, so an attempted-but-failed encoder load is NEVER silent — including on the --resolve/--debug
+	// fails, so an attempted-but-failed encoder load is never silent — including on the --resolve/--debug
 	// paths, which don't route through the degraded banner below (#1108). Every route into this function
 	// attempts the load: the deliberate skip is `--degraded`, which the guard answers with `declined`
 	// before we get here (see ParseTask).
@@ -724,7 +724,7 @@ async function serializeResult(
 		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
-		// #40: only when non-empty — the key's presence IS the signal, and its absence keeps the clean-run shape
+		// #40: only when non-empty — the key's presence is the signal, and its absence keeps the clean-run shape
 		// byte-identical for anything diffing `--debug` output. `cause` is dropped: an Error serializes to `{}`.
 		...(result.faults.length
 			? {
@@ -757,7 +757,7 @@ async function runNeural(
 	// withheld (an explicit --default-country stays).
 	const routedAway = neural !== routedClassifier.primary
 
-	// Fast path: no policy AND no resolve → preserve containment nesting via NeuralAddressClassifier
+	// Fast path: no policy and no resolve → preserve containment nesting via NeuralAddressClassifier
 	// 's direct projection helpers (returns the serialized string in one call).
 	if (!policyOverrides.length && !options.resolve) {
 		switch (options.format) {

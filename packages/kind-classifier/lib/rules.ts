@@ -183,7 +183,7 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 	// Reject if the first token is a pure number (house-number-leading pattern).
 	if (/^\d+\s/.test(text)) return 0
 
-	// Boost if the input has a number NOT at the start (venue-style: "Pier 39", "Terminal 5").
+	// Boost if the input has a number that is not at the start (venue-style: "Pier 39", "Terminal 5").
 	const hasInternalNumber = /\s\d+/.test(text) && !/^\d/.test(text)
 
 	// Check if every word starts with uppercase (proper-noun pattern).
@@ -209,7 +209,7 @@ export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShape
 }
 
 /**
- * `postcode_only` rule: input is short AND has a postcode format hit covering most of it.
+ * `postcode_only` rule: input is short and has a postcode format hit covering most of it.
  *
  * The "covering most of it" check is what distinguishes `"10118"` (postcode-only) from `"350 5th Ave 10118"`
  * (structured-address with a postcode in it).

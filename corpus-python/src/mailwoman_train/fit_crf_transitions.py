@@ -4,7 +4,7 @@ The shipped decoder applies ``crf-transitions.json`` when the weights package ca
 (``neural/weights.ts`` ``readCrfTransitions`` -> ``classifier.ts`` Viterbi potentials), but CRF
 TRAINING diverged long ago (``crf_loss_weight=0.0`` since v0.5.0) and no bundle ships the file —
 decode runs on the structural BIO mask alone. This fits transitions the cheap way: Laplace-smoothed
-bigram counts over a training corpus's gold ``labels`` sequences, emitted in the EXACT label order
+bigram counts over a training corpus's gold ``labels`` sequences, emitted in the exact label order
 of a model-card's ``labels`` array (index-aligned with the model's logit heads).
 
 Usage:

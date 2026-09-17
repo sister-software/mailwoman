@@ -5,7 +5,7 @@
  *
  *   Release-train version-parity check (#894, the structural fix for #203's class).
  *
- *   The demo repoint is DELIBERATELY a separate step from the npm publish (mailwoman-release
+ *   The demo repoint is deliberately a separate step from the npm publish (mailwoman-release
  *   Step 5), so demo-vs-npm drift is structural, not accidental — which is why this check must be
  *   structural too. #203 (demo silently two model versions behind npm) was fixed as an instance;
  *   this operation fails the day the drift reappears, anywhere it can appear:
@@ -15,7 +15,7 @@
  *   2. The docs release matrix (`docs/records/site-2026-08/releases.mdx` "(current)" row) vs the same npm
  *      version — the row went stale twice (v4.11.0 era, then again within hours of v5.1.0).
  *
- *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), AFTER its install step —
+ *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), after its install step —
  *   this module reaches `@mailwoman/core` plus the shared releases-matrix parser in
  *   `verify-metadata.ts`. `warnOnly` downgrades mismatches to warnings (useful mid-release, before
  *   the repoint lands).
@@ -65,7 +65,7 @@ function normalizeVersion(version: string): string {
 /**
  * The parity checker's HTTP client.
  *
- * Retry is ON because every host this talks to rate-limits: the npm registry, the demo manifest bucket, and Hugging
+ * Retry is on because every host this talks to rate-limits: the npm registry, the demo manifest bucket, and Hugging
  * Face. A release check that fails because a registry throttled it reads exactly like a release check that failed
  * because a surface trails, and the second one is the only kind anybody should act on.
  */
@@ -125,10 +125,10 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const npmLatest = await readNPMLatest()
 	const checks: ParityCheck[] = []
 
-	// TWO VERSION SERIES (see releases.mdx's "Two version series" intro): the demo serves MODELS, so its
+	// Two version series (see releases.mdx's "Two version series" intro): the demo serves models, so its
 	// `defaultVersion` carries the model-card lineage number, not the npm package number — comparing it
 	// against npm latest went permanently red the moment a code-only release shipped. The demo leg
-	// compares against the SHIPPED model identity: `packages/neural-weights-en-us/model-card.json#version`
+	// compares against the shipped model identity: `packages/neural-weights-en-us/model-card.json#version`
 	// (the same source verify-metadata keys off). The docs matrix row stays vs npm latest — that surface
 	// documents package releases.
 	const localCard = await readLocalJSONFile<{
@@ -140,9 +140,9 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	const demoDefault = await readDemoDefaultVersion()
 
-	// The demo's parity contract is MODEL BYTES, not the bundle number. Bundle revisions that change only
-	// decode-side artifacts move the card version with ZERO model.onnx change — the demo serving the
-	// previous bundle serves the IDENTICAL model, and can't even use the new artifacts until the web loader
+	// The demo's parity contract is model bytes, not the bundle number. Bundle revisions that change only
+	// decode-side artifacts move the card version with zero model.onnx change — the demo serving the
+	// previous bundle serves the identical model, and can't even use the new artifacts until the web loader
 	// grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the trailing version's
 	// shipped card records the same `files_md5["model.onnx"]` as the current card (fetched from the HF
 	// bucket — the same store the demo loads from). Different bytes = real drift = fail.

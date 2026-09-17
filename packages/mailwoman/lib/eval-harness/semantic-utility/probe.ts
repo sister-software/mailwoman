@@ -21,7 +21,7 @@
  *   produced, so a semantic arm cannot pass by reporting that it consulted an affordance.
  *
  *   THE OUTCOME SHAPES ARE POI SHAPES. {@linkcode POI_OUTCOME_SHAPES} is derived from `PipelineResult`'s
- *   own `path` and `POIIntentOutcome`'s own `type`. It is deliberately NOT a `DIAGNOSE_SHAPES` value:
+ *   own `path` and `POIIntentOutcome`'s own `type`. It is deliberately not a `DIAGNOSE_SHAPES` value:
  *   that vocabulary describes address-path mechanism states and carries no state for the POI branch, so
  *   borrowing one would name a state this probe never observes.
  *
@@ -541,7 +541,7 @@ export interface ProbeVerdict {
 /**
  * Map measured counts onto exactly one decision, against the frozen thresholds and the frozen baseline.
  *
- * Order is required. A control regression is checked FIRST and stops under both decisions: a target delta bought by
+ * Order is required. A control regression is checked first and stops under both decisions: a target delta bought by
  * breaking the venue-noun form of the same query is not a result the program can act on. GO is checked before
  * DIAGNOSTIC-ONLY because a row that passes the comparator necessarily reached the POI branch, so the diagnostic
  * condition holds whenever the primary one does.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The derivation behind an answer, as a projection: which constraints took part, what evidence each rested on,
  *   and what it contributed. A pure shaping function over records something else kept — no I/O, no ranking, no
- *   weights. Its one guarantee is that an answer's status is carried WITH the constraints that produced it, so an
+ *   weights. Its one guarantee is that an answer's status is carried with the constraints that produced it, so an
  *   inferred value cannot be reported as a retrieved one without the record disagreeing.
  */
 

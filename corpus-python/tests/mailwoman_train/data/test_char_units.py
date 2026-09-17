@@ -3,7 +3,7 @@
 Pins the contract the JP probe trains under (docs/superpowers/plans/2026-07-18-v8-jp-char-encoder-
 design.md): ``char_ids (S, W)`` with S = label units / W = positional composition window; char mode
 is one unit per character with per-char B/I used as-is; word mode is one unit per whitespace token
-with B/I re-flipped per unit; the loader's char branch skips SentencePiece, REQUIRES span-schema
+with B/I re-flipped per unit; the loader's char branch skips SentencePiece, requires span-schema
 parquet files, and refuses any per-SP-piece channel configuration.
 """
 

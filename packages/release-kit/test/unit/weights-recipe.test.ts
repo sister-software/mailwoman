@@ -6,7 +6,7 @@
  *   The per-key base directory, pinned.
  *
  *   Nothing in `release.config.json` marks which base an entry resolves against, and getting it wrong fails
- *   SILENTLY — every sibling degrades `existsSync → undefined`, so a mis-based path reports the artifact
+ *   silently — every sibling degrades `existsSync → undefined`, so a mis-based path reports the artifact
  *   absent rather than wrong. Both mistakes this file guards were made while writing it: resolving the
  *   lexicons against one base, and reading a `db` key from the pair-index entries that no entry has, which
  *   returned nothing for all eight countries.
@@ -110,7 +110,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 
 	it("reports a pair index for every country the config names, whatever the entry's shape", async () => {
 		// `us` carries `boroughDB` and `gb` carries `source`; neither has a `db` key. An earlier draft read `db`
-		// and therefore reported NO pair index for any country — silently, since the artifact merely stayed absent.
+		// and therefore reported no pair index for any country — silently, since the artifact merely stayed absent.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
@@ -128,7 +128,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 describe("readWeightsRecipe — the dev-only FSTs", () => {
 	it("names both FSTs even though the release config does not", async () => {
 		// They are dev-only: copy-weights.ts ships neither, so a weights directory has them only because a linker
-		// put them there — and their absence resolves the gazetteer and street-context priors OFF with no error.
+		// put them there — and their absence resolves the gazetteer and street-context priors off with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
 		const names = (await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-gb").map((a) => a.shippedName)

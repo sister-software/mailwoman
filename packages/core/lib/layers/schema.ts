@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the spatial-layer contract — the two tables EVERY layer database embeds,
+ *   Typed schema for the spatial-layer contract — the two tables every layer database embeds,
  *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
  *   `layer_coverage` (per-H3-cell survey completeness). The contract is what lets shipped,
  *   build-local, and private layers share one query surface. Spec:
@@ -121,7 +121,7 @@ export interface LayerContractDatabase {
 /**
  * The subset of a Kysely handle the contract helpers touch — the parameter type every one of them takes.
  *
- * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is NOT assignable to
+ * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable to
  * `Kysely<LayerContractDatabase>` even when `POIDatabase extends LayerContractDatabase`. The incompatibility is in
  * `transaction()` and `with()`, which the contract never calls. Naming only the members it does call lets a layer pass
  * its own handle directly. The alternative — a cast at every call site — does not merely skip one check: it disarms

@@ -9,7 +9,7 @@
  *
  *   BOTH ARE API REQUESTS AND BOTH GO THROUGH {@linkcode APIClient}. Small bodies, repeated calls,
  *   third-party hosts — the pacing, bounded retry, response caching and `ResourceError` mapping are
- *   exactly what these need. The 367 MB geodatabase is NOT one of them: it is a file transfer, it streams
+ *   exactly what these need. The 367 MB geodatabase is not one of them: it is a file transfer, it streams
  *   to disk on raw `fetch`, and `download.ts` says so in place.
  *
  *   FRESHNESS CANNOT BE PROBED BY CONTENT LENGTH. The EA's download host answers `HEAD` with HTTP 405 and
@@ -115,7 +115,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	 * The feature count the WFS reports for the flood-zone layer — `resultType=hits`, which returns the count without a
 	 * single geometry.
 	 *
-	 * This is the SECOND path in the build's two-path agreement check: the same authority, a different distribution
+	 * This is the second path in the build's two-path agreement check: the same authority, a different distribution
 	 * channel. A geodatabase whose feature count disagrees with the live service is not a file this build should be
 	 * writing into a sealed artifact.
 	 */

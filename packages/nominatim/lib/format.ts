@@ -155,7 +155,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 /**
  * Project a Nominatim result into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
  * projection. Reads the result's `address` breakdown (populated because the router forces `addressdetails` for
- * `jsonld`) plus the coordinate, re-serializing the SAME resolved place. `streetAddress` is the plain
+ * `jsonld`) plus the coordinate, re-serializing the same resolved place. `streetAddress` is the plain
  * house-number-first join (house_number + road); `addressCountry` is ISO-3166 alpha-2 (uppercased).
  */
 export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {

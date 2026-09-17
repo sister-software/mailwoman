@@ -71,7 +71,7 @@ class EmitPolicy:
 def emit_row(row: dict[str, Any], rng: random.Random, policy: EmitPolicy) -> Iterator[dict[str, Any]]:
     """Yield the rows one sampled ``row`` becomes under ``policy``.
 
-    Relabel runs AFTER augmentation so label-inheriting directional expansions are caught (#511 — see
+    Relabel runs after augmentation so label-inheriting directional expansions are caught (#511 — see
     relabel.py). `augment_row` yields fresh dicts but shares the labels list with the source row on the
     no-op path, so relabel copies before mutating.
     """

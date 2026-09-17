@@ -10,7 +10,7 @@
  *   twenty-five lines of open/create/write/destroy, which is the shape AGENTS.md names a defect generator:
  *   the code gets copied correctly and the reasoning does not travel with it.
  *
- *   THE ORDERING IS THE WHOLE CONTRACT. This must run BEFORE `sealDatabase`, because a sealed artifact is
+ *   THE ORDERING IS THE WHOLE CONTRACT. This must run before `sealDatabase`, because a sealed artifact is
  *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
  *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly; it fails
  *   loudly, which is the correct half. What it would cost is the build, at its very end.
@@ -45,7 +45,7 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
  * The git sha of the tree that ran a build, for `layer_manifest.build_sha`.
  *
  * Degrades to `unknown` rather than throwing. A build run outside a checkout — a container, an unpacked tarball — is a
- * legitimate build, and refusing to stamp a manifest over a missing git binary would leave the artifact with NO
+ * legitimate build, and refusing to stamp a manifest over a missing git binary would leave the artifact with no
  * provenance at all, which is the state this phase exists to reduce.
  */
 export function buildSHA(repoRoot: string): string {

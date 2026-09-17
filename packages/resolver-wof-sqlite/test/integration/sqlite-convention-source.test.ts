@@ -17,7 +17,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
- * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in the same schema, so
+ * A minimal WOF fixture (DE country #90 + Plauen) with an attached `address_convention` table in the same schema, so
  * the lookup auto-detects it.
  */
 function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseClient<WOFDatabase> {

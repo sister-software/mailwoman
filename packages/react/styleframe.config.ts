@@ -218,7 +218,7 @@ const stateInfoBackground = variable("color-state-info-background", "oklch(65% 0
 const accentBackground = variable("color-accent-background", "oklch(65% 0.29 340 / 0.14)")
 
 /**
- * The three confidence tiers, said ONCE.
+ * The three confidence tiers, said once.
  *
  * They were two palettes for one idea: the bars and the About legend painted `#22c55e / #f59e0b / #ef4444` while the
  * span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a` — so the legend in the About sheet
@@ -235,7 +235,7 @@ const confidenceLow = variable("color-confidence-low", ref(stateDanger))
 const confidenceLowTint = variable("color-confidence-low-tint", ref(stateDangerBackground))
 
 /**
- * The pipeline's stage hues, for the timing bar. Deliberately NOT the confidence palette — a stage is not a verdict,
+ * The pipeline's stage hues, for the timing bar. Deliberately not the confidence palette — a stage is not a verdict,
  * and a reader who has learned that green means confident should not meet green again meaning "shape".
  */
 const stageShape = variable("color-stage-shape", "#3578e5")

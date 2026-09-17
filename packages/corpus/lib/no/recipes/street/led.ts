@@ -41,7 +41,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		makeMulberry32(opts.seed)
 
 		// THE SPLIT (ported from fr-fragment, #727 T2). Without it this recipe trains on all 10,697
-		// NO surfaces, 1,952 of which the digit board reserves — so a Norway retrain would grade
+		// Norwegian surfaces, 1,952 of which the digit board reserves — so a Norway retrain would grade
 		// memorization of `Hallingrudveien` while claiming to measure the boundary form. There is no
 		// safe default: source-disjoint by street SURFACE is the discipline, so the flag throws.
 		const excludePath = opts.excludeSurfaces

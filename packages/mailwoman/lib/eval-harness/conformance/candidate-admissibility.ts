@@ -27,7 +27,7 @@
  *   A REMOVAL AT THE WINDOW LEAVES THE ROW `unmeasured`, NOT PASSING. That is the one place this instrument
  *   is deliberately less conclusive than a verdict: the observation could not decide the question, and
  *   reporting the law as holding there would count a blind spot as evidence. An addition at the window is a
- *   different matter and does NOT hold the row back — the law constrains what refinement REMOVES, so a
+ *   different matter and does not hold the row back — the law constrains what refinement removes, so a
  *   candidate the coarse table was too small to show is explained by the window rather than unexplained by it.
  *
  *   LOOKUPS ARE PAIRED BY WHAT WAS ASKED, NOT BY WHEN. The pairing key is tag + placetype + folded value, so
@@ -51,7 +51,7 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
  * - `rescoped` — gone (or new), and the refined lookup ran through a hierarchy path the base's did not: a `parentID` or a
  *   region qualifier the coarse query could not supply. The pool is a different population, and the account names the
  *   path that made it one.
- * - `beyond_window` — gone (or new), and the table on the OTHER side was sitting at its recorded fetch window, so the
+ * - `beyond_window` — gone (or new), and the table on the other side was sitting at its recorded fetch window, so the
  *   candidate may be one row past the edge. An observation, not a finding.
  * - `unexplained` — gone (or new) with no contradiction, no re-scope, and a table that had room to spare. On a removal
  *   this is the law failing. On an addition it is the unrelated candidate-set expansion the law also refuses.
@@ -93,7 +93,7 @@ export interface CandidateReading {
 	 */
 	variantRank?: number
 	/**
-	 * What the account was read FROM, in the resolver's own vocabulary. Carried on every reading, including the ones that
+	 * What the account was read from, in the resolver's own vocabulary. Carried on every reading, including the ones that
 	 * hold: an account stated only on failures cannot be checked against the run that passed.
 	 */
 	reason: string
@@ -254,7 +254,7 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
  * Did the refined lookup run through a hierarchy path the base's did not?
  *
  * A `parentID` or a region qualifier the coarse query could not supply re-points the lookup at a different population.
- * A country scope is deliberately NOT read here — it is a per-candidate predicate the candidate row can be tested
+ * A country scope is deliberately not read here — it is a per-candidate predicate the candidate row can be tested
  * against, so it warrants the sharper {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
  */
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for `soil.db` — the polygon truth table, the containment index above it, and the ONE
+ *   Typed schema for `soil.db` — the polygon truth table, the containment index above it, and the one
  *   reduction both consumers read, plus the layer-contract tables from `@mailwoman/core/layers`.
  *
  *   THREE CELL-FACING TABLES ARE ONE PIPELINE, NOT THREE SOURCES. {@link SoilMapUnitAreaTable} holds what
  *   the authority drew, unsimplified. {@link SoilMapUnitCellTable} says which cells each delineation
- *   reaches and whether it fills them. {@link SoilCapabilityCellTable} is that index reduced ONCE, at build
+ *   reaches and whether it fills them. {@link SoilCapabilityCellTable} is that index reduced once, at build
  *   time, into a per-cell distribution. A `partial` cell's contribution to the reduction is weighted by the
  *   area it actually covers, which is why the truth table keeps unsimplified rings: simplify them and the
  *   weights change silently.
@@ -22,7 +22,7 @@
  *   rather than inventing one.
  *
  *   AN ABSENCE IS NEVER A SMALL NUMBER. Four separate shares name why the rest of a cell carries no class,
- *   and class 8 is NOT among them: class 8 is a determination — the survey looked and rated the land as
+ *   and class 8 is not among them: class 8 is a determination — the survey looked and rated the land as
  *   precluding commercial plant production — so it is a class share like any other. Folding a `NOTCOM`
  *   polygon, a water body and an unrated series into "not arable" would produce a well-formed wrong answer,
  *   which is what the four shares exist to make impossible.
@@ -134,7 +134,7 @@ export interface SoilMapUnitTable {
 	 */
 	farmland_scope: string
 	/**
-	 * NRCS's OWN dominant-condition capability class for the map unit, carried rather than recomputed.
+	 * NRCS's own dominant-condition capability class for the map unit, carried rather than recomputed.
 	 */
 	niccdcd: string | null
 	/**
@@ -143,8 +143,8 @@ export interface SoilMapUnitTable {
 	 */
 	niccdcdpct: number | null
 	/**
-	 * Whether this map unit is a polygon with NO soil mapping behind it — `NOTCOM`, `NOTPUB`, access denied, or a map
-	 * unit carrying no components at all. Such a map unit contributes to `nodata_share` and NEVER to a class share.
+	 * Whether this map unit is a polygon with no soil mapping behind it — `NOTCOM`, `NOTPUB`, access denied, or a map
+	 * unit carrying no components at all. Such a map unit contributes to `nodata_share` and never to a class share.
 	 */
 	no_mapping: number
 }
@@ -250,11 +250,11 @@ export interface SoilCapabilityCellTable {
 }
 
 /**
- * The authority's mapped footprint, one row per published survey area — derived from the survey-area OUTLINE and each
- * area's own metadata, NEVER from the rated polygons.
+ * The authority's mapped footprint, one row per published survey area — derived from the survey-area outline and each
+ * area's own metadata, never from the rated polygons.
  *
  * Deriving it from the rated polygons is the error §3.2 of the survey describes: `NOTCOM` and access-denied map units
- * are INSIDE the footprint and carry no rating, so a footprint taken from the rated set would report them as unmapped
+ * are inside the footprint and carry no rating, so a footprint taken from the rated set would report them as unmapped
  * when the authority has in fact declared exactly what they are.
  */
 export interface SoilSurveyAreaTable {

@@ -21,7 +21,7 @@
  *   whoever complained loudest). The moment this file grows a per-hypothesis score blend, we have
  *   rebuilt that with extra steps.
  *
- *   So the rule is ONE bit of evidence, not a score: **drop hypotheses whose resolution is
+ *   So the rule is one bit of evidence, not a score: **drop hypotheses whose resolution is
  *   implausible; otherwise keep the model's own ranking.** The parse scores already share a partition
  *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
@@ -40,7 +40,7 @@ import { isImplausibleResolution } from "#plausibility"
  */
 export interface RerankCandidate<T = unknown> {
 	/**
-	 * The parse's own score. Comparable to its siblings from the SAME input; not across inputs.
+	 * The parse's own score. Comparable to its siblings from the same input; not across inputs.
 	 */
 	score: number
 	/**
@@ -74,11 +74,11 @@ export interface RerankResult<T = unknown> {
 	 */
 	ranked: Array<RerankedCandidate<T>>
 	/**
-	 * The winner — the first plausible candidate, or the model's rank-1 when ALL were vetoed.
+	 * The winner — the first plausible candidate, or the model's rank-1 when all were vetoed.
 	 */
 	best: RerankedCandidate<T>
 	/**
-	 * True when the winner is NOT the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
+	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
 	 * metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it, because a rerank that never fires is a rerank
 	 * that is not earning its resolver calls.
 	 */
@@ -149,7 +149,7 @@ export async function rerankByResolution<T>(
 		try {
 			resolved = await resolveTree(candidate.tree)
 		} catch {
-			// A resolver failure is NOT evidence against the parse — treat it as "no evidence" and let
+			// A resolver failure is not evidence against the parse — treat it as "no evidence" and let
 			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 

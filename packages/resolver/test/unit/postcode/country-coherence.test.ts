@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — the only
- *   mechanism allowed to override `defaultCountry`, and the only one that runs BEFORE the walk.
+ *   mechanism allowed to override `defaultCountry`, and the only one that runs before the walk.
  *
  *   The fixture pool is the real 4-way `75001` collision, coordinates taken from the 2026-08-04
  *   candidate gazetteer: FR 48.863,2.336 (Paris 1er), US 32.960,-96.838 (ZIP 75001, Addison TX),
  *   DE 48.844,9.367, PL 54.190,16.188. The fake backend models the two things that actually cause the
- *   bug — a HARD `country` filter on every query, and population-first ranking inside the exact tier
+ *   bug — a hard `country` filter on every query, and population-first ranking inside the exact tier
  *   — so `12 Rue de Rivoli, 75001 Paris` under `defaultCountry: "US"` genuinely lands in Paris, Texas
  *   before the pass and in Paris, France after it.
  *
@@ -110,7 +110,7 @@ const PARIS_TN: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// Addison TX sits 0.3 km from ZIP 75001 — the literal collision, and the case the pass must NOT flip.
+// Addison TX sits 0.3 km from ZIP 75001 — the literal collision, and the case the pass must not flip.
 const ADDISON_TX: ResolvedPlace = {
 	id: 101_725_671,
 	name: "Addison",
@@ -320,7 +320,7 @@ const SARNEN_CH: ResolvedPlace = {
 //#endregion
 
 /**
- * Models the two backend behaviours that cause the bug: `country` is a HARD filter (a US-scoped query never returns a
+ * Models the two backend behaviours that cause the bug: `country` is a hard filter (a US-scoped query never returns a
  * foreign row — `spr.country = ?`), and within the exact tier population is the primary key (#905), so Paris TX beats
  * Paris TN. Name match is exact + case-insensitive.
  */
@@ -622,10 +622,10 @@ describe("findPostcodeCountryScope", () => {
 })
 
 /**
- * The single-sided rungs (#24). The pair test can only speak when BOTH halves are in the gazetteer, and on the
+ * The single-sided rungs (#24). The pair test can only speak when both halves are in the gazetteer, and on the
  * 2026-08-09 eu-mixed panel that condition failed 10 times for two opposite reasons — a municipal district the
  * gazetteer does not name (`Praha 3`), and a country whose postcodes the gazetteer does not carry at all (CH, BE). Each
- * rung fires only when the DEFAULT country corroborates NEITHER half, and only when its own half names exactly one
+ * rung fires only when the default country corroborates neither half, and only when its own half names exactly one
  * country.
  */
 describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
@@ -695,7 +695,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 	it("abstains when the DEFAULT country holds the locality (a domestic address whose ZIP is missing)", async () => {
 		// `123 Main St, Vienna, VA 22180` with `22180` absent from the gazetteer. `Vienna` exists in the
 		// default country, so the address is domestic-plausible and no foreign scope may be proposed —
-		// even though AT's Wien/Vienna is the only OTHER bearer.
+		// even though AT's Wien/Vienna is the only other bearer.
 		const viennaUS: ResolvedPlace = {
 			id: 900_140,
 			name: "Vienna",
@@ -790,7 +790,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 })
 
 describe("findPostcodeCountryScope — multi-value locality fallthrough", () => {
-	// `Calle Mayor 12, Aravaca, 28023 Madrid`: the model tags BOTH `Aravaca` and `Madrid` as localities.
+	// `Calle Mayor 12, Aravaca, 28023 Madrid`: the model tags both `Aravaca` and `Madrid` as localities.
 	// `Aravaca` is a neighbourhood the locality band cannot see; `Madrid` carries the ES pair. Coordinates
 	// are the live candidate rows: the ES 28023 row is Aravaca's own CP, 9.6 km from the Madrid locality.
 	const PC_28023_ES: ResolvedPlace = {
@@ -828,7 +828,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 		exactMatch: true,
 	}
 
-	// Madrid, Iowa — 1,600+ km from ZIP 28023, so the US default is NOT coherent on the second value either.
+	// Madrid, Iowa — 1,600+ km from ZIP 28023, so the US default is not coherent on the second value either.
 	const MADRID_IA: ResolvedPlace = {
 		id: 900_203,
 		name: "Madrid",

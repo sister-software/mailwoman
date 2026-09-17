@@ -22,7 +22,7 @@
  *   `mailwoman/commands/*` and imports `ink` + `react`. The drop-ins are plain `parseArgs` scripts
  *   that render no UI, and `npx @mailwoman/libpostal serve` should not pay for a TUI runtime to
  *   start an HTTP server. Hence a standalone module with its own `mailwoman/cli-kit/dropin`
- *   subpath, deliberately NOT re-exported through the barrel.
+ *   subpath, deliberately not re-exported through the barrel.
  */
 
 import { printOpenAPIDocument } from "@mailwoman/api-kit"

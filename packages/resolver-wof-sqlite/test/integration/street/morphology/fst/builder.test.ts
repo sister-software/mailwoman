@@ -43,7 +43,7 @@ describe("buildStreetMorphologyFST", () => {
 		expect(ave.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 		expect(aven.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
 
-		// Demonstrate the length filter — 'av' should NOT match under default opts.
+		// Demonstrate the length filter — 'av' should not match under default opts.
 		const av = matcher.query("av")
 		expect(av.accepting).toHaveLength(0)
 	})

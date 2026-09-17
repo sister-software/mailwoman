@@ -32,7 +32,7 @@
 #   - dep_loc hallucinations: 0 (preserved)
 #   - street recall: ≥ 27% (recovers from mid-training dip like v0.6.2 did)
 #
-# Discriminator: if v0.6.4's locality recovers AND house_number holds, the
+# Discriminator: if v0.6.4's locality recovers and house_number holds, the
 # dilution hypothesis is confirmed and v0.6.5 considers Layer 1.5 / Layer 2
 # work. If locality DOESN'T recover, the positional mechanism is dominant
 # after all, and v0.6.5 drops the venue-before-street template.

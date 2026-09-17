@@ -111,7 +111,7 @@ export const ZONING_REFUSALS = [
 	 */
 	"no_coordinate",
 	/**
-	 * No adopted plan in this product assigns a zoning designation here. NOT an absence claim: the location may be
+	 * No adopted plan in this product assigns a zoning designation here. Not an absence claim: the location may be
 	 * outside any plan area, inside one on land the plan does not zone, in a jurisdiction that has never zoned, or in one
 	 * whose records are not published — and the product cannot tell those apart.
 	 */
@@ -193,7 +193,7 @@ function toObservation(
 }
 
 /**
- * What the adopted plan assigns, in ONE wording — the authority's own code verbatim, the publisher's generic type
+ * What the adopted plan assigns, in one wording — the authority's own code verbatim, the publisher's generic type
  * beside it, and the named plan — shared by the one-line description and the marker message.
  */
 export function zoningAssignmentClause(observation: ZoningDesignationObservation): string {

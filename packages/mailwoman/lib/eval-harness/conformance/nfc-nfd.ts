@@ -138,15 +138,15 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
 }
 
 /**
- * The declared reasons a canonical transformation is NOT stateable over a given row.
+ * The declared reasons a canonical transformation is not stateable over a given row.
  *
  * - `no-canonical-variance` — the query's two canonical forms are the same bytes, so neither arm moves anything. Plain
  *   ASCII, and every script whose characters carry no canonical decomposition, land here. Such a row is the IDENTITY
  *   law wearing a canonical-form label, and its holding would be counted as evidence that the forms are handled.
- * - `already-in-target-form` — the query IS canonically variant, and it is already written in the form this arm composes
+ * - `already-in-target-form` — the query is canonically variant, and it is already written in the form this arm composes
  *   or decomposes toward, so this arm alone is the identity while its sibling states the law. Reported apart from the
  *   first reading because "this query has nothing to decompose" and "this query is already decomposed" are different
- *   absences, and the second one says which direction the row DOES state.
+ *   absences, and the second one says which direction the row does state.
  */
 export const CANONICAL_APPLICABILITY_RULES = ["no-canonical-variance", "already-in-target-form"] as const
 
@@ -155,7 +155,7 @@ export type CanonicalApplicabilityRule = (typeof CANONICAL_APPLICABILITY_RULES)[
 /**
  * One applicability reading: whether the transformation may be stated as a law for this text, and why.
  *
- * The reason is populated on BOTH verdicts, for the same reason the three shipped laws populate it on both — a row
+ * The reason is populated on both verdicts, for the same reason the three shipped laws populate it on both — a row
  * silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface CanonicalApplicability {
@@ -170,7 +170,7 @@ export interface CanonicalApplicability {
 /**
  * May `form` be stated as a canonical-form law over `text`?
  *
- * The variance rule is read FIRST: a text with no canonical variance could never have stated either arm, and that
+ * The variance rule is read first: a text with no canonical variance could never have stated either arm, and that
  * reading is more useful than one naming the direction it is already in.
  */
 export function canonicalApplicability(text: string, form: CanonicalFormName): CanonicalApplicability {
@@ -236,7 +236,7 @@ export interface CanonicalFormCoverage {
 	 */
 	transformed: number
 	/**
-	 * The eligible rows counted by the form they are ALREADY written in. This is the number that says which arms the
+	 * The eligible rows counted by the form they are already written in. This is the number that says which arms the
 	 * corpus can state: a population that is entirely NFC can state the decompose arm and nothing else.
 	 */
 	eligibleByState: Record<CanonicalFormState, number>
@@ -299,10 +299,10 @@ export function describeCanonicalFormCoverage(
  * package rather than its own overlay, so a canonical-form violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *
- * Applicability is NOT re-checked here, unlike the punctuation law's audit, because both of this law's rules are
+ * Applicability is not re-checked here, unlike the punctuation law's audit, because both of this law's rules are
  * subsumed by the classification: a pair that classifies at all has a base its own transformation moved, so neither
  * rule can fire on a classified pair. The rules do their work in the absent-arm reading, which asks about arms the
- * suite does NOT carry — a question no audit over the committed rows can pose.
+ * suite does not carry — a question no audit over the committed rows can pose.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {

@@ -370,7 +370,7 @@ async function measure(
 	let coverageVersion = "not measured"
 
 	if (needed.has("absence_observation_probe")) {
-		// `db` is deliberately NOT forwarded. The absence probe defaults the layer the executor queries to the COVERAGE
+		// `db` is deliberately not forwarded. The absence probe defaults the layer the executor queries to the coverage
 		// layer itself, and that default is the whole claim: an absence qualified by one layer's coverage while the
 		// answer came out of another is a statement about two artifacts nobody compared. A `--db` meant for the board
 		// would silently cross them.
@@ -553,7 +553,7 @@ async function measure(
 /**
  * Every pinned artifact whose observed identity differs, named with both values.
  *
- * A measurement not taken is NOT a deviation: a definition registering no absence check leaves the absence pins
+ * A measurement not taken is not a deviation: a definition registering no absence check leaves the absence pins
  * unmeasured, and reporting that as a difference would turn "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {

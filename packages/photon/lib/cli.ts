@@ -102,12 +102,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
-			// #1016: forward the client's viewport/user location as a proximity bias — a SOFT re-rank the resolver
+			// #1016: forward the client's viewport/user location as a proximity bias — a soft re-rank the resolver
 			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
-			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
+			// Boston→US). Forcing "US" here is a hard override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
 			const result = await geocodeAddress(query, {
 				classifier,
@@ -153,7 +153,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 			// Locality→postcode enrichment: an admin answer for a place whose CONTAINING postcode is
 			// unambiguous (exactly one) carries that postcode — the register/WOF attests it, the query
-			// simply never said it. Multi-postcode cities (Paris) get NOTHING: the exactly-one rule is
+			// simply never said it. Multi-postcode cities (Paris) get nothing: the exactly-one rule is
 			// the abstention, per the registry doctrine. Keyed by the resolved place's WOF id, so no
 			// name matching is involved.
 			let enrichedPostcode: string | undefined

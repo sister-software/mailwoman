@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `si-bare-village` — the Slovenian no-street counter-recipe (#901 run-2). Slovenia's rural
- *   addressing has NO street line: the village name is the street-level token and repeats as the
+ *   addressing has no street line: the village name is the street-level token and repeats as the
  *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check FALSIFIED the fr-bare-street recipe alone on
  *   exactly this class (SI resolve −3.4pp; "Apače 108" split into street "Apače 10" + house "8") —
  *   the bare-street boundary lesson generalizes onto a form where the leading name must keep its
@@ -19,8 +19,8 @@
  *   2. bare       "«V» «n», «V»"        (no postcode — the anchor-free form, the fr-bare lesson)
  *   3. pc-first   "«pc» «V», «V» «n»"
  *
- *   Gold spans: leading «V» = street (matches OA ground truth — the village IS the address line),
- *   «n» = house_number (NEVER split mid-digits), «pc» = postcode (never swallowing the neighbor),
+ *   Gold spans: leading «V» = street (matches OA ground truth — the village is the address line),
+ *   «n» = house_number (never split mid-digits), «pc» = postcode (never swallowing the neighbor),
  *   trailing «V» = locality (the binding the resolver needs).
  */
 

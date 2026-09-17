@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The plan → execute contract for external writes. `computeReleasePlan` describes what a release of
- *   THIS checkout would publish — HEAD, the version, every release workspace at its manifest version,
+ *   this checkout would publish — HEAD, the version, every release workspace at its manifest version,
  *   every weights artifact a checkout does not carry, and the destinations — and seals it under a
  *   digest. An external-write operation takes the plan file back, recomputes the plan from the
  *   checkout it is about to publish, and refuses when HEAD is dirty, HEAD moved, or the digest

@@ -40,12 +40,12 @@
 #                    re-read from the gazetteer in the languages the province writes: `Illes Balears`
 #                    and `Islas Baleares` beside `Balearic Islands`, `Córdoba` with its accent.
 #
-#                    This is the ONLY trailing-region source this run draws, and the measurement behind
+#                    This is the only trailing-region source this run draws, and the measurement behind
 #                    that sentence matters because an earlier draft of this header claimed the opposite.
 #                    The three older generations (`trailing-region-{structured,placement-v25,
 #                    leftcontext-v26}-tuples.jsonl`, ~83,000 rows, ~8,489 of them ES rows carrying the
 #                    English exonyms) were built for the 2026-08-23 arc that closed DO-NOT-SHIP, and
-#                    they are in NEITHER this corpus lineage NOR any shipped config's mixture: no
+#                    they are in neither this corpus lineage nor any shipped config's mixture: no
 #                    v0.29.0 parquet file is labeled `synth-trailing-region*`, and neither v5.0.0 nor v5.3.0
 #                    weights that source, so a row carrying it would be dropped at load anyway. The
 #                    corrected recipe output therefore replaces nothing and competes with nothing — read a
@@ -82,7 +82,7 @@
 # Grade the candidate against v5.3.0 seed 42 on the routed board plus the promotion battery, and
 # report v5.0.0 seed 42 beside it so the lineage is readable. The target metrics are the family board
 # rows (`cases/<cc>/family-*.jsonl`) and the SG register board (`cases/sg/register.jsonl`); tier-1
-# regressions remain disqualifying against BOTH arms.
+# regressions remain disqualifying against both arms.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.29.0-target-families/corpus-v0.29.0-target-families

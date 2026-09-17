@@ -10,7 +10,7 @@ requires, and a census answers a question nobody has a receipt for yet. Two disc
 all four. Each counts by pulling rows through the LOADER the trainer uses rather than reading
 parquet and reimplementing the sampler — reimplementing it is how the first digit count went wrong
 — except `country_census_raw`, which reads raw parquet precisely because the loader is the thing
-under suspicion. And each prints the census BEFORE the conditional table, so a country with no rows
+under suspicion. And each prints the census before the conditional table, so a country with no rows
 reads as "no data" rather than "a probability of zero".
 """
 
@@ -38,7 +38,7 @@ def diagnose_corpus(
     Pass ``--corpus-dir`` to point at an overlay. Pass ``--verify-country DE --verify-source
     synth-german`` to additionally PULL a few rows through the real filter and confirm they survive
     — a source whose rows are all filtered out is a run that trains on nothing and reports success.
-    This is the pre-launch "verify the loader sees the source, THEN launch" check.
+    This is the pre-launch "verify the loader sees the source, then launch" check.
     """
     import json
     import random
@@ -69,28 +69,38 @@ def diagnose_corpus(
                     print(f"  MISSING: {s['path']}")
                     break
 
-    from mailwoman_train.data.loader import _first_source, _parquet_paths
+    from mailwoman_train.data.loader import _parquet_paths, file_source_counts
 
     paths = _parquet_paths(corpus_root, "train")
     print(f"\n_parquet_paths returned {len(paths)} train parquet files")
 
+    # A file counts under every source it carries, which is what the loader's index does. Counting each file once
+    # under its first row's source hid the sources that never open a file.
     by_source: Counter[str] = Counter()
+    rows_by_source: Counter[str] = Counter()
+    multi = 0
     errors = 0
     for p in paths:
         if not p.exists():
             errors += 1
             continue
         try:
-            src = _first_source(p)
-            by_source[src] += 1
+            per_source = file_source_counts(p)
         except Exception as exc:  # noqa: BLE001
             errors += 1
             if errors <= 3:
                 print(f"  ERROR reading {p}: {exc}")
+            continue
+        if len(per_source) > 1:
+            multi += 1
+        for src, row_count in per_source.items():
+            by_source[src] += 1
+            rows_by_source[src] += row_count
 
-    print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
+    readable = len(paths) - errors
+    print(f"\nSource index ({errors} errors, {readable} readable, {multi} carrying more than one source):")
     for src, count in by_source.most_common():
-        print(f"  {src:35s} {count:4d} files")
+        print(f"  {src:35s} {count:4d} files  {rows_by_source[src]:>12,} rows")
 
     # Pre-launch verification: do rows of the target country/source actually survive the filter?
     if verify_country or verify_source:
@@ -181,7 +191,7 @@ def country_census_raw(
         for src, k in (by_source.get(c) or Counter()).most_common(5):
             print(f"        via {src}: {k:,}")
 
-    # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was ONE
+    # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was one
     # silent drop; this asks what else. Two failure modes:
     #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
@@ -223,8 +233,8 @@ def digit_prior(
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
-    but that was ONE synthetic recipe output, read off disk, unweighted. The prior the model actually sees
-    is the WEIGHTED multinomial over ~700 parquet files, after the country filter, the coarse filter,
+    but that was one synthetic recipe output, read off disk, unweighted. The prior the model actually sees
+    is the weighted multinomial over ~700 parquet files, after the country filter, the coarse filter,
     and the augmentations. Those are not decorations: `augment_glue_prob` alone rewrites token
     boundaries, which is the thing under investigation.
 
@@ -232,7 +242,7 @@ def digit_prior(
     own weights — rather than reimplementing the sampler.
 
     Reports P(tag | token) for two families:
-      - BARE digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
+      - Bare digit-ish tokens matching `\\d+[A-Za-z]?` (39A, 121, 44B).
       - By token SHAPE, so `5` / `39A` / `1234` / `75008` are not averaged into one number. A
         4-digit token in NL and a 5-digit token in FR are different questions.
 
@@ -360,7 +370,7 @@ def digit_prior(
 
     # The control: the countries whose rows actually fail in production, at the shapes that fail.
     # Absence is not a low probability — a country with no rows has no prior at all, and its
-    # failures are OOD, not mis-taught. The census prints BEFORE the conditional table so a missing
+    # failures are OOD, not mis-taught. The census prints before the conditional table so a missing
     # row reads as "no data" rather than "zero probability".
     print("\n--- COUNTRY CENSUS: rows drawn per country (absence != a prior of zero) ---")
     cc_rows: Counter[str] = Counter()
@@ -403,8 +413,8 @@ def piece_prior(
     `digit_prior` counted P(tag | token) and found P(postcode | a 2- or 3-digit token) = 0.0000 in
     every country with data. That looked like the model contradicting its corpus. It is not. The
     model never sees a token; it sees pieces, and emits one label per piece. Digits tokenize roughly
-    one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints FOUR `I-postcode` labels while
-    a 2-digit house number `[1|4]` mints ONE `I-house_number`. Longer runs are postcodes AND longer
+    one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode` labels while
+    a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes and longer
     runs mint proportionally more continuation labels, so the continuation label distribution can
     invert the token distribution — mechanically, by length. Counting at the wrong unit is how the
     first reading came out backwards.
@@ -464,7 +474,7 @@ def piece_prior(
         labels = ex.labels
 
         # Walk maximal runs of digit-bearing pieces. The run is the unit under investigation:
-        # its FIRST piece is where the model emits B-*, the rest are where it emits I-*.
+        # its first piece is where the model emits B-*, the rest are where it emits I-*.
         i = 0
         while i < len(pieces):
             if not DIGIT.search(pieces[i]) or labels[i] == IGNORE:

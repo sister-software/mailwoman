@@ -25,7 +25,7 @@ export interface PlanetaryMapConfig {
 	 * The body's own name, for prose that already sits under the title — "Search Mars", "About Mars".
 	 *
 	 * Carried rather than derived: six call sites stripped the `"Mailwoman "` prefix off {@link title} themselves, and
-	 * every one of them answers the WHOLE title the day that prefix changes, which reads as a bug in the sentence rather
+	 * every one of them answers the whole title the day that prefix changes, which reads as a bug in the sentence rather
 	 * than in the config.
 	 */
 	displayName: string

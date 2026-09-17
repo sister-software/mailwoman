@@ -43,7 +43,7 @@ export interface GeoBiasRowProps {
 /**
  * The device-location bias, as one chip in the map chrome.
  *
- * The chip's own row is NOT `.mw-map-chiprow`: that class carries an overflow-scroll and an edge-fade mask built for a
+ * The chip's own row is not `.mw-map-chiprow`: that class carries an overflow-scroll and an edge-fade mask built for a
  * dozen example chips, and inheriting it here faded the right edge of a single button for no reason.
  *
  * A failure gets a line of its own. The pressed state cannot carry it — a denial turns the chip back off, which looks

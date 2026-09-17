@@ -6,7 +6,7 @@
  *   The 404 body, ejected from `@docusaurus/theme-classic`.
  *
  *   Upstream's copy is "Please contact the owner of the site that linked you to the original URL and let them know
- *   their link is broken." On our own 404s the owner IS us, so that sentence asks the visitor to report the problem to
+ *   their link is broken." On our own 404s the owner is us, so that sentence asks the visitor to report the problem to
  *   the wrong person and offers them nowhere to go. This says what happened and hands over the four doors plus the
  *   routes people actually guess — `/pricing` and `/license` now redirect, but a mistyped doc path still lands here.
  */

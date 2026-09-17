@@ -136,7 +136,7 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
-		// One-generation grace: the v1 handle is retired but NOT yet closed.
+		// One-generation grace: the v1 handle is retired but not yet closed.
 		expect(v1.closed).toBe(false)
 
 		// A second reload (no version change) closes the retired v1 handle.

@@ -9,7 +9,7 @@
  *   indices in [0, FEATURE_DIM).
  *
  *   Why these features: script is the dominant coarse-geography signal (CJK→East Asia,
- *   Cyrillic→Eastern Europe, Arabic→MENA), and char n-grams separate WITHIN a script (Hangul→KR vs
+ *   Cyrillic→Eastern Europe, Arabic→MENA), and char n-grams separate within a script (Hangul→KR vs
  *   kana→JP vs Han-only→CN, or Dutch "straat" vs French "rue" within Latin). A linear model over
  *   both is a few hundred KB and runs in microseconds — the "always-resident, places the planet
  *   coarsely" tier.
@@ -26,7 +26,7 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * The first 11 are the original v0.5.0-corpus countries. The next 16 (#743) are EU locales the placer previously
  * couldn't emit — ambiguous names there (FI "Helsinki", PL "Rybnik") landed off-continent in the population-first
  * candidate gazetteer because no country prior pinned them. They're trained from the Overture per-country addresses
- * theme (`build-dataset.mjs`), and they're pulled OUT of the Latin off-map OTHER outlier set
+ * theme (`build-dataset.mjs`), and they're pulled out of the Latin off-map `OTHER` outlier set
  * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior change; it
  * never hard-filters, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop
  * attractors. Adding a class requires a retrain + a fresh artifact — the bundled meta.json carries its own `classes`,
@@ -60,7 +60,7 @@ export const COARSE_CLASSES = [
 	"PT",
 	"SI",
 	"SK",
-	// #244/#928 AU expansion (2026-07-06): AU was unrepresentable (not in-map) AND its 4-digit postcode
+	// #244/#928 AU expansion (2026-07-06): AU was unrepresentable (not in-map) and its 4-digit postcode
 	// is format-ambiguous, so no #928 format-prior change applies — the placer is AU's only country
 	// signal. Trained from the v0.9.2 G-NAF corpus extract (150k real Australian addresses).
 	"AU",

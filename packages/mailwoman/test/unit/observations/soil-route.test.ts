@@ -6,15 +6,15 @@
  *   #1991: the soil-capability route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built soil layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer ABSENT — which is every default construction —
+ *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
  *
  *   THE REST PIN THE THREE READINGS' JOURNEY TO A CALLER: a rated cell becomes one additive marker naming
  *   the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes
- *   the same marker with NO class and the absence shares that say why, and a location outside every built
- *   survey area raises NOTHING — an advisory there would report a survey nobody ran.
+ *   the same marker with no class and the absence shares that say why, and a location outside every built
+ *   survey area raises nothing — an advisory there would report a survey nobody ran.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

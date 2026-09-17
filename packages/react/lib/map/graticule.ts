@@ -21,7 +21,7 @@ const DEFAULT_STEP_DEGREES = 15
  * a globe projection; it has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
 /**
- * The antimeridian, in degrees. Longitude runs [-180, 180]; meridians are drawn from the first bound up to but NOT
+ * The antimeridian, in degrees. Longitude runs [-180, 180]; meridians are drawn from the first bound up to but not
  * including the second, because -180 and 180 are the same line and drawing both puts two strokes on one pixel.
  */
 const MAX_LONGITUDE = 180

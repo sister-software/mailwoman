@@ -1,25 +1,25 @@
 # === v1.9.9-bare-street-si (#901 run 2 — fr-bare-street + the SI no-street counter source) ===
-# NIGHT-31. v1.9.8 was FALSIFIED at its full check: US/CZ/PL/SK ni PASS but SI ni FAIL at 6k AND 10k
+# NIGHT-31. v1.9.8 was falsified at its full check: US/CZ/PL/SK ni pass but SI ni fails at 6k and 10k
 # (resolve -3.4pp; 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
 # "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary lesson generalizes
 # onto a form where the leading name must keep its number whole and the trailing mention must stay
-# locality-bound. Per the falsified-change rule nothing from v1.9.8 ships; THIS run pairs the source
+# locality-bound. Per the falsified-change rule nothing from v1.9.8 ships; this run pairs the source
 # with its counter-distribution: synth-si-bare-village (6,285 real OA SI village tuples, 3 orders,
 # gold = street:V / house_number:n / postcode:pc / locality:V-trailing).
-# ONE compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI recipe output, weight 6.0).
+# One compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI recipe output, weight 6.0).
 #
-# PROBE CHECK (2k, pre-registered in check-v193/RESULTS.md BEFORE launch — now WITH the failure sample,
+# PROBE CHECK (2k, pre-registered in check-v193/RESULTS.md before launch — now with the failure sample,
 # the run-1 lesson): (a) FR bare-intact >= 92% (n=40 fr-parse-recall); (b) the 37 v1.9.8-lost SI rows
 # graded end-to-end (si-lost37.jsonl): >= 30/37 resolved; (c) US 12-row spot byte-identical-ish.
-# FULL CHECK: unchanged from v1.9.8's registration (US-2k ni, CZ/PL/SK/SI 1k ni incl. SI PASS, FR
-# bare-street WIN, 17 floors).
+# FULL CHECK: unchanged from v1.9.8's registration (US-2k ni, CZ/PL/SK/SI 1k ni incl. SI pass, the
+# bare-FR street-intact rate above the shipped-pair baseline, 17 floors).
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.9-bare-street-si.yaml --resume none
 #
 # --- v1.9.8 header below for the record ---
-# === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street source on the SHIPPED spliced base) ===
+# === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street source on the shipped spliced base) ===
 # NIGHT-31 (2026-07-02, $30 cap). Restores the v4.16.0-demo-only fr-bare-street capability that the v5.1.0
-# repoint traded away — now trained ON the spliced vocab so it ships in the main line. ONE variable vs the
-# shipped v5.1.0 model: the synth-fr-bare-street source (the corpus + weights below are v1.9.4 VERBATIM,
+# repoint traded away — now trained on the spliced vocab so it ships in the main line. One variable vs the
+# shipped v5.1.0 model: the synth-fr-bare-street source (the corpus + weights below are v1.9.4 verbatim,
 # which is v1.9.3a3 + that one source).
 #
 # CASE-AUG DELIBERATELY EXCLUDED (schedule adjustment vs the night plan): v1.9.6-surface-aug-full was
@@ -33,48 +33,49 @@
 # v1.9.7 fine-tune block is the precedented idiom (fresh optimizer, lr 5e-5, warmup 200, constant).
 #
 # SEQUENCE: PROBE = 2k steps (this file as-is). Probe check (pre-registered, check-v193/RESULTS.md):
-# fr-parse-recall.ts bare-FR street-intact rate moves UP from the shipped-pair baseline AND US quick
-# samples hold. Early-kill @1k on non-decreasing loss. PASS -> RESUME this run's step-002000 ckpt with
+# fr-parse-recall.ts bare-FR street-intact rate moves up from the shipped-pair baseline and US quick
+# samples hold. Early-kill @1k on non-decreasing loss. A pass resumes this run's step-002000 ckpt with
 # max_steps bumped to 12000 (the +10k full-run precedent from v1.9.4). Full check = the night plan table.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.8-bare-street-bsplice.yaml
 #
 # --- v1.9.4 header (the source's rationale) kept below for the record ---
-# === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary WITHOUT a postcode anchor) ===
-# FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
-# Paris" FIXED, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
+# === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary without a postcode anchor) ===
+# FULL RUN (probe green: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
+# Paris" fixed, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
-# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street source) — clean attribution.
-# v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and ONE new
+# and ship the FR-up/US-held sweet spot. Same single variable (the fr-bare-street source) — clean attribution.
+# v1.9.3a3 (shipped v4.16.x) is verbatim below except: corpus_dir → the v0.9.4 overlay, and one new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
-# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new source
+# the other source_weights, LR/schedule — is identical to v193a3, so the single variable is the new source
 # (clean attribution).
 #
 # ROOT MECHANISM (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
-# comprehensive FR source (BAN, OSM) is postcode-COMPLETE, so the decoder learned the FR street→locality
-# boundary as "the token after the 5-digit postcode," NEVER as "comma + city." Strip the postcode and proper-
+# comprehensive FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
+# boundary as "the token after the 5-digit postcode," never as "comma + city." Strip the postcode and proper-
 # noun street tokens leak into the following locality ("Rue René Cassin, Paris" → street="Rue Ren",
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
-# address. NOT data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
+# address. Not data absence (BAN is in the corpus) — postcode-anchoring distribution imbalance.
 #
-# THE CHANGE (ONE variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
-# rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", NO postcode.
+# THE CHANGE (one variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
+# rendered as the missing distribution: bare comma form "<n> Rue <proper-noun name>, <City>", no postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
 # (that is quarantined to the opt-in rooftop sources). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
 # CHECK (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
 # scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) AND US/intl
-# no-regression (the per-tag floors). MOVES → imbalance confirmed → scale to a full run within the $20 cap.
-# FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
-# in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
-# v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the check.
+# no-regression (the per-tag floors). If the rate moves, the imbalance is confirmed and the fix scales to a
+# full run within the $20 cap. If it stays flat, the deficit is in the model (comma-boundary feature /
+# decoder), a different fix. conventions-loss-mask is off in this lineage already (v193a3), and FR
+# street_prefix is taught by synth-fr-admin-split today, so the v1.6.0 ~7M-loss mask blow-up does not
+# apply here. Not promoted without the operator's go-ahead plus the check.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 parquet files VERBATIM (re-rooted to /data) + the 1 fr-bare-street parquet file.
+  # v0.9.4 overlay = v0.9.3a3's 694 parquet files verbatim (re-rooted to /data) + the 1 fr-bare-street parquet file.
   corpus_dir: /data/corpus/versioned/v0.9.9-si-bare-village/corpus-v0.9.9-si-bare-village
   tokenizer_dir: /data/models/tokenizer/v0.6.0-bsplice
   max_length: 128
-  country_weights: # VERBATIM from v1.9.3a3 (22 countries) — no new locales (surgical).
+  country_weights: # Verbatim from v1.9.3a3 (22 countries) — no new locales (surgical).
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -98,7 +99,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street source.
+  source_weights: # Verbatim from v1.9.3a3 + the one new fr-bare-street source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -138,7 +139,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM from v1.9.3a3.
+model: # Verbatim from v1.9.3a3.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6

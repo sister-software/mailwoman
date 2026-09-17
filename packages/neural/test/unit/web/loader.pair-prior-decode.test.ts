@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end decode proof for the #1278 browser pair-prior wiring: a loader-built classifier (REAL
- *   `NeuralAddressClassifier` + REAL fixture tokenizer, only onnxruntime-web mocked) must thread a
- *   country-matched index's emission matrix AND its TRANSITION-BETA adjustments into the shared decode
+ *   End-to-end decode proof for the #1278 browser pair-prior wiring: a loader-built classifier (real
+ *   `NeuralAddressClassifier` + real fixture tokenizer, only onnxruntime-web mocked) must thread a
+ *   country-matched index's emission matrix and its TRANSITION-BETA adjustments into the shared decode
  *   (`buildPlacetypePairPriors` → `viterbi` — the same one-decoder-two-hosts path the node classifier
  *   runs), and must be BYTE-STABLE when no index matches the eval.
  *
  *   The fixture is `neural/test/placetype-pair-decode.test.ts`'s task-8 path-fusion lattice on the same
  *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run
- *   (8+7+7=22) that outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4 — MORE than the
- *   per-piece emission gap, LESS than β=5. So the flip to dependent_locality REQUIRES both halves to
+ *   (8+7+7=22) that outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4 — more than the
+ *   per-piece emission gap, less than β=5. So the flip to dependent_locality requires both halves to
  *   reach viterbi: without the emission matrix the dep-loc path scores ~β alone; without the transition
  *   bonus the fused street path survives (the measured emission-only miss). One assertion, both wires.
  */
@@ -42,14 +42,14 @@ vi.mock("onnxruntime-web/webgpu", () => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./loader.ts` may already sit
-// in the worker's cache — evaluated WITHOUT this file's ORT mock by an earlier file (a cached module
+// in the worker's cache — evaluated without this file's ORT mock by an earlier file (a cached module
 // never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset on the way in so
-// the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
+// the chain re-evaluates against the mock, and on the way out so the next file in this fork never
 // inherits our mocked ORT from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import AFTER the ORT mock. The tokenizer + classifier are NOT mocked here — the load runs the real
+// Import after the ORT mock. The tokenizer + classifier are not mocked here — the load runs the real
 // tokenizer + classifier so the parse below exercises the real shared decode.
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
@@ -148,14 +148,14 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
 		// δ=6 emissions alone lose by 4; β=5 alone recovers nothing without the emission mass. The flip is
-		// the proof both halves were threaded into the ONE shared decode. Here the prior comes from the
+		// the proof both halves were threaded into the one shared decode. Here the prior comes from the
 		// config-default posture pin ('en-gb'); the per-parse path is proven in the next test.
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
 
 	test("PER-PARSE selection reaches decode: a selected resolver fed as ParseOpts.placetypePair flips the SAME lattice", async () => {
-		// Load with NO country posture → NO config default. The prior can ONLY come from the per-parse
+		// Load with no country posture → no config default. The prior can only come from the per-parse
 		// selection, so the flip below is proof the selected resolver threads through the shared decode.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 		const result = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX]))

@@ -1,6 +1,6 @@
 """Assembling the Japan corpus: survey, select, render, write, report.
 
-ONE `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
+One `random.Random` runs through every stage below — the exact-selection masks, the shuffle, the
 register draw, and each per-row fraction. They share a stream, so the ORDER these stages run in and
 the order of the draws inside them decide what the corpus contains.
 `tests/mailwoman_train/countries/test_jp_build_parity.py` pins the emitted rows for that reason.
@@ -44,7 +44,7 @@ from .rows import (
 )
 from .sources import ADMIN_DB_PARTS, KENALL_PARTS, PARQUET_PARTS, KenAllIndex, iter_source_rows, load_kenall_postcodes
 
-# Municipality bucket split, IDENTICAL to the probe (md5 of the NFC space-stripped kanji, mod 100,
+# Municipality bucket split, identical to the probe (md5 of the NFC space-stripped kanji, mod 100,
 # board at >= 97). Keeping the rule byte-identical means the probe's held-out board municipalities
 # stay held out here — a Phase-4 model can be graded on the Leg-1 board without leakage.
 BOARD_BUCKET_MIN = 97

@@ -73,7 +73,7 @@ hands.
   corpus recipe. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
   applies without retrain. Shipped v4.3.0 (#478 increment 1).
 
-**The base-consistency check (the #511 lesson — run it BEFORE weighting any corpus source):** a coverage
+**The base-consistency check (the #511 lesson — run it before weighting any corpus source):** a coverage
 recipe's rows cannot outvote a contradicting base corpus. The affix source spent four releases fighting
 ~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
 every weight and architecture change failed because the equilibrium was the mixing ratio. Audit what
@@ -97,8 +97,8 @@ superseded `v5.3.0-family`, and for the same reason.
 `v5.3.0-family` is **retired for v6.x candidates**. It was calibrated against the v2.2.0-era model
 and never re-derived when the lineage moved, so by 2026-07-16 it had drifted into uselessness in both
 directions: 16 of 17 floors were slack by +1.8 to +50pp (a candidate could lose 27.9pp of
-`us.street_suffix` and PASS), while its one tight floor — `fr.postcode 99.2` — **failed the shipped
-model**. Confirmed by running the full battery on v264 itself: verdict FAIL, on that floor, alone.
+`us.street_suffix` and pass), while its one tight floor — `fr.postcode 99.2` — **failed the shipped
+model**. Confirmed by running the full battery on v264 itself: verdict `FAIL`, on that floor, alone.
 
 The v6 spec is derived from the shipped model's own readings:
 `floor = v264's reading − max(1.0pp, 2 × the metric's 95% binomial half-width)`. It **tightens 15 of
@@ -144,8 +144,8 @@ first affix audit).
 
 Plus your tag's pre-registered real-OOD acceptance bar. Pass → append the run to
 `evals/scores-by-version.json` via `mailwoman eval ledger-append` (`promotion-eval.ts` prints the
-pre-filled command on every PASS — fill in the npm semver at promote time) and write the dated
-report in `docs/articles/evals/`.
+pre-filled command on every `PASS` — fill in the npm semver at promote time) and write the dated
+report in `docs/records/evals/`.
 
 ### The full re-score cadence (standing rule, operator-approved 2026-07-02)
 
@@ -155,7 +155,7 @@ So, as a **requirement, not a virtue**:
 
 - **Every 5 promotes, or any promote that lowers a spec floor, triggers a full per-tag re-score**
   of the shipped line — the whole `promotion-eval.ts` battery against the current eval spec,
-  published as a dated `docs/articles/evals/parity-scorecard-YYYY-MM-DD.md`.
+  published as a dated scorecard under `docs/records/evals/competitive-parity/`.
 - The scorecard quotes the config-canonical bars above its tables, keeps failing rows, and marks
   any relaxed threshold (the no-silent-drift rules).
 - Grade the artifact by **explicit md5-pinned path** — for the shipped line, verify against the
@@ -171,8 +171,8 @@ drift bounded — but also found two unsigned drifts (`fr.cedex_real` −6.7, li
 The complement to the cadence rule, decided _before_ a promote needed it rather than under
 promotion pressure:
 
-1. **Between re-scores, floors are immutable contracts.** Measured == floor is a PASS — a
-   knife-edge is legal, not a defect. A promote that dips below a floor FAILS; shipping it anyway
+1. **Between re-scores, floors are immutable contracts.** Measured == floor is a `PASS` — a
+   knife-edge is legal, not a defect. A promote that dips below a floor fails; shipping it anyway
    is a spec _revision_ under the existing no-silent-drift rules (written reason, attribution,
    operator sign-off) **plus a note in that version's ledger row**, so margin erosion is visible
    in the same record as the score.
@@ -197,7 +197,7 @@ postcode floors explicitly.
 
 ### Answer-key versions are not comparable across conventions (v0.1.2 → v0.1.3, 2026-08-06)
 
-The floor policy above governs floors on a FIXED instrument. A golden version bump that changes the
+The floor policy above governs floors on a fixed instrument. A golden version bump that changes the
 LABELING CONVENTION is not that: it produces numbers that look like the old ones, are printed in the
 same cell, and mean something else. Carrying a floor across such a bump is the one way to get a
 verdict that is confidently wrong in both directions.
@@ -220,8 +220,8 @@ So, when a golden version changes a convention:
    conventions mask — two specs pointing at different golden versions are not comparable, and a
    default buried in a scorer makes that invisible.
 2. **Derive a new spec; never edit floors in place.** `v9.0.0-base.json` is the precedent.
-3. **Re-anchor the affected floors on a fresh reading of the SHIPPED baseline**, on the new key,
-   through the ship config. Floors on instruments the bump did NOT touch still ratchet
+3. **Re-anchor the affected floors on a fresh reading of the shipped baseline**, on the new key,
+   through the ship config. Floors on instruments the bump did not touch still ratchet
    (`max(old, re-derived)`); floors whose instrument changed are re-anchored outright and say so in
    `$derivation`. In v9.0.0-base that exemption is exactly two: `us.street` and `us.micro`.
 4. **The answer key carries its own convention.** A version that declares it cannot be graded under
@@ -235,7 +235,7 @@ So, when a golden version changes a convention:
 
 Any tokenizer vocab splice must run the overlap check **before grading begins**
 (`tokenizer_splice.py build-tokenizer --trained-samples <locale=sample,…>`): it computes the
-non-ASCII codepoints shared between the NEW pieces and every trained locale's character
+non-ASCII codepoints shared between the new pieces and every trained locale's character
 inventory, writes the per-locale report artifact next to the spliced tokenizer, and fails loud
 on any overlapping locale that was not explicitly accepted. Accepting a locale
 (`--accept-overlap fr,de`) is a commitment, not a waiver: a per-locale non-inferiority leg for
@@ -309,7 +309,7 @@ down.** A base run (5e-4 peak, tens of thousands of high-LR steps under a cosine
 any weight anywhere — rare classes receive enough visits and gradient updates to be carved
 into the weights. A fine-tune (1e-5, ~8k steps) can only drift a short distance from its starting
 point; that is the point (it must not destroy the base), but it has two structural consequences
-that are the SAME phenomenon mirrored:
+that are the same phenomenon mirrored:
 
 - **Rare-class forgetting** — the base knew fr.cedex; every fine-tune's gradient mass pulled
   toward its own objective and the tiny cedex islands eroded (~10/430 CA rows; measured across
@@ -324,13 +324,13 @@ Three more receipts from the same run:
 1. **Inheritance masks provenance — a from-scratch run X-rays the feed.** The shipped lineage was
    four fine-tune generations deep; capabilities trained into ANCESTOR bases on feeds that no
    longer exist ride along invisibly. The v4.0.0 run exposed one: FR venue-led competence
-   ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by inheritance — the CURRENT feed's
+   ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by inheritance — the current feed's
    `source_weights` never admitted a venue source (`synth-house-venue` is not in the map, and an
-   unlisted source is DROPPED), so the from-scratch model never saw the class and regressed on it.
+   unlisted source is dropped), so the from-scratch model never saw the class and regressed on it.
    Audit rule: **before any base run, diff the feed's `source_weights` against the capability
    surface you expect** — what is not in the map is not in the model.
 2. **The over-trust decay was a fine-tune artifact.** Every bundle-era fine-tune peaked ~4-6k and
-   decayed by 8k (constant LR). The base run's G1 grid is FLAT from 40k→60k under the cosine
+   decayed by 8k (constant LR). The base run's G1 grid stays flat from 40k→60k under the cosine
    anneal — the decay never appears. Grading every save remains cheap insurance, but the
    pathology belonged to the recipe class, not the bundle.
 3. **Floor-support calibration.** The v6.0.0 spec's margin rule falls back to 2.0pp "where a
@@ -341,8 +341,8 @@ Three more receipts from the same run:
 
 **"Can't we start and stop training at will?"** Resume-of-the-same-run: yes — optimizer +
 scheduler + step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
-completed identically-in-kind). What does NOT exist is "just continue" past the end of a cosine
-schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a NEW
+completed identically-in-kind). What does not exist is "just continue" past the end of a cosine
+schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a new
 schedule — which is a new training process with new dynamics, not a continuation. And a fine-tune
 is not a resume at all: it is a new process initialized from old weights, with the plasticity dial
 turned down ~50x. The three regimes — resume, extend, fine-tune — are distinct objects; naming

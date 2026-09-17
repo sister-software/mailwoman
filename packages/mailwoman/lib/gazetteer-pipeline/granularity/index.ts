@@ -50,7 +50,7 @@ export const LADDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Rungs measured by parent-coverage share rather than node presence — everything BELOW the locality backbone, which is
+ * Rungs measured by parent-coverage share rather than node presence — everything below the locality backbone, which is
  * the denominator those shares are taken against.
  */
 export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
@@ -145,7 +145,7 @@ function ladderPlacetypes(): string[] {
  *
  * Read-only. Three grouped queries: node counts per (country, rung) with the source split, distinct covered parents per
  * (country, rung) through `ancestors`, and the locality-class denominator. The projection runs in SQL because a parent
- * with both a borough child and a neighbourhood child must count ONCE toward `dependent_locality` — counting distinct
+ * with both a borough child and a neighbourhood child must count once toward `dependent_locality` — counting distinct
  * parents per placetype and summing in JS would double it.
  */
 export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
@@ -212,7 +212,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 
 		if (existing) return existing
 
-		// Seed EVERY rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
+		// Seed every rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
 		// measurable source at all is dropped by the caller, not left implicit here.
 		const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
@@ -263,7 +263,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 /**
  * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.
  *
- * Two presence rules, because parent-coverage is only meaningful BELOW the locality backbone — the backbone is its
+ * Two presence rules, because parent-coverage is only meaningful below the locality backbone — the backbone is its
  * denominator. At or above `locality`, a rung counts as reached when it has any nodes. Below it, when parent-coverage
  * clears `floor`.
  */

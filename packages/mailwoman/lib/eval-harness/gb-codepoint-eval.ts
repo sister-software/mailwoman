@@ -8,7 +8,7 @@
  *
  *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built FROM Code-Point Open
  *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
- *      accuracy. What it DOES measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
+ *      accuracy. What it does measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
  *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim; the
  *      data's accuracy is Ordnance Survey's.
  *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
@@ -20,8 +20,8 @@
  *
  *   Sample: a seeded, stratified draw across every Code-Point area file (every area contributes equally, so London
  *   does not drown Orkney). Rows with positional-quality 90 (no coordinate available) are skipped, matching the
- *   database build. Each sampled postcode runs THREE input legs — as published ("SW10 0AA"), lowercased and unspaced
- *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under TWO locales: the production
+ *   database build. Each sampled postcode runs three input legs — as published ("SW10 0AA"), lowercased and unspaced
+ *   ("sw100aa", the user register), and country-suffixed ("SW10 0AA, UK") — under two locales: the production
  *   default and en-GB.
  *
  *   Contains OS data © Crown copyright and database right 2026 (Code-Point Open, OGL v3).
@@ -66,7 +66,7 @@ const PQ_NO_COORDINATE = 90
 
 /**
  * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg. A mutated
- * final letter frequently lands on a REAL neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
+ * final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
  * behavior; only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
  * measured wrong on the first run (346/600 resolved), which is why this set exists.
  */
@@ -131,16 +131,16 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "as_published", input: postcode },
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
-		// The leg that CAN fail, with the pass condition depending on whether the mutant EXISTS: a real
+		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real
 		// neighbouring unit must resolve like any postcode; a mutant absent from the register demands
-		// ABSTENTION — a "corrected" postcode is a DIFFERENT postcode (the BT3 9QQ → S3 9QQ trap class).
+		// abstention — a "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
 }
 
 /**
  * Deterministically swap the final letter for its alphabet successor (Z→A), skipping letters GB unit postcodes never
- * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping INTO one guarantees the
+ * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees the
  * mutant is invalid, which is fine; the pass condition is abstention either way).
  */
 function mutateFinalLetter(postcode: string): string {

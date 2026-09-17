@@ -12,7 +12,7 @@
  *   the pre-registered 1/5/25 km protocol). Merging the two into one grader would mean either grading mailwoman on the
  *   thinner axis everywhere, or inventing a component mapping for engines that never agreed to one.
  *
- *   What the two paths DO share is everything about honest reporting, and they share it by calling the same functions:
+ *   What the two paths do share is everything about honest reporting, and they share it by calling the same functions:
  *   the input set and its denominators, {@link describeObservedRate}'s bound-carrying sentence, the bucketing behind
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
@@ -270,7 +270,7 @@ async function compareMailwomanArms(
 		ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 	}
 
-	// A diff is not a verdict (§5.5). With no truth anywhere in the set, the change count is ALL this can say.
+	// A diff is not a verdict (§5.5). With no truth anywhere in the set, the change count is all this can say.
 	const mode = resolveGradeMode(options.grade, gradeable.length > 0, "no row in this set carries expectations")
 
 	const test = significance(
@@ -290,7 +290,7 @@ async function compareMailwomanArms(
 	// §5.4, learned the hard way on 2026-08-16: this tool's first real run reported "0 of 558 differed —
 	// tight enough to read as a real absence" for a pin that was never reaching a decode at all
 	// (`geocode-session`'s parseDeps omitted `fst`, and the path parses once up front). A zero-difference
-	// result has TWO readings and the number cannot separate them, so it must not be relayed as one.
+	// result has two readings and the number cannot separate them, so it must not be relayed as one.
 	const zeroDifferenceCaveat = !differed.length
 		? "A zero here has two readings — the pin moved nothing, or the pin never ran. This comparison " +
 			"cannot separate them. Confirm participation with mwdev_trace on an input the pin should move " +
@@ -468,7 +468,7 @@ function oracleRunner(
  * entirely. The input string is the one key that means the same thing in both runs.
  *
  * A row the stored run does not carry is a no-result with that reason rather than a throw, so a set that grew by three
- * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
+ * rows is still readable on the rest. How many were missing is counted before the run and warned about, not discovered
  * from the miss rate afterwards.
  */
 async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: PathBuilderLike): Promise<ArmRunner> {
@@ -485,7 +485,7 @@ async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: Pat
 	const byInput = new Map([...replayIndex(run, spec.arm).values()].map((answer) => [answer.input, answer]))
 	const missing = set.inputs.filter((item) => !byInput.has(item.input)).length
 
-	// The confound guard is not relaxed for a recorded arm: comparing across a tree change IS comparing across a tree
+	// The confound guard is not relaxed for a recorded arm: comparing across a tree change is comparing across a tree
 	// change, and `tree_fingerprint` has to be a declared variable for the isolation reading to be `clean`.
 	const warnings = [
 		`This arm is a replay of run ${run.run_id}, recorded at ${run.created_at} against tree ` +
@@ -560,7 +560,7 @@ async function externalRunner(
  * A comparison with at least one arm that is not mailwoman.
  *
  * Everything here is the pre-registered protocol and nothing here is a choice made after seeing the numbers: the same
- * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty OR failed — a miss at every threshold.
+ * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty or failed — a miss at every threshold.
  */
 async function compareAcrossEngines(
 	registry: EngineRegistryLike,
@@ -658,7 +658,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 				)
 			}
 
-			// The protocol counts a query failure as a miss at every threshold. It stays a miss WITH its reason
+			// The protocol counts a query failure as a miss at every threshold. It stays a miss with its reason
 			// attached, and the error list keeps the count separately, so a reader can see how much of a miss rate is
 			// failure rather than absence.
 			return { lat: null, lon: null, label: null, resultType: null, noResultReason: `query failed: ${message}` }
@@ -687,7 +687,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			address_kind: item.addressKind,
 			status: item.status,
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
-			// Tri-state, and separate from `differed` ON PURPOSE: identity comparison runs only when BOTH
+			// Tri-state, and separate from `differed` on purpose: identity comparison runs only when both
 			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
 			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
 			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.

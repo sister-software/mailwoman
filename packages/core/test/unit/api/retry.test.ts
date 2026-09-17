@@ -59,7 +59,7 @@ describe("parseRetryAfterMs", () => {
 	// RFC 9110's `delay-seconds` is `1*DIGIT` only — no hex, no sign, no decimal point. `Number()` is
 	// laxer than the grammar (`Number("0x10") === 16`, `Number("1.5") === 1.5`), so a naive `Number()`
 	// parse would silently honor either as a plausible-looking wait instead of falling back long.
-	// `Date.parse("1.5")` ALSO returns a valid timestamp (~Jan 2001), which is why the HTTP-date branch
+	// `Date.parse("1.5")` also returns a valid timestamp (~Jan 2001), which is why the HTTP-date branch
 	// requires a literal `GMT` suffix before it trusts `Date.parse`.
 	it.each([["0x10"], ["1.5"], ["-30"], ["+30"], ["1e3"]])(
 		"rejects %s as delay-seconds, falling back to the long ceiling",

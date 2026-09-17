@@ -15,7 +15,7 @@
  *   mistake the projection check cannot see.
  *
  *   THE DATUM GUARD RUNS EVEN THOUGH THE ANSWER IS THE IDENTITY, AND THAT IS THE POINT. PROJ substitutes a
- *   ballpark datum shift SILENTLY when the accurate grid is missing — measured on the flood layer at 3.4 m
+ *   ballpark datum shift silently when the accurate grid is missing — measured on the flood layer at 3.4 m
  *   over an entire country, visible only as eight disagreements out of 59 against the authority's own
  *   service. For an EPSG:4326 source `projinfo` answers `Null geographic offset from WGS 84 to WGS 84, 0 m,
  *   World.` and the guard passes in one process. Skipping it on the reasoning that this source needs no
@@ -58,7 +58,7 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
 }
 
 /**
- * The shapefile holding a survey area's own OUTLINE. The footprint comes from HERE and never from the union of the
+ * The shapefile holding a survey area's own outline. The footprint comes from here and never from the union of the
  * rated polygons — `NOTCOM` and access-denied map units are inside the footprint and carry no rating, so a footprint
  * derived from the rated set would report them as unmapped when the authority has declared exactly what they are.
  */
@@ -233,7 +233,7 @@ function toDelineation(
 /**
  * Where a build's delineations come from, and what the source declares about itself.
  *
- * The builder takes ONE of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
+ * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
  * with no network and no GDAL still exercises the whole database half — the domain check, the cell classification, the
  * reduction, the coverage rows, the manifest and the seal.
  */

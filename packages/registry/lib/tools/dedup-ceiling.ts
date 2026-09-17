@@ -23,7 +23,7 @@
  *   - The org-name-similarity distribution of those pairs
  *   - The COLLISION rate: fraction with org-sim ≥ τ (irreducible over-merge) — the precision floor
  *   - Whether a shared phone would help (it doesn't: institutional switchboards) — among collisions,
- *       how often the two distinct NPIs ALSO share a phone (so phone over-links, can't separate)
+ *       how often the two distinct NPIs also share a phone (so phone over-links, can't separate)
  *       …and derives a precision/F1 CEILING under stated assumptions, with the caveats called out.
  *
  *   Run: `mailwoman registry dedup-ceiling [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7]
@@ -98,7 +98,7 @@ export async function dedupCeiling(
 	// Of the collisions, split NPI-over-segmentation (one org, many NPIs — merge is CORRECT) from
 	// genuinely-distinct co-located providers (the TRUE irreducible over-merge):
 	let collideSameAuth = 0 // share an authorized official ⇒ one org, multiple NPIs ⇒ correct to merge
-	let collideDistinct = 0 // different official AND different specialty ⇒ genuinely different providers
+	let collideDistinct = 0 // different official and different specialty ⇒ genuinely different providers
 	const PAIR_BUDGET = 5_000_000
 
 	// guard against a pathological mega-address (PO-box farms)
@@ -141,12 +141,12 @@ export async function dedupCeiling(
 	}
 
 	// Derive the precision ceiling from co-located distinct-NPI records.
-	// pairs, either merge (wrong) or hold them apart using name/org. It CAN separate the `separable`
-	// (and most `mid`) pairs but NOT the `collide` ones. So the irreducible false-merge rate among
+	// pairs, either merge (wrong) or hold them apart using name/org. It can separate the `separable`
+	// (and most `mid`) pairs but not the `collide` ones. So the irreducible false-merge rate among
 	// co-located distinct pairs is collide/pairs; an oracle's precision on the co-located decision is
 	// bounded by how many merges it makes that are correct. We report the collision rate directly and
 	// a precision-ceiling BAND (optimistic: only `collide` over-merge; conservative: `collide` + half
-	// of `mid`). Recall is NOT the binding constraint here (NPPES same-NPI records almost always share
+	// of `mid`). Recall is not the binding constraint here (NPPES same-NPI records almost always share
 	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
 	const pct = formatPercent
 

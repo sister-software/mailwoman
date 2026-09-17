@@ -46,7 +46,7 @@ import { resolvePath } from "path-ts"
 import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
 
 /**
- * The license expression the artifact carries — Overture's theme license AND the register's own, the pair the rooftop
+ * The license expression the artifact carries — Overture's theme license and the register's own, the pair the rooftop
  * tier stamps for the same input.
  */
 export const TW_DISTRICTS_LICENSE = "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"
@@ -237,7 +237,7 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 }
 
 /**
- * Build the sealed Taiwan districts database. NOT re-exported from a barrel — the command lazy-imports it
+ * Build the sealed Taiwan districts database. Not re-exported from a barrel — the command lazy-imports it
  * (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {

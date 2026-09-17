@@ -7,7 +7,7 @@
  *
  *   The fixture is the Census Bureau's own documentation example (4600 Silver Hill Rd), with the
  *   component slots filled the way the live API fills them — every value uppercase, the house number
- *   present ONLY in `matchedAddress`, and the address range on `fromAddress`/`toAddress`.
+ *   present only in `matchedAddress`, and the address range on `fromAddress`/`toAddress`.
  */
 
 import { isTransientResourceError } from "@mailwoman/core/api"

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The countries that print NO sub-locality line. Everywhere else the layout carries one.
+ *   The countries that print no sub-locality line. Everywhere else the layout carries one.
  *
  *   `%D` appears in 14 of the 197 shipped libaddressinput `fmt` strings, so transcribing the dataset alone would drop
  *   the line for 183 countries. The formatter this table replaces surfaced it for 202 of its 213 — natively where a
@@ -15,7 +15,7 @@
  *   whose first alternative is the city, which is always populated, so the slot is present in the source and never
  *   renders — while Germany names no sub-locality slot at all and still printed one, because the old formatter spliced
  *   a line in after the render for exactly that case. Each country below was rendered through the old engine with a
- *   `suburb` value against an otherwise full dict, and appears here only when the value did NOT come back AND the
+ *   `suburb` value against an otherwise full dict, and appears here only when the value did not come back and the
  *   template named the slot, which is the one combination the splice did not cover.
  *
  *   The line goes directly above the locality, which is where every template that has one puts it.
@@ -25,7 +25,7 @@
  */
 
 /**
- * ISO 3166-1 alpha-2 codes whose layout carries NO `dependent_locality` line.
+ * ISO 3166-1 alpha-2 codes whose layout carries no `dependent_locality` line.
  */
 export const NO_SUB_LOCALITY_LINE_COUNTRIES: ReadonlySet<string> = new Set([
 	"BJ",

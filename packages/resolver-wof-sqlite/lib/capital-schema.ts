@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `capital` table (#1880's distribution home): the capital-status reference carried INSIDE
+ *   The `capital` table (#1880's distribution home): the capital-status reference carried inside
  *   `candidate.db`, so an npm consumer who pulled the artifact can run `capital_tier` without the
  *   repo's `data/gazetteer/capitals-v1.json` — which published packages do not ship. One row per
  *   reference entry (241 national capitals + 3,463 admin-1 seats at the 2026-08-24 build); the
- *   loader reads the WHOLE table once into a `CapitalIndex` at session construction, so there is no
+ *   loader reads the whole table once into a `CapitalIndex` at session construction, so there is no
  *   per-probe query and no index beyond the rowid.
  *
  *   `keys` holds the entry's folded name set as a JSON array — the name-membership conjunct that

@@ -18,7 +18,7 @@
  *   too; without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
  *
- *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` — the SAME default
+ *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` — the same default
  *   `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands use for their own
  *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing database in the list wins
  *   (`admin-global-priority.db` first). The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —

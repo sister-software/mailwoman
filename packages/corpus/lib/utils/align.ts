@@ -93,7 +93,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
 	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour
-	// build. Normalize `raw` AND every component value to NFC, compute spans over the NFC raw, and
+	// build. Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and
 	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
 	const raw = row.raw.normalize("NFC")
 	const components = { ...row.components }
@@ -175,7 +175,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
  *
  * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts, so
  * a violation here is a bug in this file, not bad source data: throw (naming the row) rather than quarantine, so the
- * corruption can't ride into a corpus. Exported for every OTHER span producer (`composeAdversarialRow`'s offset
+ * corruption can't ride into a corpus. Exported for every other span producer (`composeAdversarialRow`'s offset
  * arithmetic, future synthesis paths) — any code that emits the triple without going through `alignRow` must pass its
  * output through this.
  */
@@ -295,7 +295,7 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 }
 
 /**
- * Assign BIO labels to tokens given the component spans. Components MUST be sorted by start offset. For each token,
+ * Assign BIO labels to tokens given the component spans. Components must be sorted by start offset. For each token,
  * find the first component span that contains the token's start offset; if the token is the first one inside that span
  * emit `B-<tag>`, else `I-<tag>`.
  */

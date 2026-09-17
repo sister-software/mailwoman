@@ -114,7 +114,7 @@ const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 const IDENTIFIER_SHAPE = /\d{8,}/u
 
 function checkString(value: string, path: string, inputs: readonly string[]): void {
-	// Checked FIRST because it is the only one of the three that proves a disclosure rather than
+	// Checked first because it is the only one of the three that proves a disclosure rather than
 	// suspecting one: this exact string was read from the controlled file during this run.
 	const haystack = value.toLowerCase()
 

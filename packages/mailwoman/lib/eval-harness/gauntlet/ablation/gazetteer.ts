@@ -10,7 +10,7 @@
  *       containment chain, with each ancestor's centroid and bbox. The walk is `ancestorLineage`'s (shared with the
  *       reverse geocoder, `resolver-wof-sqlite/ancestry.ts`), extended with the bbox columns this model needs; both
  *       probes are PK / `ancestors_by_id` lookups.
- *   - `wof/candidate.db` — the byte-range candidate gazetteer. The AMBIGUITY count comes from here, keyed by the SAME
+ *   - `wof/candidate.db` — the byte-range candidate gazetteer. The AMBIGUITY count comes from here, keyed by the same
  *       `normalizeLocalityForKey` the resolver probes with, so "how many places share this name" is asked of the exact
  *       table the pipeline resolves against rather than of a second, differently-normalized index.
  *

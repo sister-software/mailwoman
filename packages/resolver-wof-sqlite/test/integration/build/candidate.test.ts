@@ -10,7 +10,7 @@
  *
  *   1. **Denormalized single-probe shape** — every candidate row carries name + centroid + bbox +
  *        country/placetype codes, so a resolve is one statement (no join to spr).
- *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the SAME
+ *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the same
  *        function the query side uses; a diacritic name keys to its folded form by construction.
  *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
  *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
@@ -94,7 +94,7 @@ function buildFixtureAdmin(path: string): void {
  * extract — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord
  * ZIP + one placeholder 0,0.
  *
- * @param withNames Build the extract WITHOUT a `names` table, to cover the tolerate-and-say-so path.
+ * @param withNames Build the extract without a `names` table, to cover the tolerate-and-say-so path.
  */
 function buildFixturePostcodes(path: string, withNames = true): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -256,7 +256,7 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 
-		// Georgia the country, with NO place_population row — the measured state of 147 of 237 primary
+		// Georgia the country, with no place_population row — the measured state of 147 of 237 primary
 		// country records. Without the fallback it enters every prominence race at an asserted zero.
 		using src = new DatabaseClient<WOFDatabase>(input)
 		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
@@ -488,7 +488,7 @@ describe("buildCandidateTable", () => {
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		// Before the fix this probe returned nothing: the delivery-city names reached
-		// `place_search.alt_names` (FTS) but never the candidate table, where every row IS an
+		// `place_search.alt_names` (FTS) but never the candidate table, where every row is an
 		// exact-tier row.
 		const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
 		expect(brooklyn).toBeDefined()
@@ -542,7 +542,7 @@ describe("buildCandidateTable", () => {
 
 		const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
 		expect(page_size).toBe(8192)
-		// And the clustered table is WITHOUT ROWID (the rows ARE the B-tree).
+		// And the clustered table is WITHOUT ROWID (the rows are the B-tree).
 		const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE name='candidate'").get() as { sql: string }).sql
 		expect(sql).toMatch(/WITHOUT ROWID/i)
 	})
@@ -550,7 +550,7 @@ describe("buildCandidateTable", () => {
 	describe("the importance column (#28)", () => {
 		/**
 		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
-		 * Saint-Étienne are scored; Springfield deliberately is NOT (the unmeasured case).
+		 * Saint-Étienne are scored; Springfield deliberately is not (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
 			using db = new DatabaseClient<WOFDatabase>(path)

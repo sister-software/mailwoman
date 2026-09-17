@@ -1,8 +1,8 @@
 # === v0.9.8-affix (#452-adjacent) — street-affix coverage, the next negative-space parity change ====
-# ONE conceptual variable vs v0.9.7-unit-v3 (the shipped v4.1.0): the corpus adds a 50K format-diverse
+# One conceptual variable vs v0.9.7-unit-v3 (the shipped v4.1.0): the corpus adds a 50K format-diverse
 # street-affix recipe output (OA streets split into street_prefix/street/street_suffix via the USPS Pub-28
 # C1/C2 codex) and `synth-affix: 2.0` to source_weights. Corpus v0.4.6-affix = v0.4.5-unit-v2 base
-# (so the unit win is RETAINED) + the affix overlay recipe output. Everything else held — v0.9.3 recipe
+# (so the `unit` F1 rise is retained) + the affix overlay recipe output. Everything else held — v0.9.3 recipe
 # (anchor ON, self-cond ON, region-tail German), v0.7.2 base lineage, seed 42, 20k steps.
 #
 # WHY. The v0-parity assessment (#15) found street_prefix + street_suffix at ~0% F1 — collapsed into
@@ -22,7 +22,7 @@
 # PRE-REGISTERED CHECK (stop at 20k):
 #   - street_suffix F1 >= 70% AND street_prefix F1 >= 60% on the real-affix eval (both were ~0%).
 #   - `street` F1 >= v4.1.0 (no loss; ideally +; negative space) on golden US + the real-affix eval.
-#   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
+#   - RETAIN unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
 #   - NO-REGRESSION (within ~1pp vs v4.1.0 / v0.9.7, fp32-to-fp32): US house_number / postcode /
 #     locality / region; FR per-class floors; DE native-order locality (de-order-eval.ts).
 #   DECISION: affixes clear + street holds + unit retained + no regression check → promote candidate.
@@ -70,7 +70,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
+    # retained from v4.1.0 (v0.9.7-unit-v3), so `unit` stays at or above 88% on unit-real-designators.
     synth-unit: 1.5
     # NEW: the street-affix source. 2.0 ≈ ~6% of the epoch — two starved tags to lift, but capped to
     # avoid over-firing affixes / starving `street`. Lower to 1.5 if a street/house_number regression check trips.

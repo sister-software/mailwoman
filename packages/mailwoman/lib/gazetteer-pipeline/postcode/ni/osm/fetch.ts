@@ -9,7 +9,7 @@
  *   out for the `BT` hole that Code-Point Open leaves and that no OGL source can fill. Option (a) is
  *   licensing LPS Pointer at ~£9,224; option (c) — ship nothing — is what the GB database does today. (b)
  *   is partial and ODbL, so it lands at the **build-local tier**: this machine builds it, it never
- *   enters an npm tarball, and `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which IS the
+ *   enters an npm tarball, and `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which is the
  *   build-local mechanism. Same posture as `poi.db` and `@mailwoman/osm`.
  *
  *   ## Why one query, saved verbatim
@@ -66,7 +66,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  * The area form — `area["ISO3166-2"="GB-NIR"]->.ni; nwr(area.ni)["addr:postcode"~"^BT"];` — is the obvious way to write
  * this, and both attempts at it on 2026-08-05 ended in an HTTP 504 from `overpass-api.de`'s gateway. An `(area)` filter
  * has no index to ride: Overpass enumerates the region's elements and tests each, so the whole of Northern Ireland is a
- * full scan. The bbox rides the spatial index instead, and the same instance answered THIS query 200 with 6,681,108
+ * full scan. The bbox rides the spatial index instead, and the same instance answered this query 200 with 6,681,108
  * bytes in 36 s.
  *
  * Be careful how much that proves. Over the same fifteen-minute window `overpass-api.de` returned 504 for the bbox form
@@ -82,7 +82,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  *
  * ## The rest
  *
- * `nwr` takes nodes, ways AND relations, because OSM carries `addr:postcode` on standalone address nodes and on
+ * `nwr` takes nodes, ways and relations, because OSM carries `addr:postcode` on standalone address nodes and on
  * building polygons alike; `out center;` collapses each way/relation to its centroid so every element arrives as one
  * point.
  *
@@ -120,7 +120,7 @@ export const OSM_ATTRIBUTION =
  * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL. Mailwoman's shipped
  * gazetteer is assembled from permissive sources (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so
  * that no consumer inherits a share-alike obligation from installing an npm package. Folding OSM-derived rows into a
- * SHIPPED database would push that obligation onto every consumer of `mailwoman`, which is the outcome the whole
+ * shipped database would push that obligation onto every consumer of `mailwoman`, which is the outcome the whole
  * permissive sourcing discipline exists to avoid.
  *
  * So the artifact stays on the machine that builds it. The enforcement is not a policy document:
@@ -173,8 +173,8 @@ export interface OverpassResponse {
  * Build the Overpass client.
  *
  * `APIClient` per `AGENTS.md`: this is a small-body API request against a rate-limited volunteer host — the exact
- * population the rule binds. `minRequestIntervalMs` is set even though the acquisition issues ONE request, because an
- * unpaced client is a trap for the next caller who loops it. Retry is deliberately OFF (the `APIClient` default): an
+ * population the rule binds. `minRequestIntervalMs` is set even though the acquisition issues one request, because an
+ * unpaced client is a trap for the next caller who loops it. Retry is deliberately off (the `APIClient` default): an
  * Overpass 429/504 means the server is shedding load, and the correct response to that is to come back later by hand,
  * not to have a script re-issue a whole-region scan — which is exactly what happened on 2026-08-05, when the instance
  * flapped through five 504s and a 429 before answering. `timeout` is 10 minutes, comfortably past the query's own
@@ -196,14 +196,14 @@ export function createOverpassClient(): APIClient {
 
 export interface AcquireNIPostcodesOptions {
 	/**
-	 * Directory the response lands in. The convention is a NEW dated directory per acquisition
+	 * Directory the response lands in. The convention is a new dated directory per acquisition
 	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<YYYY-MM-DD>/`), so an acquisition never overwrites an earlier one.
 	 */
 	destDir: string
 	/**
 	 * Reuse an existing `response.json` instead of re-querying. The DEFAULT and the point: Overpass is a volunteer
 	 * endpoint and the saved response is the reproducibility artifact. Set `false` only to take a deliberate new extract
-	 * into a NEW dated directory.
+	 * into a new dated directory.
 	 */
 	reuseExisting?: boolean
 	client?: APIClient
@@ -221,7 +221,7 @@ export interface AcquireNIPostcodesOptions {
 
 export interface AcquireNIPostcodesResult {
 	/**
-	 * Absolute path of the saved response — the ONLY file the builder reads.
+	 * Absolute path of the saved response — the only file the builder reads.
 	 */
 	responsePath: string
 	/**
@@ -314,7 +314,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 		data: new URLSearchParams({ data: NI_POSTCODE_OVERPASS_QUERY }).toString(),
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		responseType: "arraybuffer",
-		// The dated directory IS the cache; a second response body in the disk cache would only be a
+		// The dated directory is the cache; a second response body in the disk cache would only be a
 		// second copy that can drift from the artifact the builder reads.
 		cache: false,
 	} as Parameters<APIClient["fetch"]>[0])
@@ -361,7 +361,7 @@ export interface NIAcquisitionSidecar {
 
 /**
  * Write `acquisition.json`. The licence block is written here rather than assembled by the caller so that every path
- * that produces a sidecar produces the SAME one — the ODbL attribution is an obligation, and an obligation that depends
+ * that produces a sidecar produces the same one — the ODbL attribution is an obligation, and an obligation that depends
  * on which branch wrote the file is an obligation waiting to be missed.
  */
 async function writeAcquisitionSidecar(

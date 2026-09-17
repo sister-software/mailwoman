@@ -78,7 +78,7 @@ const config: Config = {
 		// HTML -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
 		// font byte on a warm cache; with `font-display: swap` on every face that is a guaranteed flash of the
 		// fallback plus a full-page reflow. `preconnect` above only removes the handshake, not the discovery.
-		// Any face NOT listed here still loads lazily off the stylesheet, which is what we want for the other 44.
+		// Any face not listed here still loads lazily off the stylesheet, which is what we want for the other 44.
 		...(
 			[
 				"IoveskaNexus/WOFF2/IosevkaNexus-Regular.woff2",
@@ -209,7 +209,7 @@ const config: Config = {
 				},
 				pages: {
 					// Files in src/pages/ are auto-routed. Co-located `.ts` helpers (e.g.
-					// demo/map-helpers.ts) are NOT pages and SSG-fail ("no default export") if routed —
+					// demo/map-helpers.ts) are not pages and SSG-fail ("no default export") if routed —
 					// a latent break the install-blocked CI never surfaced. Pages here are all
 					// .tsx/.md/.mdx, so exclude `.ts`. The other entries reproduce Docusaurus's defaults
 					// (a custom `exclude` replaces them).

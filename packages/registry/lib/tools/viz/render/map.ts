@@ -12,7 +12,7 @@
  *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`) provides one through
  *       SwiftShader.
  *   - The basemap tiles come from `tiles.mailwoman.ai`, which CORS-restricts to localhost + the docs
- *       domains — so the page MUST be SERVED OVER LOCALHOST, not opened as a file (a file:// page
+ *       domains — so the page must be served over localhost, not opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
  *
@@ -27,7 +27,7 @@ import { withChromiumPage } from "#tools/viz/browser"
  */
 export interface RenderMapOptions {
 	/**
-	 * The served localhost URL of the map page (NOT a file:// path — see the module doc).
+	 * The served localhost URL of the map page (not a file:// path — see the module doc).
 	 */
 	url: string
 	/**

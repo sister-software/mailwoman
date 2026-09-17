@@ -209,7 +209,7 @@ export interface CompareContext {
 }
 
 /**
- * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its OWN result block (a
+ * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own result block (a
  * `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail) in place of the package's default
  * {@link ResultPanel}. Everything the default panel needs is passed through; the candidate-selection state stays owned
  * by the package (`useGeocode`).
@@ -263,7 +263,7 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block (present or empty), for content that reads on THIS answer.
+	 * Rendered just above the result block (present or empty), for content that reads on this answer.
 	 *
 	 * A control that reads on the model rather than on an address belongs in {@link developerExtras}: above the result it
 	 * is the first thing a visitor meets, and on a phone it pushes the answer below the fold.

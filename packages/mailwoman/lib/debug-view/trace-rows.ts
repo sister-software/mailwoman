@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `--debug` input area's evidence rows, as plain strings: what the model was told the input WAS (system,
+ *   The `--debug` input area's evidence rows, as plain strings: what the model was told the input was (system,
  *   register, locale), what it was fed (tokens, retrieval channels), and what it decided (decode, locale head).
  *   Content parity with the docs demo's dev-mode drawer (`docs/src/components/ModelVisualizer`) minus its emissions
  *   heatmap — a terminal row is not a matrix, and the priors that moved those emissions are named on the decode row
  *   instead.
  *
- *   Every function here takes the {@link GeocodeTrace} the session recorded and returns ONE line. A stage that
+ *   Every function here takes the {@link GeocodeTrace} the session recorded and returns one line. A stage that
  *   produced nothing renders {@link ABSENT} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
  *   channel band already reports, and an absent locale head is a property of the loaded bundle, not a zero. Nothing in
  *   this module derives, infers, or fills in a value the trace did not carry.
@@ -73,7 +73,7 @@ export function systemRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * The locale head's top classes as probabilities, on the head's OWN axis (`localeCountries` rides with the logits, so
+ * The locale head's top classes as probabilities, on the head's own axis (`localeCountries` rides with the logits, so
  * nothing here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
  */
 export function localeHeadRow(trace: GeocodeTrace | undefined): string {
@@ -111,7 +111,7 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
 /**
  * The retrieval channels as fed to the encoder: per channel, how many pieces carried a nonzero clue and which ones.
  *
- * "not fed" and `0/12` are DIFFERENT claims — the first is a channel with no source wired (the demo's band says so
+ * "not fed" and `0/12` are different claims — the first is a channel with no source wired (the demo's band says so
  * too), the second is a wired channel that matched nothing on this input. Collapsing them is how "why didn't my
  * gazetteer prior fire" becomes unanswerable.
  */

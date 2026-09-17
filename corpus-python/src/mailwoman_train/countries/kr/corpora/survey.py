@@ -97,7 +97,7 @@ def survey_register(juso_zip: Path, args: argparse.Namespace) -> RegisterSurvey:
 def survey_permits(permit_dir: Path, args: argparse.Namespace, index: KeyIndex) -> PermitSurvey:
     """Pass 2: measure alignment per form and per category, and average each 시군구's permit points.
 
-    The census is written to the build report BEFORE any row is selected, so the alignment rate is a
+    The census is written to the build report before any row is selected, so the alignment rate is a
     measurement of the source rather than of what survived selection.
     """
     survey = PermitSurvey()

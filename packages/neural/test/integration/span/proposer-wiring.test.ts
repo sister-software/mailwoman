@@ -115,7 +115,7 @@ describe("buildSpanProposalPriors", () => {
 		const m = buildSpanProposalPriors(proposals, pieces, LABELS)
 		expect(m[0]![1]).toBeCloseTo(0.85 * 5) // B-unit on "Unit"
 		expect(m[1]![2]).toBeCloseTo(0.85 * 5) // I-unit on "4"
-		expect(m[1]![5]).toBeCloseTo(0.3 * 5) // fused B-house_number ALSO alive on "4", weaker
+		expect(m[1]![5]).toBeCloseTo(0.3 * 5) // fused B-house_number also alive on "4", weaker
 		expect(m[2]![5]).toBeCloseTo(0.85 * 5) // split B-house_number on "22" (max over fused I-)
 	})
 

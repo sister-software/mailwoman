@@ -30,7 +30,7 @@
  *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
  *   between DIFFERENT CIKs and more than one survives corroboration, this abstains and counts it. Picking
  *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
- *   one file downstream. A pinned CIK that is among the tied survivors DOES break the tie — an operator
+ *   one file downstream. A pinned CIK that is among the tied survivors does break the tie — an operator
  *   decision about one registrant's identity is a stronger signal than a name score.
  */
 
@@ -89,7 +89,7 @@ export const EdgarSkipReason = {
 export type EdgarSkipReason = (typeof EdgarSkipReason)[keyof typeof EdgarSkipReason]
 
 /**
- * One registrant's outcome. Present for EVERY input name, including the ones that produced rows, so a report can be
+ * One registrant's outcome. Present for every input name, including the ones that produced rows, so a report can be
  * read end-to-end without joining it back to the request list.
  */
 export interface EdgarIngestOutcome {
@@ -118,7 +118,7 @@ export interface EdgarIngestReport {
 export interface EdgarIngestOptions extends CIKCorroborationOptions {
 	/**
 	 * Minimum name score a candidate must clear. Passed straight to `resolveCIKCandidates`; its default applies when
-	 * omitted. NOT a substitute for corroboration — raising it does not make a confident wrong match right.
+	 * omitted. Not a substitute for corroboration — raising it does not make a confident wrong match right.
 	 */
 	minScore?: number
 	/**
@@ -139,7 +139,7 @@ interface SubmissionsPayload {
 /**
  * Pick the one corroborated CIK for a name, or say why there isn't one.
  *
- * Corroboration runs over EVERY candidate rather than only the top-scoring one: the highest name score is exactly what
+ * Corroboration runs over every candidate rather than only the top-scoring one: the highest name score is exactly what
  * proved untrustworthy, so a lower-scoring candidate that a second source agrees with is the better answer.
  */
 async function resolveCorroboratedCIK(

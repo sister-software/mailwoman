@@ -37,7 +37,7 @@ const TWO_RESPONSIBILITIES = [
 ].join("\n")
 
 /**
- * The same two chains, each reading ONE specifier — the shape a facade of same-form wrappers takes.
+ * The same two chains, each reading one specifier — the shape a facade of same-form wrappers takes.
  */
 const ONE_SPECIFIER_EACH = [
 	`import { alpha } from "pkg-a"`,

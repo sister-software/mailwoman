@@ -16,7 +16,7 @@
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
  *   that loop; this package already depends on both.
  *
- *   The eleven hand-authored countries are NOT compared here. Those depart from the dataset on purpose, and
+ *   The eleven hand-authored countries are not compared here. Those depart from the dataset on purpose, and
  *   `@mailwoman/codex`'s own test pins each departure against its reason.
  */
 

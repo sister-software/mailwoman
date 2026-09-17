@@ -122,7 +122,7 @@ export function pathLiteralsIn(file: string, text: string, moves: readonly Modul
  * Every stale path literal the moves leave in the tracked tree, outside the moved files' own content and the dated
  * records.
  *
- * The moved files themselves ARE scanned: a `Usage:` line naming the script it sits in is the single most common
+ * The moved files themselves are scanned: a `Usage:` line naming the script it sits in is the single most common
  * instance of this, and it goes stale the moment the file moves.
  */
 export async function planPathLiteralRewrites(

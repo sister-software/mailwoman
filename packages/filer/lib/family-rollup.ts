@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `familyRollup` — the corporate-family reader. A CORPORATE FAMILY (a holding/parent/
- *   subsidiary/management tree spanning several DIFFERENT filers) is a rollup spec §4.1 keeps deliberately
- *   SEPARATE from an entity cluster (same filer, different identifiers — `cluster-filers.ts` /
- *   `filer-lookup.ts`'s `cluster` field). This module reads ONLY `filer_family`; it never touches
+ *   `familyRollup` — the corporate-family reader. A corporate family (a holding/parent/
+ *   subsidiary/management tree spanning several different filers) is a rollup spec §4.1 keeps deliberately
+ *   separate from an entity cluster (same filer, different identifiers — `cluster-filers.ts` /
+ *   `filer-lookup.ts`'s `cluster` field). This module reads only `filer_family`; it never touches
  *   `filer_cluster` or the authoritative-edge entity-clustering path, so a family membership can never be
  *   returned here as an entity-cluster member, and this reader cannot be the source of the conflation check
  *   1 (`filer-lookup.test.ts`'s `describe("§7-3b criteria")`) exists to catch.
  *
  *   Query shape mirrors `filerLookup`'s XOR discipline: exactly one of `familyID`/`nodeID` is required.
  *   Given a `familyID`, this returns that one family's membership (0 or 1 elements — see the return-shape
- *   note below). Given a `nodeID`, it resolves EVERY family (if any) that node belongs to as of that date
- *   and returns the full rollup for each — a node CAN legitimately belong to more than one family at once
- *   (a filer whose holding company differs from its management company gets two DIFFERENT family
+ *   note below). Given a `nodeID`, it resolves every family (if any) that node belongs to as of that date
+ *   and returns the full rollup for each — a node can legitimately belong to more than one family at once
+ *   (a filer whose holding company differs from its management company gets two different family
  *   memberships), and this is a normal shape, not an exceptional one to guess around or refuse:
  *   `filerLookup.ts`'s own `families` field answers the identical "which families does this node belong to"
  *   question with an array, so throwing here would make the two surfaces disagree about whether a normal
@@ -81,7 +81,7 @@ export interface FamilyRollupMember {
 	node_id: string
 	relationship: string
 	/**
-	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly THIS member's membership is evidenced. Carried here
+	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is evidenced. Carried here
 	 * even though `source` is already present, because `source` provably cannot answer the question: `edgar-exhibit-21`
 	 * writes an AUTHORITATIVE disclosure edge and an INFERRED corroboration in the same build, so one source name spans
 	 * both grades, and any caller reading strength off `source` would need a private table of which sources are
@@ -98,14 +98,14 @@ export interface FamilyRollupMember {
 
 /**
  * {@linkcode familyRollup}'s per-family result shape — a corporate family's full membership, `asOf`-scoped.
- * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`, unlike the OTHER family type
- * this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`, which answers "which families does ONE node belong to."
- * This is the inverse view, "who belongs to THIS family," so `relationship` lives per-member instead.
+ * Deliberately carries no `cluster_id`-shaped key and no single top-level `relationship`, unlike the other family type
+ * this SDK exports, `filer-lookup.ts`'s `FilerLookupFamily`, which answers "which families does one node belong to."
+ * This is the inverse view, "who belongs to this family," so `relationship` lives per-member instead.
  *
- * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is NEVER deduped (provenance plurality:
- * two different sources asserting the same node's membership both survive as separate entries, as do two DIFFERENT raw
+ * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is never deduped (provenance plurality:
+ * two different sources asserting the same node's membership both survive as separate entries, as do two different raw
  * spellings one member reported for the same family), so `members.length` alone over-counts whenever more than one row
- * corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which IS already deduped (one entry
+ * corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped (one entry
  * per node) — without this field, a caller sizing a family by array length would get an inconsistent answer depending
  * on which rollup they read. It counts distinct member NODES, never rows, so widening `filer_family`'s primary key
  * cannot inflate it.
@@ -193,7 +193,7 @@ export async function familyRollup(
 
 	const nodeID = query.nodeID!
 
-	// Resolve EVERY family this node belongs to as of asOf — same half-open predicate as every other temporal read
+	// Resolve every family this node belongs to as of asOf — same half-open predicate as every other temporal read
 	// in this module. Never throws on >1 result: a node carrying both a
 	// HoldingCompany and a ManagementCompany family membership is a normal, builder-emitted shape.
 	const nodeFamilyRows = await db

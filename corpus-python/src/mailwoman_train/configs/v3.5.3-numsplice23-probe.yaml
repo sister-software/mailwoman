@@ -2,42 +2,49 @@
 #
 # THE ONE VARIABLE vs v3.5.2-numsplice3-probe: the splice RANGE adds the 2-digit pieces. v0.11.2-
 # numsplice23 adds word-start 10-999 (+988) vs numsplice3's 100-999 (+900). So `11` -> `▁11` (the
-# FR date-name DAY win the 3-digit reduce forgoes) and `178` -> `▁178`, while `1945`/`6000`/`90210`
-# STAY multi-piece (`▁194,5` / `▁600,0` / `▁902,1,0`). English letters byte-identical.
+# 2-digit day of an FR date-name street, which the 100-999 range leaves multi-piece) and `178` ->
+# `▁178`, while `1945`/`6000`/`90210` stay multi-piece (`▁194,5` / `▁600,0` / `▁902,1,0`). English
+# letters byte-identical.
 #
-# WHY. The 3-digit probe (v352) CONFIRMED the guard: parity postcode held at 0.986 (0 regressions) vs
-# the full range's 0.889 (-9.7pp) — the cost was carried entirely by the 4-5 digit pieces. But 3-digit
-# forgoes half the FR date-name win (0.367 vs the full range's 0.682) because date streets carry 2-digit
-# days (`11 Novembre`) and 4-digit years, and 100-999 splices neither. 2-digit pieces (10-99) CANNOT
-# collide with a 4-5 digit postcode, so adding them should recover the date-name 2-digit half while
-# keeping the postcode guard clean. This probe tests whether 10-999 STRICTLY DOMINATES 100-999.
-# (scratchpad/deepparse-cmp/NUMSPLICE3-verdict.md has the full v352 read.)
+# WHY. The 3-digit probe (v352) showed that keeping 4-5 digit numbers multi-piece prevents the
+# postcode regression: parity postcode held at 0.986 (0 regressions) against the full range's 0.889
+# (-9.7pp), so the 4-5 digit pieces account for the whole postcode drop. But the 100-999 range
+# delivers only half of the full range's FR date-name rise (0.367 vs 0.682), because date streets
+# carry 2-digit days (`11 Novembre`) and 4-digit years, and 100-999 splices neither. A 2-digit piece
+# (10-99) cannot collide with a 4-5 digit postcode, so adding the 2-digit pieces should recover the
+# day half of the date-name rise while parity postcode stays at 0.986. This probe tests whether
+# 10-999 STRICTLY DOMINATES 100-999. (scratchpad/deepparse-cmp/NUMSPLICE3-verdict.md has the full
+# v352 read.)
 #
 # init_from /data/models/numsplice23-expanded (v310 step-008000, token_embeddings FVT mean-init'd to
 # 74,131 — each 10-999 row = mean of its digit constituents; encoder/heads byte-identical).
 #
 # PRE-REGISTERED READ:
-#   PRIMARY (must at least MATCH v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
+#   PRIMARY (must at least match v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
 #     Polskiego 178` -> house_number; contextful classes hold at v352's recovered levels.
-#   THE 2-DIGIT WIN (the reason to prefer 10-999) — FR date-name rises ABOVE v352's 0.367 toward the
-#     full range's 0.682. If it does NOT, the 2-digit pieces add nothing and 3-digit is the reduce.
-#   GUARD (must HOLD) — parity postcode holds at ~0.986 (as v352 did); board 3 bare-pc holds; the 6
-#     demo presets hold. If postcode drops, a 2-digit piece IS colliding — unexpected; 3-digit is the reduce.
+#   THE 2-DIGIT QUESTION (the reason to prefer 10-999) — FR date-name rises above v352's 0.367 toward
+#     the full range's 0.682. If it does not, the 2-digit pieces add nothing and the 100-999 range is
+#     the one to keep.
+#   POSTCODE (must not drop) — parity postcode holds at ~0.986 (as v352 did); board 3 bare-pc holds; the 6
+#     demo presets hold. If parity postcode drops, a 2-digit piece is colliding, which is unexpected,
+#     and the 100-999 range is the one to keep.
 #   DO-NO-HARM — FR fragment OVERALL + global parity hold.
 #
 # DECISION TABLE:
-#   guard HOLDS + date-name UP -> 10-999 dominates; take THIS to 8k, then promote.
-#   guard HOLDS + date-name FLAT -> 2-digit adds nothing; take 100-999 (v352) to 8k instead.
-#   guard DROPS -> a 2-digit piece collides (unexpected); fall back to 100-999 (v352).
+#   Parity postcode holds at ~0.986 and FR date-name rises above 0.367 -> 10-999 dominates; train this
+#     config to 8k, then promote.
+#   Parity postcode holds and FR date-name stays at 0.367 -> the 2-digit pieces add nothing; train
+#     100-999 (v352) to 8k instead.
+#   Parity postcode drops -> a 2-digit piece collides (unexpected); fall back to 100-999 (v352).
 #
-# NOT A SHIP. A PASS justifies an 8k. Promotion is the operator's act.
+# Not a ship. A pass justifies an 8k. Promotion is the operator's act.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.3-numsplice23-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.11.2-numsplice23
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -61,7 +68,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -106,7 +113,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5

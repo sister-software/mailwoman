@@ -9,7 +9,7 @@
  *   tested) under bare node — see `geometry.node.test.ts`.
  *
  *   WHY NOT `@mailwoman/spatial`: the only truly-spatial primitive here is the bbox half-diagonal (a
- *   great-circle-ish distance). `@mailwoman/spatial` exposes `haversineKm`, but ONLY via its root barrel,
+ *   great-circle-ish distance). `@mailwoman/spatial` exposes `haversineKm`, but only via its root barrel,
  *   which pulls `@mailwoman/core` + `h3-js` + `wkx` — a heavy, partly node-only graph — into what must
  *   stay a lightweight, browser-only map bundle (the `@mailwoman/react/map` subpath). The original
  *   `_map-helpers.ts` made the same call: a planar `kmPerDeg` approximation, local, no dependency. We
@@ -87,7 +87,7 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 }
 
 /**
- * A circle of an EXACT radius in meters — for the street-level uncertainty (#377): a 10 m situs floor or a calibrated
+ * A circle of an exact radius in meters — for the street-level uncertainty (#377): a 10 m situs floor or a calibrated
  * interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km floor for admin fallbacks), this
  * honors small radii so an exact building reads as a tight dot (an ~8 m floor keeps a 10 m situs circle visible).
  */
@@ -99,7 +99,7 @@ export function radiusCircleGeometry(lat: number, lon: number, radiusM: number):
 
 /**
  * Bounding box of a Polygon / MultiPolygon, for `fitBounds`. Walks the nested coordinate arrays, so it handles both a
- * single-ring polygon and a multi-part polygon uniformly. Antimeridian-crossing geometry is NOT normalized (the naive
+ * single-ring polygon and a multi-part polygon uniformly. Antimeridian-crossing geometry is not normalized (the naive
  * min/max is returned) — matching the ported behavior; callers that need a wrapped bbox must handle it upstream.
  */
 export function geomBounds(geometry: PlaceGeometry): PlaceBBox {

@@ -59,7 +59,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What they're supposed to do.** Give the classifier a head start on boundary discovery. Instead of the model having to learn "these tokens belong together" purely from BIO label statistics, the phrase grouper's structural cues (punctuation, capitalization, hyphenation) provide a prior. The model can then focus on "what type is this span?" rather than jointly discovering boundaries and types.
 
-**Whether they helped.** Unclear from the current data — we haven't run h384 + CE-only WITHOUT phrase priors on A100 to isolate the contribution. The 0.633 vs 0.621 delta between v0.5.1 and v0.5.0 conflates h384 + phrase priors + class weights + direct batch + more steps. An ablation (h384 + CE-only + phrase priors OFF) would isolate it.
+**Whether they helped.** Unclear from the current data — we haven't run h384 + CE-only without phrase priors on A100 to isolate the contribution. The 0.633 vs 0.621 delta between v0.5.1 and v0.5.0 conflates h384 + phrase priors + class weights + direct batch + more steps. An ablation (h384 + CE-only with the phrase priors disabled) would isolate it.
 
 ## Loss settings
 

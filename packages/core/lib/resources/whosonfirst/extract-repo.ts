@@ -56,7 +56,7 @@ export async function resolveWOFRepo(
 /**
  * The `data` directory of a country's repository, or `null` when the repository is not cloned.
  *
- * The pairing every reader needs: {@link readWOFFeature} takes roots that already point INTO `data`.
+ * The pairing every reader needs: {@link readWOFFeature} takes roots that already point into `data`.
  */
 export async function resolveWOFDataDir(
 	reposRoot: PathBuilderLike,

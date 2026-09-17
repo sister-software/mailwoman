@@ -1,4 +1,4 @@
-"""The `rate=` figure on the console step line, which reports throughput for THIS process.
+"""The `rate=` figure on the console step line, which reports throughput for this process.
 
 A resumed run inherits the step counter but not the seconds. Dividing the absolute step by time-since-start reported
 103.70 steps/s on a run resumed at 35,000 whose real rate was 5.42, and the figure fell every line as `elapsed` grew

@@ -249,7 +249,7 @@ function destructuredSwap(base: string): TestNode {
 }
 
 /**
- * `tmp = base[i]; base[i] = base[j]; base[j] = tmp` — two index WRITES to one base.
+ * `tmp = base[i]; base[i] = base[j]; base[j] = tmp` — two index writes to one base.
  */
 function temporarySwap(base: string): TestNode {
 	const write = (index: string): TestNode => ({
@@ -270,7 +270,7 @@ test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or
 
 	expect(destructured).toHaveLength(1)
 	expect(destructured[0]).toContain("`@mailwoman/core/random`")
-	// The home is `shuffleWith`, NOT `SeededRandom.shuffle`. Three of the four copies could not use the class: each pins
+	// The home is `shuffleWith`, not `SeededRandom.shuffle`. Three of the four copies could not use the class: each pins
 	// its own stream, and the class seeds mulberry32 internally. Naming it would send a reader to the one home that
 	// cannot serve them.
 	expect(destructured[0]).toContain("shuffleWith")

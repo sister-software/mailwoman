@@ -12,7 +12,7 @@
  *        the Overture places theme on S3, per-country predicate pushdown into local Parquet. The
  *        Places schema's category/brand columns are STRUCTs whose shape has churned across releases
  *        (the `taxonomy` property is newer than `categories`); {@linkcode chooseCategoryColumn} +
- *        {@linkcode hasBrandColumn} are PURE functions over a `DESCRIBE` result, so the column-choice
+ *        {@linkcode hasBrandColumn} are pure functions over a `DESCRIBE` result, so the column-choice
  *        logic is unit-testable without touching the network (see `overture-places-schema.test.ts`).
  *   2. {@linkcode buildPOIDatabase} — stream rows (from the ingested Parquet by default, or an
  *        injected `Iterable`/`AsyncIterable<POISourceRow>` for tests) into a `poi_stage` staging
@@ -25,7 +25,7 @@
  *   Build-on-copy: `build-candidate.ts` (the closer anchor for "dictionaries + clustered
  *   materialize") writes DIRECTLY to its output path (removing any
  *   stale file first) and lets the caller `sealDatabase` once the connection closes — no
- *   `<out>.building`-suffix temp-swap. This builder mirrors THAT precedent rather than the
+ *   `<out>.building`-suffix temp-swap. This builder mirrors that precedent rather than the
  *   `admin/index.ts` staging-suffix + `VACUUM INTO` dance (which exists there for a much longer,
  *   multi-source, resumable build where a mid-build crash mustn't corrupt a promoted artifact); a
  *   single-pass POI build has no such intermediate-promotion concern, and `sealDatabase` itself
@@ -175,7 +175,7 @@ export interface BBox {
  * explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found here" — never conflate it with a cell
  * absent from `layer_coverage` entirely (unsurveyed/unknown, the contract's meaning-of-zero rule).
  *
- * Rows whose H3 cell falls OUTSIDE the bbox's own polyfilled cell set are not represented in the returned coverage
+ * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented in the returned coverage
  * (their observed count is silently uncounted) — acceptable because `bbox` is expected to describe the same extract
  * region the rows were pulled from; a caller passing a bbox narrower than its rows' actual extent will undercount.
  *
@@ -191,7 +191,7 @@ export function bboxCoverageCells(
 	for (const row of rows) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) continue
 
-		// Derive the coverage cell from the SAME res-9 cell the row is keyed by — `cellToParent(res9Cell,
+		// Derive the coverage cell from the same res-9 cell the row is keyed by — `cellToParent(res9Cell,
 		// resolution)` — never a direct `latLngToCell(row, resolution)`. Matches the default (non-override)
 		// coverage path below (~:592) and every reader (`res9ShortCellToRes6Parent` in
 		// bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts). H3's cell hierarchy is not
@@ -309,7 +309,7 @@ export interface BuildPOIResult {
 	 */
 	categories: number
 	/**
-	 * ISO country code → rows kept for it (skipped rows are NOT counted).
+	 * ISO country code → rows kept for it (skipped rows are not counted).
 	 */
 	countries: Map<string, number>
 	/**
@@ -369,7 +369,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		}
 
 		/**
-		 * ISO country code → rows kept for it (skipped rows are NOT counted).
+		 * ISO country code → rows kept for it (skipped rows are not counted).
 		 */
 		/**
 		 * Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan).
@@ -482,8 +482,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			createdAt: opts.createdAt ?? new Date().toISOString(),
 		})
 
-		// Coverage is SOURCE-LEVEL, not survey completeness: a res-6 cell we have Overture Places rows in
-		// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is NOT a
+		// Coverage is source-level, not survey completeness: a res-6 cell we have Overture Places rows in
+		// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is not a
 		// claim about how complete Overture's own Places extraction is within that cell. A cell absent
 		// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
 		// (missing = unknown, never `{completeness: 0}`).
@@ -495,7 +495,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
 		// reads the basis and refuses; one reading `completeness` alone would have concluded the opposite.
 		//
-		// An override entry MAY carry its own `completeness`/`basis` — the only way a cell in this pipeline
+		// An override entry may carry its own `completeness`/`basis` — the only way a cell in this pipeline
 		// reaches an exclusion-grade basis. Omitting either falls back to the source-present pair above, so a
 		// caller that has not measured completeness cannot claim one by accident.
 		coverageCells = opts.coverageCellsOverride
@@ -516,7 +516,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 		progress("finalize", "ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// page_size MUST be set right before VACUUM (node:sqlite initializes the file at the 4096 default
+		// page_size must be set right before VACUUM (node:sqlite initializes the file at the 4096 default
 		// on `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size)
 		// — the same discipline build-candidate.ts uses.
 		kdb.exec("PRAGMA page_size=8192")

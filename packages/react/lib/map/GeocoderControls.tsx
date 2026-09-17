@@ -187,7 +187,7 @@ export function GeocoderControls({
 	 */
 	const overscrollRef = useRef<{ startY: number; pointerId: number } | null>(null)
 
-	// The detents exist only where the panel IS a drawer. The desktop column is sized by its content and has nothing
+	// The detents exist only where the panel is a drawer. The desktop column is sized by its content and has nothing
 	// to drag towards, so every pointer gesture there is a scroll or a click.
 	const isDrawerLayout = () => globalThis.window !== undefined && globalThis.matchMedia(DRAWER_LAYOUT).matches
 
@@ -201,7 +201,7 @@ export function GeocoderControls({
 	}, [])
 
 	/*
-	 * The WHOLE header is the grab target, not just the pill: that is the part of a sheet a thumb lands on, and the
+	 * The whole header is the grab target, not just the pill: that is the part of a sheet a thumb lands on, and the
 	 * pill alone is a 3rem strip to hit. The field and the close keep their own gestures.
 	 */
 	const onHeaderPointerDown = useCallback(
@@ -236,7 +236,7 @@ export function GeocoderControls({
 	)
 
 	/*
-	 * The two-detent toggle, in ONE place. A tap on the bar, Enter on the pill, and the `aria-expanded` the pill
+	 * The two-detent toggle, in one place. A tap on the bar, Enter on the pill, and the `aria-expanded` the pill
 	 * reports are the same question asked three ways, and they were three copies of `(medium + large) / 2` — one of
 	 * them the literal `0.7`, which is that midpoint written out by hand and silently wrong the moment a detent moves.
 	 */
@@ -428,8 +428,8 @@ export function GeocoderControls({
 	/*
 	 * Escape dismisses the result, matching `MapSheet`.
 	 *
-	 * ONLY WHILE NOTHING IS OVER IT. `MapSheet` binds the same key for its own sheet and both listeners are on the
-	 * document, so Escape over an open About or Layers panel closed that panel AND threw away the result behind it —
+	 * Only while nothing is over it. `MapSheet` binds the same key for its own sheet and both listeners are on the
+	 * document, so Escape over an open About or Layers panel closed that panel and threw away the result behind it —
 	 * one keystroke, two dismissals, the second of them invisible until the panel came away.
 	 */
 	useEffect(() => {
@@ -475,7 +475,7 @@ export function GeocoderControls({
 	const bundleLoading = Boolean(loading && !runtime.ready)
 	const steps = loading?.stepLabels.length ?? 0
 
-	// The model downloads BEFORE the first step is entered, so the step fraction holds at 1/steps for the whole of a
+	// The model downloads before the first step is entered, so the step fraction holds at 1/steps for the whole of a
 	// 38 MB transfer — the part of the wait a visitor actually sits through. While bytes are arriving the bar follows
 	// them, scaled into the first step's share so it never runs backwards when the steps take over.
 	const stepFraction = steps ? ((loading?.stepIndex ?? 0) + 1) / steps : null
@@ -489,7 +489,7 @@ export function GeocoderControls({
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
 			{/*
-			 * ONE surface owns the search, the examples and the result — the arrangement the reference map apps use.
+			 * One surface owns the search, the examples and the result — the arrangement the reference map apps use.
 			 * They used to be two: a floating pill at the top and a separate bottom sheet, which is what put the search
 			 * field in the same row as the control rail (the rail won, and covered its right end) and left a phone with
 			 * a result sheet it could not get back from.
@@ -515,7 +515,7 @@ export function GeocoderControls({
 				<div className="mw-map-panel__header" onPointerDown={onHeaderPointerDown}>
 					<div className="mw-map-panel__grip">
 						{/*
-						 * The handle appears only WITH a result. With the drawer holding a search field and a row of examples
+						 * The handle appears only with a result. With the drawer holding a search field and a row of examples
 						 * there is nothing behind it to pull into view, and a handle offered over nothing either expands a band
 						 * of empty glass or reads as broken — the same fault as the decorative handle it replaced.
 						 */}
@@ -566,7 +566,7 @@ export function GeocoderControls({
 								onChange={(event) => geocode.setText(event.target.value)}
 								// The field ships pre-filled with the demo address, so the first click used to drop a caret in the
 								// middle of it and the visitor typed into someone else's address. Select the seed on focus so one
-								// keystroke replaces it — and only while it IS the untouched seed, so this never eats real work.
+								// keystroke replaces it — and only while it is the untouched seed, so this never eats real work.
 								onFocus={(event) => {
 									if (placeholder && event.currentTarget.value === placeholder) {
 										event.currentTarget.select()

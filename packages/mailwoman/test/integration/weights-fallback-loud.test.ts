@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1108 — the CLI's weights fallback must be LOUD, never silent, while KEEPING the encoder-less
+ *   #1108 — the CLI's weights fallback must be loud, never silent, while keeping the encoder-less
  *   structural fallback so `npx mailwoman parse …` quick demos still produce output.
  *
- *   These integration tests drive the compiled CLI (`mailwoman/out/cli.js`) with weights forced ABSENT
+ *   These integration tests drive the compiled CLI (`mailwoman/out/cli.js`) with weights forced absent
  *   (a locale with no weights workspace package + an empty $HOME so the user weights cache is empty too)
  *   or a bad explicit `--model`/`--tokenizer` (the corrupt/partial-bundle surrogate — a load error that
  *   `resolveWeights` raises deterministically, without needing a real onnx graph). Each asserts that:
  *
  *   1. a warning lands on STDERR (never STDOUT — piped stdout parsing must stay clean), and
- *   2. degraded structural output is STILL produced on STDOUT with exit 0 (the fallback is kept, not
+ *   2. degraded structural output is still produced on STDOUT with exit 0 (the fallback is kept, not
  *      turned into a hard-fail), and
  *   3. weights-ABSENT ("not found — install …") is distinguished from a weights LOAD error ("failed to
  *      load — Encoder error: …", the underlying cause surfaced rather than swallowed).
@@ -171,7 +171,7 @@ describe("#1108 loud weights fallback — weights LOAD error surfaced, not swall
 		)
 
 		expect(code).toBe(0)
-		// Corrupt/partial → surface the cause, do NOT mislabel it "not installed".
+		// Corrupt/partial → surface the cause, do not mislabel it "not installed".
 		expect(stderr).toContain("neural weights failed to load")
 		expect(stderr).toContain(tokenizerPath)
 		expect(stderr).not.toContain("neural weights not found")

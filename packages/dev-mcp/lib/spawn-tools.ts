@@ -180,7 +180,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				}
 
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
-				// JSON-RPC channel. The eval ALSO runs its own recompile-before-eval guard, stricter than this one and meant
+				// JSON-RPC channel. The eval also runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
 				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? tempRootPath(`mwdev-check-${jobs.list().length}`)
@@ -338,7 +338,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 					// A running job still reports what it has produced so far, clearly marked — a partial log is useful and
 					// a silent "not ready" is not.
 					partial: job.state === "running",
-					// A graded FAIL exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
+					// A graded `FAIL` exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
 					// reads as a crash, and the two need different responses — say which happened.
 					...(job.state === "failed" && report.verdict
 						? {

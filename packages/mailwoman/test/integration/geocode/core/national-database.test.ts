@@ -8,7 +8,7 @@
  *   resolver — no WOF / weights / databases / 7 GB BAN db needed. Pins the tier contract:
  *
  *   - a non-US parse consults `nationalDatabases` (BAN) AHEAD of `osmDatabases` — BAN wins where it covers;
- *   - BAN carries its own postcode + commune, so it sets NO bbox fall-through (unlike the OSM tier);
+ *   - BAN carries its own postcode + commune, so it sets no bbox fall-through (unlike the OSM tier);
  *   - when no national register covers the country, the cascade falls through to the OSM tier;
  *   - a US parse never consults BAN (the US situs path owns address points);
  *   - absent `nationalDatabases`, the cascade is byte-stable — the tier is purely additive.
@@ -67,8 +67,8 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 		})
 
 		expect(seen[0]?.addressPoints).toBe(banLookup)
-		// Bbox fall-through is ON for the national tier (2026-07-10): the register's ROWS carry
-		// postcode + commune, but the QUERY often doesn't — and BAN communes are INSEE-arrondissement-
+		// Bbox fall-through is enabled for the national tier (2026-07-10): the register's rows carry
+		// postcode + commune, but the query often doesn't — and BAN communes are INSEE-arrondissement-
 		// granular, so a city-level locality probe ("paris") misses "paris 13e arrondissement". The
 		// resolved locality's box scopes the (street, number) probe instead (fr-chevaleret-bare).
 		expect(seen[0]?.addressPointBboxFallback).toBe(true)
@@ -87,7 +87,7 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 		})
 
 		expect(seen[0]?.addressPoints).toBe(osmLookup)
-		// The OSM tier's points carry no scope tag, so its bbox fall-through IS enabled.
+		// The OSM tier's points carry no scope tag, so its bbox fall-through is enabled.
 		expect(seen[0]?.addressPointBboxFallback).toBe(true)
 	})
 

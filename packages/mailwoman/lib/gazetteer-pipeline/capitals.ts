@@ -5,14 +5,14 @@
  *
  *   Build `data/gazetteer/capitals-v1.json` — the CAPITAL-STATUS reference (#1880): every national
  *   capital (`PPLC`) and first-order administrative seat (`PPLA`) in the GeoNames gazetteer dumps,
- *   each carrying its coordinate AND its folded name set (name + romanization + alternate names).
+ *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
  *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country +
  *   proximity + name membership — all three conjuncts, because the first board run matched on
  *   coordinates alone and promoted capital-ADJACENT namesakes (North Salt Lake beside the Utah
  *   seat) instead of capitals; the alternate names are what keep exonym rows ("Vienna" for Wien)
  *   matching without a hand-kept exonym list.
  *
- *   Feature codes are matched EXACTLY: `PPLA2`–`PPLA4` (lower-order seats) and `PPLCH` (historical
+ *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `PPLCH` (historical
  *   capital) stay out. `countryInfo.txt` — the same source's own catalog — grades the extraction:
  *   a catalog country whose dump yields no `PPLC` row, and a catalog capital NAME that matches none
  *   of the extracted rows' names, are both recorded in the coverage block rather than silently
@@ -45,7 +45,7 @@ export interface CapitalReferenceEntry {
 	level: "national" | "admin1"
 	/**
 	 * Folded name keys (name + romanization + alternate names) — the consumer's name-membership conjunct, which is what
-	 * keeps the coordinate radius from promoting a capital's same-name neighbours. Folded with the SAME
+	 * keeps the coordinate radius from promoting a capital's same-name neighbours. Folded with the same
 	 * `normalizeLocalityForKey` the candidate gazetteer keys with.
 	 */
 	k: string[]
@@ -67,7 +67,7 @@ export interface CapitalsReference {
 		missing_dumps: string[]
 		/**
 		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump (GeoNames' postal exports share the
-		 * basename). NOT counted as scanned: a wrong-format file cannot answer the capital question, and "scanned, found
+		 * basename). Not counted as scanned: a wrong-format file cannot answer the capital question, and "scanned, found
 		 * none" would be the partial-reader lie.
 		 */
 		wrong_format: string[]

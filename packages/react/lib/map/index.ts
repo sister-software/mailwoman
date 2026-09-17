@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/react/map` — the geocoder map surface, kept behind its OWN subpath so `maplibre-gl`
+ *   `@mailwoman/react/map` — the geocoder map surface, kept behind its own subpath so `maplibre-gl`
  *   / `react-map-gl` (WebGL + DOM at import) never enter the package-root graph. Importing this subpath
  *   pulls the map deps; importing `@mailwoman/react` (root) does not. Consumers who only want the
  *   parse/POI explorers never pay for maplibre.

@@ -20,11 +20,11 @@
  *
  *   The inline synthesis (the OA-CSV reader, the ordinal/all-caps tables, the canonical + reversed
  *   renderers) is ported faithfully from the root build script it replaced. This is a
- *   `generate`-mode recipe that still reads REAL tuples off disk — `--count` bounds the OUTPUT, not
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output, not
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  *
- *   NOT ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
+ *   Not ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
  *   (it reads the finished file back with a separate PRNG and prints to stderr; the recipe's output
  *   stream is still open during `run`), and the dead `renderReversed` helper (the legacy `main`
  *   inlined the variant logic and never called it).

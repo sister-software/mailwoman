@@ -82,7 +82,7 @@ const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
 /**
  * Whether the lines rendered so far print the largest unit first — the region ahead of the street.
  *
- * Read off the skeleton rather than from a country list. The generator runs BEFORE the layout it is writing exists, so
+ * Read off the skeleton rather than from a country list. The generator runs before the layout it is writing exists, so
  * it cannot consult `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts; the `fmt` in hand
  * carries the same statement. A hand-kept list here held JP, CN, TW and KR while the dataset printed largest-first for
  * IR, KP and KZ as well, and those three took a trailing country line.
@@ -161,7 +161,7 @@ function layoutSource(
 	// the line goes before the locality; a largest-first one prints the locality before the street, so the line goes
 	// after it — and after the whole line, since a skeleton like `%S%C` keeps the region and the locality together,
 	// and a district spliced ahead of that line would print above the region. A skeleton that puts the street and the
-	// locality on ONE line (`%A %C`) takes the slot inside that line, between the two, for the same reason.
+	// locality on one line (`%A %C`) takes the slot inside that line, between the two, for the same reason.
 	if (!NO_SUB_LOCALITY_LINE_COUNTRIES.has(code) && !named.has("dependent_locality")) {
 		const street = `\${${streetNode}}`
 		const localityLine = lines.findIndex((line) => line.includes("${locality}"))
@@ -221,7 +221,7 @@ for (const file of await Globerator.files("json", {
 	const metadata = await readLocalJSONFile<AddressMetadata>(join(specsDirectory, file))
 	const order = STREET_ORDERS[code] ?? "number-first"
 
-	// The Latin skeleton is emitted for a hand-authored country too. The hand-authored table states ONE order per
+	// The Latin skeleton is emitted for a hand-authored country too. The hand-authored table states one order per
 	// country, so a country whose two scripts disagree has no way to carry the second there, and Hong Kong is the case
 	// that shows it: its hand-authored layout is the Latin one, which leaves the Chinese order unreachable.
 	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {

@@ -11,26 +11,26 @@
  *   Fixture: 3 known blocks (SF, NY, and a THIRD block — "DIVERGENT" — chosen because its directly
  *   -indexed res-6 cell disagrees with its res-9 cell's H3 hierarchy parent, see below) × 2
  *   providers each at SF/NY, distinct techs/speeds landing in 3 different speed buckets, plus one geoid
- *   that is NEVER fed to the builder at all (criterion 2's "absent from the fixture" block). Criteria 1–4 below
+ *   that is never fed to the builder at all (criterion 2's "absent from the fixture" block). Criteria 1–4 below
  *   query only `[GEOID_SF, GEOID_NY]` (or subsets), so DIVERGENT doesn't perturb their hand-counts
  *   — it's exercised only by the coverage-cell unification tests that need it.
  *
- *   Three properties the four criteria do NOT pin on their own, each with its own describe block below:
+ *   Three properties the four criteria do not pin on their own, each with its own describe block below:
  *
- *   - **Builder and reader must derive a block's res-6 coverage cell the SAME way.** H3's cell hierarchy
+ *   - **Builder and reader must derive a block's res-6 coverage cell the same way.** H3's cell hierarchy
  *     is not geometrically exact: `latLngToCell(centroid, 6)` and `cellToParent(latLngToCell(centroid,
  *     9), 6)` disagree for ~6% of real points. Derive the two sides independently and a genuinely
  *     surveyed block reads back as `unknown_block_count` while its own rows still populate `filings` — a
- *     self-contradiction. `build-bdc.ts` derives both `h3_cell` and the coverage cell from the SAME full
+ *     self-contradiction. `build-bdc.ts` derives both `h3_cell` and the coverage cell from the same full
  *     res-9 index; see that file's docstring. The "builder/reader coverage-cell unification" describe
  *     block below proves the agreement holds even for the DIVERGENT block, chosen specifically because
- *     the two derivations DO disagree there (asserted inline first, so the test cannot pass vacuously).
+ *     the two derivations do disagree there (asserted inline first, so the test cannot pass vacuously).
  *   - **criterion 2 must exercise `readLayerCoverage`, not the zero-rows shortcut.** A geoid absent from the
  *     fixture derives no candidate cell at all, so it is classified unknown before the coverage check is
  *     ever reached — a criterion 2 built only on that block stays green with the coverage branch deleted
- *     outright. "criterion 2 (extended)" below adds a geoid that HAS rows but whose `layer_coverage` row is
+ *     outright. "criterion 2 (extended)" below adds a geoid that has rows but whose `layer_coverage` row is
  *     deliberately deleted post-build (a genuine coverage-check exercise), plus an `h3Cells`-form query
- *     against a cell that was never surveyed at all — that branch is the ONLY path for an `h3Cells`
+ *     against a cell that was never surveyed at all — that branch is the only path for an `h3Cells`
  *     query, which has no "zero rows" shortcut available to it.
  *   - **The SQL `CASE` and the JS `speedBucketForDownloadSpeed` mirror must not drift.** "speed bucket
  *     boundaries" below is a table test over the exact boundary values plus a dedicated SQL-vs-JS
@@ -71,7 +71,7 @@ const GEOID_NY = "360610001001001"
 // directly-indexed res-6 cell (`latLngToCell(_, 6)`) disagrees with its res-9 cell's H3 hierarchy parent
 // (`cellToParent(latLngToCell(_, 9), 6)`) — the exact divergence class builder/reader unification guards.
 const GEOID_DIVERGENT = "510090101001001"
-// Deliberately NEVER passed to `buildBDCDatabase` at all — criterion 2's "absent from the fixture" block.
+// Deliberately never passed to `buildBDCDatabase` at all — criterion 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
 
 const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
@@ -96,7 +96,7 @@ const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
 
 /**
- * 5 rows, one location each (`includeLocationIDs` stays default-off; ONE row per (geoid, provider, technology) triple
+ * 5 rows, one location each (`includeLocationIDs` stays default-off; one row per (geoid, provider, technology) triple
  * keeps the block-grain collapse a no-op, so `result.rows` and the hand-computed census in criterion 3 agree without
  * any surprise collapsing):
  *
@@ -211,7 +211,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		using db = openFixture()
 		const contractDB = db
 
-		// Independent honesty check on the fixture: an area NEVER fed to the builder carries no
+		// Independent honesty check on the fixture: an area never fed to the builder carries no
 		// coverage row at all — proves the "absence" below is real, not an artifact of the query.
 		const neverSurveyedRes6 = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
@@ -223,7 +223,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		const withUnknown = await filingLandscape(db, { geoids: [GEOID_SF, GEOID_NY, GEOID_UNKNOWN] })
 
 		expect(withUnknown.unknown_block_count).toBe(1)
-		// surveyed_block_count is UNCHANGED by the unknown geoid's presence in the query — it's never
+		// surveyed_block_count is unchanged by the unknown geoid's presence in the query — it's never
 		// folded in as a (zero-filing) survey result.
 		expect(withUnknown.surveyed_block_count).toBe(knownOnly.surveyed_block_count)
 		expect(withUnknown.surveyed_block_count).toBe(2)
@@ -237,8 +237,8 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 describe("filingLandscape — Check 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
 	// criterion 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
-	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
-	// deleted, and (b) an `h3Cells` query — which has NO rows-based shortcut available at all — against a cell that
+	// it red. These two tests target that branch directly: (a) a geoid with rows whose coverage row is deliberately
+	// deleted, and (b) an `h3Cells` query — which has no rows-based shortcut available at all — against a cell that
 	// was never surveyed.
 	it("(a) a geoid with real rows but a deleted coverage row is unknown, and its rows do not leak into filings", async () => {
 		await using coverageScratch = await temporaryDirectory("bdc-filing-landscape-coverage-corrupt-")
@@ -265,7 +265,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		const sfCoverageCell = res9ShortCellToRes6Parent(sfRow.h3_cell)
 
 		const contractDB = writable
-		// Sanity: the builder DID write this coverage row, at the cell the reader derives — deleting it below is a
+		// Sanity: the builder did write this coverage row, at the cell the reader derives — deleting it below is a
 		// deliberate corruption, not a pre-existing gap.
 		expect(await readLayerCoverage(contractDB, sfCoverageCell)).toBeDefined()
 
@@ -277,7 +277,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 		expect(result.unknown_block_count).toBe(1)
 		expect(result.surveyed_block_count).toBe(1)
 
-		// SF's rows must NOT leak into filings now that SF is unknown: the SF-only (PROVIDER_B/tech40/25-100)
+		// SF's rows must not leak into filings now that SF is unknown: the SF-only (PROVIDER_B/tech40/25-100)
 		// entry must be absent entirely, and the gigabit entry PROVIDER_A/tech50 shares with NY must drop from
 		// block_count 2 to 1 (NY only) — never silently kept at 2 as if SF still counted as surveyed.
 		expect(result.filings).toEqual([
@@ -289,7 +289,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 	it("(b) an h3Cells query against a never-surveyed cell is unknown, never a zero-filing claim", async () => {
 		using db = openFixture()
 
-		// h3Cells mode has NO "zero rows" shortcut — the cell is supplied directly, so this is the ONLY code path
+		// h3Cells mode has no "zero rows" shortcut — the cell is supplied directly, so this is the only code path
 		// that can classify it, proving the coverage-check branch itself (not a rows-existence proxy) is what runs.
 		const neverSurveyedRes9Cell = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 9) as H3Cell
@@ -314,7 +314,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 			.where("geoid", "=", GEOID_DIVERGENT)
 			.executeTakeFirstOrThrow()
 
-		// Prove this is a genuinely divergent point BEFORE trusting the rest of the test: the independent
+		// Prove this is a genuinely divergent point before trusting the rest of the test: the independent
 		// derivation — `latLngToCell(centroid, 6)`, taken without reference to the stored res-9 cell — disagrees
 		// with the reader's hierarchy-parent derivation for this exact point. If this assertion ever stops holding
 		// (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh brute-force
@@ -349,7 +349,7 @@ describe("filingLandscape — Check 3: hand-verified census", () => {
 		expect(result.surveyed_block_count).toBe(2)
 		expect(result.unknown_block_count).toBe(0)
 
-		// Hand-computed: PROVIDER_A/tech 50/gigabit appears at BOTH blocks (block_count 2); each
+		// Hand-computed: PROVIDER_A/tech 50/gigabit appears at both blocks (block_count 2); each
 		// PROVIDER_B row is distinct per block (25-100 at SF only, under-25 at NY only).
 		expect(result.filings).toEqual([
 			{ provider_id: PROVIDER_A, technology_code: 50, speed_bucket: BDC_SPEED_BUCKET_GIGABIT, block_count: 2 },
@@ -429,8 +429,8 @@ describe("speed bucket boundaries", () => {
 	})
 
 	describe("SQL CASE agrees with the JS mirror at every boundary", () => {
-		// One geoid per boundary value, all at the SAME centroid (the geoid string, not location, is what
-		// `filingLandscape` groups on) — same provider/tech throughout, so the ONLY thing that can split the
+		// One geoid per boundary value, all at the same centroid (the geoid string, not location, is what
+		// `filingLandscape` groups on) — same provider/tech throughout, so the only thing that can split the
 		// resulting groups is the SQL CASE's bucketing of `max_advertised_download_speed`.
 		const BOUNDARY_PROVIDER = 999_001
 		const BOUNDARY_TECH = 99

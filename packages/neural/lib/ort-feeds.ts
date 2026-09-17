@@ -33,7 +33,7 @@ export interface InferEvidenceChannels {
 }
 
 /**
- * THE `infer()` signature — one exported type for the three call surfaces that previously restated it
+ * The `infer()` signature — one exported type for the three call surfaces that previously restated it
  * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` contract).
  *
  * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
@@ -78,7 +78,7 @@ export interface InferResult {
 	 * tokens, typed `SEGMENT_TYPES[segmentTypeIdx]` (that axis ships in the weights bundle's `semi-crf-transitions.json`,
 	 * never hardcoded — the PLACETYPE_ORDER class).
 	 *
-	 * Absent on every pre-v3 bundle, so consumers MUST treat undefined as "no span decode available" and fall back to the
+	 * Absent on every pre-v3 bundle, so consumers must treat undefined as "no span decode available" and fall back to the
 	 * BIO path. Fetching it costs ~0.75 ms (CPU, S=128); a runtime that never reads it pays nothing (ORT prunes the
 	 * unfetched branch) — measured in `docs/articles/evals/2026-07-15-v301-phase2-export.md`.
 	 */
@@ -199,7 +199,7 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order. EVERY channel is conditioned on the graph's
+ * Pack every soft-feed channel the graph declares, in feed-name order. Every channel is conditioned on the graph's
  * declared inputs: a supplied channel the graph does not declare is never fed (an undeclared feed crashes ORT), and a
  * declared channel the caller did not supply gets the zero-fill confidence=0 identity so the session never throws on a
  * missing required input. The anchor channel historically skipped the declared-input check on the supplied path — an
@@ -326,7 +326,7 @@ export function decodeInferOutput(
  * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
  * is the channel-off identity, but a model TRAINED with the channel is OOD when scored without it. Cards without a
  * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still protects them.
- * Conventions/bridge are NOT graph-observable (no dedicated input), so they're left undeclared here — only the card
+ * Conventions/bridge are not graph-observable (no dedicated input), so they're left undeclared here — only the card
  * declares them.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {

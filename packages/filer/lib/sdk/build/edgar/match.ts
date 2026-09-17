@@ -7,7 +7,7 @@
  *   The join is on the CANONICALIZED organization name, which is what makes the match possible and what limits it:
  *   `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American
  *   Broadband Corp"` all onto `"american broadband"` (verified), so a canonical hit provably cannot tell three
- *   companies apart. Grouping therefore keeps the FULL bucket per canonical name, so a caller can abstain on a
+ *   companies apart. Grouping therefore keeps the full bucket per canonical name, so a caller can abstain on a
  *   collision, and the score grades what the canonical form threw away. The two answer different questions — WHETHER
  *   to write an edge, versus how far to trust the one written — and neither substitutes for the other.
  */
@@ -27,8 +27,8 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 export const EDGAR_MATCH_SCORE_IDENTICAL_RAW_NAME = 0.9
 
 /**
- * The score when the two raw names differ only in what canonicalization normalizes WITHOUT deleting — case,
- * punctuation, accents, `&`/`and`, a leading `The`, whitespace — while carrying the SAME legal designations (`"ACME
+ * The score when the two raw names differ only in what canonicalization normalizes without deleting — case,
+ * punctuation, accents, `&`/`and`, a leading `The`, whitespace — while carrying the same legal designations (`"ACME
  * FIBER, LLC"` vs `"Acme Fiber LLC"`). Real formatting variance between two filings of one company's name, so
  * meaningfully weaker than a byte-identical match but not the ambiguous case below.
  */
@@ -38,8 +38,8 @@ export const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
  * The score when the two raw names differ in their LEGAL DESIGNATIONS — `"American Broadband LLC"` (499) vs `"American
  * Broadband, Inc."` (Exhibit 21). Weak on purpose: canonicalization is what erased the only part of the string that
  * distinguished them, so the match is resting on a token it deliberately threw away. The abstention in
- * {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does NOT cover this — it only fires on a collision
- * WITHIN the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one FRN matches and
+ * {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does not cover this — it only fires on a collision
+ * within the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one FRN matches and
  * the edge is written. That edge may well be the wrong company; this number says so.
  */
 export const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
@@ -94,7 +94,7 @@ export interface CanonicalNameCandidate {
  * Groups `legalNameByFRN` (the in-memory map {@linkcode buildFilerDatabase}'s form499 loop builds) by CANONICAL name —
  * "which FRNs share this exact canonical legal name" — the input {@linkcode processEdgarSubsidiaryRow}'s corroboration
  * match reads. A canonical name shared by two or more distinct FRNs is a genuine collision (the same
- * false-identity-link hazard `edgar-filings.ts`'s `resolveCIKCandidates` documents), so the caller must see the FULL
+ * false-identity-link hazard `edgar-filings.ts`'s `resolveCIKCandidates` documents), so the caller must see the full
  * bucket rather than just "the first match" — abstaining on a multi-member bucket is `processEdgarSubsidiaryRow`'s job,
  * not this function's.
  */

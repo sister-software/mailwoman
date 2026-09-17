@@ -8,8 +8,8 @@
  *
  *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation, capitalization,
  *   hyphenation, format-shape repetition). No place-name dictionaries — a `LOCALITY_PHRASE`
- *   proposal means "this looks shaped like a multi-word capitalized run that COULD be a city name",
- *   not "this IS a city name". Typing the span is the classifier's job; this layer only answers "do
+ *   proposal means "this looks shaped like a multi-word capitalized run that could be a city name",
+ *   not "this is a city name". Typing the span is the classifier's job; this layer only answers "do
  *   these tokens belong together?".
  *
  *   Per "possibilities not constraints", rules emit overlapping proposals freely. The reconciler
@@ -70,7 +70,7 @@ function isStreetSuffix(token: string): boolean {
  * capitalized first-segment text the locality rule proposes, and on OOD intl input the model can't type it either — so
  * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-verification).
  *
- * Street-TYPES only — deliberately NOT the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
+ * Street-TYPES only — deliberately not the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
  * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category; per-locale
  * breadth belongs in a future rule pack, not an exception pile.
  */
@@ -119,11 +119,11 @@ function isStreetPrefix(token: string): boolean {
 }
 
 /**
- * Lowercase connective particles that live INSIDE multi-word place names — the Romance/Germanic glue that bridges two
+ * Lowercase connective particles that live inside multi-word place names — the Romance/Germanic glue that bridges two
  * capitalized content words: "Las Palmas **de** Gran Canaria", "San Pietro **in** Casale", "Alphen **aan den** Rijn",
  * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This is a BOUNDED linguistic category (place-name
  * connectives), not a gazetteer or a stopword dump — and it only ever fires when bracketed by capitalized content on
- * BOTH sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle through.
+ * both sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle through.
  * Keep coverage to the connectives that actually bridge place-name tokens; growing it into a per-locale stopword list
  * is the wrong move — that pressure belongs on the gazetteer/reconciler, not here.
  */
@@ -174,7 +174,7 @@ const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 
 /**
  * A short lowercase particle fused via apostrophe to a capitalized name — the Italian/French elision that the tokenizer
- * keeps as ONE token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as place-name CONTENT (it carries the proper
+ * keeps as one token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as place-name CONTENT (it carries the proper
  * noun), so it can both start and continue a locality run.
  */
 function isFusedParticleName(s: string): boolean {
@@ -182,7 +182,7 @@ function isFusedParticleName(s: string): boolean {
 }
 
 /**
- * Place-name content token: a capitalized word OR an apostrophe-fused particle name (`nell'Emilia`).
+ * Place-name content token: a capitalized word or an apostrophe-fused particle name (`nell'Emilia`).
  */
 function isPlaceNameContent(s: string): boolean {
 	return startsCapitalized(s) || isFusedParticleName(s)
@@ -367,7 +367,7 @@ export function scoreRegionAbbreviation(
 
 		if (!isRegionAbbreviation(t.body)) continue
 		// A region code is canonically standalone — the tail of "City, ST ZIP", never immediately
-		// followed by another place-name word. When the next token IS place-name content (and not
+		// followed by another place-name word. When the next token is place-name content (and not
 		// itself a region abbreviation or a street suffix), this token is the HEAD of a multi-word
 		// place name ("SAN" NAZARIO, "DI" CASTELLO — common in all-caps intl data where every short
 		// word matches the 2-3-uppercase shape), not a region. Suppressing the region proposal here
@@ -379,7 +379,7 @@ export function scoreRegionAbbreviation(
 		}
 
 		// Position cue: last token in a segment (canonical region slot) → high confidence. Anywhere
-		// else, moderate. Anywhere in the LAST segment → slightly elevated (region is canonically the
+		// else, moderate. Anywhere in the last segment → slightly elevated (region is canonically the
 		// final non-postcode component).
 		const atTail = i === tokens.length - 1
 		const confidence = atTail ? 0.85 : segmentIsLast ? 0.7 : NEUTRAL_PROPOSAL_CONFIDENCE
@@ -398,7 +398,7 @@ export function scoreRegionAbbreviation(
  * `HYPHENATED_COMPOUND` rule: tokens containing an internal hyphen. Captures `NY-NY` (venue disambiguation case),
  * `Saint-Denis` (French locality compound), `10118-1234` (ZIP+4 written as a single token).
  *
- * Internal hyphen is the cue; the rule doesn't pre-judge what the compound MEANS — that's typing (classifier) or
+ * Internal hyphen is the cue; the rule doesn't pre-judge what the compound means — that's typing (classifier) or
  * reconcile work. A high confidence here just says "this is one unit, not two".
  */
 export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -532,7 +532,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 /**
  * Longest locality phrase proposed, in tokens — "Las Palmas de Gran Canaria" is 5.
  *
- * Bounds BOTH the emitted proposals and the forward walk that finds them. Those must stay tied: the walk exists only to
+ * Bounds both the emitted proposals and the forward walk that finds them. Those must stay tied: the walk exists only to
  * measure the run this cap will clamp anyway, so letting it range further is work whose result is discarded, and it is
  * quadratic on a long capitalized run where every start index walks to the end.
  */
@@ -564,7 +564,7 @@ export function scoreLocalityPhrase(
 		}
 
 		// Walk forward grabbing place-name content. Bridge connective particles (lowercase "de"/"in" or
-		// all-caps "DI"/"DEL") ONLY when a content token follows within a short run (≤2 consecutive
+		// all-caps "DI"/"DEL") only when a content token follows within a short run (≤2 consecutive
 		// particles: "aan den Rijn"), so a dangling "Palmas de" at end-of-segment doesn't extend the
 		// run. Stop on digits, street suffixes, and NON-particle region abbreviations ("Springfield IL"
 		// must not absorb "IL").
@@ -617,7 +617,7 @@ export function scoreLocalityPhrase(
 			const startTok = tokens[i]!
 			const endTok = tokens[i + len - 1]!
 
-			// Never end a proposal ON a connective particle ("Las Palmas de" / "CITTÀ DI" is not a place).
+			// Never end a proposal on a connective particle ("Las Palmas de" / "CITTÀ DI" is not a place).
 			if (isPlaceNameParticle(endTok.body)) continue
 			const spanText = text.slice(startTok.start, endTok.end)
 			const isRegionName = len === 1 && US_REGION_NAMES.has(spanText.toLowerCase())
@@ -643,16 +643,16 @@ export function scoreLocalityPhrase(
 				confidence: Math.min(0.95, confidence),
 			})
 		}
-		// Do NOT skip past the run — let i++ advance normally so every capitalized token gets a
+		// Do not skip past the run — let i++ advance normally so every capitalized token gets a
 		// chance to emit single-token proposals from its own starting position. (Saint Petersburg
-		// needs `Saint`, `Petersburg`, AND `Saint Petersburg`; a run-skip would lose `Petersburg`.)
+		// needs `Saint`, `Petersburg`, and `Saint Petersburg`; a run-skip would lose `Petersburg`.)
 	}
 
 	return out
 }
 
 /**
- * `VENUE_PHRASE` rule: capitalized run containing a venue-marker noun (Steakhouse, Hotel, etc.) OR containing a
+ * `VENUE_PHRASE` rule: capitalized run containing a venue-marker noun (Steakhouse, Hotel, etc.) or containing a
  * hyphenated compound + ≥1 capitalized word.
  *
  * The shape "NY-NY Steakhouse" — the kryptonite case the reconciler eventually needs to lift the NY tokens off REGION —

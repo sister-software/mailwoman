@@ -4,7 +4,7 @@
     modal run -m launch.train_remote::grade_street_type_contrast --step=3000
     modal run -m launch.train_remote::grade_evidence_bundle --step=3000 --zero=both
 
-These run in the training image because the model does. A contrast forwards the SAME checkpoint
+These run in the training image because the model does. A contrast forwards the same checkpoint
 twice — once with a channel as computed, once with it zeroed — so the difference is the channel and
 not a second training run; that is the only shape in which a feature's contribution is readable
 without a second GPU spend.
@@ -159,10 +159,10 @@ def eval_de(
 )
 def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: bool = False, case: str = "asis") -> None:
     """P-A VERDICT (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A). The street_type feature ON/OFF contrast on
-    the SAME retrained checkpoint — the clean, fully-controlled read of "does street-type INPUT evidence
-    improve street<->locality discrimination." For each ban-fragments-fr row we build the FULL feature
+    the same retrained checkpoint — the clean, fully-controlled read of "does street-type input evidence
+    improve street<->locality discrimination." For each ban-fragments-fr row we build the full feature
     set (anchor + gazetteer + country + street_type, faithful to training) via encode_row, run forward
-    TWICE (street_type_features as-computed, then zeroed), argmax-decode the street span, and compare to
+    twice (street_type_features as-computed, then zeroed), argmax-decode the street span, and compare to
     the gold street. The ON-OFF street-match delta per class is the verdict; the P-C classes (admin-
     street-homonym / bare-street / street-particle) are where the evidence hypothesis lives."""
     import json
@@ -239,7 +239,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
+            # argmax leaves behind. Not the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 
@@ -321,7 +321,7 @@ def grade_evidence_bundle(
     heal: bool = False,
     fixture: str = "ban-fragments-fr.jsonl",
 ) -> None:
-    """v3.16.0 VERDICT — the bundle ON/OFF contrast on the SAME checkpoint. ON = all channels as
+    """v3.16.0 VERDICT — the bundle ON/OFF contrast on the same checkpoint. ON = all channels as
     computed (anchor/gazetteer/country/street_type/locality_surface); OFF = the two BUNDLE channels
     zeroed (the ablation column — pre-registered leg 3 compares it to v385's P0 fixture numbers).
     Same scoring as grade_street_type_contrast."""
@@ -367,7 +367,7 @@ def grade_evidence_bundle(
     anchor = load_anchor_lookup(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup.json")
 
     STREET_TAGS = {"street", "street_prefix", "street_suffix", "street_prefix_particle"}
-    # Channel attribution (`zero`): which channels the OFF column zeroes — both | street | locality | none.
+    # Channel attribution (`zero`): which channels the ablated arm zeroes — both | street | locality | none.
     BUNDLE = {
         "both": ("street_type", "locality_surface"),
         "street": ("street_type",),
@@ -385,8 +385,8 @@ def grade_evidence_bundle(
             input_ids=torch.tensor([feats["input_ids"][:n]]),
             attention_mask=torch.tensor([feats["attention_mask"][:n]]),
         )
-        # Model-capability-aware feeding: a channel is fed only when THIS model carries it — the
-        # v385 reference row (no bundle channels) grades through the SAME instrument without raising.
+        # Model-capability-aware feeding: a channel is fed only when this model carries it — the
+        # v385 reference row (no bundle channels) grades through the same instrument without raising.
         has = {
             "anchor": getattr(model, "use_postcode_anchor", False),
             "gazetteer": getattr(model, "use_gazetteer_anchor", False),
@@ -418,7 +418,7 @@ def grade_evidence_bundle(
         if heal:
             # heal-approx (production enforceWordConsistency's core): per whitespace word, majority
             # char vote on street-membership — arbitrates the mid-word piece truncations the raw
-            # argmax leaves behind. NOT the full TS heal (no punctuation-separator/byte checks);
+            # argmax leaves behind. Not the full TS heal (no punctuation-separator/byte checks);
             # labeled heal-approx in every report.
             import re as _re
 

@@ -239,7 +239,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
-		// The retired spelling parses, and carries NO default — a default here would make the alias look supplied on
+		// The retired spelling parses, and carries no default — a default here would make the alias look supplied on
 		// every run and shadow the current flag's own.
 		if (option.deprecatedName) {
 			definitions[option.deprecatedName] = {
@@ -455,7 +455,7 @@ export function booleanValue(values: Record<string, unknown>, name: string): boo
 }
 
 /**
- * A boolean flag with NO schema default: unstated stays `undefined` so the library default applies downstream, and only
+ * A boolean flag with no schema default: unstated stays `undefined` so the library default applies downstream, and only
  * a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
  */
 export function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {

@@ -68,7 +68,7 @@ export interface RankingWeights {
 	 */
 	populationScaleLog10: number
 	/**
-	 * Tier candidates with an EXACT name/alias match above candidates that only match partially, BEFORE the weighted-sum
+	 * Tier candidates with an exact name/alias match above candidates that only match partially, before the weighted-sum
 	 * score is consulted. Default true.
 	 *
 	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance signal): the
@@ -79,7 +79,7 @@ export interface RankingWeights {
 	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
 	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge — so "Portland, ME"
 	 * resolves its region to Missouri and the locality then cascades to the wrong state. Tiering restores the intended
-	 * ordering: **match quality is the primary key, prominence (population) the secondary key WITHIN a tier.**
+	 * ordering: **match quality is the primary key, prominence (population) the secondary key within a tier.**
 	 * Springfield-IL-over-MA still works (both exact → same tier → population decides); ME→Maine now works (only Maine is
 	 * exact → higher tier → population never gets to override it). See
 	 * docs/articles/evals/resolver-geo/2026-05-30-resolver-exact-match.md.
@@ -90,7 +90,7 @@ export interface RankingWeights {
 	 */
 	exactMatchTiering: boolean
 	/**
-	 * #936 option 3 — official-language names ARE names. When true, a candidate holding the query as an OFFICIAL name
+	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an OFFICIAL name
 	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
 	 * NAME-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
@@ -142,7 +142,7 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
 	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
 	exactMatchTiering: true,
-	// #936 option 3 — promoted default-ON 2026-07-03 (eval battery PASS; see the RankingWeights docstring).
+	// #936 option 3 — promoted to on by default 2026-07-03, the eval battery passing; see the RankingWeights docstring.
 	officialNameExact: true,
 	officialNameExactFloor: 100_000,
 }

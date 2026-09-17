@@ -1,6 +1,6 @@
 """Task #25 (SP vocab-pruning probe) — bars B1 + B2 from the pre-registration.
 
-B1 — segmentation byte-identity: original vs pruned tokenizer must produce IDENTICAL piece
+B1 — segmentation byte-identity: original vs pruned tokenizer must produce identical piece
 sequences (modulo id renumbering, checked via the id map) on (a) every eval-surface text and
 (b) a fresh 1M-row random sample of the training feed. Zero diffs or the bar fails.
 
@@ -112,7 +112,7 @@ def check_segmentation_identity(orig: Any, pruned: Any, old_to_new: np.ndarray, 
 def feeds_for(input_metas: Sequence[Any], session_ids: list[int]) -> dict[str, np.ndarray]:
     """Assemble feeds per the model's actual meta: every input is (batch, sequence[, F]).
 
-    Every channel is fed zeros. Parity must hold for ANY channel values if the surgery is sound —
+    Every channel is fed zeros. Parity must hold for any channel values if the surgery is sound —
     the graphs differ only in the embedding gather table — and the full-battery bar (B3) is what
     covers realistic feeds end to end.
     """

@@ -1,6 +1,6 @@
 ---
 name: training-arc
-description: Protocol for grading a model change. Control FIRST, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
+description: Protocol for grading a model change. Control first, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
 ---
 
 ## Why this exists
@@ -32,7 +32,7 @@ Read the rest of this file when a leg needs building, or when the tool's verdict
 
 ## Step 1 — the SELF-control, once per session
 
-Stage the SHIPPED model through the identical candidate path and grade it against itself.
+Stage the shipped model through the identical candidate path and grade it against itself.
 
 ```
 mwdev_compare inputs={"kind":"board"} \
@@ -106,7 +106,7 @@ and a candidate that flips them changed a low-confidence answer rather than brok
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
 Grading a tier fall-through against a model wastes a run.
 
-## Step 5 — the comparison is against SHIPPED, and it is not the attribution
+## Step 5 — the comparison is against the shipped model, and it is not the attribution
 
 The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
 publishing costs a user the difference from what they have today.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PURE geometry tests — bare node, no map, no DOM. They exercise the circle-ring + bounds math the demo
+ *   Pure geometry tests — bare node, no map, no DOM. They exercise the circle-ring + bounds math the demo
  *   outline draws with, including the edge cases the imperative `_map-helpers.ts` handled: a single point
  *   (no bbox → default radius), a degenerate bbox (zero span → clamped floor), an over-large bbox
  *   (clamped ceiling), a sub-visible radius (meter floor), MultiPolygon bounds, and the DOCUMENTED
@@ -117,7 +117,7 @@ test("geomBounds collapses a single-vertex (degenerate) polygon to a zero-area b
 })
 
 test("geomBounds does NOT normalize an antimeridian-crossing polygon (documents the naive min/max)", () => {
-	// A ring spanning 179°E → -179°E: the naive bounds report the full -179..179 span, NOT the ~2° real one.
+	// A ring spanning 179°E → -179°E: the naive bounds report the full -179..179 span, not the ~2° real one.
 	const geom: PlaceGeometry = {
 		type: "Polygon",
 		coordinates: [

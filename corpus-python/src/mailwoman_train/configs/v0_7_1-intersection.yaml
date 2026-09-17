@@ -16,7 +16,7 @@
 # Recipe output: the intersection recipe (`packages/corpus/lib/recipes/intersection.ts`) → jsonl-to-parquet.py → 2000 rows,
 # source=synth-intersection, dropped into the v0.4.0 train dir (operator-authorized).
 #
-# Success criterion (DeepSeek): harness pass rate WITH the #35 postcode repair
+# Success criterion (DeepSeek): harness pass rate with the #35 postcode repair
 # >= 25% (baseline 15.2%) — i.e. the 65 intersection assertions move off 0%.
 #
 # Launch:

@@ -30,7 +30,7 @@ const config = createOxlintConfig({
 	constantDocs: {
 		scope: "exported",
 		// Command modules export these as framework metadata; the
-		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
+		// `description` string is the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
 	// An acronym is capitalized as a whole camelCase component: `parseJSON`, `POILookup`,
@@ -64,7 +64,7 @@ const config = createOxlintConfig({
 			"SqliteDialect",
 			"SqliteDialectConfig",
 			"SqliteDriver",
-			// `LedgerAppendOptions` receives the CLI option bag verbatim — its fields ARE the
+			// `LedgerAppendOptions` receives the CLI option bag verbatim — its fields are the
 			// `--run-id` flag names, and the house form is derived at the boundary.
 			"runId",
 		],
@@ -184,7 +184,7 @@ export default {
 			},
 		},
 		{
-			// `packages/core/lib/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches
+			// `packages/core/lib/fs/*` is the idiom the redirects below point at, so it is the one place that reaches
 			// `node:fs` directly.
 			files: ["packages/core/lib/fs/**/*.ts"],
 			rules: {
@@ -192,7 +192,7 @@ export default {
 			},
 		},
 		{
-			// `packages/core/lib/json.ts` IS what both redirects point at — the printers and the parsers are where the
+			// `packages/core/lib/json.ts` is what both redirects point at — the printers and the parsers are where the
 			// builtin is named, and each call inside them is the wrapper the rule recommends.
 			files: ["packages/core/lib/json.ts"],
 			rules: {
@@ -210,7 +210,7 @@ export default {
 			// core's ~11 MB of shipped data behind it — the same trade that keeps `un-locode-lookup` re-implementing
 			// the ray cast rather than importing `@mailwoman/spatial`.
 			//
-			// ONLY the printer entry is lifted. `JSON.parse` still binds, because these files already answer it per
+			// Only the printer entry is lifted. `JSON.parse` still binds, because these files already answer it per
 			// site with something this override cannot say — whether a throw on corrupt input is the contract there.
 			// Lifting both would leave those six disable comments dead while reading as though they still did work.
 			files: [
@@ -333,7 +333,7 @@ export default {
 		"guard-for-in": "error",
 		// The shared base sets this to `warn`, which every run prints and no run refuses, so an unused binding
 		// accumulates. `tsc` does not catch it either — `noUnusedLocals` and `noUnusedParameters` are off in
-		// `@sister.software/tsconfig`. Measured before promoting: those two flags over every package's source AND test
+		// `@sister.software/tsconfig`. Measured before promoting: those two flags over every package's source and test
 		// project report zero, so this refuses the next one rather than a backlog. The base's options are repeated
 		// verbatim because setting a severity alone drops them, and every axis carries an `^_` escape, so a binding that
 		// must exist unused still has a legal spelling.
@@ -396,12 +396,12 @@ export default {
 		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
 		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
 		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit
-		// fallback. Sites where throw-on-corrupt IS the contract — sealed-artifact readers, JSONL
+		// fallback. Sites where throw-on-corrupt is the contract — sealed-artifact readers, JSONL
 		// bulk loaders that must fail loudly with position info — keep `JSON.parse` behind a scoped
 		// disable stating why. Note the wrapper returns the fallback for non-string input, so a
 		// `JSON.parse(buffer)` site converts with an explicit `.toString()` or not at all.
 		//
-		// The entries are named in `config/oxlint/restricted-properties.ts` so an override can lift ONE of
+		// The entries are named in `config/oxlint/restricted-properties.ts` so an override can lift one of
 		// them by subtraction; `"off"` there would drop the other, and every entry added later.
 		"no-restricted-properties": restrictedPropertiesExcept(),
 		"typescript/no-explicit-any": "error",

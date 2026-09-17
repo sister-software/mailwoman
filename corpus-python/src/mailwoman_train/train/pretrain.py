@@ -190,7 +190,7 @@ def run_pretrain_loop(
                 lr = float(scheduler.get_last_lr()[0])
                 ppl = math.exp(min(20.0, avg))
                 elapsed = time.time() - started
-                # Steps THIS process ran over the seconds it ran them; `started` is this process's clock, so the
+                # Steps this process ran over the seconds it ran them; `started` is this process's clock, so the
                 # absolute step over it credits a resumed run with a previous process's work.
                 ran = step - resume_step
                 rate = ran / elapsed if elapsed > 0 else 0.0

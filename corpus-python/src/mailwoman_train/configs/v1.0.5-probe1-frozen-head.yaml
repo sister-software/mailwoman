@@ -8,31 +8,31 @@
 #                                                          => head insufficient => width-48M next.
 #   >= 72 at 2k                                          => head can own the mapping => full
 #                                                          probe-1 run (20k, labels partitioned).
-# The merged-logits forward means export + score-affix need NO changes.
+# The merged-logits forward means export + score-affix need no changes.
 #
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
-# ONE model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
-# lesson: never stack N sources into a fixed 20k budget — give them room). This is NOT a single-variable
+# One model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
+# lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
 # experiment; it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced recipe output, #464)        → synth-country 2.0 (corpus v0.4.10-country-bal)
 #   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
-#   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (FIRST trained here)
+#   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (first trained here)
 # po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up, not in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
 # + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat; every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
-# TWO deliberate changes vs v0.9.13:
+# Two deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
 #      budget is the prescribed fix; 40k ≈ 2x exposure per source.
-#   2. gazetteer_curriculum OFF, gazetteer_choreography ON. The curriculum (random clue zero-out) only
+#   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out) only
 #      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
 #      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
-#      fix — and this run is its FIRST training test. Stacking both suppressions would over-zero the
+#      fix — and this run is its first training test. Stacking both suppressions would over-zero the
 #      clue, so curriculum is dropped.
 #
 # PRE-REGISTERED CHECK (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
@@ -49,7 +49,7 @@
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.
 #
-# REQUIRES on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
+# Required on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
 # suppress_gazetteer_near_postcode + tokenizer/config/data_loader threading), the gazetteer lexicon at
 # /data/gazetteer/anchor-lexicon-v1.json, and corpus v0.4.12-consolidation. Repro of the corpus:
 #   (build the multi-locale affix + balanced country recipe outputs per #469 / #464, then assemble the manifest:
@@ -85,7 +85,7 @@ data:
     synth-german: 6.0
     # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
-    # Run C (the resume-fix): affix at the EXACT value the diagnostic hit prefix 75 with — synth-affix
+    # Run C (the resume-fix): affix at the exact value the diagnostic hit prefix 75 with — synth-affix
     # 20.0. Run A (10.0, RESUME) → 65; Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
     # the confound — momentum is required to slide the CRF into the prefix→street→suffix basin). This is
     # RESUME (output_dir below = consolidation dir, --resume auto finds clean step-040000; Run A's
@@ -177,7 +177,7 @@ train:
   warmup_steps: 1000
   grad_clip_norm: 1.0
   # Run C: RESUME clean step-040000 (Run A's 042k-060k deleted so --resume auto picks it) for 15k →
-  # 55k total. Momentum preserved (THE point — init_from is what broke Run B). EARLY-ABORT CHECK: export
+  # 55k total. Momentum preserved (the point — init_from is what broke Run B). EARLY-ABORT CHECK: export
   # + score step-042000 (2k in); if prefix isn't ~75 there, the confound hypothesis is wrong → STOP.
   max_steps: 2000
   eval_every_steps: 1000

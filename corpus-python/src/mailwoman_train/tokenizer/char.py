@@ -18,7 +18,7 @@ This module is the data side of that fix:
   ``tokens``/``labels`` (already word-aligned) — no SentencePiece sub-token projection.
 
 Deliberately minimal for the de-risk probe: no anchor / gazetteer / phrase channels (those project per
-SP-piece today; the probe compares a BARE char model against a BARE SentencePiece model on the same
+SP-piece today; the probe compares a bare char model against a bare SentencePiece model on the same
 corpus, isolating the embedding front-end). The channels get a per-word re-alignment once the probe
 confirms the fix reaches the coordinate.
 """

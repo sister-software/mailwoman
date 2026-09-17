@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file A compound Japanese municipality split into the two units the gazetteer keys separately.
  *
- *   The JP model tags `神戸市西区` (city + ward) and `猿島郡五霞町` (county + town) as ONE `municipality` span, which is
+ *   The JP model tags `神戸市西区` (city + ward) and `猿島郡五霞町` (county + town) as one `municipality` span, which is
  *   the postal form, and WOF keys the city, the ward and the town — never the compound. Probed whole, the span misses
  *   and the coordinate falls to the prefecture centroid (25–52 km on the JP board). Probed as its trailing unit
  *   UNSCOPED it does worse: a bare `西区` resolves a namesake ward in another city (Kobe's answered Fukuoka's, 407 km;

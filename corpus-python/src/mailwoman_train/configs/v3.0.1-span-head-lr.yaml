@@ -1,28 +1,28 @@
-# v3.0.1-span-head-lr — #727 STAGE 2, PHASE 1, PROBE 2. ONE variable vs v3.0.0:
+# v3.0.1-span-head-lr — #727 STAGE 2, PHASE 1, PROBE 2. One variable vs v3.0.0:
 # train.span_head_learning_rate 1e-3 (the fresh span head gets its own param group; the pretrained
 # encoder stays at learning_rate 1e-5). Everything else — corpus, tokenizer, lexicons, the span
-# scorer itself, span_loss_weight 0.5, init_from, steps — is VERBATIM v3.0.0.
+# scorer itself, span_loss_weight 0.5, init_from, steps — is v3.0.0 verbatim.
 #
 # WHY: v3.0.0 was MIS-SPECIFIED, not falsified (docs/articles/evals/2026-07-15-v300-span-head-probe.md).
 # It inherited lr 1e-5 from v2.6.4, a recipe that FINE-TUNES EXISTING weights, but the span head is
 # RANDOMLY INITIALIZED. At 2k it had barely moved: loss 26.4 -> 17.77 and STILL FALLING, raw span NLL
 # ~35 where a converged semi-CRF sits at O(1), and the decode emitted a random type per token. The
 # probe asked "does a barely-initialized head beat a fully-trained one" — a question with a known
-# answer. This is repairing the probe, NOT tuning toward a result: the treadmill is opposite-direction
+# answer. This is repairing the probe, not tuning toward a result: the treadmill is opposite-direction
 # knob oscillation, and no knob has been pushed in two directions here.
 #
 # THE CHECK (unchanged from v3.0.0, pre-registered):
 #   seg@1 > token@1 on the parity corpus, via scripts/eval_seg_at_1.py.
 #   v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers — that script feeds no
-#   anchor/gazetteer/country channels, so its absolutes are NOT the JS harness's 0.573; the check is a
+#   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573; the check is a
 #   RELATIVE comparison and both heads read the same starved encoder).
 # Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
 # LR is not the binding constraint and the fork reopens.
 #
-# NOT a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
+# Not a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
 # untouched; this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
 #
-# If seg@1 STILL loses with a converged span loss: that IS the falsification. Do not tune further —
+# If seg@1 STILL loses with a converged span loss: that is the falsification. Do not tune further —
 # fork to the operator with the loss curve.
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).
@@ -30,7 +30,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -54,7 +54,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -100,8 +100,8 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
-  # #727 stage-2 phase 1 — THE one variable vs v264.
+model: # Verbatim from v2.6.4 except the span-scorer block below (the one variable).
+  # #727 stage-2 phase 1 — the one variable vs v264.
   use_span_scorer: true
   span_loss_weight: 0.5
   span_dim: 128
@@ -130,10 +130,11 @@ model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -172,7 +173,7 @@ model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v264 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v264 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The span scorer + segment transitions start random and
   # learn to score whole spans; the encoder keeps v264's country channel + span-boundary grammar.
   output_dir: /data/output-v301-span-head-lr-s42/checkpoints
@@ -182,7 +183,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v264 (fresh optimizer; -
   eval_batch_size: 128
   grad_accum_steps: 1
   learning_rate: 1.0e-5
-  # THE one variable vs v3.0.0: the fresh head's own LR (encoder stays 1e-5 above).
+  # The one variable vs v3.0.0: the fresh head's own LR (encoder stays 1e-5 above).
   span_head_learning_rate: 1.0e-3
   weight_decay: 0.01
   warmup_steps: 500

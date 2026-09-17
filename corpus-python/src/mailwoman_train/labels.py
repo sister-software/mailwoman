@@ -14,7 +14,7 @@ exportable so historical checkpoints + eval reports can be diffed against today'
 - ``STAGE3_TAGS`` (16 tags) / ``STAGE3_BIO_LABELS`` (33) — v0.6.0 ship, the CURRENT active set.
   Decomposes ``street`` into prefix/suffix and adds unit/po_box/intersection.
 - ``STAGE4_TAGS`` (23 tags) / ``STAGE4_BIO_LABELS`` (47) — the secondary-address family
-  (#1100/#456): unit/level/building designator↔id pairs + entrance/staircase. DEFINED but NOT
+  (#1100/#456): unit/level/building designator↔id pairs + entrance/staircase. DEFINED but not
   active; activation is coupled to a retrain + the JS union bump (see the Stage 4 block below).
 
 ``ACTIVE_TAGS`` / ``ACTIVE_BIO_LABELS`` always point at the *current* training round's
@@ -54,7 +54,7 @@ STAGE1_BIO_LABELS: Final[tuple[str, ...]] = (
 
 
 # Fine tags added in Stage 2. Order is stable across runs so label IDs are reproducible
-# within a stage. NEVER reorder within a stage; ALWAYS append for a new stage.
+# within a stage. Never reorder within a stage; always append for a new stage.
 STAGE2_FINE_TAGS: Final[tuple[str, ...]] = (
     "venue",
     "street",
@@ -114,8 +114,8 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # piecemeal here (same discipline as the #875 casing batch).
 #
 # ACTIVATION (coupled, deliberately deferred — rides the v7-adjacent label-stage bump): bumping
-# ACTIVE_* to STAGE4 widens the model head 33 → 47 labels, so it REQUIRES a retrain (from-scratch or
-# an output-head expansion) AND a same-commit extension of the JS ``COMPONENT_TAGS`` union in
+# ACTIVE_* to STAGE4 widens the model head 33 → 47 labels, so it requires a retrain (from-scratch or
+# an output-head expansion) and a same-commit extension of the JS ``COMPONENT_TAGS`` union in
 # ``core/types/component.ts`` (the decoder maps model indices → labels through it — they must move
 # together). Until then ACTIVE stays STAGE3 and these tags collapse to ``O`` at load, so defining them
 # now is inert for live models and lets the secondary-address recipe emit them.
@@ -146,7 +146,7 @@ STAGE4_BIO_LABELS: Final[tuple[str, ...]] = (
 # municipality 市区町村, district 大字/丁目-level name) and the kanji-designator number parts
 # (block 丁目, sub_block 番地, building_number 号) + building_name (romaji buildings). Per the
 # encoder-design D4 rule, COMPACT numbers (2-3-16) stay whole-span ``house_number`` — the fine
-# number tags are for the long designator form (2丁目3番16号) only. NOT a universal stage: the JP
+# number tags are for the long designator form (2丁目3番16号) only. Not a universal stage: the JP
 # CHAR model trains with ``stage3-jp``; the Latin model stays on STAGE3; STAGE4 (the
 # secondary-address family above — numerically also 47 BIO, a coincidence) remains its own future
 # activation.
@@ -172,7 +172,7 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 # region CN fine tags (#2034 — the organizational ladder)
 
 #
-# ONE tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
+# One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
 # carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team; the XPCC
 # ``一四三团十二连``; the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
@@ -194,7 +194,7 @@ STAGE3_CN_BIO_LABELS: Final[tuple[str, ...]] = (
 # region CJK union (#2034 — one head for the JP and CN character models)
 
 #
-# The JP seven and the CN one behind ONE classifier, so a single from-scratch character model can
+# The JP seven and the CN one behind one classifier, so a single from-scratch character model can
 # train on the 2M-row JP corpus and the CN organizational-unit rows together. STAGE3 keeps its ids,
 # the JP tags keep theirs (this is ``stage3-jp`` with ``locality_unit`` appended), so a JP-only
 # consumer reading a CJK checkpoint sees every JP label at the id it already knows.
@@ -212,7 +212,7 @@ STAGE3_CJK_BIO_LABELS: Final[tuple[str, ...]] = (
 # region Active set (points at the most-recent stage)
 
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
-# existing v0.5.x models keep working. STAGE4 is DEFINED above but NOT active — its
+# existing v0.5.x models keep working. STAGE4 is DEFINED above but not active — its
 # activation is coupled to a retrain + the JS union bump (see the Stage 4 block).
 
 ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS
@@ -245,7 +245,7 @@ class LabelSet:
         self._tag_set = frozenset(tags)
 
     def collapse_label(self, bio_label: str) -> str:
-        """``collapse_label`` against THIS set's tag vocabulary (same shape rules as the module fn)."""
+        """``collapse_label`` against this set's tag vocabulary (same shape rules as the module fn)."""
         if bio_label == "O" or "-" not in bio_label:
             return "O"
         prefix, tag = bio_label.split("-", 1)
@@ -284,7 +284,7 @@ IGNORE_INDEX: Final[int] = -100
 # 28–44% of the time, so the model must infer it from the whole string — this map is the
 # aux head's target vocabulary.
 #
-# Stable order: NEVER reorder, only APPEND, so a checkpoint's locale-head ids stay
+# Stable order: never reorder, only append, so a checkpoint's locale-head ids stay
 # reproducible (same discipline as the BIO STAGE-N constants above). A row whose ``country``
 # is absent from this map maps to IGNORE_INDEX and contributes nothing to the aux loss —
 # graceful for locales the head wasn't trained on. The head still carries a slot for every

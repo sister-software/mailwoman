@@ -119,7 +119,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
 
-		// #1884: the Wikidata concordance rides the SAME `wd:id` source the WOF ingest writes and the
+		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the
 		// `gazetteer importance` join reads (`WHERE c.other_source = 'wd:id'`) — the predicate is the
 		// contract, so it is asserted literally.
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
@@ -128,7 +128,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 	})
 
 	test("spr uses OR REPLACE so a re-ingest updates the row rather than throwing on its primary key", async () => {
-		// Content-derived ids make a re-ingest recompute the SAME id, so this is the path a second run takes.
+		// Content-derived ids make a re-ingest recompute the same id, so this is the path a second run takes.
 		await using db = await openUnified()
 		const { spr } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 2

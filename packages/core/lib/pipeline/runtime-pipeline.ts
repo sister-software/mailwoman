@@ -67,7 +67,7 @@ function isPostcodeFormat(format: string): boolean {
 export const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
- * #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved). The placer
+ * #194: minimum placer confidence to promote the soft country prior to a hard filter (empty→unresolved). The placer
  * already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob can still be split across
  * neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the hard filter to the cases the model is sure
  * of (FI/PL routinely score ~1.0) and leaves the ambiguous ones on the soft path. Deliberately strict — a wrong hard
@@ -76,18 +76,18 @@ export const COARSE_PLACER_ANCHOR_WEIGHT = 1
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
- * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering is a PURE WIN —
- * measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
- * almost always a genuine non-match, not a coverage gap. A confident placement OUTSIDE this set stays on the SOFT
- * prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193) — the win for covered
- * countries, no recall regression for the rest (DeepSeek-advised, 2026-06-22).
+ * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall
+ * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
+ * almost always a genuine non-match, not a coverage gap. A confident placement outside this set stays on the soft
+ * prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered countries
+ * get the hard filter's precision, and the rest keep their recall.
  *
  * FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer artifacts that predate
  * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
  * table carries the per-country promotion-eval verdicts + the measured rates (the numbers that used to be trivia in
  * this comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes
  * precedence over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
- * (MEASURED_COUNTRY_COVERAGE — grow THAT at promotes; it updates the artifact at rebuild). Precedence: per-call
+ * (MEASURED_COUNTRY_COVERAGE — grow that at promotes; it updates the artifact at rebuild). Precedence: per-call
  * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures unrestricted to grow the list) → the loaded
  * artifact's manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE:
  * US/FR/DE 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote
@@ -108,9 +108,9 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
 ])
 
 /**
- * #912 change 1 — is this parse a single BARE locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
+ * #912 change 1 — is this parse a single bare locality ("Paris", "Dublin")? The coarse placer is out-of-distribution on
  * one-token city names (trained on full addresses): measured on the gauntlet's bare-namesake rows it emitted Paris→IT
- * .35, Melbourne→GB .66 — all wrong, and even sub-threshold the SOFT posterior still re-ranks the resolver toward the
+ * .35, Melbourne→GB .66 — all wrong, and even sub-threshold the soft posterior still re-ranks the resolver toward the
  * wrong country. A bare locality carries no country evidence the placer can read that the resolver's exact-tier +
  * population ranking doesn't already use better — so both production placeCountry call sites (the runtime pipeline and
  * `geocodeAddress`) ABSTAIN on this shape. Any second non-empty component makes the input address-shaped and the placer
@@ -121,10 +121,10 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 }
 
 /**
- * #1589's sibling of the #912 guard: true when the tree's ONLY value-bearing node is a `postcode`.
+ * #1589's sibling of the #912 guard: true when the tree's only value-bearing node is a `postcode`.
  *
  * A bare postcode under a locale-inferred country scope is the same disaster shape as a bare locality: `SW1A 1AA` under
- * the default en-US locale gets a HARD `defaultCountry: "US"` that filters the GB postalcode row the gazetteer holds,
+ * the default en-US locale gets a hard `defaultCountry: "US"` that filters the GB postalcode row the gazetteer holds,
  * and the query resolves to nothing — while the identical query under `--locale en-GB` answers 38 m from the rooftop.
  * The postcode's own FORMAT is harder evidence than the locale hint (the #928 table's premise), so the caller withholds
  * the inferred scope for this shape when the format implies countries that exclude it.
@@ -134,9 +134,9 @@ export function isBarePostcodeTree(tree: AddressTree): boolean {
 }
 
 /**
- * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a HARD
- * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline AND `geocodeAddress`)
- * apply the SAME three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the
+ * #743/#194: the shared coverage-guard check — decide whether a confident coarse-placer country should become a hard
+ * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline and `geocodeAddress`)
+ * apply the same three conditions and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the
  * safelist (override or the default {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to
  * respect. Returns the country to hard-filter, or `undefined` to stay on the soft prior.
  *
@@ -215,7 +215,7 @@ async function defaultClassifyKind(
 
 /**
  * Decide whether to short-circuit stages 3-5 and go straight to resolve. Conservative: requires high kind-classifier
- * confidence AND a matching QueryShape known-format hit. See `STAGES.md#fast-path-routing` for the rationale.
+ * confidence and a matching QueryShape known-format hit. See `STAGES.md#fast-path-routing` for the rationale.
  */
 function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: PipelineOpts): boolean {
 	if (opts?.forceFullPipeline) return false
@@ -329,8 +329,8 @@ export async function runPipeline(
 		timing["place-country"] = performance.now() - tPlace
 
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
-			// #194/#743: promote a CONFIDENT placement to a HARD country filter (empty→unresolved) when the
-			// caller opts in, the confidence clears the bar, AND the country is in the coverage SAFELIST. The
+			// #194/#743: promote a confident placement to a hard country filter (empty→unresolved) when the
+			// caller opts in, the confidence clears the bar, and the country is in the coverage safelist. The
 			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
 			// even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔NO stay
 			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
@@ -382,7 +382,7 @@ export async function runPipeline(
 	// stating that the vocabulary looked. A classifier with no intent vocabulary — including `defaultClassifyKind`
 	// above — leaves the field unset and every result carries `[]`, which is the byte-stable pre-§4 behaviour.
 	//
-	// `declared_ambiguity` is deliberately ABSENT from this list: its trigger is the resolved candidate list's
+	// `declared_ambiguity` is deliberately absent from this list: its trigger is the resolved candidate list's
 	// dominance margin, and the measured 0.5-log10 threshold behind it lives in `mailwoman`'s eval harness, which core
 	// cannot import (the dependency runs the other way). `mailwoman/query-intent.ts` adds it on the geocode path.
 	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
@@ -475,7 +475,7 @@ export async function runPipeline(
 			normalizeCase: opts?.normalizeCase,
 			placetypePair: opts?.placetypePair,
 			streetMorphology: stages.streetMorphology,
-			// Decision A: explicit caller register wins; otherwise the kind verdict decides. NEVER case-keyed.
+			// Decision A: explicit caller register wins; otherwise the kind verdict decides. Never case-keyed.
 			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
 		})
 
@@ -492,7 +492,7 @@ export async function runPipeline(
 		throwIfAborted(opts)
 		const tResolve = performance.now()
 
-		// #912 change 1: the placer abstains on a single bare locality — strip ONLY the anchor it
+		// #912 change 1: the placer abstains on a single bare locality — strip only the anchor it
 		// added (a caller-supplied posterior was never overwritten and passes through untouched).
 		// #1589: a bare POSTCODE abstains the same way — the code's format carries the country
 		// evidence, and the placer's language read of it is noise (see isBarePostcodeTree).
@@ -600,15 +600,15 @@ async function safeClassify(
 }
 
 /**
- * The street-context check pair (#1315): when BOTH the gazetteer FST and the street-morphology matcher are wired, the
- * classify call passes the matcher in with the morphology EMISSION prior zeroed — the check alone (measured
+ * The street-context check pair (#1315): when both the gazetteer FST and the street-morphology matcher are wired, the
+ * classify call passes the matcher in with the morphology emission prior zeroed — the check alone (measured
  * golden-flat, fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the
  * spread is `{}` and the decode is byte-stable.
  */
 export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
 /**
- * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the check at FULL suppression (0.0), not
+ * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the check at full suppression (0.0), not
  * the classifier's 0.25 default. Measured 2026-07-26 on v8.0.0-as-shipped (branch TS == origin/main, FST md5 ==
  * published): 0.0 puts FR admin-street-homonym at EXACT P0 parity (159/400 vs 157 at 0.25) with golden us/fr and every
  * other fragment class byte-identical to 0.25 — the "some admin mass for the semi-markov decoder" rationale for 0.25

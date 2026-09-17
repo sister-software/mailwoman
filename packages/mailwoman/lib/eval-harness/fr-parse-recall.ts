@@ -5,9 +5,9 @@
  *
  *   Diagnose the FR street parse-recall gap (#148): the en-US model fragments a French street when no
  *   postcode anchors it ("Rue du Chevaleret, Paris" → street="Rue du", locality="Chevaleret"). Sample
- *   real FR addresses from the OSM database, parse each BARE ("<n> <street>, <city>") and ANCHORED
+ *   real FR addresses from the OSM database, parse each bare ("<n> <street>, <city>") and anchored
  *   ("<n> <street>, <pc> <city>"), assemble the street key (FR locale) and check it matches the database's
- *   street_norm. The bare-vs-anchored match-rate delta IS the gap, and isolates whether the model only
+ *   street_norm. The bare-vs-anchored match-rate delta is the gap, and isolates whether the model only
  *   learned FR structure in the postcode-anchored context.
  *
  *   CHECK-required (#949). This is a promotion-eval battery leg — the `fr.bare_street_intact`
@@ -59,12 +59,12 @@ const MAX_REPORTED_FAILURES = 12
 /**
  * Locate a weights SIBLING artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` — the way the runtime does.
  *
- * These were read from `packages/neural-weights-en-us/` directly, which is EMPTY on a dev checkout: the linkers write
+ * These were read from `packages/neural-weights-en-us/` directly, which is empty on a dev checkout: the linkers write
  * into the data-root overlay so the tracked workspace stays bare. So this leg threw ENOENT, and the check rendered the
  * throw as `fr.bare_street_intact FAIL (floor 75%)` — a crash reported as a measurement, and one indistinguishable from
  * the French regression this floor exists to catch.
  *
- * Order matters. A candidate's OWN siblings come first, so grading a candidate never silently mixes in the shipped
+ * Order matters. A candidate's own siblings come first, so grading a candidate never silently mixes in the shipped
  * lexicon; the data-root overlay is the dev-checkout answer; the tracked workspace is last and is only non-empty on a
  * release checkout where `copy-weights.ts` has run.
  *
@@ -119,7 +119,7 @@ export interface FRParseRecallOptions {
 	 */
 	fixture?: string
 	/**
-	 * Re-derive from the live OSM database instead of the fixture — the ONLY way the fixture should ever change, and it
+	 * Re-derive from the live OSM database instead of the fixture — the only way the fixture should ever change, and it
 	 * must be committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
 	 */
 	fromDB?: boolean
@@ -184,7 +184,7 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 /**
  * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
  *
- * The report lines go to `report` and the FAIL line to `reportError`, mirroring the stdout/stderr split the check
+ * The report lines go to `report` and the `FAIL` line to `reportError`, mirroring the stdout/stderr split the check
  * captured — it wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks stay separate and are
  * concatenated in that order. The floor verdict comes back as {@linkcode FRParseRecallResult.pass} instead of the old
  * `process.exit(1)`.

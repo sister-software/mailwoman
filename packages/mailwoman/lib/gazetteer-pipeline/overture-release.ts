@@ -10,7 +10,7 @@
  *   independent on purpose, because bumping one is a new-vintage decision for that artifact alone), and each pin dies
  *   silently when its release is pruned.
  *
- *   The cost of finding out late is the reason this exists. The admin build reaches `fold-overture` only AFTER the WOF
+ *   The cost of finding out late is the reason this exists. The admin build reaches `fold-overture` only after the WOF
  *   ingest, so a dead pin surfaced after 2.9 million records and ~30 minutes as `IO Error: No files found that match
  *   the pattern` — a message that reads like a network fault rather than an expired pin. The bucket listing answers in
  *   one request.
@@ -72,7 +72,7 @@ export async function listOvertureReleases(client?: OvertureListingClient): Prom
 
 		const body = String(response.data)
 
-		// EVERY `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>` beside the
+		// Every `<Prefix>` element, which includes the request echo `<Prefix>release/</Prefix>` beside the
 		// `<CommonPrefixes>` entries. The echo reduces to an empty name and is dropped with any other.
 		for (const prefix of elementTexts(body, "Prefix", { xml: true })) {
 			const release = prefix.replace(/^release\//, "").replace(/\/$/, "")
@@ -105,7 +105,7 @@ export interface ReleaseCheck {
 	present: boolean
 	available: string[]
 	/**
-	 * `undefined` when the listing itself failed. An unreachable bucket is NOT evidence that a release was pruned, and a
+	 * `undefined` when the listing itself failed. An unreachable bucket is not evidence that a release was pruned, and a
 	 * build must not refuse to start because the network blinked.
 	 */
 	reachable: boolean
@@ -134,7 +134,7 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An EMPTY listing is not an empty bucket. Overture has never held zero releases, so nothing-found means the query
+	// An empty listing is not an empty bucket. Overture has never held zero releases, so nothing-found means the query
 	// was wrong or the response was not the listing — and the first version of this file proved the point by dropping
 	// its own query parameters and then reporting a live pin as pruned. Zero is treated as no answer, never as absence.
 	if (!available.length) {

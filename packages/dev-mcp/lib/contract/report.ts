@@ -7,7 +7,7 @@
  *   contract, and report which violation classes fire — including the ones that do not.
  *
  *   The tree validated is `GeocodeRun.tree`, which is the tree AS THE RESOLVER SEES IT — after the postcode and
- *   stranded-affix repairs. So this counts what SURVIVES the repairs rather than what the raw decode emitted, which is
+ *   stranded-affix repairs. So this counts what survives the repairs rather than what the raw decode emitted, which is
  *   the number that matters: a violation the repairs already clean up costs a consumer nothing.
  */
 
@@ -33,7 +33,7 @@ export async function runContractCensus(registry: EngineRegistryLike, args: Reco
 
 			rows.push({ id: item.id, input: item.input, tree: run.tree })
 		} catch {
-			// A row the engine cannot parse contributes NOTHING to any tally: counting it as valid would manufacture
+			// A row the engine cannot parse contributes nothing to any tally: counting it as valid would manufacture
 			// contract compliance out of a crash.
 			errored.push(item.id)
 		}

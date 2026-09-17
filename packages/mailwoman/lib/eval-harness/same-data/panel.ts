@@ -128,7 +128,7 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * FIRST rather than random: the register's order is the register's, and taking the first makes the choice a property of
+ * First rather than random: the register's order is the register's, and taking the first makes the choice a property of
  * the source instead of a second seeded draw nobody registered. The file carries 1.8 million rows, so it is streamed
  * and only the index is held.
  */

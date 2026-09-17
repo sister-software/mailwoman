@@ -162,7 +162,7 @@ export function resourceErrorKind(error: unknown): ResourceErrorKind | null {
  * Whether `error` is the kind of failure a caller should REQUEUE rather than give up on — every network-class failure
  * (connect, DNS, timeout, mid-transfer drop) and every transient HTTP status (408/429/5xx).
  *
- * This stays `true` even after a client exhausted its OWN bounded attempts: the client's ceiling is a statement about
+ * This stays `true` even after a client exhausted its own bounded attempts: the client's ceiling is a statement about
  * one call, while a caller's requeue is a new, separate attempt budget minutes or hours later. Callers branch on this
  * plus {@linkcode ResourceError.status} — 404 to skip, 403 to abort — and never on message text.
  */
@@ -219,7 +219,7 @@ function responseReason(status: number): string {
 /**
  * Delegate Axios errors to an appropriate error handler.
  *
- * ALWAYS throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric `status`, a `(source,
+ * Always throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric `status`, a `(source,
  * kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`. A non-Axios error is rethrown untouched.
  *
  * WHAT CHANGED, measured rather than recalled — a differential against `98c4dda1` across 18 failure shapes in the exact
@@ -231,11 +231,11 @@ function responseReason(status: number): string {
  * - Every non-401 HTTP status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
  *   had to reach into `error.response`. 401's own message and URN changed too.
  *
- * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` RESOLVED the chain with `undefined` was wrong FOR
- * EVERY SHAPE AXIOS ACTUALLY PRODUCES: the old `if (!response) throw` ran BEFORE that `switch`, and axios never
+ * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` resolved the chain with `undefined` was wrong for
+ * every shape axios actually produces: the old `if (!response) throw` ran before that `switch`, and axios never
  * attaches a `response` to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 — a
  * misclassified 500, not a `TypeError` at the caller. Note the `return` arms were not unreachable in general, only
- * unreachable via axios: reaching the `switch` required a response to be PRESENT, and an error carrying both a
+ * unreachable via axios: reaching the `switch` required a response to be present, and an error carrying both a
  * `response` and `ECONNABORTED` did resolve with `undefined`. Stock adapters never pair those, but this repo's own
  * `axiosLikeError(message, code, config, response)` helper builds that shape in one argument. No regression follows
  * from any of this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.

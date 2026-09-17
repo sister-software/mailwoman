@@ -19,7 +19,7 @@
  *   link, below the lower bound a non-link, and the band between is _clerical review_ — the
  *   calibrated abstain zone the whole design leans on.
  *
- *   The `m`/`u` numbers here are NOT universal constants. They are estimated from the data — by EM,
+ *   The `m`/`u` numbers here are not universal constants. They are estimated from the data — by EM,
  *   unsupervised (the next increment) — and the term-frequency adjustment that makes a rare-name
  *   agreement count more than a common one layers on top. This module is the deterministic core
  *   those build on: given the levels, it produces the weights, the probability, and the decision.
@@ -40,7 +40,7 @@ export interface ComparisonLevel {
 	 */
 	m: number
 	/**
-	 * P(a pair lands in this level | it is NOT a match). A measure of coincidence / cardinality.
+	 * P(a pair lands in this level | it is not a match). A measure of coincidence / cardinality.
 	 */
 	u: number
 	/**

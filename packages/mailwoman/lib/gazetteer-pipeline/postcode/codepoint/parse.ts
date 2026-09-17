@@ -20,9 +20,9 @@
  *   ## Two traps, both measured against the 2026-05 extract
  *
  *   1. **865 rows carry no coordinate.** Positional quality indicator `90` means "no coordinate
- *      available", and those rows are written as eastings `0`, northings `0`. Grid `0,0` is a REAL
+ *      available", and those rows are written as eastings `0`, northings `0`. Grid `0,0` is a real
  *      place — open Atlantic south-west of the Scillies — so nothing downstream can recognise it as a
- *      sentinel after conversion. They are dropped HERE, at the only layer that still has the PQI to
+ *      sentinel after conversion. They are dropped here, at the only layer that still has the PQI to
  *      drop them by. Distribution across all 1,747,841 rows: PQI 10 → 1,742,328 · 20 → 253 · 30 → 26 ·
  *      50 → 4,166 · 60 → 203 · 90 → 865. So 99.69 % of the file is PQI 10, OS's best grade (within the
  *      building of the address nearest the postcode's mean position).

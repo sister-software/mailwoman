@@ -69,6 +69,13 @@ The seam between the two modules is where a extract of the corpus is cut, and th
 gate reads it; the seams are what extract routing produced, and the gates fire on the extracts
 that were attached, cutting the run short before the gated step ever gating cuts.
 
+The 3-digit probe confirmed the guard, so the guard holds and the win survives; we
+recover the win, keep the unit win, and forgo half the date-name win, because the cost was
+carried entirely by the 4-5 digit pieces and 3-digit is the reduce; take this to 8k.
+
+The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
+by default, and the run was a PURE WIN.
+
 Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
 `promotion-eval.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval promote` are
 backticked, so the markdown parser hands none of them to the rule — that is how a

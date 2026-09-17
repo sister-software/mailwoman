@@ -5,12 +5,12 @@
  *
  *   The smallest single-setting flip that changes a row's answer (#1722).
  *
- *   An account says what the pipeline DID. A counterfactual says what it would have done under one different setting,
+ *   An account says what the pipeline did. A counterfactual says what it would have done under one different setting,
  *   which is the only way to turn "this mechanism ran" into "this mechanism decided" — the L2 rung the activation
  *   census deliberately does not measure. One setting moves per flip, always, because a flip that moves two settings
  *   cannot attribute the change to either.
  *
- *   The setting space is FIXED and enumerated here rather than derived from `EngineConfig`. Every setting in that
+ *   The setting space is fixed and enumerated here rather than derived from `EngineConfig`. Every setting in that
  *   interface is flippable in principle; these five are the ones whose flip is cheap (no second gazetteer, no second
  *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as SKIPPED
  *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
@@ -219,7 +219,7 @@ export interface CounterfactualAnswer {
 }
 
 /**
- * A flip that MOVED the answer. Flips that changed nothing are counted, never listed — the list is the finding.
+ * A flip that moved the answer. Flips that changed nothing are counted, never listed — the list is the finding.
  *
  * `moved_km` is `null` when one side has no coordinate: an abstention has no distance from anything, and turning that
  * into a number (zero, or infinity) is the projection this whole surface exists to avoid. `changed_abstention` is the
@@ -308,7 +308,7 @@ export async function runCounterfactuals(
 	}
 
 	for (const { flip, targets: batched } of batches.values()) {
-		// Tracing stays OFF on a flip arm: the flip is graded on its ANSWER, and a traced session pays an extra
+		// Tracing is off on a flip arm: the flip is graded on its answer, and a traced session pays an extra
 		// decode per input for evidence nothing here reads.
 		const engine = await registry.acquire({ ...baseConfig, ...flip.patch, trace: false })
 

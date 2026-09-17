@@ -70,7 +70,7 @@ export async function removeIfPresent(dest: string): Promise<void> {
  *
  * Every one of these artifacts is OPTIONAL by design — the runtime has a fallback for each, so a fresh worktree that
  * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
- * operator needs to know which channel just resolved OFF, not to have the link step abort.
+ * operator needs to know which channel just resolved off, not to have the link step abort.
  */
 export async function linkSoftFeedSibling(
 	source: string,
@@ -98,7 +98,7 @@ export const PAIR_INDEX_DELTA = 10
 
 /**
  * The decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
- * transition-level probe). en-nz deliberately builds WITHOUT one (unmeasured there): the two magnitudes are calibrated
+ * transition-level probe). en-nz deliberately builds without one (unmeasured there): the two magnitudes are calibrated
  * independently, and a locale earning one says nothing about the other.
  */
 export const PAIR_INDEX_TRANSITION_BETA = 5
@@ -120,12 +120,12 @@ export interface PairIndexOverlay {
 	packageDir: string
 	/**
 	 * ISO country code passed to `gazetteer pair-index --country`, and the suffix of the built artifact (`de` →
-	 * `pair-index-de.bin`). NOT the locale tag: `en-in` builds `pair-index-in.bin`.
+	 * `pair-index-de.bin`). Not the locale tag: `en-in` builds `pair-index-in.bin`.
 	 */
 	country: string
 	/**
 	 * Calibrated magnitudes the locale's bars were measured at. Baked into the artifact's PIX1 header, which is how the
-	 * freshness check notices a change to any of them. An ABSENT `transitionBeta`/`parentDelta` means the flag is not
+	 * freshness check notices a change to any of them. An absent `transitionBeta`/`parentDelta` means the flag is not
 	 * passed and the header carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`).
 	 * The whole calibration feeds both the build FLAGS and the staleness EXPECTATION, so the two cannot disagree.
 	 */
@@ -134,7 +134,7 @@ export interface PairIndexOverlay {
 	parentDelta?: number
 	/**
 	 * Source FILES whose md5s the build records, in the order `gazetteer pair-index` records them. The freshness guard
-	 * compares EVERY one against the existing header (#1734): a partial comparison leaves the guard blind to the rest,
+	 * compares every one against the existing header (#1734): a partial comparison leaves the guard blind to the rest,
 	 * and a stale artifact then keeps reporting itself fresh while the data it was built from has moved. Empty means the
 	 * build's source cannot be file-hashed (fr's BAN directory) and freshness rests on the magnitudes alone. Default: the
 	 * WOF admin DB.
@@ -176,7 +176,7 @@ export interface PairIndexHeaderFields {
  * `@mailwoman/neural` (which pulls onnxruntime-node) to read a few fields. `neural/pair-index-resolver.ts`'s own header
  * parse is the source of truth this must follow.
  *
- * Shared by the overlay build below AND by the four hand-written base linkers
+ * Shared by the overlay build below and by the four hand-written base linkers
  * (`neural-weights-{en-us,en-gb,en-nz,fr-fr}/scripts/link-dev-weights.ts`), which each carried their own near-copy
  * before 2026-08-04 — the ×5 clone the taste audit named, and the reason three of them were schema-blind while this one
  * was not.
@@ -222,7 +222,7 @@ const MD5_HEX_LENGTH = 32
  *
  * The shared home for the copies the base linkers (`en-us`, `en-gb`, `en-nz`) each carry — new callers import this one.
  */
-// repo-health-ignore export-name-affix -- the sidecar cache IS the added behaviour; `md5File` hashes every time.
+// repo-health-ignore export-name-affix -- the sidecar cache is the added behaviour; `md5File` hashes every time.
 export async function md5FileWithSidecar(path: string): Promise<string> {
 	const sidecarPath = `${path}.md5`
 	const sourceStats = await statPath(path)
@@ -248,7 +248,7 @@ export async function md5FileWithSidecar(path: string): Promise<string> {
 }
 
 /**
- * The calibrated magnitudes a linker bakes into its artifact. `undefined` means the flag is NOT passed and the header
+ * The calibrated magnitudes a linker bakes into its artifact. `undefined` means the flag is not passed and the header
  * carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`), so the comparison below
  * is `!==` against `undefined` rather than a truthiness test.
  */
@@ -288,9 +288,9 @@ export function pairIndexStaleReason(
 }
 
 /**
- * The PIX1 schema this tree's reader requires. MUST equal `KNOWN_SCHEMA_VERSION` in `neural/pair-index-resolver.ts` —
+ * The PIX1 schema this tree's reader requires. Must equal `KNOWN_SCHEMA_VERSION` in `neural/pair-index-resolver.ts` —
  * they are two ends of one fact, and this copy exists only because a data-only overlay must not gain a dependency on
- * `@mailwoman/neural` (onnxruntime-node) to read one header field. Bump BOTH in the same commit; a schema bump that
+ * `@mailwoman/neural` (onnxruntime-node) to read one header field. Bump both in the same commit; a schema bump that
  * leaves this behind makes every dev checkout rebuild-loop or serve an artifact the runtime refuses.
  *
  * The freshness guard must compare it: a guard that checks only delta + source md5 reads a format-obsolete binary as
@@ -301,7 +301,7 @@ export function pairIndexStaleReason(
 export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 
 /**
- * Warn when the per-locale FST a linker just symlinked was built from a DIFFERENT admin database than the one on disk
+ * Warn when the per-locale FST a linker just symlinked was built from a different admin database than the one on disk
  * now.
  *
  * WHY IT WARNS RATHER THAN REBUILDS, unlike its pair-index sibling above. A pair index is seconds of work and the
@@ -363,7 +363,7 @@ export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 
 /**
  * Why an existing artifact may be TRUSTED without a rebuild, or `undefined` when it must be rebuilt (with the reason
- * already printed). The skip requires both halves (#1734): the header magnitudes + format (`pairIndexStaleReason`) AND
+ * already printed). The skip requires both halves (#1734): the header magnitudes + format (`pairIndexStaleReason`) and
  * the header's `sourceMD5s` against the current sources' md5s. Magnitudes alone read a source change as "current"
  * whenever pair counts happen not to move the calibrated numbers — the R5 freshness-guard lesson, which resurfaced in
  * the 2026-08-18 admin swap. A source that is not on disk to re-hash leaves the magnitudes as the best available answer
@@ -448,7 +448,7 @@ async function pairIndexIsFresh(
 
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
- * these magnitudes FROM the sources on disk (see {@link pairIndexIsFresh}). The calibration object drives both the
+ * these magnitudes from the sources on disk (see {@link pairIndexIsFresh}). The calibration object drives both the
  * staleness expectation and the CLI flags, so a magnitude cannot be checked by the guard and dropped from the build.
  *
  * Exits non-zero on a failed build. Missing INPUTS (an unbuilt CLI, an absent source) warn and return instead: a fresh
@@ -536,7 +536,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 
 /**
  * A soft-feed sibling an overlay links: where it comes from, the name it takes in the overlay, and the consequence line
- * printed when the source is missing (the link is warn-and-continue; the channel resolves OFF).
+ * printed when the source is missing (the link is warn-and-continue; the channel resolves off).
  */
 export interface SoftFeedLink {
 	source: string
@@ -772,7 +772,7 @@ async function linkBaseModelPair(destDir: string, digestCard: string | undefined
 
 /**
  * Build a postcode binary from a WOF postcode extract, skip-if-present. A missing CLI or extract is a warning (the
- * anchor channel resolves OFF for that country); a build that runs and fails is an error.
+ * anchor channel resolves off for that country); a build that runs and fails is an error.
  */
 async function buildPostcodeBinary(
 	destDir: string,

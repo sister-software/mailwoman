@@ -243,7 +243,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 		try {
 			// Mirrors "brooklyn, new york, ny": the parsed region's bbox constrains the locality lookup.
-			// Pre-expansion this returned NOTHING (the borough was filtered out, Brooklyn Park is outside
+			// Pre-expansion this returned nothing (the borough was filtered out, Brooklyn Park is outside
 			// the bbox), and the cascade silently fell back to the unconstrained — wrong — hit.
 			const matches = await lookup.findPlace({
 				text: "Brooklyn",
@@ -279,7 +279,7 @@ describe("WOFWasmPlaceLookup", () => {
 		try {
 			// "York New" token-matches both Twin Hamlet (bag "Old York <sep> New City") and New York
 			// (name + alias "New York City"). Pre-#523, the space-joined bags let the padded containment
-			// check false-promote BOTH (' old york new city ' and ' new york new york city ' each
+			// check false-promote both (' old york new city ' and ' new york new york city ' each
 			// contain ' york new '). With the separator, no candidate may claim the exact tier.
 			const straddle = await lookup.findPlace({ text: "York New", placetype: "locality", limit: 5 })
 			expect(straddle.length).toBeGreaterThan(0) // still token-reachable…

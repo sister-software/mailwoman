@@ -12,7 +12,7 @@
  *   here (contrast the drop-ins' `legacyQuery` adapter), so there's nothing to tolerate.
  *
  *   Per-route validation hooks (the 3rd arg to `app.openapi(route, handler, hook)`) override the
- *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its OWN friendly business
+ *   app-level `defaultHook` (wired in `app.ts`) so each route can answer its own friendly business
  *   message — `"address is required"`, `"body must be { addresses: string[] }"`, etc. — matching the
  *   express `mailwoman/server` precedent this surface carries forward. Routes with no friendly
  *   carry-forward message (currently just `/v1/format`) fall through to the app-level hook's generic
@@ -247,7 +247,7 @@ const metricsRoute = createRoute({
 /**
  * `components` accepts `string | string[]` per key on the wire (a caller may pass every span a multi-span match
  * covered); `formatAddress`/`canonicalKey` want a single string per `ComponentTag`. Multi-span values collapse to their
- * FIRST span here — the formatter template owns joining semantics, not this route.
+ * first span here — the formatter template owns joining semantics, not this route.
  */
 function toComponentDict(components: Record<string, string | string[]>): ComponentDict {
 	const out: ComponentDict = {}

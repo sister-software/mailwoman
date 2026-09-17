@@ -2,7 +2,7 @@
 
 This is where the soft-feed channels are assembled. Each channel is optional and absent by
 default, so a row encoded without one is byte-identical to what the pre-channel recipe produced.
-Every channel projects onto the SAME pieces the labels do, and pads to the same width.
+Every channel projects onto the same pieces the labels do, and pads to the same width.
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ def fit_channel(
 ) -> tuple[list[list[float]], list[float]]:
     """Truncate a painted channel to `max_length` and zero-pad it to the width the labels use.
 
-    Every channel lands on the SAME pieces the labels do, so it must end the same width. A channel
+    Every channel lands on the same pieces the labels do, so it must end the same width. A channel
     padded to a different one produces a tensor the collate cannot stack, which surfaces as a shape
     error somewhere else entirely.
     """
@@ -126,7 +126,7 @@ def encode_row(
 
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
     ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``
-    ``(max_length,)``, projected onto the SAME pieces as the labels (so a postcode anchor lands on
+    ``(max_length,)``, projected onto the same pieces as the labels (so a postcode anchor lands on
     exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat). The
     anchor follows the label source: spans present → the postcode range comes off the spans.
 
@@ -175,8 +175,8 @@ def encode_row(
     if gazetteer_lexicon is not None:
         gfeats, gconfs = realign_gazetteer_to_pieces(raw, list(spans), gazetteer_lexicon)
         # Train-time channel choreography (#464): zero the clue adjacent to postcode-anchor hits so
-        # the model never learns the biased region->postcode CRF transition. Keyed off the SAME anchor
-        # confidence inference uses (consistent train/inference), which is why this block runs AFTER the
+        # the model never learns the biased region->postcode CRF transition. Keyed off the same anchor
+        # confidence inference uses (consistent train/inference), which is why this block runs after the
         # anchor's and reads the confidence out of `out`. No-op without the anchor channel.
         if gazetteer_choreography and "anchor_confidence" in out:
             gfeats, gconfs = suppress_gazetteer_near_postcode(

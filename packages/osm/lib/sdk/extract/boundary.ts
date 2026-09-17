@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Administrative-boundary extractor — pull ONE named `boundary=administrative` multipolygon out of a
+ *   Administrative-boundary extractor — pull one named `boundary=administrative` multipolygon out of a
  *   Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr and hand back its GeoJSON geometry. Mirrors
  *   `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom; the differences are that it keeps the
  *   GEOMETRY rather than reducing it to a representative point, and that it refuses anything other than
@@ -58,7 +58,7 @@ export interface OSMBoundary extends OSMBoundaryQuery {
 	 */
 	geometry: ParsedGeometry
 	/**
-	 * The matched feature's OSM id, so a build can record WHICH boundary it keyed its claim to.
+	 * The matched feature's OSM id, so a build can record which boundary it keyed its claim to.
 	 */
 	osmID: string
 }

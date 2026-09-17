@@ -6,7 +6,7 @@
  */
 
 /**
- * Real failures — the test SHOULD fail when one of these surfaces.
+ * Real failures — the test should fail when one of these surfaces.
  */
 const FAIL_PATTERNS: RegExp[] = [
 	/style is not done loading/i,

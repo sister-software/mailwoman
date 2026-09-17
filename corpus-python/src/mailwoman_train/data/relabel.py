@@ -3,30 +3,30 @@
 The #492 probe ladder found the affix ceiling is contradictory labels: 69.4% of base-corpus
 street rows label affix surfaces monolithically (``South County Road 175 West`` = all
 ``B/I-street``) while the affix recipe labels the same surfaces split — at >=1,000:1 effective
-gradient mass against its output. This pass relabels street spans at load time with EXACTLY the
+gradient mass against its output. This pass relabels street spans at load time with exactly the
 affix recipe's split semantics (its ``parseStreet``), so the whole mix makes one consistent claim:
 
-- Trailing USPS Pub-28 suffix -> ``B-street_suffix``   (REQUIRED for any split)
+- Trailing USPS Pub-28 suffix -> ``B-street_suffix``   (required for any split)
 - Leading directional        -> ``B-street_prefix``    (only if >2 words, i.e. room for name+suffix)
-- The remaining name must be non-empty and not itself affix-shaped (``W Park Ave`` gets NO split
+- The remaining name must be non-empty and not itself affix-shaped (``W Park Ave`` gets no split
   because "Park" is a suffix variant — the builder rejects it, so we must too; a looser pass here
   would introduce a THIRD labeling and re-create the disease it cures).
 
-Runs AFTER augmentation (see data_loader) so label-inheriting directional expansions
+Runs after augmentation (see data_loader) so label-inheriting directional expansions
 ("N"->"North", still street) are caught and split too.
 
 **Char-offset spans** (#519, v0.5.0): rows carrying ``span_starts``/``span_ends``/``span_tags``
 get their street SPANS split too — pure char arithmetic on the span's whitespace words (the
 builder's exact word-splitting: ``street.trim().split(/\\s+/)``), no token indirection. The token
-labels keep their existing relabel for the transition. The two can diverge ONLY on surfaces where
+labels keep their existing relabel for the transition. The two can diverge only on surfaces where
 the corpus tokenizer dropped punctuation ("Main St." — tokens see "St" and split; the span path
 sees the word "St.", which is not in the lexicon, and conservatively leaves the span whole,
 exactly like the builder's parseStreet). The span path is the v0.5.0 source of truth: when a row
-has spans, encode_row trains FROM the spans.
+has spans, encode_row trains from the spans.
 
 Vocab comes from the codex-generated lexicon (scripts/build-affix-relabel-lexicon.mjs ->
 data/gazetteer/affix-relabel-lexicon-v1.json) — one source of truth shared with the TS matchers.
-Matching is conservative by parity: case-insensitive, NO period stripping ("St." does not match,
+Matching is conservative by parity: case-insensitive, no period stripping ("St." does not match,
 same as the builder).
 
 Audit mode (run before any training on a new corpus):
@@ -74,7 +74,7 @@ class AffixRelabelLexicon:
     # v2 (2026-08-10, #1569): Pub-28 canonicals that are also common street-name head nouns
     # (PARK/HILL/CREEK...). Sourced from packages/codex/lib/us/street-suffix.json via the
     # `mailwoman gazetteer affix-relabel` builder — never hand-typed here. Empty (a v1
-    # artifact) leaves the positional licensing in split_street_span OFF: old artifacts keep
+    # artifact) leaves the positional licensing in split_street_span off: old artifacts keep
     # the old blanket-rejection behavior, by construction.
     name_prone: frozenset[str] = frozenset()
 
@@ -98,7 +98,7 @@ class AffixRelabelLexicon:
 
 
 def _is_affix_shaped(words: list[str], lex: AffixRelabelLexicon) -> bool:
-    """Port of the builder's isSuffixOrDirectional: trailing word is a suffix OR leading word is
+    """Port of the builder's isSuffixOrDirectional: trailing word is a suffix or leading word is
     a directional. Applied to the candidate NAME to reject splits like 'W Park Ave'."""
     if not words:
         return True
@@ -191,7 +191,7 @@ def relabel_spans(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
 
     The span's raw substring is whitespace-split (the builder's ``street.trim().split(/\\s+/)``,
     punctuation intact — "St." conservatively does not match, same as parseStreet), the split
-    decision is the SAME ``split_street_span``, and the street span is replaced in place by up to
+    decision is the same ``split_street_span``, and the street span is replaced in place by up to
     three spans (street_prefix / street / street_suffix) whose offsets are the matched words'
     positions within the original span. Sortedness/non-overlap are preserved by construction —
     every replacement lies inside the original span's range.

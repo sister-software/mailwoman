@@ -113,7 +113,7 @@ export class PairIndexBuilder {
 	 * (post town) is populated on virtually every row, but CITY (dependent_locality) legitimately isn't, and an empty
 	 * child has nothing to pair.
 	 *
-	 * `parentTag` is REQUIRED and caller-supplied: the builder cannot know whether `rawDistrict` came from a post-town
+	 * `parentTag` is required and caller-supplied: the builder cannot know whether `rawDistrict` came from a post-town
 	 * column, a commune column, or a WOF borough row, and PIX2 records the answer rather than deriving it.
 	 */
 	addRow(rawCity: string, rawDistrict: string, parentTag: ComponentTag): void {
@@ -152,7 +152,7 @@ export class PairIndexBuilder {
 	 * Finalize the build: deduplicated entries (sort order left to `serializePairIndex`) + the word-length distribution.
 	 */
 	/**
-	 * Distinct (child, parent) pairs accumulated so far — lets a caller measure how many NEW pairs a secondary source
+	 * Distinct (child, parent) pairs accumulated so far — lets a caller measure how many new pairs a secondary source
 	 * (the R2 borough extraction) contributed on top of the primary CSV.
 	 */
 	get distinctCount(): number {
@@ -208,7 +208,7 @@ export interface PairIndexHoldoutResult {
  * degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build (a
  * shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
- * Order-independent and seed-deterministic: entries are sorted by (child, parent) BEFORE the seeded shuffle (mirrors
+ * Order-independent and seed-deterministic: entries are sorted by (child, parent) before the seeded shuffle (mirrors
  * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries
  * regardless of what order the caller's `entries` array arrives in (e.g. `Map` iteration order, which
  * {@link PairIndexBuilder.finish} does not guarantee is stable across runs/engines).

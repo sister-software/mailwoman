@@ -116,7 +116,7 @@ export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unk
 /**
  * Predicate for checking if a polygon geometry is a solid, i.e. it has no holes.
  */
-// The parameter admits BOTH paths because distinguishing them is the function's job: defaulted to
+// The parameter admits both paths because distinguishing them is the function's job: defaulted to
 // `SolidPolygonPath`, it cannot be asked about a polygon with holes without the caller asserting past the signature.
 export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean {
 	return input.coordinates.length === 1
@@ -145,7 +145,7 @@ export type PolygonRings = readonly ContainmentRing[]
 export type MultiPolygonRings = readonly PolygonRings[]
 
 /**
- * Ray-cast a point against ONE linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
+ * Ray-cast a point against one linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
  * edge crossing.
  *
  * Points exactly on an edge are implementation-defined; either side is acceptable for geocoding, where admin boundaries
@@ -189,7 +189,7 @@ export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): b
 }
 
 /**
- * Inside ANY polygon of a multi-polygon.
+ * Inside any polygon of a multi-polygon.
  */
 export function pointInMultiPolygon(
 	lon: number,
@@ -241,7 +241,7 @@ export function arealPolygons(geometry: ParsedGeometry | null | undefined): Mult
 }
 
 /**
- * The polygons of a geometry that MUST be areal — {@linkcode arealPolygons} with the refusal every polygon ingest was
+ * The polygons of a geometry that must be areal — {@linkcode arealPolygons} with the refusal every polygon ingest was
  * writing for itself.
  *
  * @param subject Names the feature in the refusal, e.g. `feature 41209`.

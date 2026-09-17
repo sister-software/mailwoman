@@ -24,7 +24,7 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 	const r = await freezeAdmin(db) // no dataDir → the −4 backfill is skipped (fixture has no geojson)
 	expect(r.ancestorRows).toBeGreaterThan(0)
 
-	// The locality's closure reaches its region AND country.
+	// The locality's closure reaches its region and country.
 	expect(
 		(db.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = 3 AND ancestor_id != 3").get() as { n: number }).n
 	).toBe(2)

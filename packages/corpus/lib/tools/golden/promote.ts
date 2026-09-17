@@ -110,7 +110,7 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 
 /**
  * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in the first third of a
- * multi-component raw AND there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
+ * multi-component raw and there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
  * often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
@@ -160,7 +160,7 @@ export async function promoteGolden(
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the REQUIRED input, so its absence must not read as "zero candidates" —
+	// The candidates file is the required input, so its absence must not read as "zero candidates" —
 	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
 	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
 	if (!(await pathExists(options.input))) {

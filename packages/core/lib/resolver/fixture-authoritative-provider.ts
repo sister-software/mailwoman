@@ -6,7 +6,7 @@
  *   In-memory fixture implementation of the authoritative-provider contract (#1901) — synthetic
  *   addresses, synthetic identifiers, zero network. Ships beside the contract the way
  *   `@mailwoman/core/api/test-clocks` ships beside `APIClient`, and for the same reason: every
- *   consumer package exercises the boundary against the SAME reference implementation instead of five
+ *   consumer package exercises the boundary against the same reference implementation instead of five
  *   hand-rolled mocks that drift.
  *
  *   The fixture matches on the query's normalized form or a declared component value — deliberately

@@ -5,13 +5,13 @@
  *
  *   Tests for {@linkcode buildPOIDatabase} — the load/materialize/seal phase of `poi.db` (spec §3.4).
  *   Feeds the loader a synthetic row source directly (an injected `Iterable<POISourceRow>`), so the
- *   suite exercises the whole build WITHOUT touching DuckDB/network — `ingestPlaces` (the Overture
+ *   suite exercises the whole build without touching DuckDB/network — `ingestPlaces` (the Overture
  *   S3 parquet phase) is covered separately, and its schema-probe logic is exercised as a pure
  *   function over `DESCRIBE` rows in `overture-places-schema.test.ts`.
  *
  *   Fixture: 30 rows across 2 countries (US, FR) × 3 categories (cafe, restaurant, museum), 5 rows
  *   per (country, category) pair at ~3m lat jitter (well inside a res-9 cell, so a group clusters
- *   into the SAME `h3_cell`) with 5 distinct confidence values — plus 2 rows with non-finite
+ *   into the same `h3_cell`) with 5 distinct confidence values — plus 2 rows with non-finite
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
@@ -110,13 +110,13 @@ describe("buildPOIDatabase", () => {
 		expect(result.skipped).toBe(2)
 		expect(result.categories).toBe(3)
 		// Per-country counts: 15 rows kept for each of US/FR (3 categories × 5 rows) — the 2 skipped
-		// non-finite-coordinate rows (both nominally "US") are NOT counted, per the Map's contract.
+		// non-finite-coordinate rows (both nominally "US") are not counted, per the Map's contract.
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
 		// The completed artifact has no write bits.
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
-		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
+		// `kdb`'s dispose closes the underlying connection — don't also `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
@@ -385,7 +385,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 	const bbox: BBox = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
-		// Prove this point is genuinely divergent BEFORE trusting the rest of the test — if this assertion ever
+		// Prove this point is genuinely divergent before trusting the rest of the test — if this assertion ever
 		// stops holding (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh
 		// brute-force search, exactly as noted in filing-landscape.test.ts.
 		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
@@ -419,7 +419,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 			gersID: "gers-divergent",
 		}
 
-		// The OSM branch's coverage aggregator (over the SAME row) — what this test pins.
+		// The OSM branch's coverage aggregator (over the same row) — what this test pins.
 		const overrideCells = bboxCoverageCells(bbox, [row])
 		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
 
@@ -441,7 +441,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)
 
-		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for this row is the SAME cell
+		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for this row is the same cell
 		// the default branch actually wrote coverage under — reverting the `bboxCoverageCells` fix makes
 		// `overrideCell.h3Cell` the old buggy direct-res-6 cell, which the default branch never writes to, so
 		// this read comes back `undefined` and the assertion below fails.

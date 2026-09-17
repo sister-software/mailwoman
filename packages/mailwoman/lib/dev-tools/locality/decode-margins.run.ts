@@ -12,7 +12,7 @@
  *
  *   The margin is `max(locality labels) - max(every label)` at the pieces covering the expected locality, so `0` means
  *   a locality label won and a negative number is how far behind it came. A margin says how far the locality came
- *   behind; the winning label beside it says WHAT it came behind, which is the difference between a model that is
+ *   behind; the winning label beside it says what it came behind, which is the difference between a model that is
  *   unsure and one that has learned another reading.
  *
  *   `--swap-region` and `--swap-postcode` re-render each subject under a different region code or postcode, so the

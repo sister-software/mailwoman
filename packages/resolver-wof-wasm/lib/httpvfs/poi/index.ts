@@ -5,7 +5,7 @@
  *
  *   A SECOND sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
  *   category-only k-ring search for a live POI explorer. Independent of
- *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its OWN worker over a
+ *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its own worker over a
  *   different DB, over the same staged sql.js-httpvfs UMD/worker/wasm assets.
  *
  *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
@@ -132,8 +132,8 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 
 		for (const cell of newCells) {
 			seenCells.add(cell)
-			// The SAME packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
-			// packer — `poi.h3_cell` is the SHORTENED cell.
+			// The same packing as poi-lookup.ts: the shared @mailwoman/spatial `shortCellToInt` 48-bit
+			// packer — `poi.h3_cell` is the shortened cell.
 			const shortCell = shortCellToInt(cell as H3Cell)
 
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the

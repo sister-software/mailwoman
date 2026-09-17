@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Populations the gazetteer records at a fraction of their size, corrected against the record's OWN concordance.
+ * @file Populations the gazetteer records at a fraction of their size, corrected against the record's own concordance.
  *
  *   A REVIEW QUEUE, not a campaign. `same-name-parent-population.run.ts` reports 964 localities whose population is a
  *   fraction of their same-name parent's, and #2269 refuses to rewrite them from that signal: the detector cannot tell

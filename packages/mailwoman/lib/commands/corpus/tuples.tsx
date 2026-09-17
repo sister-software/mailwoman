@@ -13,7 +13,7 @@
  *   the `geonames` source reads a fetched GeoNames postal export. Both stamp the country's attested postcode placement
  *   and refuse a country whose placement nothing attests.
  *
- *   The `admin-pairs` source answers the pair WITHOUT a postcode, straight from the admin gazetteer, for a country no
+ *   The `admin-pairs` source answers the pair without a postcode, straight from the admin gazetteer, for a country no
  *   postcode source reaches — the recipe's bare `«locality», «region»[, «country»]` form needs none. It stamps the
  *   `--locale` the caller names, because the gazetteer says which languages a country writes and not which one a given
  *   region surface came from.

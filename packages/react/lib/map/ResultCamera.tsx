@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   `<ResultCamera>` — applies the {@link MapCameraTarget} a {@link MapPlaceRenderSpec} computes, by
- *   animating the live map to it. This is the ONE deliberately-imperative touch in the phase-2 overlays,
+ *   animating the live map to it. This is the one deliberately-imperative touch in the phase-2 overlays,
  *   and it is justified: maplibre exposes animated camera moves (`flyTo`) and viewport-fitting
- *   (`fitBounds`, which needs the map's PIXEL dimensions + padding) ONLY imperatively — react-map-gl has
+ *   (`fitBounds`, which needs the map's pixel dimensions + padding) only imperatively — react-map-gl has
  *   no declarative prop for "animate to these bounds". It is applied the v8-idiomatic way, through
  *   `useMap()` (exactly as `DashboardMap`/`GeoJSONClipboardLayer` reach the map), never a threaded handle.
  *
@@ -29,11 +29,11 @@ import type { MapCameraTarget } from "#map/place-render"
  * The `fitBounds` options for a `bounds` target — and the reason this is a named function rather than an object literal
  * at the call site.
  *
- * `duration` is present ONLY on the non-animated path, and its ABSENCE on the animated one is required. maplibre's
+ * `duration` is present only on the non-animated path, and its absence on the animated one is required. maplibre's
  * `Camera.flyTo` (which `fitBounds` funnels into via `_fitInternal`) branches on `'duration' in options`, not on the
  * value: an explicitly-passed `duration: undefined` therefore survives the key test and is coerced with `+undefined` →
  * `NaN`. Every ease frame then computes `k = easing(elapsed / NaN)` → `NaN`, the flight-path math yields a `NaN` world
- * coordinate, and the FIRST frame throws `Invalid LngLat object: (NaN, NaN)` out of the RAF loop — before the map has
+ * coordinate, and the first frame throws `Invalid LngLat object: (NaN, NaN)` out of the RAF loop — before the map has
  * moved at all, and with no `move` event to notice it by.
  *
  * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map: `{padding: 40, duration: undefined}` →

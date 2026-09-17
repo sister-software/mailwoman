@@ -7,9 +7,9 @@
  *   chosen from.
  *
  *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
- *   its `@mailwoman/coastal/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-PART
+ *   its `@mailwoman/coastal/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-part
  *   zero-cell guard and the allocator-avoiding shortcuts around it are properties of h3-js rather than of
- *   this product — the layer contract's polygon-builder section states them as requirements on EVERY polygon
+ *   this product — the layer contract's polygon-builder section states them as requirements on every polygon
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
  *   WHAT STAYS HERE IS WHAT IS SCENARIO-SHAPED. The flood layer accumulates per zone code, because a flood

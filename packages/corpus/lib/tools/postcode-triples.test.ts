@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `postcode-triples` — the extraction that feeds the `trailing-region` recipe.
  *
- *   Every test here is about a row that must NOT be emitted, because each one corresponds to something the recipe would
+ *   Every test here is about a row that must not be emitted, because each one corresponds to something the recipe would
  *   otherwise teach wrongly: a code counted twice, a sub-locality labelled `locality`, a blank region, or a country
  *   whose postcode placement nothing attests.
  */
@@ -36,7 +36,7 @@ afterAll(() => root[Symbol.asyncDispose]())
  * Write a GeoNames-shaped export as `[country, postcode, place, admin1, admin2]`.
  *
  * The real file has twelve columns and the reader takes four of them from non-adjacent positions — place is 2, admin1
- * is 3, admin2 is FIVE. Writing them in argument order and padding the gap keeps the fixture readable while still
+ * is 3, admin2 is 5. Writing them in argument order and padding the gap keeps the fixture readable while still
  * exercising the real offsets; a fixture that packed them adjacently would pass against a reader with the wrong index.
  */
 async function writeExport(
@@ -194,7 +194,7 @@ describe("applyCountryBudget", () => {
 	})
 
 	it("bounds a country a per-locality quota cannot", () => {
-		// IN has 128,152 distinct localities, so even a quota of ONE leaves it contributing 63,533 rows against 39,790
+		// IN has 128,152 distinct localities, so even a quota of one leaves it contributing 63,533 rows against 39,790
 		// from the other seven combined. Without this the recipe teaches the trailing surface as an Indian fact.
 		const triples = [
 			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),

@@ -14,7 +14,7 @@
  *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's
  *   DuckDB scan is capped at `--threads` (default: cores / concurrency), so concurrency × threads ≈
  *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop, not the
- *   scan, so N concurrent inserts is the real win. Sequentialise via `--concurrency 1`.
+ *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
  *
  *   Each per-state CHILD owns its own DB's atomic write; this driver only spawns children (skipping
  *   COMPLETE databases) and writes the small `ATTRIBUTION.json` manifest incrementally — so there is
@@ -23,12 +23,12 @@
  *
  *   LICENSING (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
  *   OpenAddresses (32%, government open data) with ZERO OpenStreetMap/ODbL rows. So the default is
- *   NO license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
+ *   no license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The
  *   only obligation is ATTRIBUTION: the per-row `overture:<dataset>` provenance is summarized into
  *   `<out-dir>/ATTRIBUTION.json`. Pass `--license-filter <datasets>` to build a narrowed database.
  *
  *   IDEMPOTENCY: a state is skipped only if its database is COMPLETE — non-empty `address_point` table
- *   AND the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/VACUUM
+ *   and the `idx_ap_streetkey` index present. A half-built database (data inserted, indexing/VACUUM
  *   not reached — e.g. a killed run) is detected as incomplete and rebuilt. `--force` rebuilds
  *   regardless.
  */
@@ -172,7 +172,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A database is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
+		// A database is complete iff its address_point table has rows and the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
 		const isComplete = async (dbPath: string): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
@@ -271,7 +271,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			}
 
 			// The child's parse-relevant facts span its Ink summary (stdout) + plain progress (stderr) —
-			// combine + strip ANSI, then match WITHOUT line anchors so the summary's "✓ "/"  " render
+			// combine + strip ANSI, then match without line anchors so the summary's "✓ "/"  " render
 			// prefixes don't defeat the regex.
 			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)

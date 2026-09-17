@@ -1,22 +1,22 @@
-# === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary WITHOUT a postcode anchor) ===
+# === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary without a postcode anchor) ===
 # FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
-# Paris" FIXED, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
+# Paris" fixed, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
-# and ship the FR-up/US-held sweet spot. SAME single variable (the fr-bare-street source) — clean attribution.
-# v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and ONE new
+# and ship the FR-up/US-held sweet spot. Same single variable (the fr-bare-street source) — clean attribution.
+# v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and one new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
-# the other source_weights, LR/schedule — is IDENTICAL to v193a3, so the SINGLE variable is the new source
+# the other source_weights, LR/schedule — is identical to v193a3, so the SINGLE variable is the new source
 # (clean attribution).
 #
 # ROOT MECHANISM (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
 # comprehensive FR source (BAN, OSM) is postcode-COMPLETE, so the decoder learned the FR street→locality
-# boundary as "the token after the 5-digit postcode," NEVER as "comma + city." Strip the postcode and proper-
+# boundary as "the token after the 5-digit postcode," never as "comma + city." Strip the postcode and proper-
 # noun street tokens leak into the following locality ("Rue René Cassin, Paris" → street="Rue Ren",
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
-# address. NOT data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
+# address. Not data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
 #
-# THE CHANGE (ONE variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
-# rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", NO postcode.
+# THE CHANGE (one variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
+# rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", no postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
 # (that is quarantined to the opt-in rooftop sources). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
@@ -26,14 +26,14 @@
 # no-regression (the per-tag floors). MOVES → imbalance confirmed → scale to a full run within the $20 cap.
 # FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
-# v1.6.0 ~7M-loss mask blow-up does NOT apply here. NOT promoted without operator GO + the check.
+# v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 parquet files VERBATIM (re-rooted to /data) + the 1 fr-bare-street parquet file.
+  # v0.9.4 overlay = v0.9.3a3's 694 parquet files verbatim (re-rooted to /data) + the 1 fr-bare-street parquet file.
   corpus_dir: /data/corpus/versioned/v0.9.4-fr-bare-street/corpus-v0.9.4-fr-bare-street
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
-  country_weights: # VERBATIM from v1.9.3a3 (22 countries) — no new locales (surgical).
+  country_weights: # Verbatim from v1.9.3a3 (22 countries) — no new locales (surgical).
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -57,7 +57,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street source.
+  source_weights: # Verbatim from v1.9.3a3 + the one new fr-bare-street source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -97,7 +97,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM from v1.9.3a3.
+model: # Verbatim from v1.9.3a3.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -152,7 +152,7 @@ model: # VERBATIM from v1.9.3a3.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # VERBATIM from v1.9.3a3 except output_dir + run_name + max_steps. RESUME from v193a3 step-080000.
+train: # Verbatim from v1.9.3a3 except output_dir + run_name + max_steps. RESUME from v193a3 step-080000.
   output_dir: /data/output-v195-surface-aug-s42/checkpoints
   seed: 42
   batch_size: 128

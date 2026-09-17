@@ -13,7 +13,7 @@
  *   NCERM publishes no coverage statement and an absent polygon may simply be inland.
  *
  *   THE TWELVE SCENARIOS STAYING SEPARABLE IS THE SECOND THING PINNED HERE. The fixture puts two scenarios
- *   over the SAME ground with different distances, so a build that pooled them would answer one point with
+ *   over the same ground with different distances, so a build that pooled them would answer one point with
  *   two contradictory numbers under one name.
  */
 

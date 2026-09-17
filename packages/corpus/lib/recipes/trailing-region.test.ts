@@ -7,7 +7,7 @@
  *   The same digits change TAG with position. Measured on the shipped model, `Barcelona 6001, Anzoátegui, Venezuela`
  *   tags `6001` as `house_number` and loses the locality into the street, while `6001 Barcelona, Anzoátegui, Venezuela`
  *   tags it `postcode` and recovers `locality: Barcelona`. So a recipe emitting one placement teaches one family of
- *   countries, and the tests below pin which surface each placement writes — including that an ABSENT placement still
+ *   countries, and the tests below pin which surface each placement writes — including that an absent placement still
  *   means `leading`, because a tuples file written before the field existed must produce the rows it always did.
  */
 

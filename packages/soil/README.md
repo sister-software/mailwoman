@@ -129,7 +129,7 @@ _U.S. Department of Agriculture, Natural Resources Conservation Service._
 
 ## Two dates, and they are not the same fact
 
-`sacatalog.saverest` is the refresh. NRCS runs ONE coordinated Annual Soils Refresh each October 1, and
+`sacatalog.saverest` is the refresh. NRCS runs one coordinated Annual Soils Refresh each October 1, and
 grouping the catalogue by year returns 2016: 1, 2025: 3,323, 2026: 56 — so a region's areas share a
 vintage. **The field survey underneath is far older.** `IA153` carries a 2025-09-09 refresh over a
 _Soil Survey of Polk County, Iowa_ published in **1960** at 1:15,840, and the dataset's own
@@ -196,7 +196,7 @@ pass on an artifact that answered class 8 for the whole planet.
 
 ## The observation
 
-Default OFF, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/soil/soil.db` rather than a boolean.
+Default off, and the switch is the presence of `$MAILWOMAN_DATA_ROOT/soil/soil.db` rather than a boolean.
 The reading reaches a caller as one additive `QueryIntentMarker` with `code: "authority_designation"` and
 `mechanism: "layer:soil_capability"` — the same code the flood layer's marker uses, under the same `layer`
 family, with a rule of its own. The class never travels without the share it rests on. Ranking, abstention
@@ -213,7 +213,7 @@ byte-identical to one with it, minus the marker.
   in one season, not capability — its accuracy caveats are unread, and it is a raster ingest into a
   repository with no raster tooling. Whoever does build it inherits a meaning-of-zero inversion that
   arrives pre-built in the source's own encoding: the derived Crop Frequency Layer's value domain runs
-  `"1"` planted once in 18 years through `"18"` planted every year, then **`"255"` planted ZERO times**,
+  `"1"` planted once in 18 years through `"18"` planted every year, then **`"255"` planted zero times**,
   while **`"0"` is No Data**. A reader that takes 0 as "never planted" reads _we have no data here_ as
   _nothing was ever grown here_ — exactly backwards. Nothing in this vocabulary uses a numeric sentinel
   for either state, and nothing in it should start.

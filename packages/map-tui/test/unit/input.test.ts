@@ -130,7 +130,7 @@ describe("decodeInputChunk", () => {
 		})
 
 		it("reassembles a mouse report the kernel split in two", () => {
-			// THE bug this rework exists for: no exotic key needed, just a read boundary inside a drag report. The
+			// The bug this rework exists for: no exotic key needed, just a read boundary inside a drag report. The
 			// first half used to decode as a quit and end the session mid-drag.
 			const first = decodeInputChunk(`${ESC}[<32;12`)
 

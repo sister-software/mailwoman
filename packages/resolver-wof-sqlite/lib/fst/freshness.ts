@@ -108,7 +108,7 @@ export interface FSTExpectation {
 }
 
 /**
- * Read an artifact's stamp WITHOUT deserializing it — a header seek plus the trailer, three reads totalling a few
+ * Read an artifact's stamp without deserializing it — a header seek plus the trailer, three reads totalling a few
  * kilobytes. The distinction matters: `fst-global-priority.bin` is 317 MB and this runs on every `yarn test` via the
  * weights linkers, so `readFileSync` + `readFSTProvenance` would trade a freshness guard for a slower test suite and
  * nobody would keep it.
@@ -256,7 +256,7 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 /**
  * The whole check, for a caller that has a path and a source DB and wants a warning string or nothing.
  *
- * Returns `undefined` when the artifact is current OR when it is absent — an absent artifact is a different problem
+ * Returns `undefined` when the artifact is current or when it is absent — an absent artifact is a different problem
  * with a different message, and every existing caller already reports it in place.
  */
 export async function fstFreshnessWarning({

@@ -1,14 +1,15 @@
 # === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
-# ONE conceptual variable vs v0.9.8-affix (the conditional affix change): the affix recipe output is now MULTI-LOCALE.
+# One conceptual variable vs v0.9.8-affix (the conditional affix change): the affix recipe output is now multi-locale.
 # Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only `synth-affix` recipe output SWAPPED for a multi-locale
 # one (50K US affix splits — identical exposure to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
-# no affix split, no annotation). Everything else is held EXACTLY at v0.9.8: same recipe (postcode
-# anchor ON, self-cond ON, phrase priors ON), same source_weights (synth-affix 2.0), seed 42, 20k steps.
-# NO gazetteer anchor here — that + its choreography fold in at CONSOLIDATION (#466). This is a clean
-# SOLO A/B: does multi-locale balance clear the FR-postcode dilution WITHOUT losing the affix win?
+# no affix split, no annotation). Everything else is held exactly at v0.9.8: same recipe (postcode
+# anchor on, self-cond on, phrase priors on), same source_weights (synth-affix 2.0), seed 42, 20k steps.
+# No gazetteer anchor here — that + its choreography fold in at consolidation (#466). This is a clean
+# solo A/B: does multi-locale balance clear the FR-postcode dilution without losing the street_suffix /
+# street_prefix F1 the affix rows produced?
 #
 # WHY. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
-# negative-space) but its ONE blemish was FR postcode −3.9 — a US-ONLY recipe output (every row "City, ST ZIP")
+# negative-space) but its one blemish was FR postcode −3.9 — a US-only recipe output (every row "City, ST ZIP")
 # strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
 # The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
 # 95.6→99.5. This reroll folds that exact fix into the affix recipe itself (see the postmortem
@@ -17,10 +18,10 @@
 #
 # PRE-REGISTERED CHECK (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
 #   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9; back within ~1pp).
-#   - RETAIN the affix win: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
+#   - RETAIN the affix classes: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
 #     (data/eval/external/street-affix-real.jsonl) — at or above v0.9.8 (78/67).
 #   - `street` F1 >= v4.1.0 (no loss; negative space) on golden US + the real-affix eval.
-#   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
+#   - RETAIN unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
 #   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
 #     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
 #   DECISION: FR postcode recovered + affix retained + no regression check → PROMOTE candidate (v4.2.0) and the
@@ -70,7 +71,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
+    # retained from v4.1.0 (v0.9.7-unit-v3), so `unit` stays at or above 88% on unit-real-designators.
     synth-unit: 1.5
     # the multi-locale affix source. 2.0 keeps the US affix EXPOSURE identical to v0.9.8 (50K US rows at
     # 2.0); the 40K FR/DE/IT/NL balance rows ride the same weight (additive, postcode-order signal).

@@ -14,7 +14,7 @@
  *   Two steps, both from OS's own "A Guide to Coordinate Systems in Great Britain":
  *
  *   1. **Inverse transverse Mercator (Redfearn's series)** — National Grid E/N → OSGB36 geodetic
- *      lat/lon on the Airy 1830 ellipsoid. This step is EXACT to well below a millimetre; it is
+ *      lat/lon on the Airy 1830 ellipsoid. This step is exact to well below a millimetre; it is
  *      plain map-projection algebra with no empirical content, and {@link osgb36GridToAiryLatLon}
  *      reproduces the guide's Annexe C.2 worked example to **1.3e-5 arc-seconds (~0.4 mm)**, which
  *      is that example's own published rounding rather than our error.
@@ -138,7 +138,7 @@ const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
  * The seven-parameter Helmert transformation taking OSGB36 (Airy 1830) geocentric cartesian coordinates to WGS84.
  *
  * OS publishes this transform in the ETRS89/WGS84 → OSGB36 direction (guide table 4), as `tx = -446.448, ty = +125.157,
- * tz = -542.060, s = +20.4894 ppm, rx = -0.1502", ry = -0.2470", rz = -0.8421"`. We need the OTHER direction, so every
+ * tz = -542.060, s = +20.4894 ppm, rx = -0.1502", ry = -0.2470", rz = -0.8421"`. We need the other direction, so every
  * parameter is negated — valid to well inside the transform's own metre-scale error because the rotations are
  * microradian-scale and the second-order terms of a proper inversion are sub-millimetre.
  *
@@ -213,8 +213,8 @@ export interface NationalGridPoint {
  * Convert National Grid eastings/northings to OSGB36 geodetic lat/lon on the Airy 1830 ellipsoid, by Redfearn's inverse
  * transverse Mercator series.
  *
- * This is the EXACT half of the pipeline — pure projection algebra, no datum shift. The result is still on Airy 1830,
- * so it is NOT a WGS84 coordinate and must not be handed to anything expecting one; feed it to
+ * This is the exact half of the pipeline — pure projection algebra, no datum shift. The result is still on Airy 1830,
+ * so it is not a WGS84 coordinate and must not be handed to anything expecting one; feed it to
  * {@link osgb36AiryToWGS84}. Exported separately so the projection can be tested against OS's worked example
  * independently of the Helmert, which is the only way to tell a projection bug from a datum-shift bug.
  */
@@ -351,7 +351,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
  * Convert a British National Grid (EPSG:27700) easting/northing straight to WGS84 (EPSG:4326) lat/lon — the composition
  * of {@link osgb36GridToAiryLatLon} and {@link osgb36AiryToWGS84}, and the function callers actually want.
  *
- * Accurate to about ±5 m across GB (see the module docstring). Does NOT validate that the input lies within the grid's
+ * Accurate to about ±5 m across GB (see the module docstring). Does not validate that the input lies within the grid's
  * GB extent: `{easting: 0, northing: 0}` is a real point in the Atlantic south-west of the Scillies, and Code-Point
  * Open uses exactly that to mean "no coordinate available" (its 865 positional-quality-90 rows). Callers must filter
  * those rows themselves — a zero here is a legitimate coordinate, so this module cannot tell the difference.

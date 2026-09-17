@@ -14,14 +14,14 @@
  *
  *   Three buckets fall out:
  *
- *   - **enrolled** — resolves to BOTH an eligibility and a funding record.
- *   - **eligible, not enrolled** — an eligibility record with NO funding record resolving to it (the
+ *   - **enrolled** — resolves to both an eligibility and a funding record.
+ *   - **eligible, not enrolled** — an eligibility record with no funding record resolving to it (the
  *       ANTI-JOIN: the set you currently find by eye).
  *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
  *   Output: GeoJSON (drops on the same map) + a table, each entity tagged with its bucket + source
- *   memberships. We produce the reconciled join; what a gap MEANS — and whether it's real or a
+ *   memberships. We produce the reconciled join; what a gap means — and whether it's real or a
  *   sampling artifact — is the consumer's call, not ours. This is strictly a set-membership
  *   reconciliation, never an allegation.
  *

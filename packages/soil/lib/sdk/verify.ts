@@ -234,7 +234,7 @@ function candidateDelineations(
 			rings: Uint8Array
 		}>) {
 			// DEDUPE ON THE DELINEATION, NEVER ON ITS MAP UNIT. A delineation reached through two resolutions is one
-			// delineation and must be tested once; two DIFFERENT delineations of the same map unit are two shapes covering
+			// delineation and must be tested once; two different delineations of the same map unit are two shapes covering
 			// different ground and must both be tested. Keying on the map unit drops the second, and it drops it silently —
 			// the point test simply finds nothing and the row reads as a disagreement with the authority. Measured at Iowa
 			// scale: one point in 60, where the artifact's own geometry does contain the point and the index-driven read

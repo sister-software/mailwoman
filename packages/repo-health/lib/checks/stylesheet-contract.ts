@@ -27,7 +27,7 @@ const SYSTEM_STYLESHEET = "packages/react/styles.css"
  * A rule, as the text gives it up: the selector list, the declarations inside the braces, and the at-rules it is nested
  * in.
  *
- * The enclosing at-rules are what separate a rule that USES a token from a rule that is a material's fallback. The
+ * The enclosing at-rules are what separate a rule that uses a token from a rule that is a material's fallback. The
  * chip's hover background and a sticky header both paint the fallback colour on purpose; only the rules inside
  * `@supports not (backdrop-filter…)` and `@media (prefers-reduced-transparency: reduce)` are the fallback itself.
  */
@@ -133,7 +133,7 @@ function declares(body: string, property: string): boolean {
 const STATE_SELECTOR = /:(?:hover|active|disabled|focus|focus-visible|focus-within|checked|first|last|nth)|--[a-z]+$/u
 
 /**
- * Vendor pairs the bundler collapses. A minifier keeps the LAST of two declarations carrying the same value, so the
+ * Vendor pairs the bundler collapses. A minifier keeps the last of two declarations carrying the same value, so the
  * standard property has to come after its prefixed twin or it is the one dropped from the output.
  */
 const VENDOR_PAIRS = ["backdrop-filter", "mask-image", "user-select", "text-stroke", "box-decoration-break"] as const

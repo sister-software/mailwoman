@@ -69,7 +69,7 @@ function summarizeValidationError(error: { issues: Array<{ path: PropertyKey[]; 
 
 /**
  * The document info stamped into the emitted OpenAPI document. Exported (not inlined) so the `mailwoman openapi`
- * command can call `emitOpenAPIDocuments` with the SAME info the mounted `/openapi.json` route (below, via
+ * command can call `emitOpenAPIDocuments` with the same info the mounted `/openapi.json` route (below, via
  * {@link attachOpenAPIDocs}) uses — one source of truth, no risk of the two drifting.
  */
 export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
@@ -102,7 +102,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 	const app = new OpenAPIHono({
 		// This surface is ours (no vendor contract to preserve): every declared body/query schema is
 		// validator-enforced, and a failure maps through the shared api-kit envelope — never the raw zod
-		// `{success, error}` shape. Individual routes (routes.ts) override this per-call to answer their OWN
+		// `{success, error}` shape. Individual routes (routes.ts) override this per-call to answer their own
 		// friendly business message (e.g. "address is required"); this is the fallback for the rest (currently
 		// just `/v1/format`).
 		defaultHook: (result, c) => {

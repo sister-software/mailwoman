@@ -132,7 +132,7 @@ const LITERAL_INPUTS_DESCRIPTION =
  * Which inputs a measuring tool runs over.
  *
  * `{"kind":"board"}` is the shortest legal value and the default everywhere, so the well-powered choice is the cheapest
- * one to type. The hand-picked branch is deliberately wordier — an array AND a `why` — because choosing a small panel
+ * one to type. The hand-picked branch is deliberately wordier — an array and a `why` — because choosing a small panel
  * is a claim about what is worth measuring, and the claim is echoed into every number the set produces.
  */
 export const INPUT_SET_SCHEMA = z

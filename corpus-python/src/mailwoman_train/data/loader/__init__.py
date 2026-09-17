@@ -25,7 +25,7 @@ Per Phase 2 §2:
 v0.5.0 char-offset labels (#519): parquet files whose schema carries
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
 augmentations (which re-target it; see ``augment.py``) and the #511 relabel pass (char
-arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array FROM
+arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array from
 the spans. Frozen pre-v0.5.0 files carry no span columns and ride the legacy token path. A
 file with a partial column set, or a null span value in a span-schema file, is corrupt and
 raises loudly — never a silent fallback.

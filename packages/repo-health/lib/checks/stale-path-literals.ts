@@ -2,19 +2,19 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A quoted repository path naming a file that MOVED.
+ * @file A quoted repository path naming a file that moved.
  *
  *   A moved file leaves two kinds of reference behind. The compiler reads one of them — an import specifier — and
  *   reports it. The other is a STRING: a registry entry, a `run:` block, a CLI flag default, a docstring, a
  *   provenance line written into a generated artifact. Nothing reads those until something runs, and each is read
  *   by code that treats absence as a NEGATIVE ANSWER rather than an error, so the failure is a well-formed wrong
  *   result rather than a crash. `mwops health fix prefix-directories` rewrites a moved file's references from
- *   OTHER files and not a file's references to ITSELF, so the tool built for this class shares the blind spot.
+ *   other files and not a file's references to itself, so the tool built for this class shares the blind spot.
  *
  *   TWO TESTS, AND THE SECOND IS THE ONE THAT MAKES IT USABLE. A literal must look like a repository path — first
  *   segment a repository directory, last segment carrying a file extension — AND name a path this repository once
  *   tracked. The shape test alone reported 93 literals over this tree, almost all of them correct: a path a
- *   `.run.ts` WRITES does not exist until it runs, `packages/neural-weights-en-us/model.onnx` is materialized and
+ *   `.run.ts` writes does not exist until it runs, `packages/neural-weights-en-us/model.onnx` is materialized and
  *   deliberately uncommitted, and a symbol test plants `packages/foo/new.ts` as fixture data. Requiring the path
  *   to have existed once leaves 20 of those 93, and what remains is a reference to something real that moved —
  *   which is what the check is for. A typo naming a path that never existed is a different defect, and the tool
@@ -95,7 +95,7 @@ export async function findStalePathLiterals(context: {
 
 	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged and not committed is
 	// enough — and this walk OPENS every path it is given, so the absent one throws ENOENT and the check fails for a
-	// reason that has nothing to do with path literals. `tracked` above keeps the FULL index, because a literal naming a
+	// reason that has nothing to do with path literals. `tracked` above keeps the full index, because a literal naming a
 	// staged-for-deletion file is still a literal naming a tracked file.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))

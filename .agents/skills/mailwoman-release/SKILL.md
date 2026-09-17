@@ -1,6 +1,6 @@
 ---
 name: mailwoman-release
-description: Codifies the mailwoman npm release — a coordinated version bump across ALL @mailwoman/* workspaces (the model included), published ENTIRELY via CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag FIRST — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and PUBLISHED-tarball md5 verification. The demo repoint is a SEPARATE follow-up. Use when promoting a trained model to npm or publishing any npm release ("publish", "release", "ship v…", "promote the model").
+description: Codifies the mailwoman npm release — a coordinated version bump across every @mailwoman/* workspace (the model included), published only through CI (publish.yml + npm Trusted Publishing/OIDC), never locally. Covers version determination (npm view + git tag first — a code-only release burns the next number), the model-card + release.config prep PR, the Hugging Face weight-staging prerequisite (`mailwoman release hf`), the dry-run-then-real CI dispatch, and md5 verification of the published tarball. The demo repoint is a separate follow-up. Use when promoting a trained model to npm or publishing any npm release ("publish", "release", "ship v…", "promote the model").
 ---
 
 # Mailwoman Release Skill
@@ -14,30 +14,30 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 - Publishing a code-only npm release (no model change — the version still bumps in sync).
 - Operator says "publish", "release", "ship vX", "promote the model".
 
-## When NOT to use
+## When not to use
 
-- Updating ONLY the browser demo — that's a separate repoint (see the last section). The npm
-  publish does NOT touch the demo.
+- Updating only the browser demo — that's a separate repoint (see the last section). The npm
+  publish does not touch the demo.
 - Anything local — **we never publish locally** (see Cardinal Rule 1).
 
 ## Cardinal rules (internalize before touching anything)
 
-1. **ALWAYS via CI** — `.github/workflows/publish.yml`, dispatched with `gh workflow run`. npm
+1. **Always via CI** — `.github/workflows/publish.yml`, dispatched with `gh workflow run`. npm
    Trusted Publishing (OIDC) means no npm token lives anywhere; CI publishes the weights packages
-   too. Local `yarn release` is NOT the path (local `npm whoami` is E401 by design; the `/mnt/playpen`
+   too. Local `yarn release` is not the path (local `npm whoami` is E401 by design; the `/mnt/playpen`
    weight source also doesn't exist on the runner). The operator's rule: "We never do it locally."
 2. **Full-sync versioning** — every workspace in `.release-it.json` + `neural-weights-*/model-card.json#version`
-   - `release.config.json#version` + the demo `releases.json` share ONE number per release. The
+   - `release.config.json#version` + the demo `releases.json` share one number per release. The
      trained artifact keeps its own identity (`release.config.json#weights`, the card's `model_lineage`);
      the published version is the unified release number.
 3. **The model release version is the NEXT UNIFIED number — verify, don't assume.** A _code-only_
-   release bumps the packages but NOT the card (the card version tracks the MODEL). So the card can
+   release bumps the packages but not the card (the card version tracks the model). So the card can
    lag the package version (e.g. card 4.11.0 while npm is at 4.12.0). **Run `npm view mailwoman
 version` AND `git tag -l 'v4.*'` and take the next number after the LATEST published**, not card+1.
 4. **The CI workflow FETCHES weights from HF** at `en-us/v<cardVersion>/`. A model release has a hard
    prerequisite: stage the weights to HF FIRST (Step 2). A code-only release skips this (the card
    version is unchanged → CI re-fetches the existing model).
-5. **Dry-run before real**, and **verify the PUBLISHED tarball's md5**, not the workspace file (the
+5. **Dry-run before real**, and **verify the published tarball's md5**, not the workspace file (the
    materialized `model.onnx` can be a stale post-dry-run leftover).
 
 ---
@@ -51,7 +51,7 @@ npm view mailwoman versions --json | jq 'index("4.13.0")'   # null = your target
 ```
 
 A model promotion is a **minor** bump from the latest published. Pick the explicit semver (e.g.
-`4.13.0`). Do NOT trust `--minor` to compute it — see the dispatch note.
+`4.13.0`). Do not trust `--minor` to compute it — see the dispatch note.
 
 ## Step 1 — prep PR (model-card + release.config + staged binary)
 
@@ -68,8 +68,8 @@ For a **model release**, on a branch off current `main`:
    new int8 md5**, plus reconcile `model_lineage`, `phase`, `notes` (the `requires` ship-config stays
    UNCHANGED unless the channels changed). Validate JSON: `jq -e .version <file>`.
 
-   The card WINS for the md5 — en-us's `DEFAULT_MODEL_MD5` derives from it, and
-   en-gb's linker reads THIS file to verify its own link. Skip `files_md5` and the en-gb guard fails
+   The card decides the md5 — en-us's `DEFAULT_MODEL_MD5` derives from it, and
+   en-gb's linker reads this file to verify its own link. Skip `files_md5` and the en-gb guard fails
    comparing new bytes against the old digest, which reads as a broken link rather than a missed edit.
 
 4. **Both dev linkers pin the model FILENAME and neither derives it.** A promotion that edits only
@@ -83,9 +83,9 @@ For a **model release**, on a branch off current `main`:
 
    Verify with `grep -rl "<old model basename>" --exclude-dir=node_modules .` before opening the PR;
    every hit outside `scratchpad/` is a file that still has to move. Then run `link-dev-weights` for
-   en-us AND en-gb — en-gb's #397 guard is what proves the pair moved together.
+   en-us and en-gb — en-gb's #397 guard is what proves the pair moved together.
 
-   `weights.tokenizer` / `weights.tokenizerVersion` change ONLY when the tokenizer changed.
+   `weights.tokenizer` / `weights.tokenizerVersion` change only when the tokenizer changed.
    Confirm by md5, not by run name: a from-scratch run reuses the shipped tokenizer unless the recipe replaces it, and
    assuming otherwise stages the wrong one into the bundle.
 
@@ -139,7 +139,7 @@ returns HTTP 200 before dispatching.
 ## Step 3 — dispatch the CI publish (two-phase, PR-based; dry-run first)
 
 The "Production Integrity" ruleset requires the release commit to land via a PR with a green
-`test` check, so the ship is TWO dispatches around an auto-merging release PR (the direct
+`test` check, so the ship is two dispatches around an auto-merging release PR (the direct
 release-it push is retired — the GH013 failure mode below states why):
 
 ```bash
@@ -165,9 +165,9 @@ gh run watch <rid> --exit-status --interval 15
 - **Partial-failure recovery**: `mode=publish` is idempotent (tag/release are create-if-missing;
   workspace publishes ride `--tolerate-republish`) — just re-dispatch it.
 - The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
-  before THAT dispatch; phase 1 needs no binaries.
+  before that dispatch; phase 1 needs no binaries.
 
-## Step 4 — verify the ship (the PUBLISHED tarball, not the workspace)
+## Step 4 — verify the ship (the published tarball, not the workspace)
 
 ```bash
 for p in mailwoman @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us @mailwoman/neural-weights-fr-fr; do
@@ -187,7 +187,7 @@ Then fast-forward local main: `git merge --ff-only origin/main`.
 
 ## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
 
-The npm publish leaves the browser demo (mailwoman.ai/demo) on the OLD model.
+The npm publish leaves the browser demo (mailwoman.ai/demo) on the old model.
 `mailwoman release hf` without `--set-default` leaves HF `releases.json` `defaultVersion`
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
 model to R2 (`public.mailwoman.ai/mailwoman/en-us/v<target>/`), and bump the demo version constant
@@ -200,7 +200,7 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **`--minor` → patch** through the yarn wrapper → pass the explicit semver to `-f version=`.
 - **CI fetches weights from HF at the card version** → stage to HF before the real run (model releases).
 - **Local npm is E401** → CI only; the OIDC path needs no token.
-- **The materialized `model.onnx` can read stale** (post-dry-run cleanup) → verify the PUBLISHED tarball.
+- **The materialized `model.onnx` can read stale** (post-dry-run cleanup) → verify the published tarball.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
 - **Stage binaries BESIDE the canonical** (new filename); the operator approves the actual swap = the merge + dispatch.
@@ -212,4 +212,4 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **Release PRs need their `test` check dispatched explicitly** — GITHUB_TOKEN-created PRs never
   trigger `on: pull_request` (anti-recursion), so mode=prepare runs `gh workflow run test.yml --ref
 release/v<target>` itself. If an auto-merge ever hangs with "expected — waiting", check whether
-  that dispatch failed and re-run it; do NOT merge past the check.
+  that dispatch failed and re-run it; do not merge past the check.

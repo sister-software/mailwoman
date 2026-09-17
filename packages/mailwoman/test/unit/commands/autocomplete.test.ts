@@ -128,7 +128,7 @@ describe("normalizeTokens symmetry", () => {
 	})
 
 	it("applies NFKC — composed characters are normalized but diacritics are preserved", () => {
-		// normalizeTokens applies NFKC + lowercase + punctuation strip. It does NOT decompose or
+		// normalizeTokens applies NFKC + lowercase + punctuation strip. It does not decompose or
 		// strip diacritics — that's intentional so that "José" and "Jose" are treated as distinct
 		// tokens at both build time and query time (symmetry preserved).
 		const tokens = normalizeTokens("San José")

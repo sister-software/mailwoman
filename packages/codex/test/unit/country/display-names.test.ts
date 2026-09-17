@@ -34,7 +34,7 @@ describe("enumerateCountryDisplayNames", () => {
 
 	it("keeps Georgia-the-country and Georgia-the-state distinguishable", () => {
 		// The probe's sharpest case: 佐治亚州 (the US state) resolved and 格鲁吉亚 (the country) did not, while the
-		// model gave BOTH the same wrong `locality` tag. Only the country belongs to this table.
+		// model gave both the same wrong `locality` tag. Only the country belongs to this table.
 		const ge = countryDisplayNames("GE")
 
 		expect(ge).toContain("格鲁吉亚")

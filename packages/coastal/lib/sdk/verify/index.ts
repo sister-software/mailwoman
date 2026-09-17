@@ -12,7 +12,7 @@
  *   CONVERSION rather than on the authority.
  *
  *   NEGATIVE HALF, AND IT MATTERS MORE HERE THAN IT DID FOR THE FLOOD LAYER. Inland English points and Welsh
- *   and Scottish coastal points must come back `unknown` with NO designation. Wales publishes NCERM on the
+ *   and Scottish coastal points must come back `unknown` with no designation. Wales publishes NCERM on the
  *   PREVIOUS generation's vocabulary (three periods from a 2005 base, percentile bands) and Scotland's Dynamic
  *   Coast carries an explicit prohibition on property-level assessment — neither is interchangeable with
  *   England's — and an inland English point is the case this layer's whole coverage posture exists for. A

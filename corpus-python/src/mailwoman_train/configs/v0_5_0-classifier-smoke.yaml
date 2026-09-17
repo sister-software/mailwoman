@@ -1,6 +1,6 @@
 # v0.5.0 classifier verdict-smoke — thread C-s recipe.
 #
-# Hand off: NOT for immediate use. This config is parked here as part of Thread C-s
+# Hand off: not for immediate use. This config is parked here as part of Thread C-s
 # (the scaffold-now-train-later ship). It becomes invocable when:
 #
 #   - Thread A (tokenizer retrain) has landed under /data/models/tokenizer/v0.5.0/, AND
@@ -64,7 +64,7 @@ data:
 
 model:
   # Hidden-size stays at v0.3.0/v0.4.0 baseline per Thread C-s scope. The plan doc mentions
-  # a 256 → 384 or 512 bump as "likely paid for by rented GPU" for the FULL v0.5.0 run,
+  # a 256 → 384 or 512 bump as "likely paid for by rented GPU" for the full v0.5.0 run,
   # but the scaffold validates that the new architecture trains cleanly at the current
   # size first. Treat the bump as an orthogonal training-side concern, bumped in a
   # follow-up `v0_5_0-classifier-large.yaml` if the v0.5.0 baseline lands clean.
@@ -105,9 +105,9 @@ model:
     I-street: 0.5
     B-house_number: 0.5
     I-house_number: 0.5
-  # v0.5.0 thread C: phrase-prior conditioning ON. The headline architectural change for
+  # v0.5.0 thread C: phrase-prior conditioning on. The headline architectural change for
   # this iteration — Stage 2.7's PhraseProposals flow into the classifier as per-token
-  # features (see phrase_priors.py for the layout). Default is OFF for backward-compat;
+  # features (see phrase_priors.py for the layout). Default is off for backward-compat;
   # turning it on here is the explicit v0.5.0 opt-in.
   use_phrase_priors: true
   # Per-token feature width = PHRASE_BIE_DIM (3) + PHRASE_KIND_DIM (7) = 10.
@@ -145,7 +145,7 @@ train:
 
 eval:
   # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial subset +
-  # kryptonite catalogue are NEW eval splits per the plan doc § Success metrics; their
+  # kryptonite catalogue are new eval splits per the plan doc § Success metrics; their
   # fixtures land alongside Thread D (reconcile).
   golden_dir: ""
   val_jsonl: ""

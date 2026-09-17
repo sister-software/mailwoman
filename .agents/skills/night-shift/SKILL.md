@@ -11,7 +11,7 @@ description: Autonomous overnight engineering shift workflow for mailwoman. Enco
 - The session likely involves: launching one or more Modal training runs, shipping models to HF, updating the demo, writing docs.
 - The operator is offline or asleep — decisions must be made without their input.
 
-## When NOT to use
+## When not to use
 
 - Operator is actively at the keyboard. Use normal collaboration mode.
 - Single-task sessions (one fix, one PR) — too much overhead.
@@ -103,7 +103,7 @@ the next copy is reported at commit time instead of at review.
 | Build script development + tests      | Local        | Iteration speed                                               |
 | Single-file parquet builds (<1M rows) | Local        | Bound by Python parquet, not GPU                              |
 
-**Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat ALL "either-place" work as Modal-first.
+**Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat all "either-place" work as Modal-first.
 
 **Modal pyc cache failure mode:** `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
 
@@ -119,7 +119,7 @@ When training diverges:
 
 1. **Stop** the app: `modal app stop -y <app-id>`. Don't let it burn GPU on garbage gradients.
 2. **Capture** the divergence point: which step, what loss trajectory, what config differed from a known-good run.
-3. **Diagnose ONE knob.** Never adjust two variables simultaneously — you lose attribution.
+3. **Diagnose one knob.** Never adjust two variables simultaneously — you lose attribution.
 4. **Document** the hypothesis in the config YAML as a comment, not the commit message alone. The next iteration needs to see what's already been tried.
 5. **Retry.** If it diverges again with the same root, escalate: drop the feature entirely (CE-only fallback) or schedule a deeper investigation as a separate issue.
 
@@ -140,7 +140,7 @@ structural retrain. The pattern that adjudicated the consolidation affix fork
    its examples." These imply different fixes; conflating them wastes a full
    training cycle.
 2. **Design a 2k-step probe that distinguishes them.** Resume from the latest
-   checkpoint, change ONE knob in the direction the hypothesis predicts,
+   checkpoint, change one knob in the direction the hypothesis predicts,
    re-evaluate. If the metric moves with the hypothesis → confirmed; if flat →
    the planned fix is wasted compute.
 3. **Run the probe before the fix.** Even 2k steps × A100 is minutes; a
@@ -257,7 +257,7 @@ lowering the bar in the table.
 
 ## Idle-time policy
 
-**Between training launches, work the backlog. Do NOT only schedule wakeups and wait.**
+**Between training launches, work the backlog. Do not only schedule wakeups and wait.**
 
 Scheduled wakeups (`ScheduleWakeup`) are correct for _monitoring signals_: training step counter, CI status flip, external job completion. They are wrong for "check back later in case something happened."
 
@@ -268,9 +268,9 @@ When training is running:
 | First training of session | Build the next iteration's config + corpus recipe files                |
 | Second training           | Address backlog issues (#-labeled GitHub items with empirical context) |
 | Final training            | Draft the shift report, update docs, prep ship pipeline                |
-| All training done         | Continue with backlog OR launch the next iteration                     |
+| All training done         | Continue with backlog or launch the next iteration                     |
 
-**The shift was a success when:** all primary goals shipped AND the buffer time produced 1-2 backlog items closed OR 1-2 additional iterations launched. Idle time is waste.
+**The shift was a success when:** all primary goals shipped and the buffer time produced 1-2 backlog items closed or 1-2 additional iterations launched. Idle time is waste.
 
 ## Commit hygiene
 
@@ -320,8 +320,8 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 
 ### Iteration discipline
 
-- A model change that costs 4h of GPU and 30min of human attention should produce ONE before/after table covering 5+ tags. If you can't articulate what you expect to change before the run, don't launch.
-- If a run produces an unexpected result (good OR bad), pause for 10 minutes to write up the surprise before launching the follow-up. Surprises lose information if you don't capture them while fresh.
+- A model change that costs 4h of GPU and 30min of human attention should produce one before/after table covering 5+ tags. If you can't articulate what you expect to change before the run, don't launch.
+- If a run produces an unexpected result (good or bad), pause for 10 minutes to write up the surprise before launching the follow-up. Surprises lose information if you don't capture them while fresh.
 
 ### Treadmill guard (codified)
 

@@ -2,17 +2,17 @@
 #
 # THE FOURTH SHAPE, AND THE FIRST THAT CONTAINS ITS OWN ALTERNATIVES.
 #
-# Four trailing-region runs graded DO-NOT-SHIP because the recipe output carried ONLY admin segments and so
+# Four trailing-region runs graded DO-NOT-SHIP because the recipe output carried only admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
-#                                                    -> locality "Ye Three Lords", venue AND street gone
+#                                                    -> locality "Ye Three Lords", venue and street gone
 #   v4.9.0   9.4%  11/31 regressed, 15 venue-led   binding moved to dependent_locality; bare streets broke
 #   v4.10.0  3.1%   9/22 regressed,  9 venue-led   damage scales with exposure, sub-linearly, and does not vanish
 #
 # `house-venue` was already emitting the surface those recipes were built to teach. Its default tail is
 # `${locality}, ${region} ${postcode}` — `Springfield, IL 02101` and `Bengaluru, Karnataka 560038` are
-# the same shape — and EVERY row it emits carries a venue, a street AND a house number. The surface is
+# the same shape — and every row it emits carries a venue, a street and a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
 # WHAT IS ADDED: 18,000 rows, IN/PT/MX, REAL (postcode, locality, region) triples from the GeoNames
@@ -32,7 +32,7 @@
 # clock is real; if it needs longer it can resume.
 #
 # PRE-REGISTERED CHECK:
-#   1. the 12 venue-led rows v4.8.0 regressed must ALL hold — that is the defect this design fixes;
+#   1. the 12 venue-led rows v4.8.0 regressed must all hold — that is the defect this design fixes;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.
 
@@ -206,7 +206,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

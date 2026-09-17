@@ -241,7 +241,7 @@ describe("scriptForCodepoint", () => {
 			}
 		}
 
-		// Equality rather than a ceiling: a table that covers MORE than recorded is a change someone should state, and
+		// Equality rather than a ceiling: a table that covers more than recorded is a change someone should state, and
 		// the allowance is what says which direction the change went.
 		expect([code, uncovered]).toEqual([code, UNCOVERED_ALLOWANCE[code]])
 	})

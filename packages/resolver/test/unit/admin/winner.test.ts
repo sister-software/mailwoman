@@ -26,7 +26,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A GB unit postcode the resolver answered with the FULL code — the #22 case.
+ * A GB unit postcode the resolver answered with the full code — the #22 case.
  */
 const GB_UNIT = { value: "N7 0BT", resolverName: "n70bt" }
 /**

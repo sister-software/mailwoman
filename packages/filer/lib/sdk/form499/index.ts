@@ -17,18 +17,18 @@
  *     {@linkcode FORM_499_COLUMNS}'s 17 — decision 8's "malformed input must be loud" discipline,
  *     the same one 2a's `peekProviderID` (`bdc/sdk/build-bdc.ts`) applies to a bad `provider_id`.
  *   - Nexus's `RawFCCForm499Filing` interface declares an `otherTradeName1` field that its own
- *     column tuple never lists — meaning it was NEVER actually populated by that loader, a live bug
+ *     column tuple never lists — meaning it was never actually populated by that loader, a live bug
  *     in the salvage source. This port omits the field entirely rather than perpetuate one that can
  *     never carry data.
  *   - `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string).
- *   - Nexus's row type carries `holdingCompany` AND `managementCompany` as two separate string
+ *   - Nexus's row type carries `holdingCompany` and `managementCompany` as two separate string
  *     fields; this port keeps both (spec §3.1 finding 1 — ownership and operational control are
  *     different assertions, not synonyms to collapse into one).
  *
  *   On the DC agent: the 499 "DC agent" is the registered agent for service of process, a role
  *   dominated by a handful of firms (CT Corporation, CSC, Cogency Global) serving tens of thousands
  *   of otherwise-unrelated filers. The `dcAgent*` fields below are carried as plain string
- *   attributes ONLY — nothing in this file, or anywhere downstream, may treat a shared DC agent as
+ *   attributes only — nothing in this file, or anywhere downstream, may treat a shared DC agent as
  *   evidence that two filers are related. That inference is the single most likely false-positive
  *   generator in the whole crosswalk design (spec §3.1 finding 3) and is out of scope here by
  *   design, not by oversight.
@@ -114,7 +114,7 @@ export interface Form499Row {
 	customerInquiriesAddress: string
 	/**
 	 * The DC agent's display name — the registered agent for service of process. Plain attribute only; see the module
-	 * docstring. NEVER treat this (or the other `dcAgent*` fields) as evidence that two filers sharing an agent are
+	 * docstring. Never treat this (or the other `dcAgent*` fields) as evidence that two filers sharing an agent are
 	 * related.
 	 */
 	dcAgentDisplayName: string
@@ -128,7 +128,7 @@ export interface Form499Row {
 	 *
 	 * **Optional because the SOURCE decides whether it exists, not the filer.** The 17-column TSV
 	 * ({@linkcode FORM_499_COLUMNS}) has no note columns at all, so {@linkcode parseForm499} can never populate this;
-	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is NOT the same as
+	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is not the same as
 	 * the `{notes: [], …}` an XLSX row with blank notes produces — that one means "the FCC said nothing about this
 	 * filer". A consumer treating the two alike would read every TSV-sourced filer as confirmed-active.
 	 */

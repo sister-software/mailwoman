@@ -116,7 +116,7 @@ def test_augment_row_region_only_expands_region_labeled():
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
     augmented = results[1]
-    # PA (labeled B-street) should NOT be expanded — only DC (B-region) should
+    # PA (labeled B-street) should not be expanded — only DC (B-region) should
     assert augmented["tokens"][0] == "PA"
     assert "District" in augmented["tokens"]
 
@@ -178,7 +178,7 @@ def test_glue_fuses_last_token_of_multi_token_region():
 
 def test_glue_requires_digit_leading_postcode():
     # GB-style letter-leading postcode: fusing would create a letter→letter boundary
-    # SentencePiece may not split — must NOT fire.
+    # SentencePiece may not split — must not fire.
     row = {
         "raw": "London England SW1A 1AA",
         "tokens": ["London", "England", "SW1A", "1AA"],
@@ -245,7 +245,7 @@ def test_glued_raw_projects_split_labels_onto_pieces():
 
 # region Char-offset span re-target (#519)
 
-# Every augmented COPY must carry spans consistent with ITS raw — the mutation-upstream hazard
+# Every augmented copy must carry spans consistent with its raw — the mutation-upstream hazard
 # this section exists to close.
 
 
@@ -387,7 +387,7 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
 
 
 def test_punct_drop_preserves_interior_apostrophe():
-    """A gap comma is dropped; an apostrophe INSIDE the venue span is kept (drop is gap-only)."""
+    """A gap comma is dropped; an apostrophe inside the venue span is kept (drop is gap-only)."""
     row = {
         "raw": "Ben & Jerry's, Burlington",
         "tokens": ["Ben", "&", "Jerry's,", "Burlington"],
@@ -404,7 +404,7 @@ def test_punct_drop_preserves_interior_apostrophe():
 
 
 def test_punct_drop_removes_standalone_punct_token():
-    """A comma that is its OWN whitespace token is dropped from tokens/labels, not left empty."""
+    """A comma that is its own whitespace token is dropped from tokens/labels, not left empty."""
     row = {
         "raw": "Portland , OR",
         "tokens": ["Portland", ",", "OR"],
@@ -505,7 +505,7 @@ def _dotted_po_box_row() -> dict:
 
 def test_expansion_preserves_intra_span_punctuation():
     """The dotted P.O. Box survives the region expansion verbatim — dots inside the span,
-    trailing comma still outside it — and every offset addresses the NEW raw exactly."""
+    trailing comma still outside it — and every offset addresses the new raw exactly."""
     rng = random.Random(42)
     results = list(augment_row(_dotted_po_box_row(), rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
@@ -609,7 +609,7 @@ def test_expansion_then_glue_compose_still_verifies():
 
 
 def test_lowercase_row_preserves_labels_and_spans():
-    # Lowercasing is length-preserving, so labels + char-offset spans pass through UNCHANGED.
+    # Lowercasing is length-preserving, so labels + char-offset spans pass through unchanged.
     row = {
         "raw": "350 5th Ave NW",
         "tokens": ["350", "5th", "Ave", "NW"],
@@ -665,7 +665,7 @@ def test_augment_row_case_prob_zero_is_bit_identical():
 
 
 def test_upper_case_row_preserves_labels_and_spans():
-    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through UNCHANGED.
+    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through unchanged.
     row = {
         "raw": "350 5th Ave nw",
         "tokens": ["350", "5th", "Ave", "nw"],

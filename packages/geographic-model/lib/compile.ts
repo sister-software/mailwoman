@@ -20,7 +20,7 @@
  *      derivation read. Without this a consumer would still be traversing — the closure alone tells it
  *      which concepts to go and read, which is the traversal it was supposed to be spared.
  *
- *   A relation declaring `transitive` or `inverse` is NOT closed over. Those fields are vocabulary
+ *   A relation declaring `transitive` or `inverse` is not closed over. Those fields are vocabulary
  *   describing what the relation means; materializing them is a reasoning step no executable need has
  *   asked for, and the boundary record excludes general reasoning from this package. The day one is
  *   needed it arrives as its own named derivation beside this one.
@@ -158,7 +158,7 @@ function ancestorsOfConcept(
 
 /**
  * One derived fact under construction. Drafts are keyed by the proposition they state, so two ancestors asserting the
- * same thing produce ONE fact naming both of them as inputs, while two ancestors asserting the same triple under
+ * same thing produce one fact naming both of them as inputs, while two ancestors asserting the same triple under
  * different modality produce two facts — a contradiction a consumer can see, rather than a silent choice between them.
  */
 interface DerivedDraft {

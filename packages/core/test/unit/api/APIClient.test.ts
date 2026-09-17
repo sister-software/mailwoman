@@ -89,7 +89,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	// MEASURED BEFORE THE FIX, through this exact surface: `fetch()` awaited `$cooldown` once and the
 	// request was only COUNTED by a response interceptor, so a 40-call fan-out put 40 dispatches on the
 	// wire inside 3ms against a budget of 2/minute (and 40 against 10/minute). The check has to be
-	// checked AND the slot reserved in the same synchronous step.
+	// checked and the slot reserved in the same synchronous step.
 	it("does not let a concurrent fan-out spend more than the per-minute budget before the cooldown opens", async () => {
 		const REQUESTS_PER_MINUTE = 2
 		const FAN_OUT = 40
@@ -330,7 +330,7 @@ describe("APIClient: bounded retry (A3)", () => {
 	})
 
 	it("maps a timeout to a transient network error, not the old uniform 500", async () => {
-		// The pre-migration mapper collapsed EVERY responseless failure into `ResourceError.from(500,
+		// The pre-migration mapper collapsed every responseless failure into `ResourceError.from(500,
 		// "Internal Server Error", "axios", "response", "missing")`, so a timeout was indistinguishable
 		// from a refused connection or a DNS failure. Its `ECONNABORTED: return` arm — which would have
 		// resolved the chain with `undefined` — could not be reached BY AXIOS: the `if (!response) throw`
@@ -508,7 +508,7 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 
 describe("APIClient: the pacer and the cooldown compose (I4)", () => {
 	it("re-acquires a pacer grant after a cooldown, instead of spending a stale one", async () => {
-		// A grant is a claim on a specific instant. Taking one and THEN blocking on a cooldown leaves it
+		// A grant is a claim on a specific instant. Taking one and then blocking on a cooldown leaves it
 		// stale, and every caller holding a stale grant spends it the moment the cooldown lifts —
 		// measured as four pairs dispatching 0ms apart against a documented 100ms minimum. Latent while
 		// no client sets both, which is precisely why nothing caught it.

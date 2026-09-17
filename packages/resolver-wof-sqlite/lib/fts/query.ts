@@ -29,7 +29,7 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  *   signaled they want a prefix; respect that.
  * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles apostrophes, parens, accented
  *   input, etc. safely.
- * - Multiple tokens join with implicit AND.
+ * - Multiple tokens join with implicit `AND`.
  *
  * Examples:
  *
@@ -51,7 +51,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
 
-		// #920 name law (postcode-typed queries ONLY): delete intra-token punctuation and FUSE the
+		// #920 name law (postcode-typed queries only): delete intra-token punctuation and fuse the
 		// remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
 		if (opts?.fuseTokens) {
 			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")

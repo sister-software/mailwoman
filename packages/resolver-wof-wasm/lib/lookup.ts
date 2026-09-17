@@ -119,7 +119,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const params: Array<string | number> = [ftsQuery]
 
 		// Shared placetype-equivalence expansion (core/resolver): a `locality` query must also reach
-		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an EXACT name
+		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an exact name
 		// match) was unreachable and the fuzzy "Brooklyn Park, MN" won. Same table the Node resolver
 		// uses — the two backends can't drift.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
@@ -184,14 +184,14 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		const normQuery = foldQueryText(text)
 		// Exact-abbreviation ids: region/state abbreviations live in the slim DB's `place_abbr` table
 		// (carried by build-slim before `names` is dropped). A candidate whose abbreviation equals the
-		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
+		// query is an exact match — same tier as an exact name match — so "VT" → Vermont outranks a
 		// foreign region that merely token-matches "VT" via a multilingual name fragment. No-op on slim
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
 		// replacement for the demo's hardcoded region-abbreviation map (since deleted); it also generalizes beyond US.
 		const abbrIDs = this.#abbrExactIDs(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
-		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
+		// pool first because the alias tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
 			foldQueryText(row.name) === normQuery || abbrIDs.has(row.id)
 

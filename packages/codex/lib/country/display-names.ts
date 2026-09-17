@@ -83,7 +83,7 @@ export interface CountryDisplayName {
 
 /**
  * Two-letter sequences that are not ISO 3166-1 regions. `Intl.DisplayNames.of` echoes its input for an unknown code, so
- * the echo IS the miss signal — no separate region list to keep in sync.
+ * the echo is the miss signal — no separate region list to keep in sync.
  */
 /**
  * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ASCII letters, so enumerating the whole square
@@ -99,7 +99,7 @@ function isEcho(code: string, rendered: string | undefined): boolean {
 /**
  * Enumerate every AA–ZZ code against the locale × style grid, keeping what ICU recognises.
  *
- * Deduplicated per (iso2, name): the same surface reached from several locales is one row, and the FIRST locale that
+ * Deduplicated per (iso2, name): the same surface reached from several locales is one row, and the first locale that
  * produced it wins the attribution — deterministic because {@link DISPLAY_NAME_LOCALES} is ordered.
  */
 export function* enumerateCountryDisplayNames(

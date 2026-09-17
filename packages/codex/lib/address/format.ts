@@ -80,7 +80,7 @@ const SCRIPT_WITNESSES: readonly ComponentTag[] = ["street", "locality", "depend
 /**
  * Whether a string carries a letter written in something other than the Latin alphabet.
  *
- * This is NOT script classification, which `@mailwoman/query-shape` owns and answers in full ISO 15924. The question
+ * This is not script classification, which `@mailwoman/query-shape` owns and answers in full ISO 15924. The question
  * here is binary and already scoped by the country: the eight records carrying two orders all pair a Latin register
  * with a non-Latin one, so "is this the Latin register" is the whole question a layout choice asks. Depending on
  * query-shape to ask it would give this package its first runtime dependency for one predicate.

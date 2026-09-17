@@ -51,4 +51,4 @@ file and never touches the OSM database beside it.
 `osmExtracts` tier (a national authoritative register outranks the community fallback) and only for a non-US
 parse. BAN rows carry their own postcode + commune, so the lookup keys on the scoped
 (`postcode` → `locality`) probes; no bbox fall-through is needed. Interpolation for house numbers BAN
-doesn't carry is not built yet — the exact-point tier is the whole win here (BAN's density is the point).
+doesn't carry is not built yet — the exact-point tier is what BAN adds (BAN's density is the point).

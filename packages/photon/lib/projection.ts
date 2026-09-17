@@ -38,10 +38,10 @@ export interface PhotonForwardInput {
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
 	 * A HOUSE-GRADE result (#1041): set only when the resolver produced a specific building coordinate — the
-	 * `address_point` (rooftop) or `interpolated` tier fired, NOT an admin centroid. {@link photonForwardProperties} then
+	 * `address_point` (rooftop) or `interpolated` tier fired, not an admin centroid. {@link photonForwardProperties} then
 	 * re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and surfaces the parsed `housenumber` +
 	 * `street`, matching upstream komoot/photon's own bare-address-point shape (verified against `photon.komoot.io`: a
-	 * residential rooftop returns `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with NO
+	 * residential rooftop returns `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no
 	 * `name`). Absent → the result keeps its admin-ancestry schema. Without it a rooftop reads as `type: city` and a
 	 * client zooms to city scale (or paints a city marker) on a doorstep match — the #1041 regression.
 	 */
@@ -49,7 +49,7 @@ export interface PhotonForwardInput {
 	/**
 	 * A STREET-GRADE result (#1050): set when the street-centroid tier (#1042/#1046) fired — a street-level coordinate,
 	 * below rooftop/interp, above admin. {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value:
-	 * residential` / `type: street` with the FULL assembled street name in `name` — matching upstream komoot's street
+	 * residential` / `type: street` with the full assembled street name in `name` — matching upstream komoot's street
 	 * results (verified live 2026-07-10: a street primary returns `{osm_key:"highway", osm_value:<class>, type:"street",
 	 * name:"Rue de la République", city, …}`; the street name rides `name`, not `street`). Without it a street centroid
 	 * reads `type: city` with the city's name — the #1050 regression. `house` wins when both are set (a numbered query
@@ -81,7 +81,7 @@ const FORWARD_TAG_PROJECTION: Record<
 	municipality: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
 	prefecture: { key: "state", osmKey: "place", osmValue: "state", type: "state" },
 	district: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
-	// WOF placetypes the /reverse hierarchy uses (so both endpoints derive osm tags from ONE table).
+	// WOF placetypes the /reverse hierarchy uses (so both endpoints derive osm tags from one table).
 	localadmin: { key: "city", osmKey: "place", osmValue: "city", type: "city" },
 	subregion: { key: "county", osmKey: "place", osmValue: "county", type: "county" },
 	county: { key: "county", osmKey: "place", osmValue: "county", type: "county" },
@@ -98,7 +98,7 @@ const DEFAULT_OSM_TAGS = { osm_key: "place", osm_value: "yes", type: "other" } a
 /**
  * The Photon `osm_key`/`osm_value`/`type` for a resolved tag or WOF placetype (`locality`, `region`, `country`, …),
  * falling back to a safe default so the fields are always present. Shared by the forward projection and `/reverse` so
- * the two endpoints report a place the SAME way. #1014.
+ * the two endpoints report a place the same way. #1014.
  */
 export function photonOSMTags(tagOrPlacetype: string): { osm_key: string; osm_value: string; type: string } {
 	const proj = FORWARD_TAG_PROJECTION[tagOrPlacetype]
@@ -108,7 +108,7 @@ export function photonOSMTags(tagOrPlacetype: string): { osm_key: string; osm_va
 
 /**
  * Project a resolved forward result into Photon properties — decorating from the RESOLVED gazetteer place (proper-cased
- * names + ancestry + country), NOT the parsed input span, and ALWAYS emitting `osm_key`/`osm_value`/`type` so Photon
+ * names + ancestry + country), not the parsed input span, and always emitting `osm_key`/`osm_value`/`type` so Photon
  * client libraries (leaflet-control-geocoder, @openrunner/photon-geocoder) never dereference undefined. #1014.
  */
 export function photonForwardProperties(input: PhotonForwardInput): PhotonProperties {
@@ -144,7 +144,7 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 	// #1041: house-grade override. A rooftop / interpolated coordinate is a BUILDING, not the admin locality the
 	// ancestry above would label it — re-tag the schema so a Photon client renders (and zooms to) a house, and surface
 	// the parsed housenumber + street. Matches upstream komoot/photon's bare address point (osm_key:place, osm_value:
-	// house, type:house, with housenumber + street and NO name). Drop the admin-derived `name` — else the QGIS FLF label
+	// house, type:house, with housenumber + street and no name). Drop the admin-derived `name` — else the QGIS FLF label
 	// (name + housenumber + street + city + postcode) doubles the city ("Paris 8 Boulevard du Palais Paris 75001"). The
 	// city/state/postcode/country the ancestry filled stay put (upstream carries them on a house result too).
 	// #1050: street-grade — the street-centroid tier fired. Re-tag per upstream's street shape (full
@@ -214,7 +214,7 @@ export function photonForwardCollection(result: PhotonForwardResult, limit: numb
 /**
  * Project a Photon `Feature` into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
  * projection. Reads the feature's already-decorated {@link PhotonProperties} (housenumber/street/city/state/postcode/
- * countrycode + the coordinate), so it stays a pure re-serialization of the SAME resolved place the FeatureCollection
+ * countrycode + the coordinate), so it stays a pure re-serialization of the same resolved place the FeatureCollection
  * carries. `streetAddress` is the plain house-number-first join (the light router has no locale formatter).
  */
 export function photonFeatureToSchemaOrg(feature: PhotonFeature): SchemaOrgPlace {

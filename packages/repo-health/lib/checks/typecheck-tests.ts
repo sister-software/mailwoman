@@ -6,7 +6,7 @@
  *   Type-check every workspace's test files.
  *
  *   `tsc -b` deliberately skips them: the build project excludes tests because anything it includes is emitted into
- *   `out/` and then published. That `exclude` suppressed the emit AND the checking, so for most of this repo's life
+ *   `out/` and then published. That `exclude` suppressed the emit and the checking, so for most of this repo's life
  *   test files were compiled by vitest's esbuild transform, which strips types without looking at them.
  *
  *   Each workspace carries a `tsconfig.test.json` — non-emitting, referencing its own build project so siblings resolve

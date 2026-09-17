@@ -1,7 +1,7 @@
 # === v8-jp-probe — CJK Leg 1: bare char-level CharCNN on JP (the Arc-2 viability check). ===
 # FROM SCRATCH (no init_from): fresh MailwomanCoarseEncoder on the Latin-substrate width (hidden 384,
 # 4 layers per the probe spec), STAGE3 33-label head, use_char_embed over the sealed JP char vocab
-# (D2), one unit per character at ctx 3 → W 7, S 96 (D1/D3/D6). NO anchor/gazetteer/country/street/
+# (D2), one unit per character at ctx 3 → W 7, S 96 (D1/D3/D6). No anchor/gazetteer/country/street/
 # locality channels (channel re-alignment is per-unit, post-probe), no CRF, no locale conditioning.
 #
 # Corpus: v8-jp-probe (200k train / 4k val), rendered native large-to-small space-free from

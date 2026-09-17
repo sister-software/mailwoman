@@ -9,12 +9,12 @@
  *   THE COVERAGE IS `source_present`, AND THAT IS THE WHOLE POINT OF THIS LAYER BEING THE SECOND ONE. The
  *   sibling flood build writes `basis = designated, completeness = 1.0` over the authority's stated England
  *   footprint, because the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — an
- *   absence there is a designation. NCERM publishes NO coverage statement, so an absent erosion polygon is
+ *   absence there is a designation. NCERM publishes no coverage statement, so an absent erosion polygon is
  *   either "inland" or "coast, outside the mapped risk area" and the published layers cannot tell those
  *   apart. A builder that generalized the flood rule would write "no erosion risk" over the whole of England.
  *   So the coverage rows here are exactly the cells the source's own polygons reach, on the weakest basis the
  *   contract has, and {@linkcode assertNoNegativeClaim} refuses anything stronger before a row is written.
- *   `coastal_mapped_extent` stays EMPTY, which is what would have to change first.
+ *   `coastal_mapped_extent` stays empty, which is what would have to change first.
  *
  *   THERE IS NO BUILD-TIME TOUCH TABLE, AND ITS ABSENCE IS A CONSEQUENCE OF THE KEY. A flood cell row names a
  *   ZONE CODE, so its containment is not decided until every feature carrying that code has been seen, which
@@ -148,7 +148,7 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The feature counts a SECOND distribution channel reports, per layer — the live WFS. Supplied, each is asserted
+	 * The feature counts a second distribution channel reports, per layer — the live WFS. Supplied, each is asserted
 	 * against what the build streamed for that layer, which is the cheapest two-path check available and catches a stale
 	 * or truncated archive.
 	 */

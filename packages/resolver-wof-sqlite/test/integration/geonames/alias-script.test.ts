@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #2292 — the fold admits an alternate name in ANY script.
+ *   #2292 — the fold admits an alternate name in any script.
  *
  *   The fold is the only path by which a place in a fold country acquires a name in its own writing, so an
  *   admission rule that tests script decides whether a whole country is reachable in its own script at all.

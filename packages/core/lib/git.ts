@@ -87,7 +87,7 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
 /**
  * Every path this repository has ever renamed away from or deleted, across all refs.
  *
- * The set that separates a reference to something that MOVED from a reference to something that never existed — the
+ * The set that separates a reference to something that moved from a reference to something that never existed — the
  * distinction a path-literal sweep turns on, because a path a tool writes and a path a fixture invents are both absent
  * from the tree and neither is a defect.
  *

@@ -1,4 +1,4 @@
-# v0.5.0 classifier CE-only FULL run — promoted from the smoke (val_macro_f1=0.444 at step 2000).
+# v0.5.0 classifier CE-only full run — promoted from the smoke (val_macro_f1=0.444 at step 2000).
 #
 # CE-only = CRF NLL term dropped from training. CRF stays at inference via frozen mask + Viterbi.
 # This fixes the 9-run dual-loss curvature-conflict divergence (CRF gradient dominated CE by 8-20×

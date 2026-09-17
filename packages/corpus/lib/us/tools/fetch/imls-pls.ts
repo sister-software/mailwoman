@@ -100,7 +100,7 @@ export async function fetchIMLSPLS(
 
 	let csvName = entries.find((name) => /pls_fy.*outlet.*\.csv/i.test(name))
 
-	// Fallback: if IMLS renames the file, grab any CSV that is NOT the ae file.
+	// Fallback: if IMLS renames the file, grab any CSV that is not the ae file.
 	if (!csvName) {
 		csvName = entries.find((name) => /\.csv$/i.test(name) && !/system|state|_ae\b|_se\b/i.test(name))
 	}

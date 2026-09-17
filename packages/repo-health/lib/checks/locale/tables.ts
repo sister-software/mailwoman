@@ -10,7 +10,7 @@
  *
  *   THE TABLES ARE DISCOVERED, NOT LISTED. A check that names its subjects cannot see the eighth table somebody
  *   adds, which is the failure it exists to prevent. A declaration qualifies when at least two of its entries pair
- *   a country code with a locale tag AND those are at least half of what it holds — both halves load-bearing,
+ *   a country code with a locale tag and those are at least half of what it holds — both halves load-bearing,
  *   since two pairs alone admits a table of something else carrying a couple, and the ratio alone admits a
  *   two-entry map of anything. The rule finds seven where the first version named four.
  *
@@ -47,7 +47,7 @@ const COUNTRY_CODE = /^[A-Za-z]{2}$/u
 const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
 
 /**
- * A declaration is a country→locale map when at least two of its entries pair a country code with a locale tag AND
+ * A declaration is a country→locale map when at least two of its entries pair a country code with a locale tag and
  * those are at least half of what it holds.
  *
  * DISCOVERED RATHER THAN LISTED, because a check that names its subjects cannot see the fifth table somebody adds. The

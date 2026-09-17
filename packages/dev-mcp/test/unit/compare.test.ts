@@ -104,7 +104,7 @@ function peliasBody(point: { lat: number; lon: number } | null) {
 }
 
 /**
- * @param outcomes Scripted wire responses AFTER the identity probe's two requests, in row order.
+ * @param outcomes Scripted wire responses after the identity probe's two requests, in row order.
  */
 async function comparison(
 	registry: EngineRegistryLike,

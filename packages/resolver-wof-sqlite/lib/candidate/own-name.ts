@@ -80,7 +80,7 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 }
 
 /**
- * Leading-word abbreviations expanded BEFORE comparison, so `st georges` meets `saint george s` inside the edit
+ * Leading-word abbreviations expanded before comparison, so `st georges` meets `saint george s` inside the edit
  * threshold. Whole-word only — `st` inside `stanley` never expands.
  */
 const NAME_ABBREVIATIONS: ReadonlyArray<[RegExp, string]> = [

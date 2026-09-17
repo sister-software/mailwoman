@@ -2,7 +2,7 @@
 
 Two defects pinned here:
 
-1. **Mixed-source parquet files lose rows.** The loader identifies a file's source from its FIRST
+1. **Mixed-source parquet files lose rows.** The loader identifies a file's source from its first
    row, buckets the whole file under it, then filters every row to that source — so in a
    mixed-source validation file every later-source row is silently discarded. "3 val files"
    was never a coverage receipt.
@@ -11,7 +11,7 @@ Two defects pinned here:
    validation metric scores an augmented, training-filtered sample, not held-out data.
 
 Contract pinned here (the repair): for any split other than ``"train"``, ``iter_rows``
-yields EVERY row of every parquet file exactly as authored — no source bucketing/filtering, no
+yields every row of every parquet file exactly as authored — no source bucketing/filtering, no
 source weighting, no augmentation, no online label mutation.
 """
 
@@ -110,7 +110,7 @@ def test_val_receives_no_augmentation(tmp_path: Path) -> None:
 def test_val_receives_no_affix_relabel(tmp_path: Path) -> None:
     """The #511 affix relabel is an online TRAIN-label policy (and was the #1569 corruption
     vector). Val labels must leave the loader exactly as authored. The train leg of this test
-    proves the lexicon DOES fire on the same row — so a silent no-op lexicon can't fake a pass."""
+    proves the lexicon does fire on the same row — so a silent no-op lexicon can't fake a pass."""
     lex = AffixRelabelLexicon(directionals={"west": "W"}, suffixes={"road": "Rd"}, version="test")
     street_labels = ["B-street", "I-street", "I-street"]
     corpus = tmp_path / "corpus"

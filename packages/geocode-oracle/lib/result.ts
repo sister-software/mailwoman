@@ -6,7 +6,7 @@
  *   can diff two oracles against each other and against the parser without re-learning a response
  *   schema per provider.
  *
- *   It is deliberately built out of the repo's OWN types rather than a bespoke one:
+ *   It is deliberately built out of the repo's own types rather than a bespoke one:
  *   {@linkcode PostalAddress} from `@mailwoman/record` (which carries a `ComponentTag`-keyed
  *   {@linkcode ComponentDict}, the formatter's `canonicalKey`, and an `AddressGeocode`), plus a
  *   {@linkcode PostalAddressID} from `@mailwoman/address-id`. That is what makes the oracle's output
@@ -105,7 +105,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
  * A region value narrowed to something usable as {@linkcode createPostalAddressID}'s `state` prefix, or `undefined` so
  * that function falls back to its own derivation.
  *
- * `createPostalAddressID` interpolates `state` into the key WITHOUT validating it, while `parsePostalAddressID` and
+ * `createPostalAddressID` interpolates `state` into the key without validating it, while `parsePostalAddressID` and
  * `isPostalAddressID` both require `^[a-z]{2}\.`. Handing it `Île-de-France` therefore mints an ID that the package's
  * own parser rejects — and an ID that cannot be read back is strictly worse than one that says `xx`. Only a bare
  * two-letter code passes (`NY` yes, `NSW` correctly no).

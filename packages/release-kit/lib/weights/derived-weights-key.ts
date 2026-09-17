@@ -33,10 +33,10 @@ import { Globerator } from "spliterator/node/fs"
  * The first entry mirrors the retired workflow cache key. The rest are what that key MISSED: the modules that generate
  * the binaries — each SOURCE module paired with its COMPILED counterpart, because the build spawns the compiled CLI.
  * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled builder under already-fixed
- * source computes the FIXED key, builds with the broken code, and the store then serves that artifact to every
+ * source computes the fixed key, builds with the broken code, and the store then serves that artifact to every
  * fresh-compiled run forever. With the compiled bytes in the key, a stale compile keys separately from a fresh one, so
  * its output can never be served to a checkout whose compiled tree differs. (Transitive compiled imports are
- * deliberately NOT hashed — that would invalidate the store on every unrelated commit and delete its reason to exist;
+ * deliberately not hashed — that would invalidate the store on every unrelated commit and delete its reason to exist;
  * the direct builder modules are where both real incidents lived.)
  *
  * Add here whenever a new input starts feeding the build — a key that omits an input serves stale artifacts silently,
@@ -64,12 +64,12 @@ async function gazetteerDataPaths(): Promise<string[]> {
 
 	if (!(await pathExists(dir))) return []
 
-	return Globerator.files(["json", "jsonl"], { cwd: dir, recursive: false }).toArray()
+	return Globerator.files(["json", "jsonl"], { cwd: dir, absolute: true, recursive: false }).toArray()
 }
 
 /**
  * The postcode pipeline modules the postcode-binary command calls into — source and compiled, enumerated like the data
- * payload so a new module joins the key without a code change. The #1527 fix lived HERE, one import below the command
+ * payload so a new module joins the key without a code change. The #1527 fix lived here, one import below the command
  * module the explicit list carried, which is how the stale build escaped the key.
  */
 async function postcodePipelinePaths(): Promise<string[]> {
@@ -104,7 +104,7 @@ export interface DerivedWeightsInput {
 	 */
 	name: string
 	/**
-	 * Absolute path to read. NOT hashed — see {@link derivedWeightsKeyFrom}.
+	 * Absolute path to read. Not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
 	path: string
 }
@@ -128,7 +128,7 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
  *
  * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its NAME and its bytes.
  *
- * ⚠ The name is repo-RELATIVE and the absolute path is deliberately NOT hashed. Hashing absolute paths was the first
+ * ⚠ The name is repo-relative and the absolute path is deliberately not hashed. Hashing absolute paths was the first
  * version's bug: every GitHub runner checks out to its own work directory, so lab-1, lab-2, lab-3 and a local worktree
  * each computed a different key over byte-identical inputs and none of them ever saw another's work. It surfaced as
  * four store directories holding the same eleven artifacts, and as a 41s `pair-index-nz.bin` rebuild on a runner where
@@ -173,7 +173,7 @@ export function derivedWeightsDir(key: string): string {
 }
 
 /**
- * The reason a store entry must NOT be served (or stashed), or `null` when it looks like a product.
+ * The reason a store entry must not be served (or stashed), or `null` when it looks like a product.
  *
  * The second net behind the build-time floors (#1509): the store once held a 10-byte empty `postcode-gb.bin` a
  * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its

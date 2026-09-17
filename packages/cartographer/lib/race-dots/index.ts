@@ -10,7 +10,7 @@
  *   - Tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
  *
  *   The PMTiles ships a single `dots` source-layer carrying a `cat` property; we expose each category
- *   as its OWN default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives
+ *   as its own default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives
  *   each its own checkbox — show the full mosaic, or isolate one group's geography, no extra UI.
  *   Same idiom as the coverage overlay.
  *
@@ -60,7 +60,7 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 		type: "circle",
 		source: RaceDotsTileSetID,
 		"source-layer": RACE_DOTS_SOURCE_LAYER,
-		// Default OFF — an overlay, surfaced via the layer toggle, never on by default.
+		// Default off — an overlay, surfaced via the layer toggle, never on by default.
 		layout: { visibility: "none" },
 		filter: cats.length === 1 ? ["==", ["get", "cat"], cats[0]!] : ["in", ["get", "cat"], ["literal", cats]],
 		paint: {

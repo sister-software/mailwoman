@@ -98,7 +98,7 @@ test("the Helmert reproduces OS's Annexe D worked example to the centimetre", ()
 	expect(Math.abs(airy.latitude - ANNEXE_D_OSGB36.latitude) * 3600).toBeLessThan(1e-3)
 	expect(Math.abs(airy.longitude - ANNEXE_D_OSGB36.longitude) * 3600).toBeLessThan(1e-3)
 
-	// And the shift must be a REAL correction, not a no-op: OSGB36 and WGS84 differ by ~70-120 m across
+	// And the shift must be a real correction, not a no-op: OSGB36 and WGS84 differ by ~70-120 m across
 	// GB, so a Helmert that silently did nothing would still look close to the OSGB36 intermediate.
 	expect(offsetMeters(got, ANNEXE_D_OSGB36)).toBeGreaterThan(50)
 })

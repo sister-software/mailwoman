@@ -6,7 +6,7 @@
  *
  *   A `filer_edge` row ALONE is invisible to `familyRollup`/`filerLookup.families` — both answer "which family
  *   does this node belong to" from `filer_family` alone. An ownership/control edge and its family membership are
- *   therefore two writes of ONE fact, and every caller emitting the first must emit the second.
+ *   therefore two writes of one fact, and every caller emitting the first must emit the second.
  */
 
 import type { StatementSync } from "@mailwoman/sqlite/client"
@@ -68,7 +68,7 @@ export interface FamilyMembershipFact {
  * `from_node_id` — an FRN or `bdcProviderID`) — see {@linkcode mintFamilyID} for how `family_id` is derived from the
  * TARGET name's canonical form. Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
  * derived fact, not an edge opportunity) when the name canonicalizes to nothing. `insFamily` (the prepared statement it
- * writes through) is passed in rather than closed over, so every emission path writes through the ONE statement
+ * writes through) is passed in rather than closed over, so every emission path writes through the one statement
  * `buildFilerDatabase` prepared against the shared handle.
  *
  * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted FROM — the edge's

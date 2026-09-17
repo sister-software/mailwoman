@@ -17,7 +17,7 @@
  *        rows for the same postcode are averaged into a single centroid. Source tag: `geonames-us`.
  *        License requires attribution in any DB that ships these coordinates.
  *
- *   Both passes record per-row provenance in a `centroid_source` table (`id` → `source`) and NEVER
+ *   Both passes record per-row provenance in a `centroid_source` table (`id` → `source`) and never
  *   overwrite a real coordinate. Both are idempotent (the UPDATE re-checks `latitude=0`).
  *
  *   Data file notes: `$MAILWOMAN_DATA_ROOT/census/README.md` (ZCTA);
@@ -171,7 +171,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
 
 /**
  * Fill `(0,0)`-placeholder US postcode rows from GeoNames postal centroids, stamping provenance as `geonames-us`. Runs
- * ONLY on rows that are still `(0,0)` — never overwrites a census-ZCTA or WOF coordinate. Idempotent (the UPDATE
+ * only on rows that are still `(0,0)` — never overwrites a census-ZCTA or WOF coordinate. Idempotent (the UPDATE
  * re-checks `latitude=0 AND longitude=0`). Returns the number of rows filled.
  *
  * GeoNames is CC-BY 4.0: any DB that ships rows with source `geonames-us` must attribute "GeoNames (CC-BY 4.0)".

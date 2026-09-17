@@ -6,7 +6,7 @@
  *   Which inputs a measurement runs over, and what that choice costs.
  *
  *   The design rule (spec §5.1) is that the well-powered thing must be the CHEAPEST thing to type. `{kind:"board"}` is
- *   the shortest legal value and default everywhere. A hand-picked list requires an array AND a `why` string,
+ *   the shortest legal value and default everywhere. A hand-picked list requires an array and a `why` string,
  *   so choosing a small sample is a deliberate act that leaves a record in the result. This inverts the incentive that
  *   produced nine one-off probe scripts in a day, each with a panel its author chose and nobody reviewed.
  *
@@ -165,7 +165,7 @@ export interface ResolvedInputSet {
 	 */
 	why?: string
 	/**
-	 * Strata present in the population but ABSENT from this set — the answer to "what would this panel have been blind
+	 * Strata present in the population but absent from this set — the answer to "what would this panel have been blind
 	 * to?", available before the run rather than after. Empty for a full board.
 	 */
 	notCovered: string[]
@@ -543,7 +543,7 @@ interface CorpusRow {
 /**
  * Read a JSONL corpus, or say precisely which file was missing.
  *
- * A corpus that cannot be read must NOT resolve to an empty set: a measurement over zero rows reports zero differences,
+ * A corpus that cannot be read must not resolve to an empty set: a measurement over zero rows reports zero differences,
  * which reads as "no effect" rather than "nothing ran".
  */
 async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
@@ -595,7 +595,7 @@ function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTrut
 /**
  * A benchmark panel — the corpus the head-to-head protocol was pre-registered against.
  *
- * `truthType` is carried per row and NEVER blended away: the benchmark plan's own words are that a headline "@1km lives
+ * `truthType` is carried per row and never blended away: the benchmark plan's own words are that a headline "@1km lives
  * or dies on `truth_type`", so a caller that reports one number across rooftop and centroid rows has reported a number
  * about its own row mix.
  */
@@ -709,7 +709,7 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 	const path = String(repoRootPath(PARITY_FIXTURES_RELATIVE_PATH))
 	const raw = await readCorpus(path, "parity corpus")
 
-	// The SAME live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions plus 33 gold-triage
+	// The same live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions plus 33 gold-triage
 	// tombstones are fixtures a neural parser must not be graded against. Feeding them in would quietly inflate the
 	// denominator with rows that cannot pass.
 	const all = raw.filter((row) => !(row as { dropped?: boolean }).dropped && row.expect)

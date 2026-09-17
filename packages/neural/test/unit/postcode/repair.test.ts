@@ -131,7 +131,7 @@ describe("repairPostcodeLabels", () => {
 
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("94610-2737")
-		// CA must NOT have been pulled into the postcode.
+		// CA must not have been pulled into the postcode.
 		expect(out.find((t) => t.piece === "CA")!.label).not.toBe("I-postcode")
 	})
 

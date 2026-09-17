@@ -11,7 +11,7 @@
  *   variants inline (the Karis row's `alternatenames` includes "Karjaa").
  *
  *   For each POPULATED place (feature class `P`) this writes an `spr` row + `names` rows (primary +
- *   Latin alt-names) + population into the SAME tables the WOF/Overture paths use — synthetic ids
+ *   Latin alt-names) + population into the same tables the WOF/Overture paths use — synthetic ids
  *   based at {@link GEONAMES_ID_BASE} so the three sources never collide. The caller then rebuilds
  *   `place_search` ({@link buildPlaceSearchFTS} with `drop: true`) so the candidate build carries
  *   Karjaa↔Karis. Proven (FI hard-resolve 69.5 → 85.8 %, coverage 74.4 → 94.0 %); duplicating a
@@ -19,8 +19,8 @@
  *   candidate ranking dedupes by score.
  *
  *   This is the package home so the canonical `build-unified-wof --geonames-countries`, the
- *   pipeline fold (`gazetteer-pipeline/admin/fold-geonames`), AND the `mailwoman gazetteer` commands all share
- *   ONE implementation. GeoNames dump = `download.geonames.org/export/dump/<CC>.zip` → `<CC>.txt`
+ *   pipeline fold (`gazetteer-pipeline/admin/fold-geonames`), and the `mailwoman gazetteer` commands all share
+ *   one implementation. GeoNames dump = `download.geonames.org/export/dump/<CC>.zip` → `<CC>.txt`
  *   (TSV).
  */
 
@@ -56,7 +56,7 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names; Kinshasa's 16,000,000
  * population landed on a Lithuanian hamlet.
  *
- * The upper bound is NOT the end of the id space. Each later extract owns a range above this one — GeoNames-postal @
+ * The upper bound is not the end of the id space. Each later extract owns a range above this one — GeoNames-postal @
  * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
  * would delete them.
  */
@@ -91,7 +91,7 @@ export interface GeonamesIngestProgress {
 	 */
 	skipped: boolean
 	/**
-	 * Alternate names the admission rule REFUSED. A build reporting only names written cannot tell a country whose source
+	 * Alternate names the admission rule refused. A build reporting only names written cannot tell a country whose source
 	 * carries few names from one whose names the fold threw away, and those were indistinguishable downstream for as long
 	 * as the rule tested script.
 	 */
@@ -133,14 +133,14 @@ async function parseAlternateNamesV2(
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
 	// 6 isColloquial, 7 isHistoric, 8 from, 9 to.
 	//
-	// Two passes, because historic-ness is a fact about the NAME, not the row: GeoNames splits one
-	// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) AND as (no-language,
-	// isHistoric=1, to=1973). Officialness must see the flags from EVERY row for the spelling, or the
+	// Two passes, because historic-ness is a fact about the name, not the row: GeoNames splits one
+	// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) and as (no-language,
+	// isHistoric=1, to=1973). Officialness must see the flags from every row for the spelling, or the
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
-	// Do NOT condition on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
+	// Do not condition on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
 	// is unflagged; FI has 1,746 flags across the whole dump).
 	//
-	// Both passes STREAM the file rather than sharing one materialized array: NO's V2 dump is 33 MB,
+	// Both passes stream the file rather than sharing one materialized array: Norway's V2 dump is 33 MB,
 	// and a second read off the page cache costs less than holding half a million line strings.
 	// `header: false` — the dump is headerless.
 	const historicNames = new Set<string>()
@@ -198,7 +198,7 @@ async function parseAlternateNamesV2(
  * `place_population` tables. Returns the total places ingested.
  *
  * `onProgress` receives one event per country (default: a stderr line, matching the build scripts' legacy output). The
- * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
+ * caller must rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
  * the candidate build's alias pass.
  */
 export async function ingestGeonamesAliases(
@@ -208,7 +208,7 @@ export async function ingestGeonamesAliases(
 	onProgress?: (event: GeonamesIngestProgress) => void,
 	opts?: {
 		/**
-		 * #267: the countries for which to ALSO fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link each
+		 * #267: the countries for which to also fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link each
 		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-COUNTRY because a country that already
 		 * carries WOF admin would double up — pass only the ZERO-COVERAGE gap countries (the coverage-expansion targets),
 		 * never the EU alias set. Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors), so
@@ -220,7 +220,7 @@ export async function ingestGeonamesAliases(
 		 * (`download.geonames.org/export/dump/alternatenames/<CC>.zip` → `<CC>.txt`). When a country's file is present,
 		 * alias rows gain their language tag, `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
 		 * (language is CLDR-official for the country, colloquial/historic excluded — the rule the #936 risk probe measured
-		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides WHICH rows
+		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides which rows
 		 * exist; V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
 		 */
 		alternateDir?: PathBuilderLike
@@ -348,7 +348,7 @@ export async function ingestGeonamesAliases(
 
 		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2
 		// dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official /
-		// preferred if ANY qualifying row is.
+		// preferred if any qualifying row is.
 		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and

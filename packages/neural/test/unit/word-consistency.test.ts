@@ -16,7 +16,7 @@ const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i ===
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	it("heals a fragmented word to ONE type by confidence-weighted vote (not first-piece-wins)", () => {
 		// `▁VER` leans locality (idx1, modest), `MONT` is near-certain region (idx3, strong). The vote
-		// sums region mass > locality mass → the WHOLE word becomes region (the `VER`-bleed is fixed).
+		// sums region mass > locality mass → the whole word becomes region (the `VER`-bleed is fixed).
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const emissions = [peak(1, 2), peak(3, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3]) // B-locality, B-region (fragmented)

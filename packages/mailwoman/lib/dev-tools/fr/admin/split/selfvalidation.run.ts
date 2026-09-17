@@ -9,20 +9,20 @@
  *   production resolver? Or does FTS land the same commune either way (DeepSeek's silent-wash risk
  *   — the v1.7.0 trap: a label change that the resolver ignores)?
  *
- *   For each sampled FR commune (truth = its own WOF centroid) we resolve THREE parse states through
- *   the SAME resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
+ *   For each sampled FR commune (truth = its own WOF centroid) we resolve three parse states through
+ *   the same resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
  *   `defaultCountry: FR`):
  *
- *   - DROPPED {locality:[commune]} — the model's "région → null" failure
- *   - MERGED {locality:[commune + " " + dept]} — the "CANBERRA ACT" fuse failure
- *   - SPLIT {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
+ *   - `dropped` {locality:[commune]} — the model's "région → null" failure
+ *   - `merged` {locality:[commune + " " + dept]} — the "CANBERRA ACT" fuse failure
+ *   - `split` {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
  *       error to the commune's true centroid.
  *
- *   The premise is REAL iff SPLIT's mean error is materially below DROPPED/MERGED — concentrated on
+ *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged` — concentrated on
  *   COLLISION communes (a name in >1 département), where the région is the only disambiguator.
  *   UNIQUE communes are the control (the resolver should find them with or without the région).
  *
- *   Eval: ≥5% mean centroid-error reduction (SPLIT vs DROPPED) on the collision stratum, else STOP —
+ *   Eval: ≥5% mean centroid-error reduction (`split` vs `dropped`) on the collision stratum, else stop —
  *   the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node packages/mailwoman/lib/dev-tools/fr/admin/split/selfvalidation.run.ts\
@@ -117,7 +117,7 @@ const resolveOpts = { defaultCountry: "FR" }
 
 /**
  * Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't found: the country
- * centroid. Makes the three states comparable on ONE error metric (resolved point if found, else country-centroid)
+ * centroid. Makes the three states comparable on one error metric (resolved point if found, else country-centroid)
  * instead of averaging over different resolved subsets.
  */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }

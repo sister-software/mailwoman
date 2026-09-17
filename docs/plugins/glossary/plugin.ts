@@ -39,7 +39,7 @@ import { resolvePath } from "path-ts"
 import { isSuppressedSurface } from "./remark.ts"
 
 /**
- * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to BOTH this plugin
+ * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to both this plugin
  * and the remark plugin from docusaurus.config.ts, from one shared constant, so the linker and the backlink scan cannot
  * disagree about which surfaces link.
  */

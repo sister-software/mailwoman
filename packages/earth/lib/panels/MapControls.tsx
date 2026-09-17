@@ -7,7 +7,7 @@
  *   `<MapCanvas>` children, inside the react-map-gl `<Map>` context): the bottom-right feature-inspector
  *   {@link DebugControl}, fed the underlying maplibre map handle.
  *
- *   The layer control is NOT here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
+ *   The layer control is not here. It reaches the chrome's top column through `GeocoderPanels.layers`, where the
  *   layout puts it under the example chips; a MapLibre corner control cannot sit in that column.
  */
 

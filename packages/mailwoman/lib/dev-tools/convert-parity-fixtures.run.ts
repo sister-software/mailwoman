@@ -104,7 +104,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 		expect[componentTag] = Array.isArray(values) ? values.map(String) : [String(values)]
 	}
 
-	// A case whose gold is ENTIRELY unmappable tombstones; a partially-mappable one keeps its
+	// A case whose gold is entirely unmappable tombstones; a partially-mappable one keeps its
 	// mapped gold (dropping e.g. `unit_designator` must not discard the case's house_number/street
 	// expectations — the AU unit patterns are campaign targets).
 	if (!Object.keys(expect).length) {

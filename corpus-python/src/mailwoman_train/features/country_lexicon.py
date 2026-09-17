@@ -20,14 +20,14 @@ SURFACE ONLY — never from gold labels — so the exact same computation runs a
 (no leak, no skew). The emitted per-piece feature is ``[country_surface, country_ambiguous]``:
 
 - ``country_surface`` (bit 1) — the piece is inside a recognized country surface phrase.
-- ``country_ambiguous`` (bit 2) — the SURFACE is a homograph (also a US region) or a common-word
-  name; a SOFT false-positive guard, the model-first analogue of Pelias's hard blacklist. The model
+- ``country_ambiguous`` (bit 2) — the surface is a homograph (also a US region) or a common-word
+  name; a soft false-positive guard, the model-first analogue of Pelias's hard blacklist. The model
   learns to trust ``surface & !ambiguous`` strongly and ``surface & ambiguous`` weakly, via context.
 
 WHY A DEDICATED CHANNEL rather than the gazetteer's existing ``country`` slot: the gazetteer slot
-already carries these surfaces AND the shipped model already consumes them, yet the WOF-admin case
-still fails (#1104). The country bit shares ONE projection with region/po_box/cedex/homograph and is
-ZEROED adjacent to a postcode by ``suppress_gazetteer_near_postcode`` (exactly where "…12345 USA"
+already carries these surfaces and the shipped model already consumes them, yet the WOF-admin case
+still fails (#1104). The country bit shares one projection with region/po_box/cedex/homograph and is
+zeroed adjacent to a postcode by ``suppress_gazetteer_near_postcode`` (exactly where "…12345 USA"
 sits). A separate channel de-entangles the country signal and is immune to that suppression.
 """
 
@@ -46,7 +46,7 @@ COUNTRY_SURFACE_BIT = 1
 COUNTRY_AMBIGUOUS_BIT = 2
 
 # The country lexicon is structurally identical to a GazetteerLexicon (the same n-gram phrase-scan
-# shape) — the type + loader are reused deliberately so the two channels share ONE matcher.
+# shape) — the type + loader are reused deliberately so the two channels share one matcher.
 CountryLexicon = GazetteerLexicon
 
 

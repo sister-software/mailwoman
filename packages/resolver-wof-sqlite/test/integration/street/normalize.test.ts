@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The collision contract for the address-point normalizer (#476): variants that refer to the same
- *   street MUST normalize identically; distinct streets must not. Build-side and lookup-side both
+ *   street must normalize identically; distinct streets must not. Build-side and lookup-side both
  *   import the same function, so these tests are the whole correctness story for the keying.
  */
 
@@ -118,7 +118,7 @@ describe("stripLocalityQualifier (query-side fallback)", () => {
 	it("returns '' when nothing is stripped (no wasted re-probe)", () => {
 		expect(stripLocalityQualifier("Paris")).toBe("")
 		expect(stripLocalityQualifier("San Francisco")).toBe("")
-		// "am Main" is part of the canonical name — must NOT be over-stripped.
+		// "am Main" is part of the canonical name — must not be over-stripped.
 		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
 		expect(stripLocalityQualifier("New York")).toBe("")
 		expect(stripLocalityQualifier("Foo an der")).toBe("")

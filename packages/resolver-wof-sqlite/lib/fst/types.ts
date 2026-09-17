@@ -95,7 +95,7 @@ export interface FSTProvenance {
 	 * DB is a sealed readonly artifact that a rebuild REPLACES in place, so every FST built before the 2026-08-04 swap
 	 * still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
 	 *
-	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). NEVER conflate that with "built
+	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). Never conflate that with "built
 	 * from a database whose md5 is unknown" — the freshness check reports the two in different words.
 	 */
 	sourceDBMD5?: string
@@ -129,14 +129,14 @@ export interface BuildFSTOpts {
 	languages?: string[]
 	/**
 	 * Degenerate-surface curation (build-time; the ASR-contextual-biasing "prune the bias list" discipline). A name whose
-	 * FULL normalized token sequence joins to a member of this set is never inserted — the surface carries no
+	 * full normalized token sequence joins to a member of this set is never inserted — the surface carries no
 	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
 	 * bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so excluded places stay
 	 * findable; they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
-	 * Compositional clause of the same policy: refuse a name whose EVERY normalized token is a member (e.g. "de la") — a
+	 * Compositional clause of the same policy: refuse a name whose every normalized token is a member (e.g. "de la") — a
 	 * surface made entirely of function words cannot be discriminative. Source this from stopwords only, never
 	 * street-type words ("Avenue Road" is a real name; "de la" is not).
 	 */
@@ -146,9 +146,9 @@ export interface BuildFSTOpts {
 	 */
 	exclusionPolicy?: string
 	/**
-	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of DISTINCT countries
-	 * (across the WHOLE admin DB, not just this build's country scope) with a place carrying that surface. When supplied,
-	 * every inserted place row records the count for ITS accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
+	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of distinct countries
+	 * (across the whole admin DB, not just this build's country scope) with a place carrying that surface. When supplied,
+	 * every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
 	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
 	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
 	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet; consumers (FST-prior tempering,

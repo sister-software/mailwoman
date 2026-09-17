@@ -6,7 +6,7 @@
  *   `mwdev_reliability`'s measurement: pick a surface, collect graded confidences, curve them, and say what an eval on
  *   them would buy.
  *
- *   The report deliberately answers TWO questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
+ *   The report deliberately answers two questions that get conflated. "Is the number honest?" is the curve — ECE, MCE,
  *   the per-bin gap. "Is it worth filtering on?" is the threshold table, and a well-calibrated surface can still fail it,
  *   because the admitted-error count at every useful recall can be too high for the downstream cost. A tool that
  *   returned only ECE would let a caller conclude the second from the first.
@@ -41,7 +41,7 @@ export type ReliabilitySurface = (typeof ReliabilitySurface)[keyof typeof Reliab
 /**
  * Where the coarse placer's held-out split lives, relative to the repo root.
  *
- * NOT tracked in git — the surface reports its absence rather than substituting another split, because `val` and
+ * Not tracked in git — the surface reports its absence rather than substituting another split, because `val` and
  * `train` load identically and produce a curve that is the temperature fit reporting on itself.
  */
 const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
@@ -124,7 +124,7 @@ export async function runReliability(registry: EngineRegistryLike, args: Record<
 async function decodeRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
-	// The per-token softmax IS the measurement, so tracing is forced on regardless of what the caller passed.
+	// The per-token softmax is the measurement, so tracing is forced on regardless of what the caller passed.
 	const engine = await registry.acquire({ ...config, trace: true })
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
@@ -154,7 +154,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 	return {
 		sample,
 		// No engine and no input set: the placer is loaded from its own bundle and graded against a corpus on disk, so
-		// the standard provenance block would be a shape with every field empty. The two facts that DO identify this
+		// the standard provenance block would be a shape with every field empty. The two facts that do identify this
 		// measurement are the corpus and the tree.
 		provenance: {
 			corpus,

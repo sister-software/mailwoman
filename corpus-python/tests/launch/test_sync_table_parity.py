@@ -14,7 +14,7 @@ A failure names the version whose generated transfers differ. Fix the row, never
 editing the fixture to match a wrong row is how a corpus version silently stops being staged, and
 a launch against a half-staged volume trains on the wrong data and reports success.
 
-The one exception is a DELIBERATE change to what a version stages. Then the row moves first, the
+The one exception is a deliberate change to what a version stages. Then the row moves first, the
 fixture row is updated to match, and the commit message says which version and why.
 """
 
@@ -107,7 +107,7 @@ def test_every_corpus_version_can_be_read_off_the_table() -> None:
 
 
 def test_the_totals_match_the_measured_census() -> None:
-    """Totals as well as per-version equality: a row that drops a copy AND gains one would pass
+    """Totals as well as per-version equality: a row that drops a copy and gains one would pass
     every per-version list comparison only if both lists agreed, but the totals make the size of
     the whole table visible in one number."""
     plans = [plan_sync(entry) for entry in CORPUS_VERSIONS.values()]

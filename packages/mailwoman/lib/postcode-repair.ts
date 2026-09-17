@@ -11,7 +11,7 @@
  *   eval: 11 of 600 stratified postcodes under the production default (3 bare-form misses, 8 country-suffixed rows
  *   answering the country label centroid, 27–221 km off); 0 of 600 under `--locale en-GB`.
  *
- *   The rung fires ONLY on that contradiction, and only for postcode formats whose SHAPE is structurally
+ *   The rung fires only on that contradiction, and only for postcode formats whose SHAPE is structurally
  *   letter-digit ({@link REPAIRABLE_POSTCODE_FORMATS}): a `SW1A 1AA` cannot be a house number. The five-digit
  *   families (us_zip / fr / de) are deliberately excluded — `12345` in `12345 Main St` is a house number, and a
  *   repair that could eat it would trade a GB fix for a US regression. Positive evidence only: the rung ADDS a
@@ -25,7 +25,7 @@ import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
  * Postcode formats whose surface is structurally distinguishable from anything else an address writes — letters mixed
- * INTO the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
+ * into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
  * coverage ambition. Two exclusions, both measured rather than reasoned:
  *
  * - Five-digit families (us_zip / fr / de): `12345` in `12345 Main St` is a house number.
@@ -40,7 +40,7 @@ const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode",
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces. A node with any OTHER tag overlapping the format span vetoes the repair — the rung
+ * The tags the misread produces. A node with any other tag overlapping the format span vetoes the repair — the rung
  * replaces a wrong reading, never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([

@@ -16,7 +16,7 @@
  *   - `publish.yml` prepare — the release eval.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
- *   four laws against a seeded DB and is invariant to gazetteer size. What stays HERE is the
+ *   four laws against a seeded DB and is invariant to gazetteer size. What stays here is the
  *   coverage-scale claims — `entries > 10_000` and the nonzero skip counters — because those are
  *   claims about the gazetteer rather than about the laws.
  */
@@ -88,7 +88,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 			expect(j.entries[s], s).toBeDefined()
 		}
 
-		// Multi-token entries with a directional/state INSIDE survive (only whole-surface exclusion):
+		// Multi-token entries with a directional/state inside survive (only whole-surface exclusion):
 		expect(j.entries["east nashville"]).toBeDefined()
 	}, 600_000)
 })

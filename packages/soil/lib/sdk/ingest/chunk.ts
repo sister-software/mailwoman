@@ -55,7 +55,7 @@ export interface SoilChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * The same, counting only delineations whose map unit HAS soil mapping behind it.
+	 * The same, counting only delineations whose map unit has soil mapping behind it.
 	 *
 	 * Separate from the total because the coverage rule turns on it: a coverage cell reached only by `NOTCOM` and
 	 * access-denied polygons is inside a published survey area and carries no digitized soil mapping, and the survey's
@@ -63,7 +63,7 @@ export interface SoilChunkResult {
 	 */
 	mappedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the encoded rings read WITH their holes, and read without.
+	 * Square metres: the encoded rings read with their holes, and read without.
 	 */
 	area: { nestedM2: number; allExteriorM2: number }
 }
@@ -73,7 +73,7 @@ export interface IngestSoilChunkOptions {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * The map units with NO soil mapping behind them — `NOTCOM`, `NOTPUB`, access denied, or no readable component
+	 * The map units with no soil mapping behind them — `NOTCOM`, `NOTPUB`, access denied, or no readable component
 	 * weights. Passed in rather than joined here so the chunk stays a streaming pass over geometry.
 	 */
 	noMappingMukeys: ReadonlySet<string>

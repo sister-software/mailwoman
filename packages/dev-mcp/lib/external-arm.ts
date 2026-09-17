@@ -120,8 +120,8 @@ export interface ExternalAnswer {
 	 * The answer's place-identity chain (mailwoman arms only — the resolved hierarchy's placeIDs, finest first). A
 	 * coordinate diff is blind to a wrong-INSTANCE win under a nearly-right coordinate (the Astoria class: the correct
 	 * Queens point under the Oregon placeID), and the 2026-08-18 band-injection battery needed a hand-written probe for
-	 * exactly this. ABSENT when the arm cannot state identity — external engines, oracles, and runs recorded before this
-	 * field existed — and an identity comparison only runs when BOTH sides carry one.
+	 * exactly this. Absent when the arm cannot state identity — external engines, oracles, and runs recorded before this
+	 * field existed — and an identity comparison only runs when both sides carry one.
 	 */
 	place_ids?: string[]
 	/**
@@ -219,7 +219,7 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * parsing its answer through our reimplementation's idea of the format would make it blind to exactly the divergences
  * the comparison is for. RFC 7946 is shared ground; a drop-in's schema is a claim under test.
  *
- * A feature whose geometry is not a point is a no-result WITH a reason, not a skip to the second feature: the protocol
+ * A feature whose geometry is not a point is a no-result with a reason, not a skip to the second feature: the protocol
  * scores position one, and an engine that answered with an unplaceable feature has said something different from an
  * engine that answered with nothing.
  */
@@ -359,8 +359,8 @@ export function assertScorableEndpoint(endpoint: string): string {
 /**
  * One external geocoder, paced and bounded-retried, answering the pre-registered protocol and nothing else.
  *
- * Response caching is deliberately OFF. Every other client in this repo caches because it is re-reading a slow remote
- * index; here the endpoint's answer IS the measurement, and a cached one would be scored against an identity probe
+ * Response caching is deliberately off. Every other client in this repo caches because it is re-reading a slow remote
+ * index; here the endpoint's answer is the measurement, and a cached one would be scored against an identity probe
  * taken now — reporting a vintage the number did not come from.
  */
 export class ExternalGeocoderClient extends APIClient {

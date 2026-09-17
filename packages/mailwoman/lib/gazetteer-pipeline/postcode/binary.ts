@@ -9,9 +9,9 @@
  *   WHY IT MOVED. The command's GB branch derived the outward district by splitting `name` on a SPACE.
  *   That was written against `postalcode-gb.db` (the retired GeoNames-lineage database), whose `name`
  *   carries the spaced display form. The licence-clean Code-Point Open database
- *   (`postalcode-gb-codepoint.db`, OGL v3.0) stores `name` ALREADY space-stripped (`AB101AB`), so the
+ *   (`postalcode-gb-codepoint.db`, OGL v3.0) stores `name` already space-stripped (`AB101AB`), so the
  *   split returned null on every one of its 1,746,976 rows and the command wrote a structurally-valid,
- *   ZERO-key binary and exited 0. Measured 2026-08-05:
+ *   zero-key binary and exited 0. Measured 2026-08-05:
  *
  *     mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db
  *       → GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)   [exit 0]
@@ -38,7 +38,7 @@ import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * A GB unit's inward code is ALWAYS the last three characters (`\d[A-Z]{2}`); the outward district is everything before
+ * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`); the outward district is everything before
  * it. Structural, not a guess — and unlike a space split it holds on a database that stores the glued form.
  */
 const GB_INWARD_LENGTH = 3
@@ -270,7 +270,7 @@ export function keyFloorFor(country: string, granularity: GBGranularity): number
 }
 
 /**
- * The reason a build must be REFUSED, or `null` when it clears its floor. Callers exit nonzero on a non-null return —
+ * The reason a build must be refused, or `null` when it clears its floor. Callers exit nonzero on a non-null return —
  * writing the artifact anyway is the #1467 defect class (a fed channel with nothing in it).
  */
 export function keyFloorViolation(country: string, keys: number, granularity: GBGranularity): string | null {

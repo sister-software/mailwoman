@@ -13,7 +13,7 @@
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
  *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
  *
- *   Two hard-won laws from the experiment are enforced HERE, in code, not in a runbook:
+ *   Two hard-won laws from the experiment are enforced here, in code, not in a runbook:
  *
  *   1. **The name law (#920 format law):** a postcode row's `name` is stored in the
  *      SANITIZED-QUERY token shape — every non-letter/number stripped — because that is what
@@ -28,7 +28,7 @@
  *
  *   Package home for the same reason as `geonames-aliases.ts`: `build-unified-wof
  *   --geonames-postal-countries`, any standalone fold, and the `mailwoman gazetteer` commands
- *   share ONE implementation. GeoNames postal dump = `download.geonames.org/export/zip/<CC>.zip`
+ *   share one implementation. GeoNames postal dump = `download.geonames.org/export/zip/<CC>.zip`
  *   → `<CC>.txt` (TSV: country, postcode, place, admin1, code1, admin2, code2, admin3, code3,
  *   lat, lon, accuracy). License CC BY 4.0 — attribution rides the extract's `meta` provenance and
  *   the model card like the existing GeoNames alias fold.

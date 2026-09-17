@@ -3,7 +3,7 @@
 Two things stay in the loop rather than moving to a callback, and both are here because the loop
 owns state a callback only sees the end of. The running train loss accumulates across the window a
 callback reports, so resetting it is what closes that window. Evaluating costs a forward pass over
-the val split, so the loop decides WHEN it happens and the callbacks only observe the result.
+the val split, so the loop decides when it happens and the callbacks only observe the result.
 
 `step` counts OPTIMIZER steps, not micro-batches, so it lines up with `cfg.train.max_steps`
 whatever `grad_accum_steps` is.
@@ -32,7 +32,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
     """Perturb the evidence channels in place, by optimizer step.
 
     Every curriculum here ramps with the run so the model cannot launder a clue: it must keep label
-    competence WITH and WITHOUT each channel. Each is conditioned on its own config flag so a run
+    competence with and without each channel. Each is conditioned on its own config flag so a run
     that leaves one off draws nothing for it and stays reproducible against the runs before it.
     """
     # Postcode-anchor confidence curriculum (#239/#240): perturb by optimizer step so the
@@ -40,16 +40,16 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
     if "anchor_confidence" in tb:
         tb["anchor_confidence"] = perturb_anchor_confidence(tb["anchor_confidence"], step, cfg.train.max_steps)
     # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
-    # so the model keeps label competence with AND without the clue (recovers the v0.9.12
+    # so the model keeps label competence with and without the clue (recovers the v0.9.12
     # US postcode -3.7). Conditioned on the config flag so always-on runs stay reproducible.
     if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
         tb["gazetteer_confidence"] = perturb_gazetteer_confidence(tb["gazetteer_confidence"], step, cfg.train.max_steps)
-    # Evidence-bundle anti-over-trust curriculum (v3.16.0): the SAME ramped per-row
+    # Evidence-bundle anti-over-trust curriculum (v3.16.0): the same ramped per-row
     # zero-out applied to both bundle channels — the P-A decay showed a fresh evidence
     # channel over-trusts without it. Per-channel independent draws, so the model also
     # sees each channel alone (the bundle must inform, never become a joint crutch).
     if getattr(cfg.train, "evidence_curriculum", False):
-        # False-evidence noise FIRST (v3.21.0, see perturb_evidence_noise) — then the
+        # False-evidence noise is drawn first (v3.21.0, see perturb_evidence_noise) — then the
         # absence zero-out draws over the noised batch; the rates compose independently.
         noise_p = float(getattr(cfg.train, "evidence_noise_prob", 0.0))
         if noise_p > 0.0:
@@ -150,7 +150,7 @@ def run_training_loop(
                     out = model(**tb)
             else:
                 out = model(**tb)
-            # EWC brake (fine-tunes only): the quadratic penalty rides the loss INSIDE the
+            # EWC brake (fine-tunes only): the quadratic penalty rides the loss inside the
             # accum division so effective-batch scaling matches the data loss.
             ewc = regularizers.ewc
             loss_total = out.loss if ewc is None else out.loss + ewc.penalty(model)
@@ -159,7 +159,7 @@ def run_training_loop(
             micro_step += 1
             if not is_accum_boundary:
                 continue
-            # Fisher capture window (base runs): read the accumulated gradient BEFORE clipping
+            # Fisher capture window (base runs): read the accumulated gradient before clipping
             # (the empirical Fisher is defined on ∂L/∂θ; the clipped surrogate understates
             # curvature exactly where it is largest). Read-only — trajectory unaffected.
             if (

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The classifier contract the geocode cascade consumes, and the two helpers every geocode entry runs FIRST: which
+ *   The classifier contract the geocode cascade consumes, and the two helpers every geocode entry runs first: which
  *   classifier will read this input (a script-routed one answers the character-path family for a kanji or Hangul
  *   line), and the normalizer call whose postal-mark decision must follow that classifier's encoder. They live
  *   together so the three geocode entries cannot disagree about either.
@@ -38,7 +38,7 @@ export interface GeocodeClassifier {
 			inputMode?: InputMode
 			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
 			/**
-			 * The gazetteer FST prior. The classifier reads this from `opts` ONLY — there is no config fallback, unlike
+			 * The gazetteer FST prior. The classifier reads this from `opts` only — there is no config fallback, unlike
 			 * `placetypePair` — so a path that cannot express the field does not merely weaken the prior, it never constructs
 			 * it (#1497). Absent = byte-identical to the pre-#1497 decode.
 			 */
@@ -52,7 +52,7 @@ export interface GeocodeClassifier {
 
 /**
  * The classifier that will read `input`: the routed one when the deps' classifier routes by script, else itself. Every
- * geocode entry resolves this FIRST, so the postal-mark normalization and the parse follow the same model.
+ * geocode entry resolves this first, so the postal-mark normalization and the parse follow the same model.
  */
 export async function classifierForInput(classifier: GeocodeClassifier, input: string): Promise<GeocodeClassifier> {
 	return classifier.forInput ? classifier.forInput(input) : classifier

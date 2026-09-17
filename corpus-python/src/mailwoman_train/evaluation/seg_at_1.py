@@ -3,7 +3,7 @@
 Baselines to beat (v264, ship config, triaged parity corpus): street token@1 0.573. A segment decode
 over the SUMMED-BIO stand-in scored 0.453 — WORSE — which is exactly why a trained span scorer is
 necessary and why decode-hardening alone was falsified (docs/articles/evals/
-2026-07-15-night-3-postmortem.md). If seg@1 does not cross token@1 here, the arc is falsified: do NOT
+2026-07-15-night-3-postmortem.md). If seg@1 does not cross token@1 here, the arc is falsified: do not
 tune span_loss_weight and re-run (that is the treadmill), run one diagnostic and fork.
 
 This deliberately runs in Python against the torch checkpoint — Phase 1 must not depend on the ONNX

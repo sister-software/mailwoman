@@ -63,7 +63,7 @@ export interface FloodChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the source's own figure, the encoded rings read WITH their holes, and read without.
+	 * Square metres: the source's own figure, the encoded rings read with their holes, and read without.
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 }

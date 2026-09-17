@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Diff two parses of the SAME input, over spans rather than over the component map.
+ *   Diff two parses of the same input, over spans rather than over the component map.
  *
  *   The component map is what a comparison reaches for and it loses the thing you need. Two arms that both emit
- *   `locality` tell you nothing about whether the locality MOVED, and a map keyed by tag cannot represent a span that
+ *   `locality` tell you nothing about whether the locality moved, and a map keyed by tag cannot represent a span that
  *   slid one token left — it looks identical to a span that was replaced. This is not hypothetical: it is how a
  *   regression that turned
  *
@@ -55,7 +55,7 @@ export interface SpanDelta {
 	confidenceBefore?: number
 	confidenceAfter?: number
 	/**
-	 * `after - before`, present only when both sides are. Negative means the arm under test is LESS sure.
+	 * `after - before`, present only when both sides are. Negative means the arm under test is less sure.
 	 */
 	confidenceDelta?: number
 	/**

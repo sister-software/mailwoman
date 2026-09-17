@@ -73,7 +73,7 @@ describe("corpus run option validation", () => {
 	})
 
 	test("the retired --output still satisfies the requirement it used to", () => {
-		// The alias is checked HERE and not only in the spec unit test, because `out` is `required` and the required
+		// The alias is checked here and not only in the spec unit test, because `out` is `required` and the required
 		// check reads the current key: an alias folded in after that check would make every existing caller fail with
 		// "Missing required option: --out" while passing a destination.
 		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y"])

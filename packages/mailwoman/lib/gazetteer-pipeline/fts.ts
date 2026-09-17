@@ -6,7 +6,7 @@
  *   FTS step of the gazetteer pipeline — `place_search` (FTS5) + `place_bbox` (R*Tree, the reverse
  *   geocoder's candidate index). A thin wrapper over the canonical
  *   `@mailwoman/resolver-wof-sqlite/fts` builder so the pipeline's phases share one signature shape.
- *   MUST run AFTER `enrichAdmin` — `place_search` concatenates the `names` rows, abbreviations included.
+ *   Must run after `enrichAdmin` — `place_search` concatenates the `names` rows, abbreviations included.
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

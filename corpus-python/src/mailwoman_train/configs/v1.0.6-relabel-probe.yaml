@@ -1,18 +1,18 @@
 # === v1.0.6-relabel-probe (#511 probe — the #492 ladder's data answer) ===========================
 # SINGLE-VARIABLE contrast vs PROBE 0 (v1.0.4): data.affix_relabel_lexicon_path SET (everything
-# else byte-identical — choreography false, synth-affix 20.0, suffix-tag 4.0, resume the SAME clean
+# else byte-identical — choreography false, synth-affix 20.0, suffix-tag 4.0, resume the same clean
 # consolidation step-040000 copied to a fresh dir, +4k steps). Probe 0 is the measured control:
-# prefix 81.0 @+2k -> 61.1 @+4k with relabel OFF.
+# prefix 81.0 @+2k -> 61.1 @+4k with the relabel pass off.
 #
 # HYPOTHESIS UNDER TEST (the #492 ladder's terminal finding, DeepSeek-concurred 2026-06-10): the
 # affix transient decay is CONTRADICTORY LABELS — 69.4% of base street rows label affix surfaces
 # monolithically (~467M rows, >=1,039:1 against the affix source's effective 450K), and the directional
 # augmentation (label-inheriting, p=0.3) mints more every epoch. The relabel pass
-# (mailwoman_train/relabel.py, the affix recipe's exact split semantics, runs AFTER augmentation) makes
+# (mailwoman_train/relabel.py, the affix recipe's exact split semantics, runs after augmentation) makes
 # the whole mix agree: trailing USPS suffix -> street_suffix, leading directional -> street_prefix.
 #
 # PRE-REGISTERED READ (decay-vs-hold, score-affix on real-affix eval, fp32, SAME scorer flags as
-# probe 0): prefix at +2k >= ~75 AND drop +2k->+4k <= 2pts  => contradiction theory CONFIRMED ->
+# probe 0): prefix at +2k >= ~75 AND drop +2k->+4k <= 2pts  => contradiction theory confirmed ->
 # proceed to the full relabel retrain (the #511 run, operator-GO'd). Decay reproduced (>= 10pt
 # drop) => hidden factor survives relabeling -> STOP, no full run, back to #492.
 # Secondary watches (not checks here): US street folded F1 (should hold — folding is invariant to
@@ -20,7 +20,7 @@
 # Expected transient: a val-loss spike at resume is NORMAL (the label distribution changed under
 # the model at step 40k); the +2k read absorbs it.
 #
-# REQUIRES on the volume: relabel.py + updated config.py/data_loader.py, the relabel lexicon at
+# Requires on the volume: relabel.py + updated config.py/data_loader.py, the relabel lexicon at
 # /data/gazetteer/affix-relabel-lexicon-v1.json (built by scripts/build-affix-relabel-lexicon.mjs),
 # and the clean step-040000 copied to output-v106-relabel-probe-s42/checkpoints/ (done 2026-06-10).
 # Launch:
@@ -51,7 +51,7 @@ data:
     synth-intersection: 0.2
     synth-german: 6.0
     synth-unit: 1.5
-    # IDENTICAL to probe 0 — the contrast is relabel only. (The full #511 run will sweep this DOWN:
+    # Identical to probe 0 — the contrast is relabel only. (The full #511 run will sweep this down:
     # 20.0 was calibrated to fight a contradiction that no longer exists.)
     synth-affix: 20.0
     synth-country: 2.0
@@ -63,7 +63,7 @@ data:
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   gazetteer_choreography: false
-  # THE single variable vs probe 0 (#511): end the base-vs-affix-source label contradiction.
+  # The single variable vs probe 0 (#511): end the base-vs-affix-source label contradiction.
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

@@ -93,7 +93,7 @@ export interface InventoryReport {
 	entries: InventoryEntry[]
 	counts: Record<Provenance, number>
 	/**
-	 * Databases that were found but NOT opened, because they sit under a foreign root. Named so the report's denominator
+	 * Databases that were found but not opened, because they sit under a foreign root. Named so the report's denominator
 	 * is auditable rather than implied.
 	 */
 	skippedForeign: number
@@ -180,7 +180,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 /**
  * Classify one database.
  *
- * `lstat` before `stat`: a symlinked artifact must report BOTH the link and the size of what it points at, and `stat`
+ * `lstat` before `stat`: a symlinked artifact must report both the link and the size of what it points at, and `stat`
  * alone silently answers for the target while `lstat` alone silently answers for the link.
  */
 async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
@@ -249,7 +249,7 @@ export function inventorySentence(report: InventoryReport): string {
 }
 
 /**
- * Whether a recorded `build_cmd` names something that still exists in THIS repo.
+ * Whether a recorded `build_cmd` names something that still exists in this repo.
  *
  * A manifest is only worth as much as its build command, and two ways of being worthless were measured on the shipped
  * artifacts. `osm/address-points-{de,gb,nz}-*.db` record `node osm/out/scripts/build-rooftop-database.js`, a path the

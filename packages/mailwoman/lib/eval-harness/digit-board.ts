@@ -17,8 +17,8 @@
  *   under YAML 1.1, so `country_weights.get("NO")` misses and the loader drops every row) meant that
  *   database never contributed a single row to any run since v1.9.0. The fix is #1145.
  *
- *   That makes the baseline unusually clean: SHIPPED v310 has never seen one Norwegian address, so
- *   this board's v310 arm is a TRUE ZERO-KNOWLEDGE reading, not a weak-prior one. Register it before
+ *   That makes the baseline unusually clean: shipped v310 has never seen one Norwegian address, so
+ *   this board's v310 arm is a true zero-knowledge reading, not a weak-prior one. Register it before
  *   the retrain exists.
  *
  *   THE NEGATIVE CLASS IS THE POINT — the same lesson as board 2's `bare-locality`. Every positive
@@ -28,15 +28,15 @@
  *   DISTINCTION from a flipped DEFAULT, which is exactly the trade board 2 caught v310 NOT making
  *   (bare-locality held 0.980 -> 0.980).
  *
- *   WHY `bare-street-hn` MATTERS MOST DIAGNOSTICALLY: it carries no postcode at all, so nothing
+ *   Why `bare-street-hn` matters most diagnostically: it carries no postcode at all, so nothing
  *   competes for the digit. If the model still says postcode there, the defect is not a
  *   postcode-vs-house_number competition and the whole framing is wrong.
  *
- *   SPLIT: surfaces are reserved in `no-digits.surfaces.txt` and `no-street-led` REQUIRES
+ *   SPLIT: surfaces are reserved in `no-digits.surfaces.txt` and `no-street-led` requires
  *   `--exclude-surfaces` (it throws otherwise). Source-disjoint by normalized street SURFACE, never
  *   by record row — row-disjoint leaks the surface across the boundary and measures memorization.
  *
- *   SLASH HAZARD: Norwegian `124/1` is ONE component (cadastral gnr/bnr); Australian `12/345` is TWO
+ *   SLASH HAZARD: Norwegian `124/1` is one component (cadastral gnr/bnr); Australian `12/345` is two
  *   (unit 12 + house_number 345). Identical surface shape, opposite correct answers. `slash-hn` pins
  *   the Norwegian reading so a future AU intra-word-split database cannot generalize over it unnoticed.
  */
@@ -57,7 +57,7 @@ export const DIGIT_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixture
 
 export interface DigitFixture extends SpanBoardFixture {
 	/**
-	 * Present on the negative class: the parser must emit NO house_number, and MUST still emit the postcode.
+	 * Present on the negative class: the parser must emit no house_number, and must still emit the postcode.
 	 */
 	expect_no_house_number?: boolean
 }
@@ -87,8 +87,8 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 				const hn = tagText(nodes, "house_number")
 				const pc = tagText(nodes, "postcode")
 
-				// The negative class scores TWO things at once, because either failure is the same mistake:
-				// the postcode must survive AND no house_number may be invented from it.
+				// The negative class scores two things at once, because either failure is the same mistake:
+				// the postcode must survive and no house_number may be invented from it.
 				const ok = fixture.expect_no_house_number
 					? foldCaseWhitespace(hn) === "" &&
 						foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))

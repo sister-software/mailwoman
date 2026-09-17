@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The live half of the absence-observation probe (#1965): load the frozen row set, run every row through
- *   the SAME pipeline construction the POI board uses, ask the negative-evidence route what it makes of
+ *   the same pipeline construction the POI board uses, ask the negative-evidence route what it makes of
  *   each answer, and emit a receipt.
  *
  *   THIS MODULE DECIDES NOTHING IT DID NOT READ. Every row and its registered outcome come from

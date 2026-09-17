@@ -26,12 +26,12 @@
  *     with an always-present `coverage_confidence`. A missing/absent `bdc_database_path`/`poi_database_path` degrades
  *     to a typed abstain entry in the bundle, never a throw (decision 6).
  *   - `mailwoman_filer_lookup` — read the FCC filer identity crosswalk (`@mailwoman/filer`'s
- *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every OTHER identifier it shares an
+ *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every other identifier it shares an
  *     authoritative edge with, its current attributes, its authoritative entity cluster, and any inferred links —
  *     reported separately, never merged into the cluster. `as_of` is always present (defaults to today).
  *   - `mailwoman_filer_family` — read a corporate family's membership (`@mailwoman/filer/sdk`'s
  *     `familyRollup`) from a filer.db layer database, given a `family_id` or a `node_id`. Distinct from an entity
- *     cluster (same filer, different identifiers) — a corporate family spans several DIFFERENT filers under a
+ *     cluster (same filer, different identifiers) — a corporate family spans several different filers under a
  *     holding/parent/subsidiary/management relationship. The handler passes `familyRollup`'s result through
  *     unchanged: no reshaping, filtering, or summarizing of who-owns-whom data.
  */

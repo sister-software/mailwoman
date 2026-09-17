@@ -223,7 +223,7 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 /**
  * True when this filer's notes state it is no longer an active Form 499 filer.
  *
- * Deliberately NOT `reasons.length > 0`: {@linkcode Form499CessationReason.AccountConsolidated} means the filing moved
+ * Deliberately not `reasons.length > 0`: {@linkcode Form499CessationReason.AccountConsolidated} means the filing moved
  * under a parent's and {@linkcode Form499CessationReason.ExitedTelecom} means the company still exists — reading either
  * as "this entity is gone" would erase a live company that is somebody's parent. A `ceasedAt` date, or an explicit
  * out-of-business/absorbed/replaced statement, is what this reports on.

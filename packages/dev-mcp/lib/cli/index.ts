@@ -10,7 +10,7 @@
  *   THE SPLIT IS THE FEATURE. Node cannot evict an imported ES module, so the old single-process server had to refuse
  *   after any source edit until the OPERATOR restarted the client — which locked the person developing the measurement
  *   tools out of them precisely while the tree was moving (measured cost: most of two working days routed through
- *   scratch scripts, 2026-08-16..18). This file therefore imports NOTHING from the repo's runtime — Node builtins and
+ *   scratch scripts, 2026-08-16..18). This file therefore imports nothing from the repo's runtime — Node builtins and
  *   the MCP SDK only — and `mwdev_restart` kills and re-forks the worker: a fresh module graph, new source live, no
  *   client restart. A change to the shim itself (rare by design) still needs the client restart; keep it boring.
  *
@@ -50,7 +50,7 @@ const { values } = parseArguments({
 	},
 })
 
-// NOT a `..` walk from this file. It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under
+// Not a `..` walk from this file. It was one — `resolvePath(shimDir, "..", "..")` — and when source moved under
 // `lib/` the walk landed on `<repo>/packages`, which fingerprinted zero files and refused to boot. The comment
 // beside it had been updated to say `lib/` while the arithmetic still said two, which is precisely the drift a
 // counted walk invites. `repoRootPath()` owns this arithmetic in one place. Not `cwd`, because an MCP client

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Both-order order-robustness eval harness (S6). Runs a model through the resolver on German
- *   addresses in BOTH renderings — native German order (the realistic layout) and US/international
+ *   addresses in both renderings — native German order (the realistic layout) and US/international
  *   order (the layout our OA de-sample ships) — with the postcode anchor fed and ablated
  *   (oa-resolver-eval's `--anchor-off` → `overrides.anchor=false`, the #718-sanctioned declared
  *   ablation; #887), plus US + FR for the no-regression check. The German "collapse" was
@@ -40,7 +40,7 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
  * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
  *
  * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-ON cell of the 2x2 is
- * `de.native_locality`, which is also in the fp32↔int8 delta cap, so that run executes on BOTH arms. The other five are
+ * `de.native_locality`, which is also in the fp32↔int8 delta cap, so that run executes on both arms. The other five are
  * recorded, not floored.
  */
 export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
@@ -113,7 +113,7 @@ export interface DeOrderEvalOptions {
 	 */
 	out?: string
 	/**
-	 * Row cap applied to EACH of the six runs (0/omitted = all rows).
+	 * Row cap applied to each of the six runs (0/omitted = all rows).
 	 *
 	 * PROFILING ONLY. The six corpora are 3,000 rows each except the US no-regression run at 10,000, and a capped run
 	 * reads the first N rows in file order — which is not a stratified sample. A capped run's locality percentages are
@@ -136,7 +136,7 @@ export interface DeOrderEvalOptions {
 	/**
 	 * Write one `<run-name>.json` wall-time attribution file per run into this directory.
 	 *
-	 * PROFILING ONLY, and it must name somewhere OUTSIDE the promotion output directory: the receipt comparator reads
+	 * PROFILING ONLY, and it must name somewhere outside the promotion output directory: the receipt comparator reads
 	 * every file under that directory byte-for-byte, and a timing number differs between two runs of the same artifact.
 	 */
 	profileDirectory?: string

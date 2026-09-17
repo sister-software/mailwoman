@@ -6,7 +6,7 @@
  *   Deterministic validation of a {@link GeographicModelDocument}. Plain TypeScript: no reasoner, no
  *   query engine, no schema library, and no I/O — the same input always produces the same issue list.
  *
- *   The validator reports EVERY violation it finds. A record set is authored by hand and read by a
+ *   The validator reports every violation it finds. A record set is authored by hand and read by a
  *   compiler, so a validator that stops at the first problem hands its author one defect per run. It
  *   also never returns a partial document: either the input satisfies every rule and is returned
  *   whole, or nothing is returned and every issue is named with the path it was found at. There is no
@@ -458,7 +458,7 @@ export function validateGeographicModelDocument(input: unknown): ValidationResul
 
 	if (issues.length) return { ok: false, issues }
 
-	// A clean input IS the document — the validator reads, it never rewrites. Keeping the assertion in this function,
+	// A clean input is the document — the validator reads, it never rewrites. Keeping the assertion in this function,
 	// where `input` is still `unknown`, is what makes it a single step rather than a cast through `unknown`.
 	return { ok: true, document: input as GeographicModelDocument }
 }

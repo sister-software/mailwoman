@@ -12,7 +12,7 @@ import type { ComponentTag } from "#component"
 /**
  * Mapping from mailwoman's address-component tags to the resolver's placetype taxonomy.
  *
- * PARTIAL on purpose: a tag absent from the map is NOT queried, and the resolver pass leaves its classifier attribution
+ * PARTIAL on purpose: a tag absent from the map is not queried, and the resolver pass leaves its classifier attribution
  * untouched. Omission is therefore a routing decision, not an oversight.
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
@@ -73,19 +73,19 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
 
 /**
  * Placetype-equivalence groups for lookup FILTERING. WOF splits a single addressing tier across several placetypes, but
- * an address's span can name ANY of them. A backend that filters to the one "obvious" placetype makes the equivalents
+ * an address's span can name any of them. A backend that filters to the one "obvious" placetype makes the equivalents
  * unreachable, so a fuzzy same-name place in the wrong tier wins instead.
  *
- * Three tiers are affected (the value of each entry is the set the SQL filter should accept; the FIRST entry is the
+ * Three tiers are affected (the value of each entry is the set the SQL filter should accept; the first entry is the
  * canonical/requested type, which extract routing keys off):
  *
  * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London boroughs), and
  *   `localadmin` (FR communes, US towns/townships in New England). Without the group, Brooklyn-the-borough (pop 2.5M)
  *   was unreachable and the fuzzy "Brooklyn Park, MN" won.
- * - **`region`** — `region` + `macroregion` (#718). WOF does NOT model every country's top-level civil division as
+ * - **`region`** — `region` + `macroregion` (#718). WOF does not model every country's top-level civil division as
  *   `region`: Italian regions (Lombardia, Veneto, Toscana…) are `macroregion` (their PROVINCES are `region`), and the
  *   post-2016 French régions (Île-de-France) are `macroregion` too. An address's `region` span names exactly those, so
- *   a `region`-only filter resolved them to NOTHING (confirmed against the IT/FR eval rows). US states / DE
+ *   a `region`-only filter resolved them to nothing (confirmed against the IT/FR eval rows). US states / DE
  *   Bundesländer / ES provincias are genuine `region`, so the EXACT-type match is preferred in ranking (see the
  *   resolve.ts fallback-quality annotation) — the macro is the recall safety net, not a demotion.
  * - **`county`** — `county` + `macrocounty` (#718). The `subregion` ComponentTag maps to `county` via
@@ -130,9 +130,9 @@ export function expandPlacetypeFilter(placetypes: readonly string[] | null): str
 
 /**
  * Macro/broader-tier members of {@link PLACETYPE_FILTER_GROUPS} — the recall safety net a query may fall through to
- * when no candidate of the EXACT requested placetype exists (#718). DELIBERATELY scoped to the `macro*` tiers only: the
+ * when no candidate of the exact requested placetype exists (#718). Deliberately scoped to the `macro*` tiers only: the
  * `locality` group's `borough`/`localadmin` are genuine peers (Brooklyn-the-borough is a first-class locality answer,
- * #404-class), NOT fallbacks — so they must NOT be deprioritized or annotated. Only `macroregion`/`macrocounty` are a
+ * #404-class), not fallbacks — so they must not be deprioritized or annotated. Only `macroregion`/`macrocounty` are a
  * broader admin tier standing in for a true `region`/`county`.
  */
 const MACRO_FALLBACK_PLACETYPES: ReadonlySet<string> = new Set(["macroregion", "macrocounty"])

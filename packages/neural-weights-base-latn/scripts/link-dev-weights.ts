@@ -12,7 +12,7 @@
  *   The model pair is the same source en-us links (`$MAILWOMAN_DEV_MODEL` / `$MAILWOMAN_DEV_TOKENIZER` override it),
  *   without a digest card: this workspace is parked and unpublished (#1177). The shared metadata (en-us's committed
  *   card and calibration pair) rides the soft-feed list with the same warn-and-continue miss semantics — each
- *   consequence line says which channel or metadata just resolved OFF for this overlay.
+ *   consequence line says which channel or metadata is left unavailable for this overlay.
  */
 
 import { workspacePath } from "@mailwoman/core/paths"

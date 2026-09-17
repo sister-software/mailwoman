@@ -50,7 +50,7 @@ export function weightsCacheDir(): PathBuilder {
 }
 
 /**
- * The data-root weights overlay: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, laid out with the SHIPPED filenames.
+ * The data-root weights overlay: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, laid out with the shipped filenames.
  *
  * A dev checkout carries no `model.onnx` — the binaries are not in git — so the workspace package always resolves and
  * is always empty, and before this probe existed that was terminal. Measured on a git worktree: the engine could not be
@@ -88,7 +88,7 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
  * for one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse --download-weights`
  * runs `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
  * `packages/release-kit/lib/weights/stage-weights-cache.ts` — so there is nothing for a resolver to resolve.
- * `import.meta.resolve` would also answer from THIS module's graph (the monorepo), which is precisely the bundle the
+ * `import.meta.resolve` would also answer from this module's graph (the monorepo), which is precisely the bundle the
  * candidate is being graded against.
  *
  * Every caller composes the path through this, so the day npm's prefix layout or the package scope changes, one line
@@ -244,13 +244,13 @@ export interface ResolvedWeights {
 	anchorLookupPath?: { path: string; binary: boolean }
 	/**
 	 * Path to the gazetteer-anchor lexicon (`anchor-lexicon-v1.json`, #464) shipped beside the resolved model.
-	 * `undefined` when the package doesn't ship it, OR when `opts.tier === "pocket"` (pocket is anchor-only — the
+	 * `undefined` when the package doesn't ship it, or when `opts.tier === "pocket"` (pocket is anchor-only — the
 	 * gazetteer channel is deliberately skipped). Read by the `loadFromWeights` soft-feed via `parseGazetteerLexicon`.
 	 */
 	gazetteerLexiconPath?: string
 	/**
 	 * Path to the country-surface lexicon (`country-surface-lexicon-v1.json`, #1104) shipped beside the resolved model.
-	 * `undefined` when the package doesn't ship it, OR when `opts.tier === "pocket"` (anchor-only). Read by the
+	 * `undefined` when the package doesn't ship it, or when `opts.tier === "pocket"` (anchor-only). Read by the
 	 * `loadFromWeights` soft-feed via `parseCountryLexicon`.
 	 */
 	countryLexiconPath?: string
@@ -301,8 +301,8 @@ export interface ResolvedWeights {
 	 *
 	 * Every other field is a resolved artifact path, which cannot answer "what was this package supposed to ship?" — an
 	 * absent artifact simply leaves its field `undefined`, and absence is exactly the question the anchor-presence guards
-	 * ask ({@link readDeclaredArtifactFile}, `harness.ts`'s grading-environment assertion). Note it is NOT
-	 * `dirname(modelPath)`: under `mailwoman.baseWeights` an overlay's model resolves from the BASE package while its
+	 * ask ({@link readDeclaredArtifactFile}, `harness.ts`'s grading-environment assertion). Note it is not
+	 * `dirname(modelPath)`: under `mailwoman.baseWeights` an overlay's model resolves from the base package while its
 	 * data siblings and its own card stay local.
 	 */
 	packageDir?: PathBuilder
@@ -315,7 +315,7 @@ export interface ResolvedWeights {
 	 * binaries and the siblings travel together, which the data-root overlay rung stopped guaranteeing. The report is
 	 * what `mailwoman doctor` renders so "which half do I have" answers at the artifact level.
 	 *
-	 * The list is FIXED: every known artifact appears every time, so the denominator does not move with the answer.
+	 * The list is fixed: every known artifact appears every time, so the denominator does not move with the answer.
 	 */
 	artifacts: WeightsArtifactReport[]
 }
@@ -430,7 +430,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 	// for binaries here used to skip that path and fall through to the installed package, mixing a candidate en-US model
 	// with shipped foreign-locale artifacts. Let the package resolver either complete wholly inside this root or fail.
 	if (opts.cacheRoot) {
-		// A cache with NO install for this package gets its own error: resolveFromPackageDir's
+		// A cache with no install for this package gets its own error: resolveFromPackageDir's
 		// "resolved at … but is missing model files" is written for a real-but-bare package dir (the
 		// ordinary dev-checkout state), and is a false claim about a directory that does not exist.
 		// The refusal itself is the point — an explicit cache never falls back — so say that.
@@ -461,7 +461,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 			tried
 		)
 	} catch (error) {
-		// A resolvable package with NO binaries used to be terminal here, on the reasoning that a
+		// A resolvable package with no binaries used to be terminal here, on the reasoning that a
 		// half-linked checkout must never silently load the wrong model. The reasoning held; the
 		// conclusion did not, because it is also the ordinary state of a fresh worktree — the binaries
 		// are not in git, so the workspace package always resolves and is always empty, and no later
@@ -480,7 +480,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		? PathBuilder.from(resolvePath(opts.overlayRoot, locale))
 		: weightsOverlayDir(locale)
 
-	// Probed whenever the directory EXISTS, not only when it holds both binaries. An overlay for a locale
+	// Probed whenever the directory exists, not only when it holds both binaries. An overlay for a locale
 	// that declares `mailwoman.baseWeights` deliberately carries no model — en-nz's linker removes one to
 	// prove the fallback engages — so a precondition demanding the binaries skips exactly the locales the
 	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself; a genuinely empty overlay
@@ -494,7 +494,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 	}
 
 	// 3. The user-level weights cache (npm-prefix layout written by `mailwoman parse
-	// --download-weights`, plan 3). Requires both binaries — a metadata-only cache install must NOT
+	// --download-weights`, plan 3). Requires both binaries — a metadata-only cache install must not
 	// resolve (it would load nothing); it falls through to the actionable not-found error below.
 	if (await cacheHasBinaries()) {
 		return await resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
@@ -540,7 +540,7 @@ async function resolveFromPackageDir(
 	// #1177 base-overlay dedup: a data-only locale package may SHARE the base model instead of shipping its
 	// own ~35.8 MB copy. fr-fr already ships en-us's model at publish time (publish.yml copies it), so the
 	// copy is pure duplication. Declaring `mailwoman.baseWeights` lets the package drop model.onnx +
-	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
+	// tokenizer.model from its `files` and resolve them from the base package, while its own data siblings
 	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
 	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
 	const baseDir = await resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot !== undefined)
@@ -597,7 +597,7 @@ async function resolveFromPackageDir(
 		source = `${source}+base`
 	}
 
-	// Surfaced separately from `modelCardPath`: an overlay card that EXISTS can still omit model-level fields, and
+	// Surfaced separately from `modelCardPath`: an overlay card that exists can still omit model-level fields, and
 	// presence is not the same question as completeness. The label vocabulary is the case that bites — a card without
 	// `labels` silently yields STAGE2_BIO_LABELS (21) against a 33-logit base model, and the first parse throws.
 	const resolvedBaseModelCardPath =
@@ -631,7 +631,7 @@ async function resolveFromPackageDir(
 
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
 	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them) —
-	// except that WHICH generation to resolve now comes from the CARD, not a hard-coded filename (#1510).
+	// except that which generation to resolve now comes from the card, not a hard-coded filename (#1510).
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath)
 
@@ -738,7 +738,7 @@ async function resolveAnchorLookupSibling(
 
 /**
  * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc).
- * COUNTRY-SPECIFIC BY DESIGN: this artifact is resolved from `packageDir` ONLY, unlike the model/tokenizer/model-card
+ * Country-specific by design: this artifact is resolved from `packageDir` only, unlike the model/tokenizer/model-card
  * siblings above, which fall back to a `baseWeights` package — a shared base has no locale-specific place-pair data to
  * offer, so a base package without its own `pair-index-<cc>.bin` simply has none (no fallback attempted). `undefined`
  * when the package doesn't ship one for `country`.
@@ -755,11 +755,11 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * Locate the PCN1 placetype census for `country` — `placetype-census-<cc>.bin`, the artifact `mailwoman gazetteer
  * census` builds (`neural/placetype-census.ts` owns both ends of the format).
  *
- * WHY THIS ONE DOES NOT TAKE A `packageDir`, unlike every other resolver in this file. The census is a BUILD-LOCAL
+ * WHY THIS ONE DOES NOT TAKE A `packageDir`, unlike every other resolver in this file. The census is a build-local
  * artifact: it lives under `$MAILWOMAN_DATA_ROOT/wof/`, exactly where `fst-street-morphology.bin` and the pair-index
- * probe outputs live, and it ships in NO weights tarball. That is a deliberate deferral, not an oversight. The
+ * probe outputs live, and it ships in no weights tarball. That is a deliberate deferral, not an oversight. The
  * 2026-08-04 wiring assessment ruled that the census gets no decode wiring until a calibration rung measures a δ (the
- * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime READS it,
+ * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime reads it,
  * adding 137–165 KB per locale to a published package adds nothing. When a calibration rung warrants that cost, this
  * function grows a package-sibling probe ahead of the data-root one — the same shape as
  * {@link resolveAnchorLookupSibling}'s binary-then-JSON ladder.
@@ -770,7 +770,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * candidate and records what it found on the parse trace (`TracePrior` of kind `placetypeCensus`) — nothing else. The
  * calibration rung's job is to read those traces and decide whether a δ is worth shipping.
  *
- * What the NEXT rung needs, so nobody mistakes this for a finished mechanism: the census is SPAN-BLIND (the D-C4
+ * What the next rung needs, so nobody mistakes this for a finished mechanism: the census is span-blind (the D-C4
  * ceiling). A node asserts something about a PARENT SURFACE, never about where a child span starts or ends, so census
  * evidence alone cannot tell "East Acton" the place from "East Acton" opening a venue name — it fails the same
  * venue-confound board that pinned window mode at a 52.1% false-positive rate and forced the pair prior's segment
@@ -793,10 +793,10 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<PathB
  * (see {@link resolvePlacetypeCensusPath} for what this artifact is, why it is build-local, and what the next rung
  * needs). `explicitPath` overrides the data-root lookup — a harness that built a census to a scratch directory.
  *
- * Degrade rules, deliberately asymmetric: an ABSENT artifact is silent, because not having built one is the normal
+ * Degrade rules, deliberately asymmetric: an absent artifact is silent, because not having built one is the normal
  * state for everyone who never ran `mailwoman gazetteer census`, and a warning there would fire for every user of the
  * library. A present-but-unreadable file, or one whose header names a different country than the locale being parsed,
- * is LOUD — those are build mistakes, and the country one in particular would otherwise have a census describing the
+ * is loud — those are build mistakes, and the country one in particular would otherwise have a census describing the
  * wrong country's hierarchy quietly riding the trace a calibration rung reads.
  */
 export async function loadPlacetypeCensus(

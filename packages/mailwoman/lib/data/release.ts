@@ -72,7 +72,7 @@ export async function resolveDatabasePath(
 }
 
 /**
- * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
+ * The path a `us`-family artifact already occupies on disk (versioned or legacy, via {@link resolveDatabasePath}), or
  * the artifact's own resolved path for a non-family artifact — `null` when nothing is there yet. Shared by `data pull`
  * and `data status`, so "already present" means the same thing to both.
  */

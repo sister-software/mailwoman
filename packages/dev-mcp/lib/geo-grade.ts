@@ -12,7 +12,7 @@
  *   truth point, thresholded at 1 / 5 / 25 km, with a no-result a miss at every threshold.
  *
  *   The equivalence test is here for the reason §5.6 gives: a parity claim is not two percentages that look close. It
- *   is a TOST against a bound chosen BEFORE the measurement — ±5 pp at 25 km — and it can come back "not equivalent and
+ *   is a TOST against a bound chosen before the measurement — ±5 pp at 25 km — and it can come back "not equivalent and
  *   not different", which is the answer an underpowered run should give.
  */
 
@@ -63,7 +63,7 @@ export interface GeoPoint {
 /**
  * Distance from an arm's answer to a truth point, or `null` when the arm returned no coordinate.
  *
- * `null` is NOT infinity and must not be turned into one. It flows into {@link hitAt} as a miss at every threshold —
+ * `null` is not infinity and must not be turned into one. It flows into {@link hitAt} as a miss at every threshold —
  * which is what the protocol says — while staying distinguishable in the row, so a reader can tell an arm that missed
  * by 400 km from an arm that had nothing to say.
  */
@@ -148,7 +148,7 @@ export interface EquivalenceReading {
 	p_lower: number | null
 	p_upper: number | null
 	/**
-	 * `true` only when BOTH one-sided tests reject, i.e. the difference is demonstrably inside the bound. `false` covers
+	 * `true` only when both one-sided tests reject, i.e. the difference is demonstrably inside the bound. `false` covers
 	 * two very different situations — a real difference, and too few rows to tell — which is why the sentence says which
 	 * one this is rather than leaving `false` to be read as "different".
 	 */
@@ -168,7 +168,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * The equivalence verdict as a sentence, which has THREE readings and not two.
+ * The equivalence verdict as a sentence, which has three readings and not two.
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing was learned — which of those
  * it means depends on where the point estimate fell. A difference already outside the bound is a difference; a small

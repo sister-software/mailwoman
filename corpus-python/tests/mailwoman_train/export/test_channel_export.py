@@ -3,7 +3,7 @@
 The exporter picks one wrapper per input combination, and the production ship shape — the full
 evidence bundle: anchor + gazetteer + country + street-type + locality-surface — had no export test
 at all. Only the two simplest wrappers were covered, so a channel that silently stopped reaching
-the graph would ship as a model running that channel OFF, which is the #566/#685 trap the
+the graph would ship as a model running that channel off, which is the #566/#685 trap the
 exporter's own guards exist to prevent.
 
 Each case here asserts what a consumer reads: the graph's input NAMES. A runtime feeds by name, so

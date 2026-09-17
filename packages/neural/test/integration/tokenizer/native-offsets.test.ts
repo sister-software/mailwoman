@@ -17,7 +17,7 @@
  *   3. **Normalizer-granular alignment is the TRAINING convention, not a bug** — on inputs where
  *      the model's normalizer aligns coarsely (the ALL-CAPS class: `CALLE` → `▁C`[0,0) +
  *      `AL`[0,3)), the native offsets match what `EncodeAsImmutableProto` fed the trainer
- *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the SAME proto
+ *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the same proto
  *      spans). The old TS reconstruction disagreed with training on exactly this class — 102 of
  *      1,066 rows in the swap's parity battery, every one offset-only (pieces + ids were
  *      byte-identical across all 1,066).
@@ -44,7 +44,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 		expect(un).toBeDefined()
 		expect(text.slice(un!.start, un!.end)).toBe("𝔘n")
 
-		// …and the rest of the input does NOT desync (the old reconstruction drifted by one code
+		// …and the rest of the input does not desync (the old reconstruction drifted by one code
 		// unit per preceding non-BMP char).
 		const st = pieces.at(-1)!
 		expect(st.piece).toBe("▁St")
@@ -75,7 +75,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 
 			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input (verified
 			// against Python sentencepiece on the same model bytes) — the spans BIO gold was built
-			// from. Pinning it here keeps runtime and trainer on one convention; do NOT "fix" this
+			// from. Pinning it here keeps runtime and trainer on one convention; do not "fix" this
 			// back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)

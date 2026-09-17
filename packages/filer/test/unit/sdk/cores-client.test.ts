@@ -140,7 +140,7 @@ describe("recaseUniform", () => {
 		expect(recaseUniform("HARGRAY COMMUNICATIONS GROUP LP")).toBe("Hargray Communications Group LP")
 		// A trailing comma or period must not stop the token being recognized.
 		expect(recaseUniform("ACME FIBER, LLC")).toBe("Acme Fiber, LLC")
-		// Words that conventionally ARE title case stay title case.
+		// Words that conventionally are title case stay title case.
 		expect(recaseUniform("OTELCO TELEPHONE INC")).toBe("Otelco Telephone Inc")
 	})
 })

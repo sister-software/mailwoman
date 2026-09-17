@@ -197,7 +197,7 @@ def registry_record(aligned: Aligned) -> dict[str, Any]:
 
 
 def permit_alignment(row: PermitRow, index: KeyIndex) -> list[Aligned]:
-    """Every form of one permit row that aligns AND fits the model's window: a clerk's 99-character unit list
+    """Every form of one permit row that aligns and fits the model's window: a clerk's 99-character unit list
     (`1층 282,283,292,293,302,303호 (…, 샤크존빌딩 A226~228,…)`) would be truncated by the loader, so it is a board row."""
     out: list[Aligned] = []
     if row.road_address:

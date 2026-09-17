@@ -33,7 +33,7 @@ interface FixturePlace {
 	 */
 	alt_names?: string[]
 	/**
-	 * Ancestor chain (NOT including self). Used to seed the `ancestors` table.
+	 * Ancestor chain (not including self). Used to seed the `ancestors` table.
 	 */
 	ancestor_ids?: number[]
 }
@@ -158,7 +158,7 @@ const FIXTURE: FixturePlace[] = [
 		id: 101_748_449,
 		parent_id: 85_682_077,
 		name: "London",
-		placetype: "borough", // intentionally NOT locality — to test the placetype filter
+		placetype: "borough", // intentionally not locality — to test the placetype filter
 		country: "CA",
 		lat: 42.98,
 		lon: -81.25,
@@ -175,7 +175,7 @@ const FIXTURE: FixturePlace[] = [
 		ancestor_ids: [85_633_723],
 	},
 
-	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, NOT
+	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, not
 	// `locality`. A locality query must still reach it via the shared placetype expansion
 	// (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the fuzzy
 	// "Brooklyn Park" and the resolver mislocates to Minnesota.
@@ -430,7 +430,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 
 	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
 		// "York New" straddles the bag "Old York <sep> New City": its tokens AND-match the row, but
-		// the exact tier must NOT promote it. Pre-#523 the bag was space-joined and the padded
+		// the exact tier must not promote it. Pre-#523 the bag was space-joined and the padded
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
@@ -482,7 +482,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
 		// SMOKE test, not the regression guard: SQLite silently downgrades a write-mode open to read-only on
-		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does NOT distinguish old
+		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does not distinguish old
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
 		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is
 		// enforced by the DatabaseSync construction spy in `lookup-readonly-open.test.ts`.

@@ -8,7 +8,7 @@ Per Phase 2 §7:
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
   exported per-locale; Phase 3 may split them if size or load behavior demands).
 
-`graph.py` decides WHAT gets exported — which channels the model carries, whether that combination
+`graph.py` decides what gets exported — which channels the model carries, whether that combination
 is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
 the result against PyTorch.
 """

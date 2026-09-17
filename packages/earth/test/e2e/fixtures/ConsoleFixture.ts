@@ -37,8 +37,8 @@ export class ConsoleFixture {
 
 			if (isIgnored(text)) return
 
-			// The browser's own network-error lines ("Failed to load resource: … 404") name NO url in
-			// their text — it rides `location()`. Without it, a failing suite says only that SOMETHING
+			// The browser's own network-error lines ("Failed to load resource: … 404") name no url in
+			// their text — it rides `location()`. Without it, a failing suite says only that something
 			// 404'd, which is undiagnosable from CI output.
 			const location = msg.location().url
 

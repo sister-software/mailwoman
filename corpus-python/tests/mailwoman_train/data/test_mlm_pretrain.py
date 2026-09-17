@@ -3,14 +3,14 @@
 The supervised trainer learns BIO classification from scratch; this checks the new
 self-supervised PRE-training surface (masking.py + MailwomanCoarseEncoder.forward_mlm),
 which produces an encoder checkpoint a later supervised run fine-tunes from. Runs in
-seconds on CPU; NO real corpus, NO backward, NO optimizer — those are exercised by the
+seconds on CPU; no real corpus, no backward, no optimizer — those are exercised by the
 manual end-to-end smoke. Geometry + invariants only.
 
 Covered:
-- mask_tokens: ~mask_prob of ATTENDED tokens selected; pad positions NEVER masked; targets
+- mask_tokens: ~mask_prob of ATTENDED tokens selected; pad positions never masked; targets
   are the ORIGINAL ids at masked positions and -100 elsewhere; unselected inputs unchanged.
 - forward_mlm: returns (B, S, vocab) logits + a finite scalar loss; uses the TIED token-
-  embedding head so it adds NO parameters (state_dict key-identical to a supervised model);
+  embedding head so it adds no parameters (state_dict key-identical to a supervised model);
   the supervised forward path still works unchanged.
 """
 

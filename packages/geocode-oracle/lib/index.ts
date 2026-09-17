@@ -9,7 +9,7 @@
  *   every user installs. Putting a billed third-party geocoder there would put it on that package's
  *   runtime path. No existing workspace is a better home either: `registry`, `filer`, `corpus` and
  *   `tiger` are all published, and this package's dependency fan (`core`, `spatial`, `formatter`,
- *   `record`, `address-id`, `codex`, `tiger`) would have to be pushed ONTO whichever one adopted it —
+ *   `record`, `address-id`, `codex`, `tiger`) would have to be pushed onto whichever one adopted it —
  *   the wrong direction. As its own workspace it depends on all seven and nothing depends on it, which
  *   is the property that actually matters.
  *
@@ -23,7 +23,7 @@
  *
  *   WHAT IT IS FOR. A gauntlet `SeedCase` pins `expectComponents`, `expectLat`/`expectLon`,
  *   `expectToleranceM` and `expectTier` by hand, and today those numbers come from whoever fixed the
- *   bug. This gives that person a second opinion in the SAME vocabulary — the clients answer with
+ *   bug. This gives that person a second opinion in the same vocabulary — the clients answer with
  *   `@mailwoman/record`'s `PostalAddress` (a `ComponentTag`-keyed dict, the formatter's `canonicalKey`,
  *   a coordinate and a `ResolutionTier`), so the comparison is field-to-field rather than eyeball.
  *

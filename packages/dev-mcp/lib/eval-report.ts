@@ -27,7 +27,7 @@ export interface FloorReading {
 	/**
 	 * The measured value, or `null` when the battery produced none.
 	 *
-	 * `null` is NOT zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
+	 * `null` is not zero and not a failure to clear the bar — it is a metric that was never measured, and the eval marks
 	 * it failing precisely so an unmeasured floor cannot pass by default. Reported separately from `pass` so a reader can
 	 * tell "missed the bar" from "never ran".
 	 */
@@ -63,7 +63,7 @@ export interface EvalReport {
 	 */
 	provenance: string | null
 	/**
-	 * The pre-filled `eval ledger-append` command the eval prints on a PASS, or `null`.
+	 * The pre-filled `eval ledger-append` command the eval prints on a pass, or `null`.
 	 *
 	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the eval runs on
 	 * candidates that may never ship. See {@link EvalReport.ledger_note}.
@@ -245,8 +245,8 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  *
  * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the package directory rather
  * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
- * through to the installed workspace package — which in this repo always resolves, and would grade the SHIPPED model
- * under the candidate's label. This check runs BEFORE the spawn only so the reader learns the expected shape from a
+ * through to the installed workspace package — which in this repo always resolves, and would grade the shipped model
+ * under the candidate's label. This check runs before the spawn only so the reader learns the expected shape from a
  * sentence rather than from a stack trace; it never substitutes for that guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function, rather than a re-typed
@@ -275,7 +275,7 @@ export async function missingWeightsCacheArtifacts(
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
 
-	// A cache that has the three required files but is missing what its OWN card declares is the #1516 failure with no
+	// A cache that has the three required files but is missing what its own card declares is the #1516 failure with no
 	// signal of its own: the channel resolves off, the run scores several cases lower, and the operator reads a model
 	// regression. Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion and reported
 	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.

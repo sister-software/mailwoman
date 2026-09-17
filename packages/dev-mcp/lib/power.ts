@@ -17,7 +17,7 @@
  */
 
 /**
- * Exact one-sided Clopper–Pearson upper bound for ZERO observed events: `1 − α^(1/n)`.
+ * Exact one-sided Clopper–Pearson upper bound for zero observed events: `1 − α^(1/n)`.
  *
  * Exact rather than the rule-of-three approximation (`3/n`) because the two disagree most at small n, which is the only
  * place this is ever read: at n = 10 the exact bound is 0.259 and the approximation 0.300.

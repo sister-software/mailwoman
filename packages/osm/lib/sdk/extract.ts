@@ -5,13 +5,13 @@
  *
  *   Stream rooftop address records out of a Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr — the same
  *   external-geo-CLI pattern `@mailwoman/tiger` uses for shapefiles. GDAL's OSM driver resolves node
- *   AND way/polygon geometries for us, so a building tagged with `addr:housenumber` (the dominant DE
+ *   and way/polygon geometries for us, so a building tagged with `addr:housenumber` (the dominant DE
  *   shape) becomes a point via its centroid — we don't hit the pure-JS "ways need a node-location
  *   cache" wall.
  *
  *   Address tags live in the driver's `other_tags` hstore; we pull them with OGRSQL `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
- *   ways are intentionally NOT read here — the rooftop tier is point-first; explicit interpolation is a
+ *   ways are intentionally not read here — the rooftop tier is point-first; explicit interpolation is a
  *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
  */
 

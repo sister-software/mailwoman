@@ -14,9 +14,9 @@
  *   Wave 1's lesson, and the reason the spec's "get real data first" instruction is honoured in a
  *   shape it did not anticipate: the attested SURFACE STRINGS are thin. 87 GB features attest
  *   `terminal`, 29 attest `wing`, 4 attest `concourse` (3 of which are a street called CONCOURSE WAY).
- *   You cannot train a tag on 29 strings. What the five extracts DO carry at volume is the three
+ *   You cannot train a tag on 29 strings. What the five extracts do carry at volume is the three
  *   things a generator needs — 45,000+ real venue names across four countries, a per-region
- *   identifier DISTRIBUTION measured over 2,868 gate/terminal/campus refs, and the confound
+ *   identifier distribution measured over 2,868 gate/terminal/campus refs, and the confound
  *   population that becomes the negatives. So the bulk is `designator × per-region-identifier ×
  *   modifier` sampled per locale, and the attested strings ride along as seasoning
  *   ({@link ATTESTED_FRACTION}) rather than as the corpus.
@@ -31,7 +31,7 @@
  *   is wrong about Spain, so every leg samples its own region.
  *
  *   ── ONLY PROMOTED (designator, locale) PAIRS PRODUCE POSITIVES ───────────────────────────────────
- *   A promotion names a designator, a phrase AND a locale, because the same token is a designator in
+ *   A promotion names a designator, a phrase and a locale, because the same token is a designator in
  *   one language and a disaster in another: `hall` is 0-of-3,273 in Great Britain and 35-of-40 in
  *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A REJECTED pair
  *   generates NEGATIVES in that locale instead — en-US `wing` rows are Red Wing, not units.
@@ -106,7 +106,7 @@ export interface SubVenueLeg {
 	locale: string
 	country: string
 	/**
-	 * ISO 3166-1 alpha-2 key into the lexicon's `identifierShapes` AND the extract filename. The two axes are the same
+	 * ISO 3166-1 alpha-2 key into the lexicon's `identifierShapes` and the extract filename. The two axes are the same
 	 * axis: a distribution is measured in a region's own extract.
 	 */
 	region: string
@@ -141,7 +141,7 @@ export interface SubVenueLeg {
  *
  * The negative shares invert that ordering where the confound mass does. en-US carries the largest negative share
  * because its confound population is the largest measured anywhere in the ledger — 3,354 `wing` (Red Wing boots 676,
- * chicken wings 759), 2,330 `pier` (Pier 1 Imports, which IS the designator+identifier shape), 27,081 `hall`.
+ * chicken wings 759), 2,330 `pier` (Pier 1 Imports, which is the designator+identifier shape), 27,081 `hall`.
  */
 export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 	{
@@ -237,7 +237,7 @@ export const RECOMMENDED_ROW_COUNT = 120_000
 const DEFAULT_NEGATIVE_FRACTION = 0.3
 
 /**
- * Share of POSITIVES whose sub-venue string is a REAL name lifted verbatim out of an extract rather than synthesized —
+ * Share of positives whose sub-venue string is a real name lifted verbatim out of an extract rather than synthesized —
  * `Terminal 2 D`, `Pier 1`, `Terminal 1 Flugsteig B`. The seasoning, per the module docstring. Kept small because the
  * attested pool is small: after promotion + shape filtering it is 13–47 strings per leg, and a larger share would just
  * repeat them.
@@ -259,14 +259,14 @@ const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
 
 /**
  * Surfaces reserved by `mailwoman/eval-harness/fixtures/venue-structure-confounds.jsonl` — the 30-row board this recipe
- * has to hold. A row containing any of these is DROPPED and counted in `contaminated`.
+ * has to hold. A row containing any of these is dropped and counted in `contaminated`.
  *
  * The `--exclude-surfaces` precedent from `fr-fragment` / `no-fragment`, applied by hand rather than by file because
  * the board lives in `mailwoman/` and `@mailwoman/corpus` cannot reach across that workspace boundary at run time. Keep
  * it in sync when the board grows; a recipe output that trains on its own eval set measures memorization.
  *
  * Note what this costs and why it is still right: reserving `east gate` / `west gate` removes the two GB surfaces the
- * board uses for its `modifier-designator-street` class, so the recipe teaches that class from the OTHER real ones its
+ * board uses for its `modifier-designator-street` class, so the recipe teaches that class from the other real ones its
  * sources carry (`North Gate`, `South Gate`, `East Hall`, `West Hall`, `Lower Hall`, `East Campus`, …). The class is
  * taught; the board's own strings are not.
  */
@@ -424,7 +424,7 @@ export const NegativeClass = {
 export type NegativeClass = (typeof NegativeClass)[keyof typeof NegativeClass]
 
 /**
- * Which negative classes this leg's pools can actually produce. A class with no source is ABSENT rather than
+ * Which negative classes this leg's pools can actually produce. A class with no source is absent rather than
  * substituted — the report then says so, and a reader can tell a missing class from an unsampled one.
  */
 function availableNegativeClasses(pools: LegPools, streets: StreetNegatives): NegativeClass[] {

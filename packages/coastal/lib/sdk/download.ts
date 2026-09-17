@@ -6,10 +6,10 @@
  *   Acquire the published file geodatabase — a 70,296,882-byte archive streamed to disk and unzipped.
  *
  *   THE TRANSFER, THE CACHE KEY AND THE EXTRACTION LIVE IN `@mailwoman/core/utils`, because none of them is
- *   this product's: `downloadZippedGeodatabase` carries why the archive unzips INTO a `.gdb` directory and
+ *   this product's: `downloadZippedGeodatabase` carries why the archive unzips into a `.gdb` directory and
  *   why the cache is keyed on a vintage rather than a length probe, and `streamToDisk` carries why a file
  *   transfer keeps raw `fetch` instead of going through `APIClient`. What is coastal's, and stays here, is
- *   the two names below. The METADATA reads around this transfer DO go through `APIClient` — see
+ *   the two names below. The metadata reads around this transfer do go through `APIClient` — see
  *   `client.ts`.
  *
  *   THE HOST LEAVES NO CHOICE ABOUT THE CACHE KEY. It answers `HEAD` with HTTP 405 and ignores `Range`: a

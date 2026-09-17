@@ -20,7 +20,7 @@
  *   range (`SYNTH_ID_BASE`, well above WOF's ~907M ceiling) that can never be mistaken for — or
  *   collide with — a WOF entity id.
  *
- *   Separator variants: a postcode is stored under BOTH its written forms so the candidate name_key
+ *   Separator variants: a postcode is stored under both its written forms so the candidate name_key
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
  *   space) though GeoNames stores "580 01".
  *

@@ -41,7 +41,7 @@ corpus-python/.venv/bin/python -m mailwoman_train.cli quantize --input ./model-f
 node mailwoman/out/cli.js eval check --model ./model-fp32.onnx --int8 ./model-int8.onnx --spec mailwoman/eval-harness/specs/v4.2.0-ship.json
 ```
 
-Expected: `eval promote` PASS 12/12. The int8 md5 `9eb4a99f6db06cccff57939f657c09f9` is v4.2.0's
+Expected: `eval promote` `PASS` 12/12. The int8 md5 `9eb4a99f6db06cccff57939f657c09f9` is v4.2.0's
 shipped bytes under the toolchain of its day, and the `onnxscript` 0.7.0 → 0.7.2 bump since then
 changes the graph's bytes without changing what it computes — so a rebuild today differs from that
 md5 and is correct. A digest is no longer the drift test on its own: read the pinned-toolchain
@@ -55,14 +55,14 @@ section below, and compare graphs and outputs before concluding anything from a 
 keep the int8 graph Safari-WebGPU-safe.
 
 `onnxruntime` matches the `onnxruntime-web` the browser runs, and `verify_toolchain.py` refuses a
-gap between them. The gap is not cosmetic: 1.26.0 and 1.29.0 executing the SAME int8 bytes disagree
+gap between them. The gap is not cosmetic: 1.26.0 and 1.29.0 executing the same int8 bytes disagree
 by up to ~1e-1 on a logit. That changed no decision over a real-address probe — 0 argmax flips over
 172 real tokens across ten addresses — but a graph validated by one runtime and served by another
 is being checked by an instrument that is not the one in the user's hands.
 
 Two of these pins moved without moving the shipped graph, and one moved it. `onnx` 1.21.0 → 1.22.0
 and `onnxruntime` 1.26.0 → 1.29.0 are byte-neutral: each produces an int8 artifact identical to the
-one before it, verified digest-for-digest. `onnxscript` 0.7.0 → 0.7.2 is NOT — its optimizer
+one before it, verified digest-for-digest. `onnxscript` 0.7.0 → 0.7.2 is not — its optimizer
 constant-folds twelve shape-plumbing nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers, so
 fp32 grows 2,576 bytes and int8 seven, while opset, `ir_version`, inputs, outputs and every weight
 tensor stay identical and both graphs answer bit-for-bit equal logits at sequence 8, 64 and 128.
@@ -78,7 +78,7 @@ node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts   # ex
 
 ## Eval procedure invariants
 
-Gaz-trained models (v4.2.0+) are ALWAYS evaluated with
+Gaz-trained models (v4.2.0+) are always evaluated with
 `--gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --suppress-gaz-near-postcode`
 (zero-filled clues depress country recall and fake an affix crash). Never compare F1 across
 tokenizer versions. fp32-to-fp32 for measurement; int8 for ship claims. Recompile

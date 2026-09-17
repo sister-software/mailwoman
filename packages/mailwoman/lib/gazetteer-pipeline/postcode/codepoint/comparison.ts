@@ -8,8 +8,8 @@
  *
  *   This exists because the swap is a DATA-SOURCE change, not a refresh. The two sources disagree on
  *   which postcodes exist and on where each one is, and both kinds of disagreement have to be looked at
- *   before the shipped database moves. What this tool does NOT do is decide: a large coordinate delta is a
- *   FINDING, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
+ *   before the shipped database moves. What this tool does not do is decide: a large coordinate delta is a
+ *   finding, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
  *   `geonames-tail.ts`'s `GB_LICENSE_NOTE`), not Code-Point Open, which is the authoritative upstream
  *   both datasets ultimately derive from.
  *
@@ -50,7 +50,7 @@ export interface AreaHistogram {
 }
 
 /**
- * The coordinate-disagreement distribution over postcodes present in BOTH databases, in metres.
+ * The coordinate-disagreement distribution over postcodes present in both databases, in metres.
  */
 export interface DeltaDistribution {
 	joined: number
@@ -156,7 +156,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * both databases agree with each other there to within 3 m, which is the comparison this list is actually making.
  *
  * The Senedd probe is `CF99 1SN` and that is not a typo. It was originally `CF99 1NA`, which the first eval run
- * reported ABSENT from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
+ * reported absent from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
  * the Senedd's postcode changed from `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current
  * one, and the incumbent GeoNames snapshot still carries the retired one 114 m away. That single row is the whole
  * 33,761-postcode "only in incumbent" residual in miniature — those are TERMINATED postcodes, not missing coverage.
@@ -295,7 +295,7 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 
 		phase("stats", `${deltas.length.toLocaleString()} joined postcodes`)
 
-		// Sorted ONCE here. `percentile` copies-and-sorts internally, which is the right default for a
+		// Sorted once here. `percentile` copies-and-sorts internally, which is the right default for a
 		// small sample and the wrong one for 1.7 M values read four times — so the quantiles are taken off
 		// this array directly. `percentile` is still used for the shape of the index arithmetic.
 		deltas.sort((a, b) => a - b)

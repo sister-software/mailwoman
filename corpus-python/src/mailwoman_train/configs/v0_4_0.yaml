@@ -20,7 +20,7 @@
 
 data:
   # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
-  # unless §4 source weights change significantly. Source weights HAVE changed, but
+  # unless §4 source weights change significantly. Source weights have changed, but
   # the underlying parquet files are unchanged; the loader's source_weights filter does
   # the rebalancing at sampling time.
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
@@ -33,7 +33,7 @@ data:
   # - usgov-nad dropped 2.0 → 1.0 (its 57.9M-row volume + venue+street+house_number
   #   coverage pushed the corpus into a fine-label-heavy mix; let it be 1× instead of 2×)
   # - wof-admin + wof-postalcode bumped 1.0 → 2.0 (re-prioritize coarse-only rows)
-  # - ban + tiger unchanged (they carry both fine AND coarse signal)
+  # - ban + tiger unchanged (they carry both fine and coarse signal)
   source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0

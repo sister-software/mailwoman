@@ -6,7 +6,7 @@
  *   Inference-side postcode-anchor features (#239/#240) — the mirror of the Python training pipeline
  *   (`mailwoman_train/tokenizer.py::anchor_feature_vector` + `realign_anchor_to_pieces`). At
  *   inference the model conditions on per-piece anchor features fed alongside `input_ids`; this
- *   builds them from a raw address + its SentencePiece pieces, using the SAME postcode→anchor
+ *   builds them from a raw address + its SentencePiece pieces, using the same postcode→anchor
  *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.ts`), so the feature
  *   layout matches byte-for-byte.
  *
@@ -100,7 +100,7 @@ export function parseAnchorLookup(
 }
 
 /**
- * How {@linkcode buildAnchorFeatures} decides WHICH substrings to look up.
+ * How {@linkcode buildAnchorFeatures} decides which substrings to look up.
  *
  * - `alnum-run` — every `[A-Za-z0-9]+` run in the text, uppercased. The shipped behaviour, and structurally incapable of
  *   producing a key that contains a space-joined pair: `SW1A 2AA` is scanned as `SW1A` then `2AA`, never as the
@@ -130,7 +130,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  * ASCII-only uppercase — the case fold the shaped keyer runs before shape DETECTION (#1512).
  *
  * The defect it closes: `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]` by design (they must not match
- * lowercase prose), so `collectMatches` finds NOTHING in the raw lowercase register. Measured on the 120-row gb-golden
+ * lowercase prose), so `collectMatches` finds nothing in the raw lowercase register. Measured on the 120-row gb-golden
  * board: 106/120 rows yield a shaped span as-written and UPPERCASE, **0/120** lowercase. The default parse path is
  * saved only by `normalizeInputCase` (#690/#829) restoring the postcode's case first — every GB letter run is ≤2
  * characters, so `restoreLowerInput` uppercases all of them. A `normalizeCase: false` parse gets no such rescue and
@@ -159,12 +159,12 @@ const GB_INWARD_LENGTH = 3
  * ROAD_TO_V9 §1, from the `v4.2.0-base-anchor-v2` recipe header).
  *
  * The class is concrete, not hypothetical. A GB unit key is written with a space in every real address (`SW1A 2AA`), so
- * the alnum-run scan sees `SW1A` and `2AA` and can NEVER produce the `SW1A2AA` the train painter keys. Every such key
+ * the alnum-run scan sees `SW1A` and `2AA` and can never produce the `SW1A2AA` the train painter keys. Every such key
  * in a loaded lookup is therefore dead weight under `alnum-run` — 1,746,976 of them in `pilot-anchor-lookup-v2`, which
  * is the entire point of that lookup. If a package ships one of these and its card does not declare `span_mode:
  * "shaped"`, the anchor channel is silently feeding zeros on exactly the rows the retrain was for.
  *
- * NOT counted: NL PC6 (`1012LG`) and every numeric system. Those are written glued at least some of the time, so the
+ * Not counted: NL PC6 (`1012LG`) and every numeric system. Those are written glued at least some of the time, so the
  * alnum-run scan reaches them — their presence says nothing about the card's declaration.
  *
  * Cheap by construction: it stops at {@linkcode SHAPED_ONLY_KEY_SCAN_LIMIT} keys, because the caller only needs "any?"
@@ -232,10 +232,10 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
  * The SHIP OBLIGATION message for a card that omits `span_mode: "shaped"` while its package ships a lookup full of keys
  * only the shaped keyer can reach, or `null` when the pairing is coherent (A2 of ROAD_TO_V9 §1).
  *
- * This is the fail-closed for the ONE thing about `span_mode` a runtime can actually check. The mode itself is
+ * This is the fail-closed for the one thing about `span_mode` a runtime can actually check. The mode itself is
  * unobservable from the ONNX graph — the inputs are identical either way — so the card is the only source of truth for
- * it, and a card that simply OMITS the field is indistinguishable from a legitimately-`alnum-run` bundle. What IS
- * observable is the artifact PAIRING: a lookup carrying GB unit keys next to a card that cannot reach them has no
+ * it, and a card that simply OMITS the field is indistinguishable from a legitimately-`alnum-run` bundle. What is
+ * observable is the artifact pairing: a lookup carrying GB unit keys next to a card that cannot reach them has no
  * legitimate reading and the exact shape a v4.2.0 promote would ship if the card were copied forward unchanged.
  *
  * `createScorer` throws on it (fail closed, the eval path); `loadFromWeights` warns once (tolerant by contract).
@@ -301,7 +301,7 @@ export interface BuildAnchorFeaturesOptions {
 }
 
 /**
- * Per-piece anchor features + confidence for `text`, projected onto its SP `pieces` by the SAME char→piece rule the
+ * Per-piece anchor features + confidence for `text`, projected onto its SP `pieces` by the same char→piece rule the
  * labels use (a piece takes the anchor of the postcode span its first non-whitespace char falls inside) — so the anchor
  * lands on exactly the postcode's sub-tokens.
  *
@@ -319,8 +319,8 @@ export function buildAnchorFeatures(
 	const confidence: number[] = pieces.map(() => 0)
 
 	/**
-	 * Paint `[spanBegin, spanEnd)` with `entry`'s vector. Shared by both modes so they can only ever differ in WHERE they
-	 * paint, never in WHAT they paint or HOW it lands on pieces — the same guarantee the train side gets from sharing
+	 * Paint `[spanBegin, spanEnd)` with `entry`'s vector. Shared by both modes so they can only ever differ in where they
+	 * paint, never in what they paint or how it lands on pieces — the same guarantee the train side gets from sharing
 	 * `_paint_anchor_chars`.
 	 */
 	const paint = (spanBegin: number, spanEnd: number, entry: AnchorEntry): void => {
@@ -344,13 +344,13 @@ export function buildAnchorFeatures(
 
 	if (options.spanMode === "shaped") {
 		for (const match of collectMatches(asciiUpper(text))) {
-			// The train painter's normalization VERBATIM: literal spaces removed, uppercased. Not `\s+`,
+			// The train painter's normalization verbatim: literal spaces removed, uppercased. Not `\s+`,
 			// not the `D-` strip `normalizePostcode` does — those would diverge from what trained.
 			const key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
 			let entry = lookup.get(key)
 
 			// Outward fallback: an unknown GB unit (a new-build code, or an NI `BT` code Code-Point Open
-			// does not carry) still anchors from its district — and paints the WHOLE unit span, not just
+			// does not carry) still anchors from its district — and paints the whole unit span, not just
 			// the outward half, so the painted extent matches what a known unit would have produced.
 			if (!entry && GB_UNIT_KEY.test(key)) {
 				entry = lookup.get(key.slice(0, -GB_INWARD_LENGTH))

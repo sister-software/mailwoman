@@ -5,7 +5,7 @@
  *
  *   The datum guard, against real `projinfo --summary` output.
  *
- *   Both fixtures below came off the SAME machine and the SAME command, minutes apart: the first before
+ *   Both fixtures below came off the same machine and the same command, minutes apart: the first before
  *   `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` was installed and the second after. The difference in the output is
  *   six words; the difference in the artifact is 3.4 metres over every coordinate in England.
  */
@@ -14,7 +14,7 @@ import { assessDatumTransformation } from "@mailwoman/spatial/projection-transfo
 import { describe, expect, it } from "vitest"
 
 /**
- * `projinfo -s EPSG:27700 -t EPSG:4326 --summary`, with the OSTN15 grid ABSENT.
+ * `projinfo -s EPSG:27700 -t EPSG:4326 --summary`, with the OSTN15 grid absent.
  */
 const GRID_MISSING = `Candidate operations found: 2
 Note: using '--spatial-test intersects' would bring more results (9)

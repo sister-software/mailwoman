@@ -49,7 +49,7 @@ export interface LabelledSpan {
 }
 
 /**
- * How the two readings related on ONE label. `agree` and `value-differs` both mean both parsers produced the label; the
+ * How the two readings related on one label. `agree` and `value-differs` both mean both parsers produced the label; the
  * `*-only` pair means one did not, which is a different kind of disagreement and never blended with the other.
  */
 export const SpanVerdict = {

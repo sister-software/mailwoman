@@ -62,7 +62,7 @@ export interface AutocompleteOpts {
 	maxExpansionDepth?: number
 	/**
 	 * Collapse same-name suggestions to the single highest-referential one. Off by default (the CLI surfaces distinct
-	 * same-name places — New York the city vs the county); a typeahead wants it ON so the dropdown isn't four "New
+	 * same-name places — New York the city vs the county); a typeahead wants it on so the dropdown isn't four "New
 	 * London"s. (#587)
 	 */
 	dedupeByName?: boolean
@@ -86,7 +86,7 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 
 /**
  * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the
- * payload, so the entry that WINS the algorithm's shallowest-depth rule is the entry whose fields the suggestion
+ * payload, so the entry that wins the algorithm's shallowest-depth rule is the entry whose fields the suggestion
  * reports — a side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per
  * surface).
  */

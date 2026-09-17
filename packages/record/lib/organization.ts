@@ -62,7 +62,7 @@ export interface CanonicalizeOptions {
  * Universal legal-entity designations — the forms that are safe to strip regardless of jurisdiction or domain because
  * they don't collide with common domain abbreviations. Normalized to lowercase with punctuation removed (so `L.L.C.` →
  * `llc`). Drawn from the ISO 20275 register + `cleanco`'s common set. Stripped as whole tokens wherever they occur.
- * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`) AND the collision-prone
+ * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`) and the collision-prone
  * forms (`pt`, `sca`, `scs`) — those last live in {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known
  * jurisdiction.
  */
@@ -124,7 +124,7 @@ const BASE_DESIGNATIONS = new Set([
 /**
  * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is known. This is
  * where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs` (French/Belgian/Luxembourg commandite forms).
- * Stripping these is correct ONLY when we know the org's country — never in the universal base. Grounded seeds, not
+ * Stripping these is correct only when we know the org's country — never in the universal base. Grounded seeds, not
  * exhaustive; extend per ISO 20275.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {

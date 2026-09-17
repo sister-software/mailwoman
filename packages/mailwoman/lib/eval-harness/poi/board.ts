@@ -12,7 +12,7 @@
  *   FLOORS (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
  *   (`POI_BOARD_FLOORS` / `evaluateFloors`, pre-registered in
  *   `docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`). Floors are graded and printed on
- *   EVERY run; a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
+ *   every run; a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
  *   command stays report-only (exit 0 on case failures; a non-zero exit then means the HARNESS broke —
  *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
  *
@@ -21,7 +21,7 @@
  *   `@mailwoman/poi-taxonomy`'s locale filtering — exact-locale, cross-language, and unrestricted phrases),
  *   ~6 abstains (3 build-local infra categories that poi.db structurally can't answer, 3 bare
  *   shipped categories with no anchor to search from), ~6 address-guards (full addresses + the
- *   venue-led "category, address" shape — the poi branch must NOT claim these), ~6
+ *   venue-led "category, address" shape — the poi branch must not claim these), ~6
  *   near-miss/robustness cases (comma anchors, multiword synonyms, multi-segment anchors), the
  *   4-row activity-phrased family promoted from the semantic-utility pre-registration, and one further
  *   activity-phrased row committed for the US drugstore recall gap the wave-1 semantics address.
@@ -313,7 +313,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 
 	const withinRange = nearestKm <= expect.maxNearestKm
 
-	// Brand and category checks use the SAME "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
+	// Brand and category checks use the same "top field, mismatch phrase" shape (`top <field> <got> !== expected <want>`)
 	// — kept as two branches (not a single templated string) so the category branch's exact wording stays byte-stable
 	// against v1 assertions (`top category X !== expected Y`).
 	const topCategoryID = results[0]!.categoryID
@@ -381,7 +381,7 @@ export interface CasePartition {
 
 /**
  * Split graded cases by their fixture's status. Pure, and keyed by id rather than by position — a grade whose id names
- * no fixture is REFUSED rather than dropped, because a dropped grade leaves the floors reading a smaller board and
+ * no fixture is refused rather than dropped, because a dropped grade leaves the floors reading a smaller board and
  * reports as a higher pass rate.
  */
 export function partitionCases(fixtures: readonly POIBoardFixture[], grades: readonly CaseGrade[]): CasePartition {
@@ -430,7 +430,7 @@ export interface QuantileStats {
  * RE-REGISTERED when the activity-phrased family was promoted (#1960), and the three numbers are the whole argument.
  * Before: 51 rows, 49 pass, 96.1% against a 0.90 floor. After, with the four promoted activity rows tracked: the floors
  * read 51 rows, 49 pass, 96.1% — the same denominator, the same numerator, the same comparison. The counterfactual is
- * why the tracked convention is what carries them: had the four counted, 49/55 = 89.1% would sit BELOW the 0.90 floor,
+ * why the tracked convention is what carries them: had the four counted, 49/55 = 89.1% would sit below the 0.90 floor,
  * so committing a known failure class would have turned the board red without any candidate changing, and lowering the
  * floor to admit them would have loosened the bar every other row is held to.
  *
@@ -472,7 +472,7 @@ export interface FloorLine {
 	 */
 	floor: number
 	/**
-	 * `observed >= floor` — an absent kind (no cases of it) counts as NOT met.
+	 * `observed >= floor` — an absent kind (no cases of it) counts as not met.
 	 */
 	met: boolean
 	/**
@@ -484,7 +484,7 @@ export interface FloorLine {
 export interface FloorEvaluation {
 	lines: FloorLine[]
 	/**
-	 * True when ANY floor line is unmet — the signal `--enforce` turns into a non-zero exit.
+	 * True when any floor line is unmet — the signal `--enforce` turns into a non-zero exit.
 	 */
 	breached: boolean
 }
@@ -569,7 +569,7 @@ export interface POIBoardReport {
 	 */
 	tracked: TrackedCase[]
 	/**
-	 * Report-only metrics over every `POIResult` row returned across ALL cases (any expect kind).
+	 * Report-only metrics over every `POIResult` row returned across all cases (any expect kind).
 	 */
 	resultRowCount: number
 	gersIDPresentRate: number
@@ -584,7 +584,7 @@ export interface POIBoardRunResult {
 }
 
 /**
- * Linear-interpolated quantile — deliberately NOT `percentile` from `@mailwoman/core/utils`.
+ * Linear-interpolated quantile — deliberately not `percentile` from `@mailwoman/core/utils`.
  *
  * They are different estimators, not two copies of one. Core's is nearest-rank and its docstring warns against
  * "upgrading" it, because the resolver eval baselines were measured with that exact semantics. This one interpolates

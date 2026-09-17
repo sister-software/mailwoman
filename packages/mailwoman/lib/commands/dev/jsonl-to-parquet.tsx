@@ -5,7 +5,7 @@
  *
  *   `mailwoman dev jsonl-to-parquet --input <labeled.jsonl> --output <database.parquet>` — convert a
  *   JSONL of LabeledRow objects to a Parquet database matching the v0.5.0 corpus schema. The #519
- *   char-offset span triple is REQUIRED on every row; a row without it fails loudly with its line
+ *   char-offset span triple is required on every row; a row without it fails loudly with its line
  *   number.
  */
 

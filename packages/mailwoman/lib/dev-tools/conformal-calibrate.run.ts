@@ -44,7 +44,7 @@
  *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
- *   DO NOT change the resolver or parser — this script only READS stamped metadata.
+ *   Do not change the resolver or parser — this script only reads stamped metadata.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -361,7 +361,7 @@ async function main(): Promise<void> {
 		byTier[r.tier].push(r)
 	}
 
-	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on ALL resolved rows
+	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on all resolved rows
 	const tierStats = tiers.map((t) => {
 		const innerRows = byTier[t]
 

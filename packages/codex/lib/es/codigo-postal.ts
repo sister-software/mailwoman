@@ -7,7 +7,7 @@
  *
  *   The contrast with a German PLZ is the informative part. A PLZ's leading digit maps to a Leitzone
  *   that deliberately CROSSES state borders, so it cannot tell you the Bundesland. A Spanish código
- *   postal is the opposite: its first TWO digits are the province code, assigned alphabetically
+ *   postal is the opposite: its first two digits are the province code, assigned alphabetically
  *   (01 Álava … 28 Madrid … 50 Zaragoza), so the province is derivable from the postcode exactly.
  *   Code that wants a Spanish region from an address can read it off the postcode; code that wants a
  *   German one cannot.

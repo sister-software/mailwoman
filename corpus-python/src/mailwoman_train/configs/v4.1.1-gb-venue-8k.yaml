@@ -12,7 +12,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.15.1-gb-venue/corpus-v0.15.1-gb-venue # #1366: the GB venue overlay (v3 tuples).
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -38,7 +38,7 @@ data:
     AU: 1.0
     CA: 1.0 # Overture — live locality.
     MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
-  source_weights: # VERBATIM v3.24 EXCEPT synth-po-box-cedex (the D2 revert).
+  source_weights: # Verbatim from v3.24 except synth-po-box-cedex (the D2 revert).
     synth-house-venue: 12.0 # Addendum-1 weight (v3.8.x oversample precedent); λ=1e4 per the v4.1.2 sweep.
     overture-latam: 6.0
     wof-admin: 2.0
@@ -89,7 +89,7 @@ data:
   anchor_value_mode: posterior_latlon
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json # D2: the DE fold (#1355).
-model: # VERBATIM v3.24 (v2.4.1 geometry + the shipped channel set).
+model: # Verbatim from v3.24 (v2.4.1 geometry + the shipped channel set).
   hidden_size: 384
   use_span_boundary_head: true
   use_deploc_head: false

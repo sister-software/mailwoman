@@ -5,7 +5,7 @@
  *
  *   Unit tests for the demo's admin resolution (`runCascade`, #861: the shared `resolveTree` over
  *   a candidate-style lookup via `CandidateResolverBackend`) against a stub lookup that mimics the
- *   byte-range candidate table: name/country/bbox/placetype filters, population-first ordering, NO
+ *   byte-range candidate table: name/country/bbox/placetype filters, population-first ordering, no
  *   `parentID` support (the adapter translates parent scopes to country/bbox — that translation is
  *   what these tests exercise, alongside pin extraction and the cross-country postcode check). The
  *   coherence passes themselves are tested in `resolver/admin-coherence.test.ts`; integration

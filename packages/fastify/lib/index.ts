@@ -10,7 +10,7 @@
  *   `POST /geocode`, `POST /poi`, and `GET /health`, plus a `fastify.mailwoman` decorator that
  *   exposes the same three operations programmatically.
  *
- *   The plugin runs ONE runtime pipeline (`createRuntimePipeline` from `mailwoman`). Inject a
+ *   The plugin runs one runtime pipeline (`createRuntimePipeline` from `mailwoman`). Inject a
  *   pre-built pipeline via the `pipeline` option (the DI injection point — no model weights required)
  *   or let the plugin build one lazily on first use from `resolveDatabasePath` / `poiDatabasePath` /
  *   `locale`. The lazy build resolves weights + gazetteer data through `@mailwoman/neural`'s standard
@@ -47,7 +47,7 @@ export type RuntimePipeline = (raw: string, opts?: PipelineOpts) => Promise<Pipe
 export interface MailwomanFastifyOptions {
 	/**
 	 * A pre-built runtime pipeline (`createRuntimePipeline(...)`). The dependency-injection / testing path — supply this
-	 * and the plugin makes NO attempt to load model weights or open a gazetteer. When omitted, the plugin builds one
+	 * and the plugin makes no attempt to load model weights or open a gazetteer. When omitted, the plugin builds one
 	 * lazily on first use from the paths + locale below.
 	 */
 	pipeline?: RuntimePipeline

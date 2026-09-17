@@ -3,7 +3,7 @@
 # Trains a 6-layer / 256-hidden / 4-head encoder on coarse address components only:
 # country, region, locality, dependent_locality, postcode, subregion, cedex (+ O).
 #
-# Stages 2 (street-level) and 3 (venue-level) are future phases — do NOT widen the
+# Stages 2 (street-level) and 3 (venue-level) are future phases — do not widen the
 # label set here without an explicit phase plan.
 
 data:

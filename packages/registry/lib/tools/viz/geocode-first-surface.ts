@@ -172,7 +172,7 @@ export async function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	// EVERY `<`, not only `</script>`: `<!--` also leaves script-data state in the HTML tokenizer, after which a
+	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the HTML tokenizer, after which a
 	// later `</script>` no longer ends the element. `\u003c` is the same string to a JSON reader.
 	const safe = stringifyJSON(data).replaceAll("<", "\\u003c")
 

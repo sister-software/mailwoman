@@ -38,7 +38,7 @@ export const US_REGION_NAMES: ReadonlySet<string> = new Set(
 
 /**
  * Split a segment body into whitespace-separated tokens. Offsets are absolute into the original input (caller supplies
- * the segment's `start` offset). Deliberately NOT `@mailwoman/query-shape`'s tokenizer: that one yields code-point
+ * the segment's `start` offset). Deliberately not `@mailwoman/query-shape`'s tokenizer: that one yields code-point
  * CLASS runs for the whole input, while this one carries segment-relative → absolute span math for the proposal spans —
  * the two disagree on what a token boundary is.
  */

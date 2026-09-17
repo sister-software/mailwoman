@@ -3,8 +3,8 @@
 # (unit F1 0→95.4%, street +8pp negative-space) but BREACHED the no-regression check: US
 # house_number 83.1→79.6 (-3.5, floor was -1pp; clean fp32 v1→v2 delta -1.5) and FR street/postcode/
 # locality -3..-4 (confounded by int8-vs-fp32 + FR noise; v1 did not hurt FR). DeepSeek's prescribed
-# remedy for a tripped regression check: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes EXACTLY
-# ONE variable vs v2 — the weight. Same FORMAT-DIVERSE corpus (v0.4.5-unit-v2), same base/recipe/seed.
+# remedy for a tripped regression check: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes exactly
+# one variable vs v2 — the weight. Same FORMAT-DIVERSE corpus (v0.4.5-unit-v2), same base/recipe/seed.
 # HYPOTHESIS: starving the unit source less aggressively trims the house_number/FR collateral while
 # keeping most of the 95% unit win (unit check floor is 20% — huge headroom to give back). If v3 keeps
 # unit >=~80% AND clears house_number >=82 / FR floors, PROMOTE v3. If unit collapses toward v1's 60%
@@ -12,15 +12,15 @@
 # trade, or pursue an architectural fix rather than another weight tweak).
 # ============================================================================================
 #
-# Unit-coverage retrain — the v0-parity `unit` gap. ONE variable vs v2: synth-unit 2.5 -> 1.5.
+# Unit-coverage retrain — the v0-parity `unit` gap. One variable vs v2: synth-unit 2.5 -> 1.5.
 # Everything else held — same v0.9.3 recipe (anchor ON, self-cond ON, region-tail German, v0.7.2 base,
 # seed 42) + the format-diverse v0.4.5-unit-v2 corpus (real non-Vermont US OA skeletons with USPS
 # Pub-28 C2 designators injected across positions: unit-after/first, bare-tail, venue-prefixed).
 #
 # WHY. The v0-parity assessment found `unit` at ~0% F1 — a corpus-COVERAGE gap. v2 fixed it (95.4% on
 # the real-designator arena) but at a -2..-3.5 house_number cost. Negative space (covering unit raises
-# street precision) held: golden US street 73.2→81.2. v3 tunes the weight to bank the win without the
-# collateral. See docs/articles/concepts/negative-space-coverage.md.
+# street precision) held: golden US street 73.2→81.2. v3 tunes the weight to keep the `unit` rise without
+# the house_number cost. See docs/articles/concepts/negative-space-coverage.md.
 #
 # SOURCE PROVENANCE (eval-honesty): identical corpus to v2 — train rows are real non-Vermont US OA
 # skeletons with designators INJECTED in diverse formats; the real-in-the-wild designator check is
@@ -38,7 +38,7 @@
 # Measure (fp32-to-fp32 to kill the int8 confound that muddied v2's FR read):
 #   per-locale-f1.ts (US/FR) + the real-designator unit eval + de-order-eval.ts (DE 2x2 regression check).
 #
-# CORPUS: v0.4.5-unit-v2 (SAME as v2 — no rebuild). Launch:
+# CORPUS: v0.4.5-unit-v2 (same as v2 — no rebuild). Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.7-unit-v3.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio

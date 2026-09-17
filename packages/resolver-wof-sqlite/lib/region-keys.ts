@@ -11,7 +11,7 @@
  *   `contradicted` and a re-rank that cannot find the qualifier would otherwise be two readings of
  *   one string that silently disagree — the exact drift the shared-function rule exists to prevent.
  *
- *   Lives HERE rather than in `mailwoman` because the dependency points this way: `mailwoman`
+ *   Lives here rather than in `mailwoman` because the dependency points this way: `mailwoman`
  *   depends on `@mailwoman/resolver-wof-sqlite` (which owns the fold and already depends on codex),
  *   never the reverse.
  */

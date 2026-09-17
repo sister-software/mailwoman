@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `walkNodes` yields document order, so a `find` over it and the flat component map name the SAME span when a tag
+ * @file `walkNodes` yields document order, so a `find` over it and the flat component map name the same span when a tag
  *   occurs twice. The pair that showed the two disagreeing: `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921`,
  *   two `venue` spans, where the named slot answered the second and the map the first.
  */

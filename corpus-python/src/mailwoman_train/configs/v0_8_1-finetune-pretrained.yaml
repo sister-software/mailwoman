@@ -2,11 +2,11 @@
 # vs shipped v0.7.2's 96%). Per DeepSeek turn-4: re-run at the v0.7.2-PROVEN recipe (1.5e-4
 # constant / 100k / 1k warmup) — known to reach ~96% resolver — so pretraining is judged at the
 # task CEILING, not the basement. ls 0.1 + CRF off retained. Only encoder init differs across arms.
-# v0.8.1 — supervised fine-tune FROM the MLM-pretrained encoder (arm A of the decisive A/B).
+# v0.8.1 — supervised fine-tune from the MLM-pretrained encoder (arm A of the decisive A/B).
 #
 # Phase 2 of pretrain -> fine-tune. Loads the MLM-pretrained encoder
 # (output-v080-mlm-pretrain/checkpoints/step-020000) via init_from (ENCODER WEIGHTS ONLY — no
-# optimizer/scheduler/step), then trains the supervised BIO task on top. The ONLY difference vs the
+# optimizer/scheduler/step), then trains the supervised BIO task on top. The only difference vs the
 # scratch arm (v0_8_0-finetune-scratch.yaml) is this `init_from`. DeepSeek-signed recipe
 # (2026-05-31, session-notes-2026-05-31-mlm-finetune.md).
 #
@@ -14,7 +14,7 @@
 #   - lr 5e-5 cosine->0 over 40k, 2k warmup: 3x lower than v0.7.2's constant 1.5e-4 to avoid washing
 #     out the pretrained features (catastrophic forgetting); shorter (40k vs 100k) because a
 #     pretrained encoder adapts fast.
-#   - label_smoothing 0.1: shared calibration change on BOTH arms.
+#   - label_smoothing 0.1: shared calibration change on both arms.
 #   - CRF OFF (crf_loss_weight 0.0): matches what trained stably; avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
 #     so the comparison reflects the parser the product actually uses.
@@ -111,7 +111,7 @@ model:
   phrase_feature_dim: 10
 
 train:
-  # THE one variable: initialize the encoder from the MLM pretrain checkpoint (weights only).
+  # The one variable: initialize the encoder from the MLM pretrain checkpoint (weights only).
   init_from: /data/output-v080-mlm-pretrain/checkpoints/step-020000
   output_dir: /data/output-v081-ft-pretrained-s42/checkpoints
   seed: 42

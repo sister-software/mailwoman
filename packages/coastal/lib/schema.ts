@@ -9,7 +9,7 @@
  *
  *   `area_id` IS SCOPED BY SCENARIO, AND THE KEY INSIDE A SCENARIO IS THE AUTHORITY'S FEATURE ID — NOT ITS
  *   FRONTAGE ID. The same frontage appears in all twelve scenario layers with a different distance each
- *   time, so the source's `frontageid` is not unique across the artifact; measured, it is not unique WITHIN
+ *   time, so the source's `frontageid` is not unique across the artifact; measured, it is not unique within
  *   a layer either. `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage ids (frontage
  *   39260 alone appears ten times), and the twelve layers together hold 89,211 features over far fewer
  *   frontages — 835 rows would have collided. So the key is `<scenario key>:<OBJECTID>` and `frontage_id`
@@ -28,7 +28,7 @@
  *
  *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
- *   present. `layer_coverage` is NOT compacted and stays single-resolution, because
+ *   present. `layer_coverage` is not compacted and stays single-resolution, because
  *   `recoverCoverageResolution` recovers one resolution from the stored cells and throws on a table that
  *   mixes them.
  */
@@ -127,7 +127,7 @@ export interface CoastalZoneAreaTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than on a class, because an erosion answer IS the polygon — its distance, its policy and
+ * Keyed on the polygon rather than on a class, because an erosion answer is the polygon — its distance, its policy and
  * its defence are per feature. `scenario_key` is a column so a scenario-scoped probe reads one cell's rows and keeps
  * the scenario it asked for, without ever seeing another scenario's answer.
  */

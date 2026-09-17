@@ -371,7 +371,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				})
 			}
 
-			// Viewport bias (#938): the map center as a SOFT proximity hint. The library's decay is population-ceilinged.
+			// Viewport bias (#938): the map center as a soft proximity hint. The library's decay is population-ceilinged.
 			// The device location (when granted via the "Use my location" button) joins as a weaker second hint.
 			const resolveBias: ResolveBias = []
 

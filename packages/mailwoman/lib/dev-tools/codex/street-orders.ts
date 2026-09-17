@@ -7,7 +7,7 @@
  *
  *   Its `fmt` models the street address as a single opaque `%A`, so a skeleton transcribed from it says which LINE the
  *   street occupies and nothing about how that line is spelled. The split — house number leading or following — is read
- *   from the OpenCage `address-formatting` templates (MIT), which model both slots, and it is read ONCE: this table is
+ *   from the OpenCage `address-formatting` templates (MIT), which model both slots, and it is read once: this table is
  *   the result, committed as data, so the layout generator needs no third-party package at run time.
  *
  *   210 of the 251 template countries name both slots; the other 41 say nothing, and their ABSENCE here is the answer
@@ -59,11 +59,11 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * How the street line is written in a country's OWN script, for the countries that write two.
+ * How the street line is written in a country's own script, for the countries that write two.
  *
  * `STREET_ORDERS` below is read from the OpenCage templates, which render in Latin, so it states the romanized form of
  * every country including these. Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`, which is
- * a different order AND a different separator, and neither is derivable from the other.
+ * a different order and a different separator, and neither is derivable from the other.
  *
  * The values are the codex's street-node names, so the generator emits the node rather than deriving one. `han` is the
  * unseparated name-then-number line the Chinese-writing systems use, and the entries follow the split `LINE_JOINS`

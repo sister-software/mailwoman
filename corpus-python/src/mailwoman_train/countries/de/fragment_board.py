@@ -8,15 +8,15 @@ with the class rules translated to German surface reality:
   the FR particle class.
 - `date-name` — German date-streets (Straße des 17. Juni; digit + month names).
 - `admin-street-homonym` — data-driven per the operative definition: a street whose painter-folded
-  word n-grams hit a locality-surface-lexicon-v7 entry WOULD get locality evidence painted; that
+  word n-grams hit a locality-surface-lexicon-v7 entry would get locality evidence painted; that
   is the class the DE fold can help or hurt. (German inflection — "Berliner Straße" ≠ "berlin" —
   keeps this class smaller than FR's; the exact-match residue is the honest population.)
-- `street-housenumber` / `alnum-housenumber` — German order, number AFTER street ("Hauptstraße
+- `street-housenumber` / `alnum-housenumber` — German order, number after street ("Hauptstraße
   12" / "12a").
 - `bare-street`, `bare-locality` (expect_no_street — the negative class is the point).
 
 SPLIT DISCIPLINE (recorded, weaker than FR's): the training feed's only DE street data is the
-`synth-german` source (OA Berlin + Sachsen), so the board excludes state codes BE and SN entirely —
+`synth-german` source (OA Berlin + Sachsen), so the board excludes Berlin (BE) and Saxony (SN) entirely —
 GEOGRAPHIC disjointness. Ubiquitous street vocabulary (Hauptstraße) still repeats across Länder;
 the board therefore measures class behavior over shared vocabulary with held-out compositions,
 not FR-grade surface disjointness. The reserved-surface list is still emitted for future recipes.

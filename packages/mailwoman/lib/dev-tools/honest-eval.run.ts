@@ -10,7 +10,7 @@
  *   metric is blind to picking the right name in the WRONG place. This harness measures only the
  *   LEAKAGE-FREE held-out set (OA rows in corpus-held-out geography the model never trained on) and
  *   reports the NON-GAMEABLE coordinate truth: region-match, coordinate error (p50/p90), and
- *   PIP-containment (gold OA point inside the resolved WOF polygon) — the last reported WITH a
+ *   PIP-containment (gold OA point inside the resolved WOF polygon) — the last reported with a
  *   polygon-coverage denominator, since WOF point-geometry localities can never PIP-contain and
  *   would otherwise count as silent failures.
  *

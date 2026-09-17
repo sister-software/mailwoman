@@ -132,7 +132,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Phase 1.5.1 invariant: BOTH the canonical and the colloquial name produce training rows
+		// Phase 1.5.1 invariant: both the canonical and the colloquial name produce training rows
 		// for the same WOF id. This was the failure mode the SQLite path could not address even with
 		// the is_current predicate loosened — the `names` table was empty in the WOF SQLite distro.
 		const stPete = rows.filter((r) => r.source_id.startsWith("wof-admin-1021-"))

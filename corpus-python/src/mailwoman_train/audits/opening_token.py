@@ -62,7 +62,7 @@ def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
 
     three_then_two = len(tokens) >= 2 and len(first) == 3 and _digits(tokens[1]) and len(tokens[1]) == 2
 
-    # A row of EXACTLY two tokens is the shape the failing input has and the corpus never carried: the
+    # A row of exactly two tokens is the shape the failing input has and the corpus never carried: the
     # opening is shared with every in-context row that starts on its postcode, so an opening count alone
     # cannot separate `100 00` from `100 00 Praha, Czechia`. Row length is what separates them.
     whole_row = len(tokens) == 2

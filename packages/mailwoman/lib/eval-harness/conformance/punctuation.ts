@@ -213,12 +213,12 @@ export function classifyPunctuationTransformation(base: string, variant: string)
 }
 
 /**
- * The declared reasons a punctuation transformation is NOT stateable over a given row.
+ * The declared reasons a punctuation transformation is not stateable over a given row.
  *
  * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
  *   it acts on: no comma to drop, no straight apostrophe to curl, a query that already ends in a full stop. Such a row
  *   is the IDENTITY law wearing a punctuation label — it would hold whatever the pipeline does with punctuation.
- * - `mark-inside-token` — the query DOES carry the mark, and every occurrence sits inside a token (`COMER parís.méxico`,
+ * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a token (`COMER parís.méxico`,
  *   `and more...,`). Removing it would rewrite the token's text and change what the query names, which is the opt-out
  *   this law's narrowness exists for. Reported apart from the identity reading because "this query has no point" and
  *   "this query's point is part of a name" are different absences.
@@ -237,7 +237,7 @@ export type PunctuationApplicabilityRule = (typeof PUNCTUATION_APPLICABILITY_RUL
 /**
  * One applicability reading: whether the transformation may be stated as a law for this row, and why.
  *
- * The reason is populated on BOTH verdicts, for the same reason the two shipped laws populate it on both — a row
+ * The reason is populated on both verdicts, for the same reason the two shipped laws populate it on both — a row
  * silently dropped from a law suite is the absence this layer exists to refuse.
  */
 export interface PunctuationApplicability {
@@ -269,7 +269,7 @@ export interface PunctuationApplicabilityContext {
 /**
  * May `transformation` be stated as a punctuation law over `text`?
  *
- * The identity and inside-token rules are read FIRST, and a row several rules bear on reports the earliest: a
+ * The identity and inside-token rules are read first, and a row several rules bear on reports the earliest: a
  * transformation that moves nothing could never have tested anything, and that reading is more useful than a statement
  * about the comparator it would have been graded on.
  */
@@ -347,7 +347,7 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
  * package rather than its own overlay, so a punctuation violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *
- * Applicability IS re-checked here, unlike the spacing law's audit, because two of this law's three rules can refuse a
+ * Applicability is re-checked here, unlike the spacing law's audit, because two of this law's three rules can refuse a
  * pair that classifies perfectly well: a `period-removed` arm on a component comparator moves real text and is still
  * unstateable. Only the declared half runs — the audit reads a fixture, not the corpus — and the suite test supplies
  * the row's asserted spans for the other half.

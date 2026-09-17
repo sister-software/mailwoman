@@ -11,7 +11,7 @@
  *   (`edtf:deprecated: 2019-01-16` on 53 of the 66 readable GB deprecated-no-successor localities)
  *   without writing successors. The Medway cluster shows the shape: `Chatham` stayed current,
  *   `Rochester` and `Gillingham` were deprecated, and the replacement `Medway` localadmin is itself
- *   NOT current. Every record looks individually plausible; only the cluster is wrong.
+ *   not current. Every record looks individually plausible; only the cluster is wrong.
  *
  *   THIS MODULE DECIDES NOTHING. It measures and reports, because the non-current population is a
  *   MIXTURE that no rule separates — measured over the shipped artifact:
@@ -83,9 +83,9 @@ export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
  * - `covered_containment` — a live neighbour whose name this one CONTAINS: `Town of Gilbert` over live `Gilbert`,
  *   `Arrondissement de Lyon` over live `Lyon`. This verdict is what keeps the legal-form class out of the hole count —
  *   a same-NAME-STRING test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
- *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is NOT a cover, because no query for
+ *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is not a cover, because no query for
  *   Telford resolves through it.
- * - `covered_cross_band` — a live record of the same name nearby, but at a DIFFERENT placetype: the place answers at
+ * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype: the place answers at
  *   coarser granularity and loses its in-band race. `Swansea` and `Newport` are the measured cases.
  * - `uncovered` — no live record nearby bears or contains the name. The class a reviewer must judge (`Telford`).
  */
@@ -104,7 +104,7 @@ export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerd
  */
 export interface TriageAttestation {
 	/**
-	 * `unmeasured` when no dump exists for the country: the pass could not look, which is NOT the same as looking and
+	 * `unmeasured` when no dump exists for the country: the pass could not look, which is not the same as looking and
 	 * finding nothing (the meaning-of-zero rule).
 	 */
 	state: "attested" | "unattested" | "unmeasured"
@@ -136,7 +136,7 @@ export interface TriageRow {
 	currencyClass: CurrencyClass
 	coverage: CoverageVerdict
 	/**
-	 * The live record that covers this place, when one does — so a reviewer can see WHICH record made the call, and at
+	 * The live record that covers this place, when one does — so a reviewer can see which record made the call, and at
 	 * what band.
 	 */
 	coveredBy?: CoveredBy
@@ -193,9 +193,9 @@ interface LiveRecord {
 }
 
 /**
- * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately NOT
+ * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately not
  * `normalizeLocalityForKey` — that is the RESOLVER's key discipline, and importing it here would tie a reporting pass
- * to a runtime contract it must be free to outlive. And deliberately NOT `@mailwoman/normalize`'s `stripCombiningMarks`
+ * to a runtime contract it must be free to outlive. And deliberately not `@mailwoman/normalize`'s `stripCombiningMarks`
  * either (NFD, no case/space fold): this fold decomposes under NFKD, so compatibility forms fold too, and the triage
  * artifact was built under it.
  */

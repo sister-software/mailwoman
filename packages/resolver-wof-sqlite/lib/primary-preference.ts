@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Bounded cross-country PRIMARY-NAME preference over a population-ordered candidate row set — the
- *   `is_primary` ranking signal, PURE and platform-free so the Node candidate lookup
+ *   `is_primary` ranking signal, pure and platform-free so the Node candidate lookup
  *   (`candidate-lookup.ts`) and the browser twin (`packages/resolver-wof-wasm/lib/httpvfs/resolver.ts`) rank with
- *   the SAME function rather than two copies that drift (the #861 server↔browser parity contract).
+ *   the same function rather than two copies that drift (the #861 server↔browser parity contract).
  *
  *   Only type imports and arithmetic live here: anything with a `node:` import stays out.
  */
@@ -30,12 +30,12 @@ export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id
  * 4.19 M pop — outranks the PRIMARY-name place the query actually means (Cancún MX, 0.89 M pop). This penalty makes a
  * same-key alias have to clear a population MARGIN over a foreign primary before it wins.
  *
- * It is deliberately NOT a dominant sort key (no `ORDER BY is_primary DESC`, which would make every primary outrank
+ * It is deliberately not a dominant sort key (no `ORDER BY is_primary DESC`, which would make every primary outrank
  * every alias and break the alt-names users depend on — "NYC"→New York, "LA"→Los Angeles, "Frisco"→San Francisco). Two
  * bounds keep it a soft prior:
  *
- * 1. **Cross-country only.** The penalty applies to an alias ONLY when the top-population primary sharing the key is in a
- *    DIFFERENT country. A SAME-country nickname contest (San Francisco's alias "Frisco" vs the primary Frisco, TX —
+ * 1. **Cross-country only.** The penalty applies to an alias only when the top-population primary sharing the key is in a
+ *    different country. A same-country nickname contest (San Francisco's alias "Frisco" vs the primary Frisco, TX —
  *    both US) is left on pure population, so the legitimate alias still wins.
  * 2. **Population-bounded.** The penalty is {@link PRIMARY_PREFERENCE_LOG10} in log10-population units — an alias must be
  *    at least 10x more populous than the foreign primary to still win. So a genuinely dominant alias keeps winning
@@ -46,7 +46,7 @@ export const PRIMARY_PREFERENCE_LOG10 = 1
 
 /**
  * The placetype the seat preference promotes: the populated-place tier a district duplicate shares its name and its
- * population with. Named rather than inlined because narrowing the term to this ONE tier is what keeps it off the
+ * population with. Named rather than inlined because narrowing the term to this one tier is what keeps it off the
  * region/county and locality/neighbourhood contests — see `rankByPrimaryPreference` for the measurement.
  */
 const SEAT_PLACETYPE = "locality"
@@ -70,7 +70,7 @@ export type RankedRow<R> = R & {
 	 */
 	effectiveNegRank: number
 	/**
-	 * True when this row is a cross-country alias that LOST the bounded population contest to the same-key primary — a
+	 * True when this row is a cross-country alias that lost the bounded population contest to the same-key primary — a
 	 * coincidental foreign exonym (Changchun's "Çançun" for "Cancun"). Such a row is dropped out of the exact-match tier
 	 * (`exactMatch=false`) so the resolver walk's country pin — the model's `anchorPosterior`, which "never crosses the
 	 * exact/partial boundary" (`resolve.ts`) — can't ride a spurious posterior (CN 0.86 for "Cancun") back over the
@@ -95,7 +95,7 @@ export type RankedRow<R> = R & {
 	containedByQualifier?: boolean
 	/**
 	 * The #1882 exemption's firing mark (#1893): this row would have taken the cross-country alias penalty and
-	 * `exemptVariantAliases` prevented it. PRESENT only when the exemption changed this row's treatment; absent on every
+	 * `exemptVariantAliases` prevented it. Present only when the exemption changed this row's treatment; absent on every
 	 * row it merely inspected — an in-country variant, a primary, a set with no foreign top primary. The winner-level
 	 * receipt downstream (`mechanism_fired_on.variant_alias_exemption`) counts this mark only when it survives onto the
 	 * selected candidate.
@@ -106,17 +106,17 @@ export type RankedRow<R> = R & {
 /**
  * Bounded cross-country primary-name preference (see {@link PRIMARY_PREFERENCE_LOG10}). Pure + total-ordered so
  * `candidate-lookup.test.ts` can exercise it on synthetic rows. `rows` arrive population-ordered (`neg_rank ASC`); an
- * alias (`is_primary=0`) is pushed back by `delta` in log10-population units ONLY when the top-population primary
- * sharing the key is in a different country, and is `demoted` out of the exact tier when that penalty leaves it BEHIND
+ * alias (`is_primary=0`) is pushed back by `delta` in log10-population units only when the top-population primary
+ * sharing the key is in a different country, and is `demoted` out of the exact tier when that penalty leaves it behind
  * the primary. Returns the top `limit` after the re-rank, each annotated.
  *
- * `placetypes` (the artifact's own `placetype_codes` map) enables the LAST tiebreak, the SEAT preference: when
+ * `placetypes` (the artifact's own `placetype_codes` map) enables the last tiebreak, the seat preference: when
  * `effectiveNegRank` and raw `neg_rank` both tie — two same-key rows population cannot separate at all — a
  * {@link SEAT_PLACETYPE} row carrying a real population outranks every other placetype. Omit the map and every row
  * scores 0, the term cancels, and the order is exactly the population-then-scan-order it was before.
  *
  * The tie it exists for is a DUPLICATE, not a contest. A district and its identically-named seat town are stored as two
- * rows carrying the SAME population, so `neg_rank` is equal to the bit and `referential` follows it
+ * rows carrying the same population, so `neg_rank` is equal to the bit and `referential` follows it
  * (`referentialFromPopulation` is a pure function of population). Turkey's `Of` is the measured case — locality
  * 8114738869649 and its parent county 8837168432019 both hold population 44212 — and 358 locality/parent-county pairs
  * across 15 countries share the shape in `admin-global-priority.db` (TR 162, CA 77, US 47, HR 24, DO 14). Without the
@@ -131,10 +131,10 @@ export type RankedRow<R> = R & {
  * also tie. Downstream the resolver re-sorts by importance (`resolver/toponym-prior.ts`) but is stable on equal keys,
  * so the order stamped here is the order that answers — inverting this term moves bare `Pu-cheng-hsien` 1,100 km
  * (locality Pucheng over the 浦城县 localadmin, identical population and importance). Where importance separates the pair,
- * the fame prior overrides by design; a probe with NO placetype filter (the browser cascade's last resort, the dev
+ * the fame prior overrides by design; a probe with no placetype filter (the browser cascade's last resort, the dev
  * lookup tools) presents the full tie and this term is all that breaks it.
  *
- * BOTH CONDITIONS ARE required, and a plain "finer placetype wins" measured wrong before this shape was settled: it
+ * Both conditions are required, and a plain "finer placetype wins" measured wrong before this shape was settled: it
  * moved the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest
  * were contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
  * losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality` — and 7,179 of the 11,377 sat at
@@ -165,9 +165,9 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	// A cross-country alias (different country than the top primary) is penalized; it is DEMOTED when even after — i.e.
 	// the penalty leaves its effective rank behind the primary's raw rank (it lost the bounded population contest).
 	//
-	// #1882 exemption (opt-in): a `name_role = 'variant'` alias is the holder's OWN primary name in another
+	// #1882 exemption (opt-in): a `name_role = 'variant'` alias is the holder's own primary name in another
 	// orthography (`Брэст` → `brest`, `George Town` → `georgetown` — the build's own-name detector), so the
-	// query is naming THAT place, not colliding with it; the penalty exists for the coincidental-collision
+	// query is naming that place, not colliding with it; the penalty exists for the coincidental-collision
 	// class ("Çançun"/`cancun`), which the detector's measured threshold keeps un-stamped. An artifact
 	// predating the role column carries no 'variant' rows, so the flag no-ops there by construction.
 	const wouldPenalize = (r: R): boolean =>
@@ -180,7 +180,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 		const penalized = isCrossCountryAlias(r)
 		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
 
-		// The firing mark (#1893): this row WOULD have taken the cross-country penalty and the exemption
+		// The firing mark (#1893): this row would have taken the cross-country penalty and the exemption
 		// prevented it — conditions the winner-level receipt needs, computed where the decision is made. A
 		// variant row that was in-country, primary, or keyed under a set with no foreign primary never
 		// fired, and stays unmarked.
@@ -194,7 +194,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 		}
 	}
 
-	// 1 for a populated-place row that can BE a district's seat, 0 for everything else — no code map, no
+	// 1 for a populated-place row that can be a district's seat, 0 for everything else — no code map, no
 	// placetype on the row, an id the map does not carry, a placetype that is not the seat tier, or no
 	// recorded population. Every row scoring 0 cancels the term, leaving exactly the
 	// population-then-scan-order the sort had before it existed.
@@ -209,7 +209,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 
 	// 1 for a PRIMARY-name row whose prominence is unmeasured (population 0), 0 for everything else. Two unmeasured
 	// rows tie on `neg_rank`, and that tie used to fall through to scan order — the B-tree's `spr_id`, which is no
-	// evidence about either place. A row that IS named X ranks ahead of one merely also-known-as X when nothing else
+	// evidence about either place. A row that is named X ranks ahead of one merely also-known-as X when nothing else
 	// separates them: Taiwan's 溪州鄉 township row (its own name, unmeasured) over the village 溪洲 30 km away that
 	// carries `溪州鄉` as an alias (unmeasured), which the lower WOF id had been winning. Populated ties are untouched —
 	// a populated alias ("NYC") never reaches this term, and two populated rows keep the order they had.

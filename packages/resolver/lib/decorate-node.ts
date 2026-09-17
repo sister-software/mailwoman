@@ -67,7 +67,7 @@ export function decorateNode(
 	}
 
 	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
-	// Record the resolver's ranking score AND the resolved place's CANONICAL name. The name is the
+	// Record the resolver's ranking score and the resolved place's canonical name. The name is the
 	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
@@ -89,7 +89,7 @@ export function decorateNode(
 		node.metadata["resolver_country"] = resolved.country
 	}
 
-	// The score-channel carries (ROAD_TO_V9 §2 + #28). Written ONLY when the backend actually has a
+	// The score-channel carries (ROAD_TO_V9 §2 + #28). Written only when the backend actually has a
 	// value: an absent score means "unmeasured" or "pre-split gazetteer", and a `resolver_*: 0` on the
 	// node would assert a measurement nobody made. Nothing in the resolve path reads these keys back —
 	// they exist for annotation / API surfaces downstream. `resolver_importance` is the blended #28

@@ -7,7 +7,7 @@
  *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
  *   sql.js-httpvfs's `db.exec` contract. Pins parity with the Node lookup: an exact `(name_key,
  *   postcode)` hit resolves a postal city to its geographic locality; a bare query, and a
- *   candidate.db WITHOUT the side-index (today's production demo), are byte-stable.
+ *   candidate.db without the side-index (today's production demo), are byte-stable.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

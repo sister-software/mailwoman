@@ -1,13 +1,13 @@
 # === v0.9.6-unit-v2 (#451 v2) — FORMAT-DIVERSE unit recipe output, the v0.9.5 follow-up. =========
 # v0.9.5 (single-format unit recipe output) read unit F1 98.7% on the in-distribution VT eval but the
 # REAL-designator arena (unit-first, bare, venue-prefixed) stayed 0% — an in-distribution mirage,
-# and house_number slipped -2pp. v2 changes ONE thing: the unit recipe now spreads designators across
+# and house_number slipped -2pp. v2 changes one thing: the unit recipe now spreads designators across
 # positions (unit-after/first), drops the city/state tail on bare rows, and prefixes a venue —
-# corpus v0.4.5-unit-v2. CHECK TRUSTS THE ARENA secondary-unit class (real designators), NOT the VT
+# corpus v0.4.5-unit-v2. CHECK TRUSTS THE ARENA secondary-unit class (real designators), not the VT
 # in-distribution number; also re-check house_number doesn't slip. Build: the unit recipe (`packages/corpus/lib/recipes/unit.ts`), v2.
 # ============================================================================================
 
-# Unit-coverage retrain — v0.9.5 (#451, the v0-parity `unit` gap). ONE variable vs v0.9.3-de-regiontail:
+# Unit-coverage retrain — v0.9.5 (#451, the v0-parity `unit` gap). One variable vs v0.9.3-de-regiontail:
 # the corpus adds a 50K `synth-unit` source (US secondary-unit designators) and `synth-unit: 2.5` to
 # source_weights. Everything else held — same v0.9.3 recipe (anchor ON, self-cond ON, region-tail
 # German, v0.7.2 base, seed 42). This is the "continue from v0.9.3 + the unit source" the DeepSeek recipe
@@ -29,7 +29,7 @@
 # VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
 # eval measures designator RECOGNITION on held-out addresses; the real-in-the-wild designator signal is
-# the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read BOTH lenses at the check.
+# the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read both lenses at the check.
 #
 # PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
 #   - `unit` F1 >= 20% (token-level) on the held-out VT unit eval — minimally measurable (was ~0%, but
@@ -47,7 +47,7 @@
 #   built by the unit recipe (packages/corpus/lib/recipes/unit.ts) with --output /tmp/unit-val.jsonl  --golden --count 2000 --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
 #   # assemble overlay MANIFEST (v0.4.3 base + the unit parquet file), then:
-#   # NOT `modal volume put`: a mounted container cannot see what it writes, so a run staged that
+#   # Not `modal volume put`: a mounted container cannot see what it writes, so a run staged that
 #   # way trains on whatever was already there and reports success. Route it through R2 instead.
 #   mailwoman corpus upload --corpus-version v0.4.4-unit
 #   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.4-unit
@@ -81,7 +81,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # NEW (#451): the unit-coverage source. 2.5 ≈ ~7% of the epoch (DeepSeek-signed 2–3; ≤3 to avoid
+    # New (#451): the unit-coverage source. 2.5 ≈ ~7% of the epoch (DeepSeek-signed 2–3; ≤3 to avoid
     # starving other tags). Lower to 1.5 if a US/FR/DE regression check trips on street recall.
     synth-unit: 2.5
   train_rows_per_epoch: 1000000

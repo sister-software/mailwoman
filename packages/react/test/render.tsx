@@ -47,7 +47,7 @@ export async function cleanup(): Promise<void> {
 
 	if (!trees.length) return
 
-	// Drain any trailing async update INSIDE act() so a still-pending debounce/promise settles in-scope
+	// Drain any trailing async update inside act() so a still-pending debounce/promise settles in-scope
 	// rather than firing unwrapped in the gap before unmount.
 	await act(async () => {
 		await new Promise((resolve) => {

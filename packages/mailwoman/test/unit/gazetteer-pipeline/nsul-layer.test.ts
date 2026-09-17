@@ -153,7 +153,7 @@ describe("nsulAttribution", () => {
 })
 
 /**
- * The fixture `uprn.db`: three points. UPRN 5 is deliberately ABSENT so a register row naming it becomes
+ * The fixture `uprn.db`: three points. UPRN 5 is deliberately absent so a register row naming it becomes
  * `skipped-no-coordinate`.
  */
 const UPRN_POINTS = [

@@ -87,7 +87,7 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 }
 
 /**
- * The ONE blessed way to build a child-process environment: the current environment with explicit overrides. Everything
+ * The one blessed way to build a child-process environment: the current environment with explicit overrides. Everything
  * outside `core/env` + this module is forbidden from touching `process.env` directly (enforced by
  * `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
  */

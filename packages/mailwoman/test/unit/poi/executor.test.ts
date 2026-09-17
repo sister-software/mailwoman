@@ -152,7 +152,7 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results![0]!.categoryID).toBe("hospital")
 	})
 
-	// The union: every category the subject reached goes into ONE search, so the reader's own k-ring walk unions the
+	// The union: every category the subject reached goes into one search, so the reader's own k-ring walk unions the
 	// rows and distance-sorts the pool. Two searches taken in turn would need something here to decide which set of
 	// results wins, and that decision is the candidate ordering this path does not author.
 	it("union: probes every category the subject reached in a single search", () => {
@@ -227,7 +227,7 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
 	})
 
-	// Two seeds rolling up into a shared leaf probe it ONCE — a repeated leaf would return the same rows twice and read
+	// Two seeds rolling up into a shared leaf probe it once — a repeated leaf would return the same rows twice and read
 	// as two premises at one coordinate.
 	it("union: probes a leaf two seeds share exactly once", () => {
 		const seenQueries: POISearchQuery[] = []
@@ -250,7 +250,7 @@ describe("createPOIExecutor", () => {
 		expect(seenQueries[0]!.categoryIDs).toEqual(["drugstore", "rx"])
 	})
 
-	// The abstain is about what the shipped layer CAN answer, so it needs every member to be build-local. One member
+	// The abstain is about what the shipped layer can answer, so it needs every member to be build-local. One member
 	// the layer carries makes the search answerable, and abstaining would report a gap the search does not have.
 	it("union: does not abstain when one member of the set is not build-local", () => {
 		const executor = createPOIExecutor({

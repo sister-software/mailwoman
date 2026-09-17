@@ -18,7 +18,7 @@
  *   that is SUPPOSED to differ from the frozen GB figure. Adding it as a mode would put a source that
  *   must change the numbers inside the one file whose job is to keep them identical.
  *
- *   What IS shared is shared: the unified schema, `normalizePostcodeName` (the #920 name law),
+ *   What is shared is shared: the unified schema, `normalizePostcodeName` (the #920 name law),
  *   `populateAncestors`, `buildFTS`, `sealDatabase`. Only the read side is new.
  *
  *   ## The #920 name law still governs
@@ -83,11 +83,11 @@ const COUNTRY = "GB"
 export interface BuildPostcodeCodePointOptions {
 	/**
 	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree. Default
-	 * `<data-root>/codepoint/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
+	 * `<data-root>/codepoint/<YYYY-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db` — a NEW dated path every build.
+	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db` — a new dated path every build.
 	 * Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
@@ -315,10 +315,10 @@ export async function buildPostcodeCodePoint(
  * The manifest counts ROWS IN THE FILE, which includes the positional-quality-90 rows we deliberately drop, so the
  * identity being checked is `manifest[area] === parsed[area] + noCoordinateDrops[area]`.
  *
- * THE TOLERANCE MUST NOT INCLUDE MALFORMED ROWS, and the first version of this function got that wrong in a way worth
+ * The tolerance must not include malformed rows, and the first version of this function got that wrong in a way worth
  * recording: it set `tolerance = skippedNoCoordinate + skippedMalformed`, so when a CSV-parsing bug rejected all
  * 1,746,976 coordinate-bearing rows, the tolerance grew to 1.75 M and every area "reconciled" against a database
- * holding ZERO postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
+ * holding zero postcodes. A check whose slack is derived from the size of the failure it is meant to catch cannot catch
  * it. The tolerance is now the no-coordinate drops ALONE — a deliberate, bounded, understood exclusion — and any
  * malformed row at all is reported separately as a defect by {@link buildPostcodeCodePoint}'s caller.
  */

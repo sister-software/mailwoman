@@ -94,7 +94,7 @@ def test_target_status_uses_stage2_floors_for_fine_labels():
     assert "street" in line and "0.5500" in line
     assert "target ≥0.70" in line
     # venue lands "at target" — its 0.65 is above the 0.60 floor, so it should
-    # NOT show in the "below" list. The string `0.6500` should not appear.
+    # not show in the "below" list. The string `0.6500` should not appear.
     assert "0.6500" not in line
 
 
@@ -111,7 +111,7 @@ def test_readme_includes_phase_and_components():
     assert "venue" in md
     assert "street" in md
     assert "house_number" in md
-    # SMOKE BUILD warning must NOT appear when smoke=False.
+    # SMOKE BUILD warning must not appear when smoke=False.
     assert "SMOKE BUILD" not in md
 
 

@@ -171,7 +171,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("a cap never blocks the re-pick, which moves to a same-named instance rather than the postcode", async () => {
-		// Step 2 chooses among the locality's OWN alternatives, so it cannot produce an id/coordinate disagreement
+		// Step 2 chooses among the locality's own alternatives, so it cannot produce an id/coordinate disagreement
 		// and the cap has no business refusing it.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 

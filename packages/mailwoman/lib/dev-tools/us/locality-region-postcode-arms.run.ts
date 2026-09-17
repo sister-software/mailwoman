@@ -178,7 +178,7 @@ for (const arm of ARMS) {
 		}
 
 		// What counts as a failure differs by arm, so the examples have to ask the arm. `street_only` is graded
-		// inverted, and listing rows whose answer is not the expected locality would print its PASSES under "misses" —
+		// inverted, and listing rows whose answer is not the expected locality would print its passes under "misses" —
 		// every one of them `null`, which is the answer that arm wants.
 		const failed = arm.inverted ? locality !== null : locality !== place.locality
 

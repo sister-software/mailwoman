@@ -1,6 +1,6 @@
 """One corpus row to one `EncodedExample`, through SentencePiece or the char path.
 
-Everything a channel needs is loaded ONCE here, before the row loop, and passed to every
+Everything a channel needs is loaded once here, before the row loop, and passed to every
 `encode_row` call. The two paths are exclusive: the char path skips SentencePiece entirely,
 requires span-schema parquet files, and refuses a configured channel, because the channels project per
 SentencePiece piece and have no per-unit alignment yet.
@@ -51,7 +51,7 @@ class CharMode:
 
 @dataclass(frozen=True)
 class Lexicons:
-    """Every channel input, loaded ONCE before the row loop and passed to each `encode_row`.
+    """Every channel input, loaded once before the row loop and passed to each `encode_row`.
 
     Loading one per row would re-read a 1.3 GB anchor table for every address.
     """
@@ -124,7 +124,7 @@ def load_lexicons(cfg_data: DataConfig) -> Lexicons:
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
-    Span-schema is REQUIRED here — the per-char label array comes from the span triple with no
+    Span-schema is required here — the per-char label array comes from the span triple with no
     whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
     offer. Loud failure, never a silent fallback (#519).
     """
@@ -176,7 +176,7 @@ def iter_encoded(
     Length-filter rationale: address text is short by nature; long rows are usually adapter
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
 
-    ``tokenizer`` may be None ONLY when ``cfg_data.char_mode != "off"`` — the char path never
+    ``tokenizer`` may be None only when ``cfg_data.char_mode != "off"`` — the char path never
     touches SentencePiece.
     """
     rng = rng or random.Random(0)
@@ -241,7 +241,7 @@ def iter_encoded(
             country_lexicon=lexicons.country,
             street_type_lexicon=lexicons.street_type,
             locality_surface_lexicon=lexicons.locality_surface,
-            # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train FROM the
+            # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train from the
             # spans (encode_row builds the per-char label array from them; the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
             span_starts=row.get("span_starts"),

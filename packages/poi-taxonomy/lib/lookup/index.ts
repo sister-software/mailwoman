@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Phrase → category lookup over `data/taxonomy.json`. Same loader + locale-filtering shape as
- *   `@mailwoman/variant-aliases` (its slang table resolves INTO these category ids). Matching is
+ *   `@mailwoman/variant-aliases` (its slang table resolves into these category ids). Matching is
  *   exact-phrase over a lowercased index; n-gram extraction from longer queries is the kind
  *   classifier's job, not this package's.
  *

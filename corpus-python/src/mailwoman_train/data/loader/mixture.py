@@ -32,8 +32,8 @@ def _stream_held_out(
     """Every filter-accepted row of every parquet file, file order shuffled. No source bucketing.
 
     Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing identifies a
-    file's source from its FIRST row and filters every row to it — correct for the source-segregated
-    train corpus, but a MIXED-source validation file silently loses every later-source row (the
+    file's source from its first row and filters every row to it — correct for the source-segregated
+    train corpus, but a mixed-source validation file silently loses every later-source row (the
     inherited val files are mixed, so "3 val files" was never a coverage receipt). Held-out streams
     have no source mixture to steer.
     """
@@ -61,12 +61,12 @@ def _stream_held_out(
 
 
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
-    """Bucket parquet files by EVERY `source` they carry.
+    """Bucket parquet files by every `source` they carry.
 
     A file appears under each of its sources, and `_file_row_iter` filters per row against the one it was asked
     for, so a file carrying two is read twice and yields each source only its own rows. That per-row filter has
     always been there — the defect this replaced was upstream of it: taking the first row's source as the whole
-    file's meant a source that never OPENS a file was invisible to the index, to `_apply_source_weights`' unnamed
+    file's meant a source that never opens a file was invisible to the index, to `_apply_source_weights`' unnamed
     guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
     more than one source, one carries four, and two sources appear in no other file.
 
@@ -115,7 +115,7 @@ def _apply_source_weights(
 ) -> dict[str, list[Path]]:
     """Drop the sources the weights decline, and refuse the ones they never mention.
 
-    TWO different things get dropped here and only one of them is deliberate.
+    Two different things get dropped here and only one of them is deliberate.
 
     A source NAMED at zero is the config declining it, and the config has no other way to say so —
     ``synth-no-street-led: 0.0`` is that sentence. A source the weights never MENTION is an
@@ -157,15 +157,15 @@ def _stationary_mixture(
     fresh_iter: Callable[[str], Iterator[dict[str, Any]]],
     rng: random.Random,
 ) -> Iterator[dict[str, Any]]:
-    """Draw a source per row from a multinomial FIXED for the whole epoch.
+    """Draw a source per row from a multinomial fixed for the whole epoch.
 
     STATIONARY mixture (2026-08-09 P0). The previous loop deleted an exhausted source and
-    renormalized the remaining weights, so ``source_weights`` was only the OPENING distribution: a
+    renormalized the remaining weights, so ``source_weights`` was only the opening distribution: a
     small oversampled source (the #1569 30k-row suffix source at weight 12.0) was live for ~3,330 of
     each ~7,812-step epoch and silent afterwards — the v4.3.3 B1 board oscillated in lockstep with
     those exposure windows. The multinomial is fixed now: an exhausted source restarts with a fresh
     shuffled pass (weighted sampling with replacement at the pass level), and the epoch ends once
-    EVERY source has completed >= 1 full pass — the largest source is seen exactly once, and no
+    every source has completed >= 1 full pass — the largest source is seen exactly once, and no
     source ever silently leaves the mixture.
     """
     iters = {src: fresh_iter(src) for src in weights}
@@ -235,7 +235,7 @@ def _raw_row_stream(
        order. Each iterator yields rows after country + coarse filtering.
     3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
        when ``source_weights`` is None) and yield the next row from that source's iterator.
-       The multinomial is FIXED for the whole epoch: an exhausted source restarts with a
+       The multinomial is fixed for the whole epoch: an exhausted source restarts with a
        fresh shuffled pass, and the epoch ends once every source has completed at least one
        full pass (stationary mixture — see the 2026-08-09 P0 note at the sampling loop).
        Non-train splits skip all of this and stream every file's rows directly.
@@ -259,8 +259,8 @@ def _raw_row_stream(
     max_weight = max(country_weights.values())
 
     # Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing below
-    # identifies a file's source from its FIRST row and filters every row to it — correct for
-    # the source-segregated train corpus, but a MIXED-source validation file silently loses
+    # identifies a file's source from its first row and filters every row to it — correct for
+    # the source-segregated train corpus, but a mixed-source validation file silently loses
     # every later-source row (the inherited val files are mixed, so "3 val files" was never a
     # coverage receipt). Held-out streams have no source mixture to steer; yield every
     # filter-accepted row of every file, file order shuffled.

@@ -6,20 +6,20 @@
  *   Learned-scorer CLUSTERING A/B (#603 Tier 2) — the definitive test the pairwise probe
  *   (`learned-scorer-eval.ts`) deferred. The probe showed a learned scorer ranks candidate pairs
  *   better than Fellegi-Sunter (GBT +0.0177 AUC, +6.6pp pairwise F1); a better pairwise scorer need
- *   NOT lift the assembled clustering F1 (clustering depends on the threshold +
+ *   not lift the assembled clustering F1 (clustering depends on the threshold +
  *   connected-components). This measures the clustering F1 directly, leakage-free:
  *
  *   1. Sample NPI-keyed records (real registry + name-drift + address-variation), geocode once.
  *   2. Split the NPIs into TRAIN / EVAL. Train a GBT + an LR on pairs blocked among TRAIN records (label
  *        = same-NPI). The eval NPIs' records are never seen in training.
- *   3. Cluster the EVAL records three ways via the SAME `resolveEntities` pipeline (block → score →
+ *   3. Cluster the EVAL records three ways via the same `resolveEntities` pipeline (block → score →
  *        connected-components) — once with the FS baseline, once with the GBT as the link scorer
  *        (the new `ResolveConfig.scorer` hook), once with the LR. Sweep the link threshold for
  *        each; take best F1.
  *   4. Report the eval clustering F1 (the dedup benchmark's metric): does the learned scorer beat the FS
  *        baseline on the ASSEMBLED output, not just pairwise ranking?
  *
- *   The FS arm IS the benchmark's baseline (same model: address-frequency + collapsed spatial,
+ *   The FS arm is the benchmark's baseline (same model: address-frequency + collapsed spatial,
  *   EM-fit), so the comparison is credible. Honest framing: in-domain (one state), a held-out-NPI
  *   split (not a held-out STATE — generalization across states is the next axis), a compact
  *   pure-Node GBT.
@@ -208,7 +208,7 @@ export async function scorerClusteringEval(
 		const fs = armOver(
 			Array.from({ length: 26 }, (_, i) => i),
 			// learnedScorer:false — the FS baseline is the baseline this A/B measures against (the learned scorer
-			// is now default-on, so without this the "FS arm" would silently BE the GBT).
+			// is now default-on, so without this the "FS arm" would silently be the GBT).
 			(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 		)
 

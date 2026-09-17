@@ -56,12 +56,12 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost: only applied when the query carries `near` AND the candidate has real
+	// Proximity boost: only applied when the query carries `near` and the candidate has real
 	// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
 	// still benefit; tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` + every `bias` point (each point's term is
-	// scaled by its weight; the MAX wins — a candidate near ANY hint is "nearby"). Carried
+	// scaled by its weight; the maximum wins — a candidate near any hint is "nearby"). Carried
 	// into the exact-tier prominence sort below when hints are present.
 	let proximityTerm = 0
 
@@ -99,7 +99,7 @@ export function candidateFromSearchRow(
 	score += popTerm
 
 	// Combined prominence for the exact-tier sort when proximity hints are present: population
-	// and nearness in the SAME additive units, so the map view / the user's location can win a
+	// and nearness in the same additive units, so the map view / the user's location can win a
 	// cross-country postcode tie without a hard filter.
 	const prominence = popTerm + proximityTerm
 
@@ -162,9 +162,9 @@ export function rankCandidates<DB>(
 ): void {
 	const { db, schemaName, query, weights } = options
 
-	// Exact-match tiering: a candidate whose name OR any alias equals the query text (case-folded)
+	// Exact-match tiering: a candidate whose name or any alias equals the query text (case-folded)
 	// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
-	// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
+	// within a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
 	// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
 	// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
 	// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
@@ -185,7 +185,7 @@ export function rankCandidates<DB>(
 		}
 
 		if (exactIDs.size) {
-			// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
+			// #905: within the exact tier, population is the primary key and the weighted score
 			// only breaks population ties. Exactness saturates text relevance, and the bm25
 			// residue inside `score` is length-noise (see the fetch-site comment), so letting it
 			// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier

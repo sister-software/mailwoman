@@ -6,7 +6,7 @@
  *   Quarterly docs freshness sweep (docs-architecture cleanup, Phase 4): list maintained pages
  *   whose `review-by:` frontmatter date has passed, as a ready-to-file Markdown issue body on
  *   stdout. Empty output means nothing is due — the workflow
- *   (`.github/workflows/docs-freshness.yml`) files or updates ONE "Docs freshness sweep" issue
+ *   (`.github/workflows/docs-freshness.yml`) files or updates one "Docs freshness sweep" issue
  *   only when there's a list to file.
  *
  *   Pages without `review-by:` are skipped by design: the field is the opt-in that marks a page as

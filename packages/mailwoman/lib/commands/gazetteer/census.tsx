@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer census` — build the PCN1 placetype census (hierarchy campaign R4c) from the
  *   shipped WOF admin DB. Counts each locality-class parent's children through the projection table
- *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the SAME `normalizeFSTToken`
+ *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the same `normalizeFSTToken`
  *   the PIX1 pair index uses — so a consumer folds once and probes both artifacts — and writes
  *   `placetype-census-<country>.bin`.
  *
@@ -13,8 +13,8 @@
  *   one census node whose counts are the union of both; the serializer refuses duplicate parents, so a
  *   merge bug surfaces as a throw rather than a silently halved count.
  *
- *   `--delta` is deliberately OPTIONAL and unset by default, unlike the pair index's required one: R4c
- *   ships the census as data + loader + offline probe with NO decode wiring. A calibrated delta is a
+ *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: R4c
+ *   ships the census as data + loader + offline probe with no decode wiring. A calibrated delta is a
  *   later rung's output; writing one now would put an unmeasured bias into a shipped artifact.
  *
  *   Self-verifying (the sealed-artifact spirit): after writing, the command re-reads its own bytes

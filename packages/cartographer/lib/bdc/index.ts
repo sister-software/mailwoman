@@ -47,7 +47,7 @@ export type BaseBDCLayerSpecification<T> = T extends BDCLayerSpecificationInput
 	: never
 
 /**
- * The three builders below take a spec WITHOUT the source fields and return one with them filled in.
+ * The three builders below take a spec without the source fields and return one with them filled in.
  *
  * They are not generic, and the assertion each ends with is single rather than through `unknown`, both for the same
  * reason: TypeScript cannot verify that `Omit<T, K>` plus the omitted keys reconstitutes `T`, so a builder declared

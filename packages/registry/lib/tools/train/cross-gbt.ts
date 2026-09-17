@@ -158,7 +158,7 @@ export async function trainCrossSourceGBT(
 		rows.push({ npi, name, org: "", address: practice, source: "nppes" })
 	}
 
-	// Keep only NPIs present in BOTH sources — every record has a cross-source counterpart.
+	// Keep only NPIs present in both sources — every record has a cross-source counterpart.
 	for (const npi of joined) {
 		rows.push(opByNPI.get(npi)!)
 	}

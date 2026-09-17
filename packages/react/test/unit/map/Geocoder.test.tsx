@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Composed test for the WHOLE geocoder over a FAKE runtime: render `<Geocoder>`, submit a query, and
- *   assert the geocoder responds — the result panel fills in (HARD: it's plain DOM in the control panel,
- *   independent of WebGL) and the map drops a resolved-place marker (BEST-EFFORT: react-map-gl mounts the
+ *   Composed test for the whole geocoder over a fake runtime: render `<Geocoder>`, submit a query, and
+ *   assert the geocoder responds — the result panel fills in (hard: it's plain DOM in the control panel,
+ *   independent of WebGL) and the map drops a resolved-place marker (best-effort: react-map-gl mounts the
  *   `<Marker>` only once the map instance exists, which needs SwiftShader WebGL — its absence means no
  *   software GL in this Chromium, not a component fault, exactly like `MapCanvas.test.tsx`). No network, no
  *   ONNX, no gazetteer, no tiles.
@@ -80,7 +80,7 @@ test("mounts the map container + floating control panel", async () => {
 
 	await vi.waitFor(() => expect(container.querySelector(".mw-geocoder-demo")).toBeTruthy())
 	// The chrome + the map wrapper both render synchronously (map canvas is best-effort, tested in MapCanvas). The
-	// chrome is ONE panel — a left column on a desktop, a bottom drawer on a phone — holding the search, the examples
+	// chrome is one panel — a left column on a desktop, a bottom drawer on a phone — holding the search, the examples
 	// and the result, plus a control capsule down the right edge.
 	expect(container.querySelector(".mw-map-panel")).not.toBeNull()
 	expect(container.querySelector(".mw-map-panel__header")).not.toBeNull()

@@ -23,7 +23,7 @@
  *   moves it into its final convention path — a crash mid-download can never corrupt an existing
  *   install (`core/utils/sealed-db.ts`'s discipline, applied to a download instead of a local build).
  *
- *   `--dry-run` prints the plan with ZERO network calls: existing-file detection is a plain
+ *   `--dry-run` prints the plan with zero network calls: existing-file detection is a plain
  *   filesystem stat (`resolveDatabasePath` for the versioned `us` per-state databases, `existsSync`
  *   otherwise), never a HEAD. `--only <substring>` narrows a bundle to matching artifacts (e.g.
  *   `data pull us --only nh` for one state instead of the whole ~41 GB tier).
@@ -111,8 +111,8 @@ export const spec = {
  * degrade to an empty state rather than throwing — a HEAD that 404s or times out just means "can't verify", handled
  * downstream as a warning, not a hard stop (the GET that follows is the real signal on whether the artifact exists).
  *
- * The sidecar GET carries the SAME `Range: bytes=0-` header `downloadToDisk` needs (see that function's docstring for
- * the measured WAF behavior) — a `.md5` sidecar is a tiny text object on the SAME bucket, and nothing rules out the
+ * The sidecar GET carries the same `Range: bytes=0-` header `downloadToDisk` needs (see that function's docstring for
+ * the measured WAF behavior) — a `.md5` sidecar is a tiny text object on the same bucket, and nothing rules out the
  * WAF's ranged-request rule applying to it too. No bundle publishes one today (`data-bundles.ts`'s docstring), so this
  * path is UNEXERCISED against live data; a failure here is loud (`console.error`), not swallowed, so the day a sidecar
  * ships, a wrong guess about which requests need `Range` shows up immediately instead of silently degrading forever.
@@ -258,7 +258,7 @@ async function pullBundles(
 
 			try {
 				const remote = await probeRemote(client!, artifact, opts.host)
-				// Staged under THIS pull's data root (not necessarily the env-configured one — `--data-root`
+				// Staged under this pull's data root (not necessarily the env-configured one — `--data-root`
 				// overrides it), so `dataRootPath` (which always reads `$MAILWOMAN_DATA_ROOT`) would be wrong here.
 				const stageDir = resolvePath(dataRoot, "tmp")
 

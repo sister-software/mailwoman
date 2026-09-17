@@ -42,7 +42,7 @@ async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> 
 	ins.run("37013", "Antioch", "Nashville", 47_389, 1, "overture:US", "2026-04")
 	// A second postcode, another alias (Woodbridge → Prince William County).
 	ins.run("22191", "Woodbridge", "Prince William County", 30_975, 1, "overture:US", "2026-04")
-	// A non-divergent row (postal name == geo name) — must NEVER surface as an alias.
+	// A non-divergent row (postal name == geo name) — must never surface as an alias.
 	ins.run("90210", "Beverly Hills", "Beverly Hills", 12_000, 0, "overture:US", "2026-04")
 
 	return kdb
@@ -73,7 +73,7 @@ function buildMainDB(): DatabaseClient<WOFDatabase> {
 	// Antioch, CA — a same-named distractor ~3000 km away the bare name-match would otherwise win.
 	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
-	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does NOT match it.
+	// 37013's centroid sits in Nashville (containing); the parsed name "Antioch" does not match it.
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0, 1)
 
 	return db

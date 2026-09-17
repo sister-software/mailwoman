@@ -61,7 +61,7 @@ beforeAll(async () => {
 		null
 	)
 
-	// A source that carries the range VERBATIM — the exact key must win over the low-end retry.
+	// A source that carries the range verbatim — the exact key must win over the low-end retry.
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -109,7 +109,7 @@ beforeAll(async () => {
 	const teichKey = normalizeStreetForKey("Teichstraße")
 	insert.run(teichKey, teichKey, "3", null, "04509", "werlitzsch", "Teichstraße", 51.4367, 12.1958, "osm", "r")
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
-	// An OSM-shaped row with NO scope of its own — the case the bbox rung exists for.
+	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
 	// A NAD-shaped US row whose city field is ABBREVIATED — the Texas extract writes `addi` for Addison on 5,174 rows. The
 	// board's `us-addison-zip-75001` (status pass) is this row; a locality check that reads the truncation as a
@@ -181,7 +181,7 @@ describe("AddressPointSqliteLookup", () => {
 
 	it("unit siblings share the building coordinate through every rung", () => {
 		// The fixture has unit rows for 32 (unit 6 etc. in the real register; here the plain row) — a
-		// range surface resolving through the low-end rung lands the SAME building coordinate the
+		// range surface resolving through the low-end rung lands the same building coordinate the
 		// plain-number probe returns, so a unit-bearing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
 		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })
@@ -189,7 +189,7 @@ describe("AddressPointSqliteLookup", () => {
 		expect(base?.lat).toBeDefined()
 
 		// The verbatim '32-36' fixture row wins for the range surface (precedence pin, again from the
-		// unit angle): the low-end rung only ever fires when NO row carries the surface as written.
+		// unit angle): the low-end rung only ever fires when no row carries the surface as written.
 		expect(viaRange?.lat).toBe(-27.9999)
 	})
 

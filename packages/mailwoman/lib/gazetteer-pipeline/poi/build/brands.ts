@@ -15,13 +15,13 @@
  *   pick; alphabetical for aliases), never left to SQL row order or `Map` iteration order.
  *
  *   Two phases, split the way `build-poi.ts` splits ingest from materialize, so the aggregation
- *   logic is unit-testable WITHOUT touching sqlite:
+ *   logic is unit-testable without touching sqlite:
  *
  *   1. {@linkcode readBrandNameCounts} / {@linkcode readSourceLayer} — `node:sqlite`, read-only,
  *        the exact `GROUP BY brand_wikidata, name` aggregate plus the source layer's manifest
  *        identity.
- *   2. {@linkcode aggregateBrands} — a PURE function over an `Iterable<BrandNameCount>` (real rows
- *        OR an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
+ *   2. {@linkcode aggregateBrands} — a pure function over an `Iterable<BrandNameCount>` (real rows
+ *        or an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
@@ -114,12 +114,12 @@ interface RawBrandAggregate {
 }
 
 /**
- * PURE aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture. Per QID: `rows`
- * is the sum of every observed `(wikidata, name)` count; `name` is the MODAL (highest-count) variant, ties broken
- * alphabetically; `aliases` are every OTHER variant clearing the noise floor `max(3, 1% of rows)` (guards against
+ * Pure aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture. Per QID: `rows`
+ * is the sum of every observed `(wikidata, name)` count; `name` is the modal (highest-count) variant, ties broken
+ * alphabetically; `aliases` are every other variant clearing the noise floor `max(3, 1% of rows)` (guards against
  * typo/OCR-noise variants swelling the alias list), sorted alphabetically. QIDs whose total falls under `minRows` are
- * dropped entirely. QIDs whose modal name covers LESS than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
- * = 0.5) are ALSO dropped entirely — a modal share under the floor means the QID is systematically mistagged across
+ * dropped entirely. QIDs whose modal name covers less than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
+ * = 0.5) are also dropped entirely — a modal share under the floor means the QID is systematically mistagged across
  * many unrelated names, not one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
  * The final list is sorted by `rows` descending, ties broken by QID.
  *

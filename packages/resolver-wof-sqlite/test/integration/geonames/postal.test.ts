@@ -59,7 +59,7 @@ describe("ingestGeonamesPostal", () => {
 		const dir = dirDirectory.path
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
-		// The medoid must be one of the REAL points (the cluster member nearest the mean), never
+		// The medoid must be one of the real points (the cluster member nearest the mean), never
 		// the mean itself.
 		await writeLocalTextFile(
 			[
@@ -87,7 +87,7 @@ describe("ingestGeonamesPostal", () => {
 
 		expect(row.placetype).toBe("postalcode")
 		expect(row.id).toBeGreaterThanOrEqual(GEONAMES_POSTAL_ID_BASE)
-		// Medoid = a real member (50.09 is nearest the outlier-pulled mean), NOT the mean (~50.157).
+		// Medoid = a real member (50.09 is nearest the outlier-pulled mean), not the mean (~50.157).
 		expect([50.08, 50.09, 50.3]).toContain(row.latitude)
 		expect(row.latitude).toBe(50.09)
 

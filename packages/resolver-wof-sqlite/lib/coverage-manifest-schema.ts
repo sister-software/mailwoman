@@ -44,7 +44,7 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promotion-eval verdict (a verdict column, NOT re-derived from the rate; see the fact type's docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column, not re-derived from the rate; see the fact type's docstring).
 	 */
 	hard_filter_safe: number
 	/**

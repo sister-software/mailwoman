@@ -61,7 +61,7 @@ export interface BuildAdminOptions {
 	geonamesCountries?: readonly string[]
 	overtureRelease?: string
 	/**
-	 * Skip the verify step (fixture/dev runs ONLY — an unverified artifact must never be promoted).
+	 * Skip the verify step (fixture/dev runs only — an unverified artifact must never be promoted).
 	 */
 	skipVerify?: boolean
 	/**
@@ -108,7 +108,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// BEFORE the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
+	// Before the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
 	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
@@ -229,7 +229,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		}
 	}
 
-	// BEFORE the seal — see `stampLayerManifest`, which owns that ordering and its reason.
+	// Before the seal — see `stampLayerManifest`, which owns that ordering and its reason.
 	phase("manifest")
 	const sha = buildSHA(String(repoRootPath()))
 

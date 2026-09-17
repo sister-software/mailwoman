@@ -177,7 +177,7 @@ describe("the committed canonical-form suite", () => {
 	it("gives both declared rules something real to refuse", () => {
 		const fired = new Set<string>()
 
-		// Read over the WHOLE corpus rather than over the suite's own bases: every base here is canonically variant
+		// Read over the whole corpus rather than over the suite's own bases: every base here is canonically variant
 		// by selection, so `no-canonical-variance` could never fire on one, and a rule read only against the rows
 		// that were chosen for it is a rule nothing refuses.
 		for (const input of corpusInputs) {

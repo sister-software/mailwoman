@@ -12,7 +12,7 @@
  *
  *   This is the model-first fix as DATA (the #723/#901 discipline — teach the boundary, don't
  *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
- *   addresses actually use, with the full postcode tagged as ONE postcode span. Both the SPACED
+ *   addresses actually use, with the full postcode tagged as one postcode span. Both the SPACED
  *   ("1012 LG", the failing form — a 2-token span) and UNSPACED ("1012LG", 1 token) forms are
  *   emitted so the model learns the digits-first postcode regardless of spacing; the three orders
  *   keep polarity balanced (the v1.9.9 lesson).
@@ -61,8 +61,8 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Spacing rotates so the model sees BOTH the failing spaced form and the unspaced form; the
-			// components.postcode value MUST match the raw form so alignment tags the right span.
+			// Spacing rotates so the model sees both the failing spaced form and the unspaced form; the
+			// components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 

@@ -98,7 +98,7 @@ def project_char_labels_to_pieces(
 ) -> list[str]:
     """Project a per-character BIO label array onto SP pieces.
 
-    THE projection — both label paths (token-quantized and char-span) flow through this single
+    The projection — both label paths (token-quantized and char-span) flow through this single
     function, so the two cannot drift. Each SP piece gets the label of the first non-whitespace
     char it covers; B/I semantics are recomputed per piece: only the leading piece of a contiguous
     entity gets ``B-``, subsequent pieces get ``I-``.
@@ -153,7 +153,7 @@ def realign_spans_to_pieces(
     """Project char-offset label spans onto SP pieces (#519, the v0.5.0 path).
 
     Same projection as ``realign_labels_to_pieces`` (shared ``project_char_labels_to_pieces``);
-    only the per-char array construction differs — built FROM the spans, so every covered char
+    only the per-char array construction differs — built from the spans, so every covered char
     (punctuation included) carries its span's label.
     """
     return project_char_labels_to_pieces(

@@ -1,6 +1,6 @@
 # === v4.2.0-base-anchor-v2-2k — the cheap recipe-validation probe for v4.2.0-base-anchor-v2.yaml. ===
 #
-# Diagnostic-before-fix: 2,000 steps to prove the recipe RUNS before committing 60,000. Not a check —
+# Diagnostic-before-fix: 2,000 steps to prove the recipe runs before committing 60,000. Not a check —
 # nothing here is pre-registered. It answers four mechanical questions the full run should not be
 # the first place to discover:
 #
@@ -13,14 +13,14 @@
 #      repeating, silently.)
 #   3. Does `synth-gb` at weight 6.0 under the corrected 1.0 dependent_locality class weight skew the
 #      dep-loc emission? Read per-tag F1 — dep-loc firing on US/FR rows is the v4.1.x failure mode
-#      this probe exists to catch BEFORE the spend.
+#      this probe exists to catch before the spend.
 #   4. Does `synth-sub-venue` at 12.0 move `unit` without bleeding into `venue`? Same per-tag read.
 #
-# DELIBERATE DEVIATIONS from v4.2.0-base-anchor-v2.yaml (curves are NOT directly comparable):
+# Deliberate deviations from v4.2.0-base-anchor-v2.yaml (curves are not directly comparable):
 #   * `warmup_steps: 200` instead of 1000 — half-warmup probes read as stalls.
 #   * cosine fully anneals inside the probe; the full run is 3.3% through its cosine at step 2,000.
 #   * `eval_every_steps: 250` — the point is the SHAPE of the curve, not the endpoint.
-#   * `save_every_steps: 1000` — saves TWICE, insurance against a save-path crash surfacing at
+#   * `save_every_steps: 1000` — saves twice, insurance against a save-path crash surfacing at
 #     step 5,000 of the real run.
 # Everything else is byte-identical to v4.2.0-base-anchor-v2.yaml. If you change that file, change
 # this one.
@@ -33,7 +33,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v4.0.1. Deliberately NOT re-weighted: one variable.
+  country_weights: # Verbatim from v4.0.1. Deliberately not re-weighted: one variable.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -59,7 +59,7 @@ data:
     AU: 1.0
     CA: 1.0 # Overture — live locality.
     MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
-  source_weights: # VERBATIM v4.0.1. `source_weights` DROPS unlisted sources — see PENDING DECISIONS.
+  source_weights: # Verbatim from v4.0.1. `source_weights` drops unlisted sources — see the pending decisions.
     synth-house-venue: 2.0
     overture-latam: 6.0
     wof-admin: 2.0
@@ -127,7 +127,7 @@ data:
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
 
-model: # VERBATIM v4.0.1.
+model: # Verbatim from v4.0.1.
   hidden_size: 384
   use_span_boundary_head: true
   use_deploc_head: false
@@ -166,8 +166,8 @@ model: # VERBATIM v4.0.1.
     # 1.0, NOT the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
-    # carry MORE raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
-    # weighted down. Corrected in v4.0.1 and carried here; the SHIPPED lineage still predates the
+    # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
+    # weighted down. Corrected in v4.0.1 and carried here; the shipped lineage still predates the
     # correction, so this run is the first base to retrain it in.
     B-dependent_locality: 1.0
     I-dependent_locality: 1.0
@@ -198,7 +198,7 @@ model: # VERBATIM v4.0.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group. VERBATIM v4.0.1.
+train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group. Verbatim from v4.0.1.
   output_dir: /data/output-v420-base-anchor-v2-2k-s42/checkpoints
   seed: 42
   batch_size: 128

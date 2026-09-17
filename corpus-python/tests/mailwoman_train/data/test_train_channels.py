@@ -3,13 +3,13 @@
 Every optional channel travels the same three-hop path: the loader paints per-piece features onto
 ``EncodedExample``, ``collate`` emits them keyed by name, and ``_to_tensor_batch`` converts each key
 to a device tensor for ``model(**tb)``. The first two hops are presence-driven (a configured lexicon
-adds the key); the third is a hand-maintained if-chain — and a key it misses disappears SILENTLY,
+adds the key); the third is a hand-maintained if-chain — and a key it misses disappears silently,
 because the model's forward zero-fills absent channel tensors. That is exactly how the locality-
 surface channel trained on zeros from v3.16.0 through the shipped v3.24.0 bundle (#1349): the
 shipped model's ``locality_surface_token_embedding`` is still exactly zeros-init.
 
-The invariant enforced here: with EVERY optional channel populated, ``_to_tensor_batch`` must emit
-EXACTLY the keys ``collate`` produced. Equality (not subset) is deliberate — an extra key would
+The invariant enforced here: with every optional channel populated, ``_to_tensor_batch`` must emit
+exactly the keys ``collate`` produced. Equality (not subset) is deliberate — an extra key would
 crash ``model(**tb)`` loudly, a dropped key is the silent failure this test exists to catch. Adding
 a channel to ``EncodedExample``/``collate`` without the tensor conversion now fails here instead of
 shipping a frozen-at-init projection.

@@ -14,7 +14,7 @@
  *
  *   Two deliberate differences from the Claude adapter:
  *
- *   - Codex has NO `stop_hook_active` field and no built-in loop prevention, so the one-pass guard
+ *   - Codex has no `stop_hook_active` field and no built-in loop prevention, so the one-pass guard
  *     is a session-keyed marker file in the OS temp dir: a block writes the marker, and the next
  *     Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
  *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at

@@ -7,23 +7,23 @@
  *   SEPARATE. This is the board's own acceptance test: "an unmeasurable change is an unshippable
  *   change" (§2 R3), so the first thing this runner has to establish is that the instrument moves at all.
  *
- *   THE ARMS. All three share one model, one resolver, one board — the ONLY variable is the gazetteer
+ *   THE ARMS. All three share one model, one resolver, one board — the only variable is the gazetteer
  *   binary feeding `neural/fst-prior.ts`:
  *
- *   - `none` — `fst: false`, which suppresses BOTH an explicit matcher and the pipeline's auto-load.
+ *   - `none` — `fst: false`, which suppresses both an explicit matcher and the pipeline's auto-load.
  *   - `pop` — `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/` — the shipped set. Its source DB has no
  *       `place_importance` table, so `fst-builder.ts` took the documented population fallback
  *       (`min(1, log2(1+pop/1000)/14)`). Verified from the artifact's own stamp: `importanceMatches`
  *       743,268 against `admin-global-priority.db`.
  *   - `imp` — `wof/fst-staging-2026-08-05-importance-fanoutfix/` — built from
- *       `admin-global-priority-importance.db`, `importanceMatches` 1,543,753, which is EXACTLY that DB's
+ *       `admin-global-priority-importance.db`, `importanceMatches` 1,543,753, which is exactly that DB's
  *       `place_importance` row count. So this arm carries the real Wikipedia-joined score.
- *   - `ref` — `wof/fst-staging-2026-08-06-two-score-split/` — the SAME source database as `imp`, rebuilt
+ *   - `ref` — `wof/fst-staging-2026-08-06-two-score-split/` — the same source database as `imp`, rebuilt
  *       at FST format v5 under the ratified §2 policy: the bias reads the REFERENTIAL score
  *       (population-anchored) and the encyclopedic score rides along in its own slot, unread by the
  *       decoder. `imp` vs `ref` is therefore the policy ablation with the source database held fixed —
  *       the single-variable comparison that says what ranking referentially costs or buys. `pop` vs `ref`
- *       is NOT single-variable: their source databases differ (2026-08-04 admin vs the 2026-08-05
+ *       is not single-variable: their source databases differ (2026-08-04 admin vs the 2026-08-05
  *       importance build), so a delta there mixes the policy with a gazetteer generation.
  *
  *   The two binaries are otherwise identical builds — same `stateCount` (160,246), `placeCount`
@@ -32,7 +32,7 @@
  *
  *   WHY THIS RUNNER EXISTS AT ALL — the FST's reach is narrower than it looks. `eval oa-resolver`
  *   without `--assembled`, and `eval gauntlet` in every mode, grade through `geocode-core.ts`'s
- *   `parseForGeocode`, which calls `classifier.parse` with NO `fst` key. The gazetteer prior is
+ *   `parseForGeocode`, which calls `classifier.parse` with no `fst` key. The gazetteer prior is
  *   therefore not merely weak on those paths — it is never constructed. `createRuntimePipeline` is the
  *   only entry point that wires `opts.fst`, so this runner drives the pipeline directly. A board scored
  *   through `geocodeAddress` would tie across all three arms no matter what the board contained.
@@ -112,7 +112,7 @@ for (const locale of locales) {
 
 /**
  * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped; a locale
- * with no binary in an arm's dir gets `false`, which is the SAME state as the `none` arm for that locale — recorded
+ * with no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale — recorded
  * rather than papered over, since it is why an out-of-reach row cannot discriminate.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
@@ -189,7 +189,7 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 			? null
 			: errKm !== null && errKm <= c.expectToleranceM / 1000
 
-	// §6 I2: the gauntlet stores these and never checks them. Checked here, against ANY resolved node —
+	// §6 I2: the gauntlet stores these and never checks them. Checked here, against any resolved node —
 	// the expected place may be an ancestor of the most-specific answer (a locality row whose tree also
 	// resolved a region), so requiring it at `best` would fail rows that are in fact correct.
 	let placeOK: boolean | null = null

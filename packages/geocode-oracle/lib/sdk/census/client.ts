@@ -60,7 +60,7 @@ export const CENSUS_GEOCODER_BASE_URL = "https://geocoding.geo.census.gov/geocod
 /**
  * What this client paces at by default: **60 requests per minute**, one per second.
  *
- * SOURCING, stated precisely because it could not be verified: the Census Bureau publishes NO rate limit for the
+ * SOURCING, stated precisely because it could not be verified: the Census Bureau publishes no rate limit for the
  * single-address geocoding endpoints. It does cap the separate BATCH endpoint at 10,000 records per submission, which
  * is a size limit rather than a rate. So this number is a politeness posture toward a free public service, not a
  * published ceiling — the same footing `BDC_DEFAULT_REQUESTS_PER_MINUTE` is on, and for the same reason it is a DEFAULT
@@ -197,7 +197,7 @@ export interface CensusGeocoderClientConfig extends APIClientConfig {
  * rather than being handed back as a string. This is the second check: a 200 whose JSON is structurally something else
  * must not reach disk under a week-long TTL.
  *
- * An EMPTY `addressMatches` array is cacheable. "This address does not match TIGER" is a real, stable answer, and it is
+ * An empty `addressMatches` array is cacheable. "This address does not match TIGER" is a real, stable answer, and it is
  * the answer for a large share of the rural and PO-Box inputs an oracle sweep will hand it.
  */
 export function isCacheableCensusBody(value: { data?: { data?: unknown } }): boolean {
@@ -225,7 +225,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	}
 
 	/**
-	 * Geocode an address AND attach the census geography layers the match falls in — the `geographies.Census Blocks`
+	 * Geocode an address and attach the census geography layers the match falls in — the `geographies.Census Blocks`
 	 * entry carries the 2020 block GEOID, population and housing counts.
 	 *
 	 * Pins the Census 2020 benchmark/vintage PAIR. The two must agree (see {@linkcode CensusVintageName}), so they are

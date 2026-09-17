@@ -11,14 +11,14 @@
  *
  *   - A US ZIP's first digit maps to a loose BAND of states.
  *   - A German PLZ's first digit maps to a Leitzone that CROSSES Bundesland borders.
- *   - A French code postal's first TWO digits ARE the département number directly (`75008` → 75, Paris;
+ *   - A French code postal's first two digits are the département number directly (`75008` → 75, Paris;
  *       `13001` → 13, Bouches-du-Rhône). So the French prefix pins the actual admin unit, and the
  *       région follows from the département. It is the tightest of the three.
  *
  *   The exceptions are the interesting part: Corsica shares prefix `20` across two départements (`2A`
  *   Corse-du-Sud / `2B` Haute-Corse, resolved by the rest of the code), and the overseas DOM use a
  *   THREE-digit prefix (`971`–`976`). `departementOfCodePostal` handles both. Two further
- *   real-world caveats it does NOT try to model: a handful of communes sit under a neighbouring
+ *   real-world caveats it does not try to model: a handful of communes sit under a neighbouring
  *   département's code (e.g. some `05`/`04` border villages), and a CEDEX code can carry a
  *   large-volume-mail prefix that differs from the geographic one — both rare enough to leave to
  *   the gazetteer.

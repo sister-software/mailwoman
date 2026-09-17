@@ -23,7 +23,7 @@
  *   interior parent-ward, which is hierarchy-respecting run-length encoding — a zone's interior becomes a
  *   handful of coarse cells and only the fringe stays fine. A row therefore carries its own `resolution`,
  *   and a probe walks `cellToParent` from the index resolution up to the coarsest resolution present.
- *   `layer_coverage` is NOT compacted and stays single-resolution, because
+ *   `layer_coverage` is not compacted and stays single-resolution, because
  *   `recoverCoverageResolution` recovers one resolution from the stored cells and throws on a table that
  *   mixes them.
  */

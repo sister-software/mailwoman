@@ -318,7 +318,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 			}
 
 			// v1 stored a raw population u32 here; v2–v4 the conflated `importance` float; v5 the
-			// referential score. A v1 file's population is mapped through the SAME curve
+			// referential score. A v1 file's population is mapped through the same curve
 			// `referentialFromPopulation` uses, so its value is genuinely referential — the only
 			// generation of this format for which that can be said without reading the source database.
 			const referential = isV2

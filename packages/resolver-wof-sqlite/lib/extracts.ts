@@ -12,17 +12,17 @@ import { basename } from "path-ts"
  *   ## The FTS5 syntax rule that drove this design
  *
  *   The naive `SELECT … FROM pc.place_search WHERE pc.place_search MATCH ?` fails — SQLite parses the
- *   schema-qualified table on the left of MATCH as "column place_search of table pc". Discovered in
+ *   schema-qualified table on the left of `MATCH` as "column place_search of table pc". Discovered in
  *   the spike at PR review time; documented as `_EXTRACT_RULE.md` should it ever bite again.
  *
- *   The working form: schema-qualified in FROM, bare table name in MATCH:
+ *   The working form: schema-qualified in `FROM`, bare table name in `MATCH`:
  *
  *   ```sql
  *   SELECT … FROM pc.place_search WHERE place_search MATCH ?
  * ```
  *
  *   Identical table names across attached extracts (which is what we have — every extract ships its own
- *   `place_search` + `place_bbox`) are fine because the bare-name MATCH resolves against FROM
+ *   `place_search` + `place_bbox`) are fine because the bare-name `MATCH` resolves against `FROM`
  *   scope.
  */
 
@@ -161,7 +161,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
  * All placetype-matching extracts, in routing order (the country-aware pick chooses among these). Used by the bias
  * path: a country-less postcode query with proximity hints fans out across every matching extract and merges, because
  * single-extract routing would hide the cross-country ambiguity the hints exist to resolve ("48026" lives in
- * postalcode-us AND postalcode-intl).
+ * postalcode-us and postalcode-intl).
  */
 export function pickExtractsForPlacetype(
 	extracts: ResolvedExtract[],

@@ -29,7 +29,7 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
 const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 
 /**
- * Normalize a surface for the table: trim, collapse internal whitespace, and lowercase ONLY when the string is entirely
+ * Normalize a surface for the table: trim, collapse internal whitespace, and lowercase only when the string is entirely
  * in a bicameral script. `ターミナルビル` and `航站楼` pass through untouched; `Flughafenterminal` folds.
  */
 export function normalizeSurface(text: string): string {

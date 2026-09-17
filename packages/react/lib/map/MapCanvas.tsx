@@ -9,7 +9,7 @@
  *   No overlay/marker/camera logic lives here yet.
  *
  *   NODE-IMPORT SAFETY: this module imports `react-map-gl/maplibre` (which pulls `maplibre-gl` — WebGL
- *   + DOM at import) at module scope, so it is reachable ONLY through the `@mailwoman/react/map`
+ *   + DOM at import) at module scope, so it is reachable only through the `@mailwoman/react/map`
  *   subpath, never from the package root (`index.ts`). The bare `import("@mailwoman/react")` a node
  *   consumer (or the CI smoke IMPORT_CHECK) runs must never transitively load this file. Keep it out of
  *   the root barrel.
@@ -44,7 +44,7 @@ export interface MapCanvasProps {
 	 */
 	mapStyle: MapCanvasStyle
 	/**
-	 * Uncontrolled initial camera. Use this OR `viewState`, not both.
+	 * Uncontrolled initial camera. Use this or `viewState`, not both.
 	 */
 	initialViewState?: MapProps["initialViewState"]
 	/**

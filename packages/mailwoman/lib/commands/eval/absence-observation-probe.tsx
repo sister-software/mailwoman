@@ -11,7 +11,7 @@
  *   `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
  *
  *   Nothing is injected into the runtime pipeline for the absence work: the pipeline answers, and the
- *   route reads the finished answer. The semantic phrase route (#1929) IS injected, because the
+ *   route reads the finished answer. The semantic phrase route (#1929) is injected, because the
  *   activity-phrased rows cannot reach a category without it.
  *
  *   The coverage layer is BUILD-LOCAL (ODbL), so it is not committed and not published. Without it the run

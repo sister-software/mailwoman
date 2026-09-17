@@ -86,7 +86,7 @@ export async function loadContextTuples(
 }
 
 /**
- * The street-side confound classes, mined from the leg's OWN address tuples.
+ * The street-side confound classes, mined from the leg's own address tuples.
  *
  * Real streets, not invented ones. The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate` streets,
  * 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>` population in both GB and US — small

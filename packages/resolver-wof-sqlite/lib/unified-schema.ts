@@ -49,7 +49,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 
 	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames' isPreferredName
 	// ("preferred" | ""). `official` is the #936 ingest bit: 1 when the row's language is an official
-	// language of the place's country (codex OFFICIAL_LANGUAGES) AND the row is a preferred form —
+	// language of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form —
 	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0. Primary-name mirror
 	// rows stay 0 too: the name-exact tier already consults spr.name; `official` only marks the
 	// ALIASES eligible to join it. Both are ingest-time facts, never computed at query time.

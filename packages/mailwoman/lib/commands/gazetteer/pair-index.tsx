@@ -11,11 +11,11 @@
  *   (`PairIndexBuilder`, `gazetteer-pipeline/pair-index.ts` — the extracted, unit-tested fold/dedupe/
  *   skip logic), then writes `pair-index-<country>.bin` via `serializePairIndex`.
  *
- *   `--delta` is REQUIRED with no default: it's the soft-prior bias magnitude a probe hit will
+ *   `--delta` is required with no default: it's the soft-prior bias magnitude a probe hit will
  *   contribute at decode time, and the calibration task (not this one) owns the real value — a
  *   silent default here would let an uncalibrated number ship unnoticed. `--parent-delta` follows the
- *   same discipline one step weaker: OPTIONAL, no default, and omitting it writes NO header key, so
- *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias OFF
+ *   same discipline one step weaker: optional, no default, and omitting it writes no header key, so
+ *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias off
  *   rather than with an inherited magnitude (the D-rule's per-locale check, expressed in the build).
  *
  *   PARENT TAGS (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
@@ -43,10 +43,10 @@ import { join } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
+ * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits below
  * the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) because the production fold
- * MERGES punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
- * SAME `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
+ * merges punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
+ * same `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
  * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
  * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
  * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate before
@@ -56,7 +56,7 @@ const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
  * The raw rung-3 census's pre-fold line count (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) — retained as a named
- * constant for provenance/debugging (e.g. diffing a future source refresh against this cycle's raw count), NOT the
+ * constant for provenance/debugging (e.g. diffing a future source refresh against this cycle's raw count), not the
  * cross-check target. See {@link EXPECTED_GB_PAIR_COUNT}'s doc comment for why the production target is lower.
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
@@ -87,7 +87,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		// The repeated-name convention's identity pair — the (x,x) evidence the segment rule keys on.
 		["Mangawhai", "Mangawhai"],
 	],
-	// R5 (hierarchy campaign): the US instance's probes. Unlike GB/NZ these are NOT postal-format
+	// R5 (hierarchy campaign): the US instance's probes. Unlike GB/NZ these are not postal-format
 	// dependent localities — USPS routes city/state/ZIP — they are the borough/neighbourhood class
 	// the schema's umbrella term covers, sourced from WOF rather than a postal register.
 	us: [
@@ -146,7 +146,7 @@ const SOURCE_PARENT_TAGS = {
 } as const satisfies Record<string, ComponentTag>
 
 /**
- * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its OWN
+ * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its own
  * file rather than being pre-merged into a blob, so every one keeps a distinct provenance md5 in the header — which is
  * what lets a freshness guard notice that exactly one of them changed.
  */
@@ -241,7 +241,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// R2 (hierarchy campaign): borough pairs from the WOF admin DB, through the SAME fold/dedupe
+		// R2 (hierarchy campaign): borough pairs from the WOF admin DB, through the same fold/dedupe
 		// as the CSV rows (boroughs project onto dependent_locality — plan/reference/placetype-evidence).
 		let boroughsAdded = 0
 
@@ -285,7 +285,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
 				// ward export already runs to hundreds of thousands of rows.
-				// A line MAY carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
+				// A line may carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
 				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL` — see that table's evidence
 				// line. The per-line key exists so a future source of a different shape declares itself rather
 				// than inheriting a reading that was only ever true of these three.
@@ -325,8 +325,8 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			...(await Promise.all(splitPathList(options.pairsJSONL).map((path) => md5File(path)))),
 		]
 
-		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes NO header key at
-		// all — not a null/0. For both, ABSENT means the mechanism is off, which is a different statement from
+		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes no header key at
+		// all — not a null/0. For both, an absent key means the mechanism is off, which is a different statement from
 		// "off because the magnitude happens to be zero", and the reader treats them that way.
 		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned, not builder claims.
 		const pairIndexHeader: PairIndexHeaderInput = {
@@ -361,7 +361,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			const parent = normalizeFSTToken(district)
 			const edge = resolver.probe(child, parent)
 
-			// Print BOTH ends: a readback that shows only the child tag cannot catch a builder that wrote the
+			// Print both ends: a readback that shows only the child tag cannot catch a builder that wrote the
 			// wrong parent tag, which is the failure mode PIX2 newly makes possible.
 			return edge
 				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${edge.tag} under ${edge.parentTag}`

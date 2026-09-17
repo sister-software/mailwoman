@@ -27,7 +27,7 @@ import type {
 /**
  * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field. Absent
  * fields were absent from the provider's answer; nothing is defaulted in. Unexported: consumers reach it as
- * `AuthoritativeAssertion["matches"]`, and the export-hygiene guard holds the surface to actual importers.
+ * `AuthoritativeAssertion["matches"]`, and the export-hygiene check limits the surface to actual importers.
  */
 interface AuthoritativeAssertionMatch {
 	provider_place_id: string

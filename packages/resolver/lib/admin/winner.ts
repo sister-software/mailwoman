@@ -22,10 +22,10 @@ import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/spe
  * is still finer than its locality ({@link areaPostcodeLeadsLocality}).
  *
  * The JP rungs (`municipality`, `district`, `prefecture`) sit beside their Latin counterparts, and `municipality`
- * stands ABOVE `district` on purpose. `subregion` (a county, a Korean 시군구) sits between the postcode and `region`:
+ * stands above `district` on purpose. `subregion` (a county, a Korean 시군구) sits between the postcode and `region`:
  * finer than the region it belongs to, coarser than any postcode. Absent from the ladder it was never the answer, and
  * `부산광역시 해운대구 반송로 910-1` resolved both nodes and reported Busan's point, 3.3 km from the address, over Haeundae's. It
- * stands ABOVE `district` on purpose: a district (大字 / 町名) resolves without its municipality as a parent more often
+ * stands above `district` on purpose: a district (大字 / 町名) resolves without its municipality as a parent more often
  * than not, and the unscoped namesake it then picks can be another prefecture's (`市原市大作` → 921 km). Measured on 300 JP
  * board rows @15 km: district-first 202 accepted, municipality-first 271.
  */

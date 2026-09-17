@@ -40,7 +40,7 @@ export interface SpanMatch {
  *
  * Longest-first is what lets a US ZIP+4 ("94610-2737") claim its whole span before the shorter NL-shaped false positive
  * in its tail ("2737 CA") can. The input array is not mutated (`toSorted`), and the sort is stable, so candidates of
- * equal length AND equal priority keep the order the caller pushed them in (pattern order, then match order within a
+ * equal length and equal priority keep the order the caller pushed them in (pattern order, then match order within a
  * pattern).
  */
 export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: readonly T[]): T[] {
@@ -73,7 +73,7 @@ export interface SpanPattern {
 
 /**
  * Run a priority-ordered pattern list over the raw text and resolve the hits to a non-overlapping set ({@link
- * selectNonOverlappingMatches}). Pattern order IS the priority (lower = more specific).
+ * selectNonOverlappingMatches}). Pattern order is the priority (lower = more specific).
  */
 export function collectMatchesFor<P extends SpanPattern>(
 	patterns: readonly P[],
@@ -164,7 +164,7 @@ export function tagOf(label: string): string | null {
 }
 
 /**
- * The result shape every repair pass returns: a NEW token array (inputs are never mutated) plus the number of labels
+ * The result shape every repair pass returns: a new token array (inputs are never mutated) plus the number of labels
  * the pass changed.
  */
 export interface RepairResult {

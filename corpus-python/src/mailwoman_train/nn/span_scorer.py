@@ -1,6 +1,6 @@
 """#727 stage-2 — the semi-Markov span scorer.
 
-The flat BIO head decodes T independent token choices, so "these k tokens are ONE street" is an
+The flat BIO head decodes T independent token choices, so "these k tokens are one street" is an
 emergent property of token votes rather than a scored decision. This module makes a segmentation a
 first-class hypothesis: every span up to ``max_span`` tokens gets a per-type score, a segment-level
 transition table carries the address grammar (the level at which "must not follow" is well-posed —
@@ -158,7 +158,7 @@ class SemiMarkovCRF(nn.Module):
                 cands.append(prev + seg)
             alpha = alpha.clone()
             alpha[:, j, :] = torch.logsumexp(torch.stack(cands, dim=0), dim=0)
-        # Read each row at its OWN length, then close with the end transitions.
+        # Read each row at its own length, then close with the end transitions.
         idx = lengths.to(alpha.device).view(batch, 1, 1).expand(batch, 1, num_types)
         final = alpha.gather(1, idx).squeeze(1)  # (B,T)
         return torch.logsumexp(final + self.end_transitions.float().unsqueeze(0), dim=1)

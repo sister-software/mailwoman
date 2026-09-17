@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The process's engine stamp, resolved once. The `mailwoman` package is the one place that can read its own manifest
- *   AND the configured key, and an HTTP surface's app factory must not import it (its bin may), so this module builds the
+ *   and the configured key, and an HTTP surface's app factory must not import it (its bin may), so this module builds the
  *   stamp and each bin hands it to its app as an option value.
  */
 

@@ -29,7 +29,7 @@ export interface ServiceFeature {
 }
 
 /**
- * The ONE call the verification makes against the service: the features it publishes near a point.
+ * The one call the verification makes against the service: the features it publishes near a point.
  *
  * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
  * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched

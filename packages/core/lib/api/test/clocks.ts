@@ -13,7 +13,7 @@
 import type { ClockLike } from "#api/clock"
 
 /**
- * How much REAL time {@linkcode VirtualClock.runUntilSettled} tolerates with nothing pending before declaring the work
+ * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with nothing pending before declaring the work
  * stuck. Finite, so a genuinely blocked test reports what happened instead of timing out.
  *
  * This used to be a budget of 1000 idle event-loop TURNS, on the stated assumption that "a real `readFile` resolves in
@@ -23,7 +23,7 @@ import type { ClockLike } from "#api/clock"
  * 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner, in `filer/sdk/sec-client.test.ts` and
  * `bdc/sdk/client.test.ts`.
  *
- * Measured with `performance.now()`, NOT `Date.now()`: consumers run under `vi.useFakeTimers({ toFake: ["Date"] })`,
+ * Measured with `performance.now()`, not `Date.now()`: consumers run under `vi.useFakeTimers({ toFake: ["Date"] })`,
  * which freezes `Date` while leaving `performance` and `setTimeout` real. A Date-based budget would never expire inside
  * those blocks, so genuinely stuck work would hang exactly where this is supposed to report it.
  */
@@ -55,7 +55,7 @@ export function drainMicrotasks(): Promise<void> {
 }
 
 /**
- * Yield the event loop for `ms` of REAL time — a real macrotask no virtual clock drives. Used by
+ * Yield the event loop for `ms` of real time — a real macrotask no virtual clock drives. Used by
  * {@linkcode VirtualClock.runUntilSettled}'s idle backoff (so pending real I/O is serviced instead of competing with a
  * `setImmediate` spin), and by suites that need progress the clock cannot see.
  */
@@ -74,14 +74,14 @@ export interface FakeClock extends ClockLike {
 	 */
 	sleepCalls: number[]
 	/**
-	 * Advance the clock WITHOUT recording a `sleepCalls` entry — simulates wall-clock time passing between two calls
+	 * Advance the clock without recording a `sleepCalls` entry — simulates wall-clock time passing between two calls
 	 * (e.g. "a day later") without the code under test having awaited anything.
 	 */
 	advance(ms: number): void
 }
 
 /**
- * A simple, immediately-resolving fake clock. Fine for every SEQUENTIAL assertion (nothing racing the clock), but NOT
+ * A simple, immediately-resolving fake clock. Fine for every sequential assertion (nothing racing the clock), but not
  * sufficient for a concurrency test — see {@linkcode VirtualClock}.
  */
 export function createFakeClock(startAt = 0): FakeClock {
@@ -108,10 +108,10 @@ export function createFakeClock(startAt = 0): FakeClock {
  * callers all waiting on the same deadline").
  *
  * This fidelity is exactly what a pacing regression needs: a coarser clock that resolves every same-deadline sleeper
- * "at once" cannot distinguish a fixed pacer from a broken one — under such a clock BOTH let a whole cohort through
+ * "at once" cannot distinguish a fixed pacer from a broken one — under such a clock both let a whole cohort through
  * together, because the naive clock's call-time (not wake-time) mutation of `now()` interleaves in a way that masks the
  * bug. Here each pending `sleep()` resolves only when `advance()` reaches its deadline, and the woken continuation
- * (which may register a NEW `sleep()`, pushing its own deadline further out) runs to completion before the next
+ * (which may register a new `sleep()`, pushing its own deadline further out) runs to completion before the next
  * same-deadline sleeper is resolved — reproducing how N real, independent timers settle.
  */
 export class VirtualClock implements ClockLike {
@@ -162,7 +162,7 @@ export class VirtualClock implements ClockLike {
 	}
 
 	/**
-	 * Drive `work` to completion, jumping virtual time to the next pending deadline whenever the REAL event loop goes
+	 * Drive `work` to completion, jumping virtual time to the next pending deadline whenever the real event loop goes
 	 * idle.
 	 *
 	 * {@linkcode advance} alone is not enough once the code under test interleaves virtual sleeps with real asynchrony —
@@ -172,7 +172,7 @@ export class VirtualClock implements ClockLike {
 	 * if any sleep is pending, advance to the earliest deadline; if none is, yield and look again.
 	 *
 	 * Throws rather than hanging when the work neither settles nor schedules anything for {@linkcode IDLE_BUDGET_MS} of
-	 * REAL time — a diagnosable failure beats a test-timeout stack trace pointing at the `it()`.
+	 * real time — a diagnosable failure beats a test-timeout stack trace pointing at the `it()`.
 	 */
 	public async runUntilSettled<T>(work: Promise<T>): Promise<T> {
 		let settled = false

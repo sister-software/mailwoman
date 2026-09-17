@@ -8,7 +8,7 @@
  *   THREE ANSWERS, AND KEEPING THEM APART IS THE WHOLE JOB.
  *
  *   1. `designated` — the authority's map assigns a zone here, and the zone code is the answer.
- *   2. `designated_absence` — the authority determined here and assigns NO zone. Inside England that is
+ *   2. `designated_absence` — the authority determined here and assigns no zone. Inside England that is
  *      Zone 1 by the Planning Practice Guidance's own definition ("all land outside Zones 2, 3a and 3b"),
  *      which is why an empty answer inside the footprint is a designation rather than a gap.
  *   3. `unknown` — no coverage row for this location. The EA's statement covers England and says nothing
@@ -119,7 +119,7 @@ export interface FloodZoneReading {
 	 */
 	containment: FloodContainmentPath
 	/**
-	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which IS the absence.
+	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which is the absence.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -212,7 +212,7 @@ export class FloodZoneLookup implements Disposable {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The bbox is the prefilter, so it is read WITHOUT the blob: the
+		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The bbox is the prefilter, so it is read without the blob: the
 		// largest features in this product carry hundreds of thousands of vertices, and pulling one off disk only to
 		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
 		this.#selectAreaBounds = this.#database.prepare(
@@ -235,8 +235,8 @@ export class FloodZoneLookup implements Disposable {
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
 		// COVERAGE QUALIFIES THE ABSENCE AND NOTHING ELSE — the same asymmetry `supportsExclusion` carries. A polygon
-		// containing the point IS the authority's determination at that location, and needs no coverage row to be true;
-		// an EMPTY answer needs one, because without it the emptiness is a statement about our map rather than theirs.
+		// containing the point is the authority's determination at that location, and needs no coverage row to be true;
+		// an empty answer needs one, because without it the emptiness is a statement about our map rather than theirs.
 		if (zone.zoneCode) {
 			const definition = this.#definitions.get(zone.zoneCode)
 

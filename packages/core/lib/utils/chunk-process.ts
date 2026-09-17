@@ -13,7 +13,7 @@
  *
  *   STDOUT IS THE RESULT CHANNEL AND CARRIES NOTHING ELSE. Progress is INHERITED — stderr passes straight
  *   through to the parent's — so a long chunk reports as it goes while stdout stays parseable without a
- *   framing convention. Only the LAST stdout line is read, so a child that prints diagnostics on stdout
+ *   framing convention. Only the last stdout line is read, so a child that prints diagnostics on stdout
  *   before its result still parses.
  *
  *   A NON-ZERO EXIT THROWS, AND THAT IS A CORRECTNESS RULE RATHER THAN A CONVENIENCE. A chunk that died

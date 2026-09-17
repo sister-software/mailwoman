@@ -15,7 +15,7 @@
  *   ZONE 1 IS WRITTEN AS COVERAGE, NOT AS ROWS. Inside England a location with no polygon is not
  *   unsurveyed — the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — so the
  *   designated absence is carried by a `layer_coverage` row at `basis = designated`, `completeness = 1.0`.
- *   Outside England there is NO ROW, because the EA's statement says nothing about Wales, Scotland or
+ *   Outside England there is no row, because the EA's statement says nothing about Wales, Scotland or
  *   Northern Ireland, each of which has a different authority and a different zone scheme. Those two
  *   readings must never collapse into one another, and the negative half of the verification exists to
  *   prove they do not.
@@ -138,7 +138,7 @@ export type BuildFloodOptions = BuildFloodInput & {
 	 */
 	extent: FloodMapExtent
 	/**
-	 * The feature count a SECOND distribution channel reports — the live WFS. Supplied, it is asserted against the
+	 * The feature count a second distribution channel reports — the live WFS. Supplied, it is asserted against the
 	 * geodatabase's own count, which is the cheapest two-path check available and catches a stale or truncated archive
 	 * before anything is written.
 	 */
@@ -422,7 +422,7 @@ async function runBatchedIngest(
 /**
  * Resolve the touch table into the two stored cell tiers.
  *
- * Compaction happens HERE and only on the whole side. A zone's uniform interior collapses parent-ward into a handful of
+ * Compaction happens here and only on the whole side. A zone's uniform interior collapses parent-ward into a handful of
  * coarse cells while the fringe stays fine — hierarchy-respecting run-length encoding. A partial cell's parent is not
  * partial in any useful sense, so compacting the fringe would claim it covers ground it does not.
  */
@@ -510,7 +510,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 /**
  * The coverage rows: one per interior cell of the authority's footprint, and none outside it.
  *
- * `observed_rows` counts the polygons reaching into the cell, which is what the contract's column means. It is ZERO for
+ * `observed_rows` counts the polygons reaching into the cell, which is what the contract's column means. It is zero for
  * a cell the authority designated and no polygon covers — the storable form of the Zone 1 designation, and the row a
  * reader must not confuse with the absent row a cell outside England has.
  */

@@ -16,7 +16,7 @@ import { z } from "zod"
  * then rejects — so the process dies at import instead of falling back to its default, and the message points at a
  * variable the operator believes they never set.
  *
- * The `.optional()`/`.default()` must be applied to `inner` BEFORE it reaches here: the outer value is present, so an
+ * The `.optional()`/`.default()` must be applied to `inner` before it reaches here: the outer value is present, so an
  * outer `.optional()` never fires — `inner` is what receives the `undefined` this produces.
  */
 export function blankAsAbsent<T extends z.ZodType>(inner: T) {

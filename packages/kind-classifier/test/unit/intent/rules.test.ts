@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in BOTH registers —
+ *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in both registers —
  *   as-written and lowercase — because lowercase is the primary user register and a rule that only
  *   works on title case is a rule that only works on our test data.
  */
@@ -79,7 +79,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 		"PO Box 1234",
 		"corner of 5th and Main",
 		"12 rue de Rome Paris",
-		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it NOT bare.
+		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it not bare.
 		"Paris, FR",
 		"Athens, OH",
 	]
@@ -192,7 +192,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 		"coffee in Paris",
 		"350 5th Ave, New York, NY 10118",
 		"Paris",
-		// The landmark leaders keep their own rule: a relative description of a REAL anchor.
+		// The landmark leaders keep their own rule: a relative description of a real anchor.
 		"near the Empire State Building",
 	]
 

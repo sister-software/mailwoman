@@ -12,7 +12,7 @@
  *   Department's own item description is what this transcribes: its national scheme "complements (rather than
  *   replaces) the existing statutory zoning used for each individual plan".
  *
- *   `provenance_grade` IS A COLUMN WITH A `CHECK`, NOT A CONVENTION. `NOT NULL` alone accepts `''`, and a
+ *   `provenance_grade` is a column with a `CHECK`, not a convention. `NOT NULL` alone accepts `''`, and a
  *   blank matches neither half of every read that splits on grade — so the constraint refuses a blank as well
  *   as an unknown value. This is `packages/filer`'s discipline applied unchanged, and the reason it is
  *   compulsory here is licensing as much as epistemics: an observed land-use layer is ODbL, and merging one
@@ -29,7 +29,7 @@
  *
  *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
- *   present. `layer_coverage` is NOT compacted and stays single-resolution, because `recoverShortCellResolution`
+ *   present. `layer_coverage` is not compacted and stays single-resolution, because `recoverShortCellResolution`
  *   recovers one resolution from the stored cells and throws on a table that mixes them.
  */
 
@@ -101,7 +101,7 @@ export interface ZoningAreaTable {
 	 */
 	crosswalk_description: string | null
 	/**
-	 * `SZO` — a coarser code from the SAME authority, carried as published rather than derived.
+	 * `SZO` — a coarser code from the same authority, carried as published rather than derived.
 	 */
 	crosswalk_rollup: string | null
 	/**
@@ -210,7 +210,7 @@ export interface ZoningVocabularyTable {
 }
 
 /**
- * A publisher's OWN mapping between two schemes, where it publishes one AS A TABLE.
+ * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
  * EMPTY FOR IRELAND, AND THE EMPTINESS IS A MEASUREMENT. The Department's generic type is assigned PER POLYGON, not per
  * code: 52 of the 795 (authority, local code) pairs take more than one generic type inside a single authority — Cork
@@ -225,7 +225,7 @@ export interface ZoningCrosswalkEdgeTable {
 	to_scheme: string
 	to_code: string
 	/**
-	 * The body that authored THIS edge. Never us.
+	 * The body that authored this edge. Never us.
 	 */
 	authored_by: string
 }
@@ -233,7 +233,7 @@ export interface ZoningCrosswalkEdgeTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * KEYED ON THE POLYGON RATHER THAN ON A CODE, because a zoning answer IS the polygon — its local code, its plan and its
+ * Keyed on the polygon rather than on a code, because a zoning answer is the polygon — its local code, its plan and its
  * authority are per feature, and two authorities' plans can name the same code for different things.
  */
 export interface ZoningCellTable {

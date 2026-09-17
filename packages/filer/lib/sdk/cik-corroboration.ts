@@ -5,7 +5,7 @@
  * @file The check between a name match and a database write.
  *
  *   `resolveCIKCandidates` (`edgar-filings.ts`) scores a company name against EDGAR's registrant index
- *   and deliberately returns EVERY candidate above a threshold, never a winner, because two different
+ *   and deliberately returns every candidate above a threshold, never a winner, because two different
  *   companies can canonicalize to the same name. Something still has to decide, and deciding on the score
  *   alone is measurably wrong: taking the top candidate for 24 telecom registrant names on 2026-08-03
  *   returned the wrong company twice.
@@ -30,7 +30,7 @@
  *   `Bandwidth.com CLEC, LLC`) and Ooma, Inc. (SIC 7374). SEC files VoIP and CPaaS carriers under
  *   software classifications routinely, and widening the allowlist far enough to admit them readmits
  *   WidePoint at 7373. So the allowlist stays narrow and {@link CIKCorroborationOptions.pinnedCIKs}
- *   carries the exceptions: a pin is a named, auditable decision about ONE registrant, where a widened
+ *   carries the exceptions: a pin is a named, auditable decision about one registrant, where a widened
  *   range is an unnamed decision about thousands.
  *
  *   **A rejection is an abstention, not a denial.** `corroborated: false` means no second source agreed,
@@ -95,7 +95,7 @@ export interface CIKCorroborationVerdict {
 
 export interface CIKCorroborationOptions {
 	/**
-	 * CIKs an operator has decided are telecom carriers despite their SIC. Checked BEFORE the SIC, so a pin is a decision
+	 * CIKs an operator has decided are telecom carriers despite their SIC. Checked before the SIC, so a pin is a decision
 	 * rather than a tiebreak.
 	 *
 	 * This is the escape valve for the Bandwidth/Ooma class — real carriers SEC files under a software SIC. Keep it a

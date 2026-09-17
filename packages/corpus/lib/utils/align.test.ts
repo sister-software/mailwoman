@@ -356,7 +356,7 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 			expect(span_starts!).toHaveLength(span_tags!.length)
 
 			for (let i = 1; i < span_starts!.length; i++) {
-				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted AND non-overlapping
+				expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!) // sorted and non-overlapping
 			}
 		}
 	})
@@ -430,7 +430,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 	})
 
 	it("intra-word matches survive as the fallback — affix supervision inside compounds", () => {
-		// street_suffix "straße" has NO boundary-aligned occurrence in "Hauptstraße"; the sub-word
+		// street_suffix "straße" has no boundary-aligned occurrence in "Hauptstraße"; the sub-word
 		// span is the point of the char-offset format and must not be quarantined by the fix.
 		const result = alignRow(
 			baseRow({
@@ -504,8 +504,8 @@ describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build). The
 		// precomposed য় (U+09DF) is a Bengali nukta combination EXCLUDED from NFC composition, so NFC
 		// *decomposes* it — the source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
-		// BEFORE locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
-		// the stored raw and the row ALIGNS rather than quarantining as `span-out-of-bounds` (the
+		// before locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
+		// the stored raw and the row aligns rather than quarantining as `span-out-of-bounds` (the
 		// build's tens-of-thousands non-Latin coverage nick).
 		const precomposed = "দক্ষিণ কোরিয়া"
 

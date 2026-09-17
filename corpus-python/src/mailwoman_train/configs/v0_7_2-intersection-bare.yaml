@@ -4,7 +4,7 @@
 # intersection_a/b (~0.0001 prob) to confidently + correctly parsing them (0.99)
 # — BUT only on the format it trained on. The v0.7.1 synth recipe always appended
 # a ", City, ST" tail, so the model learned "intersection followed by a locality"
-# and fumbled the harness's BARE "X & Y" cases (mislabeling the second street as a
+# and fumbled the harness's bare "X & Y" cases (mislabeling the second street as a
 # locality). It had also never seen the "@" connector. Harness intersections moved
 # 0/65 → 4/65 (functionally much better than that number; metric under-reported).
 #

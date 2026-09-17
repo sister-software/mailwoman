@@ -25,7 +25,7 @@ export default defineConfig({
 	plugins: [react()],
 	test: {
 		include: ["**/*.test.ts", "**/*.test.tsx"],
-		// Pure `*.node.test.ts` run under bare node via `vitest.node.config.ts` (see `test:node`), NOT in the browser —
+		// Pure `*.node.test.ts` run under bare node via `vitest.node.config.ts` (see `test:node`), not in the browser —
 		// they prove the geometry/render-spec modules carry no DOM/webgl/react-map-gl dependency.
 		exclude: [...configDefaults.exclude, "**/*.node.test.ts"],
 		setupFiles: ["./test/setup.ts"],

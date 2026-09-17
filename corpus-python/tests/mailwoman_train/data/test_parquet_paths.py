@@ -6,7 +6,7 @@ resolution must raise with the missing list, never train on the survivors.
 Every fixture below writes the manifest key the CURRENT code prefers, and that is exactly how this
 file passed through the 2026-09-01 rename while every manifest on disk became unreadable: the reader
 and its tests were renamed together, the artifacts were not. The legacy-key tests at the bottom are
-the ones that would have failed that day, so they assert against the shape real manifests HAVE rather
+the ones that would have failed that day, so they assert against the shape real manifests have rather
 than the shape the reader would like.
 """
 
@@ -78,7 +78,7 @@ def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_pa
 
     Every corpus built before that date lists its parquets under the pre-rename key. The reader moved
     to the new key and this file's fixtures moved with it, so nothing failed while
-    `v0.28.0-reviewed-postcode-tail` went from 706 declared train parquet files to ONE resolved.
+    `v0.28.0-reviewed-postcode-tail` went from 706 declared train parquet files to one resolved.
 
     The fixture is an OVERLAY, because only that shape can tell the two behaviours apart: the base
     file lives in another directory, so reading the manifest finds both files and the glob fallback

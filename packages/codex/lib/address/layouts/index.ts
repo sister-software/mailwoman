@@ -14,7 +14,7 @@
  *
  *   WHAT THE DATASET DOES NOT CARRY, and what is therefore authored here:
  *
- *   1. **The `%A` expansion.** libaddressinput models the street address as ONE opaque field, because its consumers
+ *   1. **The `%A` expansion.** libaddressinput models the street address as one opaque field, because its consumers
  *      hold it as free text. This project's `ComponentTag` union splits it into a house number, the four street-family
  *      tags, a unit and the two intersection tags, so each address system says how those fill the line. Six orders
  *      cover the world: number-first or number-last, crossed with a space, a comma, or a line of its own. Measured
@@ -146,7 +146,7 @@ export function layoutPrintsLargestFirst(layout: AddressLayout): boolean | null 
 /**
  * Every slot a layout prints, in print order, flattened across lines.
  *
- * Flat rather than per line because the CJK systems put the whole admin run on ONE line — Japan's prefecture and its
+ * Flat rather than per line because the CJK systems put the whole admin run on one line — Japan's prefecture and its
  * sub-prefecture run share a line, so a comparison of line indices reads them as unordered.
  */
 function printedTags(layout: AddressLayout): ComponentTag[] {
@@ -257,7 +257,7 @@ ${country}`,
 
 	// 〒%Z%n%S%n%A%n%O%n%N, with the prefecture joined to the run below it.
 	//
-	// The dataset breaks the line between %S and %A because an envelope prints them on separate lines. Written on ONE
+	// The dataset breaks the line between %S and %A because an envelope prints them on separate lines. Written on one
 	// line — which is what a geocoder query and a corpus row are — the whole admin run is unseparated and only the
 	// postal code takes a space: `〒100-0005 東京都千代田区丸の内1-9-1`. Keeping the dataset's break would put a space
 	// after the prefecture, which no Japanese address carries.
@@ -280,7 +280,7 @@ ${attention}`,
 	// `KLN, YAU TSIM MONG DISTRICT, 21 JORDAN ROAD`, which is neither register.
 	//
 	// Hong Kong writes both. The Chinese form is `九龍油尖旺佐敦道21號` and the English form is
-	// `21 Jordan Road, Yau Tsim Mong, Kowloon`, and this table holds ONE layout per country, so it holds the Latin one
+	// `21 Jordan Road, Yau Tsim Mong, Kowloon`, and this table holds one layout per country, so it holds the Latin one
 	// — which is what `isLargestFirstSystem("HK") === false` already asserts and `LINE_JOINS`'s absent HK entry already
 	// assumes. The local-script order returns when the table is keyed by (country, script).
 	//
@@ -297,7 +297,7 @@ ${country}`,
 /**
  * Address systems that print the largest unit first.
  *
- * Derived from the layouts rather than listed, because the layout IS the statement of print order and a hand-kept set
+ * Derived from the layouts rather than listed, because the layout is the statement of print order and a hand-kept set
  * beside it is a second answer to one question. The set held four entries — JP, CN, TW, KR — while the layout table
  * printed largest-first for seven: IR, KP and KZ were absent from the set and unaffected by it.
  *
@@ -314,9 +314,10 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
 /**
  * The layout for `country`, or null when neither table names it.
  *
- * The hand-authored entries win: those are checked against real addresses on a board, where a generated skeleton is a
- * transcription of a dataset. Null is a real answer — 55 of the 252 shipped country records carry no usable `fmt`, and
- * a caller that renders nothing for one of those is reporting absence rather than inventing an order.
+ * The hand-authored entries take precedence: those are checked against real addresses on a board, where a generated
+ * skeleton is a transcription of a dataset. Null is a real answer — 55 of the 252 shipped country records carry no
+ * usable `fmt`, and a caller that renders nothing for one of those is reporting absence rather than inventing an
+ * order.
  */
 export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
@@ -332,9 +333,9 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 	const hand = ADDRESS_LAYOUTS[code]
 	const local = GENERATED_LOCAL_ADDRESS_LAYOUTS[code]
 
-	// A hand-authored entry states ONE order, and where the two scripts disagree it may be stating either. Hong Kong's
+	// A hand-authored entry states one order, and where the two scripts disagree it may be stating either. Hong Kong's
 	// is the Latin one, so serving it as the local layout leaves that country's own script unreachable. The two print
-	// orders decide which it is: agreeing means the board-checked entry IS the local order and wins; disagreeing means
+	// orders decide which it is: agreeing means the board-checked entry is the local order and wins; disagreeing means
 	// it is the other script's, and the skeleton derived from `fmt` is what the local order says.
 	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
 		return local
@@ -364,7 +365,7 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
 /**
  * Which script {@link layoutForCountry} answers in when no caller says.
  *
- * `local` everywhere except a country whose default layout prints the OTHER order from its own script's skeleton, which
+ * `local` everywhere except a country whose default layout prints the other order from its own script's skeleton, which
  * is Hong Kong: its hand-authored layout is the English register, so a caller asking for no script gets the Latin
  * ordering and must get the Latin separator with it. Reading the join off the layout that was picked is the whole fix —
  * before, the order came from the layout and the separator from a country flag, so the two could name different

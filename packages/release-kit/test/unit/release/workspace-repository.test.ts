@@ -16,7 +16,7 @@ import { resolvePath } from "path-ts"
  *   costing a recovery cycle. (Writing this test immediately caught a third + fourth: the two
  *   `neural-weights-*` workspaces had a `.git`-less url and no `directory`.)
  *
- *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
+ *   This asserts every workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
 import { describe, expect, it } from "vitest"

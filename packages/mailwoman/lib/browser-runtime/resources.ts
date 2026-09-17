@@ -76,7 +76,7 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**
  * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT — it changes when
- * WOF/Overture coverage is rebuilt, NOT on every model release — so it lives on its own dated path, not under
+ * WOF/Overture coverage is rebuilt, not on every model release — so it lives on its own dated path, not under
  * `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
  * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
  * gazetteer".
@@ -85,10 +85,10 @@ export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB; US + intl postcodes + the GeoNames fold
- * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the
+ * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` and the
  * full-DB FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with
  * GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
- * ONLY on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
+ * only on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
  * Resolved by {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at
  * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street extracts.
  */
@@ -226,7 +226,7 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 }
 
 /**
- * US state/territory name OR abbreviation → 2-letter extract slug, or null if not a US region we recognize.
+ * US state/territory name or abbreviation → 2-letter extract slug, or null if not a US region we recognize.
  */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
@@ -252,7 +252,7 @@ export function neuralClassifierLoadURLs(
 		modelURL: assetURL(locale, version, "model.onnx"),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
-		// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The loader
+		// Gazetteer-anchor lexicon (#464): required by gazetteer-trained bundles (v4.2.0+). The loader
 		// tolerates a 404 for older bundles (logging loudly when the model needed it).
 		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
 		runner: { useWebGPU: !opts.forceWASM },

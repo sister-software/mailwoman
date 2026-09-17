@@ -40,14 +40,14 @@
  *   The archive md5 against the sidecar; an exact header match on every region file (schema drift
  *   fails loudly); the region set exactly the eleven GB regions (a missing or extra file fails loudly);
  *   the accounting identity `read = inserted + malformed + duplicate + no-postcode + no-coordinate`
- *   with malformed and duplicate expected ZERO; and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
+ *   with malformed and duplicate expected zero; and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
  *
  *   ## Coverage
  *
  *   GB only. ONS designates the register complete for GB (every UPRN in AddressBase whose postcode is
  *   in Code-Point Open), so every res-6 cell holding rows is written `basis: designated,
  *   completeness: 1` — the same cells and basis `uprn.db` writes, so the two layers' coverage tables
- *   describe the same ground. Cells with no rows are left ABSENT: without a GB polygon the builder
+ *   describe the same ground. Cells with no rows are left absent: without a GB polygon the builder
  *   cannot tell empty moorland from Northern Ireland or open sea, so per the meaning-of-zero rule it
  *   claims nothing there.
  */
@@ -205,7 +205,7 @@ export type NSULLineClass =
 /**
  * Classify one data line of an NSUL region file.
  *
- * CRLF-terminated in the wild: the `\r` is stripped at the reader boundary or the LAST column carries it into every
+ * CRLF-terminated in the wild: the `\r` is stripped at the reader boundary or the last column carries it into every
  * value (the G-NAF lesson). A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT}, when `UPRN` is
  * not a literal digit string within the safe-integer range, or when a non-empty `PCDS` does not have a unit-postcode
  * shape — a postcode-shaped column holding anything else is a defect to be counted, not a key to be stored.
@@ -455,11 +455,11 @@ export interface BuildNSULLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines {@link classifyNSULLine} refused — expected ZERO; any are reported in `mismatches`.
+	 * Lines {@link classifyNSULLine} refused — expected zero; any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
-	 * Lines whose UPRN collided with an already-written row — expected ZERO (UPRN is the register's own key).
+	 * Lines whose UPRN collided with an already-written row — expected zero (UPRN is the register's own key).
 	 */
 	skippedDuplicate: number
 	/**
@@ -833,7 +833,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	phase("coverage", `${coverage.size.toLocaleString()} res-${NSUL_COVERAGE_H3_RESOLUTION} cells`)
 
 	// ONS designates the register complete for GB, so observed cells are `designated`/1.0 — a miss inside one is
-	// evidence of absence. Unobserved cells stay ABSENT (unknown), per the meaning-of-zero rule.
+	// evidence of absence. Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

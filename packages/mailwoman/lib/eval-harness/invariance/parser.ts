@@ -93,7 +93,7 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
  * `classifier.parse` the old runner used. That is the point of the probe: the release Gauntlet measures the
  * user-visible pipeline, and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint, no
  * kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped path never exhibits — and
- * misses the D-rule regressions that DO ride the pipeline stages. With a `weightsCache` classifier this is fully
+ * misses the D-rule regressions that do ride the pipeline stages. With a `weightsCache` classifier this is fully
  * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
  * to load the locale FST from the weights package. The `--model` scorer path carries no FST (matching the gauntlet's
  * legacy `createScorer` modes — the FST belongs to the weights package, not the scorer).

@@ -32,7 +32,7 @@ production only an `active` entry of the shipped register passes the self-test.
 | `SITE_ORIGIN`                                        | var        | the one CORS origin the claim route admits                                                                                                                                        |
 | `EMAIL_FROM`                                         | var        | the sender address                                                                                                                                                                |
 | `LICENSE_LEDGER`                                     | D1         | the ledger: `licenses`, `license_tokens`, `stripe_events` (`migrations/0001_ledger.sql`)                                                                                          |
-| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid AND per client address, independently, for refresh and status                                                                              |
+| `CLAIM_LIMITER`, `REFRESH_LIMITER`, `STATUS_LIMITER` | rate limit | per client address for claims; per lid and per client address, independently, for refresh and status                                                                              |
 
 A production var still reading `REPLACE` makes `readEnv` refuse every request with 503, so an unfilled deploy never
 mints. Secrets arrive only through `wrangler secret put`; `.dev.vars.example` names the four for local `wrangler dev`.

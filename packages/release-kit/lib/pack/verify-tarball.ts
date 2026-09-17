@@ -9,7 +9,7 @@
  *   first-publish bootstrap).
  *
  *   The gap this closes: `yarn pack` treats every `files` entry as a glob, and a glob matching
- *   nothing contributes nothing, SILENTLY. A workspace whose derived binaries were never built
+ *   nothing contributes nothing, silently. A workspace whose derived binaries were never built
  *   therefore packs to a tarball of metadata describing artifacts that are not in it, and npm
  *   accepts it. Published versions are immutable, so between packing and publishing is
  *   the only place the mistake is still recoverable.

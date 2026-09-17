@@ -39,7 +39,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
     ) -> None:
         """The output heads, in two groups that differ in what they touch.
 
-        The merge heads OWN columns of the classifier's output: their logits replace specific label
+        The merge heads own columns of the classifier's output: their logits replace specific label
         columns in `forward`, so they reach the exported graph and change what inference predicts.
         The structured heads sit beside the classifier — the CRF decodes its output, the span scorer
         and span-boundary head score it — and touch no column.
@@ -124,8 +124,8 @@ class CoarseEncoderHeads(CoarseEncoderState):
             self.register_buffer("affix_target_lut", lut, persistent=False)
 
         # Separate dependent_locality head (P-B probe, ROAD_TO_MAILWOMAN_V8_1_0 §4). The dead dep-loc tag
-        # is resurrected in its OWN head subspace instead of by reinit-ing the shared classifier's rows:
-        # a fresh MLP whose 2 logits OWN the B/I-dependent_locality columns (merge-in-forward, exactly like
+        # is resurrected in its own head subspace instead of by reinit-ing the shared classifier's rows:
+        # a fresh MLP whose 2 logits own the B/I-dependent_locality columns (merge-in-forward, exactly like
         # the affix head, so the inference graph carries it). The encoder stays shared+trainable — the probe
         # tests whether growing the capability in a separate head avoids the comma-drop invariance break that
         # every flat-head reinit recipe paid (v3.10–v3.13). init_from v385 (strict=False) leaves this head
@@ -195,10 +195,10 @@ class CoarseEncoderHeads(CoarseEncoderState):
         self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, self.id_to_label) if use_crf else None
 
         # PR3 self-conditioning modules. ``locale_head`` maps the pooled (mean over real tokens)
-        # representation to the locale posterior — the aux supervised signal AND the exported
+        # representation to the locale posterior — the aux supervised signal and the exported
         # LocalePosterior. ``locale_film`` produces a (scale, shift) pair from the same pooled
         # vector that FiLM-modulates the per-token reps feeding the BIO head. ``locale_film`` is
-        # zero-initialized in _init_weights so the model starts as the EXACT identity of an
+        # zero-initialized in _init_weights so the model starts as the exact identity of an
         # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
         # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
         # divergence (one new behaviour, introduced gently, not a cold-start architecture shock).
@@ -214,7 +214,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
     def _init_weights(self) -> None:
         """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
 
-        Critical: ``nn.LayerNorm.weight`` (``gamma``) MUST be initialized to 1.0, not 0.
+        Critical: ``nn.LayerNorm.weight`` (``gamma``) must be initialized to 1.0, not 0.
         A previous version zeroed every 1D parameter, which collapsed every LN to a constant
         output (``gamma·normalized + beta`` = 0·anything + 0 = 0) and made the model
         predict the same class for every token regardless of input. Loss plateaued near

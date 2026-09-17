@@ -12,7 +12,7 @@
  *
  *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
  *   `transitionBeta` are compared, because those are properties of the CONTENT and a rebuild from
- *   the same sources reproduces them exactly. The card's `md5` is NOT compared: a PIX1 header
+ *   the same sources reproduces them exactly. The card's `md5` is not compared: a PIX1 header
  *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
  *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
  *   STAGED for a release; the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
@@ -127,9 +127,9 @@ describe("pair-index ↔ model-card parity", () => {
 				).toContain(String(facts.transitionBeta))
 			}
 
-			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and OFF (no
+			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and off (no
 			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
-			// parentDelta misdescribes the behaviour, and a card that CLAIMS one the artifact lacks is worse —
+			// parentDelta misdescribes the behaviour, and a card that claims one the artifact lacks is worse —
 			// it reads as though the D-rule's per-locale check had been cleared when it hasn't. The assertion
 			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
 			// substring match on "5" would pass on a card that never mentioned the parent at all.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   #822 PLACER-FRONTIER PROBE (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
- *   country hint resolves them, so growing the placer captures the win), measure whether the DEPLOYED
+ *   country hint resolves them, so growing the placer is what would recover them), measure whether the DEPLOYED
  *   coarse placer can actually emit that country. Per query (`<City>, <Country>` from cities15000):
  *
  *   - `in_class_set`  — is the true country even in the placer's class set? (a class the model can't
@@ -43,7 +43,7 @@ const MIN_IN_CLASS_TOP1 = 0.8
  */
 export interface ProbeFrontierOptions {
 	/**
-	 * Model artifact dir. Default: the DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the
+	 * Model artifact dir. Default: the deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), not the
 	 * `$MAILWOMAN_DATA_ROOT` training output — match the runtime.
 	 */
 	model?: string

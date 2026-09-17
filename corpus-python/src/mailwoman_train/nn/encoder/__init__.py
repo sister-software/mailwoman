@@ -16,7 +16,7 @@ CONSTRUCTION ORDER IS A CONTRACT. `_init_weights` walks `self.parameters()`, whi
 registration order and draws from the global RNG for each, so moving a module's construction
 changes the initial weights of everything registered after it and a from-scratch run stops
 reproducing earlier ones. `tests/mailwoman_train/nn/test_encoder_split_parity.py` pins the logits,
-the loss, the state-dict keys AND each parameter's initial checksum for exactly that reason.
+the loss, the state-dict keys and each parameter's initial checksum for exactly that reason.
 """
 
 from __future__ import annotations

@@ -104,7 +104,7 @@ def test_span_columns_round_trip(tmp_path: Path) -> None:
             span_ends=[11],
             span_tags=["po_box"],
         ),
-        # All-O row: a legitimately EMPTY triple must survive as [], not null.
+        # All-O row: a legitimately empty triple must survive as [], not null.
         _row(
             source_id="t-all-o",
             raw="hello world",

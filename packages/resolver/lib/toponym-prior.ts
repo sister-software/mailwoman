@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #17 bare city-name disambiguation — two SOFT ranking keys for the bare-toponym class.
+ *   #17 bare city-name disambiguation — two soft ranking keys for the bare-toponym class.
  *
  *   A bare city name is the one query shape where the resolver has no geography to reason with: no
  *   postcode to anchor against, no region to scope by, no country the address itself named. All that
@@ -29,12 +29,12 @@
  *   reserved slot, `ResolvedPlace.encyclopedic`, which no ranking key reads and no shipped artifact
  *   yet populates — see `core/resolver/types.ts`.)
  *
- *   {@link rankByCountryPrior} covers the other half of the class — the query where a country IS
+ *   {@link rankByCountryPrior} covers the other half of the class — the query where a country is
  *   known, but only because a locale said so. See `span-rescore.ts` for where that one applies.
  *
  *   Both obey the same three house rules, and neither is a check:
  *
- *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders WITHIN a tier; it never
+ *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders within a tier; it never
  *      promotes a partial match over an exact one.
  *   2. **Positive evidence only.** An absent score is unmeasured, not zero (the meaning-of-zero rule), so an
  *      unscored candidate is never moved BY the signal and never penalized FOR lacking it — it keeps the
@@ -74,7 +74,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * band must cover at least the 0.0149 adjacent gap for the trio to chain into one cluster.
  *
  * The band never compares across countries, and that scope is forced by decided rows, not preference: Windsor's
- * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside ANY band that covers Springfield. The two
+ * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside any band that covers Springfield. The two
  * decisions are only co-satisfiable if the band binds same-country pairs alone. That is also what the §2 referential
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
@@ -132,13 +132,13 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 const size = (c: Rankable): number => c.prominence ?? c.score
 
 /**
- * A candidate the gazetteer actually scored. An absent value means "the score source never measured this place" OR
- * "this artifact predates the column" OR "the join refused the row" — three different things, none of them zero.
+ * A candidate the gazetteer actually scored. An absent value means "the score source never measured this place" or
+ * "this artifact predates the column" or "the join refused the row" — three different things, none of them zero.
  */
 const measured = (c: Rankable): boolean => typeof c.importance === "number" && Number.isFinite(c.importance)
 
 /**
- * Reorder ONLY the measured candidates, and only among the positions they already occupy.
+ * Reorder only the measured candidates, and only among the positions they already occupy.
  *
  * This is what "positive evidence only" has to mean when coverage is partial, which it always is — measured on the
  * shipped importance artifact, the four bare GB panel rows have 2/7, 8/10, 8/10 and 9/10 of their candidates scored. A
@@ -177,7 +177,7 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measure
 const counted = (c: Rankable): boolean => typeof c.population === "number" && c.population > 0
 
 /**
- * Within ONE country, a counted bearer orders ahead of an uncounted one, both groups keeping their incoming order.
+ * Within one country, a counted bearer orders ahead of an uncounted one, both groups keeping their incoming order.
  * Cross-country order is untouched: the partition only ever permutes rows that already share a country, among the
  * positions those rows already hold.
  *
@@ -191,7 +191,7 @@ const counted = (c: Rankable): boolean => typeof c.population === "number" && c.
  *
  *     220,370   same-country pools where importance can reorder at all
  *      31,975   pools whose head moves off the population winner
- *      20,301   of those, won by a row with NO recorded population — 63%
+ *      20,301   of those, won by a row with no recorded population — 63%
  *       3,008   of the 20,301, the two sit within 10 km: one place carried as two records
  *      17,293   a distinct place
  *          72   a distinct place displacing a bearer of at least 10,000
@@ -200,7 +200,7 @@ const counted = (c: Rankable): boolean => typeof c.population === "number" && c.
  * The 3,008 twin moves are why a board re-run reports placeID and coordinate separately: a twin swap changes the id and
  * not the answer, and reading it as a regression would refuse a correct change.
  *
- * Deliberately NOT a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
+ * Deliberately not a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
  * the cap's own docstring protects, where an article-only score is the only evidence there is.
  */
 function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] {
@@ -309,7 +309,7 @@ function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] 
  * The producer is the candidate build's `importance` column (#28) — the BLENDED prior (the concordance's
  * encyclopedia-derived channel clamped around a population-derived base — `place-importance-schema.ts`'s
  * `blendImportance`; see `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately
- * NOT what lands there). On an artifact predating the column, `importance` is `undefined` on every candidate the
+ * not what lands there). On an artifact predating the column, `importance` is `undefined` on every candidate the
  * backend produces and the abstention below keeps the ranking byte-stable.
  *
  * Flip decisions, ratified 2026-08-11: bare `Moscow`→Москва, `Manchester`→GB, `Fulda`→DE, `Cambridge`→GB are ACCEPTED

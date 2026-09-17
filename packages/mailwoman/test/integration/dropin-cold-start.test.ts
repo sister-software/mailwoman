@@ -11,12 +11,12 @@
  *     within 30 s and its stderr must name the fix (`mailwoman data pull`) — never an unhandled-rejection
  *     stack trace. This was previously a bare, WAF-blocked `curl` line (measured 2026-08-03: an unranged GET
  *     against the public bucket 403s) — see `resolver-backend.ts`'s `buildNoGazetteerMessage`.
- *   - `libpostal` needs ONLY the model weights — no gazetteer, no data pull; `serve` must bind and answer
+ *   - `libpostal` needs only the model weights — no gazetteer, no data pull; `serve` must bind and answer
  *     `GET /` with 200 (the "lowest-dependency drop-in" the README claims). On a CONSUMER install the published
  *     package ships the binaries, so a bare data root is the complete cold start; that half of the claim belongs
  *     to the clean-install smoke. IN-REPO the workspace package is bare by design (#1733: `link-dev-weights`
  *     populates the data-root overlay, never the tracked package), so the test seeds its scratch root's overlay
- *     from whatever weights THIS environment resolves and proves the data-independence half; a box that resolves
+ *     from whatever weights this environment resolves and proves the data-independence half; a box that resolves
  *     no weights at all skips with the resolver's own message rather than failing on its environment.
  *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
@@ -28,8 +28,8 @@
  *     inside this monorepo can catch that one at runtime, because yarn hoists every workspace sibling into
  *     `node_modules` whether a package declares it or not.
  *
- *   These assertions run in EVERY environment and download nothing (a bare `mkdtemp` data root, never
- *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim ALSO
+ *   These assertions run in every environment and download nothing (a bare `mkdtemp` data root, never
+ *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim also
  *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
  *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is conditional
  *   behind `$MAILWOMAN_COLD_START_FULL=1` (unset in CI). Run it manually once per change to this cold-start
@@ -130,7 +130,7 @@ function spawnServer(
 	cliPath: string,
 	args: string[],
 	env: NodeJS.ProcessEnv,
-	// The HTTP drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` IS its stdin — the
+	// The HTTP drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the
 	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
@@ -348,11 +348,11 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 		async (ctx) => {
 			const dataRoot = await freshDataRoot()
 
-			// The claim under test is "weights ONLY, zero data artifacts" — not "the workspace package carries
+			// The claim under test is "weights only, zero data artifacts" — not "the workspace package carries
 			// weights". A CONSUMER install satisfies the weights half natively (the published package ships the
 			// binaries; the clean-install smoke owns that claim). A dev checkout deliberately does not (#1733:
 			// `link-dev-weights` populates the DATA-ROOT overlay, never the tracked package — the YN0035/worktree
-			// hazards), so seed the scratch root's overlay from whatever THIS environment resolves; the child then
+			// hazards), so seed the scratch root's overlay from whatever this environment resolves; the child then
 			// proves the data-independence half on every box, through the same overlay rung a dev run uses.
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
 
@@ -412,7 +412,7 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it (checked against the registry
 		// 2026-08-03), so `npm install @mailwoman/mcp` in a clean directory installed no weights package and
 		// every model-backed tool answered `Could not resolve @mailwoman/neural-weights-en-us`. A runtime
-		// assertion cannot see this — yarn hoists the sibling workspace regardless — so the manifest IS the test.
+		// assertion cannot see this — yarn hoists the sibling workspace regardless — so the manifest is the test.
 		expect(manifest.dependencies?.["@mailwoman/neural-weights-en-us"]).toBe("workspace:*")
 	})
 
@@ -505,7 +505,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				})
 
 				// The ledgered Paris/Texas finding: `mailwoman geocode` (unlike the drop-ins) resolves the candidate
-				// gazetteer ONLY via $MAILWOMAN_CANDIDATE_DB — the export step `buildNoGazetteerMessage` prints for it.
+				// gazetteer only via $MAILWOMAN_CANDIDATE_DB — the export step `buildNoGazetteerMessage` prints for it.
 				const { stdout } = await withCLISpawnLockAsync(() =>
 					runFile("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
 						timeout: PREFLIGHT_TIMEOUT_MS,

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Mechanism accounts (#1722) — per row, what the pipeline DID, assembled from the facts it already exposes.
+ *   Mechanism accounts (#1722) — per row, what the pipeline did, assembled from the facts it already exposes.
  *
  *   Two commitments from the epic bind every line here.
  *
@@ -15,7 +15,7 @@
  *      channels, constraints, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
  *      what the system did on this input; it cannot fossilize a wrong belief about how addresses work.
  *
- *   Classification is v1: transparent predicates over recorded pipeline facts, with NO calibration. Every result says so in its
+ *   Classification is v1: transparent predicates over recorded pipeline facts, with no calibration. Every result says so in its
  *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
  *   rather than squeezed into the nearest match, because a label applied to it now is the thing a calibrated v2 would
  *   have to un-learn.
@@ -252,7 +252,7 @@ export interface ParseFacts {
 }
 
 /**
- * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately NOT carried —
+ * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately not carried —
  * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
  */
 interface LookupFact {
@@ -265,7 +265,7 @@ interface LookupFact {
 	checks: string[]
 	picked: { name: string; source: string } | null
 	/**
-	 * The picked candidate's rank in the FIRST recorded stage (the backend's own order), or `null` when nothing was
+	 * The picked candidate's rank in the first recorded stage (the backend's own order), or `null` when nothing was
 	 * picked or the pick came from a path that never ranked.
 	 */
 	picked_initial_rank: number | null
@@ -277,14 +277,14 @@ interface LookupFact {
 
 export interface RetrievalFacts {
 	/**
-	 * `null` when the trace carries no resolver records at all (a trace predating them). An EMPTY array is the walk
+	 * `null` when the trace carries no resolver records at all (a trace predating them). An empty array is the walk
 	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
 	 *
 	 * COVERAGE BOUND, and it is required for every retrieval shape below: the trace records the WALK's own
 	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
 	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
 	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved
-	 * coordinate beside an EMPTY lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
+	 * coordinate beside an empty lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
 	 * case rather than leaving the reader to read the empty list as "no retrieval happened".
 	 */
 	lookups: LookupFact[] | null
@@ -322,7 +322,7 @@ export interface RowAccount {
 	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded NO lookup — the account's retrieval facts are blind for this
+	 * A coordinate arrived and the resolver trace recorded no lookup — the account's retrieval facts are blind for this
 	 * row. See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage. Reported so the empty
 	 * lookup list is not read as "retrieval had nothing to do": the retrieval shapes cannot fire here, and their silence
 	 * is a coverage bound rather than a finding.
@@ -404,7 +404,7 @@ export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> |
 	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
-		// The rank vector's key order IS the resolver's stage execution order — the recorder writes one entry per stage
+		// The rank vector's key order is the resolver's stage execution order — the recorder writes one entry per stage
 		// as it runs — so the first key is the backend's own order and the last is the order the pick came from.
 		const stages = pickedRow ? Object.keys(pickedRow.ranks) : []
 		const firstStage = stages[0]
@@ -474,8 +474,8 @@ export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFact
 /**
  * Match the mechanism-state predicates.
  *
- * The terminal states are NOT decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
- * of this function is what stops an expectation from ever influencing a MECHANISM claim (commitment 1).
+ * The terminal states are not decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
+ * of this function is what stops an expectation from ever influencing a mechanism claim (commitment 1).
  */
 export function matchShapes(facts: {
 	parse: ParseFacts | null
@@ -512,7 +512,7 @@ export function matchShapes(facts: {
 		shapes.push("retrieval_empty")
 	}
 
-	// The rule fires only when the scoped probe missed across the whole cascade AND the unscoped fallback produced
+	// The rule fires only when the scoped probe missed across the whole cascade and the unscoped fallback produced
 	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
 	// the trace can support; it suffices here because the rule's own condition covers the whole row set.
@@ -899,7 +899,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
 		// Under a cap the emitted rows lead with the non-clean ones — the ones every aggregate above points
-		// at — and says what it left out. The aggregates are computed over EVERY row regardless.
+		// at — and says what it left out. The aggregates are computed over every row regardless.
 		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
 		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}

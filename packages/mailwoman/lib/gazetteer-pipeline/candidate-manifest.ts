@@ -8,7 +8,7 @@
  *   THE CANDIDATE IS DERIVED, so its manifest names its INPUT rather than restating the input's sources.
  *   `buildCandidateTable` reads an admin gazetteer plus postcode and locality databases; it ingests nothing
  *   from WOF, Overture or GeoNames directly. A manifest that repeated "whosonfirst+overture+geonames" here
- *   would be true of the ancestor and unfalsifiable of this file — it could not tell you WHICH admin build
+ *   would be true of the ancestor and unfalsifiable of this file — it could not tell you which admin build
  *   this came from, which is the only question a reproduction actually asks.
  *
  *   So the source is the ancestor's identity, read out of the ancestor's own manifest when it has one:

@@ -10,10 +10,10 @@
  *   set — score byte-identically on the OA board, because a well-formed address ("1600 Pennsylvania Ave
  *   NW, Washington, DC 20500") never puts the decoder in a position where a soft gazetteer bias can
  *   change the argmax. An unmeasurable change is an unshippable change (§2 R3), so this board is
- *   assembled entirely out of inputs that DO exercise the bias list: bare toponyms, comma-free
+ *   assembled entirely out of inputs that do exercise the bias list: bare toponyms, comma-free
  *   fragments, and namesake confounds.
  *
- *   WHAT A ROW IS. Every row pins ONE discrimination case and declares, in the row itself, why it
+ *   WHAT A ROW IS. Every row pins one discrimination case and declares, in the row itself, why it
  *   should discriminate: {@linkcode HardCase.probeSurface} is the token whose gazetteer bias is
  *   under test, and {@linkcode HardCase.popBias} / {@linkcode HardCase.impBias} are that
  *   surface's MEASURED max-importance under each FST arm (see `dev-tools/probe-fst-bias.run.ts`). A row
@@ -37,7 +37,7 @@
  *   measured for every row, always; a zero here means the FST accepted nothing for that surface, which is
  *   a fact about the gazetteer rather than a default.
  *
- *   MEANING OF ZERO, ON TOLERANCES. A coordinate assertion is all-or-nothing and NEVER defaulted: a row
+ *   MEANING OF ZERO, ON TOLERANCES. A coordinate assertion is all-or-nothing and never defaulted: a row
  *   either carries `expectLat` + `expectLon` + `expectToleranceM` together, or asserts no coordinate at
  *   all. {@linkcode HardCaseSchema} refuses every partial combination. A silently-defaulted
  *   tolerance is a number nobody chose, and a row with a coordinate but no tolerance would inherit a bar
@@ -85,7 +85,7 @@ export const HARD_CASE_CLASSES = [
 	 */
 	"country_structure",
 	/**
-	 * A toponym in street-head position that must NOT be pulled to locality (#1142).
+	 * A toponym in street-head position that must not be pulled to locality (#1142).
 	 */
 	"street_head_control",
 	/**
@@ -146,7 +146,7 @@ export interface HardCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance (m). NEVER defaulted — see the file header's meaning-of-zero note.
+	 * Great-circle tolerance (m). Never defaulted — see the file header's meaning-of-zero note.
 	 */
 	expectToleranceM?: number
 	source: string
@@ -232,14 +232,14 @@ export const HardCaseSchema = zod
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
 /**
- * The third leg: {@linkcode HARD_CASE_KEY_ORDER} must list EVERY key, not merely valid ones.
+ * The third leg: {@linkcode HARD_CASE_KEY_ORDER} must list every key, not merely valid ones.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof HARD_CASE_KEY_ORDER)[number],
 	keyof HardCase
 >
 
-// Probe the DIRECTORY, not the board file: the builder that WRITES the board resolves this constant
+// Probe the DIRECTORY, not the board file: the builder that writes the board resolves this constant
 // before the file exists, and a file-existence probe would send the first build to the compiled-tree
 // fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
 // discriminator between source and compiled trees.

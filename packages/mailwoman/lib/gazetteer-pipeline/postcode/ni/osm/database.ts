@@ -32,7 +32,7 @@
  *   permissive sources precisely so that installing the package imposes no share-alike obligation.
  *   This artifact therefore never enters an npm tarball, an R2 publish, or the demo — it is built on the
  *   operator's machine and picked up because `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which
- *   IS the build-local mechanism. See `NI_OSM_BUILD_LOCAL_NOTE`. Same posture as `poi.db` and
+ *   is the build-local mechanism. See `NI_OSM_BUILD_LOCAL_NOTE`. Same posture as `poi.db` and
  *   `@mailwoman/osm`.
  *
  *   ## What is shared with the other postcode builders
@@ -111,11 +111,11 @@ export const NI_TOTAL_DISTRICTS = 80
 export interface BuildPostcodeNIOSMOptions {
 	/**
 	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`. Default
-	 * `<data-root>/osm-ni-postcodes/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
+	 * `<data-root>/osm-ni-postcodes/<YYYY-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<YYYY-MM-DD>.db` — a NEW dated path every build.
+	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<YYYY-MM-DD>.db` — a new dated path every build.
 	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
 	 */
 	out?: PathBuilderLike
@@ -197,7 +197,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const sidecar = await readAcquisitionSidecar<NIAcquisitionSidecar>(sourceDir)
 
 	// The saved query is authoritative over the module constant: the database must record the query that
-	// produced ITS bytes, not the query the code would issue today. They diverge the moment the constant
+	// produced its bytes, not the query the code would issue today. They diverge the moment the constant
 	// is edited, and the whole point of the sidecar is to survive that edit.
 	const queryText = sidecar?.query ?? NI_POSTCODE_OVERPASS_QUERY
 	const queryMD5 = sidecar?.queryMD5 ?? niPostcodeQueryMD5()
@@ -353,7 +353,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * Check the identities that no single counter implies.
  *
  * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements exist" — so unlike the
- * Code-Point Open build there is no external oracle to condition on. What CAN be checked is internal consistency plus
+ * Code-Point Open build there is no external oracle to condition on. What can be checked is internal consistency plus
  * two bounds that a broken validator would blow through, and those are worth more than they look: the
  * `codepoint-database.ts` check learned the hard way that a tolerance derived from the failure it is meant to catch
  * catches nothing, so every check here is against a fixed number.

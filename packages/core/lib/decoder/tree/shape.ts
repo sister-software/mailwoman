@@ -9,7 +9,7 @@
  *   - {@link isBareTreeOf} — every value-bearing node carries the given tag (several allowed). The
  *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag
  *     bound.
- *   - {@link loneValueBearingNode} — the tree has EXACTLY one value-bearing node. The street-miss
+ *   - {@link loneValueBearingNode} — the tree has exactly one value-bearing node. The street-miss
  *     fallback and the resolver's bare-country race bind the tag at the call site.
  *
  *   The distinction is required: a two-segment parse can satisfy the first and never the second,
@@ -25,7 +25,7 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 /**
  * True when every node in the tree either carries `tag` or bears no value — i.e. the only EVIDENCE in the parse is
  * `tag`-shaped. A tag-matching node counts even when its value is empty (the guard asks "did the parser emit this
- * shape", not "is the span non-blank"); any OTHER tag with a non-empty value disqualifies. False for a tree with no
+ * shape", not "is the span non-blank"); any other tag with a non-empty value disqualifies. False for a tree with no
  * `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
@@ -42,7 +42,7 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 
 /**
  * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers check on the
- * returned node's `tag` — the quantifier ("this is the WHOLE query") is what this walk answers.
+ * returned node's `tag` — the quantifier ("this is the whole query") is what this walk answers.
  */
 export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
@@ -81,7 +81,7 @@ export interface FlatTreeNode {
 	 * The resolver's answer for this span, when one won.
 	 *
 	 * Carried for the same reason `source` is: a projection that keeps only the text and the tag cannot tell a span that
-	 * resolved to a DIFFERENT place from one that did not move at all, and those are a ranking problem and a non-event
+	 * resolved to a different place from one that did not move at all, and those are a ranking problem and a non-event
 	 * respectively. `alternatives` is reduced to its LENGTH — the retrieval breadth is what a consumer reads, and handing
 	 * over the candidate objects invites a walk this projection exists to have already done.
 	 */

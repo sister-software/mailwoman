@@ -26,7 +26,7 @@ This document defines the canonical `ComponentTag` union. Where another document
 | Tag                      | Description                                    | Example                            |
 | ------------------------ | ---------------------------------------------- | ---------------------------------- |
 | `house_number`           | Building number on a street                    | `6220`, `12bis`                    |
-| `street`                 | Street name proper, WITHOUT its type           | `Salmon`, `République`             |
+| `street`                 | Street name proper, without its type           | `Salmon`, `République`             |
 | `street_prefix`          | Directional or descriptive prefix (Anglophone) | `SE`, `North`                      |
 | `street_prefix_particle` | Non-English grammatical particle (FR)          | `de la`, `du`, `des`               |
 | `street_suffix`          | Street type suffix (Anglophone)                | `Street`, `Boulevard`, `Ave`       |
@@ -59,7 +59,7 @@ Two conventions fall out of it, both established by measurement rather than tast
 - A trailing **post-directional joins the suffix**: `Pennsylvania Avenue NW` is
   `street: "Pennsylvania"`, `street_suffix: "Avenue NW"`. There is no post-directional tag, and this
   is what the corpus adapter emits (`corpus/src/adapters/tiger/street-decompose.ts`).
-- A **bare** post-directional with no type before it is NOT a suffix: `Seymour East` stays folded.
+- A **bare** post-directional with no type before it is not a suffix: `Seymour East` stays folded.
   A directional is not a Pub-28 suffix, and the rows in that class are unit-contaminated
   (`1ST AVE SW BOX E`, where the trailing `E` is a box letter).
 

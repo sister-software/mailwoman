@@ -522,7 +522,7 @@ export interface RuntimeLicenseObservation {
 }
 
 /**
- * The license that governs THIS installation of mailwoman, and what it asks of the operator. Without a valid key the
+ * The license that governs this installation of mailwoman, and what it asks of the operator. Without a valid key the
  * AGPL-3.0-only branch applies, and the summary says so in the responsibility vocabulary: attribution, share-alike on
  * modifications, and a source offer to network users (section 13). A valid key selects the commercial branch; an
  * expired, unknown, invalid or retired key is reported with its reason and the open-source branch applies. The runtime

@@ -29,7 +29,7 @@
  *       +locality+region+country.
  *
  *   `source_id` is `wof-postalcode-<wof_id>-<name-slot>-<hierarchy-variant>`. Ancestor names always
- *   come from the ancestor's canonical `wof:name`; this adapter does NOT iterate ancestor name
+ *   come from the ancestor's canonical `wof:name`; this adapter does not iterate ancestor name
  *   variants (e.g. it does not emit `"75008 Париж"` even when Paris has a `name:rus_x_preferred`).
  *   That cross-product belongs to a future synthesis pass; emitting it here would multiply row
  *   counts ~10× without a clear training-value story.

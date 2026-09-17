@@ -101,7 +101,7 @@ function writeQueryToURL(query: string): void {
 
 /**
  * The app's identity and source credits. They belong to the page rather than to the runtime, so the canned runtime the
- * smoke and the stories mount shows the same footer the real one does — the SAME component the real panels use, not a
+ * smoke and the stories mount shows the same footer the real one does — the same component the real panels use, not a
  * second copy of it, which is how the commit link came to render here and nowhere a visitor could see it.
  */
 const IDENTITY_PANELS: GeocoderPanels = {

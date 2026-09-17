@@ -91,7 +91,7 @@ describe("ancestorIdentity — the four states", () => {
 describe("candidateLayerManifest", () => {
 	it("records the ancestor as its source, not the ancestor's sources", async () => {
 		// Restating "whosonfirst+overture+geonames" here would be true of the ancestor and unfalsifiable of
-		// this file — it could not say WHICH admin build this came from.
+		// this file — it could not say which admin build this came from.
 		const root = await scratch()
 
 		manifested(join(root, "admin.db"), "admin-global-priority", "2026-08-17.0")

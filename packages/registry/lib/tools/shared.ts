@@ -77,7 +77,7 @@ const ORGANIZATION_STOP_WORDS = new Set([
 /**
  * The token set of an organization name: lower-cased, non-alphanumerics folded to spaces, stop words removed.
  *
- * NOT a canonical form — `@mailwoman/record`'s `canonicalizeOrganizationName` is the stronger canonical key
+ * Not a canonical form — `@mailwoman/record`'s `canonicalizeOrganizationName` is the stronger canonical key
  * (jurisdiction-aware designation stripping, a DBA split). This set serves the probes' cheap Jaccard overlap over raw
  * registry names, never blocking or display.
  */
@@ -568,7 +568,7 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	rows: readonly CrossSourceRow[]
 	/**
-	 * The join keys present in BOTH sources.
+	 * The join keys present in both sources.
 	 */
 	joined: ReadonlySet<string>
 	addressFrequency: TermFrequencyTable
@@ -602,8 +602,8 @@ export interface TrainCrossSourceModelOptions {
 
 /**
  * Phases C–F shared by the cross-source trainers: geocode + ingest each source under its own provenance label, block
- * the union and keep only CROSS-source candidate pairs, featurize with the SHARED `createMatchFeaturizer` (train ≡
- * inference), calibrate the #655 threshold on a held-out split of the join keys, train the shipped model on ALL pairs,
+ * the union and keep only cross-source candidate pairs, featurize with the shared `createMatchFeaturizer` (train ≡
+ * inference), calibrate the #655 threshold on a held-out split of the join keys, train the shipped model on all pairs,
  * and emit it as a committed TS module.
  */
 export async function trainCrossSourceModel(

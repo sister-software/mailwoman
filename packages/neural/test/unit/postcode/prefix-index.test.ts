@@ -39,7 +39,7 @@ const northernIreland = { placetype: "macroregion", wofID: 404_227_473, name: "N
 const nodes: PostcodePrefixNode[] = [
 	{ prefix: "SW1A", ancestors: [uk, england], lat: 51.501, lon: -0.1416, radiusP95Km: 1.23, unitCount: 232 },
 	{ prefix: "M1", ancestors: [uk, england], lat: 53.4808, lon: -2.2426, radiusP95Km: 2.5, unitCount: 1040 },
-	// The ancestry-only tier: ancestors, a count, and NO coordinate.
+	// The ancestry-only tier: ancestors, a count, and no coordinate.
 	{ prefix: "BT9", ancestors: [uk, northernIreland], unitCount: 121 },
 	// A prefix whose area straddles a border asserts the country and nothing finer.
 	{ prefix: "TD1", ancestors: [uk], lat: 55.6, lon: -2.8, radiusP95Km: 4.75, unitCount: 300 },

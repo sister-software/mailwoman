@@ -1,10 +1,10 @@
-# 500-STEP FEED SMOKE for v4.7.0 — does the v0.24.0 overlay READ and does loss descend. NOT a capability
+# 500-STEP FEED SMOKE for v4.7.0 — does the v0.24.0 overlay READ and does loss descend. Not a capability
 # probe: 500 steps at 5.9 reps/row for the target source is 0.4 reps, far too few to teach a shape. Its
 # only job is to catch a missing corpus file, a tokenizer mismatch or a NaN before 8,000 steps of A100.
 # v4.7.0 — trailing-region STRUCTURED (#1748)
 #
 # WHY: the recipe output written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
-# over both built v23 recipe outputs: 88,904 rows, two surfaces, ZERO postcodes. The model learned the bare
+# over both built v23 recipe outputs: 88,904 rows, two surfaces, zero postcodes. The model learned the bare
 # admin tail correctly and had never seen `«postcode» «locality», «region»`, which is why no decode
 # change moved it. Corpus absence, not a decode defect.
 #
@@ -27,8 +27,8 @@
 #
 # PRE-REGISTERED WATCH (#513, and the discipline #1677 says was missing):
 #   expected to move   — es/it/de/fr *-trailing-region cohort rows, es-op3-southeast-portopetro
-#   expected NOT to    — pt-cs-lagos-trailing-region (no PT triples in the corpus)
-#   must NOT regress   — bz-cs-belize-city, kh-cs-phnom-penh, tt-cs-port-of-spain,
+#   expected not to    — pt-cs-lagos-trailing-region (no PT triples in the corpus)
+#   must not regress   — bz-cs-belize-city, kh-cs-phnom-penh, tt-cs-port-of-spain,
 #                        bn-cs-bandar-seri-begawan, il-cs-tel-aviv-yafo, my-cs-petaling-jaya,
 #                        and the *-street-name-* family. These are the classes v4.6.0 broke.
 data:
@@ -93,7 +93,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

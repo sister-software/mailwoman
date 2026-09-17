@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #17 bare city-name disambiguation. Two ranking keys for the bare-toponym class, both SOFT priors:
+ *   #17 bare city-name disambiguation. Two ranking keys for the bare-toponym class, both soft priors:
  *   `rankByImportance` (the #28 blended toponym-fame signal, consumed at last) and
  *   `rankByCountryPrior` (a locale country demoted from hard filter to additive bonus).
  *
@@ -62,8 +62,8 @@ describe("rankByImportance", () => {
 	})
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
-		// A missing importance means "the score source never measured this place" OR "pre-split
-		// gazetteer" OR "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never
+		// A missing importance means "the score source never measured this place" or "pre-split
+		// gazetteer" or "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never
 		// carries its own absence, so a lone measured 0.55 must not be read as beating an unmeasured
 		// megacity.
 		const partial = [
@@ -110,7 +110,7 @@ describe("rankByImportance", () => {
 	})
 
 	it("never crosses the exact/partial boundary", () => {
-		// Tier is the PRIMARY key everywhere in this resolver; a soft prior re-orders WITHIN a tier only.
+		// Tier is the primary key everywhere in this resolver; a soft prior re-orders within a tier only.
 		const mixed = [
 			place({ id: 1, name: "Whitby", country: "CA", importance: 0.2, exactMatch: true }),
 			place({ id: 2, name: "Whitby Bay", country: "GB", importance: 0.9, exactMatch: false }),
@@ -133,7 +133,7 @@ describe("rankByImportance", () => {
 		]
 
 		expect(rankByImportance(seatFirst).map((c) => c.id)).toEqual([1, 2])
-		// The reversed input keeps ITS order too — this ranker carries the backend's decision either way.
+		// The reversed input keeps its order too — this ranker carries the backend's decision either way.
 		expect(rankByImportance(seatFirst.toReversed()).map((c) => c.id)).toEqual([2, 1])
 	})
 

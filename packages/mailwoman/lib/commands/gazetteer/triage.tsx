@@ -62,7 +62,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		await makeDirectories(dirname(outPath))
 		await writeLocalJSONLFile(emitted, outPath)
 
-		// The review queue's head: uncovered AND independently attested, most populous first — the rows most likely to
+		// The review queue's head: uncovered and independently attested, most populous first — the rows most likely to
 		// be an upstream mistake rather than a real cessation.
 		const queue = rows
 			.filter((r) => r.coverage === CoverageVerdict.Uncovered && r.attestation.state === "attested")

@@ -13,7 +13,7 @@
  *   2. Truncation — "M5V 2T6" → "2T6"; "B12 8QX" → "B12"
  *   3. Char-drift — "75008" → "5008"; "62701" → "2701" (and smear: "1200-030 Lisboa" → "200-030 Lis")
  *
- *   This pass runs AFTER the model's per-token BIO labels are decoded but BEFORE `buildAddressTree`.
+ *   This pass runs after the model's per-token BIO labels are decoded but before `buildAddressTree`.
  *   It detects postcode-shaped substrings with per-country regexes and repairs the label sequence
  *   so the postcode span matches the detected shape. The model is untouched — this is a
  *   deterministic decoder-side correction, the "lowest risk" change in the v0.7 plan (vs. #36's soft
@@ -21,7 +21,7 @@
  *
  *   PRECISION GUARDS (so we never regress the countries already passing):
  *
- *   - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this IS a postcode" patterns →
+ *   - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this is a postcode" patterns →
  *       eligible to ADD a span where the model emitted none, but only over non-structural labels
  *       (never over house_number/street/etc.).
  *   - Numeric shapes (\d{5}, ZIP+4, BR, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
@@ -35,7 +35,7 @@
  *       pattern-match (AU 4-digit, IN 6-digit, …).
  *
  *   A MISSING shape is not neutral for a HYPHENATED postcode. The local smear cleanup is local to a
- *   MATCH, and an unlisted compound shape still matches at its numeric head: `NUM5` claims the five
+ *   match, and an unlisted compound shape still matches at its numeric head: `NUM5` claims the five
  *   digits of an unlisted `NNNNN-NNN`, snaps the span down to them, and clips the suffix the model
  *   correctly labeled. That is how BR CEPs were truncated for the pass's whole life (#35, diagnosed
  *   2026-08-10) while the unhyphenated shapes above degraded gracefully. Before concluding a hyphenated
@@ -109,7 +109,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 }
 
 /**
- * Repair postcode label spans in a decoded token sequence using per-country regexes. Returns a NEW token array (inputs
+ * Repair postcode label spans in a decoded token sequence using per-country regexes. Returns a new token array (inputs
  * are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
@@ -138,7 +138,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// SNAP/ADD: relabel the matched run as a single postcode span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? POSTCODE_B : POSTCODE_I))
 
-		// Leading smear clip: postcode tokens immediately BEFORE the snapped run are noise (e.g. a
+		// Leading smear clip: postcode tokens immediately before the snapped run are noise (e.g. a
 		// house-number digit the model over-labeled) — clear to O as before.
 		for (let j = overlap[0]! - 1; j >= 0 && isTagLabel(tokens[j]!.label, "postcode"); j--) {
 			setLabel(j, OUTSIDE)
@@ -149,7 +149,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// the historical clip-to-O then DISCARDED ("08523 Pl|auen Vogtl" → postcode "08523" + O +
 		// locality "auen Vogtl", dropping the "Pl"). When the smear connects to a following locality run,
 		// hand those characters BACK to the city — reassign them to locality and demote the city's
-		// leading B so the prefix + city form ONE span ("Pl"+"auen"+"Vogtl" → "Plauen Vogtl"). A
+		// leading B so the prefix + city form one span ("Pl"+"auen"+"Vogtl" → "Plauen Vogtl"). A
 		// standalone neighbour with no following locality (a country, "Paris 75008 France") keeps the
 		// historical clip-to-O. This is the decoder-side repair for the cross-tag postcode→city
 		// absorption diagnosed in the PR3 Pilot A postmortem (+36pp DE exact-locality, no-op on US,

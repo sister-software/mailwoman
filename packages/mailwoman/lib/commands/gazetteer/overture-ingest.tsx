@@ -177,7 +177,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 
 		/**
 		 * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number, unit, postcode,
-		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept WHOLE
+		 * locality }`), so `@mailwoman/corpus` stays free of the heavy native DuckDB binding. `street` is kept whole
 		 * (keyword included); the downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
 		 * municipality (the deepest level) with a `postal_city` fallback.
 		 */

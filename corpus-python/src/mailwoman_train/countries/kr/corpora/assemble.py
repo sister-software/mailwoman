@@ -123,7 +123,7 @@ def write_label_board(
 ) -> tuple[list[dict[str, Any]], int]:
     """Write the held-out board, whose coordinate half is the permit registry's 시군구 centroid.
 
-    A row whose 시군구 has no centroid is DROPPED rather than written without one: the JP scorer
+    A row whose 시군구 has no centroid is dropped rather than written without one: the JP scorer
     compares a resolved pair against a coordinate, and a board row with none cannot be scored.
     """
     board_records: list[dict[str, Any]] = []

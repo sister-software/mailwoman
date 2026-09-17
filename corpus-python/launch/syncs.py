@@ -1,7 +1,7 @@
 """Staging assets from R2 onto the training volume, container-side.
 
 Container-side is not a preference. On this volume the CLI write -> container read path is broken:
-files written by `modal volume put` are visible to `modal volume ls/get` but NOT to a mounted
+files written by `modal volume put` are visible to `modal volume ls/get` but not to a mounted
 container, and `vol.reload()` does not bridge it. Container-side writes plus `vol.commit()` do
 propagate, so every asset routes local -> R2 -> here.
 

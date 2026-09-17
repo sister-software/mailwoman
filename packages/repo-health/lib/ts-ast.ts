@@ -10,8 +10,8 @@ import ts from "typescript"
 export interface ModuleSpecifierOptions {
 	/**
 	 * Keep declaration-level type-only specifiers: `import type` / `export type` declarations and `import("x")` type
-	 * positions. Node's type stripping erases those, so a guard about what RUNS leaves them out (`docs/sidebars.ts`
-	 * relies on that — it takes a Docusaurus type with no install); a guard about the package CONTRACT keeps them. A
+	 * positions. Node's type stripping erases those, so a guard about what runs leaves them out (`docs/sidebars.ts`
+	 * relies on that — it takes a Docusaurus type with no install); a guard about the package contract keeps them. A
 	 * specifier-level `{ type Foo }` still emits the declaration and is collected either way.
 	 */
 	includeTypeOnly?: boolean
@@ -19,7 +19,7 @@ export interface ModuleSpecifierOptions {
 
 /**
  * Every module specifier `source` imports, re-exports, or dynamically imports, in document order, as the string literal
- * that HOLDS it.
+ * that holds it.
  *
  * A rewriter needs the node rather than its text: two specifiers in one file can read alike, and the offsets are the
  * only thing that tells them apart. {@linkcode moduleSpecifiers} is the text-only reading of the same walk, so a guard

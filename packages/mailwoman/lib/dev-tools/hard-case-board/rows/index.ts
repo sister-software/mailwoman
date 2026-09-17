@@ -8,8 +8,8 @@
  *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons and
  *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit JSONL),
  *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
- *   here carries NO coordinates and NO bias numbers on purpose; those are measured at build time from
- *   primary data, so the only thing a curator can get wrong is the CHOICE, which is the thing worth
+ *   here carries no coordinates and no bias numbers on purpose; those are measured at build time from
+ *   primary data, so the only thing a curator can get wrong is the choice, which is the thing worth
  *   reviewing.
  *
  *   `comma_free` is the register the FST prior was designed for: a two-toponym fragment with no
@@ -56,7 +56,7 @@ export const CITY_TOL = 15_000
  */
 export const FRAGMENT_ROWS: Curated[] = [
 	//#region comma_free
-	// The FST prior's design register: a two-toponym fragment with NO punctuation. Each is paired with its
+	// The FST prior's design register: a two-toponym fragment with no punctuation. Each is paired with its
 	// `comma_control` twin below — same truth, comma restored. A `comma_free` row that moves while its
 	// control does not is the bias acting exactly where it was designed to.
 	{
@@ -265,7 +265,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	//#endregion
 
 	//#region comma_control
-	// The byte-stability twins. These must NOT be where an arm warrants its score.
+	// The byte-stability twins. These must not be where an arm warrants its score.
 	{
 		id: "us-cc-moscow-idaho",
 		input: "Moscow, Idaho",

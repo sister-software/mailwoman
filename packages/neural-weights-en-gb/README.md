@@ -31,7 +31,7 @@ own; it is loaded at inference time by `@mailwoman/neural`.
 > built from the HM Land Registry PPD tuples — see _Evaluation_ below), plus
 > the shared gazetteer/country lexicons.
 
-> **The postcode-anchor channel runs OFF for en-gb** (2026-08-05). This bundle
+> **The postcode-anchor channel runs off for en-gb** (2026-08-05). This bundle
 > used to ship an outward-code `postcode-gb.bin`; it no longer does. The shared
 > encoder's anchor input reserves one slot per country, and the GB slot was
 > never trained — every training recipe fed the same US/DE/FR-only lookup — so
@@ -94,7 +94,7 @@ no GB-specific numbers existed. That has changed: the base encoder was
 fine-tuned on a `dependent_locality`-feed corpus that includes a real GB
 subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
-board (69 rows carrying the tag), prior ON at the calibrated δ=5.0: **69/69
+board (69 rows carrying the tag), prior on at the calibrated δ=5.0: **69/69
 emission, 67/69 tag-correct (97.1%)**. The two misses are pre-existing,
 independently characterized parser-level cases, not prior artifacts. A
 three-way ablation shows this recall is carried almost entirely by the

@@ -17,7 +17,7 @@
 # base moves those rows on its own, whatever it is fed.
 #
 # WHAT IT DECIDES:
-#   - the nine still regress with NO new data  -> the arc measured the wrong thing. Every corpus-side
+#   - the nine still regress with no new data  -> the arc measured the wrong thing. Every corpus-side
 #     conclusion is void, the right baseline for a candidate is this run rather than the shipped model,
 #     and the question becomes whether fine-tuning this base is viable at all.
 #   - the nine hold                            -> the data is implicated after all and the floor is a
@@ -194,7 +194,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

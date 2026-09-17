@@ -61,7 +61,7 @@ export function engineHeaders(stamp: EngineStamp): MiddlewareHandler {
 }
 
 /**
- * Attach the `engine` field when a stamp is configured. The field goes LAST, so a body that already spells a key of the
+ * Attach the `engine` field when a stamp is configured. The field goes last, so a body that already spells a key of the
  * same name keeps the stamp's value.
  */
 export function withEngineStamp<T extends object>(

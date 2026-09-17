@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the Form 499 lifecycle-note parser.
  *
- *   Every note string below is quoted VERBATIM from the 2025-12-07 vintage, including the source's own
+ *   Every note string below is quoted verbatim from the 2025-12-07 vintage, including the source's own
  *   `accout` typo. The counts in the shape-coverage test are the measured counts from that file.
  */
 

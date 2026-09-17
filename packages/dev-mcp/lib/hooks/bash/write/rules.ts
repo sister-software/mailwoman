@@ -139,7 +139,7 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 /**
  * Repository paths that hold DERIVED files only — compiler output and the dependency install. Measured against the
  * index: no tracked path matches, so removing one deletes nothing a commit holds, and `tsc -b` or `yarn install`
- * restores it. `.yarn/` is NOT here — it carries the pinned yarn binary, which is tracked.
+ * restores it. `.yarn/` is not here — it carries the pinned yarn binary, which is tracked.
  *
  * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point: removing derived output restores
  * the derived state, while writing one by hand fabricates it. A hand-written `out/<subpath>.d.ts` answers for a source
@@ -225,12 +225,12 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 		//
 		// `git stash drop stash@{N}` is admitted, and only in that spelling. It writes no file — it removes one ref
 		// from a stack the operator's standing rule says to clear after restoring an entry, so refusing it made that
-		// rule impossible to follow. The explicit index is the whole condition: BARE `git stash drop` silently takes
+		// rule impossible to follow. The explicit index is the whole condition: bare `git stash drop` silently takes
 		// `stash@{0}`, and the stack is shared across every worktree, so the entry at the top is as likely to be
 		// another session's. Naming the index is what the standing rule already requires — re-find the entry by its
 		// SHA, then drop that index.
 		//
-		// `git apply` is NOT among them. The refusals here exist to route an edit through the symbol precheck, and to
+		// `git apply` is not among them. The refusals here exist to route an edit through the symbol precheck, and to
 		// stop a command from discarding work the agent cannot see. A patch does neither: it is an artifact the author
 		// produced and can dry-run with `git apply --check`, it fails rather than clobbering when the context does not
 		// match, and it is the only exact way to land a mechanically generated change — a bulk deletion, a moved block
@@ -241,7 +241,7 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	},
 	{ head: "git", pattern: /(?:^|\s)config\s+-f/u, because: "`git config -f` writes an arbitrary file" },
 	{ head: "npm", pattern: /(?:^|\s)pkg\s+set\b/u, because: "`npm pkg set` writes a manifest" },
-	// The subcommand has to be a WHOLE argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops
+	// The subcommand has to be a whole argument. `\b` ends a word at a hyphen too, so the old pattern read `yarn mwops
 	// health node-modules-reacharound` as `yarn node …` and refused a read-only check by its own name.
 	{
 		head: "yarn",
@@ -283,7 +283,7 @@ const LOOP_HEADER = /^(?:for|select)\s+\w+\s+in\b/u
 const CONTROL_FLOW_WORDS = new Set(["do", "done", "then", "elif", "else", "fi", "esac", "while", "until", "if", "case"])
 
 /**
- * Remove quoted spans and heredoc bodies in ONE pass, so the earliest quote wins. Stripping single quotes before double
+ * Remove quoted spans and heredoc bodies in one pass, so the earliest quote wins. Stripping single quotes before double
  * quotes lets the apostrophe in a word like `don't` pair with a later quote and swallow the command between them.
  */
 function withoutQuotedText(command: string): string {
@@ -416,7 +416,7 @@ function insideRepository(raw: string, repoRoot: string, cwd: string): boolean {
 }
 
 /**
- * True when a path names {@link DERIVED_PATH}. An unreadable target is NOT derived, so it stays guarded.
+ * True when a path names {@link DERIVED_PATH}. An unreadable target is not derived, so it stays guarded.
  */
 function isDerivedPath(raw: string, cwd: string): boolean {
 	const resolved = resolveTarget(raw, cwd)

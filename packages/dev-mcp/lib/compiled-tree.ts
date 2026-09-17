@@ -108,7 +108,7 @@ export async function checkCompiledFreshness(repoRoot: string): Promise<Compiled
 		const workspaceRoot = join(repoRoot, workspace)
 
 		// Emitted `.d.ts` files live under out/ and are newer than everything by construction, so counting them as
-		// source would make the guard permanently unsatisfiable. Excluded by extension AND by path.
+		// source would make the guard permanently unsatisfiable. Excluded by extension and by path.
 		const [source, compiled] = await Promise.all([
 			newestMtime(
 				workspaceRoot,

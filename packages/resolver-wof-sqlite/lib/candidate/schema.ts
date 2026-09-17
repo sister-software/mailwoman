@@ -72,19 +72,19 @@ export interface CandidateTable {
 	 * **THIS IS THE PRE-SPLIT CONFLATION, AND THE NAME SAYS SO.** It is `place_importance.importance` copied verbatim
 	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
 	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
-	 * DEPRECATED. It is NOT the split `encyclopedic` channel, and the two must not be conflated in a future build:
-	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key INERT on three of the
+	 * DEPRECATED. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
+	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key inert on three of the
 	 * four rows it exists to fix. The reason is coverage, not principle — the encyclopedia-concordance join in
 	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
-	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have ZERO concordance rows, so Whitby CA, Windsor CA and Epping
+	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
 	 * AU carry the population fallback and nothing else. Under the strict split those three become unmeasured, the
 	 * consumer's positive-evidence-only rule leaves them exactly where population put them (first), and the famous GB
 	 * bearer can never overtake them. The conflated column is the only one on which every bearer of a name is scored on a
 	 * single comparable scale, which is the precondition for comparing them at all.
 	 *
 	 * So a consumer reads this as "fame, with population standing in where fame was never measured" — the legacy blended
-	 * semantics — and NOT as "this place has an encyclopedia entry of this importance". When the score source grows a
-	 * real `encyclopedic` column for every country, add a SECOND column rather than redefining this one.
+	 * semantics — and not as "this place has an encyclopedia entry of this importance". When the score source grows a
+	 * real `encyclopedic` column for every country, add a second column rather than redefining this one.
 	 */
 	importance: number | null
 	/**
@@ -93,8 +93,8 @@ export interface CandidateTable {
 	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of the place's country's official languages
 	 *   (or English) — the #936 signal, measured at a 13× key-collision rate vs preferred names.
 	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses the gloss threshold with a non-admin
-	 *   placetype and NO measured prominence (population absent AND importance unmeasured) — the translation-gloss
-	 *   fingerprint (#1730's sweep; `Poisson` → a US fish-name place). Provenance CANNOT separate a gloss from an exonym
+	 *   placetype and no measured prominence (population absent and importance unmeasured) — the translation-gloss
+	 *   fingerprint (#1730's sweep; `Poisson` → a US fish-name place). Provenance cannot separate a gloss from an exonym
 	 *   (WOF imported both as `x_preferred`), which is why this detector is an anomaly test and stamps only the certain
 	 *   core.
 	 *
@@ -163,7 +163,7 @@ export const CANDIDATE_COLUMNS = [
 	"max_lon",
 	"population",
 	"is_primary",
-	// Appended, never inserted mid-list: the first six entries ARE the clustered primary key, and the
+	// Appended, never inserted mid-list: the first six entries are the clustered primary key, and the
 	// positional `INSERT INTO cand_stage VALUES (…)` in the builder binds by position.
 	"importance",
 	"name_role",

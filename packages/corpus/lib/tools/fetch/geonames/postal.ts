@@ -17,7 +17,7 @@
  *
  *   - **`parent_id`** — `postalcode-intl.db` carries a real parent that resolves in the admin gazetteer (measured: NL
  *     97.5% of rows linked, FR 90.7%, DE 66.1%, ES 34.9%, IT 27.4%, and 93.8–100% of those resolve to a
- *     `locality`/`localadmin`). It is also the ONLY postcode database that does: `postalcode-geonames-intl.db` and every
+ *     `locality`/`localadmin`). It is also the only postcode database that does: `postalcode-geonames-intl.db` and every
  *     `postalcode-<cc>-overture.db` carry `parent_id = 0` on every row, so five countries have this route and the rest
  *     have none.
  *   - **Nearest locality centroid** — the obvious fallback, and it does not work. Scored against the `parent_id` truth
@@ -30,14 +30,14 @@
  *
  *   ## Coverage is not universal, and the gap is the point
  *
- *   GeoNames publishes ~80 countries, NOT all of them. Venezuela returns 404 — so a VE postcode recipe output cannot be
+ *   GeoNames publishes ~80 countries, not all of them. Venezuela returns 404 — so a VE postcode recipe output cannot be
  *   built
  *   from this source at any effort, and that is an acquisition question rather than a build one. Ask for a country
  *   before assuming it is there; an absent country fails as one entry, never as the whole run.
  *
  *   ## Row counts from this source overstate, for some countries by exactly 2×
  *
- *   Countries whose postcode format contains a hyphen are published TWICE — once `3750-000`, once `3750000`. Measured
+ *   Countries whose postcode format contains a hyphen are published twice — once `3750-000`, once `3750000`. Measured
  *   on the recipe output built from this source: PT 395,544 rows over 197,772 distinct codes and PL 40,598 over 20,299,
  *   both exactly 2.00×, while AU, CZ and AT (no hyphen in the format) are 1.00×. A consumer sizing a recipe output
  *   from the row count doubles its estimate for those countries.
@@ -105,7 +105,7 @@ interface GeonamesPostalManifest {
 	downloaded_at: string
 	files: GeonamesPostalFileEntry[]
 	/**
-	 * Countries asked for and NOT published by GeoNames, recorded so a later reader does not spend the fetch again to
+	 * Countries asked for and not published by GeoNames, recorded so a later reader does not spend the fetch again to
 	 * rediscover it. An absence here is a fact about the source, not about the run.
 	 */
 	unavailable: string[]

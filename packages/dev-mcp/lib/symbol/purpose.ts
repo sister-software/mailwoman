@@ -190,7 +190,7 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 
 			if (!name) continue
 
-			// The LAST leading block comment is the declaration's own: a file header sits above an import, and a comment
+			// The last leading block comment is the declaration's own: a file header sits above an import, and a comment
 			// explaining the line before belongs to that line.
 			const doc = (ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? [])
 				.map((range) => text.slice(range.pos, range.end))
@@ -216,7 +216,7 @@ interface PurposeCache {
 	/**
 	 * The commit the index was built from, plus every working-tree change at that moment — staged, unstaged and untracked
 	 * alike. All of it is needed: keying on the commit alone goes stale over an uncommitted edit, and keying on tracked
-	 * changes alone misses a NEW file, which is the case this index most needs to see.
+	 * changes alone misses a new file, which is the case this index most needs to see.
 	 */
 	head: string
 	status: string[]
@@ -284,7 +284,7 @@ export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], 
 
 		if (matched.length < 2 && !matched.some((word) => inName.has(word))) continue
 
-		// A query word that IS the whole name outranks any amount of sentence overlap: asking for "percentile of a list
+		// A query word that is the whole name outranks any amount of sentence overlap: asking for "percentile of a list
 		// of numbers" must answer `percentile` before `splitNumberList`, which shares two of the surrounding words.
 		const exact = wanted.has(entry.name.toLowerCase()) ? 5 : 0
 		const score = exact + matched.reduce((total, word) => total + (inName.has(word) ? 2 : 1), 0)

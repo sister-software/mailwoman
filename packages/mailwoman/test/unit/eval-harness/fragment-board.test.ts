@@ -81,7 +81,7 @@ describe("the FR fragment board fixture", () => {
 
 		expect(negative.length).toBeGreaterThan(100)
 
-		// A negative row must NOT carry a street gold, or the positive scorer would pick it up.
+		// A negative row must not carry a street gold, or the positive scorer would pick it up.
 		for (const row of negative) {
 			expect(row.expect.street, `${row.id} is negative but carries a street gold`).toBeUndefined()
 		}
@@ -109,13 +109,13 @@ describe("the FR fragment board fixture", () => {
 		const bare = fixtures.filter((f) => f.klass === "bare-street")
 
 		for (const row of bare.slice(0, 50)) {
-			// Input IS the street on this class, so gold must equal the input verbatim.
+			// The input is the street on this class, so gold must equal the input verbatim.
 			expect(row.expect.street!.join(" ")).toBe(row.input)
 		}
 
 		const particle = fixtures.filter((f) => f.klass === "street-particle")
 
-		// The particle must live INSIDE the street span, never be split out.
+		// The particle must live inside the street span, never be split out.
 		for (const row of particle.slice(0, 50)) {
 			expect(row.expect.street!.join(" ")).toBe(row.input)
 		}

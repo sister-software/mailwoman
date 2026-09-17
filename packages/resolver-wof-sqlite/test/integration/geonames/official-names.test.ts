@@ -96,7 +96,7 @@ beforeAll(async () => {
 
 	await writeLocalTextFile(
 		[
-			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately NOT preferred-flagged (the real FI row isn't)
+			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately not preferred-flagged (the real FI row isn't)
 			altRow("633679", "el", "Tourkou"), // Greek transliteration — not official in FI
 			altRow("633679", "la", "Aboa", { 7: "1" }), // historic — never official
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
@@ -119,14 +119,14 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	const byName = (name: string): Row =>
 		db.prepare(`SELECT language, privateuse, official FROM names WHERE name = ?`).get(name) as Row
 
-	// Åbo qualifies WITHOUT isPreferredName — the flag is sparse annotation in real dumps (Turku's
+	// Åbo qualifies without isPreferredName — the flag is sparse annotation in real dumps (Turku's
 	// actual sv row is unflagged), so officialness must not require it.
 	expect(byName("Åbo")).toEqual({ language: "sv", privateuse: "", official: 1 })
 	expect(byName("Tourkou")).toEqual({ language: "el", privateuse: "", official: 0 })
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })
-	// The Malabo shape: the historic evidence lives on a DIFFERENT row than the language tag.
+	// The Malabo shape: the historic evidence lives on a different row than the language tag.
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
-	// The primary-name mirror row stays untagged — spr.name already IS the name-exact tier.
+	// The primary-name mirror row stays untagged — spr.name already is the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
 })
 

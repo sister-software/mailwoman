@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   How often does the decoded tree violate its OWN structural contract?
+ *   How often does the decoded tree violate its own structural contract?
  *
  *   `validateTree` states two invariants a tree can settle about itself — no illegal parent edge, no strict dependent
  *   left without an anchor. A parse can satisfy every asserted component and break both: the orphan fragments are

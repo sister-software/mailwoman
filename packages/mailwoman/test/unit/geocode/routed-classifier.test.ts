@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `parseForGeocode` over a classifier that routes by script: the routed classifier is asked for, the postal mark
- *   follows ITS encoder rather than the primary's, and a classifier without `forInput` is unchanged.
+ *   follows its encoder rather than the primary's, and a classifier without `forInput` is unchanged.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"

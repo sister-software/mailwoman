@@ -53,7 +53,7 @@ PlaceEntry {
 }
 ```
 
-Tokenization is whitespace-split with punctuation stripping. The FST edge label is the normalized token. Accepting states carry ALL valid interpretations — "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks; the neural model + reconciler do.
+Tokenization is whitespace-split with punctuation stripping. The FST edge label is the normalized token. Accepting states carry all valid interpretations — "New York" ends at a state with entries for both NYC (locality) and NY state (region). The FST never picks; the neural model + reconciler do.
 
 ### Build pipeline
 
@@ -210,7 +210,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 3. **Negative suppression on non-place labels.** When the FST matches a place name, B-street, I-street, B-house_number, I-house_number, and B-venue receive -1.5 logit suppression. This narrows the gap between place-tag and non-place-tag logits without overriding the model.
 
-4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's NOT an admin component — the neural model handles it alone. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
+4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's not an admin component — the neural model handles it alone. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
 
 5. **The FST eliminates reconciler beam search for admin components.** Only concordant paths exist in the FST. Invalid admin combinations were pruned at build time.
 

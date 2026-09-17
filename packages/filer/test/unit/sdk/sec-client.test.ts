@@ -37,7 +37,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't hide it (see
 // `bdc/sdk/client.test.ts`'s identical finding against `FCC_MAP_*`). Mock the module directly so the
 // no-UA fail-fast test below is isolated from whatever the ambient `.env` actually contains. Every
-// OTHER test in this file passes an explicit `userAgent` option and never reads `$private`.
+// other test in this file passes an explicit `userAgent` option and never reads `$private`.
 vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/filer/env")>()
 
@@ -48,9 +48,9 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 })
 
 // Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs `isolate: false`, so
-// `./sec-client.ts` may ALREADY sit in the worker's cache — evaluated WITHOUT this file's `@mailwoman/filer/env` mock by
+// `./sec-client.ts` may already sit in the worker's cache — evaluated without this file's `@mailwoman/filer/env` mock by
 // an earlier file (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation). Reset
-// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
+// on the way in so the chain re-evaluates against the mock, and on the way out so the next file in this fork never
 // inherits our mocked env module.
 //
 // Without this the UA fail-fast test passes in isolation and in a serialized run, then fails whenever unrelated test
@@ -58,7 +58,7 @@ vi.mock("@mailwoman/filer/env", async (importOriginal) => {
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
+// Dynamic imports after the reset so the module chain evaluates against the env mock.
 const { createSECClient, isImmutableArchiveURL, SEC_DEFAULT_REQUESTS_PER_SECOND, SEC_MAX_REQUESTS_PER_SECOND } =
 	await import("@mailwoman/filer/sdk/sec-client")
 
@@ -347,7 +347,7 @@ describe("createSECClient: on-disk cache", () => {
 	})
 
 	it("treats URLs differing only by query string as DISTINCT cache entries", async () => {
-		// browse-edgar's entire identity IS its query string — collapsing `origin + pathname` into the
+		// browse-edgar's entire identity is its query string — collapsing `origin + pathname` into the
 		// cache key would silently merge every distinct CIK lookup into one entry.
 		const transport = stubTransport([{ body: { cik: "0000320193" } }, { body: { cik: "0000789019" } }])
 
@@ -747,7 +747,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 2,
-			baseRetryDelayMs: 500, // must NOT be what gets slept
+			baseRetryDelayMs: 500, // must not be what gets slept
 			...transport,
 		})
 

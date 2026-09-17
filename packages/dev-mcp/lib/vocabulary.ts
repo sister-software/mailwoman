@@ -23,7 +23,7 @@
  *
  *   A RATE ALONE IS NOT A FINDING either, which is why the per-character report is not optional. Vietnamese is not
  *   missing from the vocabulary — `Đ`, `ạ`, `ô`, `ă`, `ê` are all present. What is missing, across that five-address
- *   sample, is twelve characters, every one a vowel carrying TWO marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`); a smaller sample
+ *   sample, is twelve characters, every one a vowel carrying two marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`); a smaller sample
  *   names a subset of the same set. "Add Vietnamese" and "add these codepoints" are different decisions, and only the
  *   second is one somebody can price.
  *

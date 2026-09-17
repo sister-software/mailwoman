@@ -8,12 +8,12 @@
  *
  *   THESE ARE API REQUESTS AND THEY GO THROUGH `APIClient`. Small bodies, repeated calls, a third-party
  *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
- *   need. The 247 MB bulk export is NOT one of them: it is a file transfer, it streams to disk on raw
+ *   need. The 247 MB bulk export is not one of them: it is a file transfer, it streams to disk on raw
  *   `fetch`, and `download.ts` says so in place.
  *
  *   FOUR MEASURED CLIENT BEHAVIORS ARE ENCODED HERE RATHER THAN WRITTEN DOWN SOMEWHERE ELSE.
  *
- *   1. THE HUB DOWNLOAD JOB ANSWERS WITH A `resultUrl` THAT 302s. `…/api/download/v1/items/<id>/geojson?
+ *   1. The Hub download job answers with a `resultUrl` that 302s. `…/api/download/v1/items/<id>/geojson?
  *      redirect=false&layers=0` returns `{"status":"Completed","resultUrl":…}` in 249 bytes; the result URL
  *      itself redirects, so the transfer needs `redirect: "follow"`. A client that took the first response as
  *      the file writes a redirect page to disk and reports a successful download.
@@ -165,7 +165,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The feature count the service reports, and the EPSG code it declares.
 	 *
-	 * The SECOND path in the build's agreement check: the same authority, a different distribution channel. An archive
+	 * The second path in the build's agreement check: the same authority, a different distribution channel. An archive
 	 * whose feature count disagrees with the live service is not a file this build should be writing into a sealed
 	 * artifact.
 	 */

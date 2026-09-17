@@ -75,7 +75,7 @@ export function bridgePunctuationGaps(
 
 	for (const token of input) {
 		if (token.label !== "O") {
-			// Look back past any O tokens that sit INSIDE the candidate gap (the punctuation pieces
+			// Look back past any O tokens that sit inside the candidate gap (the punctuation pieces
 			// themselves decode as O — they are exactly what we bridge across).
 			let back = out.length - 1
 

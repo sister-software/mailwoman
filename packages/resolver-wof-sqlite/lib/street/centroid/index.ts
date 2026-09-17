@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   SQLite implementation of core's `StreetCentroidLookup` (#1042): the street-level tier BELOW the
- *   exact address-point tier and ABOVE admin-centroid resolution. Given a street name (no house
+ *   SQLite implementation of core's `StreetCentroidLookup` (#1042): the street-level tier below the
+ *   exact address-point tier and above admin-centroid resolution. Given a street name (no house
  *   number) plus a postcode/commune scope, it returns the street's CENTROID + an honest extent-derived
  *   uncertainty from the derived `street-centroids-<cc>.db` roll-up.
  *
- *   Query-side normalization is THE shared normalizer (`street-normalize.ts`), selected per the extract's
+ *   Query-side normalization is the shared normalizer (`street-normalize.ts`), selected per the extract's
  *   `streetLocale`, so build-side and probe-side keys agree by construction. The commune scope folds
  *   through `normalizeLocalityForKey` + `stripArrondissement` (BAN names Paris/Lyon/Marseille per
  *   arrondissement; a query names the base commune).

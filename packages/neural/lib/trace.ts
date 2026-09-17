@@ -26,7 +26,7 @@ import type { SoftFeatureChannel } from "#soft-features"
  * and the trace test asserts against it, so adding a prior without its participation record is a test failure, not a
  * silent omission.
  *
- * `"placetypeCensus"` is the one member that is NOT an emission prior. It is the PCN1 census observability rung: it
+ * `"placetypeCensus"` is the one member that is not an emission prior. It is the PCN1 census observability rung: it
  * rides the placetype-pair prior's parent-candidate probes, records what the census knows about each parent, and
  * composes nothing — its `applied` is `false` by construction (see {@link TracePrior.applied}). It sits directly after
  * `"placetypePair"` because that is where in the decode path it is produced, and the ordering here is production order,
@@ -53,7 +53,7 @@ export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 export interface TracePrior {
 	kind: TracePriorKind
 	/**
-	 * Whether this prior moved anything. ALWAYS `false` on `"placetypeCensus"`, which writes no emissions at all — a
+	 * Whether this prior moved anything. Always `false` on `"placetypeCensus"`, which writes no emissions at all — a
 	 * `true` there would mean somebody wired a census bias into the decoder, which the 2026-08-04 assessment checks
 	 * behind a calibration δ the artifact deliberately doesn't carry.
 	 */
@@ -179,7 +179,7 @@ export interface NeuralParseTrace {
 	 */
 	labels: string[]
 	/**
-	 * The DECODER's label indices per piece — the raw viterbi/argmax output, captured BEFORE the word-consistency healing
+	 * The decoder's label indices per piece — the raw viterbi/argmax output, captured before the word-consistency healing
 	 * vote and before every token-repair pass (all of which appear in `repairs`; final labels live on `tokens`). This is
 	 * what the heatmap's path outline means: the cell the decode chose, not the healed result.
 	 */

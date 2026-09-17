@@ -91,7 +91,7 @@ export interface LookupResult {
 	source: LookupSource
 	rows: LookupRow[]
 	/**
-	 * WHICH artifact answered — the resolved path, plus whatever else decides the reading (the locale and declared span
+	 * Which artifact answered — the resolved path, plus whatever else decides the reading (the locale and declared span
 	 * mode for the anchor, the engine for the FST). Absent when there was no artifact to name: the unavailable envelope
 	 * says why in `unavailable_reason`, and `codex`/`normalize` read no file at all.
 	 */

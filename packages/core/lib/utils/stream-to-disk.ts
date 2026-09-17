@@ -12,9 +12,9 @@
  *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
  *   write a second, unreadable copy of a file already on disk; there is nothing to pace, because a transfer
  *   like this runs once per product vintage; and axios buffers any non-stream response type in memory. The
- *   METADATA reads around such a transfer DO go through `APIClient`, and each caller's client module says so.
+ *   metadata reads around such a transfer do go through `APIClient`, and each caller's client module says so.
  *
- *   THE `.part` RENAME IS THE RULE. An interrupted transfer must never present as a complete file: the next
+ *   The `.part` rename is the rule. An interrupted transfer must never present as a complete file: the next
  *   run would find it, skip the download and ingest a truncated archive, which reads as a smaller source
  *   rather than as a failure. The rename is atomic within a filesystem, so a file at the final path is a file
  *   that finished.
@@ -56,7 +56,7 @@ export interface StreamToDiskOptions {
 	 */
 	progressStrideBytes?: number
 	/**
-	 * What this host's non-OK status MEANS, appended to the refusal.
+	 * What this host's non-OK status means, appended to the refusal.
 	 *
 	 * A status code is a poor diagnosis on a host that reuses one. The soil download service answers 400 rather than 404
 	 * for a version date it does not hold, so the bare status sends a reader looking for a malformed request instead of a

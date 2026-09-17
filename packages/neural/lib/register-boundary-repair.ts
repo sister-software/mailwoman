@@ -11,7 +11,7 @@
  *   市, `@mailwoman/codex`'s `JP_INNER_SHI_TOWNS`), and `부산광역시 해운대구 반송로 910-1` as subregion `해` + street
  *   `대구` (the Korean 시군구 the model never saw, `KR_SIGUNGU`). The register names the boundary outright, so this pass
  *   extends a run by exactly the characters a register name needs and re-opens the span that followed. It fires only
- *   when the extended surface IS a register name, so a real city followed by a look-alike district is untouched.
+ *   when the extended surface is a register name, so a real city followed by a look-alike district is untouched.
  *
  *   A decode-time consumer of a positive attestation, not a prior: it changes labels only where the register states
  *   the boundary. The character model emits a second `B-` for a continuation it is unsure of (`해:B 운:B`); the pass

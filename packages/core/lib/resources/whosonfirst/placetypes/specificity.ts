@@ -13,14 +13,14 @@
  *   everything below `localadmin`.
  *
  *   THAT SHARED GAP IS WHY THIS FILE EXISTS. #1746: the currency backfill refused to
- *   resurrect a deprecated locality whenever ANY live same-name row sat within 10 km, "possibly under another
+ *   resurrect a deprecated locality whenever any live same-name row sat within 10 km, "possibly under another
  *   placetype". For a place recorded twice that premise holds. For a placetype DEMOTION it does not — WOF retired
  *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the check read the
  *   surviving CHILD as covering its own dead parent. Sixteen of seventeen GB refusals had exactly that shape. A rank
  *   comparison separates the two cases, and it needs the fine end of the scale that neither existing copy carried.
  *
  *   IT IS NOT THE ONLY TABLE. `resolver-wof-sqlite/ancestry.ts` publishes `PLACETYPE_DEPTH` for hierarchical
- *   containment, and `eval-harness/gauntlet/ablation-expectation.ts` carries a deliberate copy of THAT one so an old
+ *   containment, and `eval-harness/gauntlet/ablation-expectation.ts` carries a deliberate copy of that one so an old
  *   artifact can be re-graded against the table it was built with. This scale ORDERS the eleven placetypes they share
  *   identically, and `specificity.test.ts` holds that agreement — the two differ only in offset and in what an
  *   unranked placetype means, never in which of two placetypes is finer.

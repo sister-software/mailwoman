@@ -96,7 +96,7 @@ describe("selectRepos", () => {
 	it("expands --countries to that country's admin and postalcode repositories", () => {
 		const selection = selectRepos(DISCOVERED, { countries: "tr" })
 
-		// Venue is NOT included: no country in the data root has a venue clone, and it doubles the transfer.
+		// Venue is not included: no country in the data root has a venue clone, and it doubles the transfer.
 		expect(selection.selected.map((entry) => entry.name)).toEqual([
 			"whosonfirst-data-admin-tr",
 			"whosonfirst-data-postalcode-tr",

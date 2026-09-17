@@ -5,7 +5,7 @@
  *
  *   WHAT DATA DO WE ACTUALLY HOLD, per country, per artifact.
  *
- *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes BEFORE it —
+ *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes before it —
  *   is there anything here for this country at all, in which file, and can it be joined to anything. Every locale
  *   expansion starts with it, and it was hand-rolled four separate times in one session before landing here.
  *
@@ -15,7 +15,7 @@
  *     triple, so a row count alone is a misleading yes. `postalcode-geonames-intl.db` holds 395,544 PT postcodes and
  *     is `spr`-only; `postalcode-intl.db` holds 27,119 FR and has the ancestry tables. Same verb, different answer.
  *   - **`parentLinked`** — and even an `ancestors` table is not enough on its own. Measured on `postalcode-intl.db`:
- *     `parent_id` is `-1` on EVERY postcode row, and the ancestry chain for `75002` is a single SELF-reference at
+ *     `parent_id` is `-1` on every postcode row, and the ancestry chain for `75002` is a single self-reference at
  *     placetype `postalcode`. So neither column reaches a locality, and a builder that assumes either produces zero
  *     rows and reads as a coverage gap.
  *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
@@ -61,7 +61,7 @@ export interface SourceCensusRow {
 	countries?: Record<string, number>
 	join: JoinCapability[]
 	/**
-	 * Whether ANY row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
+	 * Whether any row carries a usable `parent_id`. A extract whose every row reads `-1` cannot be walked upward, and
 	 * that is invisible from a row count.
 	 */
 	parentLinked?: boolean

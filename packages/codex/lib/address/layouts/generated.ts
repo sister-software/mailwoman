@@ -10,10 +10,10 @@
  *   street order read once from the OpenCage templates (which slot leads). The `fmt` each was derived from is quoted
  *   above it, so a reader can compare the two without opening the dataset.
  *
- *   The locales this project publishes weights for are NOT here: those are hand-authored in the sibling `index.ts` and
+ *   The locales this project publishes weights for are not here: those are hand-authored in the sibling `index.ts` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  *
- *   The Latin table below is the exception to that split. A hand-authored entry states ONE order per country, so a
+ *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a
  *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
  *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
  *   every country that has one, hand-authored or not.
@@ -1647,7 +1647,7 @@ ${country}`,
 /**
  * LOCAL-script layouts for the same countries — the `fmt` skeleton, emitted even where the country is hand-authored.
  *
- * A hand-authored entry states ONE order, and for Hong Kong that order is the Latin one, so its own script's order has
+ * A hand-authored entry states one order, and for Hong Kong that order is the Latin one, so its own script's order has
  * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
  */
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {

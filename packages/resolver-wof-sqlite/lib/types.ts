@@ -61,17 +61,17 @@ export interface PlaceCandidate {
 	 * Absent means the artifact carries no ancestors sidecar, not that the place is a root: an artifact predating the
 	 * sidecar answers no lineage at all, and the two readings must stay apart (meaning-of-zero).
 	 *
-	 * It is what lets a consumer see that two candidates in ONE answer denote one settlement at two admin tiers. The
+	 * It is what lets a consumer see that two candidates in one answer denote one settlement at two admin tiers. The
 	 * gazetteer carries 285,478 populated localities that share a folded name with a `localadmin` within 5 km, and
 	 * 264,523 of those (92.7%) name that twin as their depth-1 ancestor — so the pair is legible from this field alone.
-	 * The backend reports the containment; whether two rows are ONE place is the consumer's call, because a `localadmin`
+	 * The backend reports the containment; whether two rows are one place is the consumer's call, because a `localadmin`
 	 * sometimes covers hamlets the settlement does not.
 	 */
 	parent_id?: number
 	score: number
 	distanceKm?: number
 	/**
-	 * True when this candidate's name OR an alias EXACTLY equals the query (the exact-match tier from
+	 * True when this candidate's name or an alias exactly equals the query (the exact-match tier from
 	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's postcode anchor in
 	 * `resolveTree`) can pin the country without crossing the tier — see the `exactMatch` field on `@mailwoman/core`'s
 	 * `ResolvedPlace`.
@@ -79,13 +79,13 @@ export interface PlaceCandidate {
 	exactMatch?: boolean
 	/**
 	 * Combined prominence (population term + best proximity-bias term, same additive units) — populated by the FTS
-	 * lookup; the exact-tier sort orders by THIS instead of raw population when the query carried proximity hints
+	 * lookup; the exact-tier sort orders by this instead of raw population when the query carried proximity hints
 	 * (`near`/`bias`).
 	 */
 	prominence?: number
 	/**
 	 * Population from WOF's `wof:population` property. Only present when the candidate has it on record — WOF carries
-	 * population for ~15% of localities (mostly larger ones). Absent does NOT mean zero, just unknown.
+	 * population for ~15% of localities (mostly larger ones). Absent does not mean zero, just unknown.
 	 */
 	population?: number
 	/**
@@ -213,7 +213,7 @@ export interface FindPlaceQuery {
 	 */
 	parentID?: number
 	/**
-	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present, triggers the
+	 * Sibling postcode. When set on a `locality` query and a `postcode_locality` table is present, triggers the
 	 * coordinate-first soft-score path: postcode→candidate localities are injected and scored `0.6·S_pc + 0.3·S_name +
 	 * 0.1·S_pop` against the FTS name-match set, recovering small localities the name-match alone misses. Ignored when no
 	 * postcode_locality extract is present.
@@ -240,7 +240,7 @@ export interface FindPlaceQuery {
 	near?: GeoPoint & { maxDistanceKm?: number }
 	/**
 	 * Ordered proximity-bias points (viewport center, user location, …), each optionally weighted (default 1.0, first
-	 * entry strongest by convention). SOFT — a re-rank signal, never a filter: with bias present, exact-tier candidates
+	 * entry strongest by convention). Soft — a re-rank signal, never a filter: with bias present, exact-tier candidates
 	 * order by combined prominence (population + the best decayed-distance term over these points) instead of population
 	 * alone, which is how an ambiguous bare postcode ("48026": Fraser MI vs Russi IT) follows the map view / the user.
 	 * Absent (and no `near`) → ranking is byte-identical to today. `near` is treated as a weight-1.0 bias point for

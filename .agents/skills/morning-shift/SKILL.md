@@ -15,7 +15,7 @@ autonomous session, then KICKOFF starts the day's collaborative work.
 - A night-shift postmortem exists at `docs/records/evals/YYYY-MM-DD-night-N-postmortem.md` and the operator hasn't merged the PRs yet.
 - Day's work is about to start — task list needs to flip from "produce while you sleep" to "collaborate while you're at the keyboard."
 
-## When NOT to use
+## When not to use
 
 - Operator is mid-collaboration (no prior autonomous session to wrap). Use normal mode.
 - Routine session start with no prior night shift. Skip WRAP, skim KICKOFF, proceed.
@@ -89,7 +89,7 @@ shorthand:
 
 Three habits that make this land:
 
-- **Headline result goes in line 1, not paragraph 4.** If the win is region p90
+- **Headline result goes in line 1, not paragraph 4.** If the result is region p90
   2763km → 10km, lead with that under the relevant `needs your eyes` item.
 - **Empty rows are fine.** "Production: unchanged" is a complete answer.
 - **No filler.** "Standing by for the next checkpoint" was a night-shift artifact;

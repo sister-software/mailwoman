@@ -28,7 +28,7 @@ export const PublicReleaseEnvSchema = z.object({
 		description: "Release-flow toggle that omits neural weights from package publication.",
 	}),
 	/**
-	 * Set to `0` to publish WITHOUT a sigstore provenance attestation. Provenance is otherwise on by default under GitHub
+	 * Set to `0` to publish without a sigstore provenance attestation. Provenance is otherwise on by default under GitHub
 	 * Actions — this exists so a release blocked by a sigstore or registry outage can still ship.
 	 */
 	MAILWOMAN_NPM_PROVENANCE: z.string().optional().meta({

@@ -5,7 +5,7 @@
  *
  *   The body's app: the host check first, then the route. A production host serving the other body's build renders
  *   the error rather than the other world, so a misconfigured Workers Builds project is visible on its first load.
- *   The selection IS the route: a click pushes `/feature/<id>`, a deep link restores the feature from the search
+ *   The selection is the route: a click pushes `/feature/<id>`, a deep link restores the feature from the search
  *   artifact, and the browser's back button is the close button.
  */
 

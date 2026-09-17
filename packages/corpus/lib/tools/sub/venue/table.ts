@@ -8,7 +8,7 @@
  *   starts out holding.
  *
  *   The shape follows `@mailwoman/poi-taxonomy`'s `taxonomy.json` idiom exactly — typed records plus a
- *   FLAT phrase array keyed back to a record id, which is what makes a longest-match phrase index cheap
+ *   flat phrase array keyed back to a record id, which is what makes a longest-match phrase index cheap
  *   to build over it. {@link SubVenueSurface} is this table's `SynonymEntry`.
  *
  *   The seeds DUPLICATE `neural/venue-structure.ts` knowingly: `@mailwoman/corpus` does not depend on
@@ -90,7 +90,7 @@ export interface SubVenueSurface {
 	 * The phrase, lowercased for Latin-script languages and left as written otherwise — case-folding is meaningless for
 	 * Han and Kana, which the script guard excludes.
 	 *
-	 * It does NOT exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it and `toLowerCase` folds it
+	 * It does not exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it and `toLowerCase` folds it
 	 * to `i` plus a combining dot above. A Turkish surface therefore round-trips through a form its own locale would not
 	 * write. Nothing shipped depends on that today; a Turkish designator would.
 	 */
@@ -120,7 +120,7 @@ export interface SubVenueSurface {
 	source: string
 	/**
 	 * Whether a human has approved this surface for parsing use IN ITS REGION. Everything machine-derived starts `false`
-	 * and is flipped only by a matching {@link SubVenuePromotion}. A consumer that gates a parse MUST filter on this — see
+	 * and is flipped only by a matching {@link SubVenuePromotion}. A consumer that gates a parse must filter on this — see
 	 * `sub-venue-lexicon.ts`'s module docstring for what a promotion decides and why it is per-locale.
 	 */
 	curated: boolean
@@ -143,7 +143,7 @@ export interface SubVenueSurface {
 /**
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
- * Derived from OSM `ref` values, NOT from names, and that is why the artifact has a section for it at all. Every one of
+ * Derived from OSM `ref` values, not from names, and that is why the artifact has a section for it at all. Every one of
  * Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`: `13`, `6`, `0/1`, `14/15`, `16-18`. So `Gate
  * A12` is a RENDERING (`<designator> <ref>`) rather than a string anyone has written down, and a recipe that wants to
  * generate the designator+identifier form needs the identifier DISTRIBUTION, not a list of phrases.
@@ -190,7 +190,7 @@ export interface SubVenueLexiconTable {
 	surfaces: SubVenueSurface[]
 	identifierShapes: IdentifierShape[]
 	/**
-	 * Every curation decision taken against this table, promotion AND rejection, each with the census that backs it. A
+	 * Every curation decision taken against this table, promotion and rejection, each with the census that backs it. A
 	 * rejection is as required as a promotion: it is what stops the next reader re-proposing `hall` for en-GB.
 	 */
 	promotions: SubVenuePromotion[]
@@ -248,7 +248,7 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
  * wave 2 on 282 Overture attestations in the `pier` category plus 162 in the GB extract — the corpus task names `Pier
  * C` as a target shape, so the record has to exist before a recipe can generate it.
  *
- * None is `modifierEligible`: that claim needs a confound board per term AND per locale, and `sub-venue-promotions.ts`
+ * None is `modifierEligible`: that claim needs a confound board per term and per locale, and `sub-venue-promotions.ts`
  * is where those live. A promotion marks a SURFACE usable; it does not widen the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{

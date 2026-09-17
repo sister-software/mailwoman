@@ -10,7 +10,7 @@
  *   digit maps cleanly to a band of states (`StateAbbreviationZipCodePrefixRecord`). A German PLZ's
  *   first digit maps to a **Leitzone** — a postal routing region that deliberately **crosses
  *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland, and Mainz
- *   in Rheinland-Pfalz). So the PLZ prior narrows geography, but it does NOT narrow the state the
+ *   in Rheinland-Pfalz). So the PLZ prior narrows geography, but it does not narrow the state the
  *   way a US ZIP does — a lesson for any code that tries to derive a German region from a postcode
  *   alone.
  */

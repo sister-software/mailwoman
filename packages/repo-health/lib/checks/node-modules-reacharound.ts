@@ -5,7 +5,7 @@
  *
  *   Guard for the node_modules reach-around.
  *
- *   The defect this catches: hand-assembling a path INTO another package's install directory —
+ *   The defect this catches: hand-assembling a path into another package's install directory —
  *   `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` — instead of asking Node where that
  *   package lives (`import.meta.resolve`, `createRequire().resolve`) or exposing the file through an `exports` subpath.
  *   The assembled literal encodes a layout its owner never agreed to: it survives a package moving, a scope rename, a
@@ -51,14 +51,14 @@ const ALLOWED: Record<string, string> = {
 		"pins the cache layout independently of the helper that builds it",
 	// Probes a FOREIGN scratch project it just created with `npm install`. The whole point is to read the install
 	// layout from outside; `import.meta.resolve` would answer from the monorepo's graph — the exact thing the clean-
-	// install smoke exists to NOT consult.
+	// install smoke exists to not consult.
 	"packages/release-kit/lib/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
 	"packages/release-kit/lib/release/smoke/get-started.ts":
 		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
 	// BUILDS a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
 	// worktree has none and symlinking the main checkout's directory across resolves every workspace back into the
-	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's REAL path).
+	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's real path).
 	// There is nothing to resolve: the directory does not exist until this code creates it.
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The ORACLE for that farm, on the same principle as the weights-cache pair above: a fixture built with the

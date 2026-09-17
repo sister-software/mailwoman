@@ -10,15 +10,15 @@
  *   A pure function over the raw input emitting TYPED span proposals from three cue families:
  *
  *   1. **Paired delimiters (M2)** — balanced `()`, `[]`, `""`, `«»`, `„“` groups propose
- *        `ANNOTATION_SPAN` / `QUOTED_SPAN`. Unbalanced delimiters of a class produce NO proposal
+ *        `ANNOTATION_SPAN` / `QUOTED_SPAN`. Unbalanced delimiters of a class produce no proposal
  *        for that class — the proposer never guesses a missing pair (graceful degradation to
  *        today's behavior, per the survey's unbalanced-class read).
  *   2. **Designator + identifier** — the sub-premise grammar (`Apt 4B`, `Suite 500`, `PO Box 19`): a
  *        closed-vocabulary leader from the injected codex-backed lexicon followed by a short
  *        identifier proposes `UNIT_PHRASE` / `LEVEL_PHRASE` / `PO_BOX_PHRASE`.
  *   3. **Dual-path numeric punctuation (M3, the Pelias PR #56 mechanism)** — `2/14`, `14-16`, `123 1/2`
- *        adjacent to a number context emit BOTH readings as alternatives sharing an
- *        `alternativeGroup`: the fused single-value reading (`FUSED_NUMBER`) AND the
+ *        adjacent to a number context emit both readings as alternatives sharing an
+ *        `alternativeGroup`: the fused single-value reading (`FUSED_NUMBER`) and the
  *        designator-split reading (`SPLIT_UNIT` + `SPLIT_HOUSE_NUMBER`), locale-conditioned by
  *        which codex systems the lexicon was built from (the AU/NZ `Flat 2/14` split exists only
  *        when those tables are loaded). The proposer never decides between readings — downstream
@@ -69,7 +69,7 @@ export type ProposedSpanKind =
 	| "UNIT_PHRASE"
 	/** Level-class designator + identifier ("Floor 3", "FL 12"). */
 	| "LEVEL_PHRASE"
-	/** Dual-path FUSED reading: the punctuated numeric is ONE value ("123 1/2", "69-10", "14/2"). */
+	/** Dual-path FUSED reading: the punctuated numeric is one value ("123 1/2", "69-10", "14/2"). */
 	| "FUSED_NUMBER"
 	/** Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45"). */
 	| "SPLIT_UNIT"
@@ -88,7 +88,7 @@ export interface ProposedSpan {
 	 */
 	confidence: number
 	/**
-	 * Alternative readings of ONE surface share a group id (M3 dual-path: the fused and split readings of `2/14` carry
+	 * Alternative readings of one surface share a group id (M3 dual-path: the fused and split readings of `2/14` carry
 	 * the same group). Absent for single-reading proposals.
 	 */
 	alternativeGroup?: number
@@ -230,7 +230,7 @@ function tokenize(text: string): RawToken[] {
 //#region Cue family 1 — paired delimiters (M2)
 
 /**
- * Find balanced pairs for one open/close class. Returns null when ANY delimiter of the class is unbalanced (stray
+ * Find balanced pairs for one open/close class. Returns null when any delimiter of the class is unbalanced (stray
  * opener or closer) — the caller emits nothing for the class.
  */
 function findBalancedPairs(text: string, open: string, close: string): Array<{ open: number; close: number }> | null {
@@ -277,7 +277,7 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 /**
  * Shape-derived annotation confidence (M2: "confidence from balance + content shape"):
  *
- * - Content that is EXACTLY a strong designator + identifier ("Suite 9") is probably a real component written in brackets
+ * - Content that is exactly a strong designator + identifier ("Suite 9") is probably a real component written in brackets
  *   (gold convention 2) → very low annotation confidence, letting the designator cue own the span.
  * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the instruction/aside shape →
  *   high.
@@ -422,8 +422,8 @@ function proposeDesignatorPhrases(
 	}
 
 	// MODIFIER + DESIGNATOR ("West Wing", "Upper Concourse") — the mirror of the shape above, where the
-	// qualifier leads rather than follows. Emitted at a lower confidence: an identifier AFTER a designator is
-	// nearly unambiguous, while a positional word BEFORE one is a shape ordinary street names also take, so
+	// qualifier leads rather than follows. Emitted at a lower confidence: an identifier after a designator is
+	// nearly unambiguous, while a positional word before one is a shape ordinary street names also take, so
 	// this proposal should lose to a confident encoder more readily than that one does.
 	for (let i = 1; i < tokens.length; i++) {
 		const designator = tokens[i]!.stripped.toLowerCase()
@@ -440,7 +440,7 @@ function proposeDesignatorPhrases(
 		// Gate, not a sub-venue of anything. The number is the discriminator the surface itself provides.
 		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
 
-		// A capitalized word before the modifier means the pair sits INSIDE a longer proper name rather than
+		// A capitalized word before the modifier means the pair sits inside a longer proper name rather than
 		// opening one: "Grand Central Terminal" contains "Central Terminal", and proposing that as a unit
 		// carves a sub-venue out of the venue's own name. Sub-venue lines lead their segment.
 		if (beforeModifier && /^\p{Lu}/u.test(beforeModifier.stripped)) continue
@@ -483,7 +483,7 @@ const FRACTION = /^\d\/\d$/
 /**
  * #481 item 7: the "plausible but genuinely ambiguous" proposal confidence — a FUSED_NUMBER reading that is real but
  * not the only reading of the token (a trailing-fused slash compound, a hyphen at house-number position). Deliberately
- * BELOW the confident readings (0.8–0.9) and above coin-flip, and the same operating point as the phrase grouper's
+ * below the confident readings (0.8–0.9) and above coin-flip, and the same operating point as the phrase grouper's
  * `NEUTRAL_PROPOSAL_CONFIDENCE` — both stages express "emit, but don't let this outrank a confident reading" alike.
  */
 const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
@@ -681,7 +681,7 @@ function proposeNumericReadings(
  *
  * Designator and numeric proposals fully inside a confident (≥ 0.6) `ANNOTATION_SPAN` are suppressed — bracketed asides
  * describe the address ("(Apt 4 around back)"), and the annotation proposal already carries the span. Content inside
- * QUOTED_SPANs is NOT suppressed (quotes wrap names, not asides).
+ * QUOTED_SPANs is not suppressed (quotes wrap names, not asides).
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
 	if (!text.length) return []

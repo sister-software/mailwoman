@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the no-street synthesizer. Verifies that every emitted row has NO street-side tags —
+ *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags —
  *   this is the contract that makes the rows useful as counter-distribution training data.
  */
 
@@ -52,7 +52,7 @@ describe("synthesizeNoStreetRow", () => {
 		expect(hasAnyStreetSideTag(row!.components)).toBe(false)
 
 		// The whole point: adversarial venues contain street-typing tokens that the model
-		// must learn to NOT classify as street-side tags.
+		// must learn to not classify as street-side tags.
 		const v = row!.components.venue!.toLowerCase()
 
 		const hasStreetWord = [

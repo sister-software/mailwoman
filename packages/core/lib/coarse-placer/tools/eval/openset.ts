@@ -3,27 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #244 M2 Phase 1 — POST-HOC open-set scoring on the EXISTING (shipped) coarse-placer, NO retrain.
+ *   #244 M2 Phase 1 — post-hoc open-set scoring on the existing (shipped) coarse-placer, no retrain.
  *   The OA-breadth verdict found the 12-way softmax's own max-prob detector tops out at ~88/88 on
  *   the leave-one-family-out probe (in-map accuracy vs off-map HELDOUT-family caught). This asks:
- *   does a DIFFERENT open-set score, read off the same frozen weights, clear the 90/90 the softmax
+ *   does a different open-set score, read off the same frozen weights, clear the 90/90 the softmax
  *   can't?
  *
- *   The 11-way routing (argmax over the in-map classes) is FIXED — the model is unchanged. The only
+ *   The 11-way routing (argmax over the in-map classes) is fixed — the model is unchanged. The only
  *   thing each score changes is the REJECT decision (keep the in-map route vs. abstain → OTHER). We
  *   sweep each score's threshold and trace its (in-map accuracy, heldout-caught) Pareto.
  *
  *   Scores compared (all functions of the frozen 12 logits / 11 in-map logits `z`):
  *
  *   - Maxprob : softmax max over the 11 in-map classes (the verdict's baseline detector)
- *   - P_inmap : 1 - P(OTHER) (trust the model's own OTHER head)
+ *   - P_inmap : 1 - P(OTHER) (trust the model's own `OTHER` head)
  *   - Energy : logsumexp(z) (free-energy; higher = more in-map)
  *   - Maxlogit : max(z)
  *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map TRAIN
  *       logits (Lee et al. 2018, in the 11-dim in-map-logit space — the linear model's only dense
  *       representation). Higher = closer to the in-map manifold.
  *
- *   In-map accuracy = of the 11-country test rows, fraction NOT rejected AND argmax-in-map == truth.
+ *   In-map accuracy = of the 11-country test rows, fraction not rejected and argmax-in-map == truth.
  *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
  *   rejected. Both move with the threshold; the Pareto is the whole story.
  *
@@ -336,7 +336,7 @@ export async function evalOpenSet(
 		softmaxInto(z, probs)
 		const zin = inVec(z)
 
-		// argmax over in-map classes (the FIXED routing).
+		// argmax over in-map classes (the fixed routing).
 		let amIdx = 0,
 			am = -Infinity
 
@@ -415,7 +415,7 @@ export async function evalOpenSet(
 		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
 		// Summaries.
-		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the FULL probe
+		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the full probe
 		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
 		let atIn90: ParetoPoint | null = null
 

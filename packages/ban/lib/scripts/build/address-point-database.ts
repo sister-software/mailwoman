@@ -10,15 +10,15 @@
  *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
  *
  *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed
- *   `"8 bis Rue X"` matches; plain-number rows are keyed on the bare number, unchanged. Keying uses THE
+ *   `"8 bis Rue X"` matches; plain-number rows are keyed on the bare number, unchanged. Keying uses the
  *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
  *   lookup tier applies at query time, so build-side and probe-side can't drift.
  *
  *   Build discipline (house rules): stream → positional prepared INSERT (batched) → indexes → ANALYZE →
  *   atomic swap into place → SEAL 0444 → record md5 + provenance in `ban/ATTRIBUTION.json`. The output
- *   is a NEW, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
+ *   is a new, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
  *
- *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, NO share-alike), so the built
+ *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, no share-alike), so the built
  *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
  *
  *   Usage:
@@ -181,7 +181,7 @@ async function main(): Promise<void> {
 					null,
 					rec.postcode,
 					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
-					// the SAME both-sides discipline the #1042 street-centroid key uses, so a query's
+					// the same both-sides discipline the #1042 street-centroid key uses, so a query's
 					// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
@@ -222,7 +222,7 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Provenance manifest — additive, written at creation (house discipline). Only for a FULL national build
+	// Provenance manifest — additive, written at creation (house discipline). Only for a full national build
 	// (the fast --depts validation builds are transient and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")

@@ -171,7 +171,7 @@ describe("verifyFloodDatabase", () => {
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
 		// Inside the fixture's extent and outside every polygon, so the artifact answers the designated absence. The
-		// negative half must NOT pass on it: an artifact that answered a designation everywhere would slip through a check
+		// negative half must not pass on it: an artifact that answered a designation everywhere would slip through a check
 		// that only ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({
 			databasePath,

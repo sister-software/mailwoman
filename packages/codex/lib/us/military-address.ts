@@ -26,7 +26,7 @@
  *       also the official USPS abbreviations for the three Armed Forces addressing regions. See:
  *       https://pe.usps.com/text/pub28/28apb_002.htm
  *   - "DPO" for Diplomatic Post Offices was added as a distinct code in 2011 (USPS Customer/ Industry
- *       Notice 61). It does NOT replace APO in diplomatic mail — both exist, with DPO used
+ *       Notice 61). It does not replace APO in diplomatic mail — both exist, with DPO used
  *       specifically for State Department overseas posts and APO/FPO retained for DoD.
  *
  * @see {@link https://pe.usps.com/text/pub28/28c7_001.htm USPS Pub 28 Chapter 7 — Military Addresses}

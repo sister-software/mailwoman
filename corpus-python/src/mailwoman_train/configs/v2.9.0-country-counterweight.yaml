@@ -1,14 +1,14 @@
-# v2.9.0-country-counterweight — #1104 fix. ONE variable vs v257: the fragment recipe output now carries
+# v2.9.0-country-counterweight — #1104 fix. One variable vs v257: the fragment recipe output now carries
 # COUNTRY-ending rows (full address + a codex country surface tail, comma'd + comma-free) so the
 # country-sparse fine-tune stops eroding country recall (88.6%→82.0% on v257; bisected to the source,
-# NOT the tokenizer, via v242). Same recipe as v2.5.7 (init_from multisplice-expanded, 8k, gentle
+# not the tokenizer, via v242). Same recipe as v2.5.7 (init_from multisplice-expanded, 8k, gentle
 # lr 1e-5); only the corpus overlay changes (v0.10.6-fragment-v5 → v0.10.7-fragment-v6). Grade: golden
 # country recall recovers toward 88.6% (2pp check), parity floors hold, flip census + gauntlet stable.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.7-fragment-v6/corpus-v0.10.7-fragment-v6
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -32,7 +32,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -76,7 +76,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -131,7 +131,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v241 (fresh optimizer; --resume auto on a
+train: # Same-vocab init_from fine-tune off the shipped v241 (fresh optimizer; --resume auto on a
   # fresh output_dir honors init_from, weights only).
   output_dir: /data/output-v290-country-counterweight-s42/checkpoints
   seed: 42

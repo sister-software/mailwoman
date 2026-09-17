@@ -200,7 +200,7 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 }
 
 /**
- * Reconstruct a short-cell int's ancestor at a coarser resolution WITHOUT going through a centroid.
+ * Reconstruct a short-cell int's ancestor at a coarser resolution without going through a centroid.
  *
  * The centroid is the wrong input: re-deriving a parent from a stored cell's center can land in a different parent than
  * the original cell belonged to (measured at ~6% of CONUS blocks between res 9 and res 6), so a coverage read and the

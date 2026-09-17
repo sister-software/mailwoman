@@ -7,14 +7,14 @@
  *
  *   The 2026-05-29 harness diagnostic found the neural model emits `intersection_a`/`intersection_b`
  *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St") — it never learned
- *   the tags, because the corpus has NO intersection training signal (no generator, and real-data
+ *   the tags, because the corpus has no intersection training signal (no generator, and real-data
  *   adapters don't emit intersection-formatted rows). Intersections are 65 of the 376 harness
  *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
  *   supplement source (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
  *
  *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into BIO labels
  *   (B-/I-intersection_a, O on the connector, B-/I-intersection_b). Surface forms of both streets
- *   MUST occur verbatim in `raw` so alignment lands.
+ *   must occur verbatim in `raw` so alignment lands.
  *
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
@@ -38,7 +38,7 @@ import type { CanonicalRow } from "#types"
 const MAX_DISTINCT_STREET_TRIES = 8
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -69,7 +69,7 @@ const STREET_CORES = [
 ] as const
 
 /**
- * Bare proper-noun streets that idiomatically take NO suffix.
+ * Bare proper-noun streets that idiomatically take no suffix.
  */
 const BARE_NAMES = ["Broadway", "Wall", "Bourbon", "Esplanade", "Riverside", "Lakeshore"] as const
 

@@ -13,7 +13,7 @@ import type { WeakResolutionReading } from "@mailwoman/core/resolver"
  */
 export interface OAResolverEvalOptions {
 	/**
-	 * #722 baseline: ablate to anchor-only (gazetteer + conventions OFF).
+	 * #722 baseline: ablate to anchor-only (gazetteer + conventions off).
 	 */
 	ablateToAnchor?: boolean
 	/**
@@ -99,7 +99,7 @@ export interface OAResolverEvalOptions {
 	 */
 	modelCard?: string
 	/**
-	 * #895 tri-state pin: force adminCoherence OFF.
+	 * #895 tri-state pin: force adminCoherence off.
 	 */
 	noAdminCoherence?: boolean
 	/**
@@ -137,7 +137,7 @@ export interface OAResolverEvalOptions {
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence ON. The library default has been ON since 2026-08-05, so this pin
+	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
 	 * is now a no-op restatement; it stays because a check leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
@@ -200,7 +200,7 @@ export interface OAResolverEvalOptions {
 	 */
 	profileJSON?: string
 	/**
-	 * #690/#895 tri-state pin: force normalizeCase OFF.
+	 * #690/#895 tri-state pin: force normalizeCase off.
 	 */
 	rawCase?: boolean
 	/**

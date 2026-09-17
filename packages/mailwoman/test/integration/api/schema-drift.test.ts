@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Compile-time drift pin between `@mailwoman/api`'s `GeocodeOutcomeSchema` (hand-modeled from
- *   `GeocodeResult`'s wire shape, with NO import from `mailwoman` — `api/schema.ts`'s engine-agnosticism
+ *   `GeocodeResult`'s wire shape, with no import from `mailwoman` — `api/schema.ts`'s engine-agnosticism
  *   boundary) and the real `GeocodeResult` interface this package owns (`geocode-core.ts`). `mailwoman`
  *   is the one workspace allowed to import both sides, so the pin lives here.
  *
  *   THE ALARM IS A TYPE ERROR, NOT A RUNTIME ONE. vitest's esbuild transform strips types without
  *   checking them, so a plain `.test.ts` file gets zero protection from `yarn vitest run` alone — the
  *   type-level declarations below only mean anything under `tsc`. `mailwoman/tsconfig.json` normally
- *   excludes all of `./test/**` (vitest-only, not part of `tsc -b`); this ONE file is carved back in via
+ *   excludes all of `./test/**` (vitest-only, not part of `tsc -b`); this one file is carved back in via
  *   an explicit `files` entry specifically so `yarn compile` type-checks it. The `test()` at the bottom
  *   is a secondary, genuinely-useful RUNTIME backstop (see its own comment) — not the primary alarm.
  *
@@ -34,14 +34,14 @@
  *     `IsAssignable<Inferred, GeocodeResult>`. If the schema claims a field, or a wider/looser type for
  *     a field, than `GeocodeResult` actually guarantees, this fails to compile — a generated client would
  *     otherwise trust a promise the real engine can violate. Also incidentally catches a field the schema
- *     DROPPED (a dropped field vanishes from `Inferred` too, so assigning into `GeocodeResult` — which
+ *     dropped (a dropped field vanishes from `Inferred` too, so assigning into `GeocodeResult` — which
  *     still requires it — fails the same way).
  *   - **Direction 1 — schema-too-narrow (would reject/misdescribe real results), narrowed to declared
  *     fields:** the index signature blocks the literal form, so this checks against `KnownFieldsSchema`
- *     — the SAME shape (`GeocodeOutcomeSchema.shape`, read live off the real export, never hand-copied)
- *     rebuilt WITHOUT `.loose()`'s catchall (`z.object(shape)` defaults to strip mode). That recovers
+ *     — the same shape (`GeocodeOutcomeSchema.shape`, read live off the real export, never hand-copied)
+ *     rebuilt without `.loose()`'s catchall (`z.object(shape)` defaults to strip mode). That recovers
  *     real per-field type checking (a field typed narrower or outright wrong vs. `GeocodeResult` fails to
- *     compile) but, on its own, cannot see a field entirely ABSENT from the schema — an object missing an
+ *     compile) but, on its own, cannot see a field entirely absent from the schema — an object missing an
  *     extra property is still structurally assignable to a target that doesn't require it. `_KeysMatch`
  *     closes that specific gap: an exact compile-time key-SET equality between `keyof GeocodeResult` and
  *     the schema's declared keys, so an added/removed/renamed field fails to compile even though the
@@ -53,7 +53,7 @@
  *   `_KeysMatch` AND Direction 1 when it's required (Direction 2 permits width subtyping, so an extra
  *   schema-side field can never break it).
  *
- *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately NOT used — they only gain teeth under
+ *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately not used — they only gain teeth under
  *   `vitest --typecheck` (a mode this repo doesn't run; its default `typecheck.include` is `*.test-d.ts`
  *   anyway, not this file's required `.test.ts` name), so they'd silently no-op under the repo's actual
  *   `yarn vitest run`. The hand-rolled `Equal`/`IsAssignable` utilities below are pure type-level
@@ -91,7 +91,7 @@ type IsAssignable<A, B> = [A] extends [B] ? true : false
 type Expect<T extends true> = T
 
 // Exact key-set parity — see file header. Fails to compile on any field added, removed, or renamed on
-// EITHER side (GeocodeResult or GeocodeOutcomeSchema).
+// either side (GeocodeResult or GeocodeOutcomeSchema).
 export type _KeysMatch = Expect<Equal<keyof GeocodeResult, keyof KnownInferred>>
 
 // Direction 1 — schema-too-narrow guard, narrowed to the schema's declared fields (see file header for
@@ -142,7 +142,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 } satisfies Record<keyof GeocodeResult, true>
 
 test("GeocodeOutcomeSchema field set matches GeocodeResult (runtime backstop — the compile-time pin above, via `yarn compile`, is the primary alarm; see file header)", () => {
-	// This is deliberately independent of the type-level `_KeysMatch` above: it inspects the REAL,
+	// This is deliberately independent of the type-level `_KeysMatch` above: it inspects the real,
 	// already-constructed `GeocodeOutcomeSchema.shape` at runtime, so it also fires under plain `yarn
 	// vitest run` (no `tsc` required) — a second, cheaper signal for the same class of drift the
 	// compile-time pin exists to catch.

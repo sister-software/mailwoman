@@ -1,4 +1,4 @@
-"""The loader and the epoch audit run ONE emit step (#2243).
+"""The loader and the epoch audit run one emit step (#2243).
 
 Both sides apply augmentation-with-a-per-source-opt-out and then the affix relabel, in that order.
 Expressing that twice is what #2243 was: `data_loader` applied `augment_exclude_sources` and

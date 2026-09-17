@@ -5,7 +5,7 @@
  *
  *   Refuse to publish a tree whose workspace manifests disagree with the root about the version.
  *
- *   The publish workflow's phase 2 runs against `main` AFTER the release PR has merged. A drifted tree means phase 1
+ *   The publish workflow's phase 2 runs against `main` after the release PR has merged. A drifted tree means phase 1
  *   never landed, or landed partially, and publishing it ships mixed versions across a release that is supposed to move
  *   in lockstep. The workflow runs this check and then reads the root manifest's version itself: a check reports
  *   diagnostics, and a passing one has established that the root's number is every release workspace's number.

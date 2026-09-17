@@ -19,8 +19,8 @@
  *   licensing edge, see `bdc/README.md` — spine `h3` res 9 for availability rows, res 6 for coverage
  *   cells, matching poi.db's convention).
  *
- *   Clustering decision (implementer's pick — the brief allows either): a PLAIN rowid table, NOT
- *   `WITHOUT ROWID`, and NOT a composite `(h3_cell, provider_id, technology_code)` primary key.
+ *   Clustering decision (implementer's pick — the brief allows either): a plain rowid table, not
+ *   `WITHOUT ROWID`, and not a composite `(h3_cell, provider_id, technology_code)` primary key.
  *   `WITHOUT ROWID` warrants its keep on small, PK-probed rows — poi.db's clustered key and
  *   `layer_coverage`'s per-cell probe both read by their exact PK and nothing else, so folding the row
  *   into the B-tree removes a second lookup. `bdc_availability` doesn't fit that shape: it's a wider,
@@ -89,9 +89,9 @@ export interface BDCAvailabilityTable {
  *   reimplemented — that query's half-open `valid_from`/`valid_to` scoping is easy to get wrong, and a second
  *   implementation would be a second place to get it wrong). Every OTHER FRN that `provider_id` carries is discarded
  *   here but stays fully recoverable from `filer.db`.
- * - `holding_company` gets the SAME single-distinct-value shortcut `frn` gets: when a `provider_id`'s rows carry exactly
+ * - `holding_company` gets the same single-distinct-value shortcut `frn` gets: when a `provider_id`'s rows carry exactly
  *   one distinct non-null `holding_company` string, there is no conflict to resolve, so it's populated directly — no
- *   rule needed, same as a single-FRN provider needs no `filerDB` query. When they carry MORE than one distinct value,
+ *   rule needed, same as a single-FRN provider needs no `filerDB` query. When they carry more than one distinct value,
  *   that ambiguity is the real conflict decision 6 refuses to paper over with last-wins (`holding_company` has no
  *   most-recent-filing-date rule the way `frn` does), so it stays NULL and every discarded value remains recoverable
  *   from `filer.db`'s `holding_company_name` edges — the identical discipline `frn`'s primary pick already applies.
@@ -162,7 +162,7 @@ export async function createBDCProviderTable(db: Kysely<BDCDatabase>): Promise<v
 }
 
 /**
- * Secondary index for the geoid point-lookup path (the public spatial join key). Call AFTER the bulk materialize
+ * Secondary index for the geoid point-lookup path (the public spatial join key). Call after the bulk materialize
  * (index-after-load), same discipline as poi.db's secondary indexes.
  */
 export async function createBDCGeoidIndex(db: Kysely<BDCDatabase>): Promise<void> {

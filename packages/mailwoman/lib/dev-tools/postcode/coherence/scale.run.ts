@@ -8,7 +8,7 @@
  *
  *   The 2026-08-04 landing record measured 28,000 pair evaluations this way but only on the candidate table, and the two
  *   backends demonstrably disagree about the one predicate the pass is built on: `exactMatch`. The FTS tier does not
- *   fold `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and NOT exact on FTS — which changes the
+ *   fold `ü`→`u`, so `Munchen`→`München` is exact on the candidate table and not exact on FTS — which changes the
  *   firing rate of a mechanism proposed for default-on. Hence a probe you can point at either backend, running the same
  *   protocol, so the two tables are comparable line for line.
  *
@@ -17,7 +17,7 @@
  *   - `domestic`  — the panel's own country as `defaultCountry`. Any override is a border crossing, i.e. a FALSE
  *       POSITIVE, because the address really is in the panel's country.
  *   - `rescue`    — a deliberately mis-scoped `defaultCountry` (the demo/CLI reality: locale `en-US` → `US` on every
- *       query). An override BACK to the panel's country is the win; an override anywhere else is a false positive.
+ *       query). An override BACK to the panel's country is a correct rescue; an override anywhere else is a false positive.
  *   - `regime`    — the same pass under an impossible default (`ZZ`), which forces step 1 to fail and reports what the
  *       alternative countries alone decide. A row whose regime probe returns the panel country was coherent under its
  *       own default and would have taken the cheap exit in the domestic leg; everything else FELL THROUGH and had every
@@ -25,7 +25,7 @@
  *       same whether the mechanism refused to cross a border or never ran.
  *
  *   The regime probe OVER-counts fall-through: a pair coherent in two countries returns null under `ZZ` (the tie rule)
- *   although the domestic leg would have exited cheaply. It errs toward claiming MORE at-risk rows than there were,
+ *   although the domestic leg would have exited cheaply. It errs toward claiming more at-risk rows than there were,
  *   which is the safe direction for the argument it supports.
  *
  *   Run from the repo root:
@@ -190,7 +190,7 @@ const domestic = await leg(panel.country)
 const rescue = await leg(panel.misScope)
 const regime = await leg(IMPOSSIBLE_DEFAULT)
 
-// A regime probe that returns the panel country means the pair is coherent under its OWN country — the cheap exit.
+// A regime probe that returns the panel country means the pair is coherent under its own country — the cheap exit.
 const coherentDefault = regime.rescued
 const fellThrough = pairs.length - coherentDefault
 

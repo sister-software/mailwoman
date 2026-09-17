@@ -7,7 +7,7 @@
  *
  *   Three decisions in this fold are silent when wrong and change the resulting curve: which tokens count toward a
  *   component's confidence, how they are folded to one number, and what happens to a component the truth row never
- *   mentions. The last has a wrong answer in BOTH directions — grade it wrong and a partial-truth corpus scores correct
+ *   mentions. The last has a wrong answer in both directions — grade it wrong and a partial-truth corpus scores correct
  *   output as hallucination; drop it silently and the curve covers a fraction of the parse without saying so.
  */
 

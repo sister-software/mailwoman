@@ -14,7 +14,7 @@
  *   instead of quietly moving a number nobody re-measured.
  *
  *   The doubles idiom is `placetype-pair-prior.test.ts`'s verbatim — hand-built pieces, a hand-built
- *   `PairIndexLike`. The census side uses the REAL `serializePlacetypeCensus` →
+ *   `PairIndexLike`. The census side uses the real `serializePlacetypeCensus` →
  *   `PlacetypeCensusResolver` round trip rather than a double, because the fold agreement between the
  *   two artifacts (`foldVersion`) is part of what's under test.
  */

@@ -11,7 +11,7 @@
  *   sibling — the survey read `NCERM_SMP_2105_95CC` — fails on the twelfth layer with
  *   `ERROR 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because ogr2ogr
  *   refuses an unknown column; a source that answered NULL instead would have shipped. So the `SELECT` is
- *   built from the layer's OWN field list, and the tests below pin which columns may be absent and which may
+ *   built from the layer's own field list, and the tests below pin which columns may be absent and which may
  *   not.
  *
  *   THE POLICY ASYMMETRY IS THE OTHER SHAPE, AND IT IS REGULAR RATHER THAN IRREGULAR. The six NFI layers omit

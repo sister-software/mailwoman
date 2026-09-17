@@ -16,15 +16,15 @@
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
  *   A geocoder that ranked on it would answer a bare "Saint-Denis" with a hamlet nobody means. The
- *   fixture below carries BOTH scores in the gazetteer — the suburb's disadvantage on the encyclopedic
+ *   fixture below carries both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
  *   column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
  * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
  *
  *   The second half of the file is the D-rule measurement for the split (§2 R1's "expected resolver
- *   delta is ZERO"): every ranking assertion is run against a gazetteer WITHOUT the encyclopedic
- *   column and one WITH it, and the two answer identically. If carrying the score could move a rank,
+ *   delta is ZERO"): every ranking assertion is run against a gazetteer without the encyclopedic
+ *   column and one with it, and the two answer identically. If carrying the score could move a rank,
  *   this is where it would show.
  */
 
@@ -235,7 +235,7 @@ describe("Saint-Denis — ranking is referential", () => {
 
 describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 	/**
-	 * §2 R1 predicts a resolver delta of ZERO: the split is schema + plumbing + a carry, and the ranking key it names
+	 * §2 R1 predicts a resolver delta of zero: the split is schema + plumbing + a carry, and the ranking key it names
 	 * (population) is the one the resolver already used. Predicted is not measured, so this measures it — every query
 	 * runs against a pre-split gazetteer and a post-split one, and the returned id ORDER must be identical.
 	 */

@@ -38,7 +38,7 @@ test("normalizeNZPostcode: rejects wrong-shape / non-string → null", () => {
 test("isNZPostcode: predicate is true only for an already-normalized four-digit string", () => {
 	expect(isNZPostcode("7942")).toBe(true)
 	expect(isNZPostcode("0110")).toBe(true)
-	// the predicate does NOT trim — it tests the shape verbatim
+	// the predicate does not trim — it tests the shape verbatim
 	expect(isNZPostcode(" 7942 ")).toBe(false)
 	expect(isNZPostcode("794")).toBe(false)
 	expect(isNZPostcode("ABCD")).toBe(false)

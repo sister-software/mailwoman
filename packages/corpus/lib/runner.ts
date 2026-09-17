@@ -16,14 +16,14 @@
  *
  *   The runner is responsible for everything an adapter is **not** responsible for:
  *
- *   - Stamping `corpus_version` on every row (adapters must NOT set it).
+ *   - Stamping `corpus_version` on every row (adapters must not set it).
  *   - Applying `canonicalDedupKey` and skipping duplicates.
  *   - Streaming sha256 over JSONL bytes so the manifest checksum doesn't require a re-read.
  *   - Honoring backpressure on the output write stream.
  *   - Counting + emitting periodic progress to an optional callback.
  *   - Honoring `signal` (delegates to adapter's iteration boundary).
  *
- *   The runner does NOT perform alignment, tokenization, synthesis, or the Parquet write. Those
+ *   The runner does not perform alignment, tokenization, synthesis, or the Parquet write. Those
  *   steps run later, consuming the JSONL files this writes.
  */
 

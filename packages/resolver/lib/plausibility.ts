@@ -17,10 +17,10 @@
  *   decorated tree — no gazetteer, no extra query — so it is free to run on every resolve. It is
  *   deliberately DIRECTION-AGNOSTIC about what the caller does with the signal: serve the result with
  *   a low-confidence marker, prefer a sibling parse hypothesis (the #727 k-best rerank), or decline to
- *   emit a coordinate. It is NOT a rules-fallback trigger — the v7 excision deletes the rules parser
+ *   emit a coordinate. It is not a rules-fallback trigger — the v7 excision deletes the rules parser
  *   outright (operator ruling 2026-07-15), so no consumer may route through legacy rules on a trip.
  *
- *   It deliberately does NOT flag region-tier resolutions: a US state or a province centroid
+ *   It deliberately does not flag region-tier resolutions: a US state or a province centroid
  *   (`Texas` → the TX centroid) is a legitimate coarse geocode, not garbage. Only "resolved no finer
  *   than a country" trips it.
  */
@@ -94,7 +94,7 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 
 /**
  * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for the cross-country guard (guard B). These are
- * DELIBERATELY rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
+ * deliberately rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
  * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
  * the mainland east coast; continental FR only; etc. A country absent here simply never trips the guard (fail-open).
  *

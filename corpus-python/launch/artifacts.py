@@ -4,7 +4,7 @@
     modal run -m launch.train_remote::quantize_onnx --fp32-path=… --int8-path=…
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
-Quantization runs HERE rather than locally because the dynamo-exported graph trips onnx shape
+Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
 inference in some local onnxruntime builds; the training image's pinned one quantizes it cleanly.
 The push exists because this volume's container and CLI views are fully divergent — `modal volume
 get` cannot pull a container-written file — so an artifact leaves the way the corpus arrived.
@@ -34,7 +34,7 @@ def export_onnx(
     MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows; CLI params take
     precedence when set.
 
-    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a FLAT
+    ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat
     ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
     into that same dir. Used to export an ad-hoc checkpoint — e.g. the #825 B-splice expanded-but-not-
     fine-tuned model for the mean-init ablation — without restructuring it into the training layout.

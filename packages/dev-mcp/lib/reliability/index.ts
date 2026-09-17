@@ -71,7 +71,7 @@ export interface ThresholdRow {
 /**
  * Equal-width bins over [0, 1].
  *
- * Empty bins are RETAINED. A model whose confidences never enter the low bins is itself the finding, and a table that
+ * Empty bins are retained. A model whose confidences never enter the low bins is itself the finding, and a table that
  * silently starts at 0.8 reads as a narrower measurement rather than as a wider result.
  */
 export function reliabilityCurve(sample: readonly Observation[], binCount: number): ReliabilityCurve {
@@ -118,7 +118,7 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest; this says what to DO with it, and they are different questions — a
+ * The curve says whether the number is honest; this says what to do with it, and they are different questions — a
  * well-calibrated surface can still have no threshold worth setting, because the admitted-error count at every useful
  * recall is too high. Both columns of the trade are reported: a precision figure alone hides the correct answers the
  * check throws away.

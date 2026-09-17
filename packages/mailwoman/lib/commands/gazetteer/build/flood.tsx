@@ -100,7 +100,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 
 		const client = createEAFloodClient()
 
-		// The catalogue read supplies the product's ISO revision date AND the direct file URL. Both are read rather than
+		// The catalogue read supplies the product's ISO revision date and the direct file URL. Both are read rather than
 		// assembled: the EA's file service keys on an opaque id with no relationship to the dataset id, so a hard-coded
 		// URL survives a republish by pointing at a file that is no longer the product.
 		const catalogue = options.offline ? undefined : await client.readCatalogueRecord()
@@ -148,7 +148,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			]
 		}
 
-		// The outline is a SECOND authority's artifact: the EA says its mapping covers all of England and does not publish
+		// The outline is a second authority's artifact: the EA says its mapping covers all of England and does not publish
 		// where England is. Which outline was used rides in `flood_map_extent`.
 		const outline = options.boundary
 			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)

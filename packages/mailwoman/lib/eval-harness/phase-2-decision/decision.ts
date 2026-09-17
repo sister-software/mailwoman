@@ -16,7 +16,7 @@
  *   HELD W1-3 behind #1980, so its operational half cannot be measured at all today. There are two ways to
  *   get that wrong and the audit refuses both: a ruler that scores a blocked lane reports a number about
  *   nothing, and a ruler that omits it reports full coverage over three quarters of the phase. So a lane
- *   carries `status`, a `blocked` lane may register NO check ({@linkcode auditPhase2Definition} refuses
+ *   carries `status`, a `blocked` lane may register no check ({@linkcode auditPhase2Definition} refuses
  *   one), it must name what blocks it and what its rows will read once unblocked, and every verdict carries
  *   {@linkcode Phase2Verdict.coverage} plus the blocked lane ids in its reasons.
  *
@@ -253,7 +253,7 @@ export interface Phase2Lane {
 /**
  * One row of the integration record's default-change bar, recorded with what it reads today.
  *
- * This register is NEVER an input to {@linkcode decidePhase2}. It exists because "proceed to what the record authorized"
+ * This register is never an input to {@linkcode decidePhase2}. It exists because "proceed to what the record authorized"
  * is a claim about a specific authorization — the opt-in surface — and a reader has to be able to see that the separate
  * bar for a default change is not met, rather than infer it from the absence of a claim.
  */
@@ -280,8 +280,8 @@ export interface Phase2Thresholds {
 	 */
 	minimumResolutionChecks: number
 	/**
-	 * How many `evidence`-tier target checks must hold. Required by BOTH decisions: the authorized surface serves a
-	 * category WITH the authority that chose it, so the evidence half is not an alternative to the resolution half.
+	 * How many `evidence`-tier target checks must hold. Required by both decisions: the authorized surface serves a
+	 * category with the authority that chose it, so the evidence half is not an alternative to the resolution half.
 	 */
 	minimumEvidenceChecks: number
 	/**
@@ -742,7 +742,7 @@ export function describeBar(bar: Phase2Bar): string {
 /**
  * Measure every registered check against the readings one run produced.
  *
- * REFUSES a check whose measurement no reading answers, rather than treating the absence as a miss. An unread
+ * Refuses a check whose measurement no reading answers, rather than treating the absence as a miss. An unread
  * measurement is a broken instrument, and a broken instrument reporting `0` is indistinguishable from a real zero — the
  * one reading a decision must never be built on.
  */
@@ -800,9 +800,9 @@ export function computePhase2Counts(
 /**
  * Map measured checks onto exactly one decision, against the frozen thresholds.
  *
- * ORDER IS required, and it is #1928's order. A control miss is checked FIRST and stops under both decisions: a
+ * Order is required, and it is #1928's order. A control miss is checked first and stops under both decisions: a
  * capability bought by moving something that already worked is not a result to act on. PROCEED-AS-AUTHORIZED is checked
- * before EVIDENCE-ONLY, and requires BOTH tiers — the surface the integration record authorizes serves a category
+ * before EVIDENCE-ONLY, and requires both tiers — the surface the integration record authorizes serves a category
  * together with the authority that chose it, so the evidence half is a component of proceeding rather than an
  * alternative to it. EVIDENCE-ONLY is then exactly the record's §7 outcome: the observation surface holds and the
  * recognition capability did not reach its bar.

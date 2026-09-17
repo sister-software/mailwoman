@@ -14,7 +14,7 @@
  *   An engine is one {@link GeocodeSession} plus the configuration that produced it, addressed by a content hash of
  *   that configuration. Two flag settings over one model share nothing at construction and are nearly free to compare;
  *   two models or two gazetteers are two resident multi-gigabyte footprints, which is a fact a caller should know
- *   BEFORE it waits.
+ *   before it waits.
  *
  *   **Deviation from spec §3.1, stated rather than buried.** The spec puts the registry in a long-lived supervisor
  *   behind a Unix socket, with one forked worker per configuration, so warmth survives agent restarts and an engine can
@@ -72,29 +72,29 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — default OFF in production; this change exists so the promotion battery
-	 * measures it with the standard tooling.
+	 * The opt-in venue tier (#1684's POI half) — off by default in production; this change exists so the promotion
+	 * battery measures it with the standard tooling.
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded NATIONAL-capital promotion on the bare-toponym class. Default OFF
-	 * (D-rule).
+	 * The capital-status ranking axis (#1880) — bounded national-capital promotion on the bare-toponym class. Off by
+	 * default (D-rule).
 	 */
 	capital_tier?: boolean
 	/**
 	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
-	 * an artifact whose `name_role` column carries the stamp. Default OFF (D-rule).
+	 * an artifact whose `name_role` column carries the stamp. Off by default (D-rule).
 	 */
 	variant_alias_exemption?: boolean
 	/**
-	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
+	 * Record the decode-path evidence on every run. Off by default and left off by the measuring tools: the trace is kept
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
 	trace?: boolean
 	/**
 	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
 	 *
-	 * NOT a change and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring
+	 * Not a change and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring
 	 * it as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools
 	 * that read misses force it on, the same way they force `trace`.
 	 */
@@ -169,7 +169,7 @@ export function effectiveKeyFor(declared: string): string {
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
-	// THE production defaults, from the geocode command's own factory — never re-typed here (#1732).
+	// The production defaults, from the geocode command's own factory — never re-typed here (#1732).
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
 	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
 	// false/false/0.9), so every unset-change measurement graded a configuration production does not
@@ -208,11 +208,11 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  *
  * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
  * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
- * of a mis-typed or half-staged candidate is not an error: it is a full run of the SHIPPED model, reported under the
+ * of a mis-typed or half-staged candidate is not an error: it is a full run of the shipped model, reported under the
  * candidate's label, with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason;
  * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
  *
- * Runs BEFORE the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
+ * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
  *
  * @throws When the root is wrong-shaped (no binaries) or under-staged (binaries present, but siblings its own card
  *   declares are missing — the #1516 shape, which degrades a channel silently and reads as a model regression).
@@ -279,7 +279,7 @@ export interface EngineSummary {
 /**
  * What a tool needs from the engine registry.
  *
- * The tools take THIS, not {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
+ * The tools take this, not {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
  * private fields, so no object literal can ever be assignable to it, and every stub in this package's tests had to
  * assert through `unknown` — which then keeps compiling after a method is renamed or its signature changes, and the
  * stub silently stops standing for the thing it doubles. `OracleGeocoderLike` in `oracle-arm.ts` is the same idea,
@@ -314,7 +314,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree the PROCESS imported — not the tree
 	 * any individual engine was built from. Those differ after a reload, and the difference is required: a registry with
 	 * no resident engine has nothing stale to compare against, so without this the first call after a reload builds and
-	 * stamps the NEW fingerprint onto answers produced by the OLD modules.
+	 * stamps the new fingerprint onto answers produced by the old modules.
 	 */
 	static async create(repoRoot: string, maxResident = 2): Promise<EngineRegistry> {
 		return new EngineRegistry(repoRoot, maxResident, await computeTreeFingerprint(repoRoot))
@@ -372,7 +372,7 @@ export class EngineRegistry implements EngineRegistryLike {
 		}
 
 		// Refuse against the BOOT fingerprint, not merely against whatever is resident. A resident engine under a
-		// different digest is one symptom of a moved tree; an EMPTY registry under a moved tree is the other, and it
+		// different digest is one symptom of a moved tree; an empty registry under a moved tree is the other, and it
 		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
 		// cannot import the new source — so both refuse here.
 		if (current.digest !== this.#bootFingerprint.digest) {

@@ -19,7 +19,7 @@
  *   It therefore builds the classifier via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
  *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block.
- *   The prior `--model` path built a RAW `new NeuralAddressClassifier` with NO anchor/gazetteer, so
+ *   The prior `--model` path built a raw `new NeuralAddressClassifier` with no anchor/gazetteer, so
  *   a freshly-trained STAGE3 checkpoint was graded ANCHOR-OFF (admin tags collapse) while the
  *   no-`--model` default (loadFromWeights) was anchor-ON — the candidate was scored OOD against an
  *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`

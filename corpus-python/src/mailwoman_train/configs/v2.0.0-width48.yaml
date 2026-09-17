@@ -1,5 +1,5 @@
 # === v2.0.0-width48 (#492 ladder rung 3 — THE WIDTH RUN, operator GO 2026-06-10) ================
-# Fresh 48M train (hidden 512 / 8 heads / FF 2048) on the FULL consolidation recipe (corpus
+# Fresh 48M train (hidden 512 / 8 heads / FF 2048) on the full consolidation recipe (corpus
 # v0.4.12), justified by the completed probe ladder: probe 0 eliminated suppression (decay with
 # clues always present), the frozen-head probe eliminated output competition (frozen 29M features
 # = P100/R~25 — the representation LACKS the affix feature). Capacity earned its evidence.
@@ -8,34 +8,34 @@
 #   - synth-affix 2.0 -> 5.0 (Run A's level; 20x was a 29M workaround, not a recipe)
 #   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING recipe formats only; the real eval's
 #     gap forms (corner-of/intersection-of/unpadded) may lag — REPORT, not check, on intersection)
-# PRE-REGISTERED CHECK (canonical bars; stability read at 2k AND 20k AND 40k — the transient lesson):
+# PRE-REGISTERED CHECK (canonical bars; stability read at 2k and 20k and 40k — the transient lesson):
 #   affix >=78/67 STABLE; US street >=80.4; country >=83.3; US postcode >=97; unit >=92;
 #   FR >=99.5/91; DE >=83.8; no-regression vs v4.2.0; intersection_a/b REPORTED (check draft #487).
 #   int8 lands ~50MB — pocket budget holds (two-tier contract). Iteration cost ~1.5-2x: the real price.
 #
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
-# ONE model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
-# lesson: never stack N sources into a fixed 20k budget — give them room). This is NOT a single-variable
+# One model carrying every proven parity change, at a larger step budget (the cumulative-dilution
+# lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
 # experiment; it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced recipe output, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
 #   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
-#   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (FIRST trained here)
+#   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (first trained here)
 # po_box/cedex DEFERRED (matcher-proven 100%; coverage recipe outputs are a follow-up, not in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
 # + the v0.4.10-country-bal balanced country recipe output, referenced verbatim (pure manifest concat; every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
-# TWO deliberate changes vs v0.9.13:
+# Two deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
 #      budget is the prescribed fix; 40k ≈ 2x exposure per source.
-#   2. gazetteer_curriculum OFF, gazetteer_choreography ON. The curriculum (random clue zero-out) only
-#      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
-#      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
-#      fix — and this run is its FIRST training test. Stacking both suppressions would over-zero the
+#   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out)
+#      only recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
+#      adjacent to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
+#      fix — and this run is its first training test. Stacking both suppressions would over-zero the
 #      clue, so curriculum is dropped.
 #
 # PRE-REGISTERED CHECK (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
@@ -52,7 +52,7 @@
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.
 #
-# REQUIRES on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
+# Requires on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
 # suppress_gazetteer_near_postcode + tokenizer/config/data_loader threading), the gazetteer lexicon at
 # /data/gazetteer/anchor-lexicon-v1.json, and corpus v0.4.12-consolidation. Repro of the corpus:
 #   (build the multi-locale affix + balanced country recipe outputs per #469 / #464, then assemble the manifest:

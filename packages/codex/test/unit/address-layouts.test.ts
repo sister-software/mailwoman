@@ -222,7 +222,7 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("reaches Hong Kong's own script, which its hand-authored layout cannot state", () => {
-		// The hand-authored HK entry IS the Latin order, so before the split the Chinese order had nowhere to live and
+		// The hand-authored HK entry is the Latin order, so before the split the Chinese order had nowhere to live and
 		// `layoutForCountry("HK")` answered the English one for both scripts.
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "local")!)).toBe(true)
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "latin")!)).toBe(false)
@@ -230,7 +230,7 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("keeps the board-checked layout where it already states the local order", () => {
-		// CN and JP are hand-authored AND largest-first, so the generated skeleton must not displace them.
+		// CN and JP are hand-authored and largest-first, so the generated skeleton must not displace them.
 		for (const cc of ["CN", "JP"]) {
 			expect(layoutForCountry(cc, "local"), cc).toBe(ADDRESS_LAYOUTS[cc])
 		}

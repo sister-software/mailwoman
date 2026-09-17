@@ -1,12 +1,12 @@
 """PR3 self-conditioning wiring smoke (CPU, seconds).
 
-The "is the new architecture wired correctly?" check that PR3 ships BEFORE any GPU run. Builds a
+The "is the new architecture wired correctly?" check that PR3 ships before any GPU run. Builds a
 tiny encoder with ``use_locale_conditioning=True``, runs forward, and asserts the locale head +
 FiLM modulation + auxiliary loss are wired and finite. Also covers the cross-pollution regression check
-metric, save/load round-trip, back-compat with the conditioning OFF, and that the pilot config
+metric, save/load round-trip, back-compat with the conditioning off, and that the pilot config
 loads with the expected scope.
 
-NO loss.backward, NO optimizer step, NO GPU. Geometry + numerical-sanity only — the falsify-before-
+No loss.backward, no optimizer step, no GPU. Geometry + numerical-sanity only — the falsify-before-
 you-spend check for the self-conditioned retrain.
 """
 
@@ -184,7 +184,7 @@ def test_save_load_roundtrip_preserves_locale_config(tmp_path):
 
 
 def test_load_pre_pr3_card_back_compat(tmp_path):
-    """A model card written before PR3 (no locale keys) loads with conditioning OFF."""
+    """A model card written before PR3 (no locale keys) loads with conditioning off."""
     m = _build_encoder(use_locale_conditioning=False)
     m.save_pretrained(tmp_path)
     card = tmp_path / "config.json"

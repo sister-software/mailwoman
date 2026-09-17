@@ -16,7 +16,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
- * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation (#402). Berlin resolves
+ * One additional admin role a resolved place also fulfils — the dual-role / city-state relation (#402). Berlin resolves
  * as a locality but `role: "region"` here surfaces that it is also a federal state. `relationshipType` is the
  * gazetteer-derived class (`city-state`, `capital-seat`, …).
  */
@@ -62,7 +62,7 @@ export interface MailwomanLookupLike {
 			lon: number
 			score: number
 			/**
-			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a partial token match).
+			 * True when the candidate's name, abbreviation, or an alias exactly matched the query (vs a partial token match).
 			 * The cascade accepts alias-exact hits ("New York City" → New York) the same way it accepts canonical-name
 			 * matches.
 			 */
@@ -123,16 +123,16 @@ const WOF_RANK_LOCALITY = 5
 const WOF_RANK_REGION = 4
 
 /**
- * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node — under the
- * locality-first EPOCH CONVENTION the Node ladder follows (`extractGeocodeResult`): an AREA-class postcode (an FR
- * 5-digit zone, an SI 4-digit code) is coarser than the locality it sits in, so it ranks BELOW locality and pins only
+ * How the demo picks the pin from a resolved tree: prefer the most address-precise resolved node — under the
+ * locality-first epoch convention the Node ladder follows (`extractGeocodeResult`): an AREA-class postcode (an FR
+ * 5-digit zone, an SI 4-digit code) is coarser than the locality it sits in, so it ranks below locality and pins only
  * when nothing finer resolved. Before 2026-08-11 this table put every postcode first (the old cascade's tier order) —
  * the staged-repoint e2e measured the demo pinning the SI `6250` AREA centroid where Node pins the Zabiče locality, the
  * exact drift the #861 convergence exists to prevent.
  *
- * The rows here are the demo's own ordering and deliberately NOT `PLACETYPE_SPECIFICITY`: `neighbourhood` sits below
+ * The rows here are the demo's own ordering and deliberately not `PLACETYPE_SPECIFICITY`: `neighbourhood` sits below
  * `locality` because that is the pin a viewer wants, where the shared scale ranks it above because it covers less
- * ground. What is NOT the demo's own is where a postcode sits against the locality — that question has one answer, and
+ * ground. What is not the demo's own is where a postcode sits against the locality — that question has one answer, and
  * it comes from `@mailwoman/codex` for both sides (see {@link PIN_RANK_POSTCODE_FIRST}).
  */
 const PIN_RANK: Record<string, number> = {
@@ -140,8 +140,8 @@ const PIN_RANK: Record<string, number> = {
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
-	// An AREA-class postcode sits below the whole locality TIER, not below `locality` alone. `borough` and `localadmin`
-	// are not peers OF that tier, they ARE it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
+	// An AREA-class postcode sits below the whole locality tier, not below `locality` alone. `borough` and `localadmin`
+	// are not peers of that tier, they are it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
 	// because a New England civil town is `localadmin` in WOF. Ranked at 4.5 this pinned the postcode on 404 of 2,000 US
 	// panel rows where Node returns the town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon,
 	// VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. It still outranks `county`, so a
@@ -247,7 +247,7 @@ export async function runCascade(
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
 	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
 	// global by design (the placer/population ranking routes, never a hardcoded country).
-	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
+	// bias (#938): the map viewport (and optional geolocation) as soft proximity hints — an in-view
 	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
 	// (48026 → Fraser MI vs Russi IT, the rule the library check pins). Omitted when empty.
 	const resolved = (await resolver.resolveTree(tree, {

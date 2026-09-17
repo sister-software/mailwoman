@@ -13,11 +13,11 @@
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
- *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry IS the winner).
- *   - `false` — the entry resolved independently to a place OUTSIDE the winner's containment chain: the chimera
+ *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry is the winner).
+ *   - `false` — the entry resolved independently to a place outside the winner's containment chain: the chimera
  *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X; winner
  *     sits in Y".
- *   - ABSENT — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
+ *   - absent — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
  *     Absence is "unverifiable", never "false" (the meaning-of-zero rule).
  *
  *   The winner-chain-AS-hierarchy representation (the issue's other sanctioned close) belongs to the #1717 stage-2
@@ -76,7 +76,7 @@ const HIERARCHY_TAGS = [
  * The MOST-SPECIFIC resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
  *
  * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
- * the FIRST resolved admin node in tree order — often the REGION — and an ancestor chain never contains its own
+ * the first resolved admin node in tree order — often the region — and an ancestor chain never contains its own
  * descendants, so `1600 Pennsylvania Ave…` graded its correctly-resolved `Washington` locality `in_winner_lineage:
  * false`. Anchoring at the deepest resolved entry grades ancestors (which its chain does contain) and can never
  * false-flag a descendant.
@@ -170,7 +170,7 @@ export function annotateHierarchyLineage(
 		if (lineage.has(entry.placeID)) {
 			entry.in_winner_lineage = true
 		} else if (ancestors !== undefined) {
-			// Only a PRESENT sidecar can testify to absence — without one, "not in the set" is ignorance.
+			// Only a present sidecar can testify to absence — without one, "not in the set" is ignorance.
 			entry.in_winner_lineage = false
 		}
 	}

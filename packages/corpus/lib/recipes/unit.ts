@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `unit` recipe — US secondary-unit coverage (#451, the v0-parity `unit` gap). Onto REAL US
- *   OpenAddresses skeletons (cached zips under `$MAILWOMAN_DATA_ROOT/oa-cache`) it INJECTS a USPS Pub-28 Appendix
+ *   `unit` recipe — US secondary-unit coverage (#451, the v0-parity `unit` gap). Onto real US
+ *   OpenAddresses skeletons (cached zips under `$MAILWOMAN_DATA_ROOT/oa-cache`) it injects a USPS Pub-28 Appendix
  *   C2 secondary-unit designator (the `@mailwoman/codex/us` table), varying the surface form
- *   (canonical "Apartment" vs approved "Apt") AND the unit's POSITION (after-street / unit-first /
- *   bare / venue-prefixed) per row, so the model learns to RECOGNIZE the designator wherever it
+ *   (canonical "Apartment" vs approved "Apt") and the unit's position (after-street / unit-first /
+ *   bare / venue-prefixed) per row, so the model learns to recognize the designator wherever it
  *   sits. The inline synthesis (the OA-CSV reader, the designator tables, `makeUnit`/`renderUnit`)
  *   is ported faithfully from the root build script it replaced.
  *
@@ -16,8 +16,8 @@
  *   uses every NON-Vermont US source. Designators are injected in both (OA carries none), so the
  *   eval measures designator recognition on held-out addresses.
  *
- *   NOTE: this is a `generate`-mode recipe but it still reads REAL tuples off disk (`unzip` of the
- *   cached OA zips) — `--count` bounds the OUTPUT, not the input. The passed `random` (the
+ *   NOTE: this is a `generate`-mode recipe but it still reads real tuples off disk (`unzip` of the
+ *   cached OA zips) — `--count` bounds the output, not the input. The passed `random` (the
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
 
@@ -184,7 +184,7 @@ function unitIdentifier(unit: string): string | undefined {
 // independently of which designator sits in it. `full-comma` is carved out of `full-after` alone so every later
 // cutoff keeps the share it had, and `full-comma-bare` out of `full-comma` for the same reason.
 //
-// `full-comma-bare` writes the identifier with NO designator at all — `301 College Ave, 101, Athens, GA 30601` — which
+// `full-comma-bare` writes the identifier with no designator at all — `301 College Ave, 101, Athens, GA 30601` — which
 // is the one unit surface carrying no token that decides its reading. It is deliberately the smallest share and
 // confined to the comma layout: a bare id anywhere else is indistinguishable from a house number.
 const FULL_AFTER_CUTOFF = 0.26

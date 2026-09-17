@@ -18,7 +18,7 @@ import type { FRN } from "#frn"
 export interface CORESRegistration {
 	frn: FRN
 	/**
-	 * The legal name the entity registered under. NOT necessarily the name anyone uses for it: FRN `0001753557` registers
+	 * The legal name the entity registered under. Not necessarily the name anyone uses for it: FRN `0001753557` registers
 	 * as `"Knology Total Communications, Inc."` while operating as WOW!.
 	 */
 	entityName?: string
@@ -46,7 +46,7 @@ export interface CORESRegistration {
 	contactPhone?: string
 	contactFax?: string
 	/**
-	 * Raw `MM/DD/YYYY hh:mm:ss AM/PM` timestamps exactly as served. NOT parsed to a `Date` here — the same discipline
+	 * Raw `MM/DD/YYYY hh:mm:ss AM/PM` timestamps exactly as served. Not parsed to a `Date` here — the same discipline
 	 * `Form499Row.lastFiledAt` follows, so a caller that needs a temporal value performs (and can validate) its own
 	 * conversion rather than inheriting a silent one.
 	 */
@@ -86,7 +86,7 @@ const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
  * Tokens that stay upper-case through the title-casing pass. Without these, `COMCAST CABLE COMMUNICATIONS, LLC`
  * title-cases to `… , Llc`, which is not a spelling anyone uses and would reach a product surface verbatim.
  *
- * Deliberately only initialisms whose conventional rendering IS all-caps. `Ltd`, `Corp` and `Inc` are absent because
+ * Deliberately only initialisms whose conventional rendering is all-caps. `Ltd`, `Corp` and `Inc` are absent because
  * their conventional rendering is title case, which the pass already produces. Matched on the token with trailing
  * punctuation stripped, so `LLC,` and `LLC.` both hit.
  */
@@ -96,12 +96,12 @@ const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", 
  * Title-case a value that arrived UNIFORMLY cased, and leave everything else alone — Nexus's `normalizeDataCell` idea,
  * kept because FCC data mixes `WINDSTREAM SERVICES LLC` with `Lumen Technologies Inc.` in the same column.
  *
- * The guard is what makes it safe. A string carrying BOTH cases is already deliberately cased and is returned
+ * The guard is what makes it safe. A string carrying both cases is already deliberately cased and is returned
  * untouched, so `WOW! Internet, Cable and Phone` survives. A string containing `:`, `@`, `(`, `)` or `-` is left alone
  * too: those mark addresses, emails and phone numbers, where re-casing corrupts rather than tidies. Entity-form
  * initialisms are restored to upper case afterwards ({@linkcode UPPERCASE_TOKENS}).
  *
- * This is a display-level tidy, NOT a matching normalizer. Anything joining on these values must still go through
+ * This is a display-level tidy, not a matching normalizer. Anything joining on these values must still go through
  * `canonicalizeOrganizationName` — re-casing does not fold `INC` and `Inc.` together.
  */
 export function recaseUniform(value: string): string {

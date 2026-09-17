@@ -22,8 +22,8 @@
  *   - {@link JP_BLOCK_MARKERS} — the markers that close the numbered tail (丁目 / 番地 / 番 / 号), the part
  *       that actually does the "house number" job in the absence of streets.
  *
- *   Note the reverse field order: the admin suffixes appear FIRST in the string (prefecture leads),
- *   and the block markers LAST — the mirror image of a US line, where the house number leads and
+ *   Note the reverse field order: the admin suffixes appear first in the string (prefecture leads),
+ *   and the block markers last — the mirror image of a US line, where the house number leads and
  *   the ZIP trails. See `postal-code.ts` for why, with no street name, the postcode is the primary
  *   anchor.
  */

@@ -10,7 +10,7 @@ nationwide road-code file, laid out as the guide inside the zip states (붙임1,
 
 A LABEL row is one 주소 record joined to its road code (the admin ladder and the road name), its representative
 lot (대표여부 = 1: the 법정동, the 리, and the lot number the 지번 form writes) and its supplement (the postcode — the
-기초구역번호 on the 주소 row IS the five-digit postcode — and the building name). The row count note in the zip gives
+기초구역번호 on the 주소 row is the five-digit postcode — and the building name). The row count note in the zip gives
 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
 
 The 2026 edition writes the merged 전남광주통합특별시 where every older source (the permit registry, Who's On First)

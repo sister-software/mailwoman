@@ -54,7 +54,7 @@ describe("canonicalizeOrganizationName", () => {
 
 describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#668)", () => {
 	it("byte-stable default: never strips collision-prone tokens without context", () => {
-		// pt / sca / scs are NOT in the universal base — the legacy behavior keeps them.
+		// pt / sca / scs are not in the universal base — the legacy behavior keeps them.
 		expect(canonicalizeOrganizationName("Lakeside PT")?.canonical).toBe("lakeside pt")
 		expect(canonicalizeOrganizationName("Lakeside PT")?.designations).toEqual([])
 		expect(canonicalizeOrganizationName("Cardiac SCA Clinic")?.canonical).toBe("cardiac sca clinic")

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The stale-path finder over a planted repository with a real rename in its history.
  *
- *   The check turns on the difference between a path that MOVED and a path that never existed, and that difference
+ *   The check turns on the difference between a path that moved and a path that never existed, and that difference
  *   lives in git history — so the fixture is a real repository: commit two files, rename one, commit again. A
  *   planted directory with no history cannot exercise the test that makes the check usable.
  */

@@ -10,9 +10,9 @@
  *   folded name with a `localadmin` within 5 km — so an arm returning the twin was graded as selecting
  *   where no correct candidate exists, on 10 of that panel's 100 withheld rows.
  *
- *   `withholdEveryDenotingRow` is the corrected rule and it is OFF by default, because turning it on
+ *   `withholdEveryDenotingRow` is the corrected rule and it is off by default, because turning it on
  *   changes what the stratum means and the v1 arms have already run. These tests pin both halves: the
- *   default stays id-equality byte-for-byte, and the opt-in catches the twin WITHOUT catching a real
+ *   default stays id-equality byte-for-byte, and the opt-in catches the twin without catching a real
  *   namesake at distance.
  */
 

@@ -11,7 +11,7 @@
  *   THE RECIPE. A clone that landed is coverage the next build will pick up whether or not anyone declared
  *   it, and a declaration with no clone is coverage that will silently not appear.
  *
- *   TWO LAYOUTS COEXIST, and a repo present in both is one of two DIFFERENT things — which is why this
+ *   TWO LAYOUTS COEXIST, and a repo present in both is one of two different things — which is why this
  *   distinguishes them rather than counting paths. Measured 2026-08-17 in the lab root:
  *
  *   - `admin-jp` and `admin-kr` are two INDEPENDENT checkouts, at identical commits today.
@@ -49,13 +49,13 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the SAME directory — a symlink, not a second checkout. The ingest does not follow
+	 * True when the layouts resolve to the same directory — a symlink, not a second checkout. The ingest does not follow
 	 * the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**
-	 * `HEAD` per layout, so a duplicate can be reported as SAME or DIVERGED rather than merely as duplicated. Absent for
-	 * a directory that is not a git checkout.
+	 * `HEAD` per layout, so a duplicate can be reported as same-commit or diverged rather than merely as duplicated.
+	 * Absent for a directory that is not a git checkout.
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
@@ -78,7 +78,7 @@ export interface ReposAudit {
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at DIFFERENT commits — the state where the ingest's result depends on
+	 * Duplicated repos whose two copies are at different commits — the state where the ingest's result depends on
 	 * enumeration order. Empty is the good case and is reported as such.
 	 */
 	diverged: ClonedRepo[]

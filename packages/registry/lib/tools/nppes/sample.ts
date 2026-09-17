@@ -51,7 +51,7 @@ export interface NPPESStateSample {
  */
 export interface NPPESSample extends NPPESStateSample {
 	/**
-	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over EVERY practice address in the
+	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over every practice address in the
 	 * registry, not just the sample, so the sharing structure is a corpus statistic rather than a sampling artifact.
 	 */
 	addressFrequency: TermFrequencyTable
@@ -86,7 +86,7 @@ export interface NPPESMultiSampleOptions {
 /**
  * Build the benchmark's input records from the real registry, one bucket per requested state.
  *
- * Two passes over two files, and the SECOND one cannot break early: the address-frequency table needs every registry
+ * Two passes over two files, and the second one cannot break early: the address-frequency table needs every registry
  * row even after the sample is full, so the per-bucket `keptNpis.size < maxNpisPerState` test bounds only the sample
  * branch.
  */
@@ -118,7 +118,7 @@ export async function buildNPPESStateSamples(
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
 	// Make one full registry pass to build the global address-frequency table.
-	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect every state's sample. ---
+	// address, so the sharing structure is corpus-wide, not sample-biased) and collect every state's sample. ---
 	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
 
 	const byState = new Map<string, NPPESStateSample>(
@@ -167,8 +167,8 @@ export async function buildNPPESStateSamples(
 
 				// the NPI's registrant — shared across its records
 				// #625: the taxonomy-code set (up to 15 slots), whitespace-joined — identical across the NPI's
-				// records by construction (it's a per-NPI registry attribute), so it NEVER splits one entity;
-				// it only separates co-located DISTINCT providers whose sets are disjoint.
+				// records by construction (it's a per-NPI registry attribute), so it never splits one entity;
+				// it only separates co-located distinct providers whose sets are disjoint.
 				const taxonomy = C.taxonomy
 					.map((col) => norm(r[col]))
 					.filter(isPresent)

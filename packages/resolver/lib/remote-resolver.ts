@@ -8,7 +8,7 @@
  *   `ResolveOpts` to a resolver service, which owns the gazetteer + situs/interpolation extracts,
  *   runs the cascade, and returns the resolved tree. Two payoffs:
  *
- *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to ONE resolver service
+ *   1. **Multi-instance** — stateless parser nodes (the ~30 MB ONNX model) talk to one resolver service
  *        (the multi-GB gazetteer + extracts). `parse` locally, `new RemoteResolver(...).resolveTree`
  *        remotely — same interface the in-process `WOFResolver` satisfies, so it's a drop-in.
  *   2. **Canary** — point it at a second resolver build (or an adapter fronting Pelias/Nominatim/BAN)

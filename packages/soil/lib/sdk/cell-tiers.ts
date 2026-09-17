@@ -27,7 +27,7 @@ import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } f
 /**
  * Resolve the touch table into the stored containment index.
  *
- * Compaction happens HERE and only on the whole side. It is expected to yield close to nothing on this layer, which is
+ * Compaction happens here and only on the whole side. It is expected to yield close to nothing on this layer, which is
  * the inversion the survey predicts: compaction needs a uniform interior, and 85.4% of `IA153`'s delineations are
  * smaller than one resolution-9 cell.
  */

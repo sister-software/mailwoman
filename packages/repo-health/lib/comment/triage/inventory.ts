@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The comment inventory as an operation over a repo context, so `mwops` can run it the way it runs a check.
  *
- *   `inventorySourceComments` takes a file list; this decides WHICH files and where the database goes, which is the
+ *   `inventorySourceComments` takes a file list; this decides which files and where the database goes, which is the
  *   half a caller would otherwise re-derive. The CLI beside it is a thin adapter over this.
  */
 

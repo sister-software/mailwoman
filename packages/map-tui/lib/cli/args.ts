@@ -72,7 +72,7 @@ export interface BrowseArgs {
 export type CLIArgs = { mode: "help" } | { mode: "version" } | BrowseArgs
 
 /**
- * A rejected command line. The message is user-facing: it says what was wrong AND what to pass instead, since the bin
+ * A rejected command line. The message is user-facing: it says what was wrong and what to pass instead, since the bin
  * prints it verbatim to stderr.
  */
 export class CLIArgsError extends Error {

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman release merge-admin` — the ONE sanctioned `gh pr merge --admin` route (#1895). The
+ *   `mailwoman release merge-admin` — the one sanctioned `gh pr merge --admin` route (#1895). The
  *   bypass stays available for the nights the lab fleet is slow, but it runs the sub-second guards
  *   the skipped checks would have, synchronously, and refuses to merge over a failure.
  *

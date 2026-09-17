@@ -9,7 +9,7 @@
  *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
  *   lives in `ban/sdk/extract.ts`'s `cleanLieuDit`, not duplicated here). Only rows carrying a clean
  *   lieu-dit survive into the pool; the existing `ban`/`synth-fr` sources and their emitted rows are
- *   untouched — this recipe reads the SAME raw CSVs but emits under its own source name.
+ *   untouched — this recipe reads the same raw CSVs but emits under its own source name.
  *
  *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's
  *   FR `place`-slot convention (`fix(formatter): render dependent_locality for neither-slot templates`,
@@ -18,7 +18,7 @@
  *
  *   ~1.69M clean rows survive the filter nationally (26M total BAN rows, 1.81M raw `nom_ld` fills, ~6.6%
  *   junk/dup). The pool is read in full (small string tuples only — no coordinates needed) and
- *   Fisher-Yates shuffled with the seeded PRNG before slicing to `--count`, rather than sampled WITH
+ *   Fisher-Yates shuffled with the seeded PRNG before slicing to `--count`, rather than sampled with
  *   replacement — at a `--count` a sizeable fraction of the pool, with-replacement draws would produce a
  *   large duplicate rate (birthday-paradox math: ~190k expected collisions at count=800k over a 1.69M
  *   pool).
@@ -59,7 +59,7 @@ interface LieuDitTuple {
 }
 
 /**
- * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, ONE path per département. Excludes the `merged`/`france`
+ * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département. Excludes the `merged`/`france`
  * aggregates (they duplicate the per-département rows) and, when both a `.csv` and a `.csv.gz` exist for the same dept
  * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the uncompressed `.csv` — mirrors
  * `packages/ban/lib/scripts/build/address-point-database.ts`'s `departementFiles`, which hit and fixed this exact
@@ -174,7 +174,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
-		// `random` is threaded in rather than constructed here: the recipe shares ONE mulberry32 stream between this
+		// `random` is threaded in rather than constructed here: the recipe shares one mulberry32 stream between this
 		// shuffle and the country-fraction draw below, so a fresh generator would move every later draw and the committed
 		// rows with it.
 		shuffleWith(pool, random)
@@ -219,7 +219,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 
 			// Country-append (the fr-admin-split #728 pattern, generalized): ~`countryFraction` of the time
 			// append an explicit "France" surface form onto the trailing (postcode+commune) line + a
-			// `country` component — the model relearns to emit country WHEN present without over-firing it
+			// `country` component — the model relearns to emit country when present without over-firing it
 			// on the (still-majority) country-less rows. `countryFraction <= 0` (the default) never draws
 			// from `random`, so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {

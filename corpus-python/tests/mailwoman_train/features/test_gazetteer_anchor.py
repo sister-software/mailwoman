@@ -114,7 +114,7 @@ def test_choreography_zeros_clue_adjacent_to_postcode_anchor():
     # The CA clue (index 1) is adjacent to the postcode anchor (index 2) → zeroed.
     assert out_f[1] == [0, 0, 0, 0, 0]
     assert out_c[1] == 0.0
-    # A clue NOT adjacent to a postcode anchor is untouched.
+    # A clue not adjacent to a postcode anchor is untouched.
     feats2 = [[1, 1, 0, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     confs2 = [1.0, 0.0, 0.0]
     anchor2 = [0.0, 0.0, 1.0]  # postcode 2 pieces away from the clue

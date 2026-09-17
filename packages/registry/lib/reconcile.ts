@@ -12,14 +12,14 @@
  *   membership in some base set — e.g. registered providers/facilities) or a **funding/enrollment**
  *   source (it denotes participation in a program). Three buckets fall out per entity:
  *
- *   - **enrolled** — resolves to BOTH an eligibility and a funding record.
- *   - **eligible, not enrolled** — an eligibility record with NO funding record resolving to it (the
+ *   - **enrolled** — resolves to both an eligibility and a funding record.
+ *   - **eligible, not enrolled** — an eligibility record with no funding record resolving to it (the
  *       ANTI-JOIN).
  *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
  *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
- *   reconciled join and surface the candidate set; what a gap MEANS — and whether it is real, a
+ *   reconciled join and surface the candidate set; what a gap means — and whether it is real, a
  *   sampling artifact, or actionable — is entirely the data consumer's call. Nothing here is an
  *   allegation. {@link reconciliationReport} bakes that caveat in by construction.
  *
@@ -68,7 +68,7 @@ export interface ReconciliationResult {
 }
 
 /**
- * Bucket an entity from the source labels its records span. Returns `null` when the entity carries NO eligibility- or
+ * Bucket an entity from the source labels its records span. Returns `null` when the entity carries no eligibility- or
  * funding-tagged source (it is outside this reconciliation — e.g. a source the caller didn't assign a role) so callers
  * can exclude it rather than silently miscount it.
  */

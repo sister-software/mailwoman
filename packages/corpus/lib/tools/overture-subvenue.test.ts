@@ -49,7 +49,7 @@ interface FixtureDatabase {
 		rowid_key: number
 		name: string | null
 		/**
-		 * Mirrors the shipped column so a rename fails here; it does NOT mirror the fold. The real `poi.name_key` is
+		 * Mirrors the shipped column so a rename fails here; it does not mirror the fold. The real `poi.name_key` is
 		 * `NameKey`, minted by `normalizeLocalityForKey` — which this package cannot reach, and which no assertion here
 		 * needs. Do not copy the value expression below as if it were the fold.
 		 */
@@ -68,7 +68,7 @@ const CATEGORY_IDS: Record<string, number> = {
 	campus_building: 733,
 	pier: 952,
 	airport_lounge: 956,
-	// Deliberately present and NOT in the sub-venue set: the reader must not read it. `gas_station`
+	// Deliberately present and not in the sub-venue set: the reader must not read it. `gas_station`
 	// is the single largest designator-token producer in the whole layer (12,996 hits of `station`,
 	// all inside brand names), so it is the right negative to pin.
 	gas_station: 250,

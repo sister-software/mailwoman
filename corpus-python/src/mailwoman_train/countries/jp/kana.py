@@ -1,7 +1,7 @@
 """Kana readings for Japanese municipalities, from the admin DB's `names` table (#2165).
 
 A municipality's official name is kanji (厚木市) and the corpus rows carry it that way, so a model sees a hiragana
-municipality only where the official name IS hiragana — some fifty of Japan's 1,741 municipalities (かすみがうら市,
+municipality only where the official name is hiragana — some fifty of Japan's 1,741 municipalities (かすみがうら市,
 つくば市, さいたま市). Two from-scratch runs closed the municipality span before the trailing 市 on the one such name the
 board holds out (#2165). The register this module feeds renders the municipality as its kana reading plus the kanji
 generic (あつぎ市 for 厚木市), which is both a surface people type and the exact shape of the official kana names.

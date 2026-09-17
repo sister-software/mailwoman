@@ -6,7 +6,7 @@
  *   `bare-postcode` — a postcode standing ALONE, in the form its country writes.
  *
  *   The shape is absent from the corpus. A census of the 685,187,151 rows the v0.29.0 mixture reads
- *   found ZERO two-token rows of `NNN NN` and one of `NNNN LL`, so `100 00` and `1012 LG` are out of
+ *   found zero two-token rows of `NNN NN` and one of `NNNN LL`, so `100 00` and `1012 LG` are out of
  *   distribution and every model's answer for them is generalization off longer lines. That
  *   generalization is what moved: held-out CZ/SK codes read 31/32 as a postcode under v5.0.0, v5.2.0
  *   AND v5.3.0 — a seed pair agreeing, so not training noise — and 0/32 under v5.4.0, whose added
@@ -19,7 +19,7 @@
  *   `buildEmissionPriors`, caps near 0.95 at the default `biasScale` against a measured 1.67-to-3.78
  *   nat deficit.
  *
- *   So this recipe emits the postcode and NOTHING else, which is the one thing no sibling does.
+ *   So this recipe emits the postcode and nothing else, which is the one thing no sibling does.
  *
  *   VERIFIED AGAINST THE PRIOR, NOT MERELY MATCHED TO IT. Every surface is run through
  *   `detectKnownFormats` and refused unless the detector calls it a postcode. The recipe's rendering
@@ -255,7 +255,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 					continue
 				}
 
-				// A board row is refused on ANY of its written forms, so the check runs over each surface the recipe
+				// A board row is refused on any of its written forms, so the check runs over each surface the recipe
 				// would emit rather than over the compact code alone: the board spells it `100 00` and the recipe
 				// holds `10000`, and `normalizeGauntletSurface` is what makes those one string.
 				if (form.render(compact).some((surface) => boardInputs.has(normalizeGauntletSurface(surface)))) {

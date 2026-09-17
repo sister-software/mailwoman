@@ -14,7 +14,7 @@
  *   harness's "Pharmacy near me" → a Hungarian namesake).
  *
  *   Checks: injected classifier only (absent → byte-identical geocoding), no explicit register pin —
- *   a caller-supplied tree does NOT skip it (the CLI session pre-parses every query as an
+ *   a caller-supplied tree does not skip it (the CLI session pre-parses every query as an
  *   optimization; a pre-parse of "train station" is still a thing-query). The kind-intent invariance
  *   receipt proves the top slot never flips on an ADDRESS-shaped corpus row under the wired lexicon.
  *

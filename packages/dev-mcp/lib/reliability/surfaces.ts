@@ -109,9 +109,9 @@ export interface EngineLike {
  * harness's own rule — `componentMatches`, exact case-folded equality, SHARED rather than re-typed, because a local
  * copy of the correctness rule is how a calibration number quietly stops describing what the board describes.
  *
- * A produced tag the truth row does not mention is NOT graded by default. The strict reading — predicting a component
- * that should not exist is exactly the error a calibrated confidence must not hide — holds only against COMPLETE truth,
- * and no corpus wired here carries it: the regression board asserts a median of ONE component key per row (534 of 591
+ * A produced tag the truth row does not mention is not graded by default. The strict reading — predicting a component
+ * that should not exist is exactly the error a calibrated confidence must not hide — holds only against complete truth,
+ * and no corpus wired here carries it: the regression board asserts a median of one component key per row (534 of 591
  * rows assert any, max 8), golden a median of 4 and parity a median of 2, against the ~7 keys a full US address has. On
  * truth that partial, a row asserting `locality` alone would grade six correctly-parsed components as hallucinations.
  *
@@ -156,7 +156,7 @@ export async function decodeReliabilitySample(
 		for (const [tag, value] of Object.entries(produced)) {
 			if (!value) continue
 
-			// Both BIO positions. A tag appearing in two separate spans folds into ONE observation, because the result
+			// Both BIO positions. A tag appearing in two separate spans folds into one observation, because the result
 			// shape holds one value per tag — so one confidence is what a consumer sees, and splitting it here would
 			// weight a fragmented span more heavily than a clean one.
 			const carrying = tokens.filter((token) => token.label === `B-${tag}` || token.label === `I-${tag}`)
@@ -237,7 +237,7 @@ export async function decodeReliabilitySample(
  * censor exactly the low-confidence rows the curve is about — a curve measured at the production threshold reports only
  * the region where the eval already agreed with itself.
  *
- * The default corpus is the held-out `test` split, held out from BOTH the training set and the `val` split the
+ * The default corpus is the held-out `test` split, held out from both the training set and the `val` split the
  * temperature was fit on, so the number is not the fit reporting on itself. Pointing this at `val` or `train` destroys
  * that property without any other symptom, so the resolved path travels with the result.
  */

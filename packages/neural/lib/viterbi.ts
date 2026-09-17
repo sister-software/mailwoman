@@ -87,17 +87,17 @@ function isValidTransition(from: string, to: string): boolean {
 }
 
 /**
- * A position-scoped transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition INTO `toLabel`
- * at exactly `timestep` — from ANY predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
+ * A position-scoped transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition into `toLabel`
+ * at exactly `timestep` — from any predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
  * the bonus lands on the start transition instead). The placetype-pair prior emits one per pair hit at the child span's
  * first piece when its index header carries `transitionBeta`; the hook itself is generic — a sparse list of
  * adjustments, no knowledge of who produced them.
  *
- * Because the bonus is predecessor-independent, it cannot change WHICH predecessor wins for `toLabel` at `timestep` —
- * it changes whether paths ENTERING `toLabel` there outscore paths that stay fused through a competing run (the task-8
+ * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel` at `timestep` —
+ * it changes whether paths entering `toLabel` there outscore paths that stay fused through a competing run (the task-8
  * probe's path-fusion mechanism: a locally-winning emission bias can still lose globally when the forced
- * `I-`/fresh-`B-` continuation costs more than the local win recovers; a transition-entry bonus pays that structural
- * toll directly).
+ * `I-`/fresh-`B-` continuation costs more than the local emission bias recovers; a transition-entry bonus pays that
+ * structural toll directly).
  */
 interface ViterbiTransitionAdjustment {
 	/**
@@ -124,11 +124,11 @@ export interface ViterbiInput {
 	 */
 	transitions: number[][]
 	/**
-	 * Per-label log-score for being the FIRST label.
+	 * Per-label log-score for being the first label.
 	 */
 	startTransitions?: number[]
 	/**
-	 * Per-label log-score for being the LAST label.
+	 * Per-label log-score for being the last label.
 	 */
 	endTransitions?: number[]
 	/**
@@ -220,7 +220,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				}
 			}
 
-			// The bonus is predecessor-independent, so it distributes over the max — adding it AFTER the
+			// The bonus is predecessor-independent, so it distributes over the max — adding it after the
 			// argmax over j is exact, not an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev

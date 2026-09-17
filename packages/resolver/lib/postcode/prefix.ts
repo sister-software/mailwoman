@@ -6,7 +6,7 @@
  *   Postcode-prefix prior (#31, Mechanism 3) — the partial-code prior for postcodes the full-code
  *   gazetteer does not carry. #1480's abstention is the defect: a BT unit with no permissive source
  *   behind it (the NI half of Code-Point Open) misses the gazetteer, and the tree contributes
- *   NOTHING for it — no country scope, no district, no coordinate. This module derives the code's
+ *   nothing for it — no country scope, no district, no coordinate. This module derives the code's
  *   PREFIX and probes the PFX1 index (`postcode-prefix-<cc>.bin`), so the resolve "abstains on the
  *   UNIT and still contributes its DISTRICT": the node resolves from the prefix's centroid and/or
  *   ancestry, whichever the artifact carries.
@@ -59,11 +59,11 @@
 import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from "@mailwoman/core/resolver"
 
 /**
- * A resolved place that may carry NO coordinate. `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value,
+ * A resolved place that may carry no coordinate. `ResolvedPlace` requires `lat`/`lon` (every gazetteer row has a value,
  * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
  * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
  * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened ONLY at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
+ * Widened only at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -142,9 +142,9 @@ export function probePostcodePrefix(
 }
 
 /**
- * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to. `id: 0` — it is NOT a gazetteer row
+ * Build the synthetic `ResolvedPlace` a prefix hit resolves a `postalcode` node to. `id: 0` — it is not a gazetteer row
  * (the same sentinel `applyPostcodeConsistency` uses for its displaced place, resolve.ts) — and the coordinate is
- * present ONLY when the node carries one, so an ancestry-only hit stays coordinate-free by construction (B3-3's 0%
+ * present only when the node carries one, so an ancestry-only hit stays coordinate-free by construction (B3-3's 0%
  * half).
  */
 export function postcodePrefixResolvedPlace(

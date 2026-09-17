@@ -30,7 +30,7 @@ import { assertISODate } from "#sdk/guards"
  * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
  * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
  * the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
- * DIFFERENT, unrelated providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node —
+ * different, unrelated providers each carrying a blank `frn` would silently mint and share one degenerate `frn:` node —
  * a false identity link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
 export function mintFRNNodeID(frn: string, context: string): string {
@@ -80,7 +80,7 @@ export function mintSubsidiaryNameNodeID(name: string): string {
 
 /**
  * Mints the `form499_id:` node id, throwing when `form499ID` is blank — see `build-filer.ts`'s module docstring,
- * "malformed input is loud" section. An empty string is NOT a legitimate missing value here (unlike a `null` `frn`):
+ * "malformed input is loud" section. An empty string is not a legitimate missing value here (unlike a `null` `frn`):
  * every 499 row has SOME `form499ID` in the real file, so a blank one signals a malformed row, and silently minting
  * `form499_id:` would collapse every such row into one degenerate shared node.
  */
@@ -97,7 +97,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 }
 
 /**
- * Validates `lastFiledAt` is non-blank before it is written into BOTH `filer_edge.source_vintage`/`valid_from` and
+ * Validates `lastFiledAt` is non-blank before it is written into both `filer_edge.source_vintage`/`valid_from` and
  * every attribute's `source_vintage` for this row. Decision 7 / criterion 1 make `valid_from` MANDATORY on every edge —
  * but `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing
  * happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt`
@@ -105,7 +105,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision
  * 7 exists to prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
- * are required for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
+ * are required for this artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
  * non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
  */
 export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {

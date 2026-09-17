@@ -6,14 +6,14 @@
  *   #1989: the authority-designation route on the geocode path, exercised through `geocodeAddress` with
  *   mock classifier/resolver deps and a fixture-built flood layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer ABSENT — which is every default construction —
+ *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
  *
  *   The remaining tests pin the three readings' journey to a caller: a designation becomes one additive
  *   marker naming the verdict's own top kind, a designated absence becomes the same marker carrying Zone 1,
- *   and a location outside the authority's footprint raises NOTHING — an advisory there would report a
+ *   and a location outside the authority's footprint raises nothing — an advisory there would report a
  *   determination nobody made.
  */
 

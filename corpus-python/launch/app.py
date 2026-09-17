@@ -60,11 +60,11 @@ training_image = (
         # Query the live image set with `modal run -m launch.train_remote::versions`.
         # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (GHSA-hwpq-hmq9-wj77,
         # Dependabot #1057) — verify-toolchain requires the pins agree. VERIFIED same day by
-        # re-export + re-quant of v241-fr-nsplice-ft step-12000 off this image: fp32 BYTE-
-        # IDENTICAL to the 1.21.0-era export (md5 1c58b0a0) and int8 BYTE-IDENTICAL to the
+        # re-export + re-quant of v241-fr-nsplice-ft step-12000 off this image: fp32 byte-
+        # identical to the 1.21.0-era export (md5 1c58b0a0) and int8 byte-identical to the
         # shipped production artifact (md5 121162e6) — the bump provably does not touch the
         # graph. quantize.py's value_info strip stays (exercised in that run, harmless).
-        # onnxscript 0.7.0->0.7.2: NOT byte-neutral. Its optimizer constant-folds twelve shape-plumbing
+        # onnxscript 0.7.0->0.7.2: not byte-neutral. Its optimizer constant-folds twelve shape-plumbing
         # nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers — fp32 +2,576 bytes, int8 +7 — while
         # opset, ir_version, inputs, outputs and every weight tensor stay identical and both graphs
         # answer bit-equal logits at sequence 8, 64 and 128. A rebuild of a pre-0.7.2 artifact differs
@@ -164,7 +164,7 @@ def _read_env_keys(keys: tuple[str, ...]) -> dict[str, str]:
 def _load_r2_env() -> dict[str, str]:
     """The R2 credentials, or a raise naming the file that did not supply them.
 
-    An empty secret is NOT a usable state and must not be built quietly: the container starts, rclone
+    An empty secret is not a usable state and must not be built quietly: the container starts, rclone
     reports `s3 provider "" not known`, and the operator reads a storage error for a missing file. So
     the absence is reported here, where the path is known, rather than a Modal app later.
     """

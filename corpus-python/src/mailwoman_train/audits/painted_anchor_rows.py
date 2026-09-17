@@ -4,7 +4,7 @@ The insurance against repeating the 2026-08-05 GB defect
 (``docs/records/evals/2026-08-05-en-gb-anchor-off.md``). That defect was invisible for 60,000 steps
 because nothing ever asked the question this script asks: *given this recipe output and this
 ``anchor_lookup_path``, how many rows put a non-zero value into the anchor channel?* The answer for
-every GB recipe output against ``pilot-anchor-lookup.json`` is ZERO, and a zero is not a smaller number — it
+every GB recipe output against ``pilot-anchor-lookup.json`` is zero, and a zero is not a smaller number — it
 is the channel being switched off for that country while the config still says ``use_postcode_anchor:
 true``.
 

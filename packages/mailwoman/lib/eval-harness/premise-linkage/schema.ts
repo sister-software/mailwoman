@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage row and report contract (#1902) — fixed BEFORE any controlled data arrives, so
+ *   The premise-linkage row and report contract (#1902) — fixed before any controlled data arrives, so
  *   a provider's file populates an adapter rather than reshaping the evaluation after results are
  *   seen.
  *
  *   Two row types, and the split is the whole privacy design. {@link PremiseLinkageInputRow} is
- *   PRIVATE: it carries the licensed address, the expected authoritative identifier, and the truth
+ *   private: it carries the licensed address, the expected authoritative identifier, and the truth
  *   coordinate, and it exists only in memory for the length of one run.
- *   {@link PremiseLinkageResultRow} is what may be PERSISTED: a salted case identifier, the shape
+ *   {@link PremiseLinkageResultRow} is what may be persisted: a salted case identifier, the shape
  *   class, the presence booleans, one outcome from a closed set, and a failure category from a closed
  *   set. There is no free-text field on the persistable row, because free text is how an address
  *   leaks.
@@ -118,7 +118,7 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * declined to name a premise, and an ambiguous answer keeps its candidates. Neither is ever recorded as `wrong`, and an
  * ambiguous answer is never recorded as `exact`.
  *
- * `errored` is NOT an outcome the arm produced — it marks a row that could not be graded at all (a transport failure,
+ * `errored` is not an outcome the arm produced — it marks a row that could not be graded at all (a transport failure,
  * or a match that named no identifier in the graded scheme). It is excluded from every rate and reported as its own
  * count, because folding an unreadable row into a denominator turns "I could not measure this" into "there was none of
  * it".
@@ -152,7 +152,7 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	ProviderAmbiguous: "provider_ambiguous",
 	/**
-	 * The provider committed to a premise and named a DIFFERENT identifier than the register holds.
+	 * The provider committed to a premise and named a different identifier than the register holds.
 	 */
 	IdentifierMismatch: "identifier_mismatch",
 	/**
@@ -211,7 +211,7 @@ export interface PremiseLinkageCount {
 /**
  * Whether the registered evaluation policy required a unique answer.
  *
- * This is the ONLY thing that moves a refusal into a denominator. Under `abstain_ok` a refusal leaves the eligible set,
+ * This is the only thing that moves a refusal into a denominator. Under `abstain_ok` a refusal leaves the eligible set,
  * because an arm that declined was not asked to be right. Under `unique_required` it stays in the denominator — and it
  * is still recorded as `refused`, never rewritten to `wrong`. The policy changes what a rate is measured over; it never
  * changes what an arm did.
@@ -235,8 +235,8 @@ export const PremiseLinkageMode = {
 export type PremiseLinkageMode = (typeof PremiseLinkageMode)[keyof typeof PremiseLinkageMode]
 
 /**
- * The four identifier rates, each with its own denominator. `exact` and `wrong` are measured over ELIGIBLE rows (see
- * {@link PremiseLinkagePolicy}); `refused` and `ambiguous` over ALL rows, so a reader can see how much of the run each
+ * The four identifier rates, each with its own denominator. `exact` and `wrong` are measured over eligible rows (see
+ * {@link PremiseLinkagePolicy}); `refused` and `ambiguous` over all rows, so a reader can see how much of the run each
  * abstention class accounts for without reconstructing it.
  */
 export interface PremiseLinkageRates {
@@ -256,7 +256,7 @@ export interface PremiseLinkageCoordinateThreshold {
 }
 
 /**
- * One arm's aggregate. `perClass` is partial: a class with no rows is ABSENT rather than reported as zero, and a class
+ * One arm's aggregate. `perClass` is partial: a class with no rows is absent rather than reported as zero, and a class
  * suppressed for cell size is removed the same way — an absent class means "not published here", which is what both
  * cases are.
  */
@@ -272,7 +272,7 @@ export interface PremiseLinkageArmReport {
 }
 
 /**
- * The arm-to-arm movement, all three counted over ALL rows. `changed` counts rows whose outcome differs; `improved` and
+ * The arm-to-arm movement, all three counted over all rows. `changed` counts rows whose outcome differs; `improved` and
  * `regressed` are the directional halves of it. Rows that could not be graded in both arms contribute to no numerator
  * and stay in the denominator, so the three numbers never add up to more than the run.
  */

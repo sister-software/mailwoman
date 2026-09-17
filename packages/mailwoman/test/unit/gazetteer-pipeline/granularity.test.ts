@@ -55,8 +55,8 @@ describe("SUB_LOCALITY_RUNGS", () => {
  * connections and the builder opens its own read-only handle, so this writes a temp file — the same approach
  * `placetype-census.test.ts` uses.
  *
- * Shape: GB has two locality parents (London, Quiet Town). London carries a borough AND a neighbourhood child, which
- * must count as ONE covered parent for dependent_locality, not two. IE has one locality parent and no children at all —
+ * Shape: GB has two locality parents (London, Quiet Town). London carries a borough and a neighbourhood child, which
+ * must count as one covered parent for dependent_locality, not two. IE has one locality parent and no children at all —
  * a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
 function ladderFixtureDB(): string {

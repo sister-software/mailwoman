@@ -36,7 +36,7 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 }
 
 /**
- * Create ONE directory, raising EEXIST when something is already there.
+ * Create one directory, raising EEXIST when something is already there.
  *
  * The exclusive counterpart to {@linkcode makeDirectories}, which is recursive and therefore idempotent. That
  * idempotence is what disqualifies it here: `mkdir` without `recursive` is an atomic test-and-set, and it is how both
@@ -99,10 +99,16 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 
 	if (typeof resolved === "string") return writeFile(filePath, resolved, "utf8")
 
-	await using writer = createNewlineWriter(filePath)
+	// `try`/`finally` rather than `await using`, which is equivalent here: this module is in the import graph of the
+	// Docusaurus plugins, and that config loader babel-parses its graph without the `explicitResourceManagement` plugin.
+	const writer = createNewlineWriter(filePath)
 
-	for await (const line of resolved) {
-		await writer.write(line)
+	try {
+		for await (const line of resolved) {
+			await writer.write(line)
+		}
+	} finally {
+		await writer.dispose()
 	}
 }
 

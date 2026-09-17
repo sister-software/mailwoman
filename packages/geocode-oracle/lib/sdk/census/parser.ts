@@ -40,7 +40,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  * The leading house number of a matched address line.
  *
  * `@mailwoman/corpus`'s `HOUSE_NUMBER_PREFIX` (`corpus/src/adapter.ts`) is this repo's declared home for the
- * house-number/street split, and it is DELIBERATELY not used here. Reaching it means taking a dependency on
+ * house-number/street split, and it is deliberately not used here. Reaching it means taking a dependency on
  * `@mailwoman/corpus`, which brings `parquet-wasm`, `apache-arrow`, `@mailwoman/ban`, `spliterator` and the rest of the
  * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two HTTP
  * calls. The dependency is what is wrong, not the sharing.
@@ -70,7 +70,7 @@ function joinParts(...parts: Array<string | undefined>): string | undefined {
  * The mapping, and why each choice:
  *
  * - `street_prefix` ← `preDirection`. The tag means the directional in front of the name, which is exactly this slot.
- *   `preType` deliberately does NOT land here: `AVENUE` in `Avenue of the Americas` is part of how the street is
+ *   `preType` deliberately does not land here: `AVENUE` in `Avenue of the Americas` is part of how the street is
  *   written, not a prefix modifier, and a parser reading that input emits it inside `street`.
  * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`. The words that make up the name as written,
  *   in written order.

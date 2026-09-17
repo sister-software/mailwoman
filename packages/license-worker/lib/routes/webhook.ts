@@ -7,8 +7,8 @@
  *   for three days, so the only 400 is a signature that does not verify, where a retry is the right outcome; an event
  *   that verifies but is not one this worker acts on, or is from the other Stripe mode, answers 200 and is logged, so
  *   a destination configured with a stray event type does not retry for three days. An event id already in the ledger
- *   answers 200 without running anything, so Stripe's redelivery is inert. Otherwise the handler runs FIRST and the
- *   event id is recorded AFTER it succeeds: a crash between the two leaves no record, Stripe retries, and the handler's
+ *   answers 200 without running anything, so Stripe's redelivery is inert. Otherwise the handler runs first and the
+ *   event id is recorded after it succeeds: a crash between the two leaves no record, Stripe retries, and the handler's
  *   own writes are idempotent by primary key, so the retry finds its work done. Recording first would turn one crash
  *   into a payment nobody minted for.
  */

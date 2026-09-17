@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The negative-evidence route, observation-only: where the compiled artifact asserts that the
- *   answered category affords an activity AND the coverage layer surveyed the cell the search was centred
+ *   answered category affords an activity and the coverage layer surveyed the cell the search was centred
  *   on, an answer holding nothing in that cell may be recorded as an ABSENCE — a coverage-qualified
  *   statement that the thing asked for is not there, carrying the assertion's provenance and the coverage
  *   cell's basis together.
@@ -20,22 +20,22 @@
  *   with and maps to is not a category this route can say anything about. The coverage half answers "may a
  *   miss here be read as absence" — {@linkcode supportsExclusion} over the cell's own basis, never over
  *   `completeness` alone, because `source_present` records that the source returned rows and says nothing
- *   about what it missed. Outside exclusion-grade coverage the route is SILENT: a `[]` there is silence,
+ *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence,
  *   not absence, and that asymmetry is the whole contract.
  *
  *   A COVERAGE LAYER IS CLASS-SCOPED, AND THE TABLE DOES NOT SAY SO. `layer_coverage` carries a
  *   completeness per cell and no class, so a completeness measured over pharmacies would license an
  *   absence claim about cafés if nothing stopped it. What stops it is read from the artifact rather than
  *   declared: the layer's own `poi_category_codes` names every class it holds, and the route refuses
- *   unless that set is exactly one class and the answered category IS it. A layer holding many classes has
+ *   unless that set is exactly one class and the answered category is it. A layer holding many classes has
  *   a pooled completeness that cannot support a per-class exclusion, and saying so is the refusal.
  *
  *   A SEARCHED UNION MUST BE COVERED WHOLE. The POI branch searches every category the subject reaches, so
  *   an activity afforded by two establishment classes puts two classes in one search. The layer surveys
- *   ONE, and its completeness says nothing about the other — so "no establishment affording this activity
+ *   one, and its completeness says nothing about the other — so "no establishment affording this activity
  *   is here" would be a claim about premises the survey never looked for, which is the unsupported
  *   negative evidence this route exists to refuse. The refusal is `category_not_surveyed` and the
- *   same reading as the single-class case: the searched set has to BE the surveyed class. Widening the
+ *   same reading as the single-class case: the searched set has to be the surveyed class. Widening the
  *   layer to survey the second class is what would make such a cell decidable again.
  *
  *   THE COVERAGE RESOLUTION IS DERIVED, NOT ASSUMED. `layer_manifest.spine_keys.h3.resolution` states the
@@ -51,7 +51,7 @@
  *   marker never changes which answer wins. A second private path from here to the caller would be the
  *   duplication that carrier exists to prevent.
  *
- *   `mailwoman` and `@mailwoman/geographic-model` must bump in ONE coordinated release. `yarn pack` freezes
+ *   `mailwoman` and `@mailwoman/geographic-model` must bump in one coordinated release. `yarn pack` freezes
  *   `workspace:*` to whatever the sibling reads at pack time, so a `mailwoman` packed ahead of the sibling's
  *   bump pins a version that will never be republished. The artifact reader stays behind a dynamic import
  *   so a caller who never builds a route never loads it.
@@ -325,7 +325,7 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
 /**
  * The resolution a layer's coverage cells were captured at, recovered from the cells themselves.
  *
- * A short cell does not name its own resolution, so it cannot simply be read. It can be RECOVERED: the digits past a
+ * A short cell does not name its own resolution, so it cannot simply be read. It can be recovered: the digits past a
  * cell's own resolution are all `7`, which is not a valid digit, so exactly one resolution expands a given short cell
  * into a valid index. Every stored cell is probed rather than a sample of them, and a table whose cells disagree throws
  * — a mixed-resolution coverage table has no single resolution to probe at, and picking one would silently answer
@@ -352,7 +352,7 @@ async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<
 /**
  * Build the route against one compiled artifact and one sealed coverage layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused HERE rather than at query time: a
+ * Everything that would make the route answer a well-formed wrong thing is refused here rather than at query time: a
  * layer with no coverage rows, a layer holding more than one class, a coverage table whose resolution cannot be
  * recovered, an artifact that defines no `affords` relation. Each of those would otherwise present as a route that
  * simply never fires, which on a receipt is indistinguishable from a region that genuinely has nothing to say.
@@ -432,7 +432,7 @@ interface DecisionContext {
 /**
  * The conjunction, in refusal order.
  *
- * Order is chosen so the reason a receipt records is the FIRST thing that was missing rather than the last thing
+ * Order is chosen so the reason a receipt records is the first thing that was missing rather than the last thing
  * checked: the artifact half before the coverage half, and within the coverage half, "we never surveyed here" before
  * "the survey supports no exclusion" before "the survey found something". A control row is graded on which of these it
  * hit, so an order that reported a later reason would let a row pass its control for a reason nobody registered.
@@ -451,7 +451,7 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (!afforded) return { fired: false, refusal: "no_affordance_assertion" }
 
-	// EVERY searched category must be the surveyed one. The coverage layer surveys a single category, so a union
+	// Every searched category must be the surveyed one. The coverage layer surveys a single category, so a union
 	// reaching past it has no survey behind the classes it added — "nothing here" would then be a claim about premises
 	// nobody looked for, which is the one thing a coverage-qualified absence exists to refuse.
 	if (!categoryIDs.every((id) => id === context.identity.surveyedCategoryID)) {

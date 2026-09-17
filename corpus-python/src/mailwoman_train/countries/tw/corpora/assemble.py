@@ -56,7 +56,7 @@ from .rows import (
 class SourceSurvey:
     """Pass 1's answer: the quotas pass 2 selects under, plus the sums the centroids come from.
 
-    The centroid sums are taken over EVERY eligible row, not over the selected ones: a board row is
+    The centroid sums are taken over every eligible row, not over the selected ones: a board row is
     scored against its district's centre, and a centre computed from the handful of rows selection
     happened to keep is a different place.
     """

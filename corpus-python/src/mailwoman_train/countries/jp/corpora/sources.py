@@ -1,6 +1,6 @@
 """Reading the two inputs: the Overture-JP parquet, and KEN_ALL for the 〒 join.
 
-The eligibility filter lives in the iterator so BOTH build passes see the identical row set — a
+The eligibility filter lives in the iterator so both build passes see the identical row set — a
 filter applied only in pass 2 would desynchronize the exact-selection masks.
 """
 
@@ -105,7 +105,7 @@ def iter_source_rows(
       ``encode_row_units`` truncates silently, so a row that cannot fit is dropped here, counted,
       rather than half-labelled there.
 
-    The filter lives in the iterator so BOTH passes see the identical row set — a filter applied
+    The filter lives in the iterator so both passes see the identical row set — a filter applied
     only in pass 2 would desynchronize the exact-selection masks.
 
     Normalization happens here for the same reason.

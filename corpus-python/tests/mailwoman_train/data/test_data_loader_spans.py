@@ -3,9 +3,9 @@
 Pins the loader-side contract:
 
 1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` carries it,
-   ``iter_encoded`` hands it to ``encode_row`` (which trains FROM the spans).
+   ``iter_encoded`` hands it to ``encode_row`` (which trains from the spans).
 2. Frozen pre-v0.5.0 files (no span columns) ride the legacy token path: no span keys appear.
-3. Corruption is LOUD, never a silent fallback: a file with a partial span-column set raises,
+3. Corruption is loud, never a silent fallback: a file with a partial span-column set raises,
    and a null span value inside a span-schema file raises naming the row.
 """
 
@@ -175,7 +175,7 @@ def test_training_source_inventory_is_not_required_in_validation_split(tmp_path:
 
 def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Path) -> None:
     """The mutation-upstream hazard, pinned at the loader level: with the directional expansion
-    AND the #511 relabel both on, every emitted row's spans must address ITS OWN raw."""
+    and the #511 relabel both on, every emitted row's spans must address its own raw."""
     from mailwoman_train.data.relabel import AffixRelabelLexicon
 
     corpus = _write_corpus(

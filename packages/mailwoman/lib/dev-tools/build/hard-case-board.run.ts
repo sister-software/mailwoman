@@ -10,12 +10,12 @@
  *   - **Coordinates + place names** come from the WOF admin DB by place id, so a row's truth is never a
  *       hand-typed decimal. The curator picks the ID; the builder reads the point.
  *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
- *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and ONLY the
+ *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
  *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no
  *       label and contribute nothing). So the recorded delta is the bias the DECODER sees, not a proxy for it
  *       computed off the database.
  *
- *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted VERBATIM from
+ *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted verbatim from
  *   `gauntlet/cases/<cc>/regression.jsonl` — same input, same coordinate, same tolerance — so the board and
  *   the corpus cannot drift apart on a row they share.
  *
@@ -97,7 +97,7 @@ function biasOf(matcher: unknown, surface: string): Map<string, number> {
 		walk.stateID
 	)
 
-	// Collapsed by the decoder's OWN function: a bias measured over placetypes the decoder cannot see would overstate
+	// Collapsed by the decoder's own function: a bias measured over placetypes the decoder cannot see would overstate
 	// every delta on this board.
 	return collapseFSTBias(entries, normalizeTokens(surface))
 }

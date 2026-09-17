@@ -22,7 +22,7 @@
  *   than the ratio and 4 carry no anchor.
  *
  *   The rule is therefore conservative by construction: the anchor overrides the label preference
- *   ONLY when the two points disagree beyond the threshold AND the anchor separates them at the
+ *   only when the two points disagree beyond the threshold and the anchor separates them at the
  *   decisive ratio. Agreeing points, anchorless records, and unclear separations all keep the
  *   existing label-first behavior byte-identically.
  */
@@ -103,10 +103,10 @@ const GN_COLUMN_LON = 5
 /**
  * Build a lazy per-country anchor lookup over a GeoNames country-file directory (`<dir>/<CC>.txt`).
  *
- * A country file loads on the FIRST anchor request for that country and is cached as an id → point map; a country whose
+ * A country file loads on the first anchor request for that country and is cached as an id → point map; a country whose
  * file is absent caches an empty map, so a data root without GeoNames extracts degrades to "no anchor anywhere" — the
  * label preference, byte-identical to a build without this module. Loading is lazy by design: the consult fires only
- * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that HAS such a
+ * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that has such a
  * record.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The freshness reader, against fixtures written by the REAL manifest writer.
+ *   The freshness reader, against fixtures written by the real manifest writer.
  *
  *   The property under test throughout is that an artifact which cannot state its provenance says so. Every
  *   failure this reader can meet — not on disk, no manifest, not a database, an undatable stamp — has to

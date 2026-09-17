@@ -14,11 +14,11 @@
  *   AND THE SERVICE ANSWERS IN THE PUBLISHER'S OWN RING CONVENTION, so the comparison exercises the hole
  *   handling twice over. `outSR=4326` on the query path returns the same clockwise-exterior rings the bulk
  *   export carries, so this side re-derives the roles the same way the ingest did — and a point inside a hole
- *   comes back OUTSIDE on both paths or on neither.
+ *   comes back outside on both paths or on neither.
  *
  *   NEGATIVE HALF, AND IT MATTERS MORE HERE THAN FOR ANY SIBLING LAYER. Donegal is the one local authority of
  *   31 the Department does not publish, and Northern Ireland is outside the product entirely — so points in
- *   both must come back `unknown` with NO designation. A positive-only check would pass on an artifact that
+ *   both must come back `unknown` with no designation. A positive-only check would pass on an artifact that
  *   reported the whole island as zoned, and this layer's entire coverage posture exists because an absent
  *   polygon is not a statement.
  *
@@ -153,7 +153,7 @@ export interface ServiceFeature {
 }
 
 /**
- * The ONE call the verification makes against the service: the features it publishes near a point.
+ * The one call the verification makes against the service: the features it publishes near a point.
  *
  * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
  * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched

@@ -94,7 +94,7 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *   and for Han and Kana a token split finds nothing at all. So every substring of length ≥
  *   {@link NON_LATIN_HEAD_MIN_LENGTH} occurring in at least two DISTINCT surfaces of the same record and primary
  *   language becomes a candidate, ranked by how many surfaces carry it. Japanese yields `ターミナル` (in all five `ja`
- *   terminal labels) ahead of `ターミナルビル` (three); Chinese yields `航站`, `航站楼`, `航站樓`. Where the script DOES space its
+ *   terminal labels) ahead of `ターミナルビル` (three); Chinese yields `航站`, `航站楼`, `航站樓`. Where the script does space its
  *   words (Korean, Greek, Cyrillic) a candidate must be a whole token, so `공항 터미널` ∩ `공항터미널` gives `터미널` and never a
  *   fragment.
  *
@@ -205,7 +205,7 @@ function commonPrefixLength(a: string, b: string): number {
  * A candidate never spans whitespace, and in a pool whose members contain whitespace a candidate must be a whole token
  * of some member. That is what keeps Korean `공항 터미널` from contributing a fragment straddling the space.
  *
- * MAXIMAL candidates only: one contained in a longer candidate carried by the SAME number of surfaces is dropped, since
+ * MAXIMAL candidates only: one contained in a longer candidate carried by the same number of surfaces is dropped, since
  * counting can never separate the two. Every one of `ターミナル`'s five ja labels also contains `ターミ`, `ターミナ` and `ミナル`, so
  * without this the group contributes four indistinguishable candidates and the Japan harvest returns four identical
  * counts. `航站` survives next to `航站楼` because six surfaces carry it against that one's two.

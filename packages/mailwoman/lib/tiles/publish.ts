@@ -8,7 +8,7 @@
  *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
- *   Uploads go through `rclone`: the `RCLONE_S3_*` variables ARE its s3-backend config (source the repo `.env` first:
+ *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
  *   `set -a; . ./.env; set +a`). rclone handles multipart for large archives, and the anti-501 flags skip the post-PUT
  *   HEAD and checksum operations R2 refuses. The worker reads the object through its R2 binding, so Content-Type and
  *   Cache-Control do not matter.

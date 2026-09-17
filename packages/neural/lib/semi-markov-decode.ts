@@ -8,9 +8,9 @@
  *   The counterpart to `corpus-python`'s `SemiMarkovCRF.decode`: the model scores every span up to
  *   `maxSpan` tokens per segment type (the `span_scores` ONNX output), a segment-level transition
  *   table carries the address grammar, and this decodes whole SEGMENTATIONS — scoring "these k tokens
- *   are ONE street" as a single decision rather than letting it emerge from independent token votes.
+ *   are one street" as a single decision rather than letting it emerge from independent token votes.
  *
- *   Deliberately OUTSIDE the ONNX graph (the Phase-2 design): span enumeration + this DP need dynamic
+ *   Deliberately outside the ONNX graph (the Phase-2 design): span enumeration + this DP need dynamic
  *   shapes, which the graph can't express cheaply and the browser shouldn't pay for. Fetching the
  *   scores costs ~0.75ms (CPU, S=128); this decode runs over the pruned candidate set.
  *
@@ -20,7 +20,7 @@
  *   function, so they are directly comparable; ACROSS inputs they are not (that needs the Phase-4
  *   isotonic pass).
  *
- *   The segment-type axis is NEVER hardcoded here — it arrives from the weights bundle's
+ *   The segment-type axis is never hardcoded here — it arrives from the weights bundle's
  *   `semi-crf-transitions.json` (the PLACETYPE_ORDER dual-maintenance class: a retrained head that
  *   reorders types would otherwise silently mislabel every decode).
  */
@@ -42,11 +42,11 @@ export interface SemiCRFTransitions {
 	 */
 	transitions: number[][]
 	/**
-	 * `startTransitions[t]` — additive score for a segmentation whose FIRST segment is type `t`.
+	 * `startTransitions[t]` — additive score for a segmentation whose first segment is type `t`.
 	 */
 	startTransitions: number[]
 	/**
-	 * `endTransitions[t]` — additive score for a segmentation whose LAST segment is type `t`.
+	 * `endTransitions[t]` — additive score for a segmentation whose last segment is type `t`.
 	 */
 	endTransitions: number[]
 }
@@ -61,7 +61,7 @@ export interface DecodedSegment {
 }
 
 /**
- * One whole-segmentation hypothesis. `score` is comparable to its siblings from the SAME input.
+ * One whole-segmentation hypothesis. `score` is comparable to its siblings from the same input.
  */
 export interface SegmentationHypothesis {
 	score: number

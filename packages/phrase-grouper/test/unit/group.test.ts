@@ -180,7 +180,7 @@ describe("scoreHyphenatedCompound", () => {
 
 describe("scoreStreetPhrase", () => {
 	it("emits STREET_PHRASE for name + suffix, EXCLUDING the leading house number (#565)", () => {
-		// The house number is NOT part of the street phrase — the NUMERIC rule proposes it separately, so
+		// The house number is not part of the street phrase — the NUMERIC rule proposes it separately, so
 		// the reconciler can type the number and the street as distinct nodes instead of fusing them.
 		const out = scoreStreetPhrase(tokenizeSegment("350 5th Ave", 0), "350 5th Ave")
 		expect(out).toHaveLength(1)
@@ -255,7 +255,7 @@ describe("scoreLocalityPhrase", () => {
 	})
 
 	// #425 — bridge lowercase place-name particles + apostrophe-fused names so native-order multi-word
-	// localities surface as ONE span (the gap that fragmented IT/ES/NL under joint-decode, Route A).
+	// localities surface as one span (the gap that fragmented IT/ES/NL under joint-decode, Route A).
 	it("bridges a Spanish 'de' particle (Las Palmas de Gran Canaria)", () => {
 		const text = "Las Palmas de Gran Canaria"
 		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)

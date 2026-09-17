@@ -13,7 +13,7 @@ describe("license exclusion (#26)", () => {
 			expect(SHARE_ALIKE_PATTERN.test(l)).toBe(true)
 		}
 
-		// Tier A (PD/CC0) + Tier B (CC-BY / Licence Ouverte) must NOT match — they're allowed.
+		// Tier A (PD/CC0) + Tier B (CC-BY / Licence Ouverte) must not match — they're allowed.
 		for (const l of ["CC0-1.0", "Public Domain", "CC-BY-4.0", "Licence Ouverte 2.0"]) {
 			expect(SHARE_ALIKE_PATTERN.test(l)).toBe(false)
 		}
@@ -24,7 +24,7 @@ describe("license exclusion (#26)", () => {
 		expect(licenseExcluded("ODbL-1.0", p)).toBe(true)
 		expect(licenseExcluded("odbl-1.0", p)).toBe(true) // case-insensitive
 		expect(licenseExcluded("CC-BY-SA-3.0", p)).toBe(true)
-		// CC-BY (Tier B) must NOT be caught by a CC-BY-SA exclusion — the prefix is anchored.
+		// CC-BY (Tier B) must not be caught by a CC-BY-SA exclusion — the prefix is anchored.
 		expect(licenseExcluded("CC-BY-4.0", p)).toBe(false)
 		expect(licenseExcluded("Licence Ouverte 2.0", p)).toBe(false)
 	})
@@ -36,7 +36,7 @@ describe("license exclusion (#26)", () => {
 
 	it("--exclude-share-alike (SHARE_ALIKE_PATTERN) leaves elected-Licence-Ouverte BAN untouched", () => {
 		// The BAN election: stamped `Licence Ouverte 2.0`, so a proprietary-weights build's
-		// share-alike exclusion does NOT drop it (the whole point of correcting the conservative stamp).
+		// share-alike exclusion does not drop it (the whole point of correcting the conservative stamp).
 		expect(licenseExcluded("Licence Ouverte 2.0", [SHARE_ALIKE_PATTERN])).toBe(false)
 	})
 })

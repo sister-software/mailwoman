@@ -15,22 +15,22 @@
  *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
  *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
  *       regression on a tag no `forbiddenTags` row names.
- *   - THIS check is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
- *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more
+ *   - This check is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
+ *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and fails if any tag's F1 drops by more
  *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
  *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
  *
  *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE CHECK — run with weights on disk
- *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
- *   Hook it into the release path (`mailwoman eval promote` / the publish flow), NOT into Test CI.
+ *   before publishing — not a weightless CI step (weight-dependent tests don't run in CI; #582).
+ *   Hook it into the release path (`mailwoman eval promote` / the publish flow), not into Test CI.
  *
  *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
  *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
  *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the LOAD-TIME check reads); THIS check computes the delta for
- *   EVERY tag, because a mask can harm a tag no `forbiddenTags` row names.
+ *   codex-forbidden tags (the only tags the LOAD-TIME check reads); this check computes the delta for
+ *   every tag, because a mask can harm a tag no `forbiddenTags` row names.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
@@ -153,7 +153,7 @@ export async function maskRegressionCheck(
 
 		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048). The rows are
 		// formatted postal addresses, and on those the production pipeline derives `formatted` and runs the
-		// evidence-bundle channels OFF as a declared ablation; grading them in the bare-library default measured a
+		// evidence-bundle channels off as a declared ablation; grading them in the bare-library default measured a
 		// path production never takes on these inputs. The per-tag numbers before this change grade `fragmented`.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,

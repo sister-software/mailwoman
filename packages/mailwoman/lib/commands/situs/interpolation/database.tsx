@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman situs interpolation-database --state VT` — build a per-state STREET-SEGMENT database (#483)
- *   from TIGER EDGES: side-aware house-number ranges + segment polylines, keyed by THE shared
+ *   from TIGER EDGES: side-aware house-number ranges + segment polylines, keyed by the one shared
  *   street normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize` — the same function the
  *   interpolation lookup applies at query time; one normalizer, never two). The interpolation
  *   tier's data half; design in `docs/articles/plan/2026-06-11-interpolation-design.md`.
@@ -193,7 +193,9 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
 		const shapefiles = (
-			await Globerator.from(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toArray()
+			await Globerator.from(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`, {
+				absolute: true,
+			}).toArray()
 		).toSorted()
 
 		if (!shapefiles.length) {
@@ -334,7 +336,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			name: `interpolation-us-${STATE.toLowerCase()}`,
 			version: String(options.release),
 			schemaVersion: 1,
-			// US Census TIGER/Line is public domain, so unlike the ODbL layers this one COULD ship. It is
+			// US Census TIGER/Line is public domain, so unlike the ODbL layers this one could ship. It is
 			// build-local because nothing publishes it today, not because the licence forbids it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",

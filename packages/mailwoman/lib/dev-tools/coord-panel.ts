@@ -59,7 +59,7 @@ export interface CoordPanel {
  * A trailing postal qualifier in parentheses, which an expected string sometimes carries and no locality name ever
  * does: `Manilla (Rural)` is the town of Manilla reached on a rural route.
  *
- * Grading against the raw expectation marks a correct answer wrong — the model answers `Manilla`, which IS the place —
+ * Grading against the raw expectation marks a correct answer wrong — the model answers `Manilla`, which is the place —
  * and a gold lookup keyed on the name finds nothing either. The strip applies to the EXPECTATION only, never to what
  * the run answered.
  */
@@ -68,7 +68,7 @@ const PARENTHETICAL_QUALIFIER = /\s*\([^)]*\)\s*$/
 /**
  * Read a coordinate eval set into one row per place.
  *
- * Keyed by country, region AND name: 30 US states hold a Springfield, and a name-only key collapses them into one row
+ * Keyed by country, region and name: 30 US states hold a Springfield, and a name-only key collapses them into one row
  * while shrinking the panel silently — reading a 5,703-row source, that key dropped 639 rows.
  */
 export async function readCoordPanel(
@@ -107,7 +107,7 @@ export async function readCoordPanel(
  *
  * `${locality}, ${region} ${postcode}` is the United States postal order and nothing else: it prints Japan's admin run
  * backwards, drops each country's own separator convention, and puts a postcode after a region in the systems that lead
- * with it. A surface that differs only in which components are PRESENT — a country name, a house number and a street —
+ * with it. A surface that differs only in which components are present — a country name, a house number and a street —
  * is a dict, not a template.
  *
  * Answers `""` when no layout can write the country: 55 of the 252 shipped records carry no usable skeleton, and
@@ -124,7 +124,7 @@ export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): st
 /**
  * The place's last word, when that word is a USPS suffix — the collision a US admin surface splits on (#2308).
  *
- * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical AND every variant, not the curated name-prone subset.
+ * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical and every variant, not the curated name-prone subset.
  * The narrower list moves rows between buckets and moves every bucket's rate with them, so which bucket a row lands in
  * is a property of the word list, and the word list has to be the whole table.
  */

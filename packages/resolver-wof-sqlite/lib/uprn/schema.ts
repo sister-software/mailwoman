@@ -11,7 +11,7 @@
  *
  *   ## Coordinates are OS's own WGS84 columns
  *
- *   The source CSV publishes BOTH coordinate systems per row — OSGB36 eastings/northings AND WGS84
+ *   The source CSV publishes both coordinate systems per row — OSGB36 eastings/northings and WGS84
  *   `LATITUDE`/`LONGITUDE`. This layer stores OS's own lat/lon verbatim and never reconverts from
  *   eastings: `@mailwoman/spatial`'s `osgb36ToWGS84` is a 7-parameter Helmert with a measured p95 of
  *   4.18 m, and re-deriving what the publisher already computed (with OSTN15, exactly) would replace
@@ -84,7 +84,7 @@ export interface UPRNDatabase extends LayerContractDatabase {
 }
 
 /**
- * The full res-9 cell for a UPRN point — the ONE derivation both the builder and every consumer share, so a fixture
+ * The full res-9 cell for a UPRN point — the one derivation both the builder and every consumer share, so a fixture
  * built by a test and a row built by the real ingest can never disagree on which cell a coordinate keys to.
  */
 export function uprnFullCell(latitude: number, longitude: number): H3Cell {
@@ -117,7 +117,7 @@ export async function createUPRNMetaTable(db: Kysely<UPRNDatabase>): Promise<voi
 }
 
 /**
- * Secondary index for the `nearestUPRN` ring probe. Builders call this AFTER the bulk load (index-after-load).
+ * Secondary index for the `nearestUPRN` ring probe. Builders call this after the bulk load (index-after-load).
  */
 export async function createUPRNIndexes(db: Kysely<UPRNDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_h3_cell").on("uprn").column("h3_cell").execute()

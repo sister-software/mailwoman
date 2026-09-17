@@ -12,7 +12,7 @@ edit (PR #534 open question 3).
 ``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY must
 re-target them by the same splice arithmetic — offsets after the edit shift by the replacement's
 length delta, a span containing the edit grows/shrinks at its end, and a span boundary falling
-strictly INSIDE the edited token is impossible to re-target (the replaced surface no longer exists)
+strictly inside the edited token is impossible to re-target (the replaced surface no longer exists)
 and raises loudly. Yielding a mutated raw with the source row's spans would corrupt the labels
 silently. Rows without spans (frozen pre-v0.5.0 corpora) pass through the legacy token path
 unchanged; a PARTIAL triple raises.
@@ -175,7 +175,7 @@ def glue_region_postcode(row: dict[str, Any], idx: int) -> dict[str, Any]:
 
 def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
     """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased; labels + char-offset spans
-    pass through UNCHANGED. Lowercasing is length-preserving char-by-char, so every offset still
+    pass through unchanged. Lowercasing is length-preserving char-by-char, so every offset still
     lands on the same (now-lowercased) character — no splice, no re-target, the simplest augmentation.
 
     Teaches the model that a lowercased query is the same address — the #829 lowercase-sensitivity
@@ -183,7 +183,7 @@ def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
     from data rather than bolt on a deterministic case-normalizer (which would discard the case
     signal directionals/proper-nouns carry).
 
-    Returns ``None`` when lowercasing is NOT length-preserving char-by-char (rare Unicode like
+    Returns ``None`` when lowercasing is not length-preserving char-by-char (rare Unicode like
     'İ' → 'i̇', 2 chars) — yielding then would desync the spans, so we skip that row instead.
     """
     raw: str = row["raw"]
@@ -194,7 +194,7 @@ def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
 
 # Separator punctuation the punct-drop augmentation strips: the delimiters that SEPARATE fields but
 # carry no component identity (comma between "Portland" and "OR", wrapping quotes). Apostrophes inside a
-# name ("Ben & Jerry's") sit INSIDE the entity span and are never touched — the drop is gap-only.
+# name ("Ben & Jerry's") sit inside the entity span and are never touched — the drop is gap-only.
 DROP_PUNCT: frozenset[str] = frozenset(",\"'")
 
 
@@ -202,7 +202,7 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
     """Return a copy of ``row`` with SEPARATOR punctuation (gap commas/quotes) removed from ``raw`` —
     the delimiter-free / whitespace-only form (#1101; whitespace-only is 64% of the parity gold).
 
-    GAP-ONLY by construction: a punct char is dropped ONLY when it falls in a gap between entity spans
+    GAP-ONLY by construction: a punct char is dropped only when it falls in a gap between entity spans
     (no char-offset span [s, e) covers it), so entity surfaces — including interior apostrophes like
     "Ben & Jerry's" — are never mutated and no span can shrink to empty. Everything stays aligned:
 
@@ -211,7 +211,7 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
       span's start is always a COVERED char (never a drop position), and its exclusive end shifts only
       by the drops before it — so entity boundaries land exactly on the same characters in the new raw.
     - ``tokens`` / ``labels``: each token is rebuilt from its char range minus the drop positions; a
-      token that was ONLY separator punct (a standalone ``","``) is dropped along with its label. This
+      token that was only separator punct (a standalone ``","``) is dropped along with its label. This
       keeps ``whitespace_spans`` able to relocate every token in the mutated raw (the glue augmentation
       can leave tokens intact because it never alters a token's own characters; punct-drop does).
 
@@ -272,13 +272,13 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
 
 def upper_case_row(row: dict[str, Any]) -> dict[str, Any] | None:
     """Return a copy of ``row`` with ``raw`` + ``tokens`` upper-cased; labels + char-offset spans pass
-    through UNCHANGED — the exact mirror of :func:`lowercase_row` (#829) for the ALL-CAPS direction.
+    through unchanged — the exact mirror of :func:`lowercase_row` (#829) for the ALL-CAPS direction.
 
     Registry corpora (NPPES, Kartverket, state boards) arrive ALL-CAPS; the shipped pipeline handles
     them with a pre-model case-normalize shim (#690). This augmentation is the punct-drop-pattern
     (#1101) retirement path for that shim: teach the case in training so the shim can be deleted.
 
-    Returns ``None`` when upper-casing is NOT length-preserving char-by-char (German eszett 'ß' → "SS")
+    Returns ``None`` when upper-casing is not length-preserving char-by-char (German eszett 'ß' → "SS")
     — yielding then would desync the spans, so we skip that row instead, mirroring lowercase_row.
     """
     raw: str = row["raw"]

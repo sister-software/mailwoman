@@ -67,7 +67,7 @@ const { db, fileList } = await openMixture(mixture.files, {
 
 /**
  * Unnesting three parallel lists in one SELECT zips them positionally, so each row of `spans` is one span with its own
- * offsets and tag. `regexp_full_match` keeps only a span whose ENTIRE text is two uppercase letters, which is the
+ * offsets and tag. `regexp_full_match` keeps only a span whose entire text is two uppercase letters, which is the
  * surface an address line writes a region code as.
  */
 const sql = `

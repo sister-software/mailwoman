@@ -1,0 +1,75 @@
+## Mailwoman house style: capitals as emphasis.
+##
+## Vale existence rule, case-sensitive, shared by published prose (.vale.ini),
+## the root and engineering markdown (.vale-vocab.ini), source comments and
+## training configs (.vale-code.ini) and agent replies (.vale-chat.ini). An
+## ordinary English word set in capitals inside lowercase prose is doing one of
+## two jobs, and neither survives a reader who did not write the sentence.
+## As emphasis ("the parser is RESTRICTED", "NOT a ship") it shouts where the
+## sentence should carry the weight itself. As a telegraph predicate ("guard
+## HOLDS", "date-name UP", "the prior is ON") it replaces the clause that would
+## have named the metric, its value and the direction of change, which is the
+## same compression Mailwoman/ReifiedShorthand.yml refuses in its noun form.
+##
+## The remedy is the lowercase word, or the clause the capitals stood in for:
+##
+##   "the parser is RESTRICTED to one locale"
+##      -> "the parser is restricted to one locale"
+##   "guard HOLDS + date-name UP"
+##      -> "parity postcode stays at 0.986 and FR date-name rises above 0.367"
+##   "the prior is ON by default"
+##      -> "the prior is on by default"
+##
+## Every token requires the capitalised word to sit between neighbours that
+## are not themselves capitals. The token before it is a plain word: letters,
+## digits, hyphens, quotes and backticks, with at most a leading capital, that
+## ends in a lowercase letter, a backtick, a closing bracket or a quote; it may
+## open with a bracket, `#` or `@`. The token after it starts with a lowercase
+## letter, a digit, a backtick, an opening bracket, a quote or a dash, or is
+## clause punctuation. That is what keeps a run of capitals out of the rule
+## (`NOT NULL`, `ON CONFLICT`, `INSERT INTO`, an acronym beside an acronym, a
+## list of country codes such as `BE, NL, LU`), and what keeps a SQL fragment
+## quoted in a comment out of it: `x = ? AND y`, `d.pre AND a.post`,
+## `asOf AND (valid_to`, `placetype='postalcode' AND` all have a `?`, a dot,
+## an inner capital or an `=` in the token before the keyword, and Vale reads
+## a code comment as plain text, so backticks do not exempt the fragment the
+## way they do in markdown. `FROM` is not in the list at all: every capital
+## `FROM` in this repository is SQL. A digit does not count as a neighbour
+## before the word, because a YAML weights table reads `1.0` then `BE:` on
+## the next line. The two-letter words (`ON`, `NO`, `IS`, `BE`, `DO`, `OR`,
+## `IF`, `UP`) are every one of them also a country code, a state code or an
+## operator, so they match only when a lowercase word FOLLOWS, directly or
+## after an opening bracket; `Portland, OR 97215` and `Whitby ON (128,377)`
+## stay data. The longer words match before clause punctuation too. A word
+## that is both an ordinary word and a code (`REAL` is a SQLite column type,
+## `MATCH` is the FTS5 operator) is still listed, because the flanking test
+## leaves those senses alone in the shapes they take, and a hit on one of
+## them is read at the site rather than excused here: `London ON` is written
+## `London, Ontario` in prose.
+##
+## The word list carries no acronym, no placetype, no tag name and no
+## identifier. `WOF`, `FTS`, `BIO`, `ONNX`, `CJK` and `USPS` are names and
+## stay capitalised wherever they appear.
+extends: existence
+message: "'%s' sets an ordinary word in capitals for emphasis or as a telegraph predicate — write it in lowercase, or write the clause the capitals stood in for (the metric, its value, the direction of change)."
+level: error
+ignorecase: false
+# Vale wraps a word token in `\b … \b`. These tokens carry their own boundaries and end on the FIRST character of the
+# following word, so the wrapped form matched "NOT a ship" and missed "Do NOT add" on the boundary inside `add`.
+nonword: true
+tokens:
+  # A longer listed word between two non-capital tokens: "is ABSENT from", "Do NOT add", "`x`), NOT into". `\s+` on
+  # both sides, because a comment block wraps at eighty or a hundred columns and the neighbour is often on the next
+  # line. The token before is anchored at whitespace so a match cannot start inside `asOf` or `d.pre`.
+  - '(?:^|\s)[(\[#@]?[A-Z]?[a-z0-9`"''’\-]*[a-z`)\]"''’][,;:]?\s+(?:HOLDS|HOLD|HELD|DROPS|DROP|DROPPED|DOWN|FLAT|ABSENT|PRESENT|MATCH|MATCHES|MATCHED|STAYS|STAY|STAYED|SURVIVES|SURVIVED|CONFIRMED|FIXED|RETAINED|RESTORED|REGRESSED|RECOVERED|RECOVERS|MOVES|MOVED|WINS|WIN|PASSES|FAILS|PASS|FAIL|HITS|MISSES|LOST|GONE|UNCHANGED|OFF|NOT|YES|ONLY|JUST|EVEN|STILL|ALREADY|ALSO|TOO|VERY|ALL|ANY|EACH|EVERY|BOTH|EITHER|NEITHER|NONE|NOTHING|ANYTHING|EVERYTHING|SOMETHING|ONE|TWO|THREE|FOUR|FIVE|ZERO|ONCE|TWICE|FIRST|SECOND|LAST|NEXT|NEW|OLD|SAME|OTHER|ANOTHER|DIFFERENT|WHOLE|ENTIRE|ENTIRELY|EXACT|EXACTLY|IDENTICAL|VERBATIM|PURE|REAL|FULL|EMPTY|HARD|SOFT|BARE|LOUD|LOUDLY|SILENT|SILENTLY|DELIBERATE|DELIBERATELY|INSIDE|OUTSIDE|ABOVE|BELOW|BEFORE|AFTER|WITHIN|WITHOUT|WITH|INTO|ONTO|THE|THIS|THAT|THESE|THOSE|THEIR|ITS|OWN|WHY|WHAT|HOW|WHEN|WHO|WHICH|BECAUSE|UNLESS|UNTIL|NOR|BUT|NOW|THEN|THERE|HERE|ALWAYS|NEVER|ANYWHERE|NOWHERE|EVERYWHERE|MUST|SHOULD|WILL|WOULD|COULD|CAN|CANNOT|MAY|MIGHT|DOES|DID|DONE|HAS|HAVE|HAD|ARE|WAS|WERE|BEEN|MORE|LESS|AND|PUBLIC|PRIVATE|SHIPPED|PUBLISHED|REFUSES|REFUSED|REQUIRES|REQUIRED|RESTRICTED|NEEDS|MEANS|READS|WRITES|EXISTS|RUNS|USES|WANTS|KEEPS|TAKES|MAKES|GIVES|SHOWS|SAYS|KNOWS)\s+[a-z0-9(\[`"''’—–-]'
+  # A two-letter listed word between a non-capital token and a lowercase word: "is ON by", "coherence ON (the default)".
+  - '(?:^|\s)[(\[#@]?[A-Z]?[a-z0-9`"''’\-]*[a-z`)\]"''’][,;:]?\s+(?:ON|NO|IS|BE|DO|OR|IF|UP)\s+\(?[a-z]'
+  # A longer listed word before clause punctuation: "the row is ABSENT.", "holds (parity UNCHANGED)".
+  - '(?:^|\s)[(\[#@]?[A-Z]?[a-z0-9`"''’\-]*[a-z`)\]"''’][,;:]?\s+(?:HOLDS|HOLD|HELD|DROPS|DROP|DROPPED|DOWN|FLAT|ABSENT|PRESENT|MATCH|MATCHES|MATCHED|STAYS|STAY|STAYED|SURVIVES|SURVIVED|CONFIRMED|FIXED|RETAINED|RESTORED|REGRESSED|RECOVERED|RECOVERS|MOVES|MOVED|WINS|WIN|PASSES|FAILS|PASS|FAIL|HITS|MISSES|LOST|GONE|UNCHANGED|OFF|NOT|YES|ONLY|JUST|EVEN|STILL|ALREADY|ALSO|TOO|VERY|ALL|ANY|EACH|EVERY|BOTH|EITHER|NEITHER|NONE|NOTHING|ANYTHING|EVERYTHING|SOMETHING|ONE|TWO|THREE|FOUR|FIVE|ZERO|ONCE|TWICE|FIRST|SECOND|LAST|NEXT|NEW|OLD|SAME|OTHER|ANOTHER|DIFFERENT|WHOLE|ENTIRE|ENTIRELY|EXACT|EXACTLY|IDENTICAL|VERBATIM|PURE|REAL|FULL|EMPTY|HARD|SOFT|BARE|LOUD|LOUDLY|SILENT|SILENTLY|DELIBERATE|DELIBERATELY|INSIDE|OUTSIDE|ABOVE|BELOW|BEFORE|AFTER|WITHIN|WITHOUT|WITH|INTO|ONTO|THE|THIS|THAT|THESE|THOSE|THEIR|ITS|OWN|WHY|WHAT|HOW|WHEN|WHO|WHICH|BECAUSE|UNLESS|UNTIL|NOR|BUT|NOW|THEN|THERE|HERE|ALWAYS|NEVER|ANYWHERE|NOWHERE|EVERYWHERE|MUST|SHOULD|WILL|WOULD|COULD|CAN|CANNOT|MAY|MIGHT|DOES|DID|DONE|HAS|HAVE|HAD|ARE|WAS|WERE|BEEN|MORE|LESS|AND|PUBLIC|PRIVATE|SHIPPED|PUBLISHED|REFUSES|REFUSED|REQUIRES|REQUIRED|RESTRICTED|NEEDS|MEANS|READS|WRITES|EXISTS|RUNS|USES|WANTS|KEEPS|TAKES|MAKES|GIVES|SHOWS|SAYS|KNOWS)[.,;:)!?]'
+  # Opening a clause before a lowercase word: "NOT a ship", "(ONE piece, so", "# VERBATIM from". A question mark
+  # is not a clause opener here, because `?` is the SQL placeholder in `x = ? AND y = ?`.
+  - '(?:^|[.;:!]\s+|[(\[]|\* |- |# |> )(?:HOLDS|HOLD|HELD|DROPS|DROP|DROPPED|DOWN|FLAT|ABSENT|PRESENT|MATCH|MATCHES|MATCHED|STAYS|STAY|STAYED|SURVIVES|SURVIVED|CONFIRMED|FIXED|RETAINED|RESTORED|REGRESSED|RECOVERED|RECOVERS|MOVES|MOVED|WINS|WIN|PASSES|FAILS|PASS|FAIL|HITS|MISSES|LOST|GONE|UNCHANGED|OFF|NOT|YES|ONLY|JUST|EVEN|STILL|ALREADY|ALSO|TOO|VERY|ALL|ANY|EACH|EVERY|BOTH|EITHER|NEITHER|NONE|NOTHING|ANYTHING|EVERYTHING|SOMETHING|ONE|TWO|THREE|FOUR|FIVE|ZERO|ONCE|TWICE|FIRST|SECOND|LAST|NEXT|NEW|OLD|SAME|OTHER|ANOTHER|DIFFERENT|WHOLE|ENTIRE|ENTIRELY|EXACT|EXACTLY|IDENTICAL|VERBATIM|PURE|REAL|FULL|EMPTY|HARD|SOFT|BARE|LOUD|LOUDLY|SILENT|SILENTLY|DELIBERATE|DELIBERATELY|INSIDE|OUTSIDE|ABOVE|BELOW|BEFORE|AFTER|WITHIN|WITHOUT|WITH|INTO|ONTO|THE|THIS|THAT|THESE|THOSE|THEIR|ITS|OWN|WHY|WHAT|HOW|WHEN|WHO|WHICH|BECAUSE|UNLESS|UNTIL|NOR|BUT|NOW|THEN|THERE|HERE|ALWAYS|NEVER|ANYWHERE|NOWHERE|EVERYWHERE|MUST|SHOULD|WILL|WOULD|COULD|CAN|CANNOT|MAY|MIGHT|DOES|DID|DONE|HAS|HAVE|HAD|ARE|WAS|WERE|BEEN|MORE|LESS|AND|PUBLIC|PRIVATE|SHIPPED|PUBLISHED|REFUSES|REFUSED|REQUIRES|REQUIRED|RESTRICTED|NEEDS|MEANS|READS|WRITES|EXISTS|RUNS|USES|WANTS|KEEPS|TAKES|MAKES|GIVES|SHOWS|SAYS|KNOWS)\s+[a-z0-9(\[`"''’—–-]'
+  # Opening a clause with a two-letter word before a lowercase word: "NO postcode partner", "(IS the row".
+  - '(?:^|[.;:!]\s+|[(\[]|\* |- |# |> )(?:ON|NO|IS|BE|DO|OR|IF|UP)\s+\(?[a-z]'
+  # Two listed words in a row after a non-capital token: "was a PURE WIN", "is NOT a", "a SHIP CANDIDATE".
+  - '(?:^|\s)[(\[#@]?[A-Z]?[a-z0-9`"''’\-]*[a-z`)\]"''’][,;:]?\s+(?:NOT|NO|ONE|PURE|REAL|SAME|WHOLE|VERY|NEVER|ALWAYS|STILL|ONLY|BOTH|ALL|ANY|EVERY|SHIP|FULL|BARE) (?:HOLDS|HOLD|HELD|DROPS|DROP|DROPPED|UP|DOWN|FLAT|ABSENT|PRESENT|MATCH|STAYS|STAY|SURVIVES|CONFIRMED|FIXED|RETAINED|RESTORED|REGRESSED|RECOVERED|MOVES|MOVED|WINS|WIN|PASSES|FAILS|LOST|GONE|UNCHANGED|ON|OFF|NOT|NO|A|AN|THE|THIS|THAT|ONE|TWO|SAME|NEW|WHOLE|EXACT|IDENTICAL|VERBATIM|PURE|REAL|FULL|EMPTY|HARD|SOFT|BARE|CANDIDATE|SHIP|WIN|CHANGE|RANGE|PIECE|ROW|ROWS|LINE|LINES)\b'

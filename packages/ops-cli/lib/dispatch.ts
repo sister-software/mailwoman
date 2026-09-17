@@ -5,7 +5,7 @@
  *
  *   `mwops`: the private operator CLI. Two verbs, each a view over a registry — `release <operation>` over
  *   `@mailwoman/release-kit` and `health <check>|all` over `@mailwoman/repo-health`. It parses arguments, hands them to
- *   the registered capability, and prints the result; every decision about WHAT happens belongs to the operation or the
+ *   the registered capability, and prints the result; every decision about what happens belongs to the operation or the
  *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
  *
  *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites

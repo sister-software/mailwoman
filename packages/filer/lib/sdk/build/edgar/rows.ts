@@ -6,7 +6,7 @@
  *
  *   The two edges answer different questions and carry different strengths. The DISCLOSURE edge (`cik ->
  *   subsidiaryName`) is always written and always authoritative: Exhibit 21 is the filer's own filed statement that a
- *   subsidiary by this name exists, which holds whether or not anything here can work out WHICH registrant it
+ *   subsidiary by this name exists, which holds whether or not anything here can work out which registrant it
  *   corresponds to. The CORROBORATION edge (`frn -> cik`) is an INFERENCE — which FRN a disclosed name actually is
  *   is not in Exhibit 21 at all — so it is written only when exactly one FRN's legal name canonically matches, and it
  *   carries a {@linkcode scoreEdgarSubsidiaryMatch} score rather than authority.
@@ -48,7 +48,7 @@ export interface EdgarSubsidiaryRow {
 	 */
 	jurisdiction?: string
 	/**
-	 * ISO `YYYY-MM-DD` filing date of the 10-K this Exhibit 21 came from — becomes BOTH `source_vintage` and `valid_from`
+	 * ISO `YYYY-MM-DD` filing date of the 10-K this Exhibit 21 came from — becomes both `source_vintage` and `valid_from`
 	 * on every edge/family row this row produces (decision 7 — a single per-row date, the same shape
 	 * `Form499Row.lastFiledAt` uses). Validated via {@linkcode assertISODate}.
 	 */
@@ -84,7 +84,7 @@ export function processEdgarSubsidiaryRow(
 	const subsidiaryNodeID = mintSubsidiaryNameNodeID(row.subsidiaryName)
 	insNode.run(subsidiaryNodeID, FilerIdentifierType.SubsidiaryName, row.subsidiaryName)
 
-	// The disclosure edge — ALWAYS written, ALWAYS authoritative. See this module's file header.
+	// The disclosure edge — always written, always authoritative. See this module's file header.
 	insEdge.run(
 		cikNodeID,
 		subsidiaryNodeID,
@@ -112,7 +112,7 @@ export function processEdgarSubsidiaryRow(
 	const matchedFRNNodeID = mintFRNNodeID(matched.frn, context)
 	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matched.frn)
 
-	// the score reflects what THIS match actually knows, not a flat 0.92 on every link — see
+	// the score reflects what this match actually knows, not a flat 0.92 on every link — see
 	// scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can see for itself what the
 	// score is grading rather than having to take the number on faith.
 	const matchScore = scoreEdgarSubsidiaryMatch(row.subsidiaryName, matched.legalName)
@@ -131,10 +131,10 @@ export function processEdgarSubsidiaryRow(
 	)
 
 	// The family-visibility precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both
-	// answer membership from filer_family alone. family_id/naming_node_id are the CIK's OWN node id: a CIK needs no
+	// answer membership from filer_family alone. family_id/naming_node_id are the CIK's own node id: a CIK needs no
 	// mintFamilyID canonicalization to be a stable family key, unlike a free-text holding-/management-company name.
 	//
-	// assertion/match_score carry the SAME values as the edge above, for the same reason the row exists
+	// assertion/match_score carry the same values as the edge above, for the same reason the row exists
 	// at all: a reader answering a family question from this table alone must be able to tell this name-match
 	// inference from a holding-company membership the filer itself filed.
 	insFamily.run(

@@ -1,6 +1,6 @@
 """#727 stage-2 Phase 1 — the semi-Markov span scorer.
 
-The two DP routines (log-partition, Viterbi) are verified against brute-force enumeration over ALL
+The two DP routines (log-partition, Viterbi) are verified against brute-force enumeration over all
 valid segmentations of a tiny input, not smoke-tested. A dynamic program that is subtly wrong still
 trains — it just trains toward the wrong thing — so the oracle is the point.
 """
@@ -235,7 +235,7 @@ _GEOM = dict(
 def test_span_head_cannot_influence_the_bio_logits():
     """The byte-identity invariant, tested as the PROPERTY rather than via seeded construction.
 
-    Seeding two models and diffing logits does NOT test this: `_init_weights()` walks the module list,
+    Seeding two models and diffing logits does not test this: `_init_weights()` walks the module list,
     so adding a head shifts every subsequent RNG draw and the whole ENCODER differs — 100% of logits
     move for reasons that have nothing to do with the head, and at `init_from` (how this ships) the
     checkpoint's weights are loaded anyway, so draw order is irrelevant. What actually matters is that

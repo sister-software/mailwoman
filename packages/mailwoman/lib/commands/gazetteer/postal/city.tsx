@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer postal-city` — build the POSTAL-CITY CANDIDATE side-index (#741 / #475) INTO
+ *   `mailwoman gazetteer postal-city` — build the POSTAL-CITY CANDIDATE side-index (#741 / #475) into
  *   a candidate gazetteer so the candidate-backend resolver (the demo/CLI default) can resolve a
  *   user-typed postal city to its geographic locality. Adds one table,
  *   `postal_city_candidate(name_key, postcode → spr_id, …)`, keyed exactly by `(name_key,

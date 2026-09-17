@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the SAME production
+ *   The two-arm premise-linkage runner (#1902). Every controlled row goes through the same production
  *   `geocodeAddress` twice: once with the deps the shipped product uses, and once with those deps plus
  *   a configured authoritative provider (#1901). Nothing else differs between the arms, which is what
  *   makes the arm-to-arm delta attributable to the provider rather than to the harness.
@@ -101,7 +101,7 @@ export interface PremiseLinkageGrade {
 }
 
 /**
- * Map one arm's authoritative block onto the outcome vocabulary. Pure, and the ONLY place an outcome is decided — both
+ * Map one arm's authoritative block onto the outcome vocabulary. Pure, and the only place an outcome is decided — both
  * arms are graded through it, so neither can acquire a private definition of `exact`.
  */
 export function outcomeFor(
@@ -395,7 +395,7 @@ export interface PremiseLinkageRunOptions extends PremiseLinkageRunConfig {
 }
 
 /**
- * A run's output. The report is publishable after the writer's preflight; `rows` and `inputs` are NOT, and exist so the
+ * A run's output. The report is publishable after the writer's preflight; `rows` and `inputs` are not, and exist so the
  * writer can check what the report was computed from.
  */
 export interface PremiseLinkageRunResult {

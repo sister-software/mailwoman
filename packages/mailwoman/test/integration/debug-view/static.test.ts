@@ -5,7 +5,7 @@
  *
  *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN PROCESS — no CLI
  *   spawn — so it needs both prerequisites the compiled CLI would otherwise hide behind a subprocess: the neural
- *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) AND a WOF admin
+ *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) and a WOF admin
  *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDB` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
  *
@@ -78,7 +78,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 		// legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 
-		// The map pane inked SOMETHING: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
+		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
 		// minimum the marker glyph at the resolved coordinate.
 		expect(/[⠀-⣿]/u.test(text) || text.includes("●")).toBe(true)
 

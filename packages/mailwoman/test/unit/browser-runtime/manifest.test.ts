@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Wire contract for the releases manifest, post-migration (2026-07-04). History: the acronym
- *   sweep capitalized the manifest READS while the published R2 json kept the legacy keys — every
+ *   sweep capitalized the manifest reads while the published R2 json kept the legacy keys — every
  *   release read `undefined`, silently disabling the demo's WOF cascade and FST for three days.
  *   The resolution keeps the house casing and migrates the WIRE: the publisher writes
- *   `hasFST`/`hasWOFDB`, `normalizeReleasesManifest` is the single boundary that tolerates BOTH
+ *   `hasFST`/`hasWOFDB`, `normalizeReleasesManifest` is the single boundary that tolerates both
  *   key generations (old HF mirrors still carry `hasFst`/`hasWofDb`), and no consumer reads raw
  *   wire keys outside it.
  */

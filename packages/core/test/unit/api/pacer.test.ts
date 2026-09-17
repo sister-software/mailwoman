@@ -87,7 +87,7 @@ describe("RequestPacer", () => {
 		const pending = Array.from({ length: TOTAL_CALLS }, () => recordedAcquire())
 
 		// The first call resolves without sleeping, but awaiting an already-resolved promise still defers
-		// its `push` to the microtask queue. Flush it HERE, before driving the clock — otherwise
+		// its `push` to the microtask queue. Flush it here, before driving the clock — otherwise
 		// `advance()`'s own first internal await would flush it, by which point `now()` has left t=0.
 		await drainMicrotasks()
 

@@ -12,7 +12,7 @@
  *   the accepting entries individually: it collapses them to `max(importance)` PER BIO TAG, and only
  *   four placetypes reach a tag at all (`PLACETYPE_TO_BIO` — country / region / locality / postalcode).
  *   A `localadmin`, `county`, `borough` or `neighbourhood` entry is walked, deduped, and then dropped
- *   without ever touching the emission matrix. So the per-place ranking INSIDE a name — the thing the
+ *   without ever touching the emission matrix. So the per-place ranking inside a name — the thing the
  *   Saint-Denis pair is about — is invisible to the decoder; only the max is not. Printing anything else
  *   would overstate what an importance swap can do here.
  *

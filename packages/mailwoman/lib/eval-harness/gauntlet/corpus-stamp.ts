@@ -11,7 +11,7 @@
  *   `out/` loader still held the deleted pre-JSONL case array. It read that array, wrote a DB, and printed
  *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the check that ran next
  *   reported a verdict about a corpus that no longer existed. Nothing in the pipeline could have said
- *   otherwise: a derived artifact carried no evidence of what it derived FROM. This module is that evidence,
+ *   otherwise: a derived artifact carried no evidence of what it derived from. This module is that evidence,
  *   and it is the same answer #1488 gave for the FST binaries.
  *
  *   Two guards, deliberately different in kind:
@@ -19,7 +19,7 @@
  *   - CONTENT — `corpus_hash` vs the live {@linkcode regressionCorpusHash}. Catches the artifact that is stale
  *       (or, equally, the working tree that moved after the build).
  *   - EMPTINESS — the builder refuses a corpus of zero rows outright ({@linkcode assertCorpusIsNonEmpty}).
- *       A hash comparison alone cannot catch this, because an empty loader on BOTH sides agrees with itself.
+ *       A hash comparison alone cannot catch this, because an empty loader on both sides agrees with itself.
  *       That is precisely the stale-tree shape: the loader resolved no `.jsonl` at all.
  */
 
@@ -46,7 +46,7 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
  *
  * The builder's own guard, and the one the hash cannot provide. A compiled tree pointing at a `cases/` directory with
  * no country dirs loads cleanly, returns `[]`, and builds a perfectly valid empty DB — which then grades 0/0 and
- * PASSES.
+ * passes.
  */
 export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return
@@ -101,7 +101,7 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
 /**
  * Throw unless the DB's stamp matches the corpus committed on disk right now.
  *
- * Called by every runner BEFORE it grades anything. The message names both hashes and the likely cause, because the two
+ * Called by every runner before it grades anything. The message names both hashes and the likely cause, because the two
  * ways to reach it need opposite fixes: an artifact older than the corpus wants a rebuild, and a build made from a
  * stale `out/` wants a recompile first.
  *

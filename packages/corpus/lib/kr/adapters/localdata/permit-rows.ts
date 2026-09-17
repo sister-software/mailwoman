@@ -140,7 +140,7 @@ export async function* readPermitDirectory(
 /**
  * One aligned string as a row in the CJK corpus schema.
  *
- * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its FIRST
+ * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its first
  * character falls inside a span, `O` otherwise. A span covering several tokens therefore labels only the token it
  * starts in, which is what the char-path trainer reads the spans for.
  */

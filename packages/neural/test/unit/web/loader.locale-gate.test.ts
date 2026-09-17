@@ -8,7 +8,7 @@
  *
  *   1. BROWSER-SAFETY SCOPE (the hard check): the two Stage-2 modules the loader now imports —
  *      `@mailwoman/locale-hint` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
- *      process runtime import across their FULL non-test source, or they'd break the browser bundle. A
+ *      process runtime import across their full non-test source, or they'd break the browser bundle. A
  *      static scan of the shipped source asserts it (a type-only re-export of `@mailwoman/core/pipeline`
  *      erases at compile and is explicitly allowed).
  *
@@ -140,7 +140,7 @@ describe("detectPairIndexCountry — structural country from the input shape", (
 	test("bitter-lesson-safe: a bare place name with NO postcode is NOT read as gb — it falls through to the us fallback", () => {
 		// locale-hint keys off structural cues (postcode/script) only, never place-name dictionaries, so
 		// "Shoreditch London" — a real GB dependent_locality/locality pair — detects `us`, not `gb`. The pair
-		// prior is additive, so a conservative miss (no bias) is the safe failure mode; a caller who KNOWS the
+		// prior is additive, so a conservative miss (no bias) is the safe failure mode; a caller who knows the
 		// posture uses the `{ country }` override on resolvePairIndexForText.
 		expect(detectPairIndexCountry("Shoreditch London")).toBe("us")
 	})
@@ -173,7 +173,7 @@ describe("resolvePairIndexForText — per-parse selection among the loaded index
 		const opt = resolvePairIndexForText(loaded, "10 Downing Street, London SW1A 2AA")
 
 		expect(opt).toEqual({ index: gb.resolver })
-		expect(opt!.index).toBe(gb.resolver) // the SAME retained instance, not a copy
+		expect(opt!.index).toBe(gb.resolver) // the same retained instance, not a copy
 	})
 
 	test("US text selects the us index", () => {

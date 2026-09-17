@@ -16,7 +16,7 @@
  *
  *   - Western / romanized names only. Cultural given-family ORDER variation (East-Asian family-first)
  *       and transliteration are not handled here — a documented follow-up.
- *   - Nickname → canonical-root mapping is intentionally NOT done at parse time: it is lossy and
+ *   - Nickname → canonical-root mapping is intentionally not done at parse time: it is lossy and
  *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
  *       agreement level, not a destructive rewrite. We only _extract_ a parenthetical/quoted
  *       nickname.
@@ -350,7 +350,7 @@ export type PersonNameStyle = "full" | "short"
  * rather than an addition to it. `"short"` prints what a person is addressed by, which is the form a display label and
  * a match key want.
  *
- * The particle travels WITH the surname in both styles. The parser stores it separately so the matcher can compare
+ * The particle travels with the surname in both styles. The parser stores it separately so the matcher can compare
  * `Vega` independently of `de la`; printing them apart would produce a name nobody wrote.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {

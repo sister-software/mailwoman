@@ -55,7 +55,7 @@ describe("WorkerHost restart", () => {
 
 		expect(unchanged.tools_changed).toBe(false)
 
-		// A new parameter, same tool name: the client's copy of the schema is now wrong, so this MUST announce.
+		// A new parameter, same tool name: the client's copy of the schema is now wrong, so this must announce.
 		await writeTools({ type: "object", properties: { tally: { type: "array" } } })
 
 		const changed = await host.restart()

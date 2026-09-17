@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ONE carrier both observation routes use to reach a caller: a semantic observation and a
+ *   The one carrier both observation routes use to reach a caller: a semantic observation and a
  *   coverage-qualified absence each become a `QueryIntentMarker` on the ordinary result, and neither gets a
  *   private path of its own.
  *
@@ -24,7 +24,7 @@
  *   A MARKER MUST NAME A KIND THE VERDICT CARRIES. `QueryIntentMarker.kind` is documented as a kind present
  *   in the result as either the top kind or an alternative, and a marker naming one that is in neither is a
  *   producer bug. So the conversion is handed the verdict and finds the POI kind in it; a verdict carrying
- *   none yields NO marker rather than an invented one. That silence is a real reading — the observation was
+ *   none yields no marker rather than an invented one. That silence is a real reading — the observation was
  *   recorded on a query the classifier did not route as a POI query — and it is not the same as there being
  *   nothing to say.
  */
@@ -328,7 +328,7 @@ export function soilCapabilityMarker(
  *
  * AND THE MESSAGE CARRIES THE COVERAGE LIMIT, because this layer's silence is not a reassurance. The Environment Agency
  * publishes no coverage statement for NCERM, so an absent designation says nothing — and the marker only ever fires on
- * a PRESENT one, which is why the limit rides on the evidence rather than being implied by the marker's absence.
+ * a present one, which is why the limit rides on the evidence rather than being implied by the marker's absence.
  *
  * The message reports WHAT THE AUTHORITY'S MAPPING ASSIGNS at a location, never whether a property will erode. The
  * authority itself declines the second statement — its data "cannot provide details for individual properties" — and a
@@ -438,7 +438,7 @@ export function zoningDesignationMarker(
  * The attached spatial layers a caller may hand to a geocode, as one named bundle.
  *
  * ONE TYPE RATHER THAN THREE FIELDS ON THE CONSUMER, because {@link layerDesignationMarkers} already reads all of them
- * together and the consumer reads none of them. `GeocodeDeps` extends this, so a fourth layer is one edit HERE — the
+ * together and the consumer reads none of them. `GeocodeDeps` extends this, so a fourth layer is one edit here — the
  * route type, its field, its docstring and its entry in the marker list — and none at the call site.
  *
  * EVERY FIELD IS OPTIONAL AND PRESENCE IS THE SWITCH. A boolean would make the consumer resolve a data-root path and
@@ -465,7 +465,7 @@ export interface LayerDesignationRoutes {
 	 */
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is NOTHING. NCERM publishes
+	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is nothing. NCERM publishes
 	 * no coverage statement, so this route fires on a designation and stays silent otherwise, which is the opposite of
 	 * the flood route above. One field across both would put one rule over two opposite meanings of an empty answer.
 	 */
@@ -474,7 +474,7 @@ export interface LayerDesignationRoutes {
 	 * The Irish zoning route (#1995) — a fourth layer, and the first whose observation is a VOCABULARY rather than a code
 	 * from a closed domain. It carries the authority's own zone code verbatim beside the publisher's own generic
 	 * classification, because 52 of 795 (authority, local code) pairs take more than one generic type and the mapping
-	 * therefore runs one way only. Its absence reading is NOTHING, on the same terms as the coastal route above and for a
+	 * therefore runs one way only. Its absence reading is nothing, on the same terms as the coastal route above and for a
 	 * harder reason: an absent zoning polygon is one of at least four different things and no product distinguishes
 	 * them.
 	 */
@@ -484,7 +484,7 @@ export interface LayerDesignationRoutes {
 /**
  * Every attached layer's designation for one resolved coordinate, in one call.
  *
- * A LIST RATHER THAN A CALL PER LAYER, so a third layer is one edit HERE and none at the call site. Each route is
+ * A LIST RATHER THAN A CALL PER LAYER, so a third layer is one edit here and none at the call site. Each route is
  * independently optional and each contributes zero markers when absent, which is what makes an unconfigured session
  * produce the identical marker list — the property the byte-stability tests pin.
  *

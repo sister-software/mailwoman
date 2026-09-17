@@ -20,15 +20,15 @@
  *   two in step — a module and its published page disagreeing about why a metric was chosen is its own
  *   defect.) `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice
  *   for an analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) —
- *   evidence pairwise is the right shape for THIS kind of experiment too, not just a borrowed convenience.
+ *   evidence pairwise is the right shape for this kind of experiment too, not just a borrowed convenience.
  *   It isn't reused here: it hard-codes a `{records}`/NPI-shaped input, and its zero-denominator
  *   convention is one this module deliberately replaces — see below.
  *
- *   **Zero-denominator convention (deliberately NOT `clusterF1`'s):** `clusterF1` defaults an empty
+ *   **Zero-denominator convention (deliberately not `clusterF1`'s):** `clusterF1` defaults an empty
  *   denominator to `0` for both precision and recall, silently. This module reports `null` instead — "the
  *   prediction made no positive calls at all" and "every positive call the prediction made was wrong" are
  *   different, honest facts, and collapsing them into the same `0` would misreport a linkage that
- *   predicted NOTHING (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
+ *   predicted nothing (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
  *   as indistinguishable from one that confidently predicted the wrong thing everywhere.
  *
  *   **`f1` propagates that `null` rather than collapsing it.** `f1` is the one field a reader quotes as
@@ -49,15 +49,15 @@
  */
 export interface PairwiseGroupingScore {
 	/**
-	 * Pairs the truth partition puts together AND the prediction puts together.
+	 * Pairs the truth partition puts together and the prediction puts together.
 	 */
 	truePositivePairs: number
 	/**
-	 * Pairs the prediction puts together that the truth partition does NOT — a false merge.
+	 * Pairs the prediction puts together that the truth partition does not — a false merge.
 	 */
 	falsePositivePairs: number
 	/**
-	 * Pairs the truth partition puts together that the prediction does NOT — a missed link.
+	 * Pairs the truth partition puts together that the prediction does not — a missed link.
 	 */
 	falseNegativePairs: number
 	/**

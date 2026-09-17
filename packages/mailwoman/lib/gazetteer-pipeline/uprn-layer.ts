@@ -29,11 +29,11 @@
  *
  *   ## Restricting
  *
- *   Unlike Code-Point Open, the archive ships NO row-count manifest (`versions.txt` is three label
+ *   Unlike Code-Point Open, the archive ships no row-count manifest (`versions.txt` is three label
  *   lines), so there is no upstream oracle to reconcile against. What checks instead: the archive md5
  *   against OS's published digest, an exact header match (schema drift fails loudly), the accounting
  *   identity `read = inserted + malformed + duplicate` with malformed and duplicate both expected
- *   ZERO, and a row floor (the 2026-08 extract holds 41,629,393 rows; the product only grows, so a count
+ *   zero, and a row floor (the 2026-08 extract holds 41,629,393 rows; the product only grows, so a count
  *   under the floor means a truncated read, not a smaller Britain).
  *
  *   ## Coverage
@@ -41,7 +41,7 @@
  *   GB only — England, Scotland, Wales (the Downloads API publishes a single `GB` area). OS
  *   designates the product complete (every UPRN in AddressBase Premium, with geometry), so every
  *   res-6 cell holding rows is written `basis: designated, completeness: 1`. Cells with no rows are
- *   left ABSENT — some are genuinely empty GB moorland, some are Northern Ireland or open sea, and
+ *   left absent — some are genuinely empty GB moorland, some are Northern Ireland or open sea, and
  *   without a GB polygon the builder cannot tell which, so per the meaning-of-zero rule it claims
  *   nothing. NI property identifiers are administered by Land & Property Services (Pointer) and are
  *   not in any OS OpenData product.
@@ -201,7 +201,7 @@ export interface OpenUPRNPoint {
 /**
  * Parse one data line of the Open UPRN CSV, or `null` when the line is malformed.
  *
- * The file is CRLF-terminated (the G-NAF lesson: strip the `\r` at the reader boundary, or the LAST column — here
+ * The file is CRLF-terminated (the G-NAF lesson: strip the `\r` at the reader boundary, or the last column — here
  * `LONGITUDE` — silently carries it into every value). Quote-free by construction: every field is numeric, so a plain
  * comma split is exact, not an assumption about lucky data.
  *
@@ -237,7 +237,7 @@ export function parseOpenUPRNLine(line: string): OpenUPRNPoint | null {
 
 export interface DownloadOpenUPRNOptions {
 	/**
-	 * Directory the archive lands in — a NEW dated directory per acquisition (`$MAILWOMAN_DATA_ROOT/os-uprn/<date>/`).
+	 * Directory the archive lands in — a new dated directory per acquisition (`$MAILWOMAN_DATA_ROOT/os-uprn/<date>/`).
 	 */
 	destDir: string
 	/**
@@ -375,7 +375,7 @@ function decodeProvenanceText(bytes: Uint8Array): string {
  * Extract the CSV + provenance texts from the Open UPRN archive into `<destDir>/extracted/`.
  *
  * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed size exactly — the dated
- * acquisition directory IS the cache, and the size check is what tells a completed extraction from one that died
+ * acquisition directory is the cache, and the size check is what tells a completed extraction from one that died
  * mid-write. (Byte size, not mtime: the zip's entries carry mode 000 and a 2026 timestamp, neither of which says
  * anything about our copy's completeness.)
  */
@@ -442,7 +442,7 @@ export async function extractOpenUPRN(options: {
 export interface BuildUPRNLayerOptions {
 	/**
 	 * Acquisition directory holding (or to hold) the archive and its `extracted/` tree. Default
-	 * `<data-root>/os-uprn/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
+	 * `<data-root>/os-uprn/<YYYY-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
@@ -490,11 +490,11 @@ export interface BuildUPRNLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines that failed {@link parseOpenUPRNLine} — expected ZERO; any are reported in `mismatches`.
+	 * Lines that failed {@link parseOpenUPRNLine} — expected to be 0; any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
-	 * Lines whose UPRN collided with an already-written row — expected ZERO (UPRN is the source's own primary key).
+	 * Lines whose UPRN collided with an already-written row — expected to be 0 (UPRN is the source's own primary key).
 	 */
 	skippedDuplicate: number
 	/**
@@ -722,7 +722,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	phase("coverage", `${coverage.size.toLocaleString()} res-${UPRN_COVERAGE_H3_RESOLUTION} cells`)
 
 	// OS designates the product complete for GB, so observed cells are `designated`/1.0 — a miss inside one
-	// is evidence of absence. Unobserved cells stay ABSENT (unknown), per the meaning-of-zero rule.
+	// is evidence of absence. Unobserved cells stay absent (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
 		kdb,
 		[...coverage.entries()]

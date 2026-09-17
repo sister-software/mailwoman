@@ -1,12 +1,12 @@
 # v5.7.0 — three admin-tail surfaces the corpus has never carried, each with its own probe
 #
 # Control: v5.6.0-bare-postcode-60k.yaml at seed 42. This config differs from it in the corpus
-# version, THREE `source_reps`/`source_weights` lines, one supersession, and three receipts. FROM
+# version, three `source_reps`/`source_weights` lines, one supersession, and three receipts. FROM
 # SCRATCH: no `init_from`, launched with `--resume none`.
 #
 # WHY ONE ARM CARRIES THREE ADDED SOURCES. v5.6.0 added exactly one and said so, because a single
 # added source makes every difference between the arms attributable to it. Three stays attributable
-# here for a different reason: each has its OWN pre-registered probe over a capability the other two
+# here for a different reason: each has its own pre-registered probe over a capability the other two
 # cannot touch, and none of the three shares an instrument with another.
 #
 #   #2303  a US city in front of a state code and a ZIP   the four-arm table over 581 US cities
@@ -35,10 +35,10 @@
 #    ZERO, which is the same shape as v5.6.0's bare postcode and not a margin to beat.
 #
 # 3. `301 College Ave, 101, Athens, GA 30601` drops the `101` entirely. `census_comma_segment_number`
-#    counted a digit group standing alone in its own comma segment: 2,923 per million in the LEADING
-#    position, every one a postcode, and ZERO in a later segment at either level. Nothing competes —
+#    counted a digit group standing alone in its own comma segment: 2,923 per million in the leading
+#    position, every one a postcode, and zero in a later segment at either level. Nothing competes —
 #    but `Athens, GA, 30601` puts a postcode in exactly that position and is right today only by
-#    generalization, so the rebuilt recipe writes BOTH readings rather than the unit alone.
+#    generalization, so the rebuilt recipe writes both readings rather than the unit alone.
 #
 # EXPOSURE, and where each number comes from. 60,000 steps x batch 128 = 7,680,000 samples.
 #
@@ -46,12 +46,12 @@
 #   synth-trailing-region-ca-bare  4.0 x 13,740 =  54,960 draws, 0.72% of the run
 #   synth-unit-v30                 weight 1.5, the exposure `synth-unit` already drew (9,013/epoch)
 #
-# The US source takes ONE pass, like `synth-bare-postcode`, because its 16,000 rows are distinct real
+# The US source takes one pass, like `synth-bare-postcode`, because its 16,000 rows are distinct real
 # (postcode, city, state) triples rather than templated variations; 12,000 of them carry no street at
 # all and 4,000 write the region as a code, so one pass delivers 4,000 instances of the exact family
 # the issue measured against v5.6.0's ~3,900 for the shape that worked.
 #
-# The Canadian source takes FOUR, and that number is set against a count rather than by symmetry. Its
+# The Canadian source takes four, and that number is set against a count rather than by symmetry. Its
 # 13,740 rows carry 188 that write `NL` and 169 that write `PE`. The mixture already carries `NL` as a
 # country 45 times per million emitted rows, which is about 345 over this run. One pass leaves the
 # region reading outnumbered 188 to 345; two reaches parity; four puts it at 752 against 345, on the
@@ -82,7 +82,7 @@
 #
 #   4. #2298's ablation, and a PO-BOX arm beside it. `301 College Ave #101, Athens, GA 30601` must
 #      reach `address_point` at 33.959694 / -83.3763072, and `301 College Ave, 101, Athens, GA 30601`
-#      must tag `101` as a unit. `Athens, GA, 30601` must still answer `postcode: 30601` and NOT a
+#      must tag `101` as a unit. `Athens, GA, 30601` must still answer `postcode: 30601` and not a
 #      unit — that is the counter-reading the recipe writes for exactly this check. A gain on units
 #      may not be paid for with a loss on `PMB #`.
 #
@@ -186,7 +186,7 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # QUOTED, because YAML 1.1 reads a bare NO as the boolean false — the key then never matches a
+    # Quoted, because YAML 1.1 reads a bare `NO` as the boolean false — the key then never matches a
     # row's `country`, and `synth-no-fragment` (33,203 rows, all NO) becomes unselectable.
     "NO": 1.0
     NZ: 1.0

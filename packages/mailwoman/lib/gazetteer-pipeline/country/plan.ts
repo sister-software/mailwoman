@@ -23,7 +23,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { AdminSource } from "#gazetteer-pipeline/country/sources"
 
 /**
- * Synthetic-id band boundaries, duplicated from the folds that mint them ONLY as SQL literals — a query cannot import a
+ * Synthetic-id band boundaries, duplicated from the folds that mint them only as SQL literals — a query cannot import a
  * constant. `country-sources.test.ts` pins them against the exporting modules so the two cannot drift silently.
  */
 const OVERTURE_BAND_START = 8_000_000_000_000
@@ -42,7 +42,7 @@ export interface SourceCensus {
 /**
  * Read the per-source row counts for one country out of an admin gazetteer.
  *
- * The band arithmetic IS the measurement: nothing in `spr` records which fold wrote a row, so the id range is the only
+ * The band arithmetic is the measurement: nothing in `spr` records which fold wrote a row, so the id range is the only
  * evidence — which is also how the #1015 recipe had to be reconstructed after the manifest lagged.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
@@ -156,7 +156,7 @@ export function planCountryMove(options: {
 			)
 		}
 
-		// Only when the target is not ALREADY serving. A country whose rows already come from WOF needs no
+		// Only when the target is not already serving. A country whose rows already come from WOF needs no
 		// addition, and printing one would have a reader edit a list the country is on — the plan would then
 		// be describing work that is done, which is the failure mode a plan is supposed to remove.
 		if (!current.includes(AdminSource.WOF)) {

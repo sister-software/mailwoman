@@ -21,7 +21,7 @@
  *   en-us/fr-trained and never saw non-en/fr street formats (the 2026-06-19 EU parse-blocker
  *   measured loc-correct ES 21% / IT 59% / NL 64% vs FR/US ~98%).
  *
- *   `--country` is REQUIRED (the JSONL is per-country and the rows omit a country field), matching
+ *   `--country` is required (the JSONL is per-country and the rows omit a country field), matching
  *   `openaddresses`. License is Overture's CDLA-Permissive-2.0 (attribution; not share-alike).
  *
  *   | Field | ComponentTag | | --------- | ---------------------------------------------- | |
@@ -123,7 +123,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 				const postcode = r.postcode?.trim() ?? ""
 				const locality = r.locality?.trim() ?? ""
 
-				// Only useful with a street + (postcode OR locality); point-only rows quarantine anyway.
+				// Only useful with a street + (postcode or locality); point-only rows quarantine anyway.
 				if (!street) continue
 
 				if (!postcode && !locality) continue

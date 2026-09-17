@@ -51,7 +51,7 @@ export interface ReleaseAssets {
 	/**
 	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
 	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
-	 * because the check needs BOTH (core's `streetContextRequirementFor` only fires when the two stages are present).
+	 * because the check needs both (core's `streetContextRequirementFor` only fires when the two stages are present).
 	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without
 	 * the check, byte-identical to before.
 	 */

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE END-TO-END RECEIPT for the ROAD_TO_V9 §4 intent vocabulary: run real queries through the
- *   real geocode cascade, print the answer AND the markers side by side.
+ *   The end-to-end receipt for the ROAD_TO_V9 §4 intent vocabulary: run real queries through the
+ *   real geocode cascade, print the answer and the markers side by side.
  *
  *   The unit tests pin the rules and the invariance receipt pins the 306-row corpus, but neither can
  *   answer the question that decides whether `declared_ambiguity` is worth shipping: on live
@@ -47,9 +47,9 @@
  *   coincident-collapse working — without it the `locality`/`localadmin` twin sits 0.3 km away with a
  *   0.01 margin and every major city on earth reads maximally ambiguous.
  *
- *   The gap this probe exposed on its first run, and it was NOT a §4 defect: several famously-ambiguous
+ *   The gap this probe exposed on its first run, and it was not a §4 defect: several famously-ambiguous
  *   names (`Springfield`, `Berlin`, `Manchester`, `Moscow`, `Fulda`, `Hamilton`) came back from the
- *   GEOCODE path with a SINGLE candidate. No alternatives means no margin to measure, so the marker
+ *   geocode path with a single candidate. No alternatives means no margin to measure, so the marker
  *   could not fire for exactly the class it exists for. **Closed by #1537**, and the cause was upstream
  *   of the intent vocabulary as suspected: the model reads those names as a `street`, so the admin walk
  *   resolves nothing and the #370 span-rescore tier is what recovers them — and it decorated the
@@ -65,14 +65,14 @@
  *   | Fulda       |                    1 → 3  | — (decisive)                |
  *   | Moscow      |                    1 → 2  | — (see below)               |
  *
- *   `Moscow` was the row that still read wrong, and it was a DIFFERENT defect: it answered Moscow,
+ *   `Moscow` was the row that still read wrong, and it was a different defect: it answered Moscow,
  *   Idaho. Span-rescore's exact-name filter re-compared the PRIMARY name folded to `[a-z0-9 ]`, so a
  *   gazetteer name in a non-Latin script folds to the empty string and could never match — Москва was
  *   not in that candidate list to be ranked, and Moscow, Idaho won by default among the Latin-named
  *   bearers. Athens survived the same trap only because it reaches the admin walk instead (`Αθήνα`
  *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
- *   backend's `exactMatch` IS the name-OR-alias surface equality (names table / alt_names bag), so a
- *   query matches a place when ANY stored name equals it, Москва's "Moscow" alias included — and
+ *   backend's `exactMatch` is the name-or-alias surface equality (names table / alt_names bag), so a
+ *   query matches a place when any stored name equals it, Москва's "Moscow" alias included — and
  *   population-first ranking then picks Москва RU. The postcode-consistency check still applies to
  *   every admitted candidate. Re-measured 2026-08-07, same backend:
  *

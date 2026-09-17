@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The command toolkit for `mailwoman/commands/*` — Ink helper types, the one-shot
- *   {@linkcode useCommandTask} runner, and the {@linkcode CheckList} renderer. Lives OUTSIDE
- *   `commands/` (the router treats every file there as a command) and OUTSIDE `sdk/` (`sdk/` submodules
+ *   {@linkcode useCommandTask} runner, and the {@linkcode CheckList} renderer. Lives outside
+ *   `commands/` (the router treats every file there as a command) and outside `sdk/` (`sdk/` submodules
  *   mean data acquisition). Built with `createElement`, not JSX, so the module stays plain `.ts` —
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
@@ -67,7 +67,7 @@ export type CommandTaskState<T> =
 
 /**
  * Run a command's one-shot async task and own the exit-code discipline: rejection renders the error state and exits 1;
- * resolution exits with `exitCode(result)` (default 0) — always AFTER the final frame committed. Replaces the
+ * resolution exits with `exitCode(result)` (default 0) — always after the final frame committed. Replaces the
  * copy-pasted useEffect/useState/setImmediate dance in every command.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by design: the task/exitCode closures
@@ -112,7 +112,7 @@ type LazyComponentState<P extends object> =
  *
  * Nothing on screen for one frame is the right fallback here and not a placeholder: Ink erases the previous frame when
  * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
- * spinner own one INSIDE the loaded component, where it can outlive the load.
+ * spinner own one inside the loaded component, where it can outlive the load.
  *
  * A REJECTED import is a command failure, and it takes {@linkcode useCommandTask}'s exact contract: the message renders
  * red and the process exits 1 from a `setImmediate`, after the frame has committed. That matters here more than for an
@@ -323,7 +323,7 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 export function countOption(raw: string | undefined, fallback: number): number {
 	if (raw == null) return fallback
 
-	// `Number("")` and `Number("  ")` are ZERO, so a blank flag value would switch the variants off with no one asking —
+	// `Number("")` and `Number("  ")` are zero, so a blank flag value would switch the variants off with no one asking —
 	// the same defect the falsy-zero idiom caused, arriving from the other side.
 	const parsed = raw.trim() === "" ? Number.NaN : Number(raw)
 
@@ -335,7 +335,7 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped BEFORE conversion, so a
+ * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped before conversion, so a
  * trailing comma is not a NaN.
  */
 export function splitNumberList(raw: string | undefined): number[] {
@@ -416,7 +416,7 @@ export function formatLayerVerification<Row extends { outcome: string; label: st
 }
 
 /**
- * Run a child process with inherited stdio — the child's own output IS the progress log — and throw
+ * Run a child process with inherited stdio — the child's own output is the progress log — and throw
  * {@linkcode CommandError} on a launch failure or nonzero exit. `echo` prints the invocation first; `cwd` runs the child
  * elsewhere.
  */
@@ -446,7 +446,7 @@ export function runProcessOrFail(
  * Load the neural classifier, degrading to `undefined` with a precise warning (#1108) so a consumer can't attribute
  * silently-degraded output to the neural parser. Two failure modes are distinguished:
  *
- * - Weights ABSENT (package not installed / carries no binaries) → an install hint, no scary error text.
+ * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
  * - Weights present but the encoder FAILED to load (corrupt / partial bundle, a bad explicit path) → the underlying error
  *   is surfaced, not swallowed.
  *
@@ -471,8 +471,8 @@ export async function loadClassifierTolerant(
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error)
-		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every OTHER
-		// failure means the weights DID resolve but the encoder couldn't load them — a partial/metadata-only
+		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every other
+		// failure means the weights did resolve but the encoder couldn't load them — a partial/metadata-only
 		// bundle ("missing model files"), a bad explicit --model/--tokenizer path, or a corrupt artifact — so we
 		// surface the underlying error verbatim rather than mislabel it "not installed" and swallow the cause.
 		const absent = /Could not resolve/iu.test(message)

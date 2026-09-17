@@ -9,17 +9,17 @@
  *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/`.
  *
  *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/AGENTS.md's closed
- *   drawer) but is NOT yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
+ *   drawer) but is not yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
  *   (`node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts`) via `runIfScript` so plain
  *   import stays side-effect-free. Graduation path (design doc): fold into `gazetteer pair-index`
  *   behind an `--edge` mode once either consumer is green-lit.
  *
- *   NOT a shipped-artifact build. Three deliberate safety properties keep an accidental wire-up
+ *   Not a shipped-artifact build. Three deliberate safety properties keep an accidental wire-up
  *   inert:
  *
  *   1. `delta: 0` — the soft-prior bias magnitude is zero, so even a loaded probe artifact biases
  *      nothing (the calibration task owns any real value).
- *   2. The filename (`pair-index-locality-region-<cc>.bin`) does NOT match the loader's auto-wire
+ *   2. The filename (`pair-index-locality-region-<cc>.bin`) does not match the loader's auto-wire
  *      pattern (`pair-index-<cc>.bin` as a weights-package sibling).
  *   3. The output lives under the data root, not in any `neural-weights-*` workspace.
  *

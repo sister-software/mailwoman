@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression test for the 2026-07 demo outage: an OPTIONAL postcode-anchor binary that 404s must
- *   NOT block the whole classifier load.
+ *   Regression test for the 2026-07 demo outage: an optional postcode-anchor binary that 404s must
+ *   not block the whole classifier load.
  *
  *   The incident: `postcode-de.bin` went 404 on prod R2 for every shipped version (postcode-us/fr
  *   stayed 200). The loader fetched the postcode binaries with a throwing `Promise.all(...fetchBytes)`,
@@ -12,9 +12,9 @@
  *   the demo's `runtime.ready` never fired → the input stayed permanently disabled even though the
  *   model, tokenizer, and the other postcode binaries were all fine.
  *
- *   The postcode anchor is a SOFT ranking channel, not a required model input. This suite pins the
+ *   The postcode anchor is a soft ranking channel, not a required model input. This suite pins the
  *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
- *   anchors; ALL 404 collapses to the anchor-off identity (undefined lookup) and STILL loads.
+ *   anchors; all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
  *
  *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real model file is
  *   needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts` (which need a real
@@ -54,7 +54,7 @@ vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 }))
 
 // Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
-// that it is CONSTRUCTED (the load reached the end) and WHAT postcode lookup it received.
+// that it is constructed (the load reached the end) and what postcode lookup it received.
 vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
@@ -64,17 +64,17 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	},
 }))
 
-// vi.resetModules() BEFORE these imports: the root vitest config runs `isolate: false` (one
+// vi.resetModules() before these imports: the root vitest config runs `isolate: false` (one
 // shared module graph per worker), so `./web-loader.ts` and its dependencies may already be
-// cached — evaluated WITHOUT this file's mocks by an earlier file. A cached module never
-// re-evaluates, so the mock factories above would be skipped and the REAL tokenizer/classifier
+// cached — evaluated without this file's mocks by an earlier file. A cached module never
+// re-evaluates, so the mock factories above would be skipped and the real tokenizer/classifier
 // would try to parse the dummy fixture bytes (SentencePiece ParseFromArray failure). resetModules
-// forces re-evaluation against the registered mocks — and reset again on the way out so the NEXT
+// forces re-evaluation against the registered mocks — and reset again on the way out so the next
 // file in this fork never inherits our mocked modules from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import AFTER the mock declarations + reset. `postcode-binary-resolver.ts` is NOT mocked, so the
+// Import after the mock declarations + reset. `postcode-binary-resolver.ts` is not mocked, so the
 // binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
@@ -159,7 +159,7 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 		// ready fires: the load resolved and constructed a classifier.
 		expect(result.classifier).toBeDefined()
 
-		// The 200 binary's anchors ARE present; the 404 one is absent.
+		// The 200 binary's anchors are present; the 404 one is absent.
 		const lookup = capturedConfig?.postcodeAnchorLookup
 		expect(lookup).toBeInstanceOf(Map)
 		expect(lookup!.has("10001")).toBe(true) // US survived

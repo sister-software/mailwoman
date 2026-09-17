@@ -162,7 +162,7 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 			"outside-expected-country"
 		)
 
-		// An artifact WITHOUT a US box → fail-open, overriding the constant.
+		// An artifact without a US box → fail-open, overriding the constant.
 		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: new Map() }).implausible).toBe(false)
 	})
 })

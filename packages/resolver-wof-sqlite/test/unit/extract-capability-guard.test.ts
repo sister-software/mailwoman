@@ -9,12 +9,12 @@
  *   its filename, so a file spelled one letter off the placetype it serves answers with nothing while holding every
  *   row that was asked for. A routable name threw from deep inside a SELECT instead.
  *
- *   The two `spr`-only fixtures below differ ONLY in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
+ *   The two `spr`-only fixtures below differ only in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
  *   not — so each test isolates one of the two failure modes.
  *
- *   `postalcode-empty.db` is the third case and the one the first version missed. It carries NO tables, so a guard
+ *   `postalcode-empty.db` is the third case and the one the first version missed. It carries no tables, so a guard
  *   keyed on `spr` alone reads it as "not claiming to be a place extract" and waves it through — after which every
- *   query routed to it by its NAME dies mid-SELECT, which is the exact failure the guard exists to prevent. A
+ *   query routed to it by its name dies mid-SELECT, which is the exact failure the guard exists to prevent. A
  *   zero-byte or truncated extract file is this shape, and one was on disk when the guard first shipped.
  */
 
@@ -56,7 +56,7 @@ const writeSprOnly = (path: string): void => {
 }
 
 /**
- * A extract with NOTHING in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
+ * A extract with nothing in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
  */
 const writeEmpty = (path: string): void => {
 	new DatabaseClient<WOFDatabase>(path).destroy()
@@ -79,7 +79,7 @@ beforeAll(async () => {
 	writeMain(dir.resolve("admin.db"))
 	// Routes by name (`postalcode_x` starts with `postalcode_`), so the old failure was a mid-query throw.
 	writeSprOnly(dir.resolve("postalcode-x.db"))
-	// Routes NOWHERE — spelled `postcode` where the placetype is `postalcode`.
+	// Routes nowhere — spelled `postcode` where the placetype is `postalcode`.
 	writeSprOnly(dir.resolve("postcode-x.db"))
 	writeRelationOnly(dir.resolve("postcode-locality-intl.db"))
 	// Routes by name and carries nothing at all — the shape `postalcode-fr.db` had on disk.
@@ -148,7 +148,7 @@ describe("extract capability guard", () => {
 			message = (error as Error).message
 		}
 
-		// The message must NOT assert a table the file does not have. That claim was false for this shape.
+		// The message must not assert a table the file does not have. That claim was false for this shape.
 		expect(message).not.toMatch(/carries "spr"/)
 		expect(message).toMatch(/named for a routed placetype/)
 		expect(message).toMatch(/die mid-SELECT/)

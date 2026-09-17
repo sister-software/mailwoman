@@ -72,7 +72,7 @@ node resolver-wof-sqlite/out/build-slim-cli.js \
 
 ### 5. Verify
 
-The FST freshness section of `gazetteer verify` answers "which artifacts were built from THIS
+The FST freshness section of `gazetteer verify` answers "which artifacts were built from this
 database" — the question that, while unanswerable, once left every FST pointing at a gazetteer
 that no longer existed after an admin swap:
 

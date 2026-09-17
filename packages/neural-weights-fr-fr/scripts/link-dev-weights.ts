@@ -14,7 +14,7 @@
  *   that local file SHADOWED the base fallback, silently running the stale model for every dev fr-fr parse, and its
  *   #397 md5 guard could never pass against the en-us card. One model, one pin — en-us's manifest owns it.)
  *
- *   What fr-fr DOES own locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
+ *   What fr-fr owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
  *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation

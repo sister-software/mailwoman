@@ -53,7 +53,7 @@ const LogLevelColors = {
  * Creates a logger with the given prefix.
  */
 /**
- * Where diagnostics are written. Under Node, a `Console` whose BOTH streams are stderr: `console.debug`, `console.info`
+ * Where diagnostics are written. Under Node, a `Console` whose streams are both stderr: `console.debug`, `console.info`
  * and `console.log` write to stdout there, so a request line from an HTTP client landed in the middle of any command
  * whose stdout is data (`mailwoman doctor --json` was the case that surfaced it). Diagnostics belong on stderr, the
  * stream a shell keeps apart from the data. In a browser there is one console and this is that console.

@@ -7,7 +7,7 @@
  *
  *   The partition itself is pure and tested directly (tier-safety, stability, the no-stamp
  *   identity). The walk tests then pin the reach contract the #1729 lesson demands: the qualifier is
- *   threaded onto exactly the lookups the setting covers, the partition runs AFTER `rankByImportance`
+ *   threaded onto exactly the lookups the setting covers, the partition runs after `rankByImportance`
  *   (fame must not win back the top slot from a qualifier-vouched candidate), and the
  *   `admin_containment` trace stamp reports the tri-state truthfully — `unavailable` on a backend
  *   that cannot answer is the census surface for an opted-in setting that cannot fire.
@@ -50,7 +50,7 @@ interface StampSpec {
 }
 
 /**
- * A backend whose locality candidates carry containment stamps ONLY when the query asked (`regionQualifier` present) —
+ * A backend whose locality candidates carry containment stamps only when the query asked (`regionQualifier` present) —
  * the capable-backend contract. Region lookups miss (the fixture region resolves nothing, like Thüringen under a US
  * scope).
  */
@@ -184,7 +184,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 	})
 
 	it("the contained candidate wins even when fame disagrees — the partition outranks rankByImportance", async () => {
-		// The uncontained namesake is MORE important (Richmond VA vs Richmond, North Yorkshire): fame
+		// The uncontained namesake is more important (Richmond VA vs Richmond, North Yorkshire): fame
 		// alone re-orders it to the front, so a setting that only trusted the backend's incoming order
 		// would lose here. This is the reach proof: the walk's own partition must run after the fame key.
 		const { locality } = await resolveWith(

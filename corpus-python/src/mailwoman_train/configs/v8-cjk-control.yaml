@@ -4,7 +4,7 @@
 # head read coordinate-acceptability 0.9653 against the JP record's 0.9928, and 598 of the 664 failed rows are ONE
 # held-out hiragana municipality, かすみがうら市, predicted without its trailing 市 (the JP-only 24k model missed 2 of
 # its 823 rows). Everything else in the run is byte-identical to v8-cjk-full: same head width (49), same re-sealed
-# CJK char vocabulary, same seed, schedule and precision. This arm answers ONE question: does the 49-label head over
+# CJK char vocabulary, same seed, schedule and precision. This arm answers one question: does the 49-label head over
 # the JP source alone also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
 # variance on a single held-out name and the CN rows are not the cause; if this arm reads like the JP record, the
 # mixture is. Nothing here is a CN reading — the CN source is off.
@@ -25,13 +25,13 @@ data:
   # The mixture (see the header): per-pull source multinomial, exhausted sources restart.
   source_weights:
     overture-jp: 1.0
-    # The control arm: the CN source at zero. The loader drops a zero-weight source from train AND val, so
+    # The control arm: the CN source at zero. The loader drops a zero-weight source from train and val, so
     # val reads the 20,000 JP rows and the CN val part contributes nothing.
     coarse-placer-cn-units: 0.0
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
-  # The 49-label CJK head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json

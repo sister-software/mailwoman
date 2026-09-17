@@ -38,20 +38,20 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
  * Matches every `TYPE` spelling EDGAR actually files an Exhibit 21 under (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase
  * `ex-21.2`, …) while rejecting a type that merely starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A`
  * are all distinct exhibits, not a spelling variant of Exhibit 21. The literal `21` must be the whole numeric part:
- * optionally followed by ONLY a `.` and more digits, never another bare digit or letter.
+ * optionally followed by only a `.` and more digits, never another bare digit or letter.
  */
 const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 
 /**
  * One `<TAG>value` line of EDGAR's SGML manifest, which is a tag-per-line header format rather than nested markup —
- * `<TYPE>`, `<SEQUENCE>` and `<FILENAME>` have no closing tags at all. Matched against RECOVERED text, never against
+ * `<TYPE>`, `<SEQUENCE>` and `<FILENAME>` have no closing tags at all. Matched against recovered text, never against
  * markup: {@linkcode parseFilingDocuments} reads the index page first, which is what turns `&lt;TYPE&gt;` back into
  * `<TYPE>` and removes the page's own `<a>`/`<br>` elements.
  */
 const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
 
 /**
- * Reads EVERY document out of one accession's SGML manifest (`headerHTML`, the `…-index-headers.html` body) — not only
+ * Reads every document out of one accession's SGML manifest (`headerHTML`, the `…-index-headers.html` body) — not only
  * the exhibits, so a caller wanting a different document type later doesn't need a second parser.
  *
  * The manifest is EDGAR's own SGML, HTML-ESCAPED inside the index page (`<DOCUMENT>` is written `&lt;DOCUMENT&gt;`) and
@@ -115,7 +115,7 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
  * not exceptional: an absent exhibit is the FILER's choice (Consolidated Communications' and United States Cellular's
  * latest 10-Ks both carry none), not an upstream contract break. This is the opposite posture from
  * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
- * SEC's OWN documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
+ * SEC's own documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
  * 21 hasn't broken any contract; it's just a filer that didn't file one this cycle.
  */
 export function findExhibit21Documents(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {

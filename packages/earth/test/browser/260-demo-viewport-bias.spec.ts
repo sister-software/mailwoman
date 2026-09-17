@@ -1,5 +1,5 @@
 /**
- * @file Viewport-bias wiring (#938 demo consumer). The map's current center is fed to `resolveTree` as a SOFT proximity
+ * @file Viewport-bias wiring (#938 demo consumer). The map's current center is fed to `resolveTree` as a soft proximity
  *   hint, so an in-view namesake sorts ahead of a distant one at equal exact-tier. Two assertions pin the contract: (1)
  *   with the map parked over Ohio, "Dublin" resolves to Dublin, OH — the bias broke the tie the user's view implies;
  *   (2) a strong population signal still wins regardless of view — "Paris" stays in France even from a US-centered map

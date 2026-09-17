@@ -1,6 +1,6 @@
-# v3.0.0-span-head — #727 STAGE 2, PHASE 1. ONE variable vs the shipped v264: the semi-Markov span
+# v3.0.0-span-head — #727 STAGE 2, PHASE 1. One variable vs the shipped v264: the semi-Markov span
 # scorer (model.use_span_scorer true, span_loss_weight 0.5). Corpus, tokenizer, lexicons, and every
-# other channel are VERBATIM v2.6.4. init_from v264 step-008000 — a NEW objective (a fresh head),
+# other channel are v2.6.4 verbatim. init_from v264 step-008000 — a new objective (a fresh head),
 # which is the documented init_from case; `resume` is for continuing a capability already being grown.
 #
 # THE CHECK (pre-registered, docs/superpowers/plans/2026-07-15-727-stage2-phase1-span-head.md):
@@ -10,9 +10,9 @@
 # Secondary read: oracle@10 must RISE from 0.749. If seg@1 crosses but oracle@10 is flat, the scorer
 # reshuffled the list without learning better spans.
 #
-# This is NOT a promote check. The standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden
+# This is not a promote check. The standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden
 # check are untouched; this checkpoint ships nowhere on its own. Phase 2 (export) only starts if this
-# crosses. If seg@1 < token@1: do NOT tune span_loss_weight and re-run — that is the treadmill. One
+# crosses. If seg@1 < token@1: do not tune span_loss_weight and re-run — that is the treadmill. One
 # diagnostic (is the loss decreasing?), then fork to the operator.
 #
 # fp32 partition math is enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF NaN
@@ -21,7 +21,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -45,7 +45,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,8 +91,8 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
-  # #727 stage-2 phase 1 — THE one variable vs v264.
+model: # Verbatim from v2.6.4 except the span-scorer block below (the one variable).
+  # #727 stage-2 phase 1 — the one variable vs v264.
   use_span_scorer: true
   span_loss_weight: 0.5
   span_dim: 128
@@ -121,10 +121,11 @@ model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -163,7 +164,7 @@ model: # VERBATIM v2.6.4 EXCEPT the span-scorer block below (the ONE variable).
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v264 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v264 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The span scorer + segment transitions start random and
   # learn to score whole spans; the encoder keeps v264's country channel + span-boundary grammar.
   output_dir: /data/output-v300-span-head-s42/checkpoints

@@ -129,7 +129,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	it("distinguishes pairs sharing a child with different parents", () => {
 		const r = resolver()
 
-		// "london" is a child of "greater london" AND a parent of "shoreditch"/"camden" — the probe key
+		// "london" is a child of "greater london" and a parent of "shoreditch"/"camden" — the probe key
 		// must be the full (child, parent) tuple, not just the child.
 		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
@@ -244,7 +244,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(r.transitionBeta).toBeUndefined()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
-		// transitionBeta stays absence-tolerant WITHIN a schema — optional fields ride on the JSON header without
+		// transitionBeta stays absence-tolerant within a schema — optional fields ride on the JSON header without
 		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
@@ -262,7 +262,7 @@ describe("parentDelta header field (whole-edge default-on, #46)", () => {
 	})
 
 	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
-		// Absent means "no parent bias", NOT "0" — the same absence contract transitionBeta carries, and the
+		// Absent means "no parent bias", not "0" — the same absence contract transitionBeta carries, and the
 		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale check).
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
@@ -298,7 +298,7 @@ describe("peekPairIndexHeader", () => {
 	it("succeeds on a header-only-valid buffer whose entry section is truncated — the constructor throws on the same bytes", () => {
 		// Serialize a normal index, then truncate everything after the header + pairCount fields — the
 		// header block itself is untouched and fully valid, but the entry bytes it declares (pairCount > 0)
-		// don't exist. This is the eval's real-world shape: a caller that peeks BEFORE constructing must
+		// don't exist. This is the eval's real-world shape: a caller that peeks before constructing must
 		// never pay for (or trip over) a full parse when it's about to discard the result on a country
 		// mismatch.
 		const bytes = serializePairIndex(HEADER, ENTRIES)
@@ -417,7 +417,7 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 
 	it("REFUSES a v2 binary (child tag only, no parent byte) with rebuild guidance", () => {
 		// The v2 shape: a tagTable in the header, but records that stop after `tagIdx`. Reading those
-		// bytes as v3 would swallow the NEXT record's child_len as a parent tag — refusing is the only
+		// bytes as v3 would swallow the next record's child_len as a parent tag — refusing is the only
 		// safe read, and the break is deliberate (operator-ruled 2026-08-04).
 		const v2Header = { ...HEADER, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] }
 		const bytes = buildRawIndex(v2Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])

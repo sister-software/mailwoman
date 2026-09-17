@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The battery's last step: fold BOTH promotion locks into one exit code, then narrate the ledger append.
+ * @file The battery's last step: fold both promotion locks into one exit code, then narrate the ledger append.
  *
- *   Separate from `verdict.ts` because the two answer different questions. The assembler there READS the battery's
+ *   Separate from `verdict.ts` because the two answer different questions. The assembler there reads the battery's
  *   artifacts and decides whether every floor was met; this file decides what the process returns, which also depends
  *   on the mask-regression check the runner ran outside the assembler's view.
  */
@@ -50,10 +50,10 @@ export interface FinalizeVerdictOptions {
 }
 
 /**
- * Return the battery's exit code: 0 only when every floor was met AND the mask-regression lock held. Either miss fails
+ * Return the battery's exit code: 0 only when every floor was met and the mask-regression lock held. Either miss fails
  * the evaluation.
  *
- * On a pass, PRINT the ledger-append command with everything pre-filled. It is printed rather than executed: the
+ * On a pass, print the ledger-append command with everything pre-filled. It is printed rather than executed: the
  * battery runs on candidates that may never publish, and the ledger records published versions keyed by npm semver, so
  * the release-prep flow runs this line with the real version. Appending used to rely on a person remembering it, and
  * the ledger froze for several versions.

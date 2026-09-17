@@ -7,15 +7,15 @@
  *   the exact `name_key` B-tree probe structurally can't do (a misspelling breaks the normalized
  *   key, so the contiguous-probe lookup returns nothing). It indexes the NORMALIZED key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
- *   rather than missing a raw `München`. The trigram tokenizer makes MATCH a substring/fuzzy
+ *   rather than missing a raw `München`. The trigram tokenizer makes `MATCH` a substring/fuzzy
  *   operation; the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
  *   loose set, then re-ranks it with a WORD-level similarity. The trigram index is the candidate
- *   GENERATOR, not the scorer — trigram Jaccard scores a true transposition correction BELOW a wrong
+ *   GENERATOR, not the scorer — trigram Jaccard scores a true transposition correction below a wrong
  *   answer, because shared generic suffixes count as evidence and transpositions count against it.
  *   The receipts are on `candidate-lookup.ts`'s `FUZZY_FETCH` and `WORD_FUZZY_MIN`.
  *
  *   This is what unifies the two gazetteers: the candidate B-tree stays the common,
- *   byte-range-optimal fast path (the browser's contiguous probe), and FTS5 is consulted ONLY on an
+ *   byte-range-optimal fast path (the browser's contiguous probe), and FTS5 is consulted only on an
  *   exact+strip miss — so its scattered postings cost is rare/amortized, and one DB serves both the
  *   browser and the server.
  *

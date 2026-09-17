@@ -6,7 +6,7 @@
  *   One survey area's attributes, its own metadata, and its mapped footprint.
  *
  *   THE FOOTPRINT IS THE SURVEY-AREA OUTLINE, NEVER THE UNION OF THE RATED POLYGONS. `NOTCOM`,
- *   access-denied and `NOTPUB` map units are INSIDE the footprint and carry no rating, so a footprint taken
+ *   access-denied and `NOTPUB` map units are inside the footprint and carry no rating, so a footprint taken
  *   from the rated set would report them as unmapped when the authority has declared exactly what they are.
  *   The archive ships the outline as its own shapefile — `soilsa_a_<areasymbol>.shp`, one feature — which is
  *   why this layer never has to reconstruct it.
@@ -227,7 +227,7 @@ export async function readSurveyAreaAttributes(
  *
  * Three signals rather than one, because the source encodes the same fact three ways and each on its own has a gap: the
  * symbol (`NOTCOM`, `NOTPUB`), the name (`Area not surveyed, access denied`), and the structural case of a map unit
- * carrying NO components at all. A map unit with no components has nothing to rate whatever it is called, and reading
+ * carrying no components at all. A map unit with no components has nothing to rate whatever it is called, and reading
  * it as "rated nothing" rather than "no mapping" would put it in `unrated_share` — a claim that the survey looked and
  * declined, when it did not look.
  */
@@ -314,8 +314,8 @@ export interface FGDCMetadata {
 /**
  * Read the metadata NRCS ships inside the archive.
  *
- * Targeted extraction rather than a general XML parse, and NOT for want of a parser — `@mailwoman/core` ships
- * `htmlparser2`. A parser RECOVERS an unclosed element by giving it the rest of the document as its content, and the
+ * Targeted extraction rather than a general XML parse, and not for want of a parser — `@mailwoman/core` ships
+ * `htmlparser2`. A parser recovers an unclosed element by giving it the rest of the document as its content, and the
  * two values below that throw would then stamp the artifact with that content instead. {@link elementText} answers
  * `undefined` for an element it cannot read, which is what makes the throw reachable. Every value this reader cannot
  * find is reported as `null` EXCEPT the publication date and the licence sentence, which throw — those two decide the

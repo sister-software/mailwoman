@@ -42,7 +42,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vites
 // real FCC_MAP_USERNAME/FCC_MAP_API_KEY values committed there: the merge falls back to `dotEnv`'s value
 // regardless of what the test stubs on `process.env`. Mock the module directly so the no-credentials test
 // below is isolated from whatever the ambient environment actually contains (live-data finding — this
-// broke the first time real credentials landed in `.env`). Every OTHER test in this file passes explicit
+// broke the first time real credentials landed in `.env`). Every other test in this file passes explicit
 // `username`/`apiKey` options and never reads `$private`, so this mock doesn't affect them.
 vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("@mailwoman/bdc/env")>()
@@ -54,18 +54,18 @@ vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./client.ts` may already sit
-// in the worker's cache — evaluated WITHOUT this file's `@mailwoman/bdc/env` mock by an earlier file
+// in the worker's cache — evaluated without this file's `@mailwoman/bdc/env` mock by an earlier file
 // (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
-// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in
+// on the way in so the chain re-evaluates against the mock, and on the way out so the next file in
 // this fork never inherits our mocked env module from the cache.
 //
 // Carried through the APIClient migration: the module surface grew (the client now exports its rate
 // default, throttle formatter and error helpers, and `./download.ts` joined the chain), but every one
-// of these still reaches `@mailwoman/core/env` transitively, so all of them must load AFTER the reset.
+// of these still reaches `@mailwoman/core/env` transitively, so all of them must load after the reset.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
+// Dynamic imports after the reset so the module chain evaluates against the env mock.
 const { BDC_API_BASE_URL, BDC_DEFAULT_REQUESTS_PER_MINUTE, createBDCClient, formatBDCThrottleStats } =
 	await import("@mailwoman/bdc/sdk/client")
 
@@ -86,7 +86,7 @@ const API_KEY = "s3cr3t"
 const DEFAULT_INTERVAL_MS = 6000
 
 /**
- * BDC answers with a `{ data: … }` envelope, and the client REFUSES to cache a 200 whose body is not one — so the
+ * BDC answers with a `{ data: … }` envelope, and the client refuses to cache a 200 whose body is not one — so the
  * stub's default body has to be a valid envelope or every cache assertion below would be testing the self-heal path
  * instead.
  */
@@ -349,7 +349,7 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	/**
-	 * The composed steady state of BOTH limits, at the shipped defaults — pinned because `createBDCClient` and
+	 * The composed steady state of both limits, at the shipped defaults — pinned because `createBDCClient` and
 	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it WRONGLY: they claimed
 	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval limit has spaced the
 	 * dispatches, so the budget was said to cost nothing. It is a real 6 s wait. `APIClient` measures the cooldown to the
@@ -378,7 +378,7 @@ describe("createBDCClient: the throttle meter", () => {
 		// One cooldown per budget's worth of requests, and it is a WAIT, not a zero-length rollover marker.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
-		// The composed rate lands BELOW the published limit — conservative, which is why the two limits are left
+		// The composed rate lands below the published limit — conservative, which is why the two limits are left
 		// composed rather than dropping the budget.
 		expect(maxCountInSlidingWindow(transport.dispatchTimes, 60_000)).toBeLessThanOrEqual(
 			BDC_DEFAULT_REQUESTS_PER_MINUTE
@@ -467,7 +467,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
-		// Validate BEFORE writing: an upstream serving an error page under a 200 would otherwise be handed
+		// Validate before writing: an upstream serving an error page under a 200 would otherwise be handed
 		// to the next run, whose caller destructures `.data` into `undefined`.
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
@@ -518,7 +518,7 @@ describe("createBDCClient: the binary download path", () => {
 		// A multi-hundred-megabyte zip through a JSON-validating disk cache is wrong twice over: it cannot
 		// be read back, and `downloadBDCFile` already writes the extracted CSV to disk itself.
 		//
-		// An empty cache directory alone would NOT prove this — the storage layer's own `validate` check
+		// An empty cache directory alone would not prove this — the storage layer's own `validate` check
 		// rejects a zip too, so the directory stays empty either way and the assertion would pass with
 		// `cache: false` deleted. What distinguishes "the request bypassed the cache" from "the cache
 		// refused the write" is the rejection itself: `buildDiskStorage` warns on every write it drops, so
@@ -645,7 +645,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 
 		expect((error as ResourceErrorShape).status).toBe(404)
 		expect(isTransientResourceError(error)).toBe(false)
-		// A 404 is NOT a credential problem, so it must not pick up the credential explanation.
+		// A 404 is not a credential problem, so it must not pick up the credential explanation.
 		expect((error as Error).message).not.toMatch(/hash_value/)
 	})
 

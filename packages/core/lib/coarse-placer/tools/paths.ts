@@ -70,7 +70,7 @@ export function defaultInt8Dir(): PathBuilder {
 }
 
 /**
- * The DEPLOYED placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), NOT the `$MAILWOMAN_DATA_ROOT` training
+ * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), not the `$MAILWOMAN_DATA_ROOT` training
  * output — for probes that must match the runtime.
  */
 export function shippedModelDir(): PathBuilder {

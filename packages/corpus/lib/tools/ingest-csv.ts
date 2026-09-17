@@ -132,7 +132,7 @@ interface IngestOptions {
 
 async function runIngest(opts: IngestOptions): Promise<void> {
 	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header handling consumes the
-	// FIRST row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
+	// first row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
 	// dropped here and the header row taken by hand. Quote handling is end-to-end (quoted delimiters, doubled quotes);
 	// `skipEmpty` drops blank lines that readline would have turned into all-null rows. The early `break` closes the
 	// file descriptor.
@@ -215,7 +215,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
-	// `Database` — the EMPTY schema — deliberately, not by default: `createTableSQL` is built from the columns and
+	// `Database` — the empty schema — deliberately, not by default: `createTableSQL` is built from the columns and
 	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
 	// below goes through `exec`/`prepare` for the same reason.
 	using db = new DatabaseClient<Database>(opts.outputPath)

@@ -6,7 +6,7 @@
  *
  *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`, which is the right shape
  *   when a client has just downloaded one (`bdc/sdk/download.ts`) and the wrong shape for anything sizable: adm-zip
- *   holds the archive AND the decompressed member resident at once. The national address dumps under
+ *   holds the archive and the decompressed member resident at once. The national address dumps under
  *   `$MAILWOMAN_DATA_ROOT` are 0.5–2.9 GB compressed and up to 9 GB unpacked, so the path-in readers below stream —
  *   yauzl seeks the central directory over a file handle and inflates one member on demand, at constant memory
  *   regardless of archive size.
@@ -96,7 +96,7 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 		[Symbol.asyncDispose]: async () => {
 			// A member read to its end has already released yauzl's read, and its `close` has already been delivered — so
 			// waiting for that event here would wait forever. `readableEnded` is the test that separates the two paths:
-			// true after a full read, false after a `take` or a `break`. `closed` is NOT the test, because Node sets it when
+			// true after a full read, false after a `take` or a `break`. `closed` is not the test, because Node sets it when
 			// the close event is queued rather than delivered, so a guard on it skips the wait on the path that needs it.
 			if (contents.readableEnded) return
 
@@ -161,7 +161,7 @@ export function extractSingleFileZip(data: ArrayBuffer | Buffer): Promise<Buffer
 /**
  * Names a member of an archive, either exactly or by pattern.
  *
- * A pattern matches the FIRST entry whose full archive-internal path tests true, in central-directory order.
+ * A pattern matches the first entry whose full archive-internal path tests true, in central-directory order.
  */
 export type ZipEntrySelector = string | RegExp
 

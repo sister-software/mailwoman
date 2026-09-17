@@ -23,7 +23,7 @@
  *   reach a caller. A `designated` reading carries the authority's zone code. A `designated_absence`
  *   carries the authority's own definition of the absent case — for the EA product that is Flood Zone 1,
  *   which the Planning Practice Guidance defines as the land outside Zones 2 and 3, so an empty answer
- *   inside England is a designation rather than a gap. An `unknown` reading raises NOTHING: outside the
+ *   inside England is a designation rather than a gap. An `unknown` reading raises nothing: outside the
  *   authority's footprint there is no coverage row, and a marker there would be an advisory about a
  *   determination nobody made.
  *
@@ -197,7 +197,7 @@ function toObservation(
 }
 
 /**
- * What the authority's map assigns, in ONE wording — shared by the one-line description and the marker message.
+ * What the authority's map assigns, in one wording — shared by the one-line description and the marker message.
  */
 export function floodZoneAssignmentClause(observation: AuthorityDesignationObservation): string {
 	return observation.code

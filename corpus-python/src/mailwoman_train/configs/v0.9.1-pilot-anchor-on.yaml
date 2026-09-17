@@ -1,8 +1,8 @@
 # Anchor pilot — ANCHOR-ON (#239/#240): self-cond + German recipe + the postcode-anchor channel, 20k.
-# The ONE variable vs v0.9.1-pilot-anchor-off (same seed/corpus/recipe). Tests whether the anchor breaks
+# The one variable vs v0.9.1-pilot-anchor-off (same seed/corpus/recipe). Tests whether the anchor breaks
 # the German end-of-string collapse that self-conditioning alone did not. Early-kill at ~2k (P>0.8).
 #
-# Tests ONE hypothesis: a model that infers the country from the whole address (an auxiliary
+# Tests one hypothesis: a model that infers the country from the whole address (an auxiliary
 # locale head over the pooled sequence) and FiLM-conditions its own per-token labeling on it
 # parses better and stops the Saint-Albans cross-tag collapse — WITHOUT regressing US/FR. The
 # probe behind PR3 (docs/articles/plan/2026-06-04-pr3-self-conditioned-retrain.md) showed the
@@ -10,7 +10,7 @@
 # reads is essential.
 #
 # SINGLE VARIABLE: this is the v0.7.2-PROVEN recipe (1.5e-4 constant / 1k warmup, ls 0.1, CRF off,
-# bf16) with self-conditioning the ONLY addition. Any delta is attributable to the conditioning,
+# bf16) with self-conditioning the only addition. Any delta is attributable to the conditioning,
 # not the recipe — the same A/B discipline as the v0.8.x MLM arms.
 #
 # STOP AT 20k (the early check). Pre-registered, from the design doc:
@@ -30,7 +30,7 @@
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
 #   # then the overlay MANIFEST (v0.4.0 parquet files + the 2 German parquet files) — see the build-log doc — and:
-#   # NOT `modal volume put`: a mounted container cannot see what it writes, so a run staged that
+#   # Not `modal volume put`: a mounted container cannot see what it writes, so a run staged that
 #   # way trains on whatever was already there and reports success. Route it through R2 instead.
 #   mailwoman corpus upload --corpus-version v0.4.1-de
 #   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.1-de
@@ -67,7 +67,7 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     # German at ~18% of the mix (6.0 of a ~34 total) — enough for a from-scratch model to learn it,
-    # while staying within the synthesis-as-supplement guideline. THE key tunable: raise it if DE
+    # while staying within the synthesis-as-supplement guideline. The key tunable: raise it if DE
     # locality F1 lags the 70% check, lower it if US/FR slip past the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
@@ -98,7 +98,7 @@ model:
   # here (it can't drift from the aux-target vocabulary).
   use_locale_conditioning: true
   locale_loss_weight: 0.3
-  # Postcode-anchor channel (#239/#240) — the ONE variable vs the control. Per-token injection at
+  # Postcode-anchor channel (#239/#240) — the one variable vs the control. Per-token injection at
   # the postcode span + the confidence curriculum (train.py). Composes with self-conditioning.
   use_postcode_anchor: true
   class_weights:

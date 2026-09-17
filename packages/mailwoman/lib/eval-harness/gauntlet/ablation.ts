@@ -24,11 +24,11 @@
  *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the check grades.
  *   - S-2 (`scripts/diagnostic/suggestion/s2-postcode-free.ts`, the suggestion arc's postcode column) is this
  *       runner's postcode column, and its finding 3 is why `substitutedCount` exists: 16 of 139 postcode
- *       deletions did not yield "no postcode", they yielded a DIFFERENT token in the postcode slot (house
+ *       deletions did not yield "no postcode", they yielded a different token in the postcode slot (house
  *       numbers, a venue's year, a plus code) and 0 of 139 recovered the deleted code.
  *
  *   LINK EVERY OVERLAY BEFORE YOU BELIEVE A NUMBER HERE. The first full run (2026-08-05, 177 cases → 667 variants)
- *   reproduced S-2's postcode column EXACTLY in FR, US, IE, MX and ES — and differed on 13 of 47 GB rows, because the
+ *   reproduced S-2's postcode column exactly in FR, US, IE, MX and ES — and differed on 13 of 47 GB rows, because the
  *   worktree S-2 ran in carried no `neural-weights-en-gb` artifacts and graded GB base-only. With the overlay linked,
  *   GB postcode-free goes 48.9% → 55.3% within 5 km, 42.6% → 36.2% beyond 100 km, p50 5.70 → 1.97 km. Five locales
  *   agreeing to the digit is what makes the sixth's disagreement attributable; run
@@ -44,12 +44,12 @@
  *   computed from the components the deletion LEFT BEHIND, never from the variant's own output, which would be
  *   circular.
  *
- *   Three outcomes are PASSES: the answer held at the base rung, it coarsened to a rung the surviving evidence still
- *   justifies, or it ABSTAINED where the surviving evidence justifies nothing (bare `Springfield`: 144 distinct places,
+ *   Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
+ *   justifies, or it abstained where the surviving evidence justifies nothing (bare `Springfield`: 144 distinct places,
  *   no population winner). Substitution stays a hard fail at every rung — a coordinate cannot redeem a slot refilled by
  *   the wrong token.
  *
- *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are UNCHANGED and still computed
+ *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are unchanged and still computed
  *   against the anchor: the two gradings sit side by side in every artifact, which is what makes the regrade
  *   comparable. `unresolvedCount` is not split in place; `correctlyAbstainedCount` and `lostCount` are the split, added
  *   alongside it (meaning-of-zero: an abstention asks the operator for nothing, a loss asks for a recall fix).
@@ -194,7 +194,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  * Four refusals, each one a class the corpus actually contains:
  *
  * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
- *    stays EMPTY; there is nothing to delete, and treating it as a deletion would manufacture support.
+ *    stays empty; there is nothing to delete, and treating it as a deletion would manufacture support.
  * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the RESOLVED value, e.g. `country:
  *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
@@ -279,7 +279,7 @@ export function ablationVariants(
 export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
 	 * Where the artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>` — the `promotion-eval.ts` convention, and
-	 * deliberately NOT under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
+	 * deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
 	 */
 	outDir?: string
 	/**
@@ -399,7 +399,7 @@ export async function runAblationLayer(
 		.orderBy("id")
 		.execute()) as CaseRow[]
 
-	// Read the pins off the SAME handle before it closes — see `ablationOverrides` for why the column may not be there.
+	// Read the pins off the same handle before it closes — see `ablationOverrides` for why the column may not be there.
 	const overrides = await ablationOverrides(kdb)
 
 	await kdb.destroy()
@@ -470,7 +470,7 @@ export async function runAblationLayer(
 				? buildCaseLadder(anchor, toleranceKm, gazetteer, { lat: c.expect_lat, lon: c.expect_lon }, c.country)
 				: { ladder: null, reason: gazetteer.unavailableReason ?? "no gazetteer" }
 
-			// A ladder has to be about THIS address. The check only ever fires on a row that asserts no coordinate (its
+			// A ladder has to be about this address. The check only ever fires on a row that asserts no coordinate (its
 			// rung 0 is the pipeline's own undeleted answer); when that answer is somewhere else, the ladder is drawn
 			// around the wrong town and every deletion on it grades against a place the row never claimed.
 			const disagreement = drawn.ladder ? ladderComponentDisagreement(components, drawn.ladder, gazetteer) : null
@@ -594,7 +594,7 @@ export async function runAblationLayer(
 			unavailableReason: gazetteer.unavailableReason,
 			overrideSource: overrides.source,
 			overrideCount: overrides.byCaseID.size,
-			// Cases whose ladder could NOT be built, and why. The complement of `ladderGradedCount` at the row level,
+			// Cases whose ladder could not be built, and why. The complement of `ladderGradedCount` at the row level,
 			// kept per case so a thin expectation column is attributable to the gazetteer rather than to the parser.
 			ladderProblems,
 		},
@@ -619,7 +619,7 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
 
-	// The instrument, not a check: a map of zero cells means the run measured NOTHING, and a "PASS" printed
+	// The instrument, not a check: a map of zero cells means the run measured nothing, and a "PASS" printed
 	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir, cells }
 }

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The prominence-floor benchmark (#2264) — does a `minWinningScore` floor reduce invented selections at
- *   EVERY population band, or only where the gold is large enough to clear it?
+ *   every population band, or only where the gold is large enough to clear it?
  *
  *   The same-data benchmark measured this floor and could not answer. All 453 of its gold entities carry
  *   population above 15,151, so a floor of 4.0 — population 10,000 — admits every correct answer it contains
@@ -13,7 +13,7 @@
  *   Four phases, run separately so the expensive one happens once:
  *
  *     panel   Execute the frozen selection rules over the per-country GeoNames dumps and write the panel.
- *     record  Parse every query with the shipped model, drive the REAL backend once per arm option set, and
+ *     record  Parse every query with the shipped model, drive the real backend once per arm option set, and
  *             freeze every answer. The only phase that touches a gazetteer.
  *     run     Replay the frozen fixture through the five arms and write the results.
  *     score   Read the results and decide the registered per-band rule.
@@ -83,17 +83,17 @@ const RECEIPT_PATH = `${OUT}/prominence-floor-receipt.json`
 const SCORE_PATH = `${OUT}/prominence-floor-report.md`
 
 /**
- * The frozen decision rule's two conditions, in percentage points. They are prose in `benchmark-definition.json` —
- * "reduces the false-selection rate by at least 10 percentage points against the default arm in EVERY band" and
- * "selection accuracy must not fall more than 5 percentage points below the default arm's in ANY band" — so they are
- * named here rather than carried as data: adding them to the definition after the freeze would move the content hash
- * the freeze record pins.
+ * The frozen decision rule's two conditions, in percentage points. They are prose in `benchmark-definition.json`: the
+ * false-selection rate must fall by at least 10 percentage points against the default arm in every band, and selection
+ * accuracy must not fall more than 5 percentage points below the default arm's in any band. So they are named here
+ * rather than carried as data: adding them to the definition after the freeze would move the content hash the freeze
+ * record pins.
  */
 const REQUIRED_FALSE_SELECTION_DROP_POINTS = 10
 const ALLOWED_ACCURACY_COST_POINTS = 5
 
 /**
- * Every arm's `ResolveOpts`, in the definition's order. The default arm's EMPTY bag is listed explicitly: an omitted
+ * Every arm's `ResolveOpts`, in the definition's order. The default arm's empty bag is listed explicitly: an omitted
  * default is a missing replay key, and `replayBackend` would raise on the arm the benchmark compares against.
  */
 function armOptionSets(definition: ProminenceFloorDefinition): ResolveOpts[] {
@@ -226,7 +226,7 @@ async function runPhase(): Promise<void> {
 }
 
 /**
- * One band's reading for one arm, over the rows EVERY arm scored without a replay miss.
+ * One band's reading for one arm, over the rows every arm scored without a replay miss.
  */
 interface BandReading {
 	band: string
@@ -280,7 +280,7 @@ async function scorePhase(): Promise<void> {
 		readings.find((entry) => entry.band === band && entry.arm === arm)
 
 	// The registered rule: some floor must reduce the false-selection rate by at least 10 points against the default in
-	// EVERY band, while costing at most 5 points of selection accuracy in any band.
+	// every band, while costing at most 5 points of selection accuracy in any band.
 	const verdictRows = definition.arms
 		.filter((arm) => arm.id !== "default")
 		.map((arm) => {

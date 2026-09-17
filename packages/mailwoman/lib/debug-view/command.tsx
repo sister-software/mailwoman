@@ -15,7 +15,7 @@
  *
  *   {@linkcode GeocodeDebugCommand} is itself a hook-free dispatcher between the two, the same shape
  *   `geocode.tsx`'s top-level `GeocodeCommand` uses to choose between this module and its own one-shot path.
- *   Branching on `process.stdout.isTTY` INSIDE a component that also calls `useCommandTask` would make that
+ *   Branching on `process.stdout.isTTY` inside a component that also calls `useCommandTask` would make that
  *   hook call conditional — forbidden by the rules of hooks even though `isTTY` never changes mid-process, because
  *   a static analyzer has no way to know that. Splitting the static and interactive halves into their own
  *   components (`GeocodeDebugStatic` / {@link DebugSessionHandoff}) keeps each one's own hook usage unconditional.
@@ -154,7 +154,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * escapes this component's callee used to carry — a frame exactly as tall as the terminal makes Ink emit `\x1b[3J`, and
  * that wipes the user's SCROLLBACK (#1577).
  *
- * Ink keeps ONE renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
+ * Ink keeps one renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
  * `render()` arrives for the same stream. So the handoff is an unmount-then-render, not a second mount: `exit()`
  * unmounts the command tree synchronously through to `instances.delete(stdout)`, which frees the slot. It runs from a
  * `setImmediate` rather than from the effect body because `exit()` unmounts the tree this effect belongs to, and React
@@ -189,7 +189,7 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 
 			// Ink's own Ctrl+C handling unmounts the app, so this settles on every exit path — Esc, `q`, Ctrl+C,
 			// a fatal. `waitUntilExit` resolves after the teardown writes have flushed, so the primary buffer is
-			// back before either branch writes: the session reports a fatal by exiting WITH the error (Ink discards
+			// back before either branch writes: the session reports a fatal by exiting with the error (Ink discards
 			// alternate-screen teardown output, so a message rendered inside the session would not survive the
 			// switch), and stderr here is where it lands.
 			void session.waitUntilExit().then(

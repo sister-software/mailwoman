@@ -15,8 +15,8 @@
  *   this is a coverage gap, not a tokenizer ceiling.
  *
  *   The original German generator produced the missing signal as a small targeted supplement source
- *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done). It does NOT synthesize
- *   German street names (German morphology is hard to fake) — it takes REAL German component tuples
+ *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done). It does not synthesize
+ *   German street names (German morphology is hard to fake) — it takes real German component tuples
  *   (from OpenAddresses Berlin/Saxony) and renders them in idiomatic German order via the OpenCage
  *   `DE` template (`formatAddress(..., "DE")` → `"Straußstraße 27, 12623 Berlin"`). The corpus
  *   aligner turns the row into BIO labels; every emitted component surface form occurs verbatim in
@@ -31,7 +31,7 @@ import type { CanonicalRow } from "#types"
  * A real address tuple (e.g. one OpenAddresses row): street + locality required, rest optional.
  */
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -41,7 +41,7 @@ export interface LocaleBaseTuple {
 	street: string
 	locality: string
 	/**
-	 * A sub-locality that sits BELOW the locality (a suburb / district). NZ is the case that needs it: the OA DISTRICT
+	 * A sub-locality that sits below the locality (a suburb / district). NZ is the case that needs it: the OA DISTRICT
 	 * column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`), so the real envelope carries both (`31
 	 * Rawene Road, Birkenhead, Auckland`). Rendered between street and locality in both orders when present.
 	 */
@@ -69,7 +69,7 @@ export type SynthesizedGermanRow = SynthesizedLocaleRow
 export interface LocaleSynthesisOpts {
 	random?: () => number
 	/**
-	 * Rendering order for the SAME components. `"native"` (default) uses the country's own template (DE →
+	 * Rendering order for the same components. `"native"` (default) uses the country's own template (DE →
 	 * house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST, postcode-AFTER-city — the US/GB
 	 * layout that international feeds, US-centric systems, and our own OpenAddresses de-sample impose on non-US
 	 * addresses. Training both teaches the model that a German address can arrive either way, so the eval's US-order
@@ -81,7 +81,7 @@ export interface LocaleSynthesisOpts {
 	 * Postcode surface shape. `"conventional"` (default) canonicalizes to the country's rendered form (NL: OA's glued
 	 * `1011AB` → the spaced `1011 AB`); `"as-source"` keeps the source's own surface — the form OA (and the OA-derived
 	 * evals) feed, which for NL is 100% glued. Only NL differs today; every other country passes through identically
-	 * either way. Mixing both teaches the two-letter-suffix `1012 LM` shape AND the glued feed shape (#241 — the model
+	 * either way. Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape (#241 — the model
 	 * currently glues the suffix onto the city).
 	 */
 	postcodeShape?: "conventional" | "as-source"
@@ -90,7 +90,7 @@ export interface LocaleSynthesisOpts {
 	 * — the official Spanish convention); OA-derived feeds and our ES eval space-join (`CALLE MAYOR 12`, the observed
 	 * form on all 3,000 eval rows). `"template"` (default) keeps the template's own join; `"space"` collapses `<street>,
 	 * <house_number>` → `<street> <house_number>` after rendering. Countries whose template already space-joins
-	 * (DE/IT/NL) render identically under both. Mixing both stops an ES recipe output from teaching the comma as THE
+	 * (DE/IT/NL) render identically under both. Mixing both stops an ES recipe output from teaching the comma as the
 	 * street→house boundary signal (#241 format-diversity audit). International order ignores this (the US template is
 	 * already house-first space-joined).
 	 */
@@ -98,7 +98,7 @@ export interface LocaleSynthesisOpts {
 	/**
 	 * The string between rendered address lines. `", "` (default) is the template's own join. `" "` renders the
 	 * comma-free single-line register — dictation, a copy out of a one-field form — `Neusser Str. 12 Nippes 50733 Köln`
-	 * for the same components. Stage 2 segments the comma form into three and the comma-free form into ONE, and a single
+	 * for the same components. Stage 2 segments the comma form into three and the comma-free form into one, and a single
 	 * segment starves the placetype-pair prior, which is how the comma-free form loses `Nippes` (#1946). Only the native
 	 * order reads it; the international layout keeps its own separator.
 	 */
@@ -141,7 +141,7 @@ function normalizePostcode(postcode: string, country: string): string {
 }
 
 /**
- * True when `value` appears verbatim AND as a standalone token (so BIO alignment lands cleanly).
+ * True when `value` appears verbatim and as a standalone token (so BIO alignment lands cleanly).
  */
 function tokenPresent(raw: string, value: string): boolean {
 	if (!raw.includes(value)) return false
@@ -182,7 +182,7 @@ export function synthesizeLocaleRow(
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
-	// Sub-locality (suburb / district) sits between street and locality and renders in BOTH orders — it's part
+	// Sub-locality (suburb / district) sits between street and locality and renders in both orders — it's part
 	// of the address body, not the admin-region tail that native order drops. NZ needs it (suburb + city both on
 	// the envelope). The tokenPresent check below drops the row if the template didn't surface it verbatim.
 	if (base.dependent_locality) {
@@ -195,14 +195,14 @@ export function synthesizeLocaleRow(
 	}
 
 	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it). The
-	// `postcodeShape: "as-source"` rewrite happens AFTER the render: the OpenCage NL template
+	// `postcodeShape: "as-source"` rewrite happens after the render: the OpenCage NL template
 	// normalizes the postcode itself, so a glued input can't survive rendering directly.
 	if (base.postcode && random() < 0.85) {
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
 	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
-	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order WITHOUT the region,
+	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order without the region,
 	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the
 	// locality / locality dropped); v0.9.3 closes that gap (#327). Native order still drops the region
 	// (the native template absorbs it into the city line, which would break verbatim alignment).
@@ -229,7 +229,7 @@ export function synthesizeLocaleRow(
 		)
 	}
 
-	// `postcodeShape: "as-source"` (see {@link LocaleSynthesisOpts.postcodeShape}): rewrite BOTH raw and
+	// `postcodeShape: "as-source"` (see {@link LocaleSynthesisOpts.postcodeShape}): rewrite both raw and
 	// the component back to the source's own surface (NL glued `1011AB`). Post-render because the
 	// OpenCage NL template normalizes the postcode to the spaced form no matter what it's given.
 	if (opts.postcodeShape === "as-source" && components.postcode && base.postcode) {

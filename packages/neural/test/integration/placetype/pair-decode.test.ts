@@ -5,7 +5,7 @@
  *
  *   The placetype-pair prior's two REGISTERED decode-order test classes: (1) a window
  *   the prior biases stays a united BIO span through the `enforceWordConsistency` heal, and (2) a word
- *   the encoder is confident about (a large contrary logit) is NOT overridden by the prior — the
+ *   the encoder is confident about (a large contrary logit) is not overridden by the prior — the
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
  *
@@ -101,8 +101,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
-		// WITH the bias: the placetypePair prior's own B-first/I-rest write (delta 6.0, dominating the
-		// weak magnitude-1 baseline) already makes "shoreditch"'s three pieces unanimous BEFORE
+		// With the bias: the placetypePair prior's own B-first/I-rest write (delta 6.0, dominating the
+		// weak magnitude-1 baseline) already makes "shoreditch"'s three pieces unanimous before
 		// enforceWordConsistency runs — there is nothing left for the heal to do.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
@@ -119,7 +119,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 		expect(biased.repairs.find((r) => r.pass === "wordConsistency")).toBeUndefined()
 
-		// The raw decoder path itself (captured BEFORE any heal) is already united across the word.
+		// The raw decoder path itself (captured before any heal) is already united across the word.
 		const depLocB = col("B-dependent_locality")
 		const depLocI = col("I-dependent_locality")
 		expect(biased.path.slice(0, 3)).toEqual([depLocB, depLocI, depLocI])
@@ -134,7 +134,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		// STRONG, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
 		// magnitude 20 — a realistic "the encoder is sure" margin (softmax-saturating relative to the
 		// prior's 6.0 delta; documented here since the brief calls for the exact magnitudes used). The
-		// placetypePair prior below would bias the SAME window toward `dependent_locality` at its real
+		// placetypePair prior below would bias the same window toward `dependent_locality` at its real
 		// artifact's calibrated delta (6.0) — 20 > 6, so the encoder's reading must win.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 20
@@ -161,7 +161,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const streetB = col("B-street")
 		const streetI = col("I-street")
 
-		// The bias DID fire (nonzero emissions delta), but the encoder's 20-vs-6 margin still wins the
+		// The bias did fire (nonzero emissions delta), but the encoder's 20-vs-6 margin still wins the
 		// decode — "shoreditch" decodes street, exactly as the encoder alone would have called it.
 		expect(trace.path.slice(0, 3)).toEqual([streetB, streetI, streetI])
 	})
@@ -171,7 +171,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 	/**
 	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer: the emission-side δ (6.0) wins nothing —
 	 * "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18)
-	 * by 4, MORE than the per-piece emission gap but LESS than β=5. So a beta-less decode keeps the fused path (the
+	 * by 4, more than the per-piece emission gap but less than β=5. So a beta-less decode keeps the fused path (the
 	 * measured current-main behavior on the 17 comma-free GB rows), and the transitionBeta artifact flips it — the
 	 * probe's recovery mechanism, end-to-end through `#decode` → viterbi. Comma-free input, `probeMode` omitted: the auto
 	 * chain's ANCHORED leg is the one that fires, matching the production population.

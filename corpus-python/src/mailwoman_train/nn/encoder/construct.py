@@ -169,7 +169,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         rather than a zero-width one. `inject_first_token` additionally places the pooled anchor at
         position 0 and is meaningful only with the postcode anchor on.
 
-        `country_feature_scale` is a per-dim scale applied to `country_features` BEFORE the
+        `country_feature_scale` is a per-dim scale applied to `country_features` before the
         projection: dim 0 (country_surface) stays 1.0 and dim 1 (country_ambiguous) takes
         `country_ambiguous_scale`, where 1.0 is the hard homograph guard. It registers as a buffer
         so it EXPORTS as a constant into the ONNX graph — inference feeds the raw feature and the

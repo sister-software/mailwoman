@@ -6,7 +6,7 @@
  *   The CAPITAL-STATUS reference index (#1880) — answers, for one resolved candidate, "is this
  *   place the national capital or an admin-1 seat of its country?". The consumer is the resolver's
  *   bounded capital promotion (`@mailwoman/resolver`'s `promoteCapitals`, applied after the fame
- *   key on the bare-toponym class); this module only matches, it never ranks. PURE and
+ *   key on the bare-toponym class); this module only matches, it never ranks. Pure and
  *   platform-free (the #861 parity discipline).
  *
  *   Matching is an IDENTITY test with three conjuncts: same country, within

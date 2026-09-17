@@ -149,14 +149,14 @@ describe("resolveThresholdSpecPath", () => {
 
 	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
-		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO eval specs and the
+		// and tsc does not emit readFileSync'd JSON, so the tarball carried zero eval specs and the
 		// installed `mailwoman eval promote --spec <name>` found an empty checks dir.
 		const pkg = await readPackageJSON(import.meta.url, "mailwoman")
 		const { files } = pkg
 
 		expect(files, "mailwoman/package.json declares no files array").toBeDefined()
 
-		// Package-relative, so it names the path INSIDE the tarball: source lives under `lib/`, and these
+		// Package-relative, so it names the path inside the tarball: source lives under `lib/`, and these
 		// JSON files ride along with it rather than being emitted into `out/`.
 		for (const spec of await listEvalSpecs()) {
 			const rel = `lib/eval-harness/specs/${spec}`
@@ -172,7 +172,7 @@ describe("paired weights-caches (#47)", () => {
 	/**
 	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
 	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
-	 * The package dir comes from `weightsCachePackageDir` — the resolver's OWN layout function, so the fixture cannot
+	 * The package dir comes from `weightsCachePackageDir` — the resolver's own layout function, so the fixture cannot
 	 * drift from what the check resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
 	 * ever loaded.
 	 */

@@ -42,14 +42,14 @@
  *     that makes "CA" mean California is `matchSubdivision`'s own), plus the region's
  *     `country_hint` metadata stamp (`mailwoman/region-recognition.ts` writes it on 2-letter US
  *     state abbreviations).
- *   - Signals are filtered to the codex SystemCode universe BEFORE the intersection test. A country
+ *   - Signals are filtered to the codex SystemCode universe before the intersection test. A country
  *     with no codex address system (ES, MX, IE, …) can never appear in any candidate set, so an unfiltered
  *     signal would make every intersection empty and every span "foreign" — filtering out those countries
  *     is the whole reason the JP-shaped "15 07691" span in the ES Portopetro row ABSTAINS rather
  *     than false-excludes.
  *
- *   Deliberately NOT a signal: a second postcode span. The census's "cross-span" idea fails on the
- *   symmetric case — "2000 Sydney NSW, SW1A 2AA London" would exclude BOTH true codes (their systems
+ *   Deliberately not a signal: a second postcode span. The census's "cross-span" idea fails on the
+ *   symmetric case — "2000 Sydney NSW, SW1A 2AA London" would exclude both true codes (their systems
  *   are disjoint), a regression worse than the defect. Cross-country multi-postcode strings are
  *   pathological, and every M-1 span carries a country/region/`country_hint` signal instead.
  *
@@ -82,7 +82,7 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
 /**
  * The codex address systems a sibling signal can speak for — the universe `candidateSystemsForPostcode` can return, in
  * the upper-case ISO form this module's signals are emitted in (`SystemCode` itself is lower-case). Signals from
- * countries with no codex address system are filtered out BEFORE the intersection test, so such a country can never
+ * countries with no codex address system are filtered out before the intersection test, so such a country can never
  * manufacture an empty intersection (the false-exclusion trap; see the header). Derived from codex's own list so a
  * system added there is admitted here in the same change.
  */
@@ -94,7 +94,7 @@ const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((s
  */
 export interface PostcodeShapeVerdict {
 	/**
-	 * The narrowed candidate systems (upper-case) of the FIRST confirmed postcode node — the one `firstPostcodeValue`
+	 * The narrowed candidate systems (upper-case) of the first confirmed postcode node — the one `firstPostcodeValue`
 	 * will pick — to thread into `findPostcodeCountryScope` as its candidate list. Undefined when no postcode node was
 	 * confirmed.
 	 */
@@ -115,7 +115,7 @@ export interface PostcodeShapeVerdict {
 
 /**
  * Collect the sibling country signals: the country node (territory-mapped), the region node (`matchSubdivision` +
- * `country_hint`), each filtered to the codex SystemCode universe. The tree is walked once for ALL postcode spans —
+ * `country_hint`), each filtered to the codex SystemCode universe. The tree is walked once for all postcode spans —
  * sibling evidence is tree-level, not per-span.
  */
 function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
@@ -159,8 +159,8 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 }
 
 /**
- * Run the shape-coherence verdict over every `postcode` span in the tree, mutating the EXCLUDED spans in place (the
- * retag / exclusion stamp) and stamping CONFIRMED spans' narrowed systems. Pure-sync: no backend, no queries. See the
+ * Run the shape-coherence verdict over every `postcode` span in the tree, mutating the excluded spans in place (the
+ * retag / exclusion stamp) and stamping confirmed spans' narrowed systems. Pure-sync: no backend, no queries. See the
  * header for the full rule.
  */
 export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): PostcodeShapeVerdict {

@@ -5,7 +5,7 @@
  *
  *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
  *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output;
- *   the merge is a PURE, deterministic function so a regenerate against the same inputs is
+ *   the merge is a pure, deterministic function so a regenerate against the same inputs is
  *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
  *   determinism test in `lookup.test.ts` exercises).
  *
@@ -15,20 +15,20 @@
  *            ac891b7f22486a6c96c1f6232461e7193263b184
  *   Fetched: 2026-07-20 (row count 2117 category rows, excluding the header)
  *   Format : semicolon-delimited, BOM-prefixed — `<category code>; [<hierarchy,path,leaf>]`, where the
- *            path's LAST element is always the code itself (asserted at parse time).
+ *            path's last element is always the code itself (asserted at parse time).
  *   The old Overture `categories` PROPERTY on the Places feature is retired in Overture's Sept 2026
- *   release; this snapshot is the NEW `taxonomy` property's category vocabulary, pinned as committed
+ *   release; this snapshot is the new `taxonomy` property's category vocabulary, pinned as committed
  *   data so the runtime never reaches the network. See `data/PROVENANCE.md`.
  *
  *   ── Merge rules ─────────────────────────────────────────────────────────────────────────────────
- *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and WIN id collisions
+ *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and win id collisions
  *     with the snapshot (a curated `bank`/`school`/`cafe` keeps its curated hierarchy, `osmTag`, and
  *     `overtureCategories` — the snapshot's same-id row is dropped).
  *   • Overture leaves a curated record already ABSORBS via its `overtureCategories` (e.g. `coffee_shop`
- *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are NOT emitted as
+ *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are not emitted as
  *     standalone snapshot records. Those leaves belong to their curated canonical id — emitting them
  *     twice would let a snapshot id-phrase (`coffee shop`) shadow the curated synonym (`coffee shop` →
- *     `cafe`) in the phrase index, which the POI board depends on NOT happening. The db still stores
+ *     `cafe`) in the phrase index, which the POI board depends on not happening. The db still stores
  *     the raw leaves; `resolveOvertureCategories` fans the curated id back out to them. Umbrella records may set
  *     `retainOvertureLeaves` when each mapped leaf remains independently meaningful.
  *   • Every other snapshot row becomes an identity Overture record (id = code, humanized label,

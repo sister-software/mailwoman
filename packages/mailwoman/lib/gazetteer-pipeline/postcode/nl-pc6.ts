@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `postalcode-nl-pc6.db` — the NL full-postcode (PC6) database, #977 tier 2. WOF NL carries NO
+ *   Build `postalcode-nl-pc6.db` — the NL full-postcode (PC6) database, #977 tier 2. WOF NL carries no
  *   `postalcode` tier at all, so `1012 LG` could only resolve to the Amsterdam locality centroid.
  *   Source: the CBS "Postcode6 statistieken" GeoPackage via PDOK (CC-BY 4.0 — provenance in `meta`),
  *   pre-extracted to a centroid CSV with ogr2ogr:
@@ -44,7 +44,7 @@ export interface BuildNLPC6Options {
 }
 
 /**
- * Build the sealed NL PC6 database (#977 tier 2). NOT re-exported from the postcode barrel — the command lazy-imports
+ * Build the sealed NL PC6 database (#977 tier 2). Not re-exported from the postcode barrel — the command lazy-imports
  * it (optional-peer discipline).
  */
 export async function buildNLPC6Database(

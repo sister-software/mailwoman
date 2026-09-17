@@ -20,7 +20,7 @@ to fix a Norwegian defect had never contributed a single row.
 ``NO`` is the only ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is exactly
 why it hid: one country, no pattern, and the config text reads correctly.
 
-These tests pin BOTH halves — the guard that rejects the retyped key, and the shipped configs that
+These tests pin both halves — the guard that rejects the retyped key, and the shipped configs that
 must stay quoted. A config-only fix would rot the moment someone adds a country.
 """
 

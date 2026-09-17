@@ -83,7 +83,7 @@ export interface FloodIngestOptions {
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
 	 * This is what makes a bounded build possible: the classification cannot run over the whole file in one process (see
-	 * `ingest-chunk.ts`), so the builder walks ranges of the authority's OWN ids. Ranges rather than an offset because
+	 * `ingest-chunk.ts`), so the builder walks ranges of the authority's own ids. Ranges rather than an offset because
 	 * `OBJECTID` is the source's stable key — a range names the same features on every run, which an offset into a result
 	 * set does not.
 	 */
@@ -220,7 +220,7 @@ function toSourceFeature(
 /**
  * Where a build's features come from, and what the source declares about itself.
  *
- * The builder takes ONE of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
+ * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
  * with no network and no GDAL still exercises the whole database half — the vocabulary check, the cell classification,
  * the coverage rows, the manifest and the seal. A fixture rung that could only run through ogr2ogr would test the
  * conversion on the machines that have it and nothing at all on the ones that do not.

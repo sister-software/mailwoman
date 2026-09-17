@@ -46,8 +46,8 @@ export interface POIPhraseMatch {
 	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
 	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, the
 	 * curated reading first (`credit union` → the `bank` rollup its synonym redirects to, then the standalone
-	 * `credit_union` category), and the first entry IS the subject. An affordance rung returns every entity kind that
-	 * affords ONE activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
+	 * `credit_union` category), and the first entry is the subject. An affordance rung returns every entity kind that
+	 * affords one activity, in a stable enumeration that is not a preference, and taking the first picks a winner nobody
 	 * authored.
 	 *
 	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch searches their
@@ -154,7 +154,7 @@ function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
 }
 
 /**
- * Match a POI subject: the whole input, or the text before the FIRST anchor separator WHOSE PREFIX HITS THE LEXICON (≤
+ * Match a POI subject: the whole input, or the text before the first anchor separator whose prefix hits the lexicon (≤
  * 8 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
  * (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point. Returns null when the
  * lexicon never fires — including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
@@ -239,7 +239,7 @@ export function matchPOISubject(
 /**
  * `poi_query` scorer over an injected lexicon. Confidence bands: whole-input lexicon hit 0.92 (above venue-landmark's
  * 0.88 ceiling — an exact lexicon phrase beats a shape heuristic); subject + anchor 0.9. Guards below keep venue-led
- * FULL addresses (class 2) on the structured-address path: a remainder that leads with a house number, or a 4+-segment
+ * full addresses (class 2) on the structured-address path: a remainder that leads with a house number, or a 4+-segment
  * input, scores 0 here.
  */
 export function createScorePOIQuery(
@@ -276,7 +276,7 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere to search: "tacos", "grocery store",
  * "drinking fountain".
  *
- * Fires ONLY on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
+ * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
  * is excluded: a bare "Starbucks" is a name lookup, not a category, and the taxonomy id a category marker promises to
  * carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case, which would
  * make the marker's `categoryID` evidence a lie.

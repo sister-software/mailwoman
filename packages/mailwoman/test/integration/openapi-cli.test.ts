@@ -29,7 +29,7 @@ describe("mailwoman openapi", () => {
 
 		expect(stdout.startsWith('{"openapi":"3.1.0"')).toBe(true)
 
-		// Anchored at both ends, so the match IS the whole stream.
+		// Anchored at both ends, so the match is the whole stream.
 		expect(stderr).toMatch(/^mailwoman is licensed [^\n]*\nA commercial license waives that obligation: [^\n]*\n$/u)
 
 		const doc = parseJSONStrict<{ openapi: string; paths: Record<string, unknown> }>(stdout)

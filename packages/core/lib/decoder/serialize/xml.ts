@@ -75,7 +75,7 @@ export interface SerializeXMLOpts {
 }
 
 /**
- * Deliberately NOT `escapeHTML` (`#strings/escape`): every attribute this serializer emits is double-quoted, so `'`
+ * Deliberately not `escapeHTML` (`#strings/escape`): every attribute this serializer emits is double-quoted, so `'`
  * needs no escape, and adding `&#39;` would change shipped serialization bytes.
  */
 function escapeXml(s: string): string {

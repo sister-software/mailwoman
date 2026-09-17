@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Postcode SHAPE patterns — which substrings of a line LOOK like a postcode, ordered most-specific
- *   to least. Priority IS the index: a lower index wins an overlap.
+ *   to least. Priority is the index: a lower index wins an overlap.
  *
  *   The DATA lives in `./shapes.json` so non-TS consumers read the identical record, the
  *   same arrangement `us/street-suffix.json` has. Two runtimes need this table and both used to

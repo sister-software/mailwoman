@@ -22,7 +22,7 @@
  * halves of one comparison on different keys. Order is required: after the class filter the strip is a no-op.
  *
  * Not fixed here, and worth knowing before trusting the fold on a non-Latin-1 name: a letter with no decomposition is
- * DROPPED rather than folded (`Łódź` → `odz`, `Đà Nẵng` → `a nang`). That needs a transliteration table, not a regex,
+ * dropped rather than folded (`Łódź` → `odz`, `Đà Nẵng` → `a nang`). That needs a transliteration table, not a regex,
  * and it is shared with every other fold in the repo.
  */
 export function foldName(s: string): string {

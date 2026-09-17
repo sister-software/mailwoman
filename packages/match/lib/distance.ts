@@ -12,7 +12,7 @@
  *   Fellegi-Sunter agreement levels (Splink's `DistanceInKMAtThresholds`): "same building" / "same
  *   block" / "same area" / far, each with its own m/u and weight.
  *
- *   Calibrate the bucket boundaries to the geocoder's OWN error, which is heavy-tailed and density-
+ *   Calibrate the bucket boundaries to the geocoder's own error, which is heavy-tailed and density-
  *   dependent (≈38 m urban, ≈200 m rural). A weakening of this evidence by geocode quality (a
  *   shared interpolated centroid is softer than a shared rooftop point) is the documented
  *   refinement.
@@ -78,12 +78,12 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 /**
  * The collapsed spatial-agreement comparison — ONE non-redundant geographic signal.
  *
- * The first matcher carried TWO spatial comparisons: canonical-address-key similarity AND great-circle distance. They
+ * The first matcher carried two spatial comparisons: canonical-address-key similarity and great-circle distance. They
  * double-count — an exact key match implies distance ≈ 0, so a co-located pair banked the same evidence twice, and the
  * redundant vote is exactly what over-merges distinct providers at a shared clinic address. This folds them into one
  * comparison:
  *
- * - **level 0 `same-key`** — an EXACT canonical-key match: the strongest tier, and the one the inverse-address-frequency
+ * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the inverse-address-frequency
  *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
  *   toward worthless while a rare one keeps full weight.
  * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs "123 Main Street Apt

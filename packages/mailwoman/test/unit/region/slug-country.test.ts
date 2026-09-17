@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file #1787 — a state slug names a US database, so a tree the resolver placed elsewhere must not produce one.
  *
- *   `regionToStateSlug` accepts ANY two-letter region, and the rooftop databases are `address-points-us-<slug>.db`. Eight
+ *   `regionToStateSlug` accepts any two-letter region, and the rooftop databases are `address-points-us-<slug>.db`. Eight
  *   of sixteen Italian province codes reach a real US database that way, five of five Spanish, six of twelve Brazilian,
  *   and Australia's WA→Washington. Nothing wrong comes back today only because Milano's 20xxx does not collide with
  *   Michigan's 48xxx, which is a coincidence of numbering rather than a guarantee.

@@ -58,11 +58,11 @@ export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[
 /**
  * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
- * ONE definition of the convention, because it is written by ten `link-dev-weights.ts` scripts and read by
+ * One definition of the convention, because it is written by ten `link-dev-weights.ts` scripts and read by
  * `@mailwoman/neural`'s `resolveWeights`, and a reader that disagreed with the writers about the directory would report
  * the artifacts absent rather than misplaced — every sibling degrades `existsSync → undefined`.
  *
- * It lives OUTSIDE git deliberately. The binaries are not committed, so materializing them into the tracked package
+ * It lives outside git deliberately. The binaries are not committed, so materializing them into the tracked package
  * directory is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked directories as a side
  * effect, and put a symlink in a publish tarball (`YN0035`). The data root is shared across every checkout on the
  * machine and is not packed by anything.
@@ -135,7 +135,7 @@ export function cacheRootPath(...segments: string[]): string {
  *   FI/CZ/SK/SI/DK/NO/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
  * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL, never published, so on any machine that
  *   did not build it the `existsSync` filter simply drops it and GB postcode queries behave as they did before. It is
- *   listed rather than special-cased because that filter IS the tier's enforcement. It is also the only GB-claiming
+ *   listed rather than special-cased because that filter is the tier's enforcement. It is also the only GB-claiming
  *   extract in this list — the Code-Point Open extract is not here — so nothing competes with it for `BT` routing.
  */
 export function wofExtractPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {

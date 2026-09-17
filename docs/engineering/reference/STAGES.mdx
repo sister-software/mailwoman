@@ -36,7 +36,7 @@ flowchart LR
     S6 --> O["Top-k places"]
 ```
 
-The fast-path arrow is the optimization win: when the kind classifier identifies a trivial input (`postcode_only`, `locality_only`) AND the QueryShape's known-format match agrees, the coordinator skips stages 3-5 and goes straight to resolve. See [Fast-path routing](#fast-path-routing) below.
+The fast-path arrow is where the latency saving comes from: when the kind classifier identifies a trivial input (`postcode_only`, `locality_only`) and the QueryShape's known-format match agrees, the coordinator skips stages 3-5 and goes straight to resolve. See [Fast-path routing](#fast-path-routing) below.
 
 ## Shared types
 
@@ -609,7 +609,7 @@ The staging picture is now formalized. Implementation order, in suggested priori
 
 1. **Stage 1 + boundary QueryShape together.** Cheap to build; every downstream improvement depends on it.
 2. **Stage 6 candidate-list API.** Small change, big win for failure mode #8.
-3. **Stage 2 + Stage 2.5 together.** Enables fast paths AND informs the encoder.
+3. **Stage 2 + Stage 2.5 together.** Enables fast paths and informs the encoder.
 4. **JS Viterbi for Stage 4a.** Already on the v0.4.0 list.
 5. **Stage 4b span re-reader.** Wait for v0.6.0 corpus support.
 

@@ -44,7 +44,7 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
  * (`@mailwoman/coastal/scripts/ingest-chunk`, `onnxruntime-web`) resolved through its package's `exports` map under
  * this runtime's conditions.
  *
- * Resolution starts from THIS module, so it answers for anything visible from `@mailwoman/core` — every workspace
+ * Resolution starts from this module, so it answers for anything visible from `@mailwoman/core` — every workspace
  * package and every hoisted dependency. A package that only a nested `node_modules` can see is out of reach; that is
  * the one case where a caller's own `import.meta.resolve` says something this cannot. A relative specifier has no
  * business here: a module's own neighbours are `resolvePath(import.meta.dirname, …)`.

@@ -10,8 +10,8 @@
  *   covered the bottom sheet's last rows on a phone; a compass built, exported and mounted in no app; a sources
  *   popover clipped out of existence by the strip's own overflow; two panels sharing an edge.
  *
- *   None of them were reachable by the suites that already ran here, which assert what the geocoder ANSWERS and
- *   nothing about what the page SHOWS.
+ *   None of them were reachable by the suites that already ran here, which assert what the geocoder answers and
+ *   nothing about what the page shows.
  *
  *   IT RUNS ON `?runtime=fake`. The chrome is the subject, and the canned runtime renders all of it and completes a
  *   query without fetching the 38 MB model — so this suite stays fast, and it keeps reporting on the chrome on a day
@@ -90,7 +90,7 @@ test.describe("Chrome — the floating controls", () => {
 	})
 
 	test("a pointer move never queries every layer in the style", async ({ page }) => {
-		// The REAL basemap, because the canned runtime's style carries no label layers and the hook returns before it
+		// The real basemap, because the canned runtime's style carries no label layers and the hook returns before it
 		// queries anything — a pass there would mean nothing. The basemap arrives well before the model, so this waits
 		// on the style having layers rather than on the geocoder being ready.
 		await page.goto("/")

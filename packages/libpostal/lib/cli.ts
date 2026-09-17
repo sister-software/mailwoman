@@ -40,7 +40,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	// The neural BIO tagger is the sole engine (v7 rules-parser excision). Note that unlike
-	// `@mailwoman/photon`/`@mailwoman/nominatim`, this package does NOT declare
+	// `@mailwoman/photon`/`@mailwoman/nominatim`, this package does not declare
 	// `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment) — a bare
 	// `npx @mailwoman/libpostal serve` resolves it only when it happens to already be installed
 	// alongside, so the friendly-failure guard warrants its keep here more than anywhere.

@@ -40,7 +40,7 @@ skill inherits the same words rather than redefining them.
 - The operator asks "why", and the answer stops at an adjective.
 - Before publishing any diagnosis: run the checklist at the bottom.
 
-## When NOT to use
+## When not to use
 
 - Routine status narration with no failure at stake.
 - A cause that is already direct and verified — do not force five levels.

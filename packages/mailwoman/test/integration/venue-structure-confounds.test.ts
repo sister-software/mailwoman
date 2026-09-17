@@ -7,7 +7,7 @@
  *
  *   `venueStructureBiasScale` pushes venue-INTERIOR designators ("concourse", "terminal", "gate",
  *   "wing", …) toward `unit` harder than the postal designators they share a vocabulary with. The
- *   risk that provides is false units on surfaces where one of those words appears WITHOUT being a
+ *   risk that provides is false units on surfaces where one of those words appears without being a
  *   designator: the GB `-gate` street names, "Gate House" venues, "Terminal" industrial estates,
  *   "Wing" as a personal or business name, and designators used as street names.
  *
@@ -16,7 +16,7 @@
  *   unit is simply wrong, not one where a unit is merely unlikely.
  *
  *   WHY THIS LIVES HERE AND NOT BESIDE THE CLASSIFIER. It has to run the path a USER runs.
- *   `enforceWordConsistency` defaults to OFF on `NeuralAddressClassifier` (so a bare classifier
+ *   `enforceWordConsistency` defaults to off on `NeuralAddressClassifier` (so a bare classifier
  *   decode stays byte-identical) and is switched on by `geocode-core.ts` via
  *   `WORD_CONSISTENCY_SHIP_DEFAULT`. A board run against the raw classifier therefore measures an
  *   UN-HEALED decode, and it will report failures that no consumer of the shipped pipeline can

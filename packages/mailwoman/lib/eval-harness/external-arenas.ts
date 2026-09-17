@@ -35,7 +35,7 @@
  *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (×3) and `summarize-arenas.run.ts` — are
  *   `lib/dev-tools/` residents, not eval legs, and de-shelling them is a separate job. `zx`
- *   therefore survives HERE while it is gone from `promotion-eval.ts`.
+ *   therefore survives here while it is gone from `promotion-eval.ts`.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -63,7 +63,7 @@ export interface ExternalArenasOptions {
 	outDir?: string
 	/**
 	 * Candidate ONNX. Omit to grade the default shipped weights. When set, {@linkcode ExternalArenasOptions.tokenizer} and
-	 * {@linkcode ExternalArenasOptions.modelCard} become REQUIRED.
+	 * {@linkcode ExternalArenasOptions.modelCard} become required.
 	 */
 	model?: string
 	tokenizer?: string

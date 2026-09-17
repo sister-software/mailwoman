@@ -5,7 +5,7 @@
  *
  *   `nearestInfrastructure` — a coverage-paired k-nearest read over the telecom-infrastructure POI
  *   categories (`telecom_exchange`/`tower_comms` — `@mailwoman/poi-taxonomy` categories, populated by the
- *   `--source osm` extractor) that a caller can join against ANY layer's own `layer_coverage`
+ *   `--source osm` extractor) that a caller can join against any layer's own `layer_coverage`
  *   survey-completeness table (decision 7). Typical caller: a BDC filing scorer that wants "what's the
  *   nearest real infrastructure to this claimed Broadband Serviceable Location, and does OUR layer even
  *   have survey evidence for that area" in one call.
@@ -18,7 +18,7 @@
  *     and prepares three statements (see `poi-lookup.ts`) — reconstructing that per call would mean
  *     re-opening the SQLite handle and re-running the dictionary `SELECT` on every single
  *     `nearestInfrastructure` invocation. A scorer calling this once per filing candidate wants to open
- *     `poi.db` ONCE and reuse the same `POILookup` — this wrapper takes that shape: the caller owns
+ *     `poi.db` once and reuse the same `POILookup` — this wrapper takes that shape: the caller owns
  *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
  *     `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
@@ -30,7 +30,7 @@
  *   why the res-6 parent is reconstructed from the STORED res-9 cell rather than recomputed from the
  *   centroid) turns each hit's res-9 cell into the res-6 cell every layer in this repo aggregates
  *   coverage at (poi.db's own convention; `bdc.db`'s `BDC_COVERAGE_H3_RESOLUTION` matches it
- *   deliberately — see `schema.ts`). `POI_H3_RESOLUTION` (`poi-lookup.ts`) is ALSO 9, so the two layers'
+ *   deliberately — see `schema.ts`). `POI_H3_RESOLUTION` (`poi-lookup.ts`) is also 9, so the two layers'
  *   spines agree without this module hardcoding a resolution of its own.
  */
 
@@ -47,7 +47,7 @@ import { res9ShortCellToRes6Parent } from "#sdk/filing/landscape"
  * Ring budget default for {@link nearestInfrastructure} — wider than `POILookup`'s own internal `DEFAULT_MAX_RINGS`
  * (16, ≈5.4 km) because telecom infrastructure (central offices, comm towers) is sparser per-area than poi.db's dense
  * categories (cafes, etc.): 32 res-9 rings ≈ 11 km, a BDC-block-scale search radius that gives real infrastructure room
- * to be found without over-restricting callers who DO want a tighter budget via `options.maxRings`.
+ * to be found without over-restricting callers who do want a tighter budget via `options.maxRings`.
  */
 export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
 

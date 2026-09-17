@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Read/write helpers over the layer-contract tables. The parsed {@link LayerManifest} is the
- *   camelCase face of `layer_manifest`; validation happens at BOTH ends so a hand-built or
+ *   camelCase face of `layer_manifest`; validation happens at both ends so a hand-built or
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
@@ -73,7 +73,7 @@ export interface CoverageCell {
 const BASES = new Set<string>(Object.values(CoverageBasis))
 
 /**
- * Reject a malformed coverage cell at BOTH ends, the way {@link assertManifestInvariants} does for the manifest.
+ * Reject a malformed coverage cell at both ends, the way {@link assertManifestInvariants} does for the manifest.
  *
  * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw: a `completeness` above
  * 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident negative evidence, and a negative
@@ -185,7 +185,7 @@ export function singleManifestRow(
  *
  * SHARED BY EVERY LAYER READER, AND SEPARATE FROM THE IDENTITY CHECK ON PURPOSE. `readLayerManifest` above is the
  * Kysely path; a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
- * row and needs the same mapping. What such readers do NOT share is how they recognize their own layer — most match a
+ * row and needs the same mapping. What such readers do not share is how they recognize their own layer — most match a
  * fixed name, and a layer whose name carries a build's region suffix matches a prefix instead — so the mapping lives
  * here and the assertion stays with the caller. {@link parseManifestRows} is the fixed-name case, wired for the callers
  * that have one.
@@ -215,7 +215,7 @@ export function toLayerManifest(row: Record<string, string | number | null>): La
 }
 
 /**
- * The manifest of a layer whose name is FIXED, checked against `expectedName`.
+ * The manifest of a layer whose name is fixed, checked against `expectedName`.
  *
  * @param rows Every row of `layer_manifest`.
  * @param context Names the caller in every refusal.
@@ -239,7 +239,7 @@ export function parseManifestRows(
 }
 
 /**
- * Refuse an artifact whose coverage would license a claim that the thing asked for is NOT there.
+ * Refuse an artifact whose coverage would license a claim that the thing asked for is not there.
  *
  * A CONDITION RATHER THAN A CONVENTION, and shared because the rule is the contract's rather than any product's: a
  * layer whose source publishes no footprint may record presence and nothing else, and the day someone writes a stronger
@@ -278,7 +278,7 @@ export function assertCoverageLicensesNoExclusion(
  */
 export interface PolygonLayerBuildStamp {
 	/**
-	 * The product vintage — `layer_manifest.version` AND `source_vintage`.
+	 * The product vintage — `layer_manifest.version` and `source_vintage`.
 	 */
 	sourceVintage: string
 	buildCmd: string

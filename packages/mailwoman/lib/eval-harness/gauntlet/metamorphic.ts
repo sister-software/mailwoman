@@ -7,10 +7,10 @@
  *   outputs, not stored expected values, so a curated corpus can't breed false trust here.
  *
  *   - INV (invariance, ≤1m): a label-preserving perturbation (casing, whitespace, trailing punctuation,
- *       expanded↔abbreviated suffix) must NOT move the assembled coordinate or tier. A drift is a
+ *       expanded↔abbreviated suffix) must not move the assembled coordinate or tier. A drift is a
  *       surface-form robustness bug. `abbrev` inverts the `normalize/abbreviations.ts` table — the model
  *       trains on both `Avenue` and `Ave`, so the coordinate must not budge.
- *   - DIR (directional, ≤5km): dropping the postcode must NOT break resolution — the result must still
+ *   - DIR (directional, ≤5km): dropping the postcode must not break resolution — the result must still
  *       land near the with-postcode coordinate. This is exactly the #251 failure class, frozen as a
  *       standing property.
  *   - BAND (tolerance, ≤5km): a CORRUPTING perturbation (single-char transpose / substitution, ordinal
@@ -20,7 +20,7 @@
  *       those are recorded in KNOWN_BAND_XFAIL so the gap is documented, non-blocking, and can't be
  *       silently hidden.
  *
- *   CHECK: any INV violation, a DIR that fails to resolve near the anchor, or a NEW (untracked) BAND miss
+ *   CHECK: any INV violation, a DIR that fails to resolve near the anchor, or a new (untracked) BAND miss
  *   fails the run. Run:
  *     mailwoman eval gauntlet --layer metamorphic [--candidate <candidate.onnx>]
  */
@@ -285,7 +285,7 @@ const BAND: Perturbation[] = [
 
 /**
  * Known, DETERMINISTIC INV failures (the pipeline is argmax + SQL — failures don't flap). Each is tracked by an issue
- * and reported as xfail: visible, but NON-blocking, so the check fails only on NEW regressions. The loop also flags any
+ * and reported as xfail: visible, but NON-blocking, so the check fails only on new regressions. The loop also flags any
  * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
  * Pelias-pass-list trap, inverted.
  */
@@ -293,11 +293,11 @@ const BAND: Perturbation[] = [
  * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
  * retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
  * the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
- * A NEW deterministic INV break belongs here with a tracked note, never silently conditional. The #1002 FR
- * `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was NOT the FR gazetteer (street_norm
+ * A new deterministic INV break belongs here with a tracked note, never silently conditional. The #1002 FR
+ * `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer (street_norm
  * expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup — fixed by
  * enabling Stage-1 `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN
- * suffixes deliberately untouched). Keep the anti-rot loop honest: a NEW deterministic INV break belongs here with a
+ * suffixes deliberately untouched). Keep the anti-rot loop honest: a new deterministic INV break belongs here with a
  * tracked note, never silently conditional. The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its
  * rooftop) was removed 2026-08-12 when the anti-rot loop flagged it newly passing — the comma-free base now holds its
  * rooftop.
@@ -465,7 +465,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 
 	deps[Symbol.dispose]()
 
-	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
+	// Anti-rot: a tracked xfail that did not fire has been fixed — surface it so the list can't accrete stale entries.
 	const newlyPassing = [
 		...[...KNOWN_INV_XFAIL].filter(([key]) => !xfailHit.has(key)),
 		...[...KNOWN_BAND_XFAIL].filter(([key]) => !bandXfailHit.has(key)),
@@ -526,7 +526,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	// The check fails on NEW regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
+	// The check fails on new regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
 

@@ -8,36 +8,36 @@
  *
  *   Root cause (#440 / #832): a place that straddles multiple parents — New York City spans five
  *   counties (its boroughs), London 30+ — carries `wof:parent_id = -4`, so the parent_id closure
- *   dead-ends and the place gets NO region/county/country ancestry. The resolver's region-descendant
+ *   dead-ends and the place gets no region/county/country ancestry. The resolver's region-descendant
  *   filter then can't reach it: given "New York, NY", NYC (with no NY-state ancestor) is excluded and
  *   a correctly-parented namesake ("New York Mills", pop 3,190) wins over NYC's 8.8M. The same defect
  *   orphans London, Singapore, and ~2,850 other localities — the most demo-visible queries.
  *
  *   **The dead end is inherited by children (#1445).** Repairing the `-4` place itself does not repair
- *   anything BELOW it: the closure walks Brooklyn → New York and stops, because New York's own
+ *   anything below it: the closure walks Brooklyn → New York and stops, because New York's own
  *   `parent_id` is `-4`. Brooklyn-the-borough (pop 2.5M) therefore carried exactly two ancestor rows —
  *   itself and New York — with no county, region or country, and the only US locality-tier place named
  *   "Brooklyn" that survived a New-York-State descendant filter was Pillar Point, a Jefferson County
  *   hamlet 411 km away carrying "Brooklyn" as an alternate name. All five NYC boroughs, every London
  *   borough and Hyderabad's zones were in the same state.
  *
- *   So the candidate test is NOT "has only a self ancestor" — that misses every child of a repaired
+ *   So the candidate test is not "has only a self ancestor" — that misses every child of a repaired
  *   place, which by construction has two. It is **"has no `country`-tier ancestor"**. Country is the
  *   universal terminal for every non-{@link TOP_PLACETYPES} placetype, so its absence is exactly the
  *   signal that the chain dead-ended somewhere, at whatever depth. On a wide-coverage build this
  *   selects ~24k places against 2.55M rows.
  *
- *   A place whose `wof:hierarchy` genuinely stops short is NOT a candidate and needs no repair: the
+ *   A place whose `wof:hierarchy` genuinely stops short is not a candidate and needs no repair: the
  *   source is the authority on what a place should have. American Samoa's localities, for instance,
  *   have `{country_id, locality_id}` and no region in WOF itself — the artifact matching that is
  *   correct, not truncated.
  *
- *   The authoritative hierarchy IS in the source geojson: `wof:hierarchy` is an array of branches,
+ *   The authoritative hierarchy is in the source geojson: `wof:hierarchy` is an array of branches,
  *   each a `<placetype>_id` → id map (region_id, county_id, country_id, …), fully populated even when
  *   parent_id is -4. This reads it for every candidate and inserts the missing ancestor rows (one per
  *   distinct ancestor across branches).
  *
- *   MUST run AFTER populateAncestors and BEFORE the build freezes (VACUUM INTO), so the rows land in
+ *   Must run after populateAncestors and before the build freezes (VACUUM INTO), so the rows land in
  *   the shipped artifact — `scripts/build-unified-wof.ts` Phase 3 calls it inline. The standalone
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
  *   repair of an already-built DB. Idempotent by the per-pair existence check, not by the candidate
@@ -112,9 +112,9 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 }
 
 // `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id. Self
-// is filtered downstream by the `aid === id` check, so we do NOT special-case locality here: for a
-// locality candidate `locality_id` IS self (dropped by aid===id), but for a neighbourhood candidate
-// `locality_id` is its PARENT locality — a real ancestor we must keep.
+// is filtered downstream by the `aid === id` check, so we do not special-case locality here: for a
+// locality candidate `locality_id` is self (dropped by aid===id), but for a neighbourhood candidate
+// `locality_id` is its parent locality — a real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 
@@ -126,8 +126,8 @@ function placetypeFromKey(key: string): string | null {
  * `wof:hierarchy` from its source geojson under `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a
  * single transaction; caller owns connection lifecycle (open, WAL checkpoint, close).
  *
- * `opts.maxID` bounds the candidate scan to ids BELOW it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
- * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have NO `wof:hierarchy`
+ * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
+ * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy`
  * geojson, so probing them is pure waste: on a wide-coverage DB the country-less set is millions of Overture/GeoNames
  * leaf localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
  * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
@@ -161,10 +161,10 @@ export async function backfillAncestorsFromHierarchy(
 
 	const candidates = await candidateBase.select(["id", "placetype"]).execute()
 
-	// Every candidate's existing ancestors in ONE query rather than an indexed read each. The widened
+	// Every candidate's existing ancestors in one query rather than an indexed read each. The widened
 	// candidate test made that per-candidate read the dominant cost of the pass, and the set is bounded:
 	// a candidate reaching this point has a handful of rows at most. The candidate set rides in as the
-	// SAME predicate re-issued as a subquery, never a materialized `IN (?, ?, …)` list — node:sqlite
+	// same predicate re-issued as a subquery, never a materialized `IN (?, ?, …)` list — node:sqlite
 	// caps a statement at 32,766 bound variables and the wide-coverage build has 67,521 candidates
 	// (measured 2026-08-04).
 	const alreadyPresent = new Map<number, Set<number>>()

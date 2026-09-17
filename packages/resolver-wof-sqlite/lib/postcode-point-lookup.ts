@@ -14,7 +14,7 @@
  *   future WASM build swaps this for an FST-backed resolver behind the same `lookup()` interface.
  *
  *   Why multiple extracts instead of the multi-extract `WOFSQLitePlaceLookup`: that resolver routes a
- *   query to ONE extract by placetype, but every postcode extract shares `placetype='postalcode'`, so a
+ *   query to one extract by placetype, but every postcode extract shares `placetype='postalcode'`, so a
  *   single query could only ever hit one country's extract. The anchor needs the union across
  *   countries to build its country posterior, so it queries each extract directly.
  */

@@ -10,7 +10,7 @@
  *   places a query on Earth far more cheaply than the rest of the parse. This module lifts the
  *   postcode out of the BIO sequence-labelling problem and treats it as a structured anchor. It
  *   runs the same per-country shape regexes the decoder repair pass uses ({@link collectMatches}),
- *   resolves each shaped span against a postcode gazetteer, and returns a SOFT signal: a country
+ *   resolves each shaped span against a postcode gazetteer, and returns a soft signal: a country
  *   posterior plus a calibrated confidence. It never decides a postcode's identity on its own — it
  *   reports "this string is (or is not) a real postcode, in these countries, near here", and leaves
  *   the parser to weigh that against the surrounding tokens.

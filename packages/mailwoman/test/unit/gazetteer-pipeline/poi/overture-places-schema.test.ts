@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the PURE Overture places-theme column-choice logic `ingestPlaces` uses
+ *   Unit tests for the pure Overture places-theme column-choice logic `ingestPlaces` uses
  *   (`chooseCategoryColumn` / `hasBrandColumn` / `chooseCountryExpression`) — exercised directly over
  *   synthetic `DESCRIBE` result rows, no DuckDB/network involved. `ingestPlaces` itself (the DuckDB S3
  *   read) isn't covered here; see the task report for why that side stays untested (no network in CI).
  *
  *   `chooseCountryExpression` fixtures cover three release shapes: an (imagined) older release with a
- *   top-level `country` column, the real 2026-05-20.0 places release which has NEITHER a top-level
- *   `country` column NOR a `categories`-only shape but DOES have `addresses`, and a pathological release
+ *   top-level `country` column, the real 2026-05-20.0 places release which has neither a top-level
+ *   `country` column nor a `categories`-only shape but does have `addresses`, and a pathological release
  *   with neither `country` nor `addresses` (must throw).
  */
 

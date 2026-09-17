@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   POI intent stage assembly (spec §3.1–3.2). This is the ONLY module that joins the pieces:
+ *   POI intent stage assembly (spec §3.1–3.2). This is the only module that joins the pieces:
  *   `@mailwoman/poi-taxonomy` (the lexicon), `@mailwoman/kind-classifier` (subject matching), and
  *   the pipeline contract from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
  *   dormant otherwise.
@@ -60,7 +60,7 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
  * filtering), then `@mailwoman/variant-aliases`' brand-kind regional slang (locale-restricted, e.g. "mcdo" →
  * fr-FR/fr-CA/fr-BE) chained through `resolveBrandName` to recover the QID.
  *
- * Precedence on a phrase that matches BOTH a category and a brand: CATEGORY WINS. Deterministic, and intentional —
+ * Precedence on a phrase that matches both a category and a brand: the category wins. Deterministic, and intentional —
  * `@mailwoman/poi-taxonomy`'s categories are the curated set; a brand phrase collision (none observed in the shipped
  * table as of the 2026-07-20 build) would be a data quality bug in the brand table, not a case to special-case here.
  */
@@ -163,7 +163,7 @@ export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
 	/**
 	 * Parses the anchor remainder ("Springfield IL") through the ADDRESS pipeline. Callers must hand in a pipeline
-	 * WITHOUT the poi stage (recursion guard) — `createRuntimePipeline` does.
+	 * without the poi stage (recursion guard) — `createRuntimePipeline` does.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
 	/**
@@ -242,7 +242,7 @@ export function createPOIIntentStage(
 /**
  * What the anchor's country does to a reached set: which categories stay searchable and which fall out.
  *
- * A category stays when ANY hit reaching it holds where the anchor is — an unscoped hit holds everywhere, a scoped one
+ * A category stays when any hit reaching it holds where the anchor is — an unscoped hit holds everywhere, a scoped one
  * holds when its list names the anchor's country. A `null` anchor country admits no scoped hit: a claim the curator
  * scoped to a place cannot be checked without knowing the place, and searching as though it held would answer with a
  * category the data there may not carry. Order is the lookup's own enumeration, and it still states no preference.

@@ -18,7 +18,7 @@
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
  *   Inclusion rule: a parent enters the census only if it has at least one child projecting onto a
- *   tag OTHER than `locality`. A node recording "this locality has 300 locality children" is true
+ *   tag other than `locality`. A node recording "this locality has 300 locality children" is true
  *   and useless — every locality has those — and including them would inflate the artifact by two
  *   orders of magnitude for zero discriminative mass. The tag whose conditional prior this arc is
  *   about (`dependent_locality`) is exactly the one the rule keeps.
@@ -80,7 +80,7 @@ export const WOF_PLACETYPES = [
 
 /**
  * WOF placetype → `ComponentTag` projection, the executable copy of plan/reference/placetype-evidence.mdx's table. A
- * `null` value means "in the vocabulary, deliberately NOT projected" (context-only placetypes: metroarea, timezone, and
+ * `null` value means "in the vocabulary, deliberately not projected" (context-only placetypes: metroarea, timezone, and
  * the out-of-grammar continent/ocean rows) — distinct from a placetype missing from this map entirely, which is an
  * unmapped placetype the builder will refuse to count silently.
  *
@@ -133,7 +133,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	// `custom` is WOF's override for a locally-defined placetype. It names no fixed feature class, so no projection
 	// can be right for it — deliberately uncounted rather than guessed at.
 	custom: null,
-	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag. An intersection is
+	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto one tag. An intersection is
 	// a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole address record consumed by
 	// the kind-classifier and the resolver's address-point tiers, not a span role.
 	intersection: null,
@@ -153,7 +153,7 @@ export interface PlacetypeCensusBuildResult {
 	 */
 	nodes: PlacetypeCensusNode[]
 	/**
-	 * Global child counts per projected tag across the whole country, BEFORE the inclusion rule drops locality-only
+	 * Global child counts per projected tag across the whole country, before the inclusion rule drops locality-only
 	 * parents — the denominator behind `PlacetypeCensusHeader.baseRates`.
 	 */
 	countryTotals: Partial<Record<ComponentTag, number>>

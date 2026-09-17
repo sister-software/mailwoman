@@ -2,7 +2,7 @@
 # The corrective retrain after v1.6.0 conditional NO-PROMOTE. v1.6.0 added the boundary source at weight 1.0 and
 # LIFTED the boundaries (fr-prefix 55→99.7) but was a NARROW distribution — every row a clean full address
 # — so the model over-fit it and regressed on OOD real rows (held-out us.locality 66.3→58.2%; 84% of the
-# regression was DROPPED locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
+# regression was dropped locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
 # THE HEADLINE VARIABLE: the BALANCED recipe output (corpus v0.6.1-boundary-stress) — two new shapes widen the
 # distribution: bare-locality (~11%, the ship-blocker fix; VENUES #511-linted) + house-number-before-street
 # (7:3 before:after, the confounding mirror for the order-bias). Co-change (hygiene): lr constant→cosine.
@@ -16,12 +16,12 @@
 #       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
 #   (c) an EXPANDED check grading the FR/DE composition wins the recipe output already trains for free
 #       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (check rows below).
-#   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
+#   (b) [not ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
 #       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
-#       `countryToLocale` NZ→en-NZ + a NEW military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
+#       `countryToLocale` NZ→en-NZ + a new military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
 #       which the leader-based model doesn't fit), and the recipe needs NZ/military base tuples +
 #       a rebuild. Low-confounding (additive on the po_box tag) once built, but it isn't built yet.
-# Competing new recipes (typo-inject, non-Latin) are deliberately NOT bundled — same-axis capacity
+# Competing new recipes (typo-inject, non-Latin) are deliberately not bundled — same-axis capacity
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
 # (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
@@ -35,21 +35,21 @@
 #   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.
 #   The STREET span is the common casualty (38-49% across all four shapes).
 # The recipe output puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
-# 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
+# 0% quarantine). It also reinforces fr.house_number (the number-after-street shape).
 #
 # PRE-REGISTERED CHECK (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
 #   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
-#     house-number-after-street 50.7 → ≥65 ; AND the shared STREET span ≥65 on all four shapes
+#     house-number-after-street 50.7 → ≥65 ; and the shared STREET span ≥65 on all four shapes
 #     (anchored to the diverse base-locale baseline).
 #   NON-REGRESSION FLOORS (checks/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
 #     72.9, US postcode 97, affix 78/67, FR postcode 99.5, fr.house_number 87, DE locality 83.8, country
-#     83.3) PLUS two NEW v1.7.0 guards — us.bare_locality (the 84%-drop surface; re-probe v1.5.1, floor just
-#     below) and us.street_recall_full (street recall where gold has BOTH street+locality — DeepSeek's
+#     83.3) plus two new v1.7.0 guards — us.bare_locality (the 84%-drop surface; re-probe v1.5.1, floor just
+#     below) and us.street_recall_full (street recall where gold has both street+locality — DeepSeek's
 #     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
 #   WATCH (DeepSeek): street_suffix OVER-fire (its check target vs the floor — a boundary recipe output can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
 #     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
-#     weight UP (1.5) — one variable, do not stack other changes.
+#     weight up (1.5) — one variable, do not stack other changes.
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     recipe output's alignment before any weight surgery.
 #
@@ -110,7 +110,7 @@ data:
     synth-country: 2.0
     # THE #375 #1-change variable (DeepSeek-signed 2026-06-17): the boundary-instability stress source.
     # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
-    # short. ONE change vs v1.5.1 — nothing else moves.
+    # short. One change vs v1.5.1 — nothing else moves.
     synth-boundary-stress: 1.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -141,7 +141,7 @@ model:
   # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary recipe output:
   # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the recipe output's fr-prefix shape
   # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the recipe output teaches and
-  # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine WITHOUT it. The
+  # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine without it. The
   # "non-confounding, different axis" call (DeepSeek + me) was wrong — the FR convention is inconsistent
   # with the FR training data. Revisit only after reconciling the conventions table with the FR labels.
   use_conventions_loss_mask: false

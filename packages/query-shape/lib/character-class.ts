@@ -171,7 +171,7 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
 /**
  * Codepoints Unicode calls `Common` that sit inside blocks this file otherwise reads as a script.
  *
- * They answer `Zyyy`, which takes them out of BOTH halves of every share — and that is what makes the share readable.
+ * They answer `Zyyy`, which takes them out of both halves of every share — and that is what makes the share readable.
  * `ブロードウェイ` is seven characters, two of them the prolonged sound mark `ー`; folding that mark into neither script
  * reports `Kana 1.00`, and the first version of this table, which had no entry for it, reported `Kana 0.67 / Zzzz 0.20`
  * and made an ordinary katakana word look a fifth unrecognized.

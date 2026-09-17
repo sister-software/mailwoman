@@ -60,7 +60,7 @@ interface ColumnMapping {
 }
 
 /**
- * The narrowest header row that establishes a mapping, counted in the row's OWN cells before blank columns are dropped.
+ * The narrowest header row that establishes a mapping, counted in the row's own cells before blank columns are dropped.
  * A two-cell header has nothing to map that the generic "first value is the name, second is the jurisdiction" rule does
  * not already read the same way, so requiring three costs no fixture a single subsidiary — and it keeps a two-cell
  * header from claiming to describe a WIDER data row it never mentions, which is `exhibit21-mangled.html`'s shape
@@ -73,7 +73,7 @@ const MINIMUM_HEADER_ROW_CELLS = 3
  * Reads a table's own header row to learn which column is the entity name and which is the jurisdiction — the answer
  * the document itself states, rather than a guess about which two of N columns matter.
  *
- * A row qualifies as the header only when EVERY one of its non-blank values is a known label/decoration and EXACTLY ONE
+ * A row qualifies as the header only when every one of its non-blank values is a known label/decoration and exactly one
  * of them is a jurisdiction label (two would be ambiguous, zero leaves nothing to anchor on). The name column is then
  * the first other column not labelled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, …) —
  * `att-2025.htm`'s `["Legal Name", "State of Incorporation/Formation", "Conducts Business Under"]` maps to `{name: 0,
@@ -119,7 +119,7 @@ function headerColumnMapping(
  * abstains.
  *
  * All three conditions are required over the table's two-value data rows: at least 4 of them, more than half of their
- * SECOND values carrying a legal designation, and more than 70% of those second values DISTINCT. `idt-2025.htm`'s
+ * second values carrying a legal designation, and more than 70% of those second values distinct. `idt-2025.htm`'s
  * "Domestic Subsidiaries" table is 5 rows, 5/5 designated, 5 distinct.
  *
  * The distinctness condition is not belt-and-braces. Charter Communications writes its jurisdiction column as
@@ -171,7 +171,7 @@ function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
  * rather than a section heading. Every row must hold at most one value, and either two of them do (an actual list) or
  * the table is literally one cell wide (a one-row list has no heading to be confused with).
  *
- * The converse is what this rule exists for: a lone value in a table that ALSO has multi-value rows is a section
+ * The converse is what this rule exists for: a lone value in a table that also has multi-value rows is a section
  * heading (`idt-2025.htm`'s "Domestic Subsidiaries") or a trailing explanatory sentence (its `"*Versature
  * Communications Corp. has registered Net2Phone Canada as a Trade Name"`, a one-row table three columns wide).
  */
@@ -188,7 +188,7 @@ function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number):
 }
 
 /**
- * Turns ONE top-level table's extracted rows into subsidiaries, given the column mapping a PRECEDING sibling table
+ * Turns one top-level table's extracted rows into subsidiaries, given the column mapping a preceding sibling table
  * established (or `null`). Returns the mapping in force at the end so the caller can carry it to the next sibling — see
  * the module docstring's "table strategy" section for the full rule order.
  */
@@ -212,7 +212,7 @@ function subsidiariesFromTable(
 	const singleColumnList = isSingleColumnNameList(rows, rawWidth)
 
 	for (const [rowIndex, row] of rows.entries()) {
-		// A row made ENTIRELY of <th> cells — a header/label row, recognized and skipped (structural certainty).
+		// A row made entirely of <th> cells — a header/label row, recognized and skipped (structural certainty).
 		// Asked of the row as EXTRACTED: right-padding adds `<td>` blanks, which say nothing about the row's markup.
 		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
@@ -331,7 +331,7 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
 }
 
 /**
- * Narrows one raw EDGAR archive document to the markup every strategy below should reason about, applied ONCE in
+ * Narrows one raw EDGAR archive document to the markup every strategy below should reason about, applied once in
  * {@linkcode parseExhibit21} so the table, list and plain-text strategies all see the same window rather than each
  * re-deriving it.
  *
@@ -348,7 +348,7 @@ const LI_OPEN_PATTERN = /<li[^>]*>/gi
 const LI_CHILD_BOUNDARY_PATTERN = /<ul[^>]*>|<ol[^>]*>|<li[^>]*>|<\/li>/i
 
 /**
- * Extracts each `<li>`'s OWN text — the content up to (but not including) its first child `<ul>`/`<ol>`/`<li>`, or its
+ * Extracts each `<li>`'s own text — the content up to (but not including) its first child `<ul>`/`<ol>`/`<li>`, or its
  * closing `</li>`, whichever comes first. This is what lets a NESTED subsidiary list flatten correctly without
  * balanced-tag tracking: scanning every `<li[^>]*>` open tag in document order and stopping each one's own text at its
  * first child element naturally separates a parent `<li>`'s own line from its nested `<ul>`'s own `<li>` children,
@@ -375,12 +375,12 @@ function extractListItemOwnText(html: string): string[] {
 
 /**
  * Strips markup and splits into non-blank lines — the plain-text strategy's input prep. Whitespace inside a line is
- * deliberately NOT collapsed (unlike a table cell's text): a fixed-width plain-text Exhibit 21 uses a run of 2+ spaces
+ * deliberately not collapsed (unlike a table cell's text): a fixed-width plain-text Exhibit 21 uses a run of 2+ spaces
  * as its column separator, and {@linkcode splitCandidateLine} needs that run intact to find it.
  *
  * BLOCK-level element boundaries become real line breaks, so a minified document with no `\n` anywhere in it still
  * separates one paragraph per logical line. The layout reading is what makes that safe: two adjacent block boundaries
- * (`</p><p>`) are ONE separation, where a per-tag rewrite fabricates a second one.
+ * (`</p><p>`) are one separation, where a per-tag rewrite fabricates a second one.
  */
 function extractPlainTextLines(html: string): string[] {
 	const text = htmlToLayoutText(html, BLOCK_ELEMENTS)
@@ -389,10 +389,10 @@ function extractPlainTextLines(html: string): string[] {
 }
 
 /**
- * True when `value` is JUST a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else —
+ * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else —
  * `canonicalizeOrganizationName` (`@mailwoman/record`, already used the same way by `edgar-filings.ts`) reduces such a
  * string to an empty canonical name and a non-empty `designations` list. Guards {@linkcode splitCandidateLine}'s
- * single-comma rule: a bare designation immediately after a comma is the tail of ONE entity's name (`"Horizon Services,
+ * single-comma rule: a bare designation immediately after a comma is the tail of one entity's name (`"Horizon Services,
  * Inc."`), not a jurisdiction, and the comma rule must not treat "Inc." as if it were a place.
  *
  * @todo Move to `@mailwoman/record/organization`
@@ -416,10 +416,10 @@ const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
  *
  * 1. A 2+-space (or tab) column gap — the fixed-width plain-text convention.
  * 2. A trailing `(Jurisdiction)` parenthetical — the common nested-list-item convention.
- * 3. EXACTLY one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is NOT split this way (a legal name can itself
+ * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is not split this way (a legal name can itself
  *    contain a comma, e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
  *    decision 6 abstains from the split, not from recording the line. Nor is a single comma split when the text after
- *    it is JUST a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
+ *    it is just a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
  *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and "Inc." is
  *    not a place a comma could plausibly be introducing.
  *
@@ -464,7 +464,7 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 }
 
 /**
- * A leading bullet or list-marker glyph — markup convention, not part of a name. Stripped from a candidate line BEFORE
+ * A leading bullet or list-marker glyph — markup convention, not part of a name. Stripped from a candidate line before
  * the name/jurisdiction split runs (module docstring, "Line/list refinements"): `"• Bandwidth.com CLEC, LLC (Delaware,
  * United States)"` must become `"Bandwidth.com CLEC, LLC (Delaware, United States)"` before
  * {@linkcode splitCandidateLine} ever sees the (fabricated, tag-stripping-artifact) 2+-space gap the bullet leaves
@@ -560,9 +560,9 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
  * True when every extracted cell of every extracted row is blank — a purely decorative border/spacer table (the kind
  * Word/Workiva exports use as a horizontal-rule substitute) carrying no subsidiary data at all, as opposed to a real
  * table that legitimately abstains on some or all of its rows (`subsidiariesFromTableRows`'s job, unchanged here).
- * `shentel-2025.htm` states its subsidiary list as block text OUTSIDE two such decorative tables; committing to the
- * (empty) table strategy the instant ANY `<table>` tag exists would silence the real list this document states. A table
- * with even one real non-blank cell still commits to the table strategy as before — reading a REAL table's data with
+ * `shentel-2025.htm` states its subsidiary list as block text outside two such decorative tables; committing to the
+ * (empty) table strategy the instant any `<table>` tag exists would silence the real list this document states. A table
+ * with even one real non-blank cell still commits to the table strategy as before — reading a real table's data with
  * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory, not this
  * check's.
  */
@@ -572,14 +572,14 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 
 /**
  * Parses an Exhibit 21 document into its subsidiary list. Decision 6 binds: a row/line that cannot be confidently
- * extracted is counted (`unparseable`) and dropped, never guessed at — this function NEVER throws on malformed input
+ * extracted is counted (`unparseable`) and dropped, never guessed at — this function never throws on malformed input
  * (criterion 3); the worst case for a document this parser cannot make sense of at all is `{subsidiaries: [],
  * unparseable: N}`.
  *
  * Runs {@linkcode documentWindow} once, first — every strategy below reasons about the same window, never the raw
  * archive document with its SGML envelope still attached.
  *
- * Tries three shapes, in order, and commits to the FIRST one it detects (a real Exhibit 21 uses one consistent format
+ * Tries three shapes, in order, and commits to the first one it detects (a real Exhibit 21 uses one consistent format
  * throughout, so there's no ambiguity in picking the first match rather than trying all three and merging):
  *
  * 1. An HTML `<table>` — the common modern shape. A table every one of whose cells is blank

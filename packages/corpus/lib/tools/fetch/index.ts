@@ -8,7 +8,7 @@
  *   files **plus** a sibling `MANIFEST.json` capturing the origin URL, fetch timestamp, byte count,
  *   and sha256 so downstream adapters can verify provenance.
  *
- *   The corpus build pipeline itself does NOT call these modules — the existing convention is for
+ *   The corpus build pipeline itself does not call these modules — the existing convention is for
  *   operators to pre-download into an out-root and point adapters at the resulting files. These
  *   modules exist for **reproducibility** (disk-loss recovery, weekly refresh, fresh-environment
  *   bootstrap).
@@ -60,7 +60,7 @@
  *   - `juso-kr` — the Korean road-name address register (주소DB, plus the English road-name DB) from
  *       business.juso.go.kr, the LABEL source for Korean. Tier B ("이용허락범위 제한 없음", attribution).
  *   - `localdata-kr` — Korea's local-government permit registry, one CSV per category, each row carrying
- *       the lot-number AND road-name address of one premises plus a coordinate. The NOISY source for
+ *       the lot-number and road-name address of one premises plus a coordinate. The NOISY source for
  *       Korean. Tier B (same label as `juso-kr`).
  *   - `gcis-tw` — Taiwan's company and business registers from the economic ministry's open-data
  *       platform, 148 files by region and industry. The NOISY source for Taiwanese. Tier B (Open

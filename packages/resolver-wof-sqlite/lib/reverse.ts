@@ -7,12 +7,12 @@
  *   implementation, per the 2026-06-11 scoping notes:
  *
  *   1. **Candidate fetch** — the admin DB's `place_bbox` R*Tree (built by `fts.ts`) for places whose
- *        bbox contains the point, smallest-area-first (so the FIRST polygon confirmation is the
+ *        bbox contains the point, smallest-area-first (so the first polygon confirmation is the
  *        deepest).
  *   2. **PIP confirmation** — ray-cast (geo.ts, the canonical TS port of
  *        `scripts/eval/pip-containment.py`) against the polygon sidecar DB (`wof-polygons.db`,
  *        `polygons(id, geom)` with GeoJSON text — built by `scripts/build-wof-polygons.mjs` for the
- *        demo map). A candidate whose polygon EXISTS but rejects the point is a bbox false positive
+ *        demo map). A candidate whose polygon exists but rejects the point is a bbox false positive
  *        and is dropped entirely; a candidate with no polygon row stays eligible for the
  *        approximate fallback.
  *   3. **Approximate descent** — WOF carries point geometry for most localities (#292: ~99% of JP
@@ -21,7 +21,7 @@
  *        locality → …) through the winner's DESCENDANTS (the `ancestors` table, reversed), taking
  *        the PIP-confirmed child when a polygon exists and the nearest-centroid child otherwise —
  *        the latter flagged `containment: "approximate"`, the demo's honesty convention.
- *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the SAME walk forward resolution
+ *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the same walk forward resolution
  *        uses (`ancestry.ts`, #404), so consumers get a symmetric tree.
  *
  *   Reverse quality is country-dependent (polygon coverage: see the #292 JP finding); `containment`
@@ -51,7 +51,7 @@ const MAX_ABS_LONGITUDE = 180
 /**
  * How the deepest returned place was confirmed:
  *
- * - `"polygon"` — the point ray-cast INSIDE the place's real (DP-simplified) admin boundary.
+ * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
  * - `"approximate"` — the place has no polygon on record; it won by nearest-centroid among the candidates whose bbox (or
  *   parent) contains the point. The same honesty convention as the demo's approximate circles — country-dependent data
  *   reality, surfaced instead of hidden.
@@ -222,7 +222,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Synchronous core of {@link reverseGeocode} — every step underneath is already sync `node:sqlite`, so this is the
-	 * REAL implementation; the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
+	 * real implementation; the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
 	 * Exposed directly for callers that can't await mid-call (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`,
 	 * whose `POIIntentOutcome` return type is synchronous by contract — see `poi-intent.ts`'s `deps.execute`).
 	 */
@@ -318,7 +318,7 @@ export class WOFReverseGeocoder implements Disposable {
 				currentConfirmed = nextConfirmed
 				currentDistanceKm = nextKm
 			}
-			// An empty tier is NOT terminal — counties without localadmins jump straight to locality.
+			// An empty tier is not terminal — counties without localadmins jump straight to locality.
 		}
 
 		// Hierarchy assembly via the shared ancestor walk. If the descent crossed an ancestry gap

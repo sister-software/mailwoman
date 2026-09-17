@@ -101,7 +101,7 @@ export function titleCaseInput(text: string): string {
 }
 
 /**
- * True when `text` is PURE-ASCII ALL-LOWERCASE: it has cased ASCII letters and ZERO uppercase, and NO non-ASCII
+ * True when `text` is pure-ASCII all-lowercase: it has cased ASCII letters and zero uppercase, and no non-ASCII
  * characters. The mirror of {@link isAllCapsInput} for the #829 class — fully-lowercase input (`1600 pennsylvania ave
  * nw, washington dc`) is as out-of-domain as all-caps for a mixed-case-trained model: it fragments the street and drops
  * the state code (the Gauntlet metamorphic INV[lower] failures). Same pure-ASCII + 3-letter guards as the all-caps
@@ -130,8 +130,8 @@ export function isAllLowerInput(text: string): boolean {
 /**
  * Restore a fully-lowercase input to the canonical mixed-case the model was trained on: title-case each ASCII run ≥3
  * letters (`pennsylvania` → `Pennsylvania`) and UPPERCASE each run ≤2 letters (`dc` → `DC`, `nw` → `NW`, `lg` → `LG`).
- * The ≤2 handling is where this differs from {@link titleCaseInput}: on all-caps input those tokens are ALREADY shouting
- * so #690 preserves them; on all-lowercase input they arrive as `dc`/`ny` and must be UPPERCASED to reach the same form
+ * The ≤2 handling is where this differs from {@link titleCaseInput}: on all-caps input those tokens are already shouting
+ * so #690 preserves them; on all-lowercase input they arrive as `dc`/`ny` and must be uppercased to reach the same form
  * — every ≤2-letter token in an address is an abbreviation the model reads best uppercase (state codes NY/DC,
  * directionals N/NW/SE, suffixes ST/RD, the NL postcode suffix LG). Length-preserving — token offsets unchanged. Net:
  * `1600 pennsylvania ave nw, washington dc` and `1600 PENNSYLVANIA AVE NW, WASHINGTON DC` both canonicalize to `1600
@@ -144,7 +144,7 @@ export function restoreLowerInput(text: string): string {
 }
 
 /**
- * Normalize a shouting OR whispering ASCII input to canonical mixed-case before the model; mixed-case and
+ * Normalize a shouting or whispering ASCII input to canonical mixed-case before the model; mixed-case and
  * accented/non-Latin input pass through byte-identically. The parser's #690 (all-caps) + #829 (all-lowercase) hook.
  */
 export function normalizeInputCase(text: string): string {

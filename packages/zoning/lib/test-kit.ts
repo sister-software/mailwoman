@@ -37,12 +37,12 @@ import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index
 import { GZT_SOURCE_EPSG, GZT_UNZONED_LOCAL_CODE } from "#vocabulary"
 
 /**
- * The exterior ring builder, under THIS service's convention. Clockwise.
+ * The exterior ring builder, under this service's convention. Clockwise.
  */
 export const exteriorRing = clockwiseRing
 
 /**
- * The hole ring builder, under THIS service's convention. Counter-clockwise.
+ * The hole ring builder, under this service's convention. Counter-clockwise.
  */
 export const holeRing = counterClockwiseRing
 
@@ -53,7 +53,7 @@ export const FIXTURE_ORIGIN = { lon: -5.99, lat: 53.3 } as const
 
 /**
  * Side of a fixture zone, in degrees. About 1.1 km at this latitude — several res-10 cells across, so a zone has a real
- * interior AND a real fringe.
+ * interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
 
@@ -121,9 +121,9 @@ export function fixtureFeature(
 
 /**
  * The fixture set: two adjacent zones, one of them holed the way this service encodes holes; a second plan over the
- * SAME ground as the first; a zone smaller than a cell; and a zone the authority states as unzoned.
+ * same ground as the first; a zone smaller than a cell; and a zone the authority states as unzoned.
  *
- * THE OVERLAP BETWEEN PLANS IS THE POINT. A point inside the first zone must answer with BOTH rows, each naming its own
+ * THE OVERLAP BETWEEN PLANS IS THE POINT. A point inside the first zone must answer with both rows, each naming its own
  * plan — which is what proves a plan is part of the claim rather than a parameter of it.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
@@ -182,7 +182,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkDescription: null,
 			crosswalkRollup: "N/A",
 		}),
-		// The SAME ground as zone A under a second plan, and the same local code mapped to a DIFFERENT generic type — which
+		// The same ground as zone A under a second plan, and the same local code mapped to a different generic type — which
 		// is the shape that makes the crosswalk non-functional over an (authority, code) pair.
 		fixtureFeature(6, [[zoneA]], {
 			planID: localAreaPlan.id,

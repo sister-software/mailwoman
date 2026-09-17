@@ -15,7 +15,7 @@
  *
  *   Two properties are required and easy to lose when transcribing:
  *
- *   1. The population base is `prominence ?? score`, NOT `score`. `prominence` carries the bounded cross-country
+ *   1. The population base is `prominence ?? score`, not `score`. `prominence` carries the bounded cross-country
  *      primary preference, so reading raw score lets a coincidental foreign alias ride population back over a primary
  *      whenever a viewport hint happens to be present.
  *   2. The combined value is PERSISTED into `prominence`. The resolver walk re-sorts by `prominence ?? score`, so a

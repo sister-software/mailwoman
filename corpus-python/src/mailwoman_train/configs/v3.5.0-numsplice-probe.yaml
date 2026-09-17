@@ -1,7 +1,7 @@
 # === v3.5.0-numsplice-probe — B4c: the number-piece vocab splice. 2k PROBE. ===
 #
 # THE ONE VARIABLE vs v310: the tokenizer. v0.11.0-numsplice adds word-start number pieces 10-9999
-# to v0.9.0-multisplice, so `178` -> `▁178` (ONE piece, ZERO postcode-leaning continuations) instead
+# to v0.9.0-multisplice, so `178` -> `▁178` (one piece, zero postcode-leaning continuations) instead
 # of `[▁1,7,8]` (two continuations). Attacks the ROOT of the cross-lingual length-conditioned digit
 # defect: the model faithfully reproduced its corpus's P(I-postcode|continuation) prior (0.043@2d ->
 # 0.879@5d, docs/.../digit-incoherence-is-cross-lingual.md) because digits tokenized per-character.
@@ -14,23 +14,23 @@
 # PRE-REGISTERED READ:
 #   PRIMARY — the digit defect: `aleja Wojska Polskiego 178` -> house_number (not postcode); board 3
 #     bare-street-hn (0.693) and slash-hn (0.650) rise. This is the mechanism test.
-#   GUARD (the 5-digit risk) — a 5-digit US ZIP now tokenizes `▁9021,0` (4-digit piece + 1), FEWER
-#     continuations than before, so postcode recognition COULD regress. The 6 demo presets (20500,
+#   GUARD (the 5-digit risk) — a 5-digit US ZIP now tokenizes `▁9021,0` (4-digit piece + 1), fewer
+#     continuations than before, so postcode recognition could regress. The 6 demo presets (20500,
 #     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
-#     negative class) MUST hold. If US 5-digit postcode drops, the splice range needs 5-digit pieces
+#     negative class) must not drop. If US 5-digit postcode drops, the splice range needs 5-digit pieces
 #     or a different reduce.
 #   DO-NO-HARM — FR fragment board + global parity hold.
-#   NEGATIVE — if the digit rows do NOT improve after single-piece-ing the numbers, the vocab is NOT
+#   NEGATIVE — if the digit rows do not improve after single-piece-ing the numbers, the vocab is not
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
 #
-# NOT A SHIP. A PASS justifies an 8k + the 5-digit range decision. Promotion is the operator's act.
+# Not a ship. A pass justifies an 8k + the 5-digit range decision. Promotion is the operator's act.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.11.0-numsplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -54,7 +54,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -85,8 +85,8 @@ data:
     synth-nl-postcode: 6.0
     # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
   train_rows_per_epoch: 1000000
@@ -104,7 +104,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -129,10 +129,11 @@ model: # VERBATIM v2.4.1.
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -171,7 +172,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
   # route the cue; the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v350-numsplice-probe-s42/checkpoints

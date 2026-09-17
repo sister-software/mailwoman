@@ -21,7 +21,7 @@ export interface DescribeColumn {
 }
 
 /**
- * PURE column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
+ * Pure column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
  * own. Overture's places-theme category struct has gone by `taxonomy` (newer) and `categories` (older); prefer
  * `taxonomy.primary` when the column is present.
  */
@@ -32,7 +32,7 @@ export function chooseCategoryColumn(
 }
 
 /**
- * PURE: whether the `brand` STRUCT column is present in this release's places schema.
+ * Pure: whether the `brand` STRUCT column is present in this release's places schema.
  */
 export function hasBrandColumn(describeRows: readonly DescribeColumn[]): boolean {
 	return describeRows.some((r) => r.column_name === "brand")
@@ -53,9 +53,9 @@ export interface CountryExpression {
 }
 
 /**
- * PURE column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
+ * Pure column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
  * own (mirrors {@link chooseCategoryColumn}'s pattern). The Overture places-theme has, as of the 2026-05-20.0 release,
- * NO top-level `country` column (unlike the addresses theme, whose SQL this one is templated from) — country instead
+ * no top-level `country` column (unlike the addresses theme, whose SQL this one is templated from) — country instead
  * lives inside the `addresses` LIST<STRUCT<...>> column. Prefers a top-level `country` column when present (a future
  * release may add one back), falling back to `addresses[1].country` (DuckDB lists are 1-based).
  *
@@ -153,7 +153,7 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 	)
 
 	// brand.wikidata only: the QID is the join key; the row's own name carries the display form.
-	// brand.names.primary is deliberately NOT extracted (review 2026-07-18).
+	// brand.names.primary is deliberately not extracted (review 2026-07-18).
 	const brandExprs = hasBrand ? "brand.wikidata AS brand_wikidata" : "CAST(NULL AS VARCHAR) AS brand_wikidata"
 
 	const countryParquet: Record<string, string> = {}

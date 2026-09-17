@@ -1,16 +1,16 @@
-"""The JP 47-label head gets its own param group — proved on the SHIPPED config, not a fixture.
+"""The JP 47-label head gets its own param group — proved on the shipped config, not a fixture.
 
 The v8 plans all carry the #727 head-expansion rule ("a freshly-added head/label group needs its own
 param-group LR… bake this into the JP training config"). ``test_resurrection.py`` already pins the
 generic mechanism on a 33-label toy. What was missing, and what burned a launch cycle in the 2026-07-22
-en-GB run A, is proof that a REAL config file actually produces the groups it means to: that YAML's
+en-GB run A, is proof that a real config file actually produces the groups it means to: that YAML's
 settings were silently dropped by a stale volume-side config and the run proceeded with everything
 inert. So these tests read ``configs/v8-jp-full.yaml`` off disk and assert on what
 ``build_model`` + ``build_optimizer`` do with it.
 
 They also pin the GRANULARITY, because the plan's phrasing ("the cold new label rows") invites a
 wrong assumption. ``classifier`` is one ``nn.Linear(384, 47)``. A PyTorch param group owns whole
-tensors, so the 14 fresh JP rows (ids 33..46) CANNOT be given a different LR from the 33 stage3 rows
+tensors, so the 14 fresh JP rows (ids 33..46) cannot be given a different LR from the 33 stage3 rows
 — they share a tensor. The carve-out is the whole head or nothing, and a gradient hook is not a
 substitute (Adam's update is scale-invariant in the gradient). ``test_the_fourteen_fresh_rows_share_
 one_tensor_with_the_other_thirty_three`` states that in code so the next reader does not go looking
@@ -84,7 +84,7 @@ def test_build_optimizer_splits_the_47_label_head_into_its_own_group():
 
     classifier_params = {id(p) for p in model.classifier.parameters()}
     assert {id(p) for p in hot["params"]} == classifier_params
-    # …and the base group is everything else, non-empty (the encoder is NOT frozen here).
+    # …and the base group is everything else, non-empty (the encoder is not frozen here).
     base = optim.param_groups[0]
     assert base["params"]
     assert classifier_params.isdisjoint({id(p) for p in base["params"]})
@@ -124,7 +124,7 @@ def test_the_fourteen_fresh_rows_share_one_tensor_with_the_other_thirty_three():
 
 
 def test_the_scheduler_scales_both_groups_and_preserves_their_ratio():
-    """`LambdaLR` multiplies each group's OWN `initial_lr`, so warmup/cosine composes for free."""
+    """`LambdaLR` multiplies each group's own `initial_lr`, so warmup/cosine composes for free."""
     cfg = load_config(FULL)
     model = _model(cfg)
     optim, _ = _optimizer(cfg, model)
@@ -167,7 +167,7 @@ def test_dropping_the_head_lr_collapses_to_the_probe_recipes_single_group():
 
 
 def test_a_47_label_checkpoint_will_not_load_into_a_33_label_head():
-    """The receipt behind the config's from-scratch note: strict=False does NOT tolerate a size
+    """The receipt behind the config's from-scratch note: strict=False does not tolerate a size
     mismatch, so warm-starting the probe checkpoint would crash rather than partially apply."""
     small, big = torch.nn.Linear(384, 33), torch.nn.Linear(384, 47)
     try:

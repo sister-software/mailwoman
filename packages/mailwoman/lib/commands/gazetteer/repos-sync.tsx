@@ -8,7 +8,7 @@
  *
  *   THE DIVISION OF LABOUR MATTERS, because two commands touching the same directories otherwise looks like an
  *   accident. `gazetteer inspect sync` clones and pulls; it now resolves each repo's origin through
- *   `resolveWOFRepoOrigin`, so a NEW clone comes from our fork when one exists. What it cannot do is fix an EXISTING
+ *   `resolveWOFRepoOrigin`, so a new clone comes from our fork when one exists. What it cannot do is fix an EXISTING
  *   checkout: `synchronizeRepo` pulls in place and never rewrites a remote, so a directory cloned from upstream before
  *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
  *   here, and it is opt-in twice (`--apply --repoint`) because it changes what the next build ingests.
@@ -133,7 +133,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// The vintage stamp lives OUTSIDE the repos root: `ingestWOF` globs the root and a stray file inside it is one
+		// The vintage stamp lives outside the repos root: `ingestWOF` globs the root and a stray file inside it is one
 		// more thing for that glob to consider.
 		const vintagePath = String(dataRootPath("wof", "repos-vintage.json"))
 

@@ -8,7 +8,7 @@
  *
  *   THESE ARE API REQUESTS AND THEY GO THROUGH `APIClient`. Small bodies, repeated calls, a third-party
  *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
- *   need. The 70 MB geodatabase is NOT one of them: it is a file transfer, it streams to disk on raw
+ *   need. The 70 MB geodatabase is not one of them: it is a file transfer, it streams to disk on raw
  *   `fetch`, and `download.ts` says so in place.
  *
  *   THREE MEASURED CLIENT BEHAVIORS ARE ENCODED HERE RATHER THAN WRITTEN DOWN SOMEWHERE ELSE.
@@ -21,7 +21,7 @@
  *      IGNORES `Range` — a ranged GET returns 200 with the whole 70,296,882-byte body — so a size probe
  *      starts a real transfer. {@linkcode EANCERMClient.readCatalogueRecord} reads the ISO revision date out
  *      of the catalogue entry instead, which is the authority's own statement about what changed.
- *   3. THE ATTRIBUTION COMES FROM THE STRUCTURED LICENCE FIELD. The abstract carries the statement TWICE and
+ *   3. THE ATTRIBUTION COMES FROM THE STRUCTURED LICENCE FIELD. The abstract carries the statement twice and
  *      the first copy — inherited from the superseded 2018–2021 record — has no year. The ISO record carries
  *      no `gmd:credit` element at all. {@linkcode parseAttributionStatement} refuses the yearless copy, so a
  *      reader that falls back to the abstract cannot take the wrong one.
@@ -137,7 +137,7 @@ export function parseAttributionStatement(text: string): string {
 		const nextTag = text.indexOf("<", from)
 
 		// `Math.min` over the two ends, with an absent end reading as the end of the string rather than as `-1` — which
-		// would sort BELOW every real index and truncate every statement to nothing.
+		// would sort below every real index and truncate every statement to nothing.
 		const end = Math.min(nextMarker === -1 ? text.length : nextMarker, nextTag === -1 ? text.length : nextTag)
 		const statement = text.slice(from, end).trim()
 
@@ -214,7 +214,7 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * The feature count the WFS reports for one layer — `resultType=hits`, which returns the count without a single
 	 * geometry.
 	 *
-	 * This is the SECOND path in the build's two-path agreement check: the same authority, a different distribution
+	 * This is the second path in the build's two-path agreement check: the same authority, a different distribution
 	 * channel. A geodatabase whose feature count disagrees with the live service is not a file this build should be
 	 * writing into a sealed artifact.
 	 */

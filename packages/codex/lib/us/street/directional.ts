@@ -168,7 +168,7 @@ export interface DirectionalMatch {
 }
 
 /**
- * Look up a directional by abbreviation OR name (any variation), returning both forms.
+ * Look up a directional by abbreviation or name (any variation), returning both forms.
  */
 export function lookupDirectional(input: unknown): DirectionalMatch | null {
 	if (!input || typeof input !== "string") return null
@@ -185,7 +185,7 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 // ── Codex extract-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
 
 /**
- * If the FIRST whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical
+ * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical
  * name, its abbreviation, and the matched surface word. Null otherwise. (The leading-end counterpart of
  * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "NORTH
  * EAST" form is normalized to its one-word variant in real US streets, which this matches via the lookup.

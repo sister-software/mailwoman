@@ -8,7 +8,7 @@
  *   Shared by `WOFSQLitePlaceLookup` (lazy build via `buildFTS: true`) and the operator-side
  *   `mailwoman gazetteer build fts` CLI (ahead-of-time build to avoid first-open latency in production).
  *
- *   Upstream WOF SQLite distributions do NOT ship FTS5. The index lives in a `place_search` virtual
+ *   Upstream WOF SQLite distributions do not ship FTS5. The index lives in a `place_search` virtual
  *   table whose rows mirror `(spr.id, spr.name, GROUP_CONCAT(names.name))` — one current,
  *   non-deprecated place per row, with all alternate names concatenated into a single search-token
  *   bag.
@@ -59,11 +59,11 @@ export const PLACE_SEARCH_TABLE = "place_search"
  *   length stats are already the known #189 problem.
  *
  * Interaction with #189 (split `alt_names` into its own FTS table for independent BM25 length stats): the separator
- * SURVIVES that split as proposed — #189 still GROUP_CONCATs all aliases into one `place_search_alt` row per place, so
+ * survives that split as proposed — #189 still GROUP_CONCATs all aliases into one `place_search_alt` row per place, so
  * both the separator and the bag-parsing exact check (`aliasBagExactMatch`) carry over unchanged, just pointed at the
  * new table. Only if #189 were instead built as one-row-per-alias would both become moot (per-alias rows give exact
  * equality and phrase isolation for free). Sequencing: if #189 lands before the next slim-DB artifact rebuild, fold
- * both into ONE rebuild rather than shipping two FTS schema bumps.
+ * both into one rebuild rather than shipping two FTS schema bumps.
  */
 export const ALIAS_SEPARATOR = "\uE000"
 
@@ -74,7 +74,7 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
  * The query/name fold every exact-tier comparison uses: lowercase, trim, collapse internal whitespace. The `alt_names`
- * bag is compared alias-by-alias against a query folded THIS way, so the fold lives beside the bag parser — every
+ * bag is compared alias-by-alias against a query folded this way, so the fold lives beside the bag parser — every
  * consumer (the Node resolver's exact tier, the WASM resolver, the name-exact sub-tier sort) folds through this one
  * function.
  */
@@ -101,7 +101,7 @@ export function foldQueryText(input: string): string {
  * @param altNames The `alt_names` bag from `place_search` (null when the row has no aliases).
  * @param normalizedQuery The query, pre-normalized: lowercased, trimmed, internal whitespace collapsed (every consumer
  *   already normalizes this way).
- * @param anyStrictExact Whether ANY candidate in the pool already matched strictly (canonical name or region
+ * @param anyStrictExact Whether any candidate in the pool already matched strictly (canonical name or region
  *   abbreviation). Only consulted for legacy bags.
  */
 export function aliasBagExactMatch(altNames: string | null, normalizedQuery: string, anyStrictExact: boolean): boolean {
@@ -138,7 +138,7 @@ export const PLACE_POPULATION_TABLE = "place_population"
  * ranking backbone) and `encyclopedic` (the Wikipedia join, NULL when there is no article). Built by `mailwoman
  * gazetteer importance`; schema and derivations in `place-importance-schema.ts`.
  *
- * The lookup reads ONLY `encyclopedic` from it, and only to CARRY the value onto the result — referential is derived
+ * The lookup reads only `encyclopedic` from it, and only to carry the value onto the result — referential is derived
  * from the population already joined, and no ORDER BY anywhere touches this table (ROAD_TO_V9 §2). Sparse and
  * schema-versioned: a pre-split gazetteer has this table with a single conflated `importance` column instead, which the
  * lookup's column probe deliberately refuses to read.
@@ -174,7 +174,7 @@ export interface BuildPlaceSearchFTSResult {
 
 export interface BuildPlaceSearchFTSOpts {
 	/**
-	 * Drop the existing `place_search` AND `place_bbox` tables before building. Default false — if either already exists
+	 * Drop the existing `place_search` and `place_bbox` tables before building. Default false — if either already exists
 	 * the corresponding build step is skipped. Set true when you want to rebuild against an updated `spr` / `names`
 	 * snapshot.
 	 */
@@ -190,11 +190,11 @@ export interface BuildPlaceSearchFTSOpts {
 }
 
 /**
- * Build (or rebuild, with `drop: true`) the `place_search` FTS5 virtual table AND the `place_bbox` R*Tree virtual table
+ * Build (or rebuild, with `drop: true`) the `place_search` FTS5 virtual table and the `place_bbox` R*Tree virtual table
  * from the existing `spr` + `names` tables in a WOF SQLite distribution.
  *
- * The FTS5 index is used for name-based MATCH queries; the R*Tree is used for bbox + proximity filtering. Both are pure
- * SQLite — no extensions required.
+ * The FTS5 index is used for name-based `MATCH` queries; the R*Tree is used for bbox + proximity filtering. Both are
+ * pure SQLite — no extensions required.
  *
  * Returns a `BuildPlaceSearchFTSResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
  * DB skips whichever indexes already exist.
@@ -232,7 +232,7 @@ export function buildPlaceSearchFTS<DB>(
 
 		onProgress("populating")
 
-		// Excludes only definitively-not-current places. WOF's `is_current` carries TWO conventions:
+		// Excludes only definitively-not-current places. WOF's `is_current` carries two conventions:
 		// `-1` (modern Who's On First) and `1` (legacy Mapzen-era), both meaning "currently valid".
 		// Only `0` means "no longer current". Filtering on `= -1` strict (as Phase 4.2 did) excluded
 		// ~42% of admin-US and ~68% of postcode-US — see #91 for the diagnostic + magnitude.
@@ -278,7 +278,7 @@ export function buildPlaceSearchFTS<DB>(
 		onProgress("creating-bbox")
 
 		// R*Tree requires INTEGER PRIMARY KEY (id) + paired min/max for each indexed dimension.
-		// `rtree` (not `rtree_i32`) keeps coordinates as REAL — what we want for WGS-84.
+		// `rtree` (not `rtree_i32`) keeps coordinates in the SQLite REAL type — what we want for WGS-84.
 		db.exec(`
 			CREATE VIRTUAL TABLE ${PLACE_BBOX_TABLE} USING rtree(
 				id,
@@ -289,7 +289,7 @@ export function buildPlaceSearchFTS<DB>(
 
 		onProgress("populating-bbox")
 
-		// Only index places that have non-zero coordinates AND a real bbox. WOF stores both the
+		// Only index places that have non-zero coordinates and a real bbox. WOF stores both the
 		// centroid (latitude/longitude) and the bounding box (min_*/max_*). A subset of rows have
 		// all-zero coordinates — likely placeholders for deprecated / unmapped entries; the
 		// is_current / is_deprecated filter mostly catches them, but we double-check at insert.
@@ -317,7 +317,7 @@ export function buildPlaceSearchFTS<DB>(
 
 	const bboxCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_BBOX_TABLE}`).get() as { n: number }
 
-	// NOTE: `place_population` is NOT built here. `scripts/build-unified-wof.ts` extracts
+	// NOTE: `place_population` is not built here. `scripts/build-unified-wof.ts` extracts
 	// `wof:population` straight into that table at ingest (the canonical source carries no `geojson`
 	// table), and `build-slim` copies it through. This function only owns the two FTS-derived virtual
 	// tables, both of which build from `spr` + `names` alone. `placePopulationExists` lets callers

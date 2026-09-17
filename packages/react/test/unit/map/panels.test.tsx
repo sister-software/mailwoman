@@ -200,7 +200,7 @@ test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () 
 	await userEvent.type(input, "90210")
 
 	// A short wait past the debounce — a digit-leading query never fires the fetcher. Held in act() so the
-	// debounce's own state update + the abstaining effect (which DO run) settle in-scope, not unwrapped.
+	// debounce's own state update + the abstaining effect (which do run) settle in-scope, not unwrapped.
 	await actDelay(60)
 	expect(autocomplete).not.toHaveBeenCalled()
 	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)

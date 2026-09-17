@@ -104,7 +104,7 @@ describe("the never-stale shim", () => {
 			// which is true in isolation and false in the suite it runs in.
 			expect(report.tools_changed).toBe(false)
 
-			// The plumbing each fork owns, which IS load-independent: a worker reports the fingerprint it booted
+			// The plumbing each fork owns, which is load-independent: a worker reports the fingerprint it booted
 			// against, and the restart report carries each fork's own value rather than re-reading one for both.
 			expect(report.previous_boot_fingerprint).toBe(beforeStatus.boot_tree_fingerprint)
 

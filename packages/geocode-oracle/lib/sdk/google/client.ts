@@ -65,7 +65,7 @@ import {
 } from "#sdk/google/types"
 
 /**
- * The Geocoding API endpoint every request in this file is issued against. Forward AND reverse geocoding and place-ID
+ * The Geocoding API endpoint every request in this file is issued against. Forward and reverse geocoding and place-ID
  * lookup are all this one URL — they differ only in which of `address` / `latlng` / `place_id` is supplied.
  */
 export const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
@@ -157,7 +157,7 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	requestsPerMinute?: number
 	/**
-	 * Time source powering the pacer, the cooldown timer, and BOTH retry backoffs. Defaults to the system clock; tests
+	 * Time source powering the pacer, the cooldown timer, and both retry backoffs. Defaults to the system clock; tests
 	 * inject a fake one so no suite ever sleeps on the wall clock.
 	 */
 	clock?: ClockLike
@@ -209,7 +209,7 @@ export interface CreateGoogleGeocoderClientOptions {
 export interface GeocodeRequestOptions {
 	/**
 	 * Restrict results to a country, as an ISO-3166 alpha-2 code. Sent as Google's `components=country:XX` filter, which
-	 * is a HARD restriction, not a bias — a match outside the country is not returned at all.
+	 * is a hard restriction, not a bias — a match outside the country is not returned at all.
 	 *
 	 * This is the change a per-country oracle sweep wants: it stops `"Springfield"` resolving to Illinois when the case
 	 * under authorship is Neuseeland's.
@@ -254,7 +254,7 @@ export interface GoogleGeocoderClientConfig extends APIClientConfig {
 	baseRetryDelayMs: number
 	/**
 	 * The clock the in-band retry backoff sleeps on. `APIClient` keeps its own copy private, so this is a second
-	 * reference to the SAME instance — `createGoogleGeocoderClient` passes one value to both.
+	 * reference to the same instance — `createGoogleGeocoderClient` passes one value to both.
 	 */
 	clock: ClockLike
 }
@@ -545,7 +545,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 /**
  * Create a Google Geocoding API client. See the file header for the full rationale.
  *
- * Throws immediately, before any request is made, when constructed without an explicit `apiKey` AND without
+ * Throws immediately, before any request is made, when constructed without an explicit `apiKey` and without
  * `GOOGLE_MAPS_API_KEY` set.
  */
 export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOptions = {}): GoogleGeocoderClient {

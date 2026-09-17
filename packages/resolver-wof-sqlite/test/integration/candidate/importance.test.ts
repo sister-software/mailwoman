@@ -12,7 +12,7 @@
  *   1. **The id disagreement.** `candidate.db` and the score source key Whitby, Ontario differently
  *        (`8143502164401` vs `8000001156384`), so an id join drops it — and dropping the foreign
  *        homonym is exactly the outcome the fame prior exists to prevent. Every fixture place here
- *        carries a DIFFERENT id on the two sides, so an id join would score nothing at all.
+ *        carries a different id on the two sides, so an id join would score nothing at all.
  *   2. **Same-name fan-out.** One country holds many places of one name. The join must give each its
  *        own score rather than the group's best, and must refuse a same-name place that is simply
  *        somewhere else.
@@ -30,7 +30,7 @@ let sourcePath: string
 /**
  * A score source in the shape `admin-global-priority-importance.db` has: `spr` + `place_importance`.
  *
- * Ids here are deliberately NOTHING like the ids a candidate build would carry — the join must not depend on them.
+ * Ids here are deliberately nothing like the ids a candidate build would carry — the join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -115,7 +115,7 @@ describe("ImportanceIndex.find", () => {
 		const index = loadImportanceIndex(sourcePath)
 
 		expect(index.find("Warwick", "US", "locality", 41.7001, -71.4162)).toBeCloseTo(0.5055, 4)
-		// The Georgia one must NOT inherit Rhode Island's 0.5055 — that is the fan-out defect.
+		// The Georgia one must not inherit Rhode Island's 0.5055 — that is the fan-out defect.
 		expect(index.find("Warwick", "US", "locality", 33.2137, -83.9224)).toBeCloseTo(0.3729, 4)
 	})
 

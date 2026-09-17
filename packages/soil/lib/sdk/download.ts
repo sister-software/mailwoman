@@ -11,7 +11,7 @@
  *   transfer is told rather than assumes: the progress stride and what a 400 means. The METADATA reads
  *   around this one do go through `APIClient` — see `client.ts`.
  *
- *   FRESHNESS IS `sacatalog.saverest`, NEVER A LENGTH PROBE, AND THE HOST LEAVES NO CHOICE. It answers `HEAD`
+ *   Freshness is `sacatalog.saverest`, never a length probe, and the host leaves no choice. It answers `HEAD`
  *   with HTTP 405 (`allow: GET`) and IGNORES `Range`: a request with `Range: bytes=0-0` returned HTTP 200 and
  *   transferred the whole 27,598,377 bytes in 7.23 s. So "check the size first" starts a real download. The
  *   cache is keyed on the version date the tabular service reports instead, and a vintage already on disk is
@@ -73,7 +73,7 @@ export interface DownloadSurveyAreaOptions {
 const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
 /**
- * What this host answers for a version date it does not hold. NOT a 404: it reads as a malformed request rather than a
+ * What this host answers for a version date it does not hold. Not a 404: it reads as a malformed request rather than a
  * missing file, which is why the message below says so and why the date comes from the catalogue rather than a guess.
  */
 const UNKNOWN_VERSION_STATUS = 400

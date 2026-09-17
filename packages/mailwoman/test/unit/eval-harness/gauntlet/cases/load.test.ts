@@ -12,13 +12,13 @@
  *   content claim outlives the source it was checked against. The deep-equal is in the history, not in prose.
  *
  *   The board id is the required one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
- *   content-addressed and NOT order-addressed: reorganizing 192 rows into 29 files is invisible to it, and
+ *   content-addressed and not order-addressed: reorganizing 192 rows into 29 files is invisible to it, and
  *   every ablation artifact measured before the migration stays comparable to every one measured after.
- *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is NOT versioned by this
+ *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is not versioned by this
  *   change, deliberately — versioning it would have declared a corpus that did not change to be a new board.
  *
  *   Everything else here is the loader's error surface. A corpus spread across 121 files warrants its keep only
- *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
+ *   if a bad row says which file and which line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -172,11 +172,11 @@ const CORPUS_SIZE = 996
  * 569 → 570, so the board id moves too.
  *
  * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
- * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
- * coordinate check already excludes the 65.9-km city row, so the country row is the only admissible answer and
- * hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass (now-PASSES
- * byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause — the
- * paragraph above under-reported that. Board id held throughout.
+ * of Djibouti" (the #1650 country-population rebuild let the bare-country repick take the top slot, 9.9 km inside the
+ * 25 km bar; the coordinate check already excludes the 65.9-km city row, so the country row is the only admissible
+ * answer and hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass
+ * (now-PASSES byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause —
+ * the paragraph above under-reported that. Board id held throughout.
  *
  * Moved again the same day — → this — by the Rochester promotion: `gb-cs-rochester-kent` flips improvement_target →
  * pass with the #1737 receipt (the candidate build's currency backfill resurrects the WOF-deprecated Kent locality
@@ -196,7 +196,7 @@ const CORPUS_SIZE = 996
  *
  * Moved again the same day — → this — by the Cairo digit re-pin: `eg-cs-1-tahrir-square-downtown` expected the
  * Arabic-Indic '١' for an input whose own text carries the Latin '1' — the oracle's canonical rendering leaked into the
- * component pin (a dual-script assertion belongs in expectComponentRenderings with BOTH forms, #34). The coordinate
+ * component pin (a dual-script assertion belongs in expectComponentRenderings with both forms, #34). The coordinate
  * half was already cured by the #1738 guard (Cairo GEORGIA → Cairo EGYPT, 101 m). Pin + note edit; the board id holds.
  * The row then promoted the same day — byte-identical now-PASSES across two consecutive full-board runs.
  *
@@ -220,7 +220,7 @@ const CORPUS_SIZE = 996
  * Moved 2026-09-01 — `9151f474…` → `8eacc945…` — by PROSE ONLY, which makes it the first move here that changes no
  * measurement. Twelve `note` fields carried the retired four-way word; each now names what it meant (a per-state or
  * per-country database, the LINZ promote, a corpus recipe output). Row count stays 651 and every `id`, `input`,
- * `expectComponents`, `expectLat`/`expectLon` and tolerance is byte-identical, so the board id below does NOT move —
+ * `expectComponents`, `expectLat`/`expectLon` and tolerance is byte-identical, so the board id below does not move —
  * the same reason it held across the 2026-08-06 `expectPlaceName` edit.
  *
  * It still has to move, because `note` is in {@link SEED_CASE_KEY_ORDER} and the hash is a function of the whole
@@ -233,7 +233,7 @@ const CORPUS_HASH = "3843f437072ae3fc16ad9cebcd74b4e1c3dae228fc3975b3447524cdf39
 /**
  * `ablationBoardID` of the corpus.
  *
- * The id is content-addressed and not order-addressed, which is what carried it UNCHANGED across the 2026-08-05 array →
+ * The id is content-addressed and not order-addressed, which is what carried it unchanged across the 2026-08-05 array →
  * JSONL migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
  * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
  * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode board on 2026-08-11

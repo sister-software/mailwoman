@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Gauntlet regression runner — the conditional, curated layer (the executable bug log). Loads `regression.db`,
- *   runs every `status=pass` case through the FULL pipeline, and asserts the ASSEMBLED output: coordinate
+ *   runs every `status=pass` case through the full pipeline, and asserts the ASSEMBLED output: coordinate
  *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
- *   fixed bug must STAY fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
+ *   fixed bug must stay fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
  *   capture is the Pelias trap); the metamorphic + held-out layers carry breadth.
  *
  *   The grading itself lives in `check-case.ts` (pure, unit-tested); the freshness refusal that runs before
@@ -111,7 +111,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
-		// A row carrying `locale` runs under THAT locale's overlay instead of the truth country's: a
+		// A row carrying `locale` runs under that locale's overlay instead of the truth country's: a
 		// #1585 locale-arm row like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
 		// production route goes through the US register. The region subtag is the overlay key.
 		const overlayCountry = routeCountry(c)
@@ -173,9 +173,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
-	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
-	// unpinned run is now the ON configuration and the run whose firing count a reader needs.
+	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned off. Keying this on the
+	// enabled pin was right while the library default was off and wrong the moment it flipped (2026-08-05): the
+	// standard unpinned run now has the pass enabled, and that is the run whose firing count a reader needs.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

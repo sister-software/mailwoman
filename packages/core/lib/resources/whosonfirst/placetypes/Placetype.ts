@@ -76,6 +76,7 @@ export class Placetype implements Disposable {
 
 		const definitionPaths = Globerator.from("*.json", {
 			cwd: repoDirectory("placetypes"),
+			absolute: true,
 		})
 
 		const batchIterator = parallelMap(

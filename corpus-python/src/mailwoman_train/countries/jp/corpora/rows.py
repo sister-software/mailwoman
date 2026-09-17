@@ -1,6 +1,6 @@
 """Rendering one Japanese address in one register, and verifying what came out.
 
-A register is a way of writing the SAME address: the source's own surface, the chōme in Arabic
+A register is a way of writing the same address: the source's own surface, the chōme in Arabic
 numerals, the chōme folded into the number, the long designator form, or the municipality as its
 kana reading. The corpus carries all of them because a user types all of them, and three of the
 five appear in zero source rows — synthesis is the only way they reach the model.
@@ -23,7 +23,7 @@ from ....text.kana import int_to_kanji
 
 LABEL_SET_NAME = "stage3-jp"
 
-# Same source string as the probe corpus. An unlisted source is DROPPED by ``source_weights``, so a
+# Same source string as the probe corpus. An unlisted source is dropped by ``source_weights``, so a
 # new name would silently empty the feed of any config that names the probe's — the corpus_dir
 # already distinguishes the two corpora.
 SOURCE = "overture-jp"
@@ -36,10 +36,10 @@ _COMPACT = re.compile(r"^[0-9]+(?:-[0-9]+)*$")
 REGISTER_WEIGHTS: dict[str, float] = {
     # The source's own surface: kanji chōme + compact banchi-go. The postal-official register.
     "native": 0.40,
-    # 二丁目 → 2丁目. Ubiquitous in typed input and ABSENT from the source (0 of 3,139,164).
+    # 二丁目 → 2丁目. Ubiquitous in typed input and absent from the source (0 of 3,139,164).
     "arabic_chome": 0.25,
     # Chōme folded into the number: 八島町2-3-16. This is D4's named compact form, and the 3-part
-    # compact number appears in ZERO source rows — only synthesis puts it in front of the model.
+    # compact number appears in zero source rows — only synthesis puts it in front of the model.
     "compact_folded": 0.20,
     # 3番16号 — designators in the surface, so the JP-seven number tags fire (D4's two-surface rule).
     "designator": 0.15,
@@ -67,7 +67,7 @@ def render_row(
     """Render one JP row in one register, returning the #519 span-triple corpus record.
 
     Order is native large-to-small and space-free by default (``spaced`` inserts single ASCII spaces
-    between the admin components, which real typed input does carry). The 〒 mark stays OUTSIDE the
+    between the admin components, which real typed input does carry). The 〒 mark stays outside the
     postcode span — the span is the digits, mirroring the Latin convention.
     """
     renderer = RowRenderer()

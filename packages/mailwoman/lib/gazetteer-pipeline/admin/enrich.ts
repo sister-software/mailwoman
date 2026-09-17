@@ -13,7 +13,7 @@
  *      (abbreviations) ↔ `sub_names` (full names), tilde-delimited and index-aligned.
  *   2. **`place_abbr`** (the `id → abbreviation` join table, from `build-slim.ts`): lets the resolver
  *      accept a 2-letter region abbreviation as an exact match. Derived from the step-1 rows, so this
- *      MUST run after them — and both MUST precede the FTS build (`place_search` concatenates `names`).
+ *      must run after them — and both must precede the FTS build (`place_search` concatenates `names`).
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -107,7 +107,7 @@ export async function enrichAdmin<DB>(
 	}
 
 	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches. Rebuilt
-	// from the rows above (the build-slim.ts recipe); DROP first so a re-run stays idempotent.
+	// from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
 	db.exec("DROP TABLE IF EXISTS place_abbr")
 	db.exec("CREATE TABLE place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)")
 	db.exec("INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'")

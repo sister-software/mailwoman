@@ -21,8 +21,8 @@
  *   defaultHoldout), a different seed, and emits {raw, components} for per-locale-f1. Train uses
  *   every NON-Vermont US source.
  *
- *   Multi-locale BALANCE (`--multilocale-count`, opts.multilocaleCount > 0): appends NO-affix
- *   native-order rows (FR/DE/IT/NL) AFTER the US affix rows, riding the same source weight, purely
+ *   Multi-locale BALANCE (`--multilocale-count`, opts.multilocaleCount > 0): appends no-affix
+ *   native-order rows (FR/DE/IT/NL) after the US affix rows, riding the same source weight, purely
  *   to keep the postcode-ORDER distribution multi-locale so a US-heavy affix output doesn't dilute
  *   FR/DE postcode (the v0.9.8 blemish).
  */
@@ -73,7 +73,7 @@ const EVAL_SOURCE: USSource = {
 	region: "VT",
 }
 
-// Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
+// Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry no affix split — they exist
 // only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors the
 // `country-balanced` recipe: FR = number-street, postcode-city; DE/IT/NL = street-number,
 // postcode-city. `order` drives the body.
@@ -228,7 +228,7 @@ const TERMINAL_ONLY_MIN_WORDS = 3
 /**
  * Classify a real street surface for #1569. `terminal-only` has an ambiguous suffix-eligible name word immediately
  * before a different terminal type (`Blue Hill Rd`); `terminal-contrast` ends at the ambiguous word itself (`Sutton
- * Hollow`). The contrast check intentionally wins when both final words are name-prone: only the LAST token is the
+ * Hollow`). The contrast check intentionally wins when both final words are name-prone: only the last token is the
  * suffix under the canonical rule.
  */
 export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClass | null {
@@ -416,7 +416,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 }
 
 /**
- * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the OA value verbatim.
+ * Render a non-US BALANCE row in native order — no affix split, no country token. `street` is the OA value verbatim.
  * The sole job is to put a postcode in its native position so the recipe output doesn't pull the model US-ward.
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
@@ -547,8 +547,8 @@ export const streetAffixRecipe: CorpusRecipe = {
 		}
 
 		// ── Multi-locale balance rows (--multilocale-count) ─────────────────────────────────────────────
-		// Appended AFTER the US affix rows so the US affix signal is unchanged (same `--count`), and the
-		// non-US rows ride the SAME source weight. Native-order postcodes, no affix labels.
+		// Appended after the US affix rows so the US affix signal is unchanged (same `--count`), and the
+		// non-US rows ride the same source weight. Native-order postcodes, no affix labels.
 		let balanceEmitted = 0
 		let balanceSkipped = 0
 		const balanceISO: Record<string, number> = {}
@@ -774,7 +774,7 @@ export const suffixBoundaryRecipe: CorpusRecipe = {
 			if (!emitOne(rowClass, base, parsed, `suffix-boundary:${rowClass}`)) continue
 
 			// Stem-pair hard negative (v2, 2026-08-10 recipe review): after a terminal-only row
-			// ('Menlo Park' + 'Road'), also emit the SAME stem without its true suffix as a
+			// ('Menlo Park' + 'Road'), also emit the same stem without its true suffix as a
 			// contrast row ('Menlo' + 'Park' under the canonical last-token rule). Sharing the stem
 			// forces the model to key on the licensing evidence — the trailing true suffix — rather
 			// than on name identity. Reps-neutral: these fill the existing 20% contrast target.

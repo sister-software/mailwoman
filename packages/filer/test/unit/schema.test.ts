@@ -209,7 +209,7 @@ describe("filer schema", () => {
 
 		await db.insertInto("filer_edge").values(AUTHORITATIVE_EDGE).execute()
 
-		// Same source, same pair, same valid_from — only `relationship` differs. `relationship` is deliberately NOT
+		// Same source, same pair, same valid_from — only `relationship` differs. `relationship` is deliberately not
 		// part of the composite PK (see createFilerEdgeTable's docstring), so this must still collide on the PK and
 		// be rejected, never silently stored as a second, contradictory row.
 		await expect(
@@ -402,7 +402,7 @@ describe("filer schema", () => {
 		 * `assertion` is graded evidence, not decoration: EDGAR's subsidiary→FRN corroboration is the repo's first INFERRED
 		 * family membership, and without this column it would reach `filerLookup.families` shape-identical to a Form 499
 		 * holding-company disclosure. Its two constraints close the two ways that grading can be defeated at write time — a
-		 * blank value (which `NOT NULL` accepts, and which would then match NEITHER half of a criterion-2 read, so the row
+		 * blank value (which `NOT NULL` accepts, and which would then match neither half of a criterion-2 read, so the row
 		 * would vanish from any surface that splits on strength), and a `match_score` on an authoritative row (a fabricated
 		 * confidence for a membership that matched nothing).
 		 *

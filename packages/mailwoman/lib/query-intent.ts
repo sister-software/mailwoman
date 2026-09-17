@@ -9,7 +9,7 @@
  *   > return the winner with declared ambiguity — the suggestion layer's nudge shape — and never
  *   > resolve a bare query to an obscure feature type silently.
  *
- *   The three OTHER intent markers are raised by the kind classifier, from the string alone
+ *   The three other intent markers are raised by the kind classifier, from the string alone
  *   (`@mailwoman/kind-classifier`'s `intent-markers.ts`). This one cannot be: its trigger is a
  *   property of the RESOLVED candidate list, which does not exist until after Stage 6. So it lives
  *   here, on the geocode path, and `geocodeAddressOnce` appends it to the classifier's markers.
@@ -21,7 +21,7 @@
  *   behind them (see that module's docstring: below 0.5 the top-ranked place is the intended one
  *   52.4% of the time, above it 89.1%), and a second copy would be a second thing to keep in sync
  *   with a measurement nobody re-runs. `dominanceMarginLog10` itself is imported too — the
- *   subtraction is three lines, and the point is that there is ONE definition of "decisive" in this
+ *   subtraction is three lines, and the point is that there is one definition of "decisive" in this
  *   repo.
  *
  *   The import crosses from `eval-harness/` into the production geocode path, which is unusual and
@@ -40,7 +40,7 @@
  *   {@linkcode COINCIDENT_PLACE_KM} and it runs on the RESOLVER's places, before the geocode result's
  *   de-dupe, which is the only place the prominence column is still attached.
  *
- *   ## What it does NOT do
+ *   ## What it does not do
  *
  *   It never changes which answer wins. Nothing in this module reorders candidates, filters them, or
  *   touches a coordinate — it reads a ranked list and appends an advisory. That is the whole posture:
@@ -73,10 +73,10 @@ interface RankedPlaceLike {
 	lon?: number
 	/**
 	 * The candidate's PROMINENCE. On the candidate backend this is exactly `-effectiveNegRank`
-	 * (`resolver-wof-sqlite/candidate-lookup.ts`), so a difference of two prominences IS a log10 population margin and
+	 * (`resolver-wof-sqlite/candidate-lookup.ts`), so a difference of two prominences is a log10 population margin and
 	 * `DECISIVE_MARGIN_LOG10` applies to it directly.
 	 *
-	 * On the FTS backend it is `min(log-population, populationBoost) + proximityTerm`, which is a DIFFERENT unit: capped,
+	 * On the FTS backend it is `min(log-population, populationBoost) + proximityTerm`, which is a different unit: capped,
 	 * and contaminated by proximity when a bias point was supplied. The marker is therefore backend-conditional and says
 	 * so in its own evidence (`marginUnit`), rather than pretending the two are the same number. This is the same "the
 	 * two backends do not share a unit" finding the 2026-08-04 resolver-score characterization recorded.
@@ -143,7 +143,7 @@ export interface DeclaredAmbiguityOpts {
 }
 
 /**
- * Raise `declared_ambiguity` when the query named ONE bare place and the gazetteer's answer for that name is not
+ * Raise `declared_ambiguity` when the query named one bare place and the gazetteer's answer for that name is not
  * decisive.
  *
  * Returns `null` — not an empty marker — when the query was not a bare toponym, when nothing resolved, or when the
@@ -215,13 +215,13 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
  * The COARSEST tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
  *
  * A component sets a FLOOR rather than a target. `house_number` reads `interpolated` and not `address_point` because
- * interpolation IS how a house number is placed along a segment — the first version of this table put the floor at
+ * interpolation is how a house number is placed along a segment — the first version of this table put the floor at
  * `address_point` and fired on `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that
  * locates the house as precisely as the tier permits. `postcode` reads `street` for the same reason from the other
  * side: a postcode centroid is a street-grade answer in most address systems, and a finer floor would raise this marker
  * on every correct Dutch result.
  *
- * `unit` is deliberately ABSENT. No layer in this repository locates a unit — there is no floor or interior geometry in
+ * `unit` is deliberately absent. No layer in this repository locates a unit — there is no floor or interior geometry in
  * the artifact set — so a unit can never be "used", and a floor for it would fire on every correct answer carrying
  * one.
  *
@@ -264,7 +264,7 @@ export interface CoarserAnswerOpts {
  */
 export function coarserAnswerMarker(opts: CoarserAnswerOpts): QueryIntentMarker | null {
 	// `venue` and `plus_code` rank as house-grade in `tierRank`, so an entity answer and a decoded plus code satisfy
-	// every floor here and raise nothing — which is correct: a resolved venue IS the place the query asked about.
+	// every floor here and raise nothing — which is correct: a resolved venue is the place the query asked about.
 	const reached = tierRank(opts.reachedTier)
 
 	const unused = COMPONENT_TIER_FLOOR.filter(([tag, floor]) => opts.components[tag] && reached < tierRank(floor))

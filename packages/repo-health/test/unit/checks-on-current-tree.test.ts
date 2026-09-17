@@ -8,7 +8,7 @@
  *   registered runtime flag must be touched by a test, and the scope register must still agree with the declaration it
  *   encodes. The checks carry those assertions as error diagnostics, so "no diagnostics" is the whole contract.
  *
- *   This file is also the ONLY place several of them run. `yarn lint`'s health leg invokes four checks by id — `debt`,
+ *   This file is also the only place several of them run. `yarn lint`'s health leg invokes four checks by id — `debt`,
  *   `bundle-graph`, `exports`, `test-contract` — and no workflow runs `mwops health all`, so a registered check with no
  *   test here is a check nothing executes. Registering one without a case below leaves it in the state it exists to
  *   prevent.

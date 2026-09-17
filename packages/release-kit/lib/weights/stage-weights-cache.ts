@@ -8,10 +8,10 @@
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
  *
- *   WHY THIS EXISTS RATHER THAN "just point --model at the checkpoint". A model is not its `.onnx`. The
- *   card declares which channels it needs, and the SIBLINGS (anchor binary, four lexicons, FST, pair
+ *   Why this exists rather than "just point --model at the checkpoint". A model is not its `.onnx`. The
+ *   card declares which channels it needs, and the siblings (anchor binary, four lexicons, FST, pair
  *   index) are what feed them; grading a candidate by swapping the model file alone silently scores it
- *   with the SHIPPED bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
+ *   with the shipped bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
  *   throwaway directory is what makes "this is the bundle, graded as a bundle" checkable.
  *
  *   Symlinks by default (nothing is copied, nothing in the data root is touched). `--from` seeds the

@@ -5,7 +5,7 @@
  *
  *   Typed schema for `nsul.db` — the GB UPRN → unit-postcode register: the ONS **National Statistics
  *   UPRN Lookup** (NSUL) joined to the WGS84 point OS Open UPRN publishes for the same UPRN. One row per
- *   GB UPRN that carries a unit postcode AND has a published coordinate; the postcode is Code-Point
+ *   GB UPRN that carries a unit postcode and has a published coordinate; the postcode is Code-Point
  *   Open's, so this table and `postcode-gb.bin` agree by construction on the universe of unit postcodes.
  *
  *   ## Why this table exists
@@ -90,7 +90,7 @@ export interface NSULDatabase extends LayerContractDatabase {
 }
 
 /**
- * The compact form of a unit postcode: every space removed, upper-cased. `RG40 4HR` → `RG404HR`. The ONE derivation
+ * The compact form of a unit postcode: every space removed, upper-cased. `RG40 4HR` → `RG404HR`. The one derivation
  * both the builder and every consumer share, so a caller holding NSUL's spaced form and one holding Code-Point's
  * compact form reach the same key.
  */
@@ -120,7 +120,7 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 }
 
 /**
- * The `pcds_compact` index the `uprnsForPostcode` probe reads. Builders call this AFTER the bulk load
+ * The `pcds_compact` index the `uprnsForPostcode` probe reads. Builders call this after the bulk load
  * (index-after-load). There is no index on the spaced `pcds`: it is derivable from `pcds_compact` through
  * {@link compactPostcode}, and a second index over 40 million rows would add nothing a caller cannot get by compacting
  * its key first.

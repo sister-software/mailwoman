@@ -5,14 +5,14 @@
  *
  *   Build a KR postcode → WOF locality table by POINT-PRIMARY match (#293, Direction E / CJK arena).
  *
- *   This is the South-Korea sibling of `build-postcode-locality-cjk.ts` (Japan). It emits the SAME
+ *   This is the South-Korea sibling of `build-postcode-locality-cjk.ts` (Japan). It emits the same
  *   `postcode_locality` table, so the existing `postcode_area_resolution` resolver strategy
- *   consumes it unchanged — that is the whole point of the CJK arena: ONE strategy, many builds.
+ *   consumes it unchanged — that is the whole point of the CJK arena: one strategy, many builds.
  *   But KR's data shape is the INVERSE of Japan's, so the build is inverted too:
  *
  *   Japan (name-primary): postcode --KEN_ALL--> municipality NAME (romaji) ; GeoNames --> point ;
  *   match NAME (+ proximity tiebreak) against romanized `spr.name`. -> 94.9% Korea (point-primary):
- *   GeoNames postal file ALREADY carries postcode -> (place_name, admin1, lat, lon) in one source.
+ *   GeoNames postal file already carries postcode -> (place_name, admin1, lat, lon) in one source.
  *   `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor` + Hangul-bearing
  *   `und`) variants. So we resolve by NEAREST locality POINT (always available, sub-km dense) and
  *   use the Hangul name as an authoritative CONFIRMATION signal where it exists.
@@ -150,7 +150,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first. Korean place names repeat heavily across the country
-	 * (homonymous villages), so a Hangul name-match MUST be constrained to nearby candidates — matching globally then
+	 * (homonymous villages), so a Hangul name-match must be constrained to nearby candidates — matching globally then
 	 * taking the nearest homonym lands hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
@@ -195,7 +195,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
+			// Hangul name confirmation: a name-matched locality that is also nearby (two signals agreeing —
 			// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))

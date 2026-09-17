@@ -32,7 +32,7 @@ const ALLOWED_PREFIXES: readonly string[][] = [
  * Denied even though a prefix above would otherwise admit them.
  *
  * `eval ledger-append` is the one that matters and the reason this list exists at all: it is nested under an allowed
- * verb and it WRITES `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
+ * verb and it writes `evals/scores-by-version.json`, the score ledger. `mwdev_promotion_eval` deliberately reports that
  * command rather than running it, and this stops the passthrough from becoming the back door around that decision.
  */
 const DENIED_PREFIXES: readonly string[][] = [
@@ -67,7 +67,7 @@ function matchesPrefix(args: readonly string[], prefix: readonly string[]): bool
 export interface AllowlistVerdict {
 	allowed: boolean
 	/**
-	 * Why, in the words a caller needs. Populated on a refusal AND on an allow, so a log of calls records the boundary
+	 * Why, in the words a caller needs. Populated on a refusal and on an allow, so a log of calls records the boundary
 	 * that was applied rather than only the ones that tripped it.
 	 */
 	reason: string

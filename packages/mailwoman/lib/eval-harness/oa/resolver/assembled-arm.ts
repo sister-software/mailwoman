@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The assembled arm — the full runtime pipeline, wired to the SAME classifier and resolver the bare neural arm
+ * @file The assembled arm — the full runtime pipeline, wired to the same classifier and resolver the bare neural arm
  *   uses so the two arms differ only in the assembly between them.
  */
 
@@ -30,19 +30,19 @@ export async function buildAssembledArm(
 	const { neural, resolver } = rig
 
 	// #478 inc 3 leg 2 — the ASSEMBLED arms. Route each row through `createRuntimePipeline` using the
-	// SAME neural classifier (postcodeRepair on, for comparability with the neural arm) and the SAME
+	// same neural classifier (postcodeRepair on, for comparability with the neural arm) and the same
 	// resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The
 	// street+house_number precondition (the thing #566 broke) is counted per arm so a regression is
 	// visible directly.
 	//
-	// placeCountry default is OFF here (`false`) so the assembled arm isolates arbitration from the
-	// #244 coarse prior. But the SHIPPED `createRuntimePipeline`/`geocodeAddress` default IS the
+	// placeCountry default is off here (`false`) so the assembled arm isolates arbitration from the
+	// #244 coarse prior. But the shipped `createRuntimePipeline`/`geocodeAddress` default is the
 	// bundled placer (on, open-set @ 0.9). `--place-country` flips this eval to the production-
 	// representative config — load the same bundled placer and feed it to the pipeline — which is the
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
 	// caller sees (ambiguous EU names without a country constraint land off-continent).
 	const runAssembled = options.assembled ?? false
-	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
+	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a hard country filter
 	// (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move. Production-
 	// representative: conditional by the built-in coverage safelist (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
@@ -72,7 +72,7 @@ export async function buildAssembledArm(
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
 				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map
-				// set, so EVERY confident country hard-filters (unrestricted measurement). Plain `--place-country-hard`
+				// set, so every confident country hard-filters (unrestricted measurement). Plain `--place-country-hard`
 				// leaves it undefined → the built-in safelist (production-representative).
 				...(useHardCountryAll
 					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }

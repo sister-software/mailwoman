@@ -5,8 +5,8 @@
  * @file What the locale hint's `script` field says over three committed boards, and what `locale` says beside it.
  *
  *   The Korean case is the whole argument for the field. Every row of the Korean reference set is Hangul, every row
- *   reports `locale: "ja-JP"`, and that is not a routing error — the character path is ONE weights family for Japanese,
- *   Korean and Chinese, so the model loaded is the same whichever tag stands there. It is a REPORTING error, and until
+ *   reports `locale: "ja-JP"`, and that is not a routing error — the character path is one weights family for Japanese,
+ *   Korean and Chinese, so the model loaded is the same whichever tag stands there. It is a reporting error, and until
  *   `script` existed the hint had nowhere to put the thing it could see.
  *
  *   `locale` is asserted here too, unchanged, because the change is worthless if it moved. A consumer mapping the hint

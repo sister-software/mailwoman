@@ -6,7 +6,7 @@
  *   Clone and refresh the WOF repos root through {@link resolveWOFRepoOrigin}, so a machine cannot quietly rebuild from
  *   upstream over a correction we depend on.
  *
- *   `repos-audit` reports what IS on disk and `wof-repo-origin` answers where a repo SHOULD come from. Nothing joined
+ *   `repos-audit` reports what is on disk and `wof-repo-origin` answers where a repo should come from. Nothing joined
  *   them, so the join happened by hand — and a hand-run clone is how the fork gets bypassed: the pull succeeds, the
  *   build succeeds, and the artifact silently loses every record the fork corrects. THE DIRECTORY IS THE RECIPE
  *   (`repos-audit`'s docstring explains why), so what lands here decides what the next build believes.
@@ -132,7 +132,7 @@ export function sameRemote(a: string | undefined, b: string | undefined): boolea
 /**
  * Decide what to do with one repo. Pure: every input is already measured.
  *
- * Order matters and encodes the priority. Refusals come FIRST, before the re-point question — a dirty tree is a reason
+ * Order matters and encodes the priority. Refusals come first, before the re-point question — a dirty tree is a reason
  * to touch nothing at all, and reporting it as a re-point candidate would invite exactly the action that loses the
  * work.
  */

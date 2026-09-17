@@ -6,7 +6,7 @@
  *
  *   Materialize a release's weights artifacts from the PUBLIC Hugging Face bucket — the `--source hf`
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
- *   the curl-and-cp block it used to carry inline. ONE recipe, two callers: the preflight points it at
+ *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
  *   the operator's data root; both take a destination root and touch nothing else.
  *
@@ -48,7 +48,7 @@ const MODEL_FILENAME = "model.onnx"
  *
  * `hf` names a bucket object by basename under `base`, the versioned bucket directory it is read from: `mailwoman
  * release hf` uploads with a single `--locale`, flat, so an overlay's `pair-index-de.bin` lives under the BASE locale's
- * version directory rather than its own, and a character-path family (`cjk`) lives under its OWN directory, because its
+ * version directory rather than its own, and a character-path family (`cjk`) lives under its own directory, because its
  * `model.onnx` shares a basename with the Latin base's and is not the same bytes. `repo` names a committed file the
  * checkout already carries (see `repoCommittedSoftFeedSources`).
  */
@@ -135,7 +135,7 @@ async function trackedWorkspaceFiles(repoRoot: string, workspaces: readonly stri
  *
  * Merged across every release weights card rather than read from the base alone: the base's card covers the artifacts
  * every overlay copies (`model.onnx`, the two bundle lexicons), and an overlay is free to declare its own. Two cards
- * declaring DIFFERENT md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
+ * declaring different md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
  * has no basis to choose.
  */
 async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
@@ -211,12 +211,12 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 }
 
 /**
- * Artifacts the base model card declares that ride the bucket but are NEVER fetched into a tarball — today the #1354
+ * Artifacts the base model card declares that ride the bucket but are never fetched into a tarball — today the #1354
  * Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
  *
  * The bundle contract says a weights release ships its Fisher, so every fine-tune off that base can apply the EWC
  * brake; the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
- * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. BOTH halves are probed:
+ * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. Both halves are probed:
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
 export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {

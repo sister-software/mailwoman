@@ -15,7 +15,7 @@ import type { GeocodeResult } from "mailwoman/geocode"
 import { describe, expect, it } from "vitest"
 
 /**
- * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country` stamp but NO ancestor chain
+ * The #1717 shape: a locality winner from the candidate tier — carries a `resolver_country` stamp but no ancestor chain
  * (candidate.db has no ancestors table).
  */
 const weimarTexas: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
@@ -28,7 +28,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 	it("unverifiable when the winner carries no region-class ancestry (the candidate-tier finding)", () => {
 		// `Weimar, Thüringen` → Weimar TX: the qualifier was parsed, the winner has no ancestry of
-		// that class to check it against. This must NOT read as confirmed or contradicted.
+		// that class to check it against. This must not read as confirmed or contradicted.
 		expect(assessAdminCoherence({ region: "Thüringen" }, weimarTexas).region).toBe("unverifiable")
 	})
 
@@ -105,7 +105,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
 		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region band (Adjara)
 		// cannot match, but the winner's country-class evidence can, and `contradicted` would be the
-		// wrong claim about the geography. The bridge runs through the SAME winnerCountryKeys the
+		// wrong claim about the geography. The bridge runs through the same winnerCountryKeys the
 		// country verdict reads, so the two verdicts can never disagree about country evidence.
 		const batumi: AdminCoherenceWinner = {
 			tag: "locality",
@@ -148,7 +148,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Penang" }, georgetownTexas).region).toBe("contradicted")
 
-		// And with NO region-class ancestry and no country match, the faithful verdict stays
+		// And with no region-class ancestry and no country match, the faithful verdict stays
 		// unverifiable — the bridge never converts an unanswerable question into a decided one.
 		const bare: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
 

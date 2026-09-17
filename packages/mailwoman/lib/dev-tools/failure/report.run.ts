@@ -193,7 +193,7 @@ async function runFailureReport(): Promise<void> {
 			const byTag = await parseTags(cls, f.input)
 			const fails: { label: string; expected: string; got: string }[] = []
 
-			// Grade EVERY gold label (not just the floors) so country/region/locality/venue failures — the
+			// Grade every gold label (not just the floors) so country/region/locality/venue failures — the
 			// classes a candidate silently trades — are captured. Floor labels compare their tag FAMILY
 			// (street = prefix/street/suffix/particle); all others compare by direct tag name.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
@@ -215,7 +215,7 @@ async function runFailureReport(): Promise<void> {
 	const all = [...records.values()]
 	const labels = specs.map((s) => s.label)
 	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length)
-	// "Beyond reach": failed on EVERY graded model.
+	// "Beyond reach": failed on every graded model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
 	// Per-LABEL failure count per model — the view where a silently-traded class (e.g. country on the
@@ -271,7 +271,7 @@ async function runFailureReport(): Promise<void> {
 	const stamp = flags.date || isoDate()
 
 	const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
-	// NOT `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
+	// Not `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
 	// last bit at a .5 rounding boundary — the report's zero-decimal cells stay byte-stable under their own arithmetic.
 	const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 	const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`

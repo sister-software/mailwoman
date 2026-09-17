@@ -62,7 +62,7 @@ export interface AddressPointTable {
 	release: string
 	/**
 	 * The source register's stable administrative key for the point's commune or municipality — BAN's `code_insee`. A
-	 * display name (`locality_norm`) is not a key; the coverage basis is computed per THIS.
+	 * display name (`locality_norm`) is not a key; the coverage basis is computed per this key.
 	 */
 	admin_code: string | null
 	/**

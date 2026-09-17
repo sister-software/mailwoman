@@ -1,9 +1,9 @@
 # === v3.4.0-norway-coverage-probe — 2k PROBE. Does un-dropping Norway (#1145) fix the Norwegian rows? ===
 #
-# THE ONE VARIABLE vs SHIPPED v310: Norway is now in the training mix. v310 (and every model since
-# v1.9.0) trained on ZERO Norwegian rows — `country_weights: NO: 1.0` parsed to the YAML boolean
+# THE ONE VARIABLE vs shipped v310: Norway is now in the training mix. v310 (and every model since
+# v1.9.0) trained on zero Norwegian rows — `country_weights: NO: 1.0` parsed to the YAML boolean
 # `false`, so `country_weights.get("NO")` missed and the loader dropped all 25k Norwegian rows
-# (#1145). This config is v310's EXACT recipe with that key now quoted (fixed on main), so Norway
+# (#1145). This config is v310's exact recipe with that key now quoted (fixed on main), so Norway
 # flows: ~4.2% of the corpus, including the synth-no-street-led source (weight 12.0) that has never
 # contributed a row. init_from v310, 2k, to see if coverage alone moves the needle fast.
 #
@@ -17,17 +17,17 @@
 #   PRIMARY (the operator's question) — the brief's Norwegian rows: does the STREET stop reading as a
 #     locality? `Epleskogen 39A` / `Tindvegen nedre 44B` -> street, not locality. If the street reads
 #     correctly, coverage is the fix and an 8k run (init_from v264, full recipe) becomes a ship
-#     candidate. If the street STILL reads as locality after 2k of Norway-inclusive training, either
-#     coverage alone is insufficient OR 2k off v310 cannot overwrite the "never saw Norway" prior —
+#     candidate. If the street still reads as locality after 2k of Norway-inclusive training, either
+#     coverage alone is insufficient or 2k off v310 cannot overwrite the "never saw Norway" prior —
 #     escalate to init_from v264 full recipe before concluding.
-#   SECONDARY — the NO digit board (board 3). CAVEAT: synth-no-street-led's on-disk part predates its
+#   SECONDARY — the Norway digit board (board 3). CAVEAT: synth-no-street-led's on-disk part predates its
 #     own --exclude-surfaces (#1145) and is contaminated vs the board, so its three street-led classes
-#     will read inflated — do NOT treat board-3 street-led movement as generalization. bare-street-hn
+#     will read inflated — do not treat board-3 street-led movement as generalization. bare-street-hn
 #     (a form no-street-led never emits) and bare-pc (the negative class) are the clean cells.
-#   GUARD — the FR fragment board (board 2) and global parity must HOLD. Norway coverage must not be
-#     bought by trading away the fr-fragment win or the broad corpus.
+#   GUARD — the FR fragment board (board 2) and global parity must not fall. Norway coverage must not be
+#     bought by trading away fr-fragment F1 or the broad corpus.
 #
-# NOT A SHIP. A PASS justifies the 8k run (init_from v264 = "what v310 would have been with the bug
+# Not a ship. A pass justifies the 8k run (init_from v264 = "what v310 would have been with the bug
 # fixed"), pre-registered against the same rows. Promotion is the operator's act.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.4.0-norway-coverage-probe.yaml --resume none
@@ -36,7 +36,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -60,7 +60,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1 + the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,8 +91,8 @@ data:
     synth-nl-postcode: 6.0
     # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
   train_rows_per_epoch: 1000000
@@ -110,7 +110,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -135,10 +135,11 @@ model: # VERBATIM v2.4.1.
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -177,7 +178,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
   # route the cue; the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v340-norway-coverage-probe-s42/checkpoints

@@ -72,11 +72,11 @@ export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — population-anchored. The ONLY score the decoder bias reads (ROAD_TO_V9 §2,
+	 * REFERENTIAL likelihood in [0, 1] — population-anchored. The only score the decoder bias reads (ROAD_TO_V9 §2,
 	 * ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this is the place the
 	 * user means").
 	 *
-	 * The structural type deliberately does NOT name `encyclopedic`. The FST entries the matcher hands over carry it, and
+	 * The structural type deliberately does not name `encyclopedic`. The FST entries the matcher hands over carry it, and
 	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced, not a
 	 * comment.
 	 */
@@ -97,7 +97,7 @@ export interface FSTMatcherLike {
  * The only placetypes that reach a BIO tag.
  *
  * Exported because a probe that reports "what bias would the decoder get for this surface" has to collapse the FST's
- * accepting entries the SAME way {@link applyBias} does, and a second copy of this map makes the probe answer a
+ * accepting entries the same way {@link applyBias} does, and a second copy of this map makes the probe answer a
  * question about a decoder that does not exist. A `county` or `borough` entry is walked, deduped, and dropped without
  * ever touching the emission matrix — no attested board row licenses a tag for those tiers, and `region` would be a
  * guess.
@@ -109,7 +109,7 @@ export interface FSTMatcherLike {
  * groups already treat the pair as one contest class. The bias stays soft (referential-scaled), so a dependent-locality
  * reading can still win where the model's own emissions say so.
  *
- * The two mapped tiers carry ONE surface-conditional exception (#1903): a street-shaped surface — see
+ * The two mapped tiers carry one surface-conditional exception (#1903): a street-shaped surface — see
  * {@link isStreetShapedSurface} — draws no locality bias from a neighbourhood/localadmin entry. Direct `locality`
  * entries are never suppressed; a real locality named after a street keeps its bias.
  */
@@ -171,15 +171,15 @@ export interface FSTEntryLike {
 /**
  * Collapse accepting entries to `max(importance)` PER BIO TAG — the only shape {@link applyBias} acts on.
  *
- * The per-place ranking INSIDE a name is invisible to the decoder; only the per-tag max is not. A caller reporting
+ * The per-place ranking inside a name is invisible to the decoder; only the per-tag max is not. A caller reporting
  * anything finer would overstate what an importance change can do.
  *
- * `surfaceTokens` is the FST-normalized matched surface, and it is REQUIRED because the collapse is
+ * `surfaceTokens` is the FST-normalized matched surface, and it is required because the collapse is
  * surface-conditional: a street-shaped surface draws nothing from the mapped tiers ({@link isStreetShapedSurface},
  * #1903). A probe that omitted it would answer for a decoder that does not exist — the same hazard this function's
  * export guards against for the placetype map.
  *
- * An EMPTY result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
+ * An empty result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
  * decoder sees nothing. A caller must keep that apart from "the FST does not accept this surface at all", which is
  * absence, and from a tag present with value `0`, which is a measured zero.
  */
@@ -297,7 +297,7 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 /**
  * Match-length scaling mode for the importance bias (#1142). A single-token place match is weak evidence (a place name
  * that is also a surname / street head / common word); a multi-token match is reliable. `both` scales the positive
- * locality bias AND the street suppression by match length; `suppression` scales only the suppression (leaving the
+ * locality bias and the street suppression by match length; `suppression` scales only the suppression (leaving the
  * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias warrants its keep); `off`
  * disables it.
  */
@@ -307,15 +307,15 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * Street-context check for the positive FST bias (#1142, street-context check — the FR-fragment complement to #1173's
  * suppression length-scaling).
  *
- * Washington/Madison/Jackson are simultaneously the highest-importance US place names AND the commonest US street
+ * Washington/Madison/Jackson are simultaneously the highest-importance US place names and the commonest US street
  * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
- * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), NEVER on the importance
+ * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), never on the importance
  * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
- * Positive-evidence-only: the check can only scale the positive bias DOWN when street context is present; its absence
+ * Positive-evidence-only: the check can only scale the positive bias down when street context is present; its absence
  * never penalizes, and a parse with no street context is byte-identical to the unrestricted path.
  *
  * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
- * prefix locales like "Rue de Rivoli", the FR −3), NOT codex `us/street-suffix.ts` (US-only — using it re-introduces an
+ * prefix locales like "Rue de Rivoli", the FR −3), not codex `us/street-suffix.ts` (US-only — using it re-introduces an
  * FR regression).
  */
 export interface StreetContextRequirementOpts {
@@ -324,7 +324,7 @@ export interface StreetContextRequirementOpts {
 	 */
 	fst: FSTMatcherLike
 	/**
-	 * Multiplier applied to the positive `impBias` when the check fires. Default 0.25 (tune 0.15–0.4). Deliberately NOT
+	 * Multiplier applied to the positive `impBias` when the check fires. Default 0.25 (tune 0.15–0.4). Deliberately not
 	 * zero — "New York Ave" still deserves some admin mass for the semi-markov decoder.
 	 */
 	positiveScale?: number
@@ -370,7 +370,7 @@ export function buildFSTEmissionPriors(
 	const seenWOFIDs = new Set<number>()
 	const maxBias = opts.maxBias ?? 3
 	const suppressionScale = opts.suppressionScale ?? 1.5
-	// Default `suppression` (#1142, measured 2026-07-18): scaling ONLY the street-suppression term by
+	// Default `suppression` (#1142, measured 2026-07-18): scaling only the street-suppression term by
 	// match length is a broad win (US golden +35, admin-street-homonym fragments +50, bare-locality −2),
 	// and it leaves the positive locality bias untouched so the bare-fragment regime is safe. Scaling the
 	// positive term too (`both`) measured strictly worse (US +26, FR −9). See docs/…/the-meaning-of-zero.
@@ -451,7 +451,7 @@ export function buildFSTEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is reconstructed by
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
- * **The word boundary is `▁` (the SentencePiece space sentinel) — and ONLY `▁`.** The loop carries one piece of state,
+ * **The word boundary is `▁` (the SentencePiece space sentinel) — and only `▁`.** The loop carries one piece of state,
  * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is PENDING (nothing is open,
  * and the next real content should start one fresh, whatever piece it arrives on). Three kinds of piece, crossed with
  * that state, is the whole state machine:
@@ -459,9 +459,9 @@ export function buildFSTEmissionPriors(
  * 1. **`▁`-prefixed, with alnum content** (a genuine new word, e.g. `"▁Stock"`, `"▁Tyne"`): always closes whatever
  *    `current` holds (pushing it to `groups`) and opens a fresh one. This is the only case that unconditionally starts
  *    a word — every other case below is conditioned on whether one is already open or pending.
- * 2. **`▁`-prefixed, NO alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
+ * 2. **`▁`-prefixed, no alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
  *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
- *    1, but does NOT open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
+ *    1, but does not open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
  *    }`, preserving index alignment) and leaves the state PENDING (`current = null`) for whatever piece comes next.
  * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
  *
@@ -553,12 +553,12 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
  * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
  *
  * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
- * forms; it does NOT strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
+ * forms; it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
  * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
  * specific form (indexed and query surfaces agree on diacritics).
  *
  * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
- * (U+0020) is Unicode category Zs (separator), NOT matched by `\p{P}` or `\p{S}`. So this function preserves spaces
+ * (U+0020) is Unicode category Zs (separator), not matched by `\p{P}` or `\p{S}`. So this function preserves spaces
  * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space EQUIVALENCE that produces
  * "stocktonontees" is a property of the caller's split-then-join pipeline in `groupPiecesIntoWords` — each word is
  * normalized separately, then words are joined with no separator.
@@ -597,7 +597,7 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
 
 /**
  * Street-context check (#1142): returns the positive-bias multiplier for a matched span at word-groups
- * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when EITHER syntactic condition holds, else 1.0
+ * `[startIdx..endIdx]` — `streetContext.positiveScale` (default 0.25) when either syntactic condition holds, else 1.0
  * (byte-identical to the unrestricted path):
  *
  * 1. **Street-type adjacency** — the word-group immediately after (suffix locales: "Washington Blvd") or before (prefix

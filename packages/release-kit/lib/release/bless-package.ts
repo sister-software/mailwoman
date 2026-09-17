@@ -192,7 +192,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 
 	const tgz = `/tmp/${pkg.name.replaceAll(/[@/]/g, "-")}.tgz`
 
-	// Pack through the SAME helper the release path uses, rather than a bare `yarn pack`. That buys
+	// Pack through the same helper the release path uses, rather than a bare `yarn pack`. That buys
 	// three things this path previously went without: symlinked `files` entries are dereferenced
 	// (the registry rejects tarballs containing symlinks outright), the dev `exports` map is
 	// transformed for consumers (a bare pack ships `node → .ts`, which no consumer can resolve), and
@@ -264,7 +264,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 		return true
 	} catch (error) {
 		// The create endpoint is not idempotent: a package that already carries a trust config answers
-		// 409 whatever that config SAYS, so a stale one (wrong workflow file, wrong repo) is
+		// 409 whatever that config says, so a stale one (wrong workflow file, wrong repo) is
 		// indistinguishable from a correct one here. Name that case, because the repair is a revoke
 		// rather than a retry — retrying returns 409 forever.
 		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)

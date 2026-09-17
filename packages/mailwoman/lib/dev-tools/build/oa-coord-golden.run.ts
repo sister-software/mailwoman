@@ -123,7 +123,7 @@ interface SampleOptions {
 	 */
 	target: number
 	/**
-	 * Sample each bucket uniformly across the WHOLE stream rather than taking its first `perBucket` rows.
+	 * Sample each bucket uniformly across the whole stream rather than taking its first `perBucket` rows.
 	 *
 	 * The default fill takes a bucket's rows from wherever its key first appears in file order. Municipality-ordered
 	 * dumps (OA CZ/PL) therefore concentrate every bucket on one city, which under-disperses the localities the
@@ -260,7 +260,7 @@ async function* sourceRows(): AsyncIterable<CSVRecord> {
 	}
 
 	const pattern = values["csv-glob"]!
-	const filePaths = await Globerator.from(pattern).toSorted()
+	const filePaths = await Globerator.from(pattern, { absolute: true }).toSorted()
 
 	for (const filePath of filePaths) {
 		yield* csvRecordsFromFile(filePath)

@@ -15,7 +15,7 @@
  * #928: distinctive postcode FORMATS that unambiguously indicate a country — a stronger country signal than the
  * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
  * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
- * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend ONLY with
+ * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend only with
  * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` change (conditional, default-off pending its
  * check).
  */
@@ -60,16 +60,16 @@ const SHARED_NNN_NN = /^\d{3} \d{2}$/
  * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a POSTCODE shape (GB/CA/IE are
  * letters-first; the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
  * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
- * only here, where every consumer checks on a tree that IS a bare postcode.
+ * only here, where every consumer checks on a tree that is a bare postcode.
  */
 const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
 
 /**
- * EVERY country a parsed postcode's FORMAT is consistent with — the singles table, the NL PC6 shape, and the shared
+ * Every country a parsed postcode's FORMAT is consistent with — the singles table, the NL PC6 shape, and the shared
  * `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more; that family stays with
  * the locale prior on purpose — the `75008` contract).
  *
- * Unlike {@link countryFromPostcodeFormat}, this is NOT an unforgeable-in-any-context claim: consumers (the resolver's
+ * Unlike {@link countryFromPostcodeFormat}, this is not an unforgeable-in-any-context claim: consumers (the resolver's
  * implied-set probe, the CLI's withheld-scope guard) apply it only to a tree that is a bare postcode, where the
  * street-fragment collision the singles table must exclude cannot arise.
  */

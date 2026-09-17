@@ -6,8 +6,8 @@
  *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer PARENT surface, the
  *   distribution of its children's PROJECTED `ComponentTag`s — "this parent has 33 boroughs and 642
  *   neighbourhoods, i.e. 675 dependent-locality-class children". The general form of the shipped
- *   PIX1 pair index: where PIX1 answers "is THIS child known under THIS parent?", PCN1 answers "does
- *   this parent have children of this KIND at all?" — the conditional prior that turns a globally
+ *   PIX1 pair index: where PIX1 answers "is this child known under this parent?", PCN1 answers "does
+ *   this parent have children of this kind at all?" — the conditional prior that turns a globally
  *   rare tag into a conditionally common one (see plan/reference/placetype-evidence.mdx).
  *
  *   Why both artifacts exist, rather than folding the census's links into the pair index: a pair
@@ -17,7 +17,7 @@
  *   entertains under a parent it already identified. That makes the census the safe way to cover
  *   the long tail the pair batches will never individually clear.
  *
- *   This file owns BOTH ends of the format — `serializePlacetypeCensus` (Node, build tooling) and
+ *   This file owns both ends of the format — `serializePlacetypeCensus` (Node, build tooling) and
  *   `PlacetypeCensusResolver` (browser and server alike) — the same single-file discipline as
  *   `pair-index-resolver.ts` and `postcode-binary-resolver.ts`, so the layout can never drift
  *   between writer and reader.
@@ -99,8 +99,8 @@ export interface PlacetypeCensusHeader {
 	 */
 	baseRates: Partial<Record<ComponentTag, number>>
 	/**
-	 * OPTIONAL soft-prior bias magnitude a census hit contributes at decode time. ABSENT until a calibration task
-	 * measures one — the census ships as a probeable artifact first (R4c is data + loader + offline probe, NO decode
+	 * Optional soft-prior bias magnitude a census hit contributes at decode time. Absent until a calibration task
+	 * measures one — the census ships as a probeable artifact first (R4c is data + loader + offline probe, no decode
 	 * wiring), and a defaulted number here would let an uncalibrated bias reach the decoder unnoticed.
 	 */
 	delta?: number
@@ -194,7 +194,7 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
  * the shape, not the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The observability rung
  * (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and magnitude (`lift`).
  *
- * `share` is deliberately NOT on this interface. Within-parent share was measured at ~100% for the dominant class
+ * `share` is deliberately not on this interface. Within-parent share was measured at ~100% for the dominant class
  * everywhere, so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate) is the only
  * one of the two that varies with the parent, and naming just it keeps a future consumer from reaching for the flat
  * one.
@@ -297,7 +297,7 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * `share(parent, tag)` divided by the country's global base rate for `tag` — how much MORE likely this tag is under
+	 * `share(parent, tag)` divided by the country's global base rate for `tag` — how much more likely this tag is under
 	 * this parent than under a parent drawn at random. `1` means "no different from the country at large", `0` means no
 	 * support. Returns `0` (not `Infinity`) when the base rate is absent, so a missing denominator can never manufacture
 	 * unbounded evidence.

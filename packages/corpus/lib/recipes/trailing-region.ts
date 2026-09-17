@@ -19,7 +19,7 @@
  *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
  *
  *   POSTCODE-PREFIXED FORMS (2026-08-20, #1748). The two bare forms above were the whole recipe, and the
- *   board row this recipe was written for is NOT bare — it reads `…, 07691 Portopetro, Illes Balears,
+ *   board row this recipe was written for is not bare — it reads `…, 07691 Portopetro, Illes Balears,
  *   Spain`. Measured over both built recipe outputs: 88,904 rows, zero containing a postcode. So the model
  *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
  *   decode change moved it.
@@ -43,22 +43,22 @@
  *   change moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
  *
  *   So the tuple's `postcodePlacement` selects the surface, and it keeps apart two trailing conventions
- *   that are NOT the same shape: VE writes `Barcelona 6001, Anzoátegui, Venezuela` (the code on the
- *   LOCALITY segment) and IN writes `…, Bengaluru, Karnataka 560038, India` (on the REGION segment).
+ *   that are not the same shape: VE writes `Barcelona 6001, Anzoátegui, Venezuela` (the code on the
+ *   locality segment) and IN writes `…, Bengaluru, Karnataka 560038, India` (on the region segment).
  *   Each of the three placements matches a board row verbatim. A tuple with no placement means `leading`,
  *   so a tuples file written before the field existed produces the rows it always did.
  *
  *   LEFT CONTEXT (v25). A tuple may carry a `dependentLocality`, and when it does the surface becomes
- *   `«dep_locality», «locality»…`. This is not decoration: without it EVERY row in the recipe output begins with
+ *   `«dep_locality», «locality»…`. This is not decoration: without it every row in the recipe output begins with
  *   the locality, and at a 9.4% share that taught the model the first named segment is the locality.
  *   Measured on the v4.8.0 candidate — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back
  *   `locality: "Ye Three Lords"` with venue and street both gone, `Le Colimaçon, 44 Rue Vieille du
  *   Temple, 75004 Paris` came back `locality: "Le Colimaçon"`, and 11 of 25 regressions were venue-led
- *   rows across seven countries. The house-number prefix does NOT supply this: a number before the
- *   locality does not teach that a NAME can precede one. `no-fragment.ts`'s header records the same
+ *   rows across seven countries. The house-number prefix does not supply this: a number before the
+ *   locality does not teach that a name can precede one. `no-fragment.ts`'s header records the same
  *   trap from the other direction.
  *
- *   The (postcode, locality, region) triples are REAL — `postalcode-intl.db` parents joined to admin
+ *   The (postcode, locality, region) triples are real — `postalcode-intl.db` parents joined to admin
  *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
  *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
  *   4,846, against a p50 of 1 and a p99 of 53. Eight such hubs held 47% of the join. Capping at the p99
@@ -75,7 +75,7 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, r
 /**
  * The code an address line in this country writes the region as, or null where the name is written out.
  *
- * A subdivision belongs here only when its code IS a posted surface. A Canadian province code is (`ca/province.ts`
+ * A subdivision belongs here only when its code is a posted surface. A Canadian province code is (`ca/province.ts`
  * states the contrast with Germany and France in its own header), and so is a US state's; a Bundesland or a région is
  * not, and teaching `BY` for Bayern would attest a form nobody writes.
  *
@@ -138,7 +138,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			const components: Record<string, string> = { locality, region }
 
 			// LEFT CONTEXT. Without it every row begins with the locality, and the recipe teaches that the first named
-			// segment IS the locality — measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
+			// segment is the locality — measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
 			// came back `locality: "Ye Three Lords"` with the venue and street gone, and 11 of its 25 regressions were
 			// venue-led rows across seven countries. The house-number prefix does not supply it, because a NUMBER before
 			// the locality does not teach that a NAME can precede one.

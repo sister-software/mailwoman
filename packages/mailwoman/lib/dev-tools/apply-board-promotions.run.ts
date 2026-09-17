@@ -10,8 +10,8 @@
  *   row. Author a board against one model and grade it against another and the claim is simply false — the target set
  *   then contains rows the control already passes, and the comparison reports them as wins.
  *
- *   The gauntlet's regression layer prints the rows whose status disagrees with the run (`now PASSES — promote to
- *   status=pass`). Feed those ids here to make the board agree with the arm it is graded against.
+ *   The gauntlet's regression layer marks every row whose status disagrees with the run as now passing and says to
+ *   promote it to `status=pass`. Feed those ids here to make the board agree with the arm it is graded against.
  *
  *   WARNING: read the run's overlay warnings before feeding it a list. A locale whose overlay is absent from the
  *   weights cache is graded BASE-ONLY, and a base-only pass is not evidence that the production path passes — the

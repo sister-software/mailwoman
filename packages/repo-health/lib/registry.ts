@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The registry of repository health checks — the ONLY executable entry point of this package, and the file knip
+ *   The registry of repository health checks — the only executable entry point of this package, and the file knip
  *   treats as such. A check that is not listed here is dead code and knip reports it. `mwops health <id>` and
  *   `mwops health all` iterate this array.
  */

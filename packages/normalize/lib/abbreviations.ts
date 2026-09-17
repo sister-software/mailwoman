@@ -66,7 +66,7 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 
 /**
  * #1002: the locale-UNKNOWN expansion set — the entries safe to apply when the input's locale hasn't been established
- * yet (the geocode path expands BEFORE the parse, which is what determines the locale). Safe = multi-char,
+ * yet (the geocode path expands before the parse, which is what determines the locale). Safe = multi-char,
  * collision-free across the locale dictionaries, and never a plausible standalone token in the other locale (FR
  * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately EXCLUDED: the FR single letters (`R` → Rue would fire on
  * Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those, and
@@ -77,7 +77,7 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
  * through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros" →
  * "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
  * (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
- * Dropping the entry is NOT a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
+ * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
  * de la Convention" and an `address_point` tier, so it pins the current behaviour and a removal has to be measured on a
  * resolver-gauntlet run. The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1
  * precedes the parse, and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script class + known
@@ -94,7 +94,7 @@ const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()
 
-	// BCP-47 "und" (undetermined) — the caller knows it does NOT know the locale yet (the geocode path
+	// BCP-47 "und" (undetermined) — the caller knows it does not know the locale yet (the geocode path
 	// expands before the parse). Only the collision-free multi-locale set applies; `undefined` keeps its
 	// historical en-US default.
 	if (lc === "und") return LOCALE_UNKNOWN_DICT
@@ -110,7 +110,7 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 }
 
 /**
- * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the SAME data instead of duplicating
+ * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the same data instead of duplicating
  * it. The metamorphic gauntlet inverts this table to generate expanded→abbreviated perturbations (`Avenue`→`Ave`); the
  * "no required trivia" rule means that data lives in exactly one place — here.
  */

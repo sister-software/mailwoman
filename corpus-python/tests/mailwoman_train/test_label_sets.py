@@ -94,7 +94,7 @@ def test_encode_row_units_maps_jp_labels_under_the_jp_set() -> None:
     )
     assert enc["labels"][0] == JP.label_to_id["B-prefecture"]
     assert enc["labels"][3] == JP.label_to_id["B-municipality"]
-    # The SAME row under the default set: JP tags collapse to O — never a silent cross-set id.
+    # The same row under the default set: JP tags collapse to O — never a silent cross-set id.
     enc_default = encode_row_units(raw, spans, labels, vocab, max_units=8, max_unit_width=7, ctx_chars=3)
     assert enc_default["labels"][0] == DEFAULT.label_to_id["O"]
 

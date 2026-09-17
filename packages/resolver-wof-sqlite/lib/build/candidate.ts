@@ -15,19 +15,19 @@
  *   Each row is DENORMALIZED — it carries the place's display `name`, centroid (`latitude`/
  *   `longitude`), and `min/max` bbox — so a resolve is one statement, no FTS, no join to spr:
  *   SELECT spr_id, name, latitude, longitude, min_lat, ... FROM candidate WHERE name_key = ? AND
- *   country_id = ? AND placetype_id IN (...) [AND latitude BETWEEN ...] ORDER BY neg_rank ASC LIMIT
- *   K; The demo cascade resolves a parsed region first (its bbox), then constrains the locality to
+ *   country_id = ? AND placetype_id IN (...) AND latitude BETWEEN ... (the bbox clause, optional) ORDER BY
+ *   neg_rank ASC LIMIT K; The demo cascade resolves a parsed region first (its bbox), then constrains the locality to
  *   that bbox; `region_id` (the place's region-tier ancestor) is also carried for a future region
  *   2-step.
  *
  *   The name_key normalizer is the SHARED {@link normalizeLocalityForKey} — the query side (the demo
- *   resolver {@link WOFCandidateTableLookup}) MUST use the same function, the one-normalizer
+ *   resolver {@link WOFCandidateTableLookup}) must use the same function, the one-normalizer
  *   discipline the address-point extract uses, so build/query stay consistent by construction.
  *
  *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows; ~12 range fetches per 8-query
  *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
  *
- *   #28 adds one more denormalized field, `importance` — the toponym-fame prior that decides a BARE
+ *   #28 adds one more denormalized field, `importance` — the toponym-fame prior that decides a bare
  *   city name, joined in from a separate score source by name rather than by id (see
  *   `candidate-importance.ts`, which owns that join and explains why the id would be wrong). It is
  *   optional: without {@link BuildCandidateOptions.importance} the column is NULL on every row, which
@@ -109,7 +109,7 @@ export interface BuildCandidateOptions {
 	/**
 	 * Optional WOF admin database carrying a `place_importance` table — the source of the `importance` column (#28), the
 	 * toponym-fame prior that decides the bare-city-name class. Joined by `(name_key, country, placetype)` + nearest
-	 * centroid, NOT by id; see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
+	 * centroid, not by id; see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
 	 * prior exists to demote.
 	 *
 	 * Omit it and every row's `importance` is NULL — unmeasured, which is what the consumer's positive-evidence-only rule
@@ -121,7 +121,7 @@ export interface BuildCandidateOptions {
 	/**
 	 * Cross-source currency backfill (#1737). WOF carries deprecated-with-no-successor records for real, populated
 	 * settlements (Rochester Kent, Aldershot, Telford — 120 GB localities alone), and the currency filter correctly drops
-	 * them, leaving holes no ranking can fill. When this option is set, pass 1c resurrects a dead locality ONLY under
+	 * them, leaving holes no ranking can fill. When this option is set, pass 1c resurrects a dead locality only under
 	 * three conditions, positive evidence throughout: no live same-name row of any placetype near the dead record (a
 	 * distant same-name row is a NAMESAKE and does not block — Rochester, Northumberland pop 318 must not veto Rochester,
 	 * Kent); an independent GeoNames P-class attestation of the same folded name within
@@ -165,7 +165,7 @@ export interface BuildCandidateResult {
 	postcodes: number
 	/**
 	 * Delivery-city (and other `names`-table) aliases folded onto postcode rows — #1495. Zero here means the extracts
-	 * carried no alias names, NOT that the pass was skipped: a extract with no `names` table reports that separately
+	 * carried no alias names, not that the pass was skipped: a extract with no `names` table reports that separately
 	 * through `onProgress`.
 	 */
 	postcodeAliases: number
@@ -180,7 +180,7 @@ export interface BuildCandidateResult {
 	ancestorPlaces: number
 	/**
 	 * Places that received a pre/post interval label — the canonical-parent forest's node count. Places outside it (no
-	 * recorded ancestry, extract rows, cycle-skipped) have NO label: containment against them is unverifiable, never
+	 * recorded ancestry, extract rows, cycle-skipped) have no label: containment against them is unverifiable, never
 	 * false.
 	 */
 	intervalPlaces: number
@@ -188,7 +188,7 @@ export interface BuildCandidateResult {
 	 * Places that took an `importance` score from the join (#28).
 	 *
 	 * `undefined` and `0` mean different things. `undefined` is "the pass did not run" — no score source was given. A `0`
-	 * would be the source matching NOTHING, which is a finding. Never collapse the two.
+	 * would be the source matching nothing, which is a finding. Never collapse the two.
 	 */
 	importanceScored?: number
 	/**
@@ -314,7 +314,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
 	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so
-	// the column COUNT can't drift; the positional run() args below MUST stay in CANDIDATE_COLUMNS order.
+	// the column COUNT can't drift; the positional run() args below must stay in CANDIDATE_COLUMNS order.
 	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	// Stage primary names and attributes reused by later alias passes.
@@ -632,7 +632,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// recover misspellings, so FTS5-trigram over `name` lets the reader fuzzy-match on an exact+strip miss.
 	progress("fts", "building FTS5-trigram fuzzy index")
 	createCandidateFTS(kdb)
-	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
+	// page_size must be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.
 	kdb.exec("PRAGMA page_size=8192")

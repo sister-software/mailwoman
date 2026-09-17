@@ -102,7 +102,7 @@ export const GZT_LICENSE_CONTRADICTION =
 	"A shipped layer needs one grant it can quote, so this one is built locally and never redistributed."
 
 /**
- * The projected CRS the service and its bulk export both declare. The source is NOT in WGS84 — it is IRENET95 / Irish
+ * The projected CRS the service and its bulk export both declare. The source is not in WGS84 — it is IRENET95 / Irish
  * Transverse Mercator, in metres — so the ingest reprojects and refuses a source declaring anything else.
  */
 export const GZT_SOURCE_EPSG = 2157
@@ -280,12 +280,12 @@ export const ProvenanceGrade = {
 export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGrade]
 
 /**
- * The grade every row of THIS artifact carries. A government department republishing local authorities' adopted plans.
+ * The grade every row of this artifact carries. A government department republishing local authorities' adopted plans.
  */
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
- * What the product does NOT state, in the Department's own words.
+ * What the product does not state, in the Department's own words.
  *
  * Carried onto every reading, because a caller holding a zone code cannot see from it that the answer is a generalised
  * republication rather than the plan itself. The first of these is the sharpest constraint the Department states, and
@@ -303,7 +303,7 @@ export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
  * THE MEANING-OF-ZERO RULE UNDER ITS HARDEST CASE. For flood zones the Environment Agency states England-wide coverage
- * and the Planning Practice Guidance defines Zone 1 as the absence, so a location with no polygon IS a designation. No
+ * and the Planning Practice Guidance defines Zone 1 as the absence, so a location with no polygon is a designation. No
  * such definition exists anywhere for zoning. A location with no zoning polygon is one of at least four different
  * things: outside any adopted plan area, inside a plan area on land the plan does not zone, in a jurisdiction that has
  * never adopted zoning, or in a jurisdiction whose records nobody has published. And the source can state one of them

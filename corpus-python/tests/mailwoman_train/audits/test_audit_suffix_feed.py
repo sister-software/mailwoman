@@ -5,11 +5,11 @@ Definitions mirror ``classifySuffixBoundaryStreet`` (corpus/src/recipes/street-a
 via the v2 lexicon's vocabulary: a row's street-family group (street span + immediately
 following authored suffix span) is assembled into surface words;
 
-- ``terminal-only``  — trailing word is a true (non-name-prone) suffix AND the word before it
+- ``terminal-only``  — trailing word is a true (non-name-prone) suffix and the word before it
   is name-prone ('Blue Hill Rd', 'Menlo Park' + 'Road');
 - ``terminal-contrast`` — the trailing word itself is name-prone ('Sutton Hollow').
 
-Correct after the load-time relabel = the group's LAST word carries ``street_suffix`` and the
+Correct after the load-time relabel = the group's last word carries ``street_suffix`` and the
 word before it carries ``street``. Classification always uses the v2 (classify) lexicon; the
 RELABEL lexicon is the variable under test — v1 reproduces the 2026-08-09 baseline behavior
 (ordinary monolithic carriers stay wrong), v2 licenses the positional split.

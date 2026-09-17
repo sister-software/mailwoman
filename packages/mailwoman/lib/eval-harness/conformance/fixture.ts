@@ -18,7 +18,7 @@
  *   transformation or hide a changed identity behind a nearby coordinate. `expect` names one of three
  *   relations, and `status` one of three verdict roles — a violated row is TRACKED rather than deleted, and
  *   never re-stated as `expect: diverges`, which would make the suite assert the defect. A fixture that
- *   omits the comparator, or names one that does not exist, is REFUSED at load with its own id in the
+ *   omits the comparator, or names one that does not exist, is refused at load with its own id in the
  *   message — never skipped, never defaulted. A skipped row reports as an absence, and an absence is what a
  *   law suite is measuring.
  *
@@ -66,7 +66,7 @@ export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
  *
  * - `equivalent` — a normalization law: the variant carries the same information, so the comparator must find no
  *   difference on its axis.
- * - `refines` — a refinement law: the variant carries MORE information, so the variant's outcome must contain the base's
+ * - `refines` — a refinement law: the variant carries more information, so the variant's outcome must contain the base's
  *   and add to it.
  * - `diverges` — a contradiction law: the variant carries different information, so the outcomes must differ.
  */
@@ -144,16 +144,16 @@ export interface ConformanceFixture {
 	 */
 	law: string
 	/**
-	 * The query the law's relation is stated FROM.
+	 * The query the law's relation is stated from.
 	 */
 	base: string
 	/**
-	 * The query the law's relation is stated TO. May equal {@linkcode ConformanceFixture.base} — an idempotence law states
+	 * The query the law's relation is stated to. May equal {@linkcode ConformanceFixture.base} — an idempotence law states
 	 * that running the same input twice agrees, which is a relation between two runs rather than two strings.
 	 */
 	variant: string
 	/**
-	 * Per-query priors applied to BOTH sides. Absent means production defaults on both.
+	 * Per-query priors applied to both sides. Absent means production defaults on both.
 	 */
 	context?: ConformanceContext
 	/**

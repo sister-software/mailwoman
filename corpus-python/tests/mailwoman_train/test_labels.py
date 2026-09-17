@@ -60,7 +60,7 @@ def test_stage2_extends_stage1_with_fine_tags():
 
 
 def test_stage2_preserves_stage1_label_ids():
-    # STAGE2 appends fine labels AFTER all STAGE1 entries so old label IDs remain valid
+    # STAGE2 appends fine labels after all STAGE1 entries so old label IDs remain valid
     # if anyone reloads an old checkpoint and only consults the first 15 indices.
     for i, label in enumerate(STAGE1_BIO_LABELS):
         assert STAGE2_BIO_LABELS[i] == label
@@ -94,7 +94,7 @@ def test_stage3_preserves_stage2_label_ids():
 
 def test_active_set_points_at_current_stage():
     # ACTIVE_* tracks the CURRENT training round's vocabulary — STAGE3 as of the v0.6.0
-    # ship (STAGE4 is defined in labels.py but deliberately NOT active; its activation
+    # ship (STAGE4 is defined in labels.py but deliberately not active; its activation
     # couples to a retrain + the JS ComponentTag union bump). When the ship-line moves,
     # this sentinel moves with it in the same commit — never pin ACTIVE to a historical
     # stage.
@@ -138,8 +138,8 @@ def test_collapse_label_keeps_stage3_tags():
 
 def test_collapse_label_drops_tags_not_in_active_set():
     # Tags that exist in the JS-side ComponentTag union but aren't in ACTIVE_TAGS yet
-    # (e.g. attention) still collapse to O. STAGE4 tags are DEFINED in labels.py but
-    # NOT active (activation is coupled to a retrain + the JS union bump) — they
+    # (e.g. attention) still collapse to O. STAGE4 tags are defined in labels.py but
+    # not active (activation is coupled to a retrain + the JS union bump) — they
     # collapse too.
     assert collapse_label("B-attention") == "O"
     assert collapse_label("B-entrance") == "O"

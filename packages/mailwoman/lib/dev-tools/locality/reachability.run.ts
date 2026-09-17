@@ -93,7 +93,7 @@ const LOCALITY_PLACETYPE_ID = 3
  * The gold place for one panel row: the locality whose key is the row's own name and whose coordinate is nearest the
  * panel's.
  *
- * Nearest-by-coordinate rather than highest-population, because the panel row IS the disambiguation — 21 US localities
+ * Nearest-by-coordinate rather than highest-population, because the panel row is the disambiguation — 21 US localities
  * are named Ramsey, and the one this row means is the one at its coordinate.
  */
 async function goldPlace(place: PanelLocality): Promise<number | null> {

@@ -9,7 +9,7 @@
  *   churches, foundations, ...), published as per-region CSVs at
  *   `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`
  *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization NAME plus
- *   its mailing address. It complements `usgov-nppes` with a DIFFERENT venue population
+ *   its mailing address. It complements `usgov-nppes` with a different venue population
  *   (non-profits vs healthcare providers) and, notably, a high share of PO-box addresses — useful
  *   `po_box`-tag signal (a tag with historically low recall).
  *
@@ -53,7 +53,7 @@ interface IRSBMFRow {
 /**
  * Classify the street line into a `po_box` or a `{house_number?, street}` split.
  *
- * BMF mixes street addresses and PO boxes in one `STREET` column, so the PO-box shapes have to be claimed BEFORE the
+ * BMF mixes street addresses and PO boxes in one `STREET` column, so the PO-box shapes have to be claimed before the
  * shared house-number split runs — otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street, which
  * is correct for every other US adapter and wrong here.
  */

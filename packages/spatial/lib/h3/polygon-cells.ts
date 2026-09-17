@@ -19,7 +19,7 @@
  *   it. So the index takes overlapping containment, and {@link classifyFeatureCells} throws on a feature
  *   that reaches no cell rather than skipping it.
  *
- *   THE `[lat, lng]` TRAP IS AVOIDED BY NOT ENTERING IT. h3-js reads a vertex as `[lat, lng]` in its
+ *   The `[lat, lng]` trap is avoided by not entering it. h3-js reads a vertex as `[lat, lng]` in its
  *   default mode; every call here passes `isGeoJSON = true` and hands it GeoJSON-order `[lon, lat]` rings,
  *   which is the order an ingest already produces. Converting instead would put a transposition between the
  *   geometry and the index that nothing downstream could see.
@@ -255,8 +255,8 @@ export function classifyFeatureCells(
 					true
 				)
 
-				// AN EMPTY ANSWER FOR A REAL PART IS AN ALLOCATOR FAILURE WEARING A RESULT'S CLOTHES, and it has to be caught
-				// HERE rather than after the whole feature. h3-js sizes its output buffer with `_calloc`, and a `_calloc`
+				// An empty answer for a real part is an allocator failure wearing a result's clothes, and it has to be caught
+				// here rather than after the whole feature. h3-js sizes its output buffer with `_calloc`, and a `_calloc`
 				// that fails returns the null pointer — which in WASM is ordinary writable memory, so the call reports
 				// success and the reader hands back an array of zeros, i.e. nothing. Every part with a non-degenerate
 				// bounding box touches at least one cell, so zero is impossible as an answer. Checking per FEATURE instead
@@ -388,7 +388,7 @@ export function ancestorChainCells(
  * and blob arithmetic, and a second copy is a second place for the subtraction to stop happening.
  *
  * COMPACTION IS PER FEATURE, which is what keeps a build's memory flat in row count with no temporary table: a row that
- * names one polygon is final the moment that polygon is classified. Only the WHOLE set is compacted — compacting the
+ * names one polygon is final the moment that polygon is classified. Only the whole set is compacted — compacting the
  * fringe would claim it covers ground it does not.
  */
 export function featureCellRows(cells: FeatureCells): Array<{

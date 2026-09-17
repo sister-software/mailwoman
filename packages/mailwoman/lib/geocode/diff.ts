@@ -255,7 +255,7 @@ export function renderGeocodeDiff(diff: GeocodeDiff): string {
 		}
 	}
 
-	// The parse story last, because when attribution is `parse-changed` it IS the explanation and the reader needs it.
+	// The parse story last, because when attribution is `parse-changed` it is the explanation and the reader needs it.
 	if (!diff.parse.identical) {
 		for (const span of diff.parse.spans.filter(isChange)) {
 			lines.push(`  · parse: ${describeSpan(span)}`)

@@ -6,14 +6,14 @@
  *   Scaffold a data-only `@mailwoman/neural-weights-<locale>` overlay and register it everywhere it
  *   has to be registered.
  *
- *   WHY THIS EXISTS. A weights overlay is six small files, which makes copying a sibling look like
- *   the obvious move. It is not: copying carried `repository.directory` verbatim THREE times in one
+ *   Why this exists. A weights overlay is six small files, which makes copying a sibling look like
+ *   the obvious move. It is not: copying carried `repository.directory` verbatim three times in one
  *   day (de-de took en-nz's, then en-in took de-de's before that was fixed, propagating the wrong
  *   value two hops), each time turning `main` red on the #757 provenance test. The fields that must
- *   NOT survive a copy are precisely the ones naming the source, and a human diffing two
+ *   not survive a copy are precisely the ones naming the source, and a human diffing two
  *   near-identical manifests is bad at spotting them.
  *
- *   A new overlay also has FIVE registration points, and missing any one fails at a different stage
+ *   A new overlay also has five registration points, and missing any one fails at a different stage
  *   and a different time:
  *
  *   1. root `package.json` `workspaces` — miss it and `yarn pack` says "not part of the project"
@@ -25,7 +25,7 @@
  *   This writes all six files and edits all five registers, so the failure mode is "the command was
  *   not run" rather than "the command was run and one edit was forgotten".
  *
- *   Deliberately does NOT touch `.github/workflows/publish.yml`: its fetch/preflight/guard lines
+ *   Deliberately does not touch `.github/workflows/publish.yml`: its fetch/preflight/guard lines
  *   name artifacts explicitly and a locale may or may not ship a pair index, a postcode binary or an
  *   FST. That edit stays a human decision, and the command prints the exact lines to add.
  *
@@ -118,7 +118,7 @@ export async function scaffoldWeightsOverlay(
 			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
-			// `directory` names THIS package. It is the field that has been wrong every time an overlay was
+			// `directory` names this package. It is the field that has been wrong every time an overlay was
 			// created by copying a sibling.
 			repository: {
 				type: "git",

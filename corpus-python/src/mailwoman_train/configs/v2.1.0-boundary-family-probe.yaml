@@ -1,6 +1,6 @@
 # 2k PROBE variant of v2.1.0-boundary-family — diagnostic-before-fix. Bars in check-v193/RESULTS.md.
 # v2.1.0-boundary-family — #901 re-scoped: the four-orthography leading-name-boundary family,
-# trained as ONE variable on the SHIPPED v5.2.0 base (nsplice-v2-expanded, tokenizer v0.7.1-nsplice).
+# trained as one variable on the shipped v5.2.0 base (nsplice-v2-expanded, tokenizer v0.7.1-nsplice).
 #
 # The family (one decode class, four orthographies — all real-tuple synthetic, 3 orders each,
 # balanced polarity per the v1.9.9 lesson):
@@ -10,14 +10,14 @@
 #   synth-cz-pcfirst-preposition(#897 close-out: leading postcode → house_number, "nad X" shatters)
 #
 # init_from (fresh optimizer over the surgery export — the v1.9.7 idiom; the nsplice-v2 export has
-# no optimizer state). Probe 2k FIRST; the probe check covers EVERY graded locale at reduced n
+# no optimizer state). Probe 2k first; the probe check covers every graded locale at reduced n
 # (the run-1 lesson). Pre-registration in check-v193/RESULTS.md before any grade.
 data:
-  # v0.9.4 overlay = v0.9.3a3's 694 parquet files VERBATIM (re-rooted to /data) + the 1 fr-bare-street parquet file.
+  # v0.9.4 overlay = v0.9.3a3's 694 parquet files verbatim (re-rooted to /data) + the 1 fr-bare-street parquet file.
   corpus_dir: /data/corpus/versioned/v0.10.0-boundary-family/corpus-v0.10.0-boundary-family
   tokenizer_dir: /data/models/tokenizer/v0.7.1-nsplice
   max_length: 128
-  country_weights: # VERBATIM from v1.9.3a3 (22 countries) — no new locales (surgical).
+  country_weights: # Verbatim from v1.9.3a3 (22 countries) — no new locales (surgical).
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -41,7 +41,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM from v1.9.3a3 + the one new fr-bare-street source.
+  source_weights: # Verbatim from v1.9.3a3 + the one new fr-bare-street source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -83,7 +83,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM from v1.9.3a3.
+model: # Verbatim from v1.9.3a3.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6

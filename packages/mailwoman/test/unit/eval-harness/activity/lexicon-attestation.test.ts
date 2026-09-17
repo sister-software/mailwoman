@@ -7,7 +7,7 @@
  *
  *   `@mailwoman/activity-lexicon` declares zero dependencies, so it can check that a derived form's base is
  *   present and that a citation is not empty, and nothing more. The claims that matter most are the ones
- *   pointing OUTSIDE it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
+ *   pointing outside it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
  *   compiled concept's own description. Those are checked here, where all three artifacts are held.
  *
  *   An attestation nobody can check is indistinguishable from an invented one, which is the whole reason the

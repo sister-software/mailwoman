@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for region-country coherence (`applyRegionCountryCoherence`, wired under `opts.adminCoherence`).
- *   When the locale-inferred `defaultCountry` is applied as a HARD `spr.country` candidate filter, a region
- *   qualifier naming a FOREIGN subdivision ("QC" under a US locale) resolves to nothing and is discarded —
+ *   When the locale-inferred `defaultCountry` is applied as a hard `spr.country` candidate filter, a region
+ *   qualifier naming a foreign subdivision ("QC" under a US locale) resolves to nothing and is discarded —
  *   and the locality is force-matched to the populous US namesake ("Montreal" → Montreal, WI). This pass
  *   expands the region token to its country via codex's ISO-3166-2 subdivision table (QC → Quebec / CA),
  *   confirms both the subdivision and a same-named locality resolve UNDER that country, and swaps the pair.
@@ -98,7 +98,7 @@ const MONTREAL_WI: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// London, Ontario vs London, KY (a real US namesake — so the greedy US filter DOES resolve a locality to rescue from).
+// London, Ontario vs London, KY (a real US namesake — so the greedy US filter does resolve a locality to rescue from).
 const LONDON_CA: ResolvedPlace = {
 	id: 202,
 	name: "London",
@@ -150,7 +150,7 @@ const PORTLAND_ME: ResolvedPlace = {
 
 /**
  * Backend filtered by name equality (regions also match their two-letter `abbrev`), placetype, country, and `parentID`
- * (descendant scope). Models the HARD `spr.country` filter: a query with `country` set never returns a foreign row.
+ * (descendant scope). Models the hard `spr.country` filter: a query with `country` set never returns a foreign row.
  */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {
@@ -295,7 +295,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("keeps the greedy result when the foreign country has no same-named locality (fail-safe)", async () => {
-		// Quebec resolves under CA, but there is NO 'Gotham' locality anywhere → no re-pick, region stays unresolved.
+		// Quebec resolves under CA, but there is no 'Gotham' locality anywhere → no re-pick, region stays unresolved.
 		const resolver = createWOFResolver(await makeBackend([QUEBEC, ILLINOIS]))
 		const out = await resolver.resolveTree(regionLocalityTree("Gotham", "QC"), { defaultCountry: "US" })
 		const loc = localityOf(out)

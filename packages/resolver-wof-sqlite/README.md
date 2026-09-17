@@ -240,8 +240,8 @@ are all stripped safely before going to FTS5. Per-token rules:
 - **Trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
   postcode starting with 627, `Pari*` matches Paris / Parishville / etc. The caller explicitly
   signals "prefix"; bare tokens stay phrase-matched for safety.
-- **Multiple tokens** join with implicit AND: `"Pari* TX"` matches places whose name contains
-  both a `Pari*`-prefixed word AND the word `TX`.
+- **Multiple tokens** join with an implicit `AND`: `"Pari* TX"` matches places whose name contains
+  both a `Pari*`-prefixed word and the word `TX`.
 
 Example: `findPlace({ text: "902*", placetype: "postalcode" })` returns 90201, 90210, 90211, …
 matching the Los Angeles ZIP corridor.

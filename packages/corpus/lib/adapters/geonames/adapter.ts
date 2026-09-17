@@ -71,7 +71,7 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Populated-place feature codes that are NOT current real places — skip them.
+ * Populated-place feature codes that are not current real places — skip them.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
@@ -103,7 +103,7 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 
 	if (!(await pathExists(fp))) return map
 
-	// `header: false` — the file's header IS a `#` comment, so it falls out with the other comments
+	// `header: false` — the file's header is a `#` comment, so it falls out with the other comments
 	// rather than being consumed as column names.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue

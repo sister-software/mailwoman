@@ -129,7 +129,7 @@ export class OracleMeter {
 	/**
 	 * Whether a provider may be called for `rows` more inputs.
 	 *
-	 * Checked BEFORE the run rather than per row, so a caller learns it cannot afford a 420-row panel before spending
+	 * Checked before the run rather than per row, so a caller learns it cannot afford a 420-row panel before spending
 	 * anything on the first 300 of it.
 	 */
 	admit(provider: OracleProviderName, rows: number): OracleAdmission {

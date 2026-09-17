@@ -12,7 +12,7 @@
  *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id,
  *   not the whole table paged into memory). Per the provenance-first design value: every row
  *   carries `source` provenance, and a convention that names a strategy this build doesn't register
- *   is rejected HERE, loudly, rather than silently no-opping at runtime.
+ *   is rejected here, loudly, rather than silently no-opping at runtime.
  *
  *   Authored entry shape (each element of the JSON array): { "wof_id": 85633111, "source": "…why this
  *   row exists…", "convention": { …Convention… } }

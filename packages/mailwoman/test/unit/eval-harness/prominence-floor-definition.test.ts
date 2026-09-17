@@ -7,7 +7,7 @@
  *   the audit's job is to say which one rather than to run and produce a number nobody can read.
  *
  *   The band cases carry the weight. This benchmark exists because the same-data panel's gold all sat above one
- *   floor, so the band edges ARE the measurement: bands that overlap would count a row twice under a claim
+ *   floor, so the band edges are the measurement: bands that overlap would count a row twice under a claim
  *   stated per band, and a row with no recorded population bucketed at zero would invent a band member the
  *   register never counted.
  */
@@ -66,7 +66,7 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a band whose ceiling sits below its floor", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// The SECOND band, so the inverted ceiling is not 0 — that value means unbounded and would be refused by a
+				// The second band, so the inverted ceiling is not 0 — that value means unbounded and would be refused by a
 				// different check, which would let this one pass without ever running.
 				draft.populationBands[1]!.max = draft.populationBands[1]!.min - 1
 			})
@@ -157,7 +157,7 @@ describe("prominence-floor ruler (#2264)", () => {
 
 		expect(floors).toEqual([1, 2, 3, 4])
 
-		// A floor of F admits population 10^F. The registered set must reject at least one WHOLE band, or the benchmark
+		// A floor of F admits population 10^F. The registered set must reject at least one whole band, or the benchmark
 		// repeats the same-data panel's blind spot: every gold clearing every floor, and a rate nobody can attribute.
 		// floor_4 admits 10,000 and the second band ends at 4,999, so it rejects both of the two smallest bands outright.
 		const highest = Math.max(...floors)

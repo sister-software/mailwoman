@@ -58,7 +58,7 @@ describe("readZipEntry", () => {
 	it("lets a consumer stop before the member ends", async () => {
 		let first = 0
 
-		// oxlint-disable-next-line no-unreachable-loop -- stopping after one chunk IS the case under test.
+		// oxlint-disable-next-line no-unreachable-loop -- stopping after one chunk is the case under test.
 		for await (const chunk of readZipEntry(archivePath, "big.bin")) {
 			first = chunk.length
 
@@ -79,7 +79,7 @@ describe("readZipEntry", () => {
 	})
 
 	it("reads a second member after one was abandoned, so the archive was really closed", async () => {
-		// oxlint-disable-next-line no-unreachable-loop -- abandoning the first member IS the setup under test.
+		// oxlint-disable-next-line no-unreachable-loop -- abandoning the first member is the setup under test.
 		for await (const _chunk of readZipEntry(archivePath, "big.bin")) break
 
 		let text = ""

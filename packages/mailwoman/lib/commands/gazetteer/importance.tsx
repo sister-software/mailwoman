@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database.
  *   Downloads Nominatim's `wikimedia-importance.csv.gz`, joins it through the `concordances` table,
- *   and writes TWO scores per place.
+ *   and writes two scores per place.
  *
  *   THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1, ratified 2026-08-06). This command used to write one
  *   column, filled by Wikipedia where the join landed and by a population-derived pseudo-score
@@ -219,7 +219,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		// Before the split this ran as two passes over one column: Wikipedia scores, then an
 		// `INSERT OR IGNORE` population fallback for whatever Wikipedia missed. That made the column
 		// a conflation nothing downstream could take apart — which is how encyclopedic importance
-		// became the de-facto ranking signal. Now each place gets ONE row carrying both scores in
+		// became the de-facto ranking signal. Now each place gets one row carrying both scores in
 		// their own columns, and the legacy `importance` column is written by `blendImportance` — the
 		// bounded blend whose cap keeps an article-floor score from outranking a population-attested
 		// town (see the constant's docstring for the bracketing contests).

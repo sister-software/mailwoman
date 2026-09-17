@@ -6,7 +6,7 @@
  *   The learned scorer (#603) — the production wiring for the gradient-boosted-tree model behind
  *   {@link ResolveConfig.scorer}. Two pieces:
  *
- *   1. {@link createMatchFeaturizer} — the ONE feature extractor for a candidate pair, used identically
+ *   1. {@link createMatchFeaturizer} — the one feature extractor for a candidate pair, used identically
  *        at train time (`registry/tools/train-gbt.ts`), eval time (the learned-scorer
  *        evals), and inference time (here). A pair → one-hot of each comparison's agreement level +
  *        the over-merge interaction terms (co-located × name/org disagreement) + address
@@ -48,7 +48,7 @@ export interface LearnedFeatureConfig {
 	/**
 	 * The comparison set the features are built over — MUST be `buildDefaultModel({ collapseSpatial: true,
 	 * addressFrequency }).comparisons` so the feature layout matches the trained model. (`usePhone` / `discriminators`
-	 * are NOT part of the learned feature model — the GBT replaces the FS weight wholesale and owns its own feature
+	 * are not part of the learned feature model — the GBT replaces the FS weight wholesale and owns its own feature
 	 * vector.)
 	 */
 	comparisons: Comparison<SourceRecord>[]
@@ -86,7 +86,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			}
 		}
 
-		// Interaction: co-located (spatial exact = level 0) AND names/org disagree (catch-all level).
+		// Interaction: co-located (spatial exact = level 0) and names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
 
 		const nameDisagree =
@@ -106,7 +106,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		// #625 roll-up signature (2026-07-06 adjudication): every genuine over-merge in the adjudicated
 		// packet was a MANAGEMENT-COMPANY roll-up — differently-branded operating entities at a shared
 		// corporate/billing address where the AUTHORIZED OFFICIAL also agrees (the operator signs
-		// everything). The official is NOT in the comparison set (discriminators are excluded from the
+		// everything). The official is not in the comparison set (discriminators are excluded from the
 		// learned feature model), so the GBT could never see — let alone learn — that officialAgree in
 		// the presence of orgDisagree is ANTI-identity evidence. These three appended features express
 		// it directly from `attributes.authorizedOfficial`; appended at the END so models trained

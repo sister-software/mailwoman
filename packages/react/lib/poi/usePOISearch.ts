@@ -118,7 +118,7 @@ export function usePOISearch({
 	const debouncedText = useDebouncedValue(text, debounceMs)
 	const trimmedText = debouncedText.trim()
 
-	// The load fires exactly ONCE on mount regardless of whether the caller passes a fresh `loadRuntime`
+	// The load fires exactly once on mount regardless of whether the caller passes a fresh `loadRuntime`
 	// closure each render (an inline `async () => …` would otherwise retrigger the effect → reload →
 	// re-render loop). `useEffectEvent` reads the LATEST closure without joining the dependency list —
 	// the runtime is a load-once resource.

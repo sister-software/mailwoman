@@ -6,13 +6,13 @@
  *   Per-locale held-out F1 regression check.
  *
  *   The golden v0.1.2 dev set is already split by country (`dev/us.jsonl`, `dev/fr.jsonl`,
- *   `dev/adversarial.jsonl`). This script loads the neural classifier ONCE and scores each country
- *   file SEPARATELY, then reports per-locale component-F1, exact-match, and — the point of the
- *   exercise — the SPREAD of macro-F1 across locales.
+ *   `dev/adversarial.jsonl`). This script loads the neural classifier once and scores each country
+ *   file separately, then reports per-locale component-F1, exact-match, and — the point of the
+ *   exercise — the spread of macro-F1 across locales.
  *
  *   Why it exists (DeepSeek consult 2026-06-02, measurement #1): the multi-locale-interference risk
  *   is theorized, never observed. Before building any locale-conditioning architecture we must
- *   first measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no
+ *   first measure whether US and FR already diverge on the same model. Equal per-locale F1 ⇒ no
  *   current interference ⇒ conditioning is premature. A gap ⇒ interference conditioning
  *   warrants its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference regression check firing.
@@ -79,15 +79,15 @@ import { $public } from "#env"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
 /**
- * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
+ * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
  * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs `anchor_features`/`gazetteer_features`)
- * were trained WITH these channels live, so honest inference must feed them. The lookup is keyed by the input's own
+ * were trained with these channels live, so honest inference must feed them. The lookup is keyed by the input's own
  * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
  * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
  * out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
  * (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0, region↔locality flip
  * — while the morphology tags (street/house_number/venue) that don't lean on the anchor channel survive. The result
- * LOOKS like a per-version model regression but is purely a harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater
+ * looks like a per-version model regression but is purely a harness OOD artifact: both v1.5.0 and v1.7.0 crater
  * identically without the feed and recover identically with it. Pass `--no-anchor` to deliberately measure the
  * anchor-off (zero-feed) path.
  */
@@ -413,7 +413,7 @@ export async function perLocaleF1(
 
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
-		// misuse check: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
+		// misuse check: if any custom-model flag is set, all three are required. Previously a missing
 		// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
 		// different checkpoints scored byte-identical. Refuse to guess; fail loud.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
@@ -507,7 +507,7 @@ export async function perLocaleF1(
 
 			// PRODUCTION-CONFIG parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
-			// this battery historically fed NEITHER — so the check scored a config production doesn't run.
+			// this battery historically fed neither — so the check scored a config production doesn't run.
 			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
 			const tree = await neural.parse(row.raw, {

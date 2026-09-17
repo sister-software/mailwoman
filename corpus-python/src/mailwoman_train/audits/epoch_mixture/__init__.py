@@ -3,7 +3,7 @@
 2026-08-09 training-substrate audit (HANDOFF-CODEX-TO-CLAUDE §6, action 7): the 250k-row
 prefix audits ended before any source exhausted, so the non-stationary sampler — a source
 deleted and the mixture renormalized mid-epoch — was invisible to them. This audit consumes
-ONE full row-limited epoch (the unit the trainer loops) and reports the mixture at two
+one full row-limited epoch (the unit the trainer loops) and reports the mixture at two
 levels:
 
 - **draw level** — ``_raw_row_stream``'s own output (pre-augmentation), counted per fixed
@@ -16,7 +16,7 @@ levels:
   quota design. The affix relabel pass mutates labels, never row counts, so its lexicon is
   deliberately left out of the policy here.
 
-The emitted pass runs the SAME function the trainer runs (``emit.emit_row``), which is what
+The emitted pass runs the same function the trainer runs (``emit.emit_row``), which is what
 makes its counts comparable with a training run's. It reimplemented that step until #2243, and
 the copy omitted ``augment_exclude_sources`` — so an excluded source was reported with the
 count it would have had if augmented. It still skips ``iter_rows``' shuffle buffer, which

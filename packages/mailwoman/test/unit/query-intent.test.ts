@@ -194,7 +194,7 @@ describe("coarserAnswerMarker", () => {
 	})
 
 	test("a venue answer satisfies every floor, so an entity query raises nothing", () => {
-		// `tierRank` ranks `venue` house-grade: a resolved venue IS the place the query asked about.
+		// `tierRank` ranks `venue` house-grade: a resolved venue is the place the query asked about.
 		expect(
 			coarserAnswerMarker({
 				kinds: ["landmark"],

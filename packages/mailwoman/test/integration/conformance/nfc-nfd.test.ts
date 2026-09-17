@@ -21,7 +21,7 @@
  *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` blocks on `status: pass` rows and
  *   reports tracked ones without blocking, so a tracked violation is printed in full and does not fail CI —
  *   and a tracked row that starts holding prints a promotion instruction rather than sitting in the list
- *   forever. What it DOES fail on is a new violation on a row that held, or a suite that stopped stating this
+ *   forever. What it does fail on is a new violation on a row that held, or a suite that stopped stating this
  *   law.
  *
  *   The suite path is pinned rather than defaulted: a default run covers every committed law, and this file

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Model-card channel declarations and per-tag capability reading — which evidence channels a weights bundle
- *   REQUIRES, which it merely ships, and what the runtime must warn about when one goes unfed. Split from
+ *   requires, which it merely ships, and what the runtime must warn about when one goes unfed. Split from
  *   `weights.ts`, which answers the different question of WHERE the artifacts are.
  */
 
@@ -26,7 +26,7 @@ export { inferRequiredChannelsFromInputs } from "#ort-feeds"
  */
 export interface RequiredChannels {
 	/**
-	 * Postcode-anchor channel (#239/#240). `span_mode` declares WHICH substrings the runtime should look up — omit (or
+	 * Postcode-anchor channel (#239/#240). `span_mode` declares which substrings the runtime should look up — omit (or
 	 * `alnum-run`) for every model trained before 2026-08-05, `shaped` for a model trained against a lookup with
 	 * letter-bearing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that never
 	 * saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its GB/NL
@@ -91,10 +91,10 @@ export interface DeclaredArtifact {
 }
 
 /**
- * What a weights package's OWN `model-card.json` declares it ships under `files`, for one family of keys.
+ * What a weights package's own `model-card.json` declares it ships under `files`, for one family of keys.
  *
- * The card's `files` block is the package's manifest of intent and the only per-package statement of what SHOULD be on
- * disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay that
+ * The card's `files` block is the package's manifest of intent and the only per-package statement of what should be on
+ * disk — `requires` describes the trained encoder, which is a different claim and is shared across every overlay that
  * inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required:
  * true` (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under the #1476
  * mitigation, so a guard keyed on `requires` alone calls a supported configuration broken, and — because the old
@@ -132,7 +132,7 @@ export async function readDeclaredArtifactFile(
 	for (const key of keys) {
 		const file = (files as Record<string, unknown>)[key]
 
-		// The cards keep `$comment_*` siblings in `files` to record a DELIBERATE absence (en-gb's
+		// The cards keep `$comment_*` siblings in `files` to record a deliberate absence (en-gb's
 		// `$comment_postcode_anchor`), so only a plain filename counts as a declaration.
 		if (typeof file !== "string" || !file || file.startsWith("$")) continue
 
@@ -190,8 +190,8 @@ const warnedUnfedChannels = new Set<string>()
 
 /**
  * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of the web loader's
- * `warnOnUnfedTrainedChannels`. A card that declares a channel REQUIRED, paired with a package that didn't ship (or
- * could not parse) its data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
+ * `warnOnUnfedTrainedChannels`. A card that declares a channel required, paired with a package that didn't ship (or
+ * could not parse) its data, runs that channel off. Structural fallback (the parse still works), loud console (a
  * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this exists to surface).
  *
  * BOUND TO A PACKAGE, and deduped per (channel, package) — it was once per channel per PROCESS until #1516. One process
@@ -219,7 +219,7 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
 }
 
 /**
- * Why an unfed anchor channel is worth a warning for THIS package, or `undefined` when it is not.
+ * Why an unfed anchor channel is worth a warning for this package, or `undefined` when it is not.
  *
  * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix. The old test was
  * `requires.anchor.required && nothing loaded`, and `requires` describes the trained ENCODER — shared by every overlay
@@ -244,7 +244,7 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 /**
  * Read the structured `requires` block from a `model-card.json` (#718). DEFENSIVE: returns `undefined` when the card is
  * absent, unreadable, or has no `requires` field (callers then INFER the required channels from the ONNX graph — see
- * `inferRequiredChannelsFromInputs`). Throws ONLY when the field is PRESENT but corrupt (not an object, or a channel
+ * `inferRequiredChannelsFromInputs`). Throws only when the field is present but corrupt (not an object, or a channel
  * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug, not a silent
  * re-default.
  */
@@ -339,13 +339,13 @@ export async function readRequiredChannels(
 
 /**
  * One tag's certified capability under a (tier × address-system) cell of the capability manifest (#718/#719).
- * `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask OFF; `maskOnF1` is the same with
- * the mask ON — recorded ONLY for tags some codex `forbiddenTags` row suppresses, because that's the only place the
+ * `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask off; `maskOnF1` is the same with
+ * the mask on — recorded only for tags some codex `forbiddenTags` row suppresses, because that's the only place the
  * loader's delta check consults it.
  */
 export interface TagCapability {
 	/**
-	 * Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability.
+	 * Measured per-tag F1 (percent) with the conventions mask off — the model's real capability.
 	 */
 	maskOffF1: number
 	/**
@@ -368,7 +368,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
 /**
  * Read the `capabilities` block from a `model-card.json` (#718/#719). DEFENSIVE, mirroring `readRequiredChannels`:
  * returns `undefined` when the card is absent, unreadable, or has no `capabilities` field (a pre-#718 card → the
- * loader's delta check is skipped, back-compat). Throws ONLY when the field is PRESENT but not an object — a corrupt
+ * loader's delta check is skipped, back-compat). Throws only when the field is present but not an object — a corrupt
  * declared contract is a loud artifact bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
@@ -394,7 +394,7 @@ export async function readCapabilityManifest(
 
 /**
  * Resolve `capabilities[tier][system][tag]` to a `TagCapability`, returning `undefined` for any missing/malformed cell
- * (a tag the model is NOT certified for — the loader treats that as legal: the model can't emit it, so a mask can't
+ * (a tag the model is not certified for — the loader treats that as legal: the model can't emit it, so a mask can't
  * destroy it). Skips the `$comment` provenance key.
  */
 export function lookupTagCapability(

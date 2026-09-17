@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #1891 regression pin: bumping `release.config.json#version` changes EXACTLY the version line — the
+ * @file The #1891 regression pin: bumping `release.config.json#version` changes exactly the version line — the
  *   `weights` block (the model identity, which a code-only release must never move) stays byte-equivalent. v9.2.0
  *   shipped while this file read 9.1.0 because nothing bumped it (#1024's drift class); the bump is a targeted
  *   textual replacement because the file is oxfmt-formatted and a parse-then-stringify write would reformat it

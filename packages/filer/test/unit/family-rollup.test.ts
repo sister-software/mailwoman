@@ -20,24 +20,24 @@
  *   **`display_names` is recovered by a join, which is why this suite creates more tables than the reader
  *   reads.** `family_id` alone is a canonicalized slug, and the raw holding-/management-company name(s)
  *   that produced it are otherwise unrecoverable through this reader — a real loss for a product surface
- *   whose headline output IS "these filers report holding company H". Recovering them means joining back
+ *   whose headline output is "these filers report holding company H". Recovering them means joining back
  *   to the specific `filer_edge` row that implied each membership, so `createAllTables` also creates
  *   `filer_node`/`filer_edge` even though `familyRollup` itself touches only
  *   `filer_family`/`filer_manifest`.
  *
- *   **The `display_names` fixtures mint their `family_id` through the REAL `mintFamilyID`
+ *   **The `display_names` fixtures mint their `family_id` through the real `mintFamilyID`
  *   (`family-id.ts`), never an arbitrary constant.** A made-up `family_id` can round-trip through a join
  *   that is nonetheless wrong, which makes the whole block blind to the failure it exists to catch: a
- *   member with two holding-company edges sharing one provenance tuple, both names attributed to EVERY
+ *   member with two holding-company edges sharing one provenance tuple, both names attributed to every
  *   family that tuple touched.
  *
  *   **Scoping is a plain join on `filer_family.naming_node_id`** — the company node the BUILDER recorded
  *   as the one whose name produced each `family_id` — not a read-time re-canonicalization of edge targets.
  *   So every `filer_family` insert below carries that column, and two fixtures depend on it directly: one
- *   member with two same-tuple edges naming DIFFERENT families (the cross-family leak, at reader level),
+ *   member with two same-tuple edges naming different families (the cross-family leak, at reader level),
  *   and an artifact whose persisted `family_id` does not match what today's canonicalizer would mint,
- *   which under any read-time derivation returns no names at all. The REAL-builder versions of all of this
- *   (including one filer reporting two spellings of ONE family, the shape that forced `naming_node_id`
+ *   which under any read-time derivation returns no names at all. The real-builder versions of all of this
+ *   (including one filer reporting two spellings of one family, the shape that forced `naming_node_id`
  *   into the primary key) live in `filer-lookup.test.ts`.
  */
 
@@ -127,13 +127,13 @@ describe("familyRollup — general reader contract", () => {
 
 	/**
 	 * Without this guard, an artifact whose manifest predates `filer_family` (`schema_version` < 2) surfaces a raw,
-	 * unhelpful "no such table: filer_family" the instant the member query runs — so this fixture deliberately NEVER
+	 * unhelpful "no such table: filer_family" the instant the member query runs — so this fixture deliberately never
 	 * creates that table, standing in for a real pre-`filer_family` artifact.
 	 */
 	it("throws a descriptive, rebuild-pointing error — not a raw 'no such table' — when schema_version predates filer_family", async () => {
 		using db = openMemory()
 		await createFilerManifestTable(db)
-		// filer_family deliberately NOT created — this IS the schema_version 1 shape being simulated.
+		// filer_family deliberately not created — this is the schema_version 1 shape being simulated.
 		await seedManifest(db, { schema_version: 1 })
 
 		await expect(familyRollup(db, { familyID: FAMILY_ID })).rejects.toThrow(
@@ -248,7 +248,7 @@ describe("familyRollup — general reader contract", () => {
 	/**
 	 * A node belonging to two families (holding company != management company) is a normal, builder-emitted shape — see
 	 * `build-filer.test.ts`'s own "holding company differs from its management company" fixture — so ambiguity is not an
-	 * error condition here: BOTH rollups must come back, matching `filerLookup.ts`'s `families` field's own array
+	 * error condition here: both rollups must come back, matching `filerLookup.ts`'s `families` field's own array
 	 * contract for the identical question.
 	 */
 	it("returns ALL families a nodeID belongs to, never throwing on a normal multi-family shape", async () => {
@@ -406,15 +406,15 @@ describe("familyRollup — general reader contract", () => {
 	 * silently empty a shipped artifact's `display_names`.
 	 *
 	 * These fixtures are hand-written (nodes, edges and family rows inserted directly) and each asserts a spelling the
-	 * reader must surface. They are NOT independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and
-	 * the multi-spelling pair below are minted through the REAL `mintFamilyID`, because made-up `family_id` constants
+	 * reader must surface. They are not independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and
+	 * the multi-spelling pair below are minted through the real `mintFamilyID`, because made-up `family_id` constants
 	 * round-trip through a wrong join and hide the cross-family leak. What each test PROVES is the reader's join; what
 	 * the real `mintFamilyID` calls establish is that the fixture's premise (these two spellings really do land in one
 	 * family) holds for real rather than by assumption. The end-to-end builder versions live in `filer-lookup.test.ts`.
 	 */
 	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
-		// The REAL canonicalized family_id — not an arbitrary constant. A made-up one is satisfied by a join that
+		// The real canonicalized family_id — not an arbitrary constant. A made-up one is satisfied by a join that
 		// never checks whether an edge's target canonicalizes to the family_id at all, which is how the
 		// cross-family leak hides from a fixture.
 		const FAMILY_ID_SOLO = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Solo Spelling Inc")!
@@ -472,8 +472,8 @@ describe("familyRollup — general reader contract", () => {
 		})
 
 		/**
-		 * THE RULE (coordinator's explicit requirement — "expose the set, never collapse silently"): two members whose raw
-		 * holding-company spellings differ ("Acme Corp" vs "Acme Corporation, LLC" — both reduce to the SAME canonical
+		 * The rule (coordinator's explicit requirement — "expose the set, never collapse silently"): two members whose raw
+		 * holding-company spellings differ ("Acme Corp" vs "Acme Corporation, LLC" — both reduce to the same canonical
 		 * `family_id` per `@mailwoman/record`'s `canonicalizeOrganizationName`, verified against a real build in
 		 * `filer-lookup.test.ts`) both survive here, sorted — never silently picked down to one.
 		 */
@@ -485,8 +485,8 @@ describe("familyRollup — general reader contract", () => {
 			const HOLDING_NODE_SPELLING_1 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corp`
 			const HOLDING_NODE_SPELLING_2 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`
 
-			// Confirms the fixture's premise BEFORE using it: these two spellings really do canonicalize to the
-			// IDENTICAL family_id (real mintFamilyID, not an arbitrary constant).
+			// Confirms the fixture's premise before using it: these two spellings really do canonicalize to the
+			// identical family_id (real mintFamilyID, not an arbitrary constant).
 			const familyIDSpelling1 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
 			const familyIDSpelling2 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corporation, LLC")!
 			expect(familyIDSpelling1).toBe(familyIDSpelling2)
@@ -542,7 +542,7 @@ describe("familyRollup — general reader contract", () => {
 				.execute()
 
 			// Same family_id for both — exactly what canonicalizeOrganizationName would produce for real (verified
-			// end-to-end via the REAL builder in filer-lookup.test.ts's own multi-spelling assertion).
+			// end-to-end via the real builder in filer-lookup.test.ts's own multi-spelling assertion).
 			await db
 				.insertInto("filer_family")
 				.values([
@@ -578,8 +578,8 @@ describe("familyRollup — general reader contract", () => {
 		/**
 		 * The join under direct unit pressure. Both tests above pass with the naming-provenance join REMOVED — their
 		 * fixtures give each member exactly one holding-company edge, so any query keyed on `(from_node_id, relationship,
-		 * source, valid_from)` finds the same single row either way. This one does not: ONE member carries TWO edges
-		 * sharing that identical 4-tuple, whose targets canonicalize to two DIFFERENT families (the documented decision-6
+		 * source, valid_from)` finds the same single row either way. This one does not: one member carries two edges
+		 * sharing that identical 4-tuple, whose targets canonicalize to two different families (the documented decision-6
 		 * shape — one FRN filing two 499 rows the same day with conflicting holding companies). Only `naming_node_id` tells
 		 * the two apart. Drop it from the query and each family reports the other's name too: a family claiming a holding
 		 * company its member never reported to it, the same false-assertion class as 3a's identity leaks. The REAL-builder
@@ -616,7 +616,7 @@ describe("familyRollup — general reader contract", () => {
 				])
 				.execute()
 
-			// Two edges out of ONE member sharing (from_node_id, relationship, source, valid_from) — distinct rows only
+			// Two edges out of one member sharing (from_node_id, relationship, source, valid_from) — distinct rows only
 			// because filer_edge's PK carries to_node_id.
 			await db
 				.insertInto("filer_edge")
@@ -753,8 +753,8 @@ describe("familyRollup — general reader contract", () => {
 
 		/**
 		 * "Documented relationships only". `readFamilyDisplayNames` filters the naming edge to `assertion:
-		 * "authoritative"`. Nothing in the pipeline emits an INFERRED holding-/management-company edge today —
-		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the REAL builder;
+		 * "authoritative"`. Nothing in the pipeline emits an inferred holding-/management-company edge today —
+		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the real builder;
 		 * it is constructible only by hand, as here. The predicate is there because a `display_names` entry is presented as
 		 * a name this family's members actually REPORTED. Surfacing one recovered from a matcher's guess would restate that
 		 * guess as a filing, which is the same category of error as 3a's inferred/authoritative conflation — the reason

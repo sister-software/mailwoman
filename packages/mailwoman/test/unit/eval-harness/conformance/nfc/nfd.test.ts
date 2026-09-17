@@ -7,7 +7,7 @@
  *
  *   THE GUARD IS THE SCOPE. `canonicalFormKey` is `NFD`, so a pair whose decompositions match is canonically
  *   equivalent and a pair whose decompositions differ is not — which is the whole of what this law claims, and
- *   the reason the relations it must NOT absorb are refused by construction rather than by a list.
+ *   the reason the relations it must not absorb are refused by construction rather than by a list.
  *   Compatibility normalization, a removed accent, a transliteration and a case change each move the key, and
  *   each is asserted here to move it.
  *
@@ -72,7 +72,7 @@ const decompose = CANONICAL_TRANSFORMATION_BY_NAME.nfd
 const compose = CANONICAL_TRANSFORMATION_BY_NAME.nfc
 
 /**
- * The Hanoi row with its FIRST accented word decomposed and every later one left composed — a query written in NEITHER
+ * The Hanoi row with its first accented word decomposed and every later one left composed — a query written in neither
  * canonical form, and therefore canonically equivalent to the base while being reproducible from neither
  * transformation's name. It is the shape a string assembled from two differently-normalized sources arrives in.
  */

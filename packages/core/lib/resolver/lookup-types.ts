@@ -24,7 +24,7 @@ export interface AddressPointHit {
 	 */
 	release: string
 	/**
-	 * The point's OWN scope tags, when the extract row carries them — the register's locality (normalized key form) and
+	 * The point's own scope tags, when the extract row carries them — the register's locality (normalized key form) and
 	 * postcode. A rooftop answer can then be DECORATED with the commune/postcode the register attests, which a query that
 	 * never named them cannot supply. Optional: not every source carries both, and existing readers/consumers predate the
 	 * fields.
@@ -35,7 +35,7 @@ export interface AddressPointHit {
 
 /**
  * Street-level exact-point lookup (#476). Implementations own their normalization — both the extract build and this
- * lookup must apply the SAME normalizer (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this
+ * lookup must apply the same normalizer (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this
  * contract.
  */
 export interface AddressPointLookup {
@@ -53,8 +53,8 @@ export interface AddressPointLookup {
 		region?: string
 		subregion?: string
 		/**
-		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For extracts whose
-		 * points carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the
+		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried after postcode/locality. For extracts whose
+		 * points carry no postcode/locality of their own (OSM addr nodes often don't) but do carry a coordinate — the
 		 * resolved locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it
 		 * (byte-stable).
 		 */
@@ -95,7 +95,7 @@ export interface InterpolatedPointHit {
 /**
  * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own their normalization
  * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Postcode-scoped; without
- * a postcode the tier answers only when the covering ranges agree on ONE postcode — `near` (the resolved locality's
+ * a postcode the tier answers only when the covering ranges agree on one postcode — `near` (the resolved locality's
  * coordinate) lets an implementation break a multi-postcode tie by segment proximity instead of abstaining (the
  * Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
  */
@@ -120,7 +120,7 @@ export interface InterpolationLookup {
 }
 
 /**
- * One street-CENTROID hit (#1042) — the street-level tier BELOW the exact address-point tier and ABOVE admin-centroid
+ * One street-CENTROID hit (#1042) — the street-level tier below the exact address-point tier and above admin-centroid
  * resolution. A street's centroid + an honest extent-derived radius, for a street-only query (no house number) that an
  * address-point tier cannot serve by definition. Derived from a national register's rooftop points
  * (`street-centroids-<cc>.db`, a `GROUP BY street` roll-up). `uncertaintyM` prices the coarseness (half the street's

@@ -21,7 +21,7 @@
  *      of one threshold choice; {@link completenessAcrossProtocols} runs a pre-registered grid and reports
  *      the weakest bound any of them supports.
  *
- *   What it does NOT correct, and no two-source design can: POSITIVE DEPENDENCE between the sources. If
+ *   What it does not correct, and no two-source design can: positive dependence between the sources. If
  *   the same POI is more likely to be in both inventories than chance would have it — a chain branch on a
  *   high street against a single pharmacy on a village lane — then `m` runs high, `N̂` runs low, and
  *   completeness runs HIGH. That is the direction that turns a data gap into confident negative evidence,
@@ -66,7 +66,7 @@ export interface MatchProtocol {
 }
 
 /**
- * The pre-registered grid. Fixed BEFORE any completeness value was read off it, and the spread between its ends is the
+ * The pre-registered grid. Fixed before any completeness value was read off it, and the spread between its ends is the
  * honest width of the measurement — on the pharmacy/Île-de-France pilot it ran 0.6665 to 0.8423.
  *
  * `strict` is the conservative end: it accepts only rows that agree on both position and name, so it under-counts `m`,
@@ -230,7 +230,7 @@ export interface ProtocolCompleteness {
 	matched: number
 	estimate: ChapmanEstimate
 	/**
-	 * Point estimate of the SECOND inventory's completeness — the one a pilot layer built from `second` records.
+	 * Point estimate of the second inventory's completeness — the one a pilot layer built from `second` records.
 	 */
 	completeness: number
 	/**

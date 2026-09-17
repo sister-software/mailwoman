@@ -2,7 +2,7 @@
 
 The critical property is the NO-REGIME-SWITCH guarantee: a per-token confidence of 0 (an absent
 postcode, or a confidence-zeroed anchor under the training curriculum) must make the injection an
-EXACT identity. That is what lets "absent" be the continuous c=0 tail of a spectrum instead of a
+exact identity. That is what lets "absent" be the continuous c=0 tail of a spectrum instead of a
 discrete [NO-ANCHOR] mode (DeepSeek 2026-06-05) — and it is the reason no separate dropout token is
 needed. Also covered: the channel actually does something at c>0, back-compat is bit-identical off,
 the supplied-but-not-built guard fires, and the flags survive save/load.
@@ -90,11 +90,11 @@ def test_save_load_round_trips_the_channel():
 
 # endregion
 
-# region Dual-injection (#327, v0.9.4): the SAME anchor also at position 0
+# region Dual-injection (#327, v0.9.4): the same anchor also at position 0
 
 
 def _dual_fixture():
-    """A dual-injection model sharing a single-injection model's weights (flag is the ONLY difference)."""
+    """A dual-injection model sharing a single-injection model's weights (flag is the only difference)."""
     torch.manual_seed(0)
     single = MailwomanCoarseEncoder(**_COMMON, use_postcode_anchor=True, inject_first_token=False).eval()
     dual = MailwomanCoarseEncoder(**_COMMON, use_postcode_anchor=True, inject_first_token=True).eval()

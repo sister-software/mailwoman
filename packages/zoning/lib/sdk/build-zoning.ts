@@ -16,8 +16,8 @@
  *   THE AREA CHECK IS THE HOLE CHECK AND THE ONE THING HERE THAT IS EXACT. The service encodes hole
  *   roles by ring orientation, and reading them wrong is silent — a hole read as an exterior produces a
  *   well-formed polygon that answers "inside" for every location the plan carved out. Measured over the whole
- *   national export: the rings read WITH their holes total 5,444.5 km² and the Department's own `Shape__Area`
- *   sums to 5,444.5 km²; the same rings read WITHOUT their holes total 5,666.6 km². The publisher's figure has
+ *   national export: the rings read with their holes total 5,444.5 km² and the Department's own `Shape__Area`
+ *   sums to 5,444.5 km²; the same rings read without their holes total 5,666.6 km². The publisher's figure has
  *   to come from the live service, because the bulk export drops the column — which is what makes this a
  *   two-path check rather than the archive agreeing with itself.
  *
@@ -152,7 +152,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The publisher's OWN area figure for the whole product, in square metres — its `Shape__Area` sum, read from the live
+	 * The publisher's own area figure for the whole product, in square metres — its `Shape__Area` sum, read from the live
 	 * service. Supplied, the build asserts the rings it encoded agree with it.
 	 */
 	expectedSourceAreaM2?: number
@@ -207,7 +207,7 @@ export interface BuildZoningResult {
 		nestedHoles: number
 		adjacentHoles: number
 		/**
-		 * Features whose exterior was chosen by MAGNITUDE because no ring read as one by orientation. Measured at ONE of
+		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation. Measured at one of
 		 * 85,330 — a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a ring's winding is floating-point noise rather
 		 * than something the publisher stated. Reported rather than implied to be zero.
 		 */
@@ -431,7 +431,7 @@ interface StreamResult {
 		nestedHoles: number
 		adjacentHoles: number
 		/**
-		 * Features whose exterior was chosen by MAGNITUDE because no ring read as one by orientation. Measured at ONE of
+		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation. Measured at one of
 		 * 85,330 — a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², where a ring's winding is floating-point noise rather
 		 * than something the publisher stated. Reported rather than implied to be zero.
 		 */
@@ -685,7 +685,7 @@ function writeJurisdictionRows(
 	)
 
 	for (const [code, name] of jurisdictions.toSorted((left, right) => (left[0] < right[0] ? -1 : 1))) {
-		// The id IS the publisher's own code. `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — carried in both
+		// The id is the publisher's own code. `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — carried in both
 		// columns rather than repaired in one, because a repaired code is this package's spelling in a column that claims to
 		// be the publisher's.
 		insert.run(code, name, code, "IE")
@@ -778,7 +778,7 @@ function writeVocabularyRows(
 		census.codes++
 
 		// A LOCAL SCHEME IS UNDECLARED BY CONSTRUCTION and reporting it as such would bury the one that matters. The census
-		// counts an undeclared code only where the publisher DOES publish a domain to be outside of.
+		// counts an undeclared code only where the publisher does publish a domain to be outside of.
 		if (!row.declared && row.scheme === GZT_CROSSWALK_SCHEME) {
 			census.undeclared++
 			census.undeclaredCodes.push(row.code)

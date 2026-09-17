@@ -187,7 +187,7 @@ describe("loadImportanceSplit", () => {
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.splitColumns)
 		expect(split.referential.get(1)).toBe(0.25)
 		expect(split.encyclopedic.get(1)).toBe(0.1173)
-		// NULL encyclopedic is ABSENT, not 0.
+		// A NULL encyclopedic score is absent from the map, not a 0 entry.
 		expect(split.encyclopedic.has(2)).toBe(false)
 	})
 

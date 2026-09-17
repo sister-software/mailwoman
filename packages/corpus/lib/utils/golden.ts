@@ -75,7 +75,7 @@ export interface GoldenReport {
  * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
-	// The throw IS the result: `validateGoldenFile` catches it and records the message against the line
+	// The throw is the result: `validateGoldenFile` catches it and records the message against the line
 	// number, so a tolerant parse would report a corrupt row as valid.
 	const obj = parseJSONStrict<Partial<GoldenEntry> & Record<string, unknown>>(line)
 
@@ -140,7 +140,7 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
  */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const issues: GoldenIssue[] = []
-	// Counted over EVERY row including blanks, so the number matches what an editor shows.
+	// Counted over every row including blanks, so the number matches what an editor shows.
 	let lineNumber = 0
 
 	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {

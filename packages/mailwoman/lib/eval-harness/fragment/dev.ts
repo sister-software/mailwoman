@@ -6,13 +6,13 @@
  *   Probe-1 read-out (parity campaign): score a checkpoint on the held-out fragment-dev split with
  *   the pre-registered SEPARATOR metrics (campaign runbook / DeepSeek prediction 2):
  *
- *   - Token-level tag accuracy vs span-level EXACT match — a token-F1 rise with a lagging
+ *   - Token-level tag accuracy vs span-level exact match — a token-F1 rise with a lagging
  *       span-exact-match confirms the #727 span-head ceiling.
  *   - Trailing-number→postcode rate on street+number rows — persistence above noise confirms the
  *       numeric-neighbor confusion survives data.
  *
  *   Fixture: fragment-dev.jsonl (rows never trained on; schema = corpus rows). Grade candidates via
- *   `--weights-cache` package-shaped dirs ONLY (#718 zero-fill trap).
+ *   `--weights-cache` package-shaped dirs only (#718 zero-fill trap).
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"

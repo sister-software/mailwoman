@@ -9,9 +9,9 @@
  *
  *   - `homonym_confound` — a trailing region determines the result (#267/#833/#905).
  *   - `bare_namesake` — nothing determines the result but ranking; the answer has to be dominant enough to pin.
- *   - `wiki_pop_conflict` — population and encyclopedic importance pick DIFFERENT bearers, so the row is
+ *   - `wiki_pop_conflict` — population and encyclopedic importance pick different bearers, so the row is
  *       the disagreement itself. Saint-Denis is the canonical member.
- *   - `street_head_control` — the surface is a toponym in street-head position and must NOT be pulled to
+ *   - `street_head_control` — the surface is a toponym in street-head position and must not be pulled to
  *       locality (#1142). These are the arm comparison's cost side: where a bigger bias is dangerous.
  *
  *   The shape-driven half lives in `rows/index.ts`; both are concatenated by the builder.
@@ -383,7 +383,7 @@ export const TOPONYM_ROWS: Curated[] = [
 	//#endregion
 
 	//#region street_head_control
-	// A toponym in street-head position. The bias must NOT pull it to locality.
+	// A toponym in street-head position. The bias must not pull it to locality.
 	// #1142's measured failure mode: real gazetteer importance dragged the leading token of a comma-free
 	// street into `locality` ("Sweeney Ranch Road" → loc "Sweeney"), costing US golden 22 points. These rows
 	// are where a bigger bias is DANGEROUS, so they are the arm comparison's cost side.

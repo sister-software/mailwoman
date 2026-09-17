@@ -44,7 +44,7 @@ export const REFERENTIAL_SATURATION_POPULATION = (2 ** REFERENTIAL_LOG2_SCALE - 
  * Population → referential likelihood in [0, 1].
  *
  * `min(1, log2(1 + pop/1000) / 14)` — the formula the FST builder has used for its population fallback since the FST
- * shipped, and the one `gazetteer importance` used for its fallback rows. It is defined ONCE here so the decode-bias
+ * shipped, and the one `gazetteer importance` used for its fallback rows. It is defined once here so the decode-bias
  * artifact's values, the gazetteer's `referential` column, and the resolver's ranking key are the same number by
  * construction rather than by three matching copies.
  *

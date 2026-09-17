@@ -22,7 +22,7 @@
  *   ## Layout
  *
  *   This is an `sdk/`-shaped trio (fetch → extract → parse, exactly like `ban/sdk`) that deliberately
- *   does NOT live in its own workspace. Code-Point Open has one consumer — the GB postcode database
+ *   does not live in its own workspace. Code-Point Open has one consumer — the GB postcode database
  *   builder two directories up — and `gazetteer-pipeline/postcode/` already owns every other postcode
  *   database's build. A top-level `codepoint/` workspace would add a publish surface, an exports map, two
  *   tsconfigs and a row in the AGENTS.md table to acquire one 14 MB zip that nothing outside this
@@ -30,7 +30,7 @@
  *
  *   ## Licence
  *
- *   OGL v3, and the attribution is NOT optional — see {@link codePointAttribution}. The year in the
+ *   OGL v3, and the attribution is not optional — see {@link codePointAttribution}. The year in the
  *   block is the year of OUR publication, which is why it is a function and not a string constant.
  */
 
@@ -130,7 +130,7 @@ export interface CodePointProduct {
  * What "GB" means on this product, stated here because it is the single most consequential fact about it and the one a
  * reader is most likely to assume wrongly.
  *
- * Code-Point Open covers **England, Scotland and Wales only**. It does NOT cover Northern Ireland, and it does not
+ * Code-Point Open covers **England, Scotland and Wales only**. It does not cover Northern Ireland, and it does not
  * cover the Isle of Man or the Channel Islands. The country codes on the 2026-05 rows are exactly three — `E92000001`,
  * `S92000003`, `W92000004` — with no `N92000002` among 1,747,841 rows. NI postcodes (the `BT` area) are administered by
  * Land & Property Services and are not in any OS OpenData product; ONS's OGL grant for postcode products explicitly
@@ -148,7 +148,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  * wrong in a way that would get us in trouble.
  *
  * The obvious answer is ONSPD: the ONS Postcode Directory is free, is published on the Open Geography Portal under OGL,
- * and DOES carry BT postcodes with coordinates (derived from LPS's Pointer, on the Irish National Grid). Take it and
+ * and does carry BT postcodes with coordinates (derived from LPS's Pointer, on the Irish National Grid). Take it and
  * the gap closes. That reading is wrong, and the wrongness is explicit in ONS's own words rather than a matter of
  * interpretation. From the ONS licences page, covering ONSPD and NSPL alike: "You may re-use this information **(not
  * including logos or Northern Ireland data)** free of charge", and BT rows ship only with "a Northern Ireland End User
@@ -169,12 +169,12 @@ export const CODEPOINT_COVERAGE_NOTE =
  *
  * So the real options are three, and only one of them is free:
  *
- * (a) LICENCE POINTER FROM LPS. The authoritative NI address database, ~1 M points with UPRNs. The OSNI mapshop lists
+ * (a) Licence Pointer from LPS. The authoritative NI address database, ~1 M points with UPRNs. The OSNI mapshop lists
  * full NI coverage at £9,224 excl. VAT; orders over £3,000 need a formal licence application with a ≥12-month term.
- * This is the ONLY route to complete NI centroids in a permissively-licensed package. (b) SHIP NI AS ODbL from
+ * This is the only route to complete NI centroids in a permissively-licensed package. (b) Ship NI as ODbL from
  * OpenStreetMap `addr:postcode`. Coverage is partial and uneven, and ODbL's share-alike would infect the artifact — the
  * same posture `@mailwoman/osm` already sits in, awaiting counsel. Note the OSM community explicitly forbids importing
- * LPS/ONSPD centroids into OSM, so this cannot be laundered. (c) SHIP NO NI POSTCODE CENTROIDS. Fall back to the
+ * LPS/ONSPD centroids into OSM, so this cannot be laundered. (c) Ship no NI postcode centroids. Fall back to the
  * OGL-clean OSNI Streetnames gazetteer (every NI street with Irish Grid coordinates) for street-level NI resolution.
  *
  * **(b) LANDED 2026-08-05, at the build-local tier** — `../ni-osm-database.ts`, `mailwoman gazetteer build
@@ -185,7 +185,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  * #1480 an unknown postcode ABSTAINS, so a `BT` code the database lacks behaves exactly as it did when there was no
  * database at all.
  *
- * THIS database — Code-Point Open, the published one — still does (c), and must: its `BT` hole is a licensing fact and
+ * This database — Code-Point Open, the published one — still does (c), and must: its `BT` hole is a licensing fact and
  * filling it from an ODbL source would be exactly the contamination the tier split exists to prevent. Scale of what (c)
  * gives up: ONSPD Feb 2025 counts 50,032 LIVE NI postcodes (62,980 including terminated). The incumbent GeoNames
  * snapshot's 48,990 BT rows sit between the May 2020 and May 2021 live figures, i.e. a live-only extract roughly five
@@ -250,7 +250,7 @@ export async function fetchCodePointDownloads(
 
 export interface DownloadCodePointOptions {
 	/**
-	 * Directory the archive lands in. The caller owns it — the convention is a NEW dated directory per acquisition
+	 * Directory the archive lands in. The caller owns it — the convention is a new dated directory per acquisition
 	 * (`$MAILWOMAN_DATA_ROOT/codepoint/<YYYY-MM-DD>/`) so an acquisition never overwrites an earlier one.
 	 */
 	destDir: string
@@ -264,7 +264,7 @@ export interface DownloadCodePointOptions {
 	 */
 	client?: APIClient
 	/**
-	 * Skip the download when the destination already exists AND matches the upstream md5. The default. Set `false` to
+	 * Skip the download when the destination already exists and matches the upstream md5. The default. Set `false` to
 	 * force a re-pull.
 	 */
 	reuseExisting?: boolean
@@ -304,7 +304,7 @@ export interface DownloadCodePointResult {
  * RAW `fetch` FOR THE ARCHIVE BODY IS DELIBERATE, and `AGENTS.md` draws exactly this line: the rule binds API requests
  * — small bodies, repeated calls, rate-limited hosts — and the two metadata GETs above honour it through
  * {@link createOSDownloadsClient}. The archive is a file transfer streamed to disk. Caching a 14 MB body in the response
- * cache is pointless when the dated directory IS the cache, there is one request to pace, and axios buffers a
+ * cache is pointless when the dated directory is the cache, there is one request to pace, and axios buffers a
  * non-stream response type in memory. Same call as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`.
  *
  * The md5 check is not ceremony. A truncated or CDN-corrupted archive still unzips far enough to yield plausible CSVs,

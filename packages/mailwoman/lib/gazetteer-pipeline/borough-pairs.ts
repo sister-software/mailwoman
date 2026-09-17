@@ -12,7 +12,7 @@
  *   a contextually-alive tag receive entries (GB/London first; a perfect index against a dead tag
  *   is zero, the v385 control's lesson). The 211-borough census (2026-08-01): London 33, Tokyo 23,
  *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class; they
- *   enter ONLY when their locale carrier exists, and law-1-style directional care applies).
+ *   enter only when their locale carrier exists, and law-1-style directional care applies).
  *   Berlin-style duplicates (locality + localadmin parents) dedupe on (child, parent) surface.
  *
  *   CURRENCY (added 2026-08-02, after the fact): both ends of the pair must be LIVE — `is_current != 0 AND
@@ -40,7 +40,7 @@ export interface BoroughPair {
 	/**
 	 * The parent row's own `ComponentTag` (PIX2 / schema 3) — the WOF `placetype` of the ancestor this pair was drawn
 	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW, not per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits
-	 * `locality`, `localadmin` AND `borough` as parents on several countries, and those do not project to the same tag
+	 * `locality`, `localadmin` and `borough` as parents on several countries, and those do not project to the same tag
 	 * (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag instead
 	 * — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF` gives
 	 * `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
@@ -76,7 +76,7 @@ function parentTagFor(placetype: string): ComponentTag {
  * - **GB** takes boroughs only. Its neighbourhood pairs come from a curated, venue-confound-boarded file
  *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods here would ship
  *   an unboarded batch and skip the law-1 discipline every GB increment has cleared.
- * - **US** takes boroughs AND neighbourhoods, and admits `borough` as a PARENT. WOF parents US neighbourhoods to the
+ * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent. WOF parents US neighbourhoods to the
  *   LOCALITY, not to the borough ("Astoria" hangs off New York, not off Queens), so a locality-only parent rule
  *   silently drops the borough-level pairs the US instance exists for (campaign R5).
  *
@@ -87,12 +87,12 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 > = {
 	US: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
-	// India is the ONE country where parent aliases are enabled, and it is enabled because it was measured there.
+	// India is the one country where parent aliases are enabled, and it is enabled because it was measured there.
 	// Indian cities carry official renames that WOF has not promoted: it stores Bangalore while an address today says
 	// Bengaluru (renamed 2014, present as an `eng` VARIANT). Without expansion the pair exists and never fires —
 	// "12 MG Road, Indiranagar, Bengaluru" emitted no dependent locality at all.
 	//
-	// NOT enabled globally, deliberately. Applying it everywhere took the US index from 47,878 to 101,560 — more than
+	// Not enabled globally, deliberately. Applying it everywhere took the US index from 47,878 to 101,560 — more than
 	// double, on surfaces no board has ever graded. Every other increment in this campaign cleared a venue-confound
 	// board before shipping, and a 2× expansion of the flagship locale is exactly the kind of change that warrants one
 	// rather than riding in on another country's evidence.
@@ -101,8 +101,8 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 		parents: ["locality", "localadmin", "borough"],
 		expandParentAliases: true,
 	},
-	// ES and IT need aliases for the reason India did, in their OWN languages rather than English: WOF stores `Rome`
-	// for a city written `Roma`, and `Cordoba` for one written `Córdoba`. The fold does NOT strip accents, so
+	// ES and IT need aliases for the reason India did, in their own languages rather than English: WOF stores `Rome`
+	// for a city written `Roma`, and `Cordoba` for one written `Córdoba`. The fold does not strip accents, so
 	// `cordoba` and `córdoba` are different keys and the unaccented WOF form would never match a real address.
 	ES: {
 		children: ["borough", "neighbourhood"],

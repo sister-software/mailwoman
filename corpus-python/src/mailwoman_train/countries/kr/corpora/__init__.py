@@ -19,7 +19,7 @@ with their representative lot, postcode and building name (`juso.py`) — in sev
 **The registry corpus** (``--registry-out-dir``, source ``localdata-kr``) is the NOISY half: every open business in
 the permit registry (`registers.py`), each row carrying both address forms as a clerk typed them, aligned against
 the LABEL register's own key sets and kept only when the whole key matches. The alignment rate is measured per form
-and per category and written to the build report BEFORE the rows are selected. A permit string that does not align
+and per category and written to the build report before the rows are selected. A permit string that does not align
 is a board row (``kr-registry-board.jsonl``), never a training row.
 
 The board is the held-out set of 시군구 (the same stable hash rule as the JP and TW boards, one in ten). The register

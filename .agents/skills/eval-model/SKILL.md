@@ -31,7 +31,7 @@ mwdev_arc candidate=<staged candidate root> \
 ```
 
 `candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/`,
-not the package directory itself. A root that is not staged is REFUSED rather than falling through to
+not the package directory itself. A root that is not staged is refused rather than falling through to
 the installed weights — do not "fix" that refusal by pointing it one level deeper.
 
 The full protocol, and why the controls come first, is the `training-arc` skill. Read it before
@@ -97,7 +97,7 @@ done
 `grouper-audit` nodes appearing in the XML — the audit injecting where the model should cover is a
 coverage gap, not a pass.
 
-Anything short of outright collapse is NOT a verdict. Six US rows cannot clear or condemn a model;
+Anything short of outright collapse is not a verdict. Six US rows cannot clear or condemn a model;
 take it to the board.
 
 ## Related

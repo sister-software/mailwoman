@@ -6,14 +6,14 @@
  *   Regenerate `core/resources/languages/types.gen.ts` — the ISO 639-1 / 639-2 language-code types +
  *   label maps — from the committed `internal/languages.csv` resource dictionary.
  *
- *   BOTH 639-2 standards are emitted, and the reason is data, not completeness. ISO 639-2 has two
+ *   Both 639-2 standards are emitted, and the reason is data, not completeness. ISO 639-2 has two
  *   three-letter forms: /B (bibliographic) and /T (terminological, identical to 639-3). They differ
  *   for exactly 20 languages, and **Who's On First keys its name properties in /T** — so a /B-only
  *   union excluded `deu`, `fra` and `nld`, three tier-1 locales, while admitting spellings the data
  *   never uses. Measured over the built gazetteer's `names` table: 3,591,751 rows on the /T side of
  *   those 20 pairs against 247 on the /B side, a ratio of 14,542:1.
  *
- *   /B is NOT dropped: `packages/codex/lib/country/official-languages.ts` lists both forms deliberately
+ *   /B is not dropped: `packages/codex/lib/country/official-languages.ts` lists both forms deliberately
  *   (`DE: ["de","deu","ger"]`) and 247 real rows carry one, so the union accepts either and both map
  *   to the same label and the same alpha-2.
  *
@@ -86,8 +86,8 @@ export async function generateLanguageTypes(
 		// The /T spelling is a first-class member of the same union and maps to the same label and the
 		// same alpha-2. It is the form WOF actually writes, so a lookup keyed on it must hit.
 		//
-		// It goes to `alpha3tPairs`, NOT to `entryLines`. Both lists build BOTH direction maps from a
-		// `new Map([...])`, where the LAST entry for a key wins — so appending the /T form to
+		// It goes to `alpha3tPairs`, not to `entryLines`. Both lists build both direction maps from a
+		// `new Map([...])`, where the last entry for a key wins — so appending the /T form to
 		// `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`. That map is
 		// named for the /B standard and documented as returning it; changing what it answers is a
 		// separate decision from widening what the union ACCEPTS, and it is not this one.

@@ -141,7 +141,7 @@ export const SAME_DATA_DEFINITION_PATH = preregistrationPath("same-data", "bench
 export const SAME_DATA_FREEZE_PATH = preregistrationPath("same-data", "benchmark-freeze.json")
 
 /**
- * The fields a fixture must NOT carry, read from the frozen definition rather than re-typed here: a second copy of the
+ * The fields a fixture must not carry, read from the frozen definition rather than re-typed here: a second copy of the
  * list would let the fixture builder and the ruler disagree about what equal evidence means.
  */
 export function withheldFixtureFields(definition: SameDataBenchmarkDefinition): ReadonlySet<string> {

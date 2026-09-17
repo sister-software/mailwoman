@@ -56,15 +56,9 @@ export function extractDelimited(value?: unknown, delimiter = ","): string[] {
 	return normalized
 		.split(delimiter)
 		.map((entry) => entry.trim())
-		.filter(Boolean)
+		.filter((entry) => entry.length > 0)
 }
 
-/**
- * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
- * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself; a caller
- * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
- * result is typed from the config exactly as the builtin types it.
- */
 /**
  * A flag's value, or a thrown error naming the flag and the command that needs it.
  *
@@ -143,6 +137,12 @@ export function optionPropertyName(value: string): string {
 	)
 }
 
+/**
+ * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
+ * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself; a caller
+ * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
+ * result is typed from the config exactly as the builtin types it.
+ */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
 	// The builtin types its result from the whole config object, so supplying `args` moves the type; the parsed shape
 	// depends on `options`/`allowPositionals` alone, which `T` carries.

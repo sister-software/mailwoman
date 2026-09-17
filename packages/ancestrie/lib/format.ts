@@ -5,7 +5,7 @@
  *
  *   Binary format for the ancestrie — a materialized trie over an ancestry graph, sealed into one
  *   static artifact. This module owns the layout: the header read/write pair and the section math
- *   are HERE so the builder (writer) and the reader can never disagree about where a table starts —
+ *   are here so the builder (writer) and the reader can never disagree about where a table starts —
  *   the shared-function-not-shared-constants rule. All integers are little-endian, read and written
  *   through DataView so the artifact is byte-identical across platforms.
  *
@@ -38,7 +38,7 @@
  *
  *   PRE/POST INTERVALS: `pre` and `post` are Dietz-style pre/post-order labels drawn from a single
  *   counter over the PRIMARY-parent forest (see below), assigned at seal time. Containment is O(1)
- *   in both directions: x contains y ⟺ pre(x) ≤ pre(y) AND post(y) ≤ post(x) (an entry contains
+ *   in both directions: x contains y ⟺ pre(x) ≤ pre(y) and post(y) ≤ post(x) (an entry contains
  *   itself). The classic objection to interval labels — relabeling on update — is void here because
  *   the artifact is sealed and rebuilt whole, never patched.
  *
@@ -58,7 +58,7 @@
  *
  *   METADATA (optional trailer, at metadataOffset) jsonLen u32, then jsonLen bytes of UTF-8 JSON.
  *
- *   CANONICAL OUTPUT: the serializer is deterministic AND insertion-order-independent. Strings are
+ *   CANONICAL OUTPUT: the serializer is deterministic and insertion-order-independent. Strings are
  *   interned in sorted order; trie states are numbered by a pre-order DFS that visits edges in
  *   sorted-token order (root = 0); entry ordinals follow the interval forest's pre-order (roots and
  *   sibling lists sorted by id ascending). Sealing the same entry set twice — in any add order —
@@ -66,7 +66,7 @@
  */
 
 /**
- * File magic, "ANCT" (ANCestry Trie). A reader rejects anything not starting with these four bytes. Deliberately NOT
+ * File magic, "ANCT" (ANCestry Trie). A reader rejects anything not starting with these four bytes. Deliberately not
  * "FST\0" — this format shares ancestry with `@mailwoman/resolver-wof-sqlite`'s FST gazetteer but is its own contract.
  */
 export const ANCESTRIE_MAGIC: readonly number[] = [0x41, 0x4e, 0x43, 0x54]

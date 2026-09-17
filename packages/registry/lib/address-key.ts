@@ -8,7 +8,7 @@
  *   exact-canonical-address complement to the fuzzy Fellegi-Sunter / GBT scoring. Two uses:
  *
  *   - **As a pre-dedup / join key:** `GROUP BY postalAddressID(record)` collapses records that resolve
- *       to the same place AND share a canonical address with NO scoring at all — the cheap, certain
+ *       to the same place and share a canonical address with no scoring at all — the cheap, certain
  *       part of dedup before the matcher does the fuzzy rest.
  *   - **As a blocking key:** {@link addressIDBlockingKey} adds the address-id to the blocking union, so
  *       records sharing one are guaranteed to be compared.

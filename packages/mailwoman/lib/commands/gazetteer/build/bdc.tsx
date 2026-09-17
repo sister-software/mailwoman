@@ -11,7 +11,7 @@
  *   First version wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
  *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
  *
- *   `--provider-list-path` (decision 6) opts INTO populating `bdc_provider` —
+ *   `--provider-list-path` (decision 6) opts into populating `bdc_provider` —
  *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
  *   (`@mailwoman/filer/sdk`) streams the FCC provider-list CSV as `BuildBDCOptions.providers`, and
  *   filer.db (`--filer-db-path`, default `<data-root>/filer/filer.db`) is opened read-only to resolve
@@ -19,7 +19,7 @@
  *   rather than reimplemented — see `build-bdc.ts`'s `BuildBDCOptions.filerDB` docstring). Omitting
  *   `--provider-list-path` leaves `bdc_provider` empty.
  *
- *   Both paths are `existsSync`-guarded BEFORE any download/build work starts:
+ *   Both paths are `existsSync`-guarded before any download/build work starts:
  *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
  *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
@@ -79,8 +79,8 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
-		// Fail-fast guards — checked BEFORE any network/download work
-		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
+		// Fail-fast guards — checked before any network/download work
+		// starts. `populateBDCProviderTable` only runs after the availability ingest and writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
 		// build, discarding hours of work for a check that costs microseconds up front.
 		if (options.filerDBPath && !options.providerListPath) {

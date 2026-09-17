@@ -14,7 +14,7 @@
  *   inside a survey the build had ingested — an artifact that is complete, well-formed, and silently
  *   answers "no survey here" over ground it holds.
  *
- *   The fix is to run the test ONCE over the union. This file pins it with two adjacent fixture areas that
+ *   The fix is to run the test once over the union. This file pins it with two adjacent fixture areas that
  *   share an edge, because the per-area version passes every other test in this package.
  */
 
@@ -57,7 +57,7 @@ const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
  * How far the second delineation band sits from the shared edge — comfortably more than a resolution-6 cell's ~0.06°,
  * so a county's own interior test produces coverage over it whether or not the border cells survive.
  *
- * Both bands are needed. Without the interior band a single county yields NO coverage rows at all (its mapped soil sits
+ * Both bands are needed. Without the interior band a single county yields no coverage rows at all (its mapped soil sits
  * entirely inside the strip its own interior test drops), and the comparison below would be against zero.
  */
 const INTERIOR_BAND_OFFSET = 0.3
@@ -148,7 +148,7 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		expect(westOnly).toBeGreaterThan(0)
 		expect(eastOnly).toBeGreaterThan(0)
 
-		// STRICTLY greater than the sum, and the excess IS the border strip: those cells lie wholly inside the union and
+		// Strictly greater than the sum, and the excess is the border strip: those cells lie wholly inside the union and
 		// wholly inside neither county, so a per-area test cannot produce them however many areas it is given.
 		expect(both).toBeGreaterThan(westOnly + eastOnly)
 	})

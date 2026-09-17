@@ -127,7 +127,7 @@ beforeAll(() => {
 				[0.001, 2],
 			],
 		},
-		// Odd number on a street with ONLY an even side on record — the parity fallback.
+		// Odd number on a street with only an even side on record — the parity fallback.
 		{
 			street_norm: "mill street",
 			side: "R",
@@ -272,14 +272,14 @@ describe("StreetInterpolator", () => {
 	})
 })
 
-// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
-// built against, so it ships in the extract's `interp_calibration` metadata table and is read ONCE at open
+// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
+// built against, so it ships in the extract's `interp_calibration` metadata table and is read once at open
 // time. A extract predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the extract's baked multiplier at open time", async () => {
 		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
-		// The SAME producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
+		// The same producer the extract builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
 
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
@@ -287,7 +287,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 
 		expect(calibrated.radiusCalibration).toBe(1.7)
 		// find() itself never applies the multiplier — the raw radius stays the honest half-segment
-		// value (conformal-calibrate measures THIS); the resolver owns the multiplication.
+		// value (conformal-calibrate measures this); the resolver owns the multiplication.
 		const hit = calibrated.find({ street: "Main St", number: "150", postcode: "05601" })
 		expect(hit).not.toBeNull()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)

@@ -6,12 +6,12 @@
  *   The four-law selectivity end to end against a SEEDED admin DB — the every-PR layer.
  *
  *   Same idiom as `resolver-wof-sqlite/candidate-lookup.test.ts`: production DDL, hand-picked rows,
- *   and the REAL `buildLocalitySurfaceLexicon` driven through `opts.dbPath`. Every surface here is
+ *   and the real `buildLocalitySurfaceLexicon` driven through `opts.dbPath`. Every surface here is
  *   one the full-scale test named, so the laws are asserted at full fidelity — and, unlike the full
  *   build, this file is invariant to gazetteer size. The 2026-08-02 measurement that motivated the
  *   split: the two full-DB tests were 236.9s of a 253s CI leg, and growing.
  *
- *   What does NOT live here: `entries > 10_000` and the other coverage-scale assertions. Those are
+ *   What does not live here: `entries > 10_000` and the other coverage-scale assertions. Those are
  *   claims about the gazetteer rather than about the laws — see `evidence-lexicons.full.test.ts`.
  *
  *   ## Reading the populations
@@ -23,7 +23,7 @@
  *
  *   Which floor applies depends on whether libpostal's given_names/surnames/personal_titles carry
  *   the surface. Verified against the shipped dictionaries: paris, lyon, joseph, fargo and
- *   washington ARE person names; rennes, belleville, smallville, minot, rutland, plainfield,
+ *   washington are person names; rennes, belleville, smallville, minot, rutland, plainfield,
  *   cheyenne and roazhon are not. Fargo is the one that surprises — it needs the 0.45 tier, which is
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
@@ -181,9 +181,9 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 	it("law-3 guard: parent prominence never launders a person-name neighbourhood", async () => {
 		const { surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
 
-		// Joseph-the-neighbourhood sits inside Paris and STILL does not clear.
+		// Joseph-the-neighbourhood sits inside Paris and still does not clear.
 		expect(surfaces.joseph).toBeUndefined()
-		// Belleville is not a person name, so it DOES inherit Paris's prominence.
+		// Belleville is not a person name, so it does inherit Paris's prominence.
 		expect(surfaces.belleville).toBeDefined()
 	})
 
@@ -227,7 +227,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 			expect(surfaces[surface], surface).toBeDefined()
 		}
 
-		// A directional INSIDE a multi-token surface survives.
+		// A directional inside a multi-token surface survives.
 		expect(surfaces["east nashville"]).toBeDefined()
 		// …and nothing in the US set is refused on prominence, unlike the FR set. The asymmetry is
 		// the point: these rows are seeded at their real magnitudes.

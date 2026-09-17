@@ -154,7 +154,7 @@ def test_an_import_names_the_module_that_declares_it() -> None:
     A plain module's import list is its own business, not a public surface: ``trainer`` imports
     ``build_optimizer`` so it can call it, and a test that took the name from there kept passing
     after the function moved to ``optim.groups`` — so the move looked complete while six call sites
-    still named the old file. A package ``__init__`` is the exception: re-exporting IS what it is
+    still named the old file. A package ``__init__`` is the exception: re-exporting is what it is
     for, and so is an explicit ``__all__``.
     """
     modules: dict[str, ast.Module] = {}

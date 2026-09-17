@@ -42,7 +42,7 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
 
 /**
  * Coarseness rank: higher is more precise. The tier ladder is `address_point → interpolated → street → admin`, and a
- * deletion that walks DOWN it has cost the user precision even when the coordinate barely moved.
+ * deletion that walks down it has cost the user precision even when the coordinate barely moved.
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
@@ -86,8 +86,8 @@ export function scoreAblation(
 
 	return {
 		displacementKm,
-		// A row whose own anchor never resolved is NOT gradable — reporting it as held would be the meaning-of-zero
-		// trap one level down. A resolved anchor with an unresolved ablated arm IS broken: the answer is gone.
+		// A row whose own anchor never resolved is not gradable — reporting it as held would be the meaning-of-zero
+		// trap one level down. A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
 		broken: !anchorResolved ? null : !ablatedResolved ? true : displacementKm! > toleranceKm,
 		tierDrop: isTierDrop(anchor.tier, ablated.tier),
 		unresolved: !ablatedResolved,
@@ -97,7 +97,7 @@ export function scoreAblation(
 }
 
 /**
- * Fold per-row outcomes into the (component, locale) map. A pair with no rows produces NO cell — see
+ * Fold per-row outcomes into the (component, locale) map. A pair with no rows produces no cell — see
  * {@linkcode AblationCell.support}.
  */
 export function aggregateCells(

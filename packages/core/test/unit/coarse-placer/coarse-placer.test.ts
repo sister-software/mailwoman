@@ -195,7 +195,7 @@ describe("open-set reject rule (#244 M2)", () => {
 	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string. Lets us
 	// engineer an exact class distribution and assert the reject/route decoupling deterministically.
 	const classes = ["US", "FR", "OTHER"]
-	// dim MUST be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
+	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
 	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
 	const dim = FEATURE_DIM
 
@@ -226,9 +226,9 @@ describe("open-set reject rule (#244 M2)", () => {
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
 
-		// Default rule: OTHER wins outright (0.8 ≥ 0.5) → a confident OTHER, not an abstain.
+		// Default rule: `OTHER` wins outright (0.8 ≥ 0.5) → a confident `OTHER`, not an abstain.
 		expect(def.predict("x").country).toBe("OTHER")
-		// Open-set: in-map mass 0.2 < 0.5 → abstain; a reject is null, never the OTHER class.
+		// Open-set: in-map mass 0.2 < 0.5 → abstain; a reject is null, never the `OTHER` class.
 		const o = open.predict("x")
 		expect(o.abstained).toBe(true)
 		expect(o.country).toBeNull()

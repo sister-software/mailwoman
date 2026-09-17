@@ -10,7 +10,7 @@
  *   Execution provider strategy:
  *
  *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than WASM on supported devices, but
- *       availability depends on browser (Chromium 113+, Safari Tech Preview) AND hardware. The
+ *       availability depends on browser (Chromium 113+, Safari Tech Preview) and hardware. The
  *       runtime surfaces a clean error when WebGPU is unavailable, so the constructor falls back to
  *       WASM automatically.
  *   - WASM (SIMD when available) is the universal fallback. ~2× slower than WebGPU on the same model
@@ -18,7 +18,7 @@
  *       harness exercises this file.
  *
  *   Tensor shape + I/O contract matches `ONNXRunner` exactly: the packing and the output decode are
- *   the SAME functions (`ort-feeds.ts`), so the two hosts cannot drift; only the `ort.Tensor`
+ *   the same functions (`ort-feeds.ts`), so the two hosts cannot drift; only the `ort.Tensor`
  *   construction is host-specific.
  */
 

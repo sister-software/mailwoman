@@ -161,7 +161,7 @@ describe("the Hugging Face materialization plan", () => {
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 release's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
+		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
 		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
@@ -170,7 +170,7 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
-		// What this proves: no literal `files` entry of a release weights package is BOTH untracked and unplanned.
+		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned.
 		// That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
 		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
 		// published. The manifests and the git listing are read here independently of the recipe, so a planner
@@ -200,7 +200,7 @@ describe("the Hugging Face materialization plan", () => {
 
 	it("never plans over a file git already tracks", async () => {
 		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
-		// committed content in the checkout on the publish path, where the destination root IS the checkout.
+		// committed content in the checkout on the publish path, where the destination root is the checkout.
 		const tracked = trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))
@@ -213,7 +213,7 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 release's SECOND dispatch died because publish.yml named the parity test's pre-regroup path and
+		// The v9.2.0 release's second dispatch died because publish.yml named the parity test's pre-regroup path and
 		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's NAME, and
 		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())

@@ -40,7 +40,7 @@ export interface POITable {
 	rowid_key: number
 	name: string | null
 	/**
-	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build AND at query.
+	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build and at query.
 	 *
 	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`: it binds to the parameter, returns
 	 * fewer rows, and the shortfall reads as a coverage gap in the data rather than a defect in the probe.
@@ -160,7 +160,7 @@ export async function createPOITable(db: Kysely<POIDatabase>): Promise<void> {
 }
 
 /**
- * Secondary index for the FTS-hydration path. Builders call this AFTER the bulk materialize (index-after-load).
+ * Secondary index for the FTS-hydration path. Builders call this after the bulk materialize (index-after-load).
  */
 export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<void> {
 	await db.schema.createIndex("poi_name_key").on("poi").column("name_key").execute()
@@ -169,9 +169,9 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 /**
  * Secondary index for the BRAND path — a brand-wide fetch by `brand_wikidata` (no `h3_cell` prefix). Brand rows are
  * globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km), so the k-ring walk can never reach them;
- * the reader instead fetches ALL of a brand's rows and distance-sorts. Without this index that is a full-table scan
+ * the reader instead fetches all of a brand's rows and distance-sorts. Without this index that is a full-table scan
  * (~600 ms); with it, a range-scan (<1 ms p50). PARTIAL (`WHERE brand_wikidata IS NOT NULL`) so the ~99.7% of rows that
- * carry no QID never enter the B-tree — the index holds only the ~43k branded rows. Builders call this AFTER the bulk
+ * carry no QID never enter the B-tree — the index holds only the ~43k branded rows. Builders call this after the bulk
  * materialize (index-after-load), same phase as {@link createPOINameKeyIndex}.
  */
 export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void> {

@@ -8,10 +8,10 @@
  *
  *   What was salvaged from `isp-nexus/universe/mailwoman/sdk/google/parser.ts`: the idea of indexing
  *   `address_components` by type once instead of re-scanning the array per field, and the
- *   `location_type` → accuracy-tier mapping. What was NOT:
+ *   `location_type` → accuracy-tier mapping. What was not:
  *
  *     1. **The uppercasing.** The original's `getShortName`/`getLongName` both ended in
- *        `.toUpperCase()`, because it was serving a USPS-shaped US-only pipeline where uppercase IS the
+ *        `.toUpperCase()`, because it was serving a USPS-shaped US-only pipeline where uppercase is the
  *        postal form. This oracle exists to canonicalize gauntlet cases across ~160 COUNTRIES, where
  *        the same call turns `Köln` into `KÖLN`, `Île-de-France` into `ÎLE-DE-FRANCE`, and every CJK or
  *        Cyrillic name into itself with the reader's confidence quietly damaged. Casing is preserved
@@ -120,7 +120,7 @@ const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
 
 /**
  * Index every component by every type it carries, so a lookup is a map probe rather than a scan of the array. A
- * component tagged both `locality` and `political` is reachable under either key and is the SAME object under both,
+ * component tagged both `locality` and `political` is reachable under either key and is the same object under both,
  * which is what lets {@linkcode buildGoogleComponents} consume it once.
  */
 function indexByType(components: readonly GoogleAddressComponent[]): Map<string, GoogleAddressComponent> {
@@ -221,7 +221,7 @@ export function toResolutionTier(result: GoogleGeocodeResult): ResolutionTier | 
 /**
  * The `{ latitude, longitude }` shape the rest of the repo speaks, from Google's `{ lat, lng }`.
  *
- * `GeoPoint` is deliberately NOT in this path. It would validate the pair — which is worth doing on an INPUT, and
+ * `GeoPoint` is deliberately not in this path. It would validate the pair — which is worth doing on an INPUT, and
  * `google-client.ts` does exactly that on the reverse-geocode argument — but on an OUTPUT it can only discard: a
  * `GeoPoint.from` returning `null` for a coordinate Google actually served would turn a reportable oddity into a
  * missing result. Null Island is the concrete case: `GeoPoint.from` treats `0, 0` as the missing-coordinate sentinel,
@@ -267,7 +267,7 @@ export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeo
 			address: result.formatted_address,
 			state: regionPrefix(components.region),
 		}),
-		// ABSENT means exact — Google only sets this field when it had to loosen the query.
+		// Absent means exact — Google only sets this field when it had to loosen the query.
 		partialMatch: result.partial_match === true,
 		placeID: result.place_id || null,
 		plusCode: result.plus_code?.global_code || null,

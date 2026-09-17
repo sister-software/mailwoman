@@ -40,7 +40,7 @@ async function readReply(payload: Record<string, unknown> | null): Promise<strin
 
 	if (typeof transcriptPath !== "string") return ""
 
-	// The wanted entry is the LAST assistant line; the substring pre-filter keeps only candidate
+	// The wanted entry is the last assistant line; the substring pre-filter keeps only candidate
 	// lines resident while the transcript streams forward.
 	const candidates = TextSpliterator.from(await readLocalTextFile(transcriptPath))
 		.filter((line) => line.includes('"assistant"'))

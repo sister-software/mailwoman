@@ -57,7 +57,7 @@ const BASE = "https://cdn.example/mailwoman/v9.1.0"
 
 /**
  * Fetch stub: 200 with card JSON at the card URL, 200 dummy bytes everywhere else, and every requested URL recorded —
- * the assertion surface is WHICH names were derived, not what loaded.
+ * the assertion surface is which names were derived, not what loaded.
  */
 function makeRecordingFetch(card: object | null, requested: string[]): typeof fetch {
 	return async (input) => {

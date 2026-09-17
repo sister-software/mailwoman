@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A populated locality whose OWN same-name administrative parent dwarfs it.
+ *   A populated locality whose own same-name administrative parent dwarfs it.
  *
  *   `Aurangabad`, Maharashtra is a city of roughly 1.2 million. Its `locality` row records 19,172 while its
  *   same-name `county` row records 3,701,282. Nothing in the resolver is wrong there; the number is. That row is
@@ -68,7 +68,7 @@ using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wo
 })
 
 /**
- * The comparison surface. Diacritic-folded and case-folded, but NOT emptied for a non-Latin name the way the resolver's
+ * The comparison surface. Diacritic-folded and case-folded, but not emptied for a non-Latin name the way the resolver's
  * `foldName` is — a Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
  */
 const nameKey = (name: string): string =>
@@ -131,7 +131,7 @@ const linked = (
 	db.prepare(`SELECT id FROM concordances WHERE other_source = 'gn:id'`).all() as Array<{ id: number }>
 ).filter((link) => wanted.has(link.id)).length
 
-// Counted in SQL and on the EXACT name: `spr` holds 4,386,926 named localities, so folding every one in JS to key a
+// Counted in SQL and on the exact name: `spr` holds 4,386,926 named localities, so folding every one in JS to key a
 // map costs the whole scan, and `Sultanpur` is spelled one way across all 312 of its Indian rows.
 const bearerCount = db.prepare(
 	`SELECT COUNT(*) AS n FROM spr WHERE placetype = 'locality' AND country = ? AND name = ?`

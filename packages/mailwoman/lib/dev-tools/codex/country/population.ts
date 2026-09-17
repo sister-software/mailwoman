@@ -9,11 +9,11 @@
  *
  *   Why it exists (#1650): WOF carries no readable population for 147 of 237 country records
  *   (measured against the 2026-08-18 candidate build), so those countries entered every prominence
- *   race at an asserted ZERO — ranked below any namesake hamlet. The magnitude is what a fame race
+ *   race at an asserted zero — ranked below any namesake hamlet. The magnitude is what a fame race
  *   reads, so a census-vintage figure is entirely sufficient; currency of the estimate is not the
  *   point.
  *
- *   Rows whose GeoNames population is 0 are DROPPED rather than emitted: an entry in this table is a
+ *   Rows whose GeoNames population is 0 are dropped rather than emitted: an entry in this table is a
  *   positive claim, and the consumer's absence branch (`?? undefined`) must stay reachable for
  *   territories GeoNames itself declines to estimate (the meaning-of-zero rule).
  *

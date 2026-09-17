@@ -69,7 +69,7 @@ class TestSplitBuilderParity:
         assert split("Broadway") is None
 
     def test_no_suffix_no_split(self):
-        # Trailing directional is NOT a suffix — the builder requires a trailing suffix.
+        # Trailing directional is not a suffix — the builder requires a trailing suffix.
         assert split("South County Road 175 West") is None
 
     def test_directional_is_the_name(self):
@@ -78,7 +78,7 @@ class TestSplitBuilderParity:
         assert split("North St") is None
 
     def test_affix_shaped_name_rejected(self):
-        # Builder parity: "W Park Ave" gets NO split because the name "Park" is a suffix variant.
+        # Builder parity: "W Park Ave" gets no split because the name "Park" is a suffix variant.
         assert split("W Park Ave") is None
 
     def test_multiword_name_prone_tail_is_licensed_by_the_true_suffix(self):
@@ -398,7 +398,7 @@ class TestPositionalLicensing:
         assert split("W Park Ave") is None
 
     def test_non_name_prone_suffix_shaped_tail_still_refused(self):
-        # 'Avenue' is suffix-shaped but NOT a name-prone head noun — no license.
+        # 'Avenue' is suffix-shaped but not a name-prone head noun — no license.
         assert split("Old Avenue Road") is None
 
     def test_bio_end_to_end(self):

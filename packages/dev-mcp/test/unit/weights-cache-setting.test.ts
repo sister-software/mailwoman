@@ -5,10 +5,10 @@
  *
  *   The candidate-weights setting, and the guard that keeps it from measuring the shipped model.
  *
- *   `resolveWeights` treats an explicit `cacheRoot` as authoritative ONLY when that directory actually holds the
+ *   `resolveWeights` treats an explicit `cacheRoot` as authoritative only when that directory actually holds the
  *   binaries; a cache missing them falls through to the installed workspace package, which in this repo always
- *   resolves. So a typo in a cache path does not fail — it grades the SHIPPED model and labels the answer with the
- *   candidate's name. That is the failure this file pins: the engine refuses BEFORE the multi-second session build,
+ *   resolves. So a typo in a cache path does not fail — it grades the shipped model and labels the answer with the
+ *   candidate's name. That is the failure this file pins: the engine refuses before the multi-second session build,
  *   and it refuses differently for a wrong-shaped root than for a correctly-shaped one that is under-staged.
  */
 

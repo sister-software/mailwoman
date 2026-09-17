@@ -200,7 +200,7 @@ export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promis
 
 		if (!Object.keys(scores).length) continue
 
-		// One row per version: the LAST ledger entry for a version wins (re-measurements supersede).
+		// One row per version: the last ledger entry for a version wins (re-measurements supersede).
 		if (seenVersions.has(version)) {
 			rows = rows.filter(([seen]) => seen !== version)
 		}

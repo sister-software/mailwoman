@@ -198,7 +198,7 @@ export async function runResolverArm(
 			traceSink: (record) => traces.push(record),
 		})
 
-		// Read BEFORE the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
+		// Read before the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
 		// point looking exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
 		if (misses.length) {
 			return {

@@ -15,7 +15,7 @@
  *
  *   ── THE CATEGORY SET IS MEASURED, NOT GUESSED ────────────────────────────────────────────────────
  *   A full scan of all 13,681,698 rows (2026-08-05, poi.db vintage 2026-05-20.0) counted, per
- *   category, how many named rows carry a designator token. The ranking is NOT what a category name
+ *   category, how many named rows carry a designator token. The ranking is not what a category name
  *   predicts — `gas_station` leads the whole table with 12,996 hits, every one of them the token
  *   `station` inside "Holiday Station" / "Chevron Station Seward", and `shoe_store` contributes 708
  *   hits of `wing` because Red Wing sells boots. {@link OVERTURE_SUBVENUE_CATEGORIES} is the four
@@ -31,7 +31,7 @@
  *
  *   ── The row shape fits; the PROVENANCE STAMP did not ─────────────────────────────────────────────
  *   Wave 1's `OSMSubVenueRow` was written to accept a non-OSM row, and it does: an Overture row is
- *   `{ designatorID, name }` with no `ref` and no `localizedNames`. What did NOT fit is
+ *   `{ designatorID, name }` with no `ref` and no `localizedNames`. What did not fit is
  *   `extractAttestedPhrases`, which hardcoded `osm:name` as the surface's `source`. Feeding Overture
  *   rows through it unchanged would have labelled every Overture surface as OSM-attested — a
  *   provenance lie, and under ODbL a consequential one. Hence the `source`/`region` options on that
@@ -68,8 +68,8 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 	// in the layer and the reason this reader exists.
 	airport_terminal: "terminal",
 	// 7,366 rows / 3,382 hits — hall 2,134, building 1,019, campus 209. US academic halls and numbered
-	// campus buildings: "UAA Cuddy Hall", "UAA Science Building". The row is a building ON a campus, so
-	// `campus` is its CONTEXT designator; the phrase found inside the name decides the record it
+	// campus buildings: "UAA Cuddy Hall", "UAA Science Building". The row is a building on a campus, so
+	// `campus` is its context designator; the phrase found inside the name decides the record it
 	// attests, which for these rows is mostly `hall`.
 	campus_building: "campus",
 	// 443 rows / 301 hits — pier 282, terminal 17.
@@ -159,7 +159,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
  *
  * Cold path, already async, no interface constraint — so Kysely, per the repo's inline-SQL rule.
  *
- * `category_id` is the SECOND component of poi.db's clustered `(h3_cell, category_id, …)` primary key, which reads like
+ * `category_id` is the second component of poi.db's clustered `(h3_cell, category_id, …)` primary key, which reads like
  * a full 13.7M-row scan and is not one: SQLite skip-scans the leading `h3_cell` and the whole four-category read
  * returned 9,219 rows in **1.4 s** on the shipped layer (2026-08-05). A JS-side scan of every row to survey the same
  * question took 52 s, which is the number to remember if you are tempted to filter in JS instead.

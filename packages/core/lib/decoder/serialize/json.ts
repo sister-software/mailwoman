@@ -23,8 +23,8 @@ import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
  * A span the flat projection could not represent, and why.
  *
  * The flat map holds one value per tag, so a tree carrying two `locality` spans emits one and the other ceases to
- * exist. `region: null` then means BOTH "the input named no region" and "the input named one, we parsed it, and the
- * projection deleted it" — and #1755 is what that costs: the #1748 trailing region is PARSED, tagged `locality`, and
+ * exist. `region: null` then means both "the input named no region" and "the input named one, we parsed it, and the
+ * projection deleted it" — and #1755 is what that costs: the #1748 trailing region is parsed, tagged `locality`, and
  * dropped here, which is why no decode change could ever move that class.
  */
 export interface DroppedSpan {

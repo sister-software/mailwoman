@@ -26,7 +26,7 @@ import { sql } from "kysely"
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 
 /**
- * Countries whose Overture `county` divisions ARE the addressable settlement tier, and the placetype they take instead.
+ * Countries whose Overture `county` divisions are the addressable settlement tier, and the placetype they take instead.
  *
  * Overture's subtype is its own taxonomy, and the fold otherwise writes it through verbatim. Singapore's 55 planning
  * areas — Ang Mo Kio, Bedok, Bukit Timah, Jurong East — arrive as `county`, which no admin tag queries:
@@ -144,7 +144,7 @@ export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = 
  * middle of a multi-hour build. The statements themselves stay raw positional prepares: this is the throughput path
  * (~1.6 M divisions, three writes each), which is the bulk-write carve-out the repo's SQL policy names.
  *
- * The run() argument order below MUST match these tuples.
+ * The run() argument order below must match these tuples.
  */
 const SPR_COLUMNS = [
 	"id",
@@ -186,7 +186,7 @@ const CONCORDANCE_COLUMNS = ["id", "other_id", "other_source", "lastmodified"] a
  * Compile a positional INSERT for one of the tuples above.
  *
  * Built through Kysely's `sql` helper rather than by concatenation: `sql.table`/`sql.ref` quote the identifiers, and
- * the placeholder list is generated FROM the column list, so the two cannot fall out of step. The result is a plain SQL
+ * the placeholder list is generated from the column list, so the two cannot fall out of step. The result is a plain SQL
  * string for `db.prepare` — Kysely's own `insertInto().values()` binds a row per call, which is the wrong shape for a
  * statement prepared once and run 1.6 M times.
  */
@@ -206,8 +206,8 @@ function compileInsert(
 /**
  * The three bulk-write statements, prepared against an open unified DB.
  *
- * Exported so a test can run them against a REAL `createUnifiedSchema` database. The `satisfies` above checks the
- * column tuples against the `WOFDatabase` INTERFACE, which is a different artifact from the DDL that builds the tables
+ * Exported so a test can run them against a real `createUnifiedSchema` database. The `satisfies` above checks the
+ * column tuples against the `WOFDatabase` interface, which is a different artifact from the DDL that builds the tables
  * — the two can drift, and the only thing that catches it is binding a row.
  */
 export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
@@ -230,7 +230,7 @@ export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
 
 /**
  * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the WOF GeoJSON repos
- * don't cover. Writes the SAME spr/names/place_population tables the WOF path uses — with synthetic ids based at
+ * don't cover. Writes the same spr/names/place_population tables the WOF path uses — with synthetic ids based at
  * {@link OVERTURE_ID_BASE} so the two sources never collide — so the caller's Freeze phase (ancestors closure,
  * coincident_roles, indexes, FTS) treats them uniformly. The Overture sub-tree is self-contained (locality → region →
  * county via `parent_division_id`); a division whose parent we didn't ingest tops out at -1. Country scoping rides
@@ -246,8 +246,8 @@ export async function ingestOvertureDivisions(
 	countries: readonly string[],
 	release: string,
 	/**
-	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An INCREMENTAL augment of a DB
-	 * that ALREADY holds Overture rows MUST pass `max(spr.id) + 1` so the new ids don't collide with — and `INSERT OR
+	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB
+	 * that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `INSERT OR
 	 * REPLACE` clobber — the existing ones.
 	 */
 	idBase: number = OVERTURE_ID_BASE
@@ -376,7 +376,7 @@ export async function ingestOvertureDivisions(
 			}
 		}
 
-		// #1884: carry Overture's own Wikidata id into `concordances` under the SAME `wd:id` source the
+		// #1884: carry Overture's own Wikidata id into `concordances` under the same `wd:id` source the
 		// WOF ingest uses — the `gazetteer importance` join reads exactly that predicate, so an Overture
 		// row with a Wikidata id gets the encyclopedia channel through the existing join and its #1497
 		// fan-out guards. Before this, every Overture-origin city entered fame contests on the

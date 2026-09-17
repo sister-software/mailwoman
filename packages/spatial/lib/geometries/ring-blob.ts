@@ -17,7 +17,7 @@
  *   one `(u32 pointCount, u32 polygonIndex)` pair per ring — `8 + 8 × ringCount` bytes, a multiple of
  *   eight by construction. Coordinates follow as `[lon, lat]` pairs, ring by ring.
  *
- *   `polygonIndex` IS required AND CANNOT BE INFERRED. A source feature is a MultiPolygon, so its
+ *   `polygonIndex` is required and cannot be inferred. A source feature is a MultiPolygon, so its
  *   rings belong to several polygons and "the first ring is the exterior" is true only per polygon. The
  *   point test is orientation-free and nesting-free (even-odd across a polygon's own rings, the rule
  *   {@link pointInPolygon} uses), but it still has to know which rings share a polygon: an island sitting
@@ -382,7 +382,7 @@ export interface EncodedArea {
 }
 
 /**
- * A point INSIDE one stored polygon, for a verification sampler.
+ * A point inside one stored polygon, for a verification sampler.
  *
  * The bounding-box centre is tried first; where it is not inside — a crescent, a band hugging a river, a polygon with a
  * hole through its middle — a small deterministic grid over the box is scanned. A polygon no grid point lands inside is

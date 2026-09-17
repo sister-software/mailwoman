@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Register enforcement fence (Decision A): `parse(text, { inputMode: "formatted" })` must run the
- *   evidence-bundle channels OFF (the curriculum-trained absence identity) while every other channel
+ *   evidence-bundle channels off (the curriculum-trained absence identity) while every other channel
  *   feeds unchanged; `"fragmented"` (and the bare-library default, unset) feeds them. Asserted at the
  *   runner boundary via a stub — the same interface the ONNX session sees.
  */

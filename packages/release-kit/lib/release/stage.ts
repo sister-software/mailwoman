@@ -28,8 +28,8 @@ import { packWorkspaceForPublish } from "#pack/pack-workspace"
 import { verifyTarball } from "#pack/verify-tarball"
 
 /**
- * The root workspaces that are OUTSIDE `.release-it.json`'s publish list, each with the reason a reader can state. The
- * identity check below fails on any absence NOT in this record — "expected 51, found 50" sends someone counting; naming
+ * The root workspaces that sit outside `.release-it.json`'s publish list, each with the reason a reader can state. The
+ * identity check below fails on any absence not in this record — "expected 51, found 50" sends someone counting; naming
  * the unexpected workspace is the actionable version, and this record is the data the check owns.
  */
 export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
@@ -154,7 +154,7 @@ export interface WorkspaceAuditResult {
 }
 
 /**
- * Pack and audit every release workspace in the staged tree, collecting EVERY failure — one run reports every broken
+ * Pack and audit every release workspace in the staged tree, collecting every failure — one run reports every broken
  * package instead of stopping at the first (the v9.2.0 tarball-guard failures surfaced one dispatch apart because the
  * publish loop's per-workspace isolation was the only sweep that existed).
  */

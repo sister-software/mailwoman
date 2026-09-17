@@ -9,16 +9,16 @@ Pre-registered shape (2026-07-18-v8-jp-char-encoder-design §d):
 - STAGE3 universal tags only (D5): region=prefecture, locality=municipality, street=ōaza/chōme
   surface, house_number=the COMPACT number whole-span (D4), postcode on the 〒 fraction.
 - Native large-to-small, space-free: ``[〒NNN-NNNN ]{pref}{muni}{street}{number}``. The 〒 mark
-  itself stays OUTSIDE the postcode span (symbol prefix, O — the span is the digits, mirroring the
+  itself stays outside the postcode span (symbol prefix, O — the span is the digits, mirroring the
   Latin convention).
-- Postcodes: Overture-JP postcode fill is ZERO (re-verified on #473), so the 〒 fraction joins the
+- Postcodes: Overture-JP postcode fill is zero (re-verified on #473), so the 〒 fraction joins the
   representative postcode from KEN_ALL by NFC/space-stripped (pref, muni) kanji — the lowest code
   per municipality (the NNN-0000 catch-all Japan Post lists first). Same join as
   ``scripts/diagnostic/build-jp-overture-gold.ts``; the pairing's KEN_ALL descent is documented,
   not pretended away.
 - Stratified per-prefecture reservoir (47 prefectures, each with its own seeded reservoir), then a
   round-robin draw to the target count — Tokyo cannot drown Tottori.
-- Held-out board: municipalities whose bucket hash lands in the board range NEVER appear in
+- Held-out board: municipalities whose bucket hash lands in the board range never appear in
   train/val; board rows carry the gold fields + coordinate for the resolve-side scoring.
 - Sanity checks (the JSON-hides-gaps scar): no all-O row, per-char BIO coverage printed, >= 45
   prefectures in train, board∩train municipality overlap must be empty — violations RAISE.
@@ -83,7 +83,7 @@ JP_PREFECTURES = frozenset(
 )
 
 # Municipality bucket split (md5 of the NFC space-stripped muni kanji, mod 100). Board
-# municipalities are UNSEEN by train AND val — the generalization read the check needs.
+# municipalities are UNSEEN by train and val — the generalization read the check needs.
 BOARD_BUCKET_MIN = 97
 
 
@@ -207,7 +207,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def fill_reservoirs(args: argparse.Namespace, rng: random.Random) -> Reservoirs:
     """One streaming pass over the parquet, filling both reservoirs.
 
-    Each prefecture carries its OWN reservoir so Tokyo cannot drown Tottori, capped at three times
+    Each prefecture carries its own reservoir so Tokyo cannot drown Tottori, capped at three times
     a prefecture's share of the target. A municipality whose bucket lands in the board range goes
     to the board instead, which is what keeps board municipalities unseen by train and val.
     """
@@ -297,7 +297,7 @@ def encode_rows(
 ) -> list[dict[str, Any]]:
     """Render each row, joining a postcode onto the configured fraction of them.
 
-    The coin is drawn BEFORE the lookup and for every row, so a municipality KEN_ALL does not cover
+    The coin is drawn before the lookup and for every row, so a municipality KEN_ALL does not cover
     still consumes its draw — the row order a seeded build produces does not depend on the join's
     hit rate.
     """

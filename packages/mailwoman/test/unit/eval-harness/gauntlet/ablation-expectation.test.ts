@@ -222,7 +222,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(expected).toMatchObject({ kind: "rung", depth: 0 })
 	})
 
-	// The operator's own example: dropping the country from an address the region still pins must NOT be graded as a
+	// The operator's own example: dropping the country from an address the region still pins must not be graded as a
 	// break — the surviving evidence keeps the deep rung.
 	it("keeps the deep rung when only the country goes", () => {
 		const expected = deriveExpectedRung(
@@ -254,7 +254,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
 		expect(deriveExpectedRung({ unit: "Suite 400" }, LADDER, gz).kind).toBe(ABSTAIN_RUNG)
 	})
 
-	// Ambiguity plus a handle this model cannot evaluate is NOT a licence to demand abstention.
+	// Ambiguity plus a handle this model cannot evaluate is not a licence to demand abstention.
 	it("declines to constrain when a venue survives alongside the ambiguous name", () => {
 		const expected = deriveExpectedRung({ locality: "Springfield", venue: "Kwik-E-Mart" }, LADDER, gz)
 
@@ -331,7 +331,7 @@ describe("residualWords — the corpus types less than the input carries", () =>
 		expect(residualWords("742 A B, IL", { region: "IL" })).toEqual([])
 	})
 
-	// `fr-chevaleret-rooftop` asserts ONLY its postcode. Deleting it leaves the model an empty component set, and an
+	// `fr-chevaleret-rooftop` asserts only its postcode. Deleting it leaves the model an empty component set, and an
 	// empty set used to read as "nothing names a place" → abstain → the correct rooftop graded overconfident.
 	it("turns an otherwise-ABSTAIN expectation into an unconstrained one", () => {
 		const gz = fakeGazetteer()
@@ -359,7 +359,8 @@ describe("gradeAgainstLadder", () => {
 		expect(graded).toMatchObject({ grade: "held", achievedRungDepth: 0, degradedRungs: 0 })
 	})
 
-	// The whole point of the layer: coarser-and-honest is a PASS, and the rung-depth delta is recorded as data.
+	// The whole point of the layer: a coarser answer the surviving evidence justifies passes, and the rung-depth delta
+	// is recorded as data.
 	it("passes a coarsening the surviving evidence justifies, and records how far it fell", () => {
 		const graded = gradeAgainstLadder({ ...base, expected: rung(3), lat: 39.76, lon: -89.66 })
 

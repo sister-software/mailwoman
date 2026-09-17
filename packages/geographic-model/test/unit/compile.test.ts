@@ -5,7 +5,7 @@
  *
  *   The compiler, its derivations, and the two determinism properties the artifact is a contract for:
  *   the same document compiles to the same bytes, and a document whose tables and object keys are
- *   permuted compiles to the SAME bytes as the unpermuted one.
+ *   permuted compiles to the same bytes as the unpermuted one.
  *
  *   The fixture extends the frozen first record set (`pharmacy affords obtain_medication`) with the
  *   inheritance shapes a closure has to get right and one record set cannot exercise: a chain

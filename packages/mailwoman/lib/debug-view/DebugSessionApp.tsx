@@ -13,13 +13,13 @@
  *   all: Ink emits `\x1b[2J\x1b[3J\x1b[H` for a frame as tall as the terminal, and `3J` wipes the SCROLLBACK (the
  *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing —
  *   the buffer has no scrollback of its own, and leaving it restores the primary buffer untouched. So this component
- *   may render a full-height frame from its FIRST frame; there is no primary buffer underneath to protect.
+ *   may render a full-height frame from its first frame; there is no primary buffer underneath to protect.
  *
  *   FATAL is reachable only from the loading phase — a failed format guard, an empty query, or a session that could
- *   not open (missing weights/gazetteer, whose {@link CommandError} messages ARE the CLI's error contract). It is
- *   reported by exiting the app WITH the error rather than by rendering it: Ink treats alternate-screen teardown
+ *   not open (missing weights/gazetteer, whose {@link CommandError} messages are the CLI's error contract). It is
+ *   reported by exiting the app with the error rather than by rendering it: Ink treats alternate-screen teardown
  *   output as disposable, so a message painted here would be erased by the buffer switch on the way out. `command.tsx`
- *   writes it to stderr once the primary buffer is back. Failures after the first result are NOT fatal — a rejected
+ *   writes it to stderr once the primary buffer is back. Failures after the first result are not fatal — a rejected
  *   re-run reports in the output pane and keeps the previous result, and a map render that throws degrades that pane
  *   to a note.
  */
@@ -308,7 +308,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [stdout])
 
-	// Exiting WITH the error rather than rendering it — see the header. Ink unmounts, restores the primary buffer,
+	// Exiting with the error rather than rendering it — see the header. Ink unmounts, restores the primary buffer,
 	// and rejects `waitUntilExit()`, which is where `command.tsx` prints the message.
 	useEffect(() => {
 		if (phase !== "fatal") return
@@ -391,7 +391,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Input + keys
 
-	// Stable across a keystroke so the memoized input field is, too — it is the ONE element that has to re-render
+	// Stable across a keystroke so the memoized input field is, too — it is the one element that has to re-render
 	// when the user types, and a fresh handler identity would drag the whole frame with it.
 	const submit = useCallback(
 		(value: string): void => {
@@ -401,7 +401,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 			setPhase("busy")
 			// The previous attempt's failure is stale the moment a new one starts — leaving it up through the busy
-			// window reads as if THIS query had already failed.
+			// window reads as if this query had already failed.
 			setErrorNote(null)
 
 			const requestID = ++runRequestRef.current
@@ -467,7 +467,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 		if (!key.downArrow) return
 
-		// Only the DOWN arrow needs the bound, so only it pays for the list. Clamped against the pane's OWN lines
+		// Only the down arrow needs the bound, so only it pays for the list. Clamped against the pane's own lines
 		// and window — the same builder and capacity function `DebugFrame` renders with, so the scroll can never run
 		// past what the pane shows, and the last page stays full instead of scrolling into empty rows.
 		const lineCount = run
@@ -526,7 +526,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	// re-measured by `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change. Typing in the
 	// input row changes none of these values.
 	//
-	// The scroll offset is deliberately NOT in here: it rides its own prop into the output pane, so scrolling leaves
+	// The scroll offset is deliberately not in here: it rides its own prop into the output pane, so scrolling leaves
 	// `data` identical and the map frame effect (which depends on `run`) never re-runs on an arrow key.
 	const data = useMemo<DebugData | null>(
 		() =>

@@ -11,7 +11,7 @@ import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
 import type { ResolutionTier } from "#geocode/result"
 
 /**
- * WHAT MAY BE CLAIMED about a coordinate, from HOW it was produced and, when the answering register carries one, the
+ * WHAT MAY BE CLAIMED about a coordinate, from how it was produced and, when the answering register carries one, the
  * coverage basis of the row that answered.
  *
  * - No coordinate → `unresolved`

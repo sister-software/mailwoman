@@ -16,7 +16,7 @@
  *
  *   MATCHING IS DELIBERATELY LOOSE. A flag name appearing anywhere in a test file counts, including in prose. A stricter
  *   check (the flag passed as an option, say) would be more meaningful and far more fragile, and this check's job is to
- *   catch a flag with NO connection to the suite at all, not to grade the quality of the coverage it finds.
+ *   catch a flag with no connection to the suite at all, not to grade the quality of the coverage it finds.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

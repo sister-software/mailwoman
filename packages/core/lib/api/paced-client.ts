@@ -6,7 +6,7 @@
  *   The paced, disk-cached client factory the layer products' acquisition clients share: courtesy pacing,
  *   bounded retry, and an on-disk response cache under the data root.
  *
- *   NOT exported from the `@mailwoman/core/api` barrel — it reaches `#api/disk-storage`, which imports
+ *   Not exported from the `@mailwoman/core/api` barrel — it reaches `#api/disk-storage`, which imports
  *   `node:fs/promises`, and the barrel serves a browser bundle. Import it from the
  *   `@mailwoman/core/api/paced-client` subpath.
  */

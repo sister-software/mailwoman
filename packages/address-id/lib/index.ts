@@ -103,7 +103,7 @@ function canonicalizeForHash(address: string): string {
 
 /**
  * Best-effort 2-letter US state from a full address: scan for `ST ZIP` occurrences (codex's `pluckStateZIPCode` anchors
- * to a bare snippet, so it can't read a full address) and take the LAST valid one — addresses end with the state + ZIP.
+ * to a bare snippet, so it can't read a full address) and take the last valid one — addresses end with the state + ZIP.
  * Returns the uppercase abbreviation or null.
  */
 function deriveState(address: string): string | null {
@@ -121,7 +121,7 @@ function deriveState(address: string): string | null {
 /**
  * Build a stable {@link PostalAddressID} from a geocoded, canonicalizable address. Deterministic: the same
  * (coordinate-cell, canonical address, state) always yields the same key. Two records that resolve to the same place
- * and share a canonical address get the SAME id — a join/dedup key that needs no matcher. (Distinct canonical address
+ * and share a canonical address get the same id — a join/dedup key that needs no matcher. (Distinct canonical address
  * strings → distinct keys; semantic equivalence that isn't string-identical is the fuzzy matcher's job, not this
  * one's.)
  */

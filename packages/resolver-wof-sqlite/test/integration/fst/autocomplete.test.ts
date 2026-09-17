@@ -127,7 +127,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 
 	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
 		// The live en-us artifact holds a place literally named "Chic" — with it, the typed prefix is
-		// BOTH a complete edge and a partial of "chicago", and the walk's success silently dropped
+		// both a complete edge and a partial of "chicago", and the walk's success silently dropped
 		// every longer completion (the prod typeahead offered only "Chic" for "Chic").
 		const shadowed = new FSTMatcher([
 			{

@@ -8,7 +8,7 @@
  *   are what `decodeAsJSON` silently drops (the JSON-hides-gaps trap) — surfacing them lets a consumer route
  *   them to fallback logic, display them, or aggregate them as the self-reporting corpus-gap detector.
  *
- *   This is the PURE primitive: it reads `tree.raw` + node `[start,end)` ranges and returns the complement.
+ *   This is the pure primitive: it reads `tree.raw` + node `[start,end)` ranges and returns the complement.
  *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple contracts + the
  *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
  */

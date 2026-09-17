@@ -192,7 +192,7 @@ export interface GoogleGeocodeResult {
 	 */
 	types: string[]
 	/**
-	 * Set (and only set) when Google could not match the query as given and fell back to something looser. ABSENT means
+	 * Set (and only set) when Google could not match the query as given and fell back to something looser. Absent means
 	 * exact, which is why {@linkcode OracleGeocodeResult.partialMatch} coerces rather than passes through.
 	 */
 	partial_match?: boolean

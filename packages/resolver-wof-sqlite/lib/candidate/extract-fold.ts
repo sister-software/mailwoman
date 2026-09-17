@@ -46,7 +46,7 @@ function extractRegionAncestry(pc: DatabaseClient<WOFDatabase>, attrs: Map<numbe
 }
 
 /**
- * Fold ONE extract (`spr` rows at `extractPlacetype` carrying real coordinates) in, then pass 4b: the alias names
+ * Fold one extract (`spr` rows at `extractPlacetype` carrying real coordinates) in, then pass 4b: the alias names
  * hanging off that same extract's `names` table.
  *
  * Self-contained by construction — it shares only the staging statement and the code dictionaries with the admin passes
@@ -178,7 +178,7 @@ export function foldExtract(ctx: {
 	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
 	// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
 	// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
-	// while the candidate backend — whose every row IS an exact-tier row — had no key for it at
+	// while the candidate backend — whose every row is an exact-tier row — had no key for it at
 	// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
 	// and `attrs` holds admin ids only, so a postcode extract could never reach it.
 	//

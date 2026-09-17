@@ -1,6 +1,6 @@
 """Taiwan's company and business registers (GCIS 公司登記 / 商業登記資料) as a NOISY corpus source (#2204 §5).
 
-Each register row carries the registered address as ONE string, and the company files carry a second rendering of
+Each register row carries the registered address as one string, and the company files carry a second rendering of
 the same premises from the tax office:
 
     公司地址  臺中市南屯區同心里文心路一段186號17樓之10

@@ -11,9 +11,9 @@
  *     cell's clustered `(h3_cell, category_id, neg_rank, …)` range. Rings accumulate until `limit`
  *     rows are on hand after a completed ring, or `maxRings` is exhausted; the pool is sorted by
  *     haversine distance from `center` after every ring.
- *   - **Brand**: NOT a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db; median nearest
+ *   - **Brand**: not a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db; median nearest
  *     tagged instance ~110 km), so ring expansion could never reach them. Instead a single brand-wide
- *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls EVERY row for
+ *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls every row for
  *     the QID — category unconstrained — then haversine-sorts from `center` and takes the nearest
  *     `limit`, bounded by a `BRAND_MAX_DISTANCE_KM` sanity radius.
  *   - **Name**: FTS5 `MATCH` against the `poi_search` virtual table, hydrated back to full rows by
@@ -21,7 +21,7 @@
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
  *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt` — that math
- *   is NEVER reimplemented here (see AGENTS.md on `@mailwoman/spatial` being the one true home for
+ *   is never reimplemented here (see AGENTS.md on `@mailwoman/spatial` being the one true home for
  *   it).
  */
 
@@ -53,7 +53,7 @@ export const POI_H3_RESOLUTION = 9
 const DEFAULT_MAX_RINGS = 16
 
 /**
- * Brand sanity radius (km): the brand-wide fetch returns the global nearest at ANY distance, so this drops hits far
+ * Brand sanity radius (km): the brand-wide fetch returns the global nearest at any distance, so this drops hits far
  * enough to be certainly the wrong continent — "Applebee's near Marseille" comes back empty rather than with a 5,700 km
  * hit. A product bound, not a reach cap (the index already makes the fetch cheap regardless of distance).
  */
@@ -71,7 +71,7 @@ export interface POISearchQuery {
 	categoryID?: string
 	/**
 	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category rolls up into (e.g.
-	 * `supermarket` → `grocery_store`, `organic_grocery_store`, …). When set, the k-ring walk probes EVERY resolvable
+	 * `supermarket` → `grocery_store`, `organic_grocery_store`, …). When set, the k-ring walk probes every resolvable
 	 * leaf per cell and unions the rows; unknown leaves are skipped. Supersedes `categoryID` (which is treated as a
 	 * one-element list `[categoryID]` when this is absent). Ignored when `brandWikidata` is set — brand wins.
 	 */
@@ -144,7 +144,7 @@ type POIRow = Pick<
 export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposable {
 	#db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -206,7 +206,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 			}
 
 			// brandWikidata wins over categoryID(s) when both are set — see POISearchQuery.categoryID. The brand path is
-			// a brand-wide indexed fetch, NOT a k-ring walk (brand rows are too sparse for ring expansion to reach).
+			// a brand-wide indexed fetch, not a k-ring walk (brand rows are too sparse for ring expansion to reach).
 			if (query.brandWikidata) {
 				return this.#searchBrand(query.brandWikidata, query.center, limit)
 			}
@@ -218,7 +218,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Brand path: a single brand-wide indexed fetch — NO k-ring. Fetch EVERY row for the QID (the partial
+	 * Brand path: a single brand-wide indexed fetch — no k-ring. Fetch every row for the QID (the partial
 	 * `poi_brand_wikidata` index makes this a range-scan, not a 13.68M full scan), haversine-sort from `center`, drop
 	 * anything past the {@link BRAND_MAX_DISTANCE_KM} sanity radius, and take the nearest `limit`. Returns the true
 	 * nearest at any distance — the reach ceiling k-ring hits on sparse brand rows is gone.
@@ -263,7 +263,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 
 		// `ring` starts at 0 (the origin cell itself), so this loop's k reaches `maxRings - 1`.
 		for (let ring = 0; ring < maxRings; ring++) {
-			// gridDisk(origin, ring) returns the WHOLE disk out to `ring`; diffing against what's
+			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's
 			// already been probed derives just this ring's new cells.
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells = diskCells.filter((cell) => !seenCells.has(cell))
@@ -290,7 +290,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	/**
 	 * Name path: FTS5 MATCH → hydrate by name_key. No center required; distance-sorts if one is given anyway.
 	 *
-	 * Hydration is ONE batched `WHERE name_key IN (...)` query over the FTS hits' unique `name_key`s, not a per-hit probe
+	 * Hydration is one batched `WHERE name_key IN (...)` query over the FTS hits' unique `name_key`s, not a per-hit probe
 	 * — with up to `limit` FTS hits, a per-hit probe was up to `limit` full table scans before `createPOINameKeyIndex`
 	 * (poi-schema.ts) + this batching.
 	 */
@@ -385,7 +385,7 @@ function toHit(
 }
 
 /**
- * Sanitize free text into an FTS5-safe MATCH query: strip the characters FTS5 would otherwise read as syntax (`"`
+ * Sanitize free text into an FTS5-safe `MATCH` query: strip the characters FTS5 would otherwise read as syntax (`"`
  * phrase delimiters, `*` prefix wildcards, `:` column-filter separators), then phrase-quote each whitespace-separated
  * token (AND-joined).
  *

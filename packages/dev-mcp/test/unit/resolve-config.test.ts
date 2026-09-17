@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The lockstep pin for #1732: dev-mcp's effective defaults ARE production's, field by field.
+ *   The lockstep pin for #1732: dev-mcp's effective defaults are production's, field by field.
  *
  *   The incident this guards: `resolveConfig` carried a hand-copied default table that drifted on three values
  *   (postcode shape/containment coherence true where production ships false; placer threshold 0.5 where production

@@ -8,7 +8,7 @@
  *   plus the #1901 authoritative provider) and emits an aggregate report that has passed the writer's
  *   preflight.
  *
- *   Two modes, and the report says which it was. With `--config <module>` the command loads a PRIVATE
+ *   Two modes, and the report says which it was. With `--config <module>` the command loads a private
  *   run configuration from outside this repository — the controlled adapter, the real provider, and
  *   production deps — and requires both an agreed `--min-cell-size` and a run salt in the environment.
  *   Without it the command runs the shipped synthetic fixture end to end, which is a self-check of the

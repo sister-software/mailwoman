@@ -73,7 +73,7 @@ export interface TokenLike {
 }
 
 /**
- * The BIO label a non-postcode `KnownFormat` biases. Postcode formats are NOT listed here: they are decided by name
+ * The BIO label a non-postcode `KnownFormat` biases. Postcode formats are not listed here: they are decided by name
  * through {@linkcode isPostcodeFormat}, so a format added to the detector's table reaches this prior on the day it is
  * named and no second list has to be kept in step.
  */
@@ -81,7 +81,7 @@ const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_b
 
 /**
  * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined` when the format names no
- * label. A hit whose format the detector produces but nothing here maps contributes ZERO bias and raises nothing, so
+ * label. A hit whose format the detector produces but nothing here maps contributes zero bias and raises nothing, so
  * `formatCoverage` in the unit suite asserts every detector format resolves.
  */
 function formatLabel(format: string): string | undefined {
@@ -151,7 +151,7 @@ export function buildEmissionPriors(
 
 /**
  * The SCOPED locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header). It fires
- * ONLY on the bare admin doubleton the original was built for ("New York, NY", "Washington, DC" — a region-ambiguous
+ * only on the bare admin doubleton the original was built for ("New York, NY", "Washington, DC" — a region-ambiguous
  * city name before its state abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally cannot
  * reach the venue/street inputs the old walk broke on. Guards, in order:
  *
@@ -160,7 +160,7 @@ export function buildEmissionPriors(
  * 2. The abbreviation is the FINAL token — the doubleton shape, not a mid-sentence state mention.
  * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health Service Inc - Grafton ND" does not).
  *
- * The retired version also carried a "name IS the region" guard ("Washington, WA" stays region). It was DEAD in
+ * The retired version also carried a "name is the region" guard ("Washington, WA" stays region). It was DEAD in
  * production — the classifier passes tokenizer PIECES whose spans include the trailing comma, so the string comparison
  * never matched (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
  * Deliberately dropped; the bias is soft, so a confident region emission on a true state restatement still wins.

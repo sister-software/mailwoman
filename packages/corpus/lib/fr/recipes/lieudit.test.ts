@@ -61,7 +61,7 @@ describe("fr-lieudit recipe", () => {
 		expect(parsed.components!.locality).toBe("Altier")
 		expect(parsed.raw).toBe("6 Route de Pomaret\nLe Bourg\n48800 Altier")
 		expect(parsed.source).toBe("synth-fr-lieudit")
-		// The dependent_locality line sits BEFORE the postcode+commune line.
+		// The dependent_locality line sits before the postcode+commune line.
 		const lieuIdx = parsed.raw.indexOf("Le Bourg")
 		const cityIdx = parsed.raw.indexOf("48800 Altier")
 		expect(lieuIdx).toBeGreaterThan(-1)
@@ -179,7 +179,7 @@ describe("fr-lieudit recipe", () => {
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 
-		// Must NOT read both — exactly the one row from the uncompressed adresses-48.csv survives.
+		// Must not read both — exactly the one row from the uncompressed adresses-48.csv survives.
 		expect(stats.emitted).toBe(1)
 	})
 })

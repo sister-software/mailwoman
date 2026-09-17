@@ -6,7 +6,7 @@
  *
  *   Materialize a release's weights artifacts from the PUBLIC Hugging Face bucket — the `--source hf`
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
- *   the curl-and-cp block it used to carry inline. ONE recipe, two callers: the preflight points it at
+ *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
  *   the operator's data root; both take a destination root and touch nothing else.
  *

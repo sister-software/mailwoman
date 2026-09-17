@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   No-street address synthesizer — the counter-distribution that v0.6.1's synth-street source is
- *   missing. Generates BIO-labelable rows where there is NO street, NO house_number, NO
- *   street_prefix, NO street_suffix, NO intersection — only some subset of {venue, locality,
+ *   missing. Generates BIO-labelable rows where there is no street, no house_number, no
+ *   street_prefix, no street_suffix, no intersection — only some subset of {venue, locality,
  *   region, postcode, country}.
  *
  *   Rationale: the [2026-05-28 night-2
@@ -13,7 +13,7 @@
  *   eval](../../docs/articles/evals/experiments/2026-05-28-layer-1-morphology-fst.md) showed that synth-street
  *   pushed the model into a high-confidence "decompose mode" that leaked into `dependent_locality`.
  *   Per DeepSeek's turn-2 recipe, the model needs explicit counter-examples: addresses where the
- *   model should NOT emit street labels. This synthesizer is that source.
+ *   model should not emit street labels. This synthesizer is that source.
  *
  *   Six row templates, each producing a {raw, components} pair with no street-side tags:
  *
@@ -30,7 +30,7 @@
  *
  *   Output is a `CanonicalRow` with no street-side components. Alignment will produce BIO labels
  *   where every token is one of {`B-venue`, `I-venue`, `B-locality`, `I-locality`, `B-region`,
- *   `B-postcode`, `B-country`, `I-country`, `O`} — explicitly never any street tag. That IS the
+ *   `B-postcode`, `B-country`, `I-country`, `O`} — explicitly never any street tag. That is the
  *   counter-example signal the model is missing.
  *
  *   This complements (does not replace) the existing US-base-tuple source used by
@@ -47,7 +47,7 @@ import type { CanonicalRow } from "#types"
 //#region Types
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -155,7 +155,7 @@ const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Garden Lane Florist",
 ]
 
-// Compile-time guard: every venue must NOT start with the digit+ordinal pattern that
+// Compile-time guard: every venue must not start with the digit+ordinal pattern that
 // confuses house_number recognition. If a future contributor adds a "5th Avenue Theatre"-
 // style entry, this assertion will fire at module load time.
 for (const v of ADVERSARIAL_VENUES) {

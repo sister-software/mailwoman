@@ -1,19 +1,19 @@
-# Order-robustness retrain — v0.9.4 (#327, the v0.9.3 follow-up). ONE variable vs v0.9.3-de-regiontail:
+# Order-robustness retrain — v0.9.4 (#327, the v0.9.3 follow-up). One variable vs v0.9.3-de-regiontail:
 # DUAL-INJECTION of the postcode anchor (model.inject_first_token=true) — the anchor is pooled and ALSO
-# injected at position 0, not only at the postcode span. SAME corpus (v0.4.3-de-regiontail, region tail),
+# injected at position 0, not only at the postcode span. Same corpus (v0.4.3-de-regiontail, region tail),
 # anchor ON, self-cond ON, v0.7.2 recipe, seed 42. Only the model flag changes.
 #
-# WHY. v0.9.2 (both-order) + v0.9.3 (region tail) BOTH left the anchor-ON international gap ~flat (intl
+# WHY. v0.9.2 (both-order) + v0.9.3 (region tail) both left the anchor-ON international gap ~flat (intl
 # 44.5/44.7 vs native 82-84). The corpus change is EXHAUSTED: three lines agree the ceiling is the
 # anchor's STRUCTURE, not the data — anchor-OFF is order-agnostic (~48% both orders), forcing the
 # posterior to DE=1.0 left intl at 44.5%, and the region tail moved region-tagging (0→~40%) but not
 # locality. The per-token anchor at the TRAILING postcode (international order) fires on the wrong side
-# of the locality. PIP-containment confirms the intl gap is a REAL geographic miss (57% vs native 96%),
+# of the locality. PIP-containment confirms the intl gap is a real geographic miss (57% vs native 96%),
 # not a name-match artifact. DeepSeek (2026-06-06, 2 turns) signed off dual-injection as the fix: the
 # first-token anchor is an order-INDEPENDENT global cue the locality can attend back to. Full analysis:
 # docs/articles/evals/2026-06-06-v0.9.2-eval.md (the v0.9.3 follow-up section).
 #
-# SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT model.inject_first_token=true. NO corpus,
+# SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT model.inject_first_token=true. No corpus,
 # data-pipeline, or inference change — the model pools the per-token anchor (gather by max-confidence,
 # the postcode span) and adds it at position 0, blocked by that confidence so the c=0 identity holds. The
 # ONNX captures it (4-input, unchanged inference). De-risked: corpus-python test_anchor_channel.py
@@ -36,7 +36,7 @@
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
 #   # Assemble the overlay MANIFEST (v0.4.0 parquet files + the 2 German parquet files) — mirror v0.4.1-de via
 #   # scripts/assemble-de-overlay-manifest.py (point it at v0.4.3-de-regiontail), then:
-#   # NOT `modal volume put`: a mounted container cannot see what it writes, so a run staged that
+#   # Not `modal volume put`: a mounted container cannot see what it writes, so a run staged that
 #   # way trains on whatever was already there and reports success. Route it through R2 instead.
 #   mailwoman corpus upload --corpus-version v0.4.3-de-regiontail
 #   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.3-de-regiontail
@@ -69,8 +69,8 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # German at ~18% of the mix — same weight as v0.9.1; the ONLY change is the `synth-german` rows now carry both
-    # orders. THE key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
+    # German at ~18% of the mix — same weight as v0.9.1; the only change is the `synth-german` rows now carry both
+    # orders. The key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -95,7 +95,7 @@ model:
   use_locale_conditioning: true
   locale_loss_weight: 0.3
   use_postcode_anchor: true
-  # v0.9.4 (#327): dual-injection — pool the anchor at the postcode AND inject it at position 0
+  # v0.9.4 (#327): dual-injection — pool the anchor at the postcode and inject it at position 0
   # (an order-independent cue), to fix the anchor's positional harm on international word order.
   inject_first_token: true
   class_weights:

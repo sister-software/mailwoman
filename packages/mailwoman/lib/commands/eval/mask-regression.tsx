@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval mask-regression` — the per-release mask-regression check (#718), the "second
  *   lock" beside `createScorer`'s load-time capability delta check: re-runs the ship artifact
- *   mask-off vs mask-on and FAILS (exit 1) if ANY tag's unfolded F1 drops more than the threshold
+ *   mask-off vs mask-on and fails (exit 1) if any tag's unfolded F1 drops more than the threshold
  *   (default 2pp) under the conventions mask. Weight-dependent — a release eval, never a CI step
  *   (#582). `eval promote` runs it automatically when the spec declares `requires_conventions`.
  */

@@ -11,7 +11,7 @@
  *   the standing meaning-of-zero mistake: one is a fact about the configuration, the other about this input, and the
  *   remedies are different (wire the mechanism vs. extend its data).
  *
- *   The predicate that matters downstream: a parse where every PRESENT channel is silent was decided by the token
+ *   The predicate that matters downstream: a parse where every present channel is silent was decided by the token
  *   embeddings alone. That is often correct behaviour — the Weimar case parsed correctly with all channels silent —
  *   so the flag is a diagnostic fact for accounts and ledgers, never a health verdict on the row.
  *
@@ -35,7 +35,7 @@ export interface EvidenceCensus {
 	country: ChannelReading
 	/**
 	 * True when at least one channel was present and every present channel was silent — the model decided from token
-	 * embeddings alone. False when any channel fired, and ALSO false when no channel was configured at all: a session
+	 * embeddings alone. False when any channel fired, and also false when no channel was configured at all: a session
 	 * with no channels cannot be starved of them, and reporting it as starved would point the reader at retrieval when
 	 * the fact is about configuration.
 	 */

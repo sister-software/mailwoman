@@ -132,7 +132,7 @@ test("scorePostcode: no known formats → no proposals", () => {
 test("scoreRegionAbbreviation: tail-of-segment region code scores highest", () => {
 	const text = "NYC NY"
 	// "NYC" is 3 uppercase letters → also region-shaped, but "NY" follows it and is itself a region
-	// abbreviation, so the suppression guard does NOT trigger for NYC (after must be NON-region content).
+	// abbreviation, so the suppression guard does not trigger for NYC (after must be NON-region content).
 	const out = scoreRegionAbbreviation(tokens(text), text, true)
 
 	expect(out.map(summarize)).toEqual([
@@ -328,7 +328,7 @@ test("scoreLocalityPhrase: never proposes a span ending on a connective particle
 })
 
 test("scoreLocalityPhrase: a stray digit or street suffix stops the run", () => {
-	// "Springfield IL" — the run from "Springfield" must NOT absorb the region abbreviation "IL".
+	// "Springfield IL" — the run from "Springfield" must not absorb the region abbreviation "IL".
 	const text = "Springfield IL"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 	const bodies = out.map((p) => p.span.body)
@@ -367,7 +367,7 @@ test("scoreVenuePhrase: a venue-marker noun lifts the whole capitalized run to i
 
 test("scoreVenuePhrase: a hyphenated compound inside a 2+ capitalized run fires at 0.65", () => {
 	// "NY-NY Steakhouse" actually has a venue marker (steakhouse=0.9) which dominates. Use a run with a
-	// hyphen compound but NO marker to isolate the 0.65 branch.
+	// hyphen compound but no marker to isolate the 0.65 branch.
 	const text = "Coca-Cola Tower"
 	const out = scoreVenuePhrase(tokens(text), text, false)
 	// "tower" is a venue marker (0.65). So marker weight 0.65 wins — both branches happen to agree here.
@@ -389,7 +389,7 @@ test("scoreVenuePhrase: venue-by-exclusion fires only in the first segment for a
 	// VENUE_PHRASE. 2 tokens → 0.5.
 	const first = scoreVenuePhrase(tokens(text), text, true)
 	expect(first.map(summarize)).toEqual([{ body: "Acme Corp", start: 0, end: 9, kind: "VENUE_PHRASE", confidence: 0.5 }])
-	// Same run NOT in the first segment → no venue-by-exclusion proposal.
+	// Same run not in the first segment → no venue-by-exclusion proposal.
 	expect(scoreVenuePhrase(tokens(text), text, false)).toEqual([])
 })
 

@@ -79,7 +79,7 @@ test("smartCapitalCase: passes through email addresses unchanged", () => {
 })
 
 test("smartCapitalCase: passes through uniformly-cased input unchanged", () => {
-	// Per the docstring: uniformly-cased input is left alone, so an all-lower phrase is NOT title-cased.
+	// Per the docstring: uniformly-cased input is left alone, so an all-lower phrase is not title-cased.
 	expect(smartCapitalCase("hello world")).toBe("hello world")
 	expect(smartCapitalCase("HELLO WORLD")).toBe("HELLO WORLD")
 	expect(smartCapitalCase("street-name")).toBe("street-name")

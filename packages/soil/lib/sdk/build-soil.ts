@@ -14,7 +14,7 @@
  *   ABSENCE IS NO ROW, IN EVERY TABLE. Land outside a published survey area gets no `layer_coverage` row and
  *   no summary row — never a zero, never an empty histogram. Inside a published area the coverage row says
  *   `designated` at completeness 1.0, because NRCS declares its own mapping complete for those areas at its
- *   own scale; a coverage cell reached ONLY by `NOTCOM` and access-denied polygons gets no row either,
+ *   own scale; a coverage cell reached only by `NOTCOM` and access-denied polygons gets no row either,
  *   because the polygon exists and the soil mapping behind it does not.
  *
  *   A COVERAGE ROW LICENSES ONLY THAT THE AUTHORITY MAPPED HERE. The reading is the class distribution, and
@@ -199,7 +199,7 @@ export interface BuildSoilResult {
 	topClassUnderHalfCells: number
 	topClassUnderHalfShare: number
 	/**
-	 * Cells with NO class at all: the survey mapped them and rated nothing there.
+	 * Cells with no class at all: the survey mapped them and rated nothing there.
 	 */
 	classlessCells: number
 	/**
@@ -260,7 +260,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			)
 		},
 		ingest: async (kdb) => {
-			// Attributes FIRST because the ingest needs one thing out of them — which map units have no soil mapping behind
+			// Attributes first because the ingest needs one thing out of them — which map units have no soil mapping behind
 			// them — and because a delineation whose map unit is missing must fail while the artifact is still empty rather
 			// than after millions of geometry rows are written.
 			writeAttributes(kdb, options.areas)
@@ -616,7 +616,7 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
  * may or may not reach.
  *
  * `observed_rows` counts the delineations reaching the cell, which is what the contract's column means. A cell reached
- * only by `NOTCOM` and access-denied polygons gets NO ROW — the polygon exists, the soil mapping behind it does not,
+ * only by `NOTCOM` and access-denied polygons gets no row — the polygon exists, the soil mapping behind it does not,
  * and the survey's §3.2 puts that case with the absences rather than with the coverage.
  */
 function buildCoverageCells(
@@ -757,7 +757,7 @@ function writeSurveyAreaRows(
  * Insert the authority's declared domains, plus the weighting the shares were produced under.
  *
  * The weighting rides in the vocabulary table as well as on every row: the row-level copy is what a consumer reads, and
- * this one carries the sentence that says what it MEANS, which no column can.
+ * this one carries the sentence that says what it means, which no column can.
  */
 function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insert = database.prepare(

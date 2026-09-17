@@ -24,7 +24,7 @@
  *   Data (`--communes`, opts.communes): REAL BAN (Base Adresse Nationale) commune+postcode+coord
  *   tuples, one per line, TAB-separated `commune <TAB> postcode <TAB> lon <TAB> lat`. Build the
  *   input TSV once from the BAN staging CSV (see the legacy script header). Anchor-ON by
- *   construction: rows carry a REAL postcode token in `raw` + a `postcode` component, so the
+ *   construction: rows carry a real postcode token in `raw` + a `postcode` component, so the
  *   training loader paints the anchor feature onto that span automatically. The trailing-postcode
  *   anchor REINFORCES the FR split (FR postcode is trailing, unlike German PLZ-leading — the v0.9.2
  *   scar is positional, not universal).
@@ -113,7 +113,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	let out: AdminSplitVariant
 
 	if (r < BARE_COMMA_CUTOFF) {
-		// 1. bare comma, NO postcode — the Thauron/#727 shape (anchor off)
+		// 1. bare comma, no postcode — the Thauron/#727 shape (anchor off)
 		out = { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
 	} else if (r < BARE_COMMA_PC_CUTOFF) {
 		// 2. bare comma + postcode — anchor ON
@@ -126,16 +126,16 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 		// 3. space-delimited admin (the AU `CANBERRA ACT` fuse applied to FR) — anchor ON
 		out = { raw: `${loc} ${dep} ${pc}`, components: { locality: loc, region: dep, postcode: pc }, order: "space-pc" }
 	} else if (r < CANONICAL_PC_FIRST_CUTOFF) {
-		// 4. canonical FR postcode-first (NO département) — preservation, anchor ON
+		// 4. canonical FR postcode-first (no département) — preservation, anchor ON
 		out = { raw: `${pc} ${loc}`, components: { postcode: pc, locality: loc }, order: "canonical-pc-first" }
 	} else {
-		// 5. commune + postcode (NO département) — preservation, anchor ON
+		// 5. commune + postcode (no département) — preservation, anchor ON
 		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
 
-	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried NO country
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried no country
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
-	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
+	// explicit "France" + a `country` component — the model relearns to emit country when the token is
 	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
 	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {

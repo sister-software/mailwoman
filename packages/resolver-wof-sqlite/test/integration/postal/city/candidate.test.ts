@@ -8,7 +8,7 @@
  *   distractor, attaches a `postal_city_candidate` row (`antioch`, 37013 → Nashville), and pins the
  *   probe's behaviour: an exact `(name_key, postcode)` hit resolves the postal city to its
  *   geographic locality; a bare query (no postcode), a postcode miss, a non-locality request, and a
- *   candidate.db WITHOUT the side-index are all untouched (byte-stable).
+ *   candidate.db without the side-index are all untouched (byte-stable).
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -128,7 +128,7 @@ describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	})
 
 	test("a candidate.db WITHOUT the side-index is byte-stable (no probe, no crash)", async () => {
-		// candidatePath has NO postal_city_candidate table here (attach not called).
+		// candidatePath has no postal_city_candidate table here (attach not called).
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })

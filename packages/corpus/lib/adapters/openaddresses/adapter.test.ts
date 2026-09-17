@@ -253,7 +253,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("INCLUDES share-alike by default; drops only on explicit allowShareAlike:false (#26 exclusion is deliberate)", async () => {
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is PRESENT — no silent drop.
+		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is present — no silent drop.
 		// Exclusion is now a deliberate BUILD-level act (`--exclude-share-alike`), not an adapter default.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),

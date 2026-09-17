@@ -426,7 +426,7 @@ describe("lookupPostcodeAnchor", () => {
 	})
 
 	it("says a present record is unreachable at serve under an alnum-run card", () => {
-		// The artifact HAS the key and the running model is never fed it — a hit and a warning, not a miss.
+		// The artifact has the key and the running model is never fed it — a hit and a warning, not a miss.
 		const [row] = lookupPostcodeAnchor(resolver, ["SW1A 2AA"], { spanMode: "alnum-run" })
 
 		expect(row!.hit).toBe(true)
@@ -499,7 +499,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 			}
 		}
 
-		// Without the option the property is ABSENT — unread, not measured-empty.
+		// Without the option the property is absent — unread, not measured-empty.
 		const [bare] = lookupCandidate(db, ["Porto Petro"])
 		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
 

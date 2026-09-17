@@ -7,7 +7,7 @@ import { stringifyJSON } from "#json"
  * @file The CN organizational-unit reader (#2034). China's rural and state-farm addresses carry a hierarchy below the
  *   named settlement that the universal tags have no rung for: `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm →
  *   No. 8 production team), the XPCC ladder `一四三团十二连` (143rd regiment → 12th company), the villager group `民权三组`.
- *   The schema holds the whole ordinal chain as ONE `locality_unit` span; this module is the deterministic reading of
+ *   The schema holds the whole ordinal chain as one `locality_unit` span; this module is the deterministic reading of
  *   that span — which rung each generic names — and the labeler the corpus recipe uses to write the span in the first
  *   place. Both halves share the one generic table, so a generic added for labeling is read back the same way.
  *

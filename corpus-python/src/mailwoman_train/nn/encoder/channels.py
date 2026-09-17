@@ -142,17 +142,17 @@ class CoarseEncoderChannels(CoarseEncoderState):
             if anchor_confidence is None:
                 anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
             if self.inject_first_token:
-                # Dual-injection (#327, v0.9.4): ALSO inject the pooled anchor at position 0 — an
+                # Dual-injection (#327, v0.9.4): also inject the pooled anchor at position 0 — an
                 # order-INDEPENDENT global cue the locality can attend back to regardless of where the
                 # postcode sits. Pool each sequence by its max-confidence token (the postcode span) via
                 # gather (ONNX-clean), scale by that confidence so an all-zero (no-anchor) sequence stays
-                # the EXACT c=0 identity, and add it only at position 0 (functional cat, no in-place).
+                # the exact c=0 identity, and add it only at position 0 (functional cat, no in-place).
                 conf = anchor_confidence.to(h.dtype)
                 max_conf, max_idx = conf.max(dim=1)  # (B,), (B,)
                 idx = max_idx.view(bsz, 1, 1).expand(bsz, 1, h.shape[-1])  # (B, 1, hidden)
                 pooled_vec = anchor_vec.gather(1, idx).squeeze(1)  # (B, hidden) — the postcode token's anchor_vec
                 pos0_add = (max_conf.unsqueeze(-1) * pooled_vec).unsqueeze(1)  # (B, 1, hidden)
-                # Place it ONLY at position 0 via a position-0 indicator broadcast — avoids a dynamic
+                # Place it only at position 0 via a position-0 indicator broadcast — avoids a dynamic
                 # `seq-1` cat that trips the ONNX opset version-converter. (1, S, 1) × (B, 1, hidden).
                 pos_indicator = (torch.arange(seq, device=h.device) == 0).to(h.dtype).view(1, seq, 1)
                 h = h + pos0_add * pos_indicator

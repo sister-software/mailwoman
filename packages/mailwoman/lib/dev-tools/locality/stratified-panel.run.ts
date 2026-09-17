@@ -16,7 +16,7 @@
  *   source holds fewer rows for contributes what it has, and the run reports which regions came up short.
  *
  *   The coordinate is the POSTCODE's, straight from the export's own columns. It is good enough to place a row on a
- *   map and to reject a gross mis-geocode; it is NOT a locality centroid, so a probe grading rooftop distance against
+ *   map and to reject a gross mis-geocode; it is not a locality centroid, so a probe grading rooftop distance against
  *   it is grading the wrong thing. Each row says so in `coordinate_basis`.
  *
  *   Run:
@@ -77,7 +77,7 @@ const triples = await readTriplesFromGeonames(country, source, values["country-n
 const quotaed = applyLocalityQuota(triples, Number(values.quota))
 
 /**
- * Keyed by the region form the panel WRITES. GeoNames publishes `California`, never `CA`, and the surface under test is
+ * Keyed by the region form the panel writes. GeoNames publishes `California`, never `CA`, and the surface under test is
  * the code, so folding here keeps the shortfall report and the rows speaking the same vocabulary.
  */
 const byRegion = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()

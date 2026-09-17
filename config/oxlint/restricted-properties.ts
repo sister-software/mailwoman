@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `no-restricted-properties` entries, named so an override can lift ONE of them.
+ * @file The `no-restricted-properties` entries, named so an override can lift one of them.
  *
  *   oxlint models the rule as a single list, so an override that writes `"off"` drops every entry —
  *   including the ones it never meant to touch, and including whatever is added to the list later. Each

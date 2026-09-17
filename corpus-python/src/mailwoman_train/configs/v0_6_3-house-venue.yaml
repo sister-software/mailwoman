@@ -18,8 +18,8 @@
 #        from ADVERSARIAL_VENUES. Module-load-time assertion now rejects any
 #        digit+ordinal venue addition (mechanism (a) fix).
 #
-#   2. NEW synth-house-venue-v063 at weight 1.0 (32K rows)
-#      - Companion recipe output with house_number + venue + street ALL coexisting.
+#   2. New synth-house-venue-v063 at weight 1.0 (32K rows)
+#      - Companion recipe output with house_number + venue + street all coexisting.
 #      - Two templates: "123 Main St, Sunrise Bakery, ..." and
 #        "Sunrise Bakery, 123 Main St, ..." (50/50). Plain venue pool only.
 #      - Teaches the model that house_number and venue are not mutually

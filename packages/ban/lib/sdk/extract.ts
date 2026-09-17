@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr). The
- *   dump is a `;`-delimited, header-first CSV in which EVERY row already carries the full tuple —
+ *   dump is a `;`-delimited, header-first CSV in which every row already carries the full tuple —
  *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there is no OSM-style
  *   "association gap" (a point with no street): BAN is a structured government register, not a
  *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
@@ -50,7 +50,7 @@ export interface BANAddrRecord {
 	city: string | null
 	/**
 	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune, cleaned via {@link cleanLieuDit}. Filled on
-	 * 6.94% of BAN rows nationally; null on the rest AND on any row whose raw value is junk/duplicate (see
+	 * 6.94% of BAN rows nationally; null on the rest and on any row whose raw value is junk/duplicate (see
 	 * {@link cleanLieuDit} for the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section,
 	 * 2026-07-22).
 	 */
@@ -69,7 +69,7 @@ export interface BANAddrRecord {
 }
 
 /**
- * The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY).
+ * The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails loudly).
  */
 const REQUIRED_COLUMNS = [
 	"numero",
@@ -174,7 +174,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 
 		if (!numero || !street) continue
 		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point —
-		// so require a non-empty coord string BEFORE parsing, then the finite check catches garbage.
+		// so require a non-empty coord string before parsing, then the finite check catches garbage.
 		const lonStr = row.lon?.trim()
 		const latStr = row.lat?.trim()
 

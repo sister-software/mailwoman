@@ -13,7 +13,7 @@
  *   country_id, region_id, placetype_id, …)` and ranked population-first — it has no postcode
  *   dimension. A cloned alias row was tested (#741) and falsified: a sentinel rank is
  *   bare-name-safe but then loses to any in-region homonym, and there is no single rank that is
- *   both. The fix is an EXACT `(name_key, postcode)` probe that bypasses population/region ranking
+ *   both. The fix is an exact `(name_key, postcode)` probe that bypasses population/region ranking
  *   entirely — consulted only when the query carries a postcode, so the common no-postcode path is
  *   untouched.
  */

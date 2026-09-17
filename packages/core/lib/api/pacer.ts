@@ -13,16 +13,16 @@
 import { type ClockLike, systemClock } from "#api/clock"
 
 /**
- * A strict-interval request pacer: grants are spaced AT LEAST `intervalMs` apart, with NO burst allowance beyond the
+ * A strict-interval request pacer: grants are spaced AT LEAST `intervalMs` apart, with no burst allowance beyond the
  * very first grant. {@linkcode RequestPacer.acquire} resolves immediately for the first call after construction (or
  * after any idle gap), and every call within one interval of the previous grant waits out the remainder of it.
  *
  * WHY NOT A TOKEN BUCKET: a token bucket with capacity C admits up to `C + rate * 1s` requests within any sliding
- * one-second window — there is NO non-zero capacity that honors a FLAT rate cap, only an average one. The bucket this
- * replaced started full (a one-time startup burst, by design) but ALSO refilled to full after any idle gap, so a fresh
+ * one-second window — there is no non-zero capacity that honors a flat rate cap, only an average one. The bucket this
+ * replaced started full (a one-time startup burst, by design) but also refilled to full after any idle gap, so a fresh
  * burst recurred every time a crawl paused and resumed — measured at 20 grants inside one 1000ms window against a 10/s
  * ceiling (2x). Upstreams that publish a flat rate (SEC EDGAR's 10 req/s, verified enforced) and actively police it
- * need the FLAT guarantee, at the cost of the first-call-of-a-burst latency a bucket would have avoided.
+ * need the flat guarantee, at the cost of the first-call-of-a-burst latency a bucket would have avoided.
  *
  * FAIRNESS (deliberately not addressed): under concurrent contention (N callers racing `acquire()` in the same
  * synchronous turn), grants are issued in whatever order the synchronous reservation happens to run in. This never
@@ -63,11 +63,11 @@ export class RequestPacer {
 	 * Resolve once this call's turn comes up: immediately for the first call (or after any idle gap), or exactly
 	 * `intervalMs` after the previous grant otherwise.
 	 *
-	 * The grant time is reserved SYNCHRONOUSLY, before any `await` — `#nextGrantAt` is read AND bumped in the same
+	 * The grant time is reserved SYNCHRONOUSLY, before any `await` — `#nextGrantAt` is read and bumped in the same
 	 * synchronous step that computes this call's own wait. Moving the `#nextGrantAt` update to after the `await` (i.e.
 	 * "compute the wait, sleep, then update state") reopens the concurrency bug this pacer exists to close — N callers
-	 * invoked in the same synchronous turn would all read the SAME stale `#nextGrantAt` before any of them updates it,
-	 * compute the SAME wait, and all be released together instead of one interval apart.
+	 * invoked in the same synchronous turn would all read the same stale `#nextGrantAt` before any of them updates it,
+	 * compute the same wait, and all be released together instead of one interval apart.
 	 *
 	 * `Math.max(#nextGrantAt, now)` is also required. Without it, a long idle gap leaves `#nextGrantAt` stuck in the
 	 * past, and every call after the idle would compute a negative/zero wait forever (the increment-by-one-interval never

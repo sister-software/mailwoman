@@ -1,9 +1,9 @@
-# === v3.11.0-deploc-feed — dependent_locality FEED run: multi-locale mass at probe-2 density. 8k SHIP CANDIDATE. ===
+# === v3.11.0-deploc-feed — dependent_locality FEED run: multi-locale mass at probe-2 density. 8k ship candidate. ===
 # Escalation of v3.10.1-gb-probe2 (PRIMARY PASS: first decode-layer dep-loc emissions ever — NZ 3/246,
 # GB 1/69; raw-BIO GB 12/69, min gap 0.000). Probe-2's costs were SKEW costs (synth-gb alone at 20.2%
 # of stream): golden us −0.8pp (0.1 outside bar), FR-fragment bare-locality 0.98→0.60, val −1.7pp.
-# THIS run holds combined dep-loc density (~6.3% of stream vs probe-2's ~6.6%) while splitting mass
-# across FOUR locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream; densities .328/.792/.303/1.00)
+# This run holds combined dep-loc density (~6.3% of stream vs probe-2's ~6.6%) while splitting mass
+# across four locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream; densities .328/.792/.303/1.00)
 # — combined dep-loc 6.66% ≈ probe-2's 6.6% EXACTLY (one variable = diversity), max single-locale share 20.2% → 6.1%. Same resurrection changes as the probes (reinit rows 7/8 +
 # classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed mechanism.
 # Roster final 2026-07-22 ~05:5x UTC: all four recipe outputs landed + check-checked (synth-fr-lieudit @ 100% dep-loc).
@@ -15,32 +15,32 @@
 #     - golden us micro within ±0.7pp of v385  [probe-2 missed by 0.1pp — must recover]
 #     - golden fr micro within ±0.7pp of v385
 #     - FR-fragment BARE-LOCALITY class ≥ 0.90 (v385 baseline 0.978; probe-2 collapsed to 0.603 —
-#       the composite board number is NOT the bar; this class is)
+#       the composite board number is not the bar; this class is)
 #     - digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
 #     - 6 demo presets byte-identical to v385
 #     - val macro_f1 within 1.0pp of v385's 0.7047
-#   SHIP CHECK : full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet PASS.
+#   SHIP CHECK : full error-analysis vs v385 — no tag regresses >2pp (config-canonical); gauntlet passes.
 #              Ship path (HF upload → promote → npm CI → demo) is OPERATOR-AUTHORIZED for the
 #              2026-07-22 night shift CONDITIONAL on every bar above passing. Any bar fails → stage
 #              only, report, no promote (no silent check drift; treadmill guard: no knob iteration).
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.11.0-deploc-feed.yaml --resume none
-#   (--resume none REQUIRED: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)
+#   (--resume none is required: reinit_label_rows lives in the init_from branch; --resume auto silently no-ops it.)
 #
 # --- original v3.10.0-gb-probe header follows (provenance retained) ---
-# Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with EXACTLY the
+# Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with exactly the
 # deltas below — one-variable discipline, everything else verbatim.
 #
 # [SUPERSEDED HISTORY — retained for the record, CORRECTED by the probe-2 header above]: the
 # "run A = instrument failure" adjudication was WRONG. Runs A and B produced byte-identical
 # checkpoints; captured run-B startup logs + rows-7/8 cosine analysis prove every change fired in
-# BOTH runs (sources were already synced before run A). The maxΔ-based "rows unchanged" reading
+# both runs (sources were already synced before run A). The maxΔ-based "rows unchanged" reading
 # used the wrong instrument (element scale ~0.07 at 384 dims; cosine 0.10 vs 0.62-0.73 was the
 # truth). Probe 1's real confound was positive-mass starvation + decode-layer scoring.
 #
 # THE VARIABLES (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
 #   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 recipe output, 800k rows,
-#      32.8% B-dependent_locality) + data.source_weights.synth-gb (36.0 in THIS probe-2 file; the
+#      32.8% B-dependent_locality) + data.source_weights.synth-gb (36.0 in this probe-2 file; the
 #      probe-1 value was 6.0 — see probe-2 header above; other locale-add sources unchanged).
 #   2. model.class_weights B-/I-dependent_locality 0.3 -> 1.0. Task 4a's fix made GB actually EMIT
 #      the tag in the corpus; a 0.3 downweight on top of a near-zero classifier row is the THIRD
@@ -50,9 +50,9 @@
 #      only a real param group moves a baked-negative row; see train.py build_optimizer/
 #      reinit_label_rows, #1100 Task 6).
 #
-# ⚠️ LAUNCH DISCIPLINE: this recipe MUST launch with `--resume none`. `reinit_label_rows` and
+# ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
-# auto` run takes the `if resume_from:` branch instead and NEVER evaluates `reinit_label_rows` at
+# auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
 # all (silent no-op, not an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
@@ -71,7 +71,7 @@
 #   GUARDS  : golden us/fr noise, digit + FR fragment boards, 6 demo presets byte-identical.
 #   FALLBACK: locality-mapped ship, no knob-spinning.
 #
-# 2k PROBE (not a ship candidate). On PASS: operator decides whether to escalate to 8k. On a
+# 2k PROBE (not a ship candidate). On a pass: operator decides whether to escalate to 8k. On a
 # PRIMARY miss: invoke the pre-registered fallback (locality-mapped) — do not iterate the knobs.
 #
 # Launch (see probe-2 header above): --config v3.10.1-gb-probe2.yaml --resume none
@@ -80,7 +80,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -104,10 +104,10 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
-    MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
+    MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
+  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+    overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -138,12 +138,12 @@ data:
     synth-nl-postcode: 6.0
     # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
     synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
@@ -157,7 +157,7 @@ data:
   augment_glue_prob: 0.25
   # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
+  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -168,7 +168,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -193,10 +193,11 @@ model: # VERBATIM v2.4.1.
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -235,7 +236,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only).
   output_dir: /data/output-v3110-deploc-feed-s42/checkpoints # FEED output dir.
   seed: 42
@@ -257,7 +258,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; -
   lr_schedule: constant
   gazetteer_curriculum: false
   classifier_learning_rate: 1.0e-3 # DELTA — NEW. The dead-tag resurrection hot param group (#1100 Task 6); see header.
-  reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — NEW. Mean-of-live re-init of the baked-dead rows; REQUIRES init_from AND --resume none (see header).
+  reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — NEW. Mean-of-live re-init of the baked-dead rows; requires init_from and --resume none (see header).
   trackio_project: mailwoman
   trackio_run_name: v3.11.0-deploc-feed-s42
 

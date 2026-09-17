@@ -55,7 +55,7 @@ export function sampleRegister(random: () => number): Register {
 }
 
 /**
- * Join groups into `raw` + `components`, applying the register to BOTH so alignment still finds every value.
+ * Join groups into `raw` + `components`, applying the register to both so alignment still finds every value.
  */
 export function renderGroups(
 	groups: Group[],

@@ -39,7 +39,7 @@ export function relativeImportSpecifiers(source: string): string[] {
  * Stage MapLibre's tile worker (`maplibre-gl-worker.mjs`) and the module it imports into `destDir`, and answer the
  * staged file names.
  *
- * MapLibre derives its default worker URL from `import.meta.url` and answers an EMPTY string when that is not an
+ * MapLibre derives its default worker URL from `import.meta.url` and answers an empty string when that is not an
  * `http(s):` URL. The docs client bundle is classic-script output, so webpack inlines `import.meta.url` as the `file:`
  * path of `maplibre-gl.mjs` on the build host; the empty URL then spawns the PAGE ITSELF as the worker, which dies at
  * its first byte of HTML. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The

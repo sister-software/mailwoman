@@ -16,10 +16,10 @@
  *     then treated as a plain backspace — one character, not one word.
  *
  *   Both are the same defect: the modifier is delivered and ignored. So the rule here is inverted — an unhandled
- *   ctrl/meta chord is DROPPED, never inserted. A control byte can only ever reach the value as an edit.
+ *   ctrl/meta chord is dropped, never inserted. A control byte can only ever reach the value as an edit.
  *
  *   JSX-free on purpose (`.ts`, `createElement`): bare node strips types but does not transform JSX, so this is the
- *   form that lets the pty probe run the REAL component from source, the way `map-tui`'s pty test runs its real bin.
+ *   form that lets the pty probe run the real component from source, the way `map-tui`'s pty test runs its real bin.
  *   The component is one `<Text>` — the JSX would have bought nothing.
  */
 
@@ -31,7 +31,7 @@ import { createElement, type ReactElement } from "react"
 export interface InputState {
 	value: string
 	/**
-	 * UTF-16 offset the cursor sits BEFORE, in `[0, value.length]`, and never INSIDE a surrogate pair — every move and
+	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a surrogate pair — every move and
 	 * every delete in this module steps by whole codepoints, so `value.slice(cursor)` is always a valid string. (Ink
 	 * measures and indexes in UTF-16 too; keeping the offset in the same units as the render is what makes the two agree.
 	 * See {@link stepLeft}.)
@@ -66,7 +66,7 @@ function stepRight(value: string, index: number): number {
 }
 
 /**
- * Bound an offset to the value AND out of the middle of a surrogate pair — the only place a caller-supplied cursor can
+ * Bound an offset to the value and out of the middle of a surrogate pair — the only place a caller-supplied cursor can
  * be illegal.
  */
 function clampCursor(value: string, index: number): number {
@@ -119,7 +119,7 @@ function deleteRange(state: InputState, start: number, end: number): InputState 
 }
 
 /**
- * Apply one keypress to the field, or return the state UNCHANGED when the key isn't the field's business.
+ * Apply one keypress to the field, or return the state unchanged when the key isn't the field's business.
  *
  * Pure, and exported for its own tests: the pty proves the bytes arrive as this function expects, and the unit tests
  * prove the edits are right, without either having to do the other's job.
@@ -151,7 +151,7 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 
 	if (key.ctrl) {
 		// The readline set, spelled out. Every one of these arrives as a bare letter (Ink resolves ctrl+letter to
-		// the letter), so anything NOT listed has to fall through to the drop below — inserting it is the bug.
+		// the letter), so anything not listed has to fall through to the drop below — inserting it is the bug.
 		switch (input) {
 			case "w":
 				return deleteRange({ value, cursor }, wordStart(value, cursor), cursor)
@@ -168,7 +168,7 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 		}
 	}
 
-	// An unhandled meta chord (alt+f, alt+b, …) is DROPPED, and so is anything with no printable content left —
+	// An unhandled meta chord (alt+f, alt+b, …) is dropped, and so is anything with no printable content left —
 	// `input` is empty for the keys Ink names (arrows, escape, tab).
 	if (key.meta) return state
 

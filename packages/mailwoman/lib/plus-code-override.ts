@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The plus-code (Open Location Code) result override — the LAST step of a geocode, after every
+ *   The plus-code (Open Location Code) result override — the last step of a geocode, after every
  *   resolve tier. See {@link applyPlusCodeOverride} for the contract; the decoder itself lives in
  *   `@mailwoman/spatial` (pure arithmetic, officially-vectored).
  */
@@ -23,10 +23,10 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{2,3})(?=[\s,]|$)/i
 
 /**
- * Plus-code override: when the query carries an Open Location Code, the code IS the user's most precise claim — Google
+ * Plus-code override: when the query carries an Open Location Code, the code is the user's most precise claim — Google
  * prints these on every place card, and in sparse-addressing countries they are the address (the Nicaraguan board
- * rows). A FULL code decodes directly; a SHORT code recovers against the coordinate the rest of the address resolved to
- * (the locality/admin answer — which is why this runs LAST, after every resolve tier). The parse typically mislabels
+ * rows). A full code decodes directly; a short code recovers against the coordinate the rest of the address resolved to
+ * (the locality/admin answer — which is why this runs last, after every resolve tier). The parse typically mislabels
  * the code (`street: "VFQ6+92P"`), which does not matter here: the override replaces the coordinate claim, tier
  * `plus_code`, uncertainty priced at the decoded cell's half-diagonal. A short code with no resolved reference stays an
  * abstention — a cell modulo 20° is not an answer.

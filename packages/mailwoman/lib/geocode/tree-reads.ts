@@ -86,8 +86,8 @@ export function treePostcodeValue(tree: AddressTree): string | undefined {
  *
  * The check is deliberately the narrowest one that fixes the class:
  *
- * - The tree carries NO postcode node already (never second-guess a parse that found one),
- * - The retagged node is the ONLY value-bearing node in the tree, and
+ * - The tree carries no postcode node already (never second-guess a parse that found one),
+ * - The retagged node is the only value-bearing node in the tree, and
  * - Its value matches a format that is UNFORGEABLE across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
  *   GB/CA/IE, the same table #928 already trusts to name a country outright).
  *

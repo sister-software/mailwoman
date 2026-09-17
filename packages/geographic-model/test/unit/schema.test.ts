@@ -198,7 +198,7 @@ function refusalOf(input: unknown): ValidationIssue[] {
 }
 
 /**
- * Every issue as a `path → code` pair, so a case can state the WHOLE expected list rather than the one entry it
+ * Every issue as a `path → code` pair, so a case can state the whole expected list rather than the one entry it
  * remembered to look for.
  */
 function refusalPairs(input: unknown): Array<[string, ValidationIssueCode]> {
@@ -669,7 +669,7 @@ describe("reporting every violation at once", () => {
 		const issues = refusalOf(ninefoldDefect())
 		const rendered = formatValidationIssues(issues)
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count IS the assertion.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count is the assertion.
 		expect(rendered.split("\n")).toHaveLength(issues.length)
 	})
 })

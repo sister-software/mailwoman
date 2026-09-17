@@ -22,7 +22,7 @@
  *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
  *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator;
  *      measured against the pilot's own départements the pooled and stratified populations agreed to within
- *      0.7% (4,055 vs 4,042 under the primary protocol), which is what licenses the uniform value HERE and
+ *      0.7% (4,055 vs 4,042 under the primary protocol), which is what licenses the uniform value here and
  *      is not a result that transfers to another region unmeasured.
  */
 

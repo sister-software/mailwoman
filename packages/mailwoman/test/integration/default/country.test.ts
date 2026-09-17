@@ -31,7 +31,7 @@ import { describe, expect, test, vi } from "vitest"
 
 /**
  * Wall-clock budgets for the CLI spawns in this suite. Every test here runs at least one full `parse --resolve`, which
- * loads the weights AND opens the global WOF database — several seconds before any assertion, and vitest's global
+ * loads the weights and opens the global WOF database — several seconds before any assertion, and vitest's global
  * `testTimeout` is nowhere near it. The per-test budget must exceed the spawn budget it wraps, plus time queued on the
  * shared spawn lock.
  */
@@ -189,9 +189,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 	)
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
-		// The #833 class: with coherence ON (the default), "Paris, TX" under `--default-country none`
-		// stays Paris, TEXAS — the region token wins over the more-populous foreign twin. This is the
-		// behavior the greedy probe above must pin OFF to observe raw ranking.
+		// The #833 class: with coherence on (the default), "Paris, TX" under `--default-country none`
+		// stays Paris, Texas — the region token wins over the more-populous foreign twin. This is the
+		// behavior the greedy probe above must pin off to observe raw ranking.
 		const lat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
 
 		expect(lat, "expected a Paris locality").not.toBeNull()

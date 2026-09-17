@@ -133,7 +133,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 		.run()
 
-	// An EMPTY per-country directory — the shape on disk that made this branch required.
+	// An empty per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	await makeDirectories(geonamesDir)
@@ -153,7 +153,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 
 	expect(r.geonamesNames).toBe(1)
 
-	// FI carries the SAME postcode string — country scoping is what keeps Helsinki out of Brooklyn.
+	// FI carries the same postcode string — country scoping is what keeps Helsinki out of Brooklyn.
 	const row = db.prepare("SELECT n.name AS name FROM names n WHERE n.id = 1").get() as { name: string }
 
 	expect(row.name).toBe("Brooklyn")

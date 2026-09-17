@@ -43,7 +43,7 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 | `earth/panels/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                                                             |
 | `mailwoman/commands/situs/address-points.tsx`            | `mailwoman situs address-points` — per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).           |
 
-Source data (NOT in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
+Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
 
 ## Runbook: rebuild + republish
 
@@ -129,13 +129,13 @@ The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible
 - **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `mailwoman/coverage/core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir named `coverage` at any depth — it was silently swallowing `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
-- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does NOT subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode IS coarse. Don't "finish" it to street level.
+- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does not subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — accurate, since a postcode is coarse. Don't "finish" it to street level.
 
 ## Follow-ups / open work
 
 1. **Close real holes with rooftop/postcode data.** The map now NAMES the gaps — biggest wins: UK/Ireland (Royal Mail isn't in open GeoNames; needs Code-Point Open or OA), and the Overture-EU address parquets already on disk (`…/overture/<rel>/addresses-<cc>.parquet`) → real EU **rooftop** databases (would upgrade EU from postcode-coarse to street-level + clear more holes).
 2. **NH rooftop points** via NH GRANIT — NH is street-level only today.
-3. **AK** — the antimeridian guard now DROPS wrapped hexes (so AK partial-renders if its state database is included); a proper fix splits the boundary at ±180 in `mailwoman/coverage/core.ts` instead of dropping.
+3. **AK** — the antimeridian guard now drops wrapped hexes (so AK partial-renders if its state database is included); a proper fix splits the boundary at ±180 in `mailwoman/coverage/core.ts` instead of dropping.
 4. **Importance refresh cadence** — `place_importance` is built onto a WOF-DB copy; re-run `mailwoman gazetteer importance` when WOF or the Nominatim importance dump refreshes, then re-bake.
 5. **Browser perf** — the ~1 GiB / 59M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.
 

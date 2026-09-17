@@ -24,7 +24,7 @@
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"
 
 /**
- * Affix tags that cannot stand without a `street`. `house_number` is deliberately NOT here: a bare `12, London` is a
+ * Affix tags that cannot stand without a `street`. `house_number` is deliberately not here: a bare `12, London` is a
  * degenerate-but-honest parse, and absorbing a number into a place name would invent a name that was never written.
  */
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
@@ -51,7 +51,7 @@ const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "depen
 export function repairStrandedAffix(tree: AddressTree): boolean {
 	const all = collectNodes(tree.roots, () => true)
 
-	// A `street` ANYWHERE means the affix has a legitimate owner, whether or not the tree builder attached it.
+	// A `street` anywhere means the affix has a legitimate owner, whether or not the tree builder attached it.
 	if (all.some((node) => node.tag === "street")) return false
 
 	const stranded = all.filter((node) => STRANDED_AFFIX_TAGS.has(node.tag))

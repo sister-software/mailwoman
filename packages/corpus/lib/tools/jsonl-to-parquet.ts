@@ -21,7 +21,7 @@
  *   Schema: raw, tokens, labels, span_starts, span_ends, span_tags, country, locale, source,
  *   source_id, corpus_version, license, synth_method, synth_base_id.
  *
- *   The span triple (#519, v0.5.0 char-offset labels) is REQUIRED on every row: `alignRow` emits it
+ *   The span triple (#519, v0.5.0 char-offset labels) is required on every row: `alignRow` emits it
  *   on every labeled row, so a row arriving without it came from a producer that hasn't migrated —
  *   writing it would silently drop the v0.5.0 labels from the file. Loud failure, naming the row
  *   number, instead.

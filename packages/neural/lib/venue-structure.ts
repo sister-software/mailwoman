@@ -43,7 +43,7 @@
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 
 /**
- * WOF placetypes that name a structure INSIDE a venue rather than a place on the map.
+ * WOF placetypes that name a structure inside a venue rather than a place on the map.
  *
  * Deliberately excludes `venue` itself (the container, not an interior division) and `address`/`intersection` (grammar
  * anchors, handled by the parser proper). Typed against {@link WhosOnFirstPlacetype} so the compiler enforces that each

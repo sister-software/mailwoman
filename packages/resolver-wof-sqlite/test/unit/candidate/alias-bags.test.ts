@@ -93,7 +93,7 @@ describe("explodeAliasBags", () => {
 
 	test("skips an alias that folds onto the place's own primary key", () => {
 		const attrs = new Map([[202, place("Saint-Étienne")]])
-		// The diacritic-free spelling folds to the SAME key as the display name, so it is the place's
+		// The diacritic-free spelling folds to the same key as the display name, so it is the place's
 		// primary row, not a second alias.
 		const { nAlias, keyCounts } = run([{ id: 202, alt: bag("Saint-Etienne", "St Etienne") }], attrs)
 

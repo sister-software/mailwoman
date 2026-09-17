@@ -136,7 +136,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  *
  * A source a checkout has not cached yields nothing, after saying so. A lab holds the archives for the countries it has
  * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
- * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with NO tuples at all
+ * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with no tuples at all
  * still throws; that is the case where the cache, not the recipe, is the problem.
  *
  * @category CSV
@@ -162,7 +162,7 @@ export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / publi
 /**
  * The surface key shared by the Norwegian recipes (`no-fragment`, `no-street-led`).
  *
- * MUST match the NO digit board's `norm_surface`: NFC, lowercase, collapse whitespace — and KEEP diacritics.
+ * Must match the Norwegian digit board's `norm_surface`: NFC, lowercase, collapse whitespace — and keep diacritics.
  * fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French but would collapse
  * `Tømmerlien` → `tommerlien` here, so a recipe's exclusion check would never match the board's reserved `tømmerlien`
  * and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point
@@ -378,12 +378,12 @@ export interface RecipeOptions {
 	banDir?: string
 	multilocaleCount?: number
 	/**
-	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. REQUIRED for those
+	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list. Required for those
 	 * recipes — a recipe output that trains on its own eval set measures memorization. See their docstrings.
 	 */
 	excludeSurfaces?: string
 	/**
-	 * `no-fragment`: share of rows that are counter-distribution (bare locality OR bare postcode).
+	 * `no-fragment`: share of rows that are counter-distribution (bare locality or bare postcode).
 	 */
 	counterProb?: number
 	/**

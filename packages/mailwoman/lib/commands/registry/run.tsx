@@ -230,7 +230,7 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
- * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (NOT
+ * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (not
  * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
  * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
  * `registry train-scorer` and `registry scorer-eval` commands.
@@ -358,7 +358,7 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE combined record set,
+ * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into one combined record set,
  * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required;
  * geography is the join.
  */

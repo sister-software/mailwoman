@@ -49,7 +49,7 @@ export async function buildAncestorsSidecar(ctx: {
 
 	// The canonical-parent forest the interval labels are computed over. One parent per place — the
 	// depth-1 edge (finest containment tier, lowest ancestor id; the `regionOf` MIN-stability
-	// convention). ALL parents stay in the closure rows; only the interval tree canonicalizes.
+	// convention). All parents stay in the closure rows; only the interval tree canonicalizes.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()

@@ -1,5 +1,5 @@
-# v2.6.2-span-boundary-w15 — #727 stage-1 weight sweep. ONE variable vs v2.6.0: span_boundary_loss_weight
-# 0.5 -> 1.5. v2.6.0 (2k) AND v2.6.1 (8k) both plateaued at flips 5->2 / street flat @ weight 0.5 — the
+# v2.6.2-span-boundary-w15 — #727 stage-1 weight sweep. One variable vs v2.6.0: span_boundary_loss_weight
+# 0.5 -> 1.5. v2.6.0 (2k) and v2.6.1 (8k) both plateaued at flips 5->2 / street flat @ weight 0.5 — the
 # head fixes 3/5 boundary cases then saturates on training duration. This tests whether the plateau is
 # WEIGHT-limited: does stronger boundary pressure fix the remaining 2 (VT 05068, ND 58852) and/or lift
 # aggregate street? If yes -> the simple head has more to give (sweep higher). If flat -> the residual is
@@ -8,7 +8,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -32,7 +32,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -76,7 +76,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 1.5
@@ -133,7 +133,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v241 (fresh optimizer; --resume auto on a
+train: # Same-vocab init_from fine-tune off the shipped v241 (fresh optimizer; --resume auto on a
   # fresh output_dir honors init_from, weights only).
   output_dir: /data/output-v262-span-boundary-w15-s42/checkpoints
   seed: 42

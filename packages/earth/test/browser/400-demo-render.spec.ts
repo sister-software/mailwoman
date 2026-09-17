@@ -35,7 +35,7 @@ test.describe("Demo — structural render", () => {
 
 		// The About explainer is a control in the map chrome, and its copy renders in the sheet that control opens —
 		// `MapControlButton` carries its name as `aria-label` on an icon button, so the name is a label and not text.
-		// Asserted LAST: the sheet it opens overlays the chrome the assertions above read.
+		// Asserted last: the sheet it opens overlays the chrome the assertions above read.
 		await expect(page.getByLabel("About this geocoder")).toBeVisible()
 		await page.getByLabel("About this geocoder").click()
 		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()

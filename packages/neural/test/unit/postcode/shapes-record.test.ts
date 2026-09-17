@@ -40,7 +40,7 @@ describe("the postcode shape record", () => {
 		expect(POSTCODE_SHAPES.length).toBeGreaterThanOrEqual(12)
 		expect(POSTCODE_SHAPES_VERSION).toBe("postcode-shapes-v1")
 
-		// Priority IS the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
+		// Priority is the index, so the catch-all has to stay last or it claims the spans the specific rows exist for.
 		expect(POSTCODE_SHAPES.at(-1)?.label).toBe("NUM5")
 
 		for (const shape of POSTCODE_SHAPES) {

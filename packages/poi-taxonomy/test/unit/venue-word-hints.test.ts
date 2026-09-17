@@ -68,7 +68,7 @@ describe("venue-word-hints table integrity", () => {
 	})
 
 	it("the table is the size the survey measured, within regeneration drift", () => {
-		// 2,249 at the committed bars. A regenerate against a NEW survey artifact may move this — move
+		// 2,249 at the committed bars. A regenerate against a new survey artifact may move this — move
 		// the pin with the provenance sourceMD5, deliberately.
 		expect(venueWordHintCount()).toBe(2249)
 		expect(venueWordHintProvenance().sourceMD5).toBe("a2ae6f4b29ee0ee45870273487d86e79")

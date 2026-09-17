@@ -10,14 +10,14 @@
 #      prominence with the law-3 guard; US+FR unchanged — the DE country fold is deliberately the
 #      NEXT increment, not this one).
 #
-# PRE-REGISTERED CHECKS (graded at EVERY save: 2k/4k/6k/8k via grade_evidence_bundle, both
-# case=asis|lower, heal on/off; the v385 checkpoint graded through the SAME raw grader as the
+# PRE-REGISTERED CHECKS (graded at every save: 2k/4k/6k/8k via grade_evidence_bundle, both
+# case=asis|lower, heal on/off; the v385 checkpoint graded through the same raw grader as the
 # reference row — the v3.17 leg-3 instrument lesson):
 #   G1 bundle bars HOLD AT 8k: homonym ON−OFF ≥ +0.050 (asis) and ≥ +0.25 (lower+heal);
 #      house-number classes ON−OFF ≥ −0.020 each (asis, raw); lowercase-heal ALL ≥ +0.015.
-#   G2 ABLATION (base competence): the OFF column within ±0.015 per class of the v385 same-grader
-#      reference (evidence-zeroed parse must not degrade what v385 already does).
-#   G3 INVARIANCE (exported int8, standard instrument, --baseline v385): ZERO new violation
+#   G2 ABLATION (base competence): the evidence-off column within ±0.015 per class of the v385
+#      same-grader reference (evidence-zeroed parse must not degrade what v385 already does).
+#   G3 INVARIANCE (exported int8, standard instrument, --baseline v385): zero new violation
 #      classes; the P-B signature watch is us-white-house [comma-drop] staying INVARIANT.
 #   G4 GAUNTLET ×3 PASS on the exported candidate (weights-cache with the bundle lexicons).
 #   G5 GOLDEN us/fr (standard check instrument on the int8): within the standing floors vs v385.
@@ -32,7 +32,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.15.0-deploc/corpus-v0.15.0-deploc # FEED — v0.14.0-gb + synth-nz-v2 + synth-es-pedania (+synth-fr-lieudit if landed).
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -56,11 +56,11 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # NEW (Overture) — live locality, sidesteps NZ's dead dependent_locality
-    MX: 1.0 # NEW (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew ZERO rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
-  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the ONE new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # NEW — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
+    MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
+    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
+  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+    overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,12 +91,12 @@ data:
     synth-nl-postcode: 6.0
     # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the ONE variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with NO house number + the
+    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the NO house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with NO postcode partner, + counters.
+    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
+    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
     synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
@@ -110,8 +110,8 @@ data:
   augment_glue_prob: 0.25
   # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). ONE new variable vs v373.
-  augment_punct_drop_prob: 0.6 # v3.12 DELTA (the ONE pre-registered variable): 0.3->0.6, solves p/(1+p)=0.377 = base comma-free rate (step-0 measured)
+  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  augment_punct_drop_prob: 0.6 # v3.12 DELTA (the one pre-registered variable): 0.3->0.6, solves p/(1+p)=0.377 = base comma-free rate (step-0 measured)
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
@@ -126,10 +126,10 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A: OFF — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment; don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -154,16 +154,17 @@ model: # VERBATIM v2.4.1.
   country_feature_dim: 2
   # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
-  # loads clean (v385 lacks street_type_* → strict=False leaves ONLY those fresh).
+  # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
   street_type_feature_dim: 1
-  # v3.16.0 — the locality-surface channel ON (the bundle).
+  # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -202,7 +203,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only).
   output_dir: /data/output-v3190-bundle-8k-s42/checkpoints # v3.19.0 production candidate.
   seed: 42
@@ -214,7 +215,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 8000 # Production duration (the v385 precedent). Checkpoints every 2k, EACH graded (the over-trust watch).
+  max_steps: 8000 # Production duration (the v385 precedent). Checkpoints every 2k, each graded (the over-trust watch).
   eval_every_steps: 2000
   save_every_steps: 2000
   log_every_steps: 50
@@ -223,7 +224,7 @@ train: # Same-vocab init_from fine-tune off the SHIPPED v385 (fresh optimizer; -
   csv_log_path: "{output_dir}/../train_log.csv"
   lr_schedule: constant
   gazetteer_curriculum: false
-  evidence_curriculum: true # v3.16.0 — the anti-over-trust leg (ramped zero-out on BOTH bundle channels).
+  evidence_curriculum: true # v3.16.0 — the anti-over-trust leg (ramped zero-out on both bundle channels).
   classifier_learning_rate: 1.0e-3 # P-A: hot LR for the FRESH street_type channel (the carveout covers street_type_projection/cue) + the classifier. Single phase, 3k window.
   trackio_project: mailwoman
   trackio_run_name: v3.19.0-bundle-8k-s42

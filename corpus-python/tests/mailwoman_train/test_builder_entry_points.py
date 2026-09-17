@@ -86,7 +86,7 @@ def test_a_usage_string_names_the_module_it_is_written_in(path: Path) -> None:
         stripped = line.strip().removeprefix("uv run ")
         if not stripped.startswith("python -m mailwoman_train"):
             continue
-        # The WHOLE token after `-m`, not a substring of it: a lost space turns
+        # The whole token after `-m`, not a substring of it: a lost space turns
         # `…corpora.registry tw` into `…corpora.registrytw`, which contains the module name and is
         # not the module name.
         documented = stripped.split()[2]

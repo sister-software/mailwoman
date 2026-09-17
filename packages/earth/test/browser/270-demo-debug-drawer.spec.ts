@@ -1,6 +1,6 @@
 /**
  * @file `/debug` route + the in-demo model-visualizer drawer (operator's #941 integration). The debug drawer traces the
- *   SAME address geocoded on the map. Asserts: /debug opens with the drawer on, a parse populates the decode-path
+ *   same address geocoded on the map. Asserts: /debug opens with the drawer on, a parse populates the decode-path
  *   visualizer, and the plain / has no drawer until dev mode is toggled.
  */
 

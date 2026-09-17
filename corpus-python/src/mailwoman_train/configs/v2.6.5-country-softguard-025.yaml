@@ -1,21 +1,21 @@
-# v2.6.5-country-softguard-025 — #1104 homograph-guard PROBE. ONE variable vs v264: country_ambiguous_scale
+# v2.6.5-country-softguard-025 — #1104 homograph-guard PROBE. One variable vs v264: country_ambiguous_scale
 # 0.5 -> 0.25 (a stronger soften). init_from v263 (same base as v264, for a clean A/B). v264 (0.5) already
 # cleanly beat v263 (homograph 82.6->85.1, WOF-admin 89.3->91.1, coord flat); this probes whether 0.25
-# recovers MORE homograph recall WITHOUT eroding precision — WATCH THE HALLUCINATION GUARD (over-softening
+# recovers more homograph recall without eroding precision — watch the hallucination guard (over-softening
 # lets the model over-emit country on non-country homographs like "Georgia" the state). init_from v263 so
 # encoder keeps v263's country channel + span-boundary grammar and only relearns to trust homograph
 # country surfaces (Georgia/Jordan) a little more. The scale multiplies the country_ambiguous feature dim
-# BEFORE country_projection (a registered buffer that BAKES INTO the exported ONNX — no lexicon or
+# before country_projection (a registered buffer that bakes into the exported ONNX — no lexicon or
 # inference change; inference feeds the raw [surface, ambiguous] and the graph scales it). Corpus + lexicon
-# UNCHANGED from v263. CHECK (package-shaped, eval check --weights-cache): country-homograph F1 recovers
-# toward 89.8 from v263's 82.6 WHILE golden WOF-admin country recall holds ~89.3% AND the held-out US/FR
-# coordinate stays flat (the #566 ship check) + real-postal guard holds. Grade PACKAGE-SHAPED, never
+# unchanged from v263. CHECK (package-shaped, eval check --weights-cache): country-homograph F1 recovers
+# toward 89.8 from v263's 82.6 WHILE golden WOF-admin country recall holds ~89.3% and the held-out US/FR
+# coordinate stays flat (the #566 ship check) + the real-postal board does not regress. Grade PACKAGE-SHAPED, never
 # --model alone (#718 country-OFF trap).
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # VERBATIM v2.4.1.
+  country_weights: # Verbatim from v2.4.1.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -39,7 +39,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # VERBATIM v2.4.1 + the one new assay source.
+  source_weights: # Verbatim from v2.4.1, plus the one new assay source.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -85,7 +85,7 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # VERBATIM v2.4.1.
+model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -105,15 +105,16 @@ model: # VERBATIM v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the ONE variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall while holding the WOF-admin country win.
+  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
+  # WOF-admin rows produced.
   country_ambiguous_scale: 0.25
   class_weights:
     O: 0.5
@@ -152,7 +153,7 @@ model: # VERBATIM v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the SHIPPED v261 (fresh optimizer; --resume none on a fresh
+train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
   # route the cue; the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v265-country-softguard-025-s42/checkpoints

@@ -6,7 +6,7 @@
  *   The default coarse-placer (#244) for the user-facing geocoding surfaces. As of the M2 misrouting
  *   check (0 misroutes across 2 000 in-map addresses, 10 countries — see
  *   docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-inmap-misroute.md) the soft country prior runs
- *   **on by default**: `geocodeAddress` and `createRuntimePipeline` load THIS bundled placer unless
+ *   **on by default**: `geocodeAddress` and `createRuntimePipeline` load this bundled placer unless
  *   the caller passes their own `placeCountry` or opts out with `placeCountry: false`.
  *
  *   Loaded LAZILY + cached once per process: the int8 model is ~0.79 MB and `predict` is
@@ -23,7 +23,7 @@ export type PlaceCountryFn = (normalizedText: string) => {
 	country: string | null
 	confidence: number
 	/**
-	 * Full per-in-map-country distribution (#244 residual). When set it IS the `anchorPosterior`.
+	 * Full per-in-map-country distribution (#244 residual). When set it is the `anchorPosterior`.
 	 */
 	posterior?: Record<string, number>
 }

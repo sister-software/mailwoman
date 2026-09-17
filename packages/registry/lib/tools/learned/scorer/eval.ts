@@ -16,9 +16,9 @@
  *        address-variation), geocoded.
  *   2. Block → candidate pairs. For each: the FS agreement pattern + engineered interaction features;
  *        the label is same-NPI.
- *   3. Split the NPIs into train / test. A pair is train iff BOTH endpoints are train-NPIs, test iff
+ *   3. Split the NPIs into train / test. A pair is train iff both endpoints are train-NPIs, test iff
  *        both test-NPIs — so no NPI's records leak across the split.
- *   4. Train TWO learned scorers on the train pairs: an L2 logistic regression (linear) and
+ *   4. Train two learned scorers on the train pairs: an L2 logistic regression (linear) and
  *        gradient-boosted shallow trees (non-linear — the model #603 names). Both pure-Node.
  *   5. Score the test pairs with (a) the EM-fitted FS scorer, (b) the LR, (c) the GBT. Report pairwise
  *        ROC-AUC + best-threshold F1 for each, averaged over N seeds. AUC is threshold-free: does
@@ -179,7 +179,7 @@ export async function scorerPairwiseEval(
 
 	/**
 	 * One train/test split (by NPI): train the L2 logistic regression on the train pairs, then score the held-out test
-	 * pairs with both the LR and the EM-fitted FS scorer. The FS model is seed-independent (fit unsupervised on ALL
+	 * pairs with both the LR and the EM-fitted FS scorer. The FS model is seed-independent (fit unsupervised on all
 	 * pairs); only the LR weights and the test subset move with the seed, so repeating over seeds bounds split variance.
 	 */
 	function runSplit(seed: number): SplitScored {
@@ -221,7 +221,7 @@ export async function scorerPairwiseEval(
 			dim
 		)
 
-		// Gradient-boosted trees on the SAME train pairs + class weights — the non-linear arm.
+		// Gradient-boosted trees on the same train pairs + class weights — the non-linear arm.
 		const gbt = trainGBT(
 			train.map((s) => s.x),
 			train.map((s) => s.y),
@@ -379,7 +379,7 @@ export async function scorerPairwiseEval(
 		"",
 	]
 
-	// Linear vs tree: does a non-linear model extract MORE than the LR? (The probe's open question.)
+	// Linear vs tree: does a non-linear model extract more than the LR? (The probe's open question.)
 	const treeVerdict =
 		meanGbtVsLr > MIN_MEANINGFUL_DELTA && gbtBeatsLr >= SEEDS - 1
 			? `**The tree extends the linear gain** — GBT beats the LR by ΔAUC ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} ` +

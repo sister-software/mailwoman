@@ -15,7 +15,7 @@ Rows carry char-offset spans (#519) — the authoritative label channel for v0.5
 cursor tracking and self-checked (every span must cover exactly its own entity text) before write, the same
 corruption guard the augmentation recipe enforces.
 
-STAGE4 is DEFINED but NOT the active label set (see ``labels.py``); until activation these tags collapse
+STAGE4 is DEFINED but not the active label set (see ``labels.py``); until activation these tags collapse
 to ``O`` at load. This recipe output is staged so a STAGE4-active retrain can consume it the moment the
 label-stage bump lands.
 
@@ -83,7 +83,7 @@ EU_BASES: tuple[tuple[str, str, str, str], ...] = (
 
 def _row_from_groups(groups: list[list[tuple[str, str]]], sep: str) -> dict[str, Any]:
     """Build a row (raw + tokens + labels + char-offset spans) from ordered GROUPS. Within a group the
-    (tag, text) parts are ALWAYS space-joined (a designator + its id — "STE 200", "FL 3" — are one
+    (tag, text) parts are always space-joined (a designator + its id — "STE 200", "FL 3" — are one
     logical unit); groups are joined by ``sep`` (", " punctuated / " " delimiter-free, #1101). Cursor
     tracks char offsets so each span covers exactly its own entity text."""
     tokens: list[str] = []
@@ -141,7 +141,7 @@ def _secondary_forms(rng: random.Random) -> list[list[tuple[str, str]]]:
 
 
 def generate(cap: int) -> list[dict[str, Any]]:
-    """Combinatorial secondary-address rows: each base × each secondary form, punctuated AND
+    """Combinatorial secondary-address rows: each base × each secondary form, punctuated and
     delimiter-free (#1101), US streets and EU orders. Deterministic under SEED."""
     rng = random.Random(SEED)
     rows: list[dict[str, Any]] = []
@@ -172,7 +172,7 @@ def generate(cap: int) -> list[dict[str, Any]]:
 
 
 def _self_check(rows: list[dict[str, Any]]) -> None:
-    """Every span MUST cover exactly its own entity text in raw, spans sorted + non-overlapping — the
+    """Every span must cover exactly its own entity text in raw, spans sorted + non-overlapping — the
     corruption guard. Raises on the first violation rather than writing a silently mislabeled output."""
     for r in rows:
         raw = r["raw"]

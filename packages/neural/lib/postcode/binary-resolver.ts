@@ -8,7 +8,7 @@
  *   runs in the WASM/browser parser behind the same `lookup()` interface as the server-side
  *   `WOFPostcodeLookup`.
  *
- *   This file owns BOTH ends of the format — `serializePostcodeBinary` (run in Node by
+ *   This file owns both ends of the format — `serializePostcodeBinary` (run in Node by
  *   `scripts/build-postcode-binary.ts`) and `PostcodeBinaryResolver` (run in the browser) — so the
  *   layout can never drift between writer and reader.
  *

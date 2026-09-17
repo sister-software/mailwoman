@@ -2,7 +2,7 @@
 
 A dependency drift is what broke int8 quantization for mobile-Safari once already (2026-06-09:
 unpinned ``>=`` let transformers→5.x / onnx→1.21 in, and the dynamo exporter started writing
-stale ``value_info`` the quantizer choked on). The pins now live in THREE places that must agree,
+stale ``value_info`` the quantizer choked on). The pins now live in three places that must agree,
 or a local export silently differs from the browser-shipped graph:
 
 1. ``corpus-python/pyproject.toml`` ``[project.optional-dependencies].train`` — the local toolchain.
@@ -40,7 +40,7 @@ import tomllib
 from pathlib import Path
 
 # The export/quant deps whose version is required for the shipped ONNX graph. datasets/tqdm/
-# trackio are loose by design (they don't touch the graph), so they are NOT guarded here.
+# trackio are loose by design (they don't touch the graph), so they are not guarded here.
 #
 # `onnxscript` was absent from this list while five graph pins existed, so pyproject read 0.7.1
 # against the Modal image's 0.7.0 and this check still printed that the two agree. It is the dynamo
@@ -49,7 +49,7 @@ from pathlib import Path
 INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime", "onnxscript")
 MAX_OPSET = 17
 
-# `onnxruntime` is the only guarded dep with a SECOND implementation outside this directory: the
+# `onnxruntime` is the only guarded dep with a second implementation outside this directory: the
 # browser executes the graph through `onnxruntime-web`, and Python quantizes it through
 # `onnxruntime`. A gap there means the artifact is validated by a runtime that is not the one
 # serving it — measured at up to ~1e-1 on a logit between 1.26.0 and 1.29.0 on the same bytes. The
@@ -88,7 +88,7 @@ PROJECT_VENV = REPO_ROOT / "corpus-python" / ".venv" / "bin" / "python3"
 def _installed_versions() -> dict[str, str]:
     """Installed versions of the guarded deps, read from the project venv where there is one.
 
-    The pre-commit hook invokes this script with a bare `python3`, so reading THIS interpreter
+    The pre-commit hook invokes this script with a bare `python3`, so reading this interpreter
     reports whatever the system Python happens to carry — a stray global copy of one dep made the
     check disagree with the venv that actually runs the export. Falls back to this interpreter when
     no venv exists, which is the lint-only checkout the skip note describes.

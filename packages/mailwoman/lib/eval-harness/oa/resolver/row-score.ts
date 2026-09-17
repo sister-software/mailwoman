@@ -28,8 +28,8 @@ export interface RowScore extends ArmOutcome {
 /**
  * Score one resolved tree's places against the row's ground truth.
  *
- * Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality equals the resolved place's
- * canonical name OR any of its WOF altnames (see {@linkcode LocalityMatcher}); region is name-or-abbrev tolerant.
+ * Admin-match is by name (OA carries no WOF id): a row matches if OA's expected locality equals the resolved place's
+ * canonical name or any of its WOF altnames (see {@linkcode LocalityMatcher}); region is name-or-abbrev tolerant.
  *
  * The locality node is looked up over the placetypes the resolver's own `locality` tag expands to — locality, borough
  * and localadmin — because New England civil "towns" are `localadmin` in WOF, not `locality`. Mirroring the resolver's

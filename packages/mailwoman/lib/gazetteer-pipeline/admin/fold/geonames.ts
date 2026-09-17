@@ -9,7 +9,7 @@
  *   the previous script hardcoded the lab playpen path for the dump dir, which the data-root rule
  *   forbids in shipped code.
  *
- *   NOT the postal fold. This file carried `postalCountries`/`postalDir` passthroughs to
+ *   Not the postal fold. This file carried `postalCountries`/`postalDir` passthroughs to
  *   `ingestGeonamesPostal` from 2026-07 to 2026-08-05 with NO CALLER anywhere in the tree: #1027
  *   deleted `build-unified-wof`'s Phase 2d (the only invocation) and moved its parameters here
  *   instead of its behaviour, leaving a signature that pointed readers hunting the
@@ -36,8 +36,8 @@ export interface FoldGeonamesOptions {
 	 */
 	alternateDir?: string
 	/**
-	 * #267/#1026: countries for which to ALSO fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link
-	 * locality ancestry. Pass ONLY zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
+	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link
+	 * locality ancestry. Pass only zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
 	 * Omitting this is what flattened 95 countries' nodes (#1026).
 	 */
 	adminForCountries?: ReadonlySet<string>

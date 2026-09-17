@@ -8,7 +8,7 @@
  *   boundaries wrong and produced cascading classification errors.
  *
  *   The phrase grouper's job here is the easier half of the eventual joint decode: propose the right
- *   phrase boundaries WITH a structural kind hypothesis. Disambiguating which proposal wins when
+ *   phrase boundaries with a structural kind hypothesis. Disambiguating which proposal wins when
  *   several overlap is Stage 5 reconcile's job (Thread D); this file asserts only that the grouper
  *   SURFACES the correct proposals at usable confidence ranges.
  *

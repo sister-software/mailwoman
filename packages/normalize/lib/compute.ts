@@ -79,7 +79,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 		}
 	}
 
-	// 4. Abbreviation expansion (opt-in) — runs BEFORE case-fold so case-folding the canonical
+	// 4. Abbreviation expansion (opt-in) — runs before case-fold so case-folding the canonical
 	// expansion form (e.g. "Street") gives a consistent final case.
 	if (opts?.expandAbbreviations) {
 		const r = expandAbbreviations(text, opts.locale)

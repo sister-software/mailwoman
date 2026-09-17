@@ -39,7 +39,7 @@ export const ABLATABLE_COMPONENTS = [
 export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
 
 /**
- * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`. Rows that DO assert one are graded
+ * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`. Rows that do assert one are graded
  * against theirs — a row pinned to an 80 m rooftop and a row pinned to a 500 km "in NY not France" guard are not asking
  * the same question, and one band for both would answer neither. The per-row value used is recorded on every row of the
  * JSON artifact.
@@ -69,7 +69,7 @@ export interface AblationCell {
 	support: number
 	/**
 	 * Rows whose assembled coordinate moved further than the row's tolerance once the component was deleted. A row whose
-	 * ablated arm produced NO coordinate counts as broken too — losing the answer is not a small displacement.
+	 * ablated arm produced no coordinate counts as broken too — losing the answer is not a small displacement.
 	 */
 	brokenCount: number
 	displacementKmP50: number
@@ -83,7 +83,7 @@ export interface AblationCell {
 	 */
 	unresolvedCount: number
 	/**
-	 * Rows where the deleted component's SLOT was refilled by a DIFFERENT span — S-2's finding 3 (a house number emitted
+	 * Rows where the deleted component's slot was refilled by a different span — S-2's finding 3 (a house number emitted
 	 * as the postcode). Distinct from `brokenCount`: a refill can leave the coordinate intact and still make a completion
 	 * nudge unsafe, because the slot the nudge wanted to fill reads as already filled.
 	 */
@@ -99,18 +99,18 @@ export interface AblationCell {
 	boardID: string
 	measuredAt: string
 	/**
-	 * ADDITIVE (not in §C.5): rows where the ablated arm re-emitted the SAME value the deletion removed — the resolver
+	 * ADDITIVE (not in §C.5): rows where the ablated arm re-emitted the same value the deletion removed — the resolver
 	 * recovered it from the gazetteer. Without this, `substitutedCount` would have to mean "refilled by anything" and a
 	 * recovery would read as a hazard. 0 of 139 on S-2's postcode column, which is itself the finding.
 	 */
 	recoveredCount: number
 	/**
-	 * ADDITIVE: rows excluded from the displacement percentiles because the row's OWN anchor never resolved. Not a
+	 * ADDITIVE: rows excluded from the displacement percentiles because the row's own anchor never resolved. Not a
 	 * failure of the deletion — there was nothing to measure against. Named so `gradedCount < support` is attributable.
 	 */
 	anchorUnresolvedCount: number
 	/**
-	 * ADDITIVE: rows where BOTH arms resolved — the denominator of `displacementKmP50` / `P90`.
+	 * ADDITIVE: rows where both arms resolved — the denominator of `displacementKmP50` / `P90`.
 	 */
 	gradedCount: number
 	/**
@@ -123,7 +123,7 @@ export interface AblationCell {
 	/**
 	 * ADDITIVE: the full verdict histogram, keyed by {@linkcode AblationGrade}. Every key is present so a reader never has
 	 * to tell "no rows in this class" from "this runner does not emit that class" — within a cell that already has
-	 * `ladderGradedCount > 0`, a zero IS a measurement.
+	 * `ladderGradedCount > 0`, a zero is a measurement.
 	 */
 	grades: Record<AblationGrade, number>
 	/**

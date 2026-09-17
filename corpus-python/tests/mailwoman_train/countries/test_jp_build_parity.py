@@ -6,7 +6,7 @@ adding or dropping a draw anywhere re-renders the whole corpus, and nothing else
 notice: the JP builder reads Overture-JP and KEN_ALL, which no test has, so it has never run under
 pytest at all.
 
-The fixture supplies both inputs at a size the build can finish in a second. It is NOT a sample of
+The fixture supplies both inputs at a size the build can finish in a second. It is not a sample of
 the real source — it is the shapes the renderers branch on: a chōme district and a bare one, a
 compact number and one the designator register cannot re-render, a town KEN_ALL entry, an ōaza
 prefix that only matches once stripped, and a municipality catch-all.
@@ -25,7 +25,7 @@ import pytest
 
 from mailwoman_train.countries.jp.corpora import build
 
-#: Committed beside this file, captured from the code as it stood BEFORE a split. Regenerating it
+#: Committed beside this file, captured from the code as it stood before a split. Regenerating it
 #: after a change makes the test compare the new code against itself, so regenerate only when the
 #: current code is already verified against the existing reference.
 #:

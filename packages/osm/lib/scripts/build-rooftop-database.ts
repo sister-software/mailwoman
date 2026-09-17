@@ -243,7 +243,7 @@ async function main(): Promise<void> {
 			source,
 			sourceVintage: args.release,
 			// The path this recorded — `osm/out/scripts/build-rooftop-extract.js` — moved under `packages/` in the
-			// workspace regroup, and the literal survived INSIDE every extract built before then, where no lint can
+			// workspace regroup, and the literal survived inside every extract built before then, where no lint can
 			// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
 			// "has a manifest" check and cannot be rebuilt from what they say.
 			buildCmd: "node packages/osm/out/scripts/build-rooftop-extract.js",

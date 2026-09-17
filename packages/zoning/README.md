@@ -25,7 +25,7 @@ Two readings, and the one that is missing is the point.
 
 **There is no `designated_absence` here, and zoning is the hardest case of the rule.** For flood zones the
 Environment Agency states England-wide coverage and the Planning Practice Guidance defines Zone 1 as the land
-outside Zones 2 and 3, so an empty answer inside England IS a designation. No such definition exists anywhere
+outside Zones 2 and 3, so an empty answer inside England is a designation. No such definition exists anywhere
 for zoning. A location with no zoning polygon is one of at least four different things:
 
 1. Outside any adopted plan area — most land in most countries. The authority has said nothing.
@@ -164,7 +164,7 @@ zoning at exactly the question this layer exists to answer.
 carries its own `resolution` and a probe walks its own `cellToParent` chain over every resolution the table
 holds. `layer_coverage` stays single-resolution.
 
-## The resolution is a measurement, and NOT the one the size contract names
+## The resolution is a measurement, and not the one the size contract names
 
 The inherited size contract picks a resolution from the measured `partial` share. **For this subject that
 statistic carries no signal**, and the reason was measured. Zoning polygons are mostly smaller than a cell:
@@ -178,7 +178,7 @@ Against H3 average cell areas (h3-js 4.5.0): res 9 = 105,333 m², res 10 = 15,04
 34.5% smaller than a res-11 cell — so the `partial` share sits near 100% at every candidate and cannot choose
 between them.
 
-Two numbers can, and both are measured over the FULL national set by
+Two numbers can, and both are measured over the full national set by
 `mailwoman gazetteer build zoning --measure-resolutions 9,10,11`:
 
 | res    | features | polyfill-only zero-cell | stored cell rows | touched cells | candidates/cell mean |   p90 | max | cells >1 candidate | partial share | coarsened |
@@ -244,7 +244,7 @@ ceiling by luck is not the same fact as one that cannot cross it.
 `--verify` runs both halves against the Department's own feature service.
 
 **Positive half.** A deterministic sample of interior points, spread across authorities, answered from the
-sealed artifact and then re-asked of the live service. The service's rings get the SAME hole-role resolution
+sealed artifact and then re-asked of the live service. The service's rings get the same hole-role resolution
 the ingest gave the archive's, so what is compared is a verdict against a verdict. A point within half a meter
 of a service-polygon edge is reported as `boundary_tolerance` rather than as a disagreement, with its distance
 **to the nearest edge** — a point a centimeter from a long edge can be meters from every vertex of it.

@@ -74,8 +74,8 @@ describe("compareComponents", () => {
 	})
 
 	it("is LOST when a critical tag is ABSENT in the original but PRESENT in the transformed parse — hallucination", () => {
-		// A hallucinated house_number/street/postcode can resolve to a SPECIFIC WRONG rooftop — worse than a
-		// fallback to a coarser admin tier, so this is LOST even though nothing "changed" in the more
+		// A hallucinated house_number/street/postcode can resolve to a specific wrong rooftop — worse than a
+		// fallback to a coarser admin tier, so this is `LOST` even though nothing "changed" in the more
 		// familiar sense of a present value drifting.
 		const a = { street: "Rue Montmartre", locality: "Paris" }
 		const b = { street: "Rue Montmartre", locality: "Paris", postcode: "75001" }

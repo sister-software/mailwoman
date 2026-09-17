@@ -19,7 +19,7 @@
  *       not used for Private Bags that do not have an identifier allocated by New Zealand Post".
  *       Examples: `PO Box 24999`, `Private Bag 106999`, `Response Bag 500999`, `CMB B99`, `Counter
  *       Delivery`, `Poste Restante`. The standard's incorrect-form examples show `P O Box 4 099`
- *       and `PB 39990` as wrong — `PB` is a common error, not a designator, so it is NOT in this
+ *       and `PB 39990` as wrong — `PB` is a common error, not a designator, so it is not in this
  *       table.
  *   - The live addressing-standards page repeats the format rules: "PO Box and Private Bag numbers are
  *       space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and
@@ -33,7 +33,7 @@
  *   mail, accessed 2026-06-11) name only the six types above. However, real NZ mail and the postal
  *   arena's gold rows carry "Private Box" as a colloquial synonym for a numbered PO Box (same
  *   numbered format, different label). Operator ruling 2026-06-11: "Private Box = recognize-as-used
- *   — codex documents it unofficial/colloquial WITH the 'officially invalid' citation; the extract
+ *   — codex documents it unofficial/colloquial with the 'officially invalid' citation; the extract
  *   teaches recognition (validity and recognition are separate disciplines, same as the AU legacy
  *   flags)." This is encoded in {@link NZ_PRIVATE_BOX_ALIAS} — a distinct export from
  *   {@link NZ_DELIVERY_SERVICE_TYPES} so callers can choose whether to include the unofficial form.
@@ -98,7 +98,7 @@ export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[numbe
 
 /**
  * Metadata for the colloquial "Private Box" alias (see the module header and operator ruling 2026-06-11). Kept separate
- * from {@link NZ_DELIVERY_SERVICE_TYPES} because it is NOT a valid ADV358 Delivery Service Type — recognition and
+ * from {@link NZ_DELIVERY_SERVICE_TYPES} because it is not a valid ADV358 Delivery Service Type — recognition and
  * validity are separate concerns.
  *
  * Sourcing: ADV358 (Oct 2021) omits "Private Box" from its Delivery Service Type list entirely. NZ Post's live
@@ -123,14 +123,14 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	identifier: "required-if-allocated" satisfies NZIdentifierRule,
 	/**
-	 * True — this form is NOT valid per ADV358 or NZ Post's live standards pages (accessed 2026-06-11).
+	 * True — this form is not valid per ADV358 or NZ Post's live standards pages (accessed 2026-06-11).
 	 */
 	officiallyInvalid: true,
 } as const
 
 /**
  * Per-type surface patterns (designator phrase only). Recognition is deliberately wider than the prescriptive standard
- * — mail in the wild writes "P.O. Box" even though ADV358 says `PO` is punctuation-free — but it does NOT admit forms
+ * — mail in the wild writes "P.O. Box" even though ADV358 says `PO` is punctuation-free — but it does not admit forms
  * the standard names as errors of TYPE (`PB`).
  *
  * The colloquial "Private Box" alias is included for recognition (see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling

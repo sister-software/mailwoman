@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `computeMapPlaceRenderSpec` — the PURE core that replaces the docs demo's ~100-line imperative
+ *   `computeMapPlaceRenderSpec` — the pure core that replaces the docs demo's ~100-line imperative
  *   marker/bbox/camera redraw effect (`_app.tsx:601-705`). It takes an ALREADY-RESOLVED place (the async
  *   polygon-DB fetch is a host/runtime concern — a later phase — so a crisp polygon arrives pre-fetched
  *   as `place.geometry`) and returns a declarative render spec: the marker position(s), the outline
@@ -53,16 +53,16 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 */
 	uncertaintyM?: number
 	/**
-	 * The crisp admin polygon, when the host has ALREADY fetched it from the sibling polygon DB. Its presence drives the
+	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB. Its presence drives the
 	 * polygon path; the async fetch itself stays out of this pure function (a runtime concern in a later phase).
 	 */
 	geometry?: PlaceGeometry
 }
 
 /**
- * The camera target the render computes. `center` (fly to a point at a zoom) HAS a declarative equivalent — a consumer
+ * The camera target the render computes. `center` (fly to a point at a zoom) has a declarative equivalent — a consumer
  * can feed it to a controlled `viewState` (see {@link cameraToViewState}). `bounds` (fit a box with pixel padding) does
- * NOT — `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
+ * not — `fitBounds` needs the map's pixel dimensions, so it is applied imperatively by `<ResultCamera>`.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }

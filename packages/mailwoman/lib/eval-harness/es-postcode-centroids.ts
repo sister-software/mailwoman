@@ -87,7 +87,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 
 	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
 	// ES postcodes are 5-digit; left-pad numeric codes so leading zeros survive (eval truth uses "01001").
-	// pcLen 0 = no lpad (use the raw Overture form). Correct when BOTH the candidate database AND the
+	// pcLen 0 = no lpad (use the raw Overture form). Correct when both the candidate database and the
 	// eval/query come from Overture (same surface form), and the only safe choice for non-numeric formats
 	// (PT "XXXX-XXX", SK/CZ "XXX XX", LV "LV-XXXX"). A positive pcLen left-pads numeric codes to that
 	// width (the GeoNames-comparison case the ES build used).
@@ -122,7 +122,7 @@ GROUP BY b.pc
 	// Emit the spr table the WOFPostcodeLookup query consumes:
 	//   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
 	using out = new DatabaseClient<WOFDatabase>(OUT_DB)
-	// Throwaway build artifact — no durability needed; OFF journal + a single transaction around the
+	// Throwaway build artifact — no durability needed; `journal_mode=OFF` + a single transaction around the
 	// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
 	// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
 	out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)

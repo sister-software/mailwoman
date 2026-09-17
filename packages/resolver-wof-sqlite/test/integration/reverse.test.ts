@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the reverse geocoder (#484): the ray-cast PIP primitives, the bbox→PIP→descent walk
- *   over an inline fixture gazetteer, and an env-restricted integration pass against the REAL production
+ *   over an inline fixture gazetteer, and an env-restricted integration pass against the real production
  *   DBs.
  *
- *   The integration suite SKIPS unless BOTH env vars point at real artifacts (so CI stays green
+ *   The integration suite skips unless both env vars point at real artifacts (so CI stays green
  *   without them — same pattern as `resolver-wof-wasm/hot-db.test.ts`):
  *
  *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree, e.g.
@@ -118,7 +118,7 @@ function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: Databas
 	insert.run(2, stringifyJSON({ type: "Polygon", coordinates: [square(-73.5, 42.7, -71.4, 45)] }))
 	// County A polygon CONTAINS the query point (44.0, -72.0)…
 	insert.run(3, stringifyJSON({ type: "Polygon", coordinates: [square(-72.5, 43.8, -71.8, 44.3)] }))
-	// …county B's polygon does NOT (its bbox row lies — DP-simplified bboxes overlap).
+	// …county B's polygon does not (its bbox row lies — DP-simplified bboxes overlap).
 	insert.run(6, stringifyJSON({ type: "Polygon", coordinates: [square(-72.45, 43.85, -71.85, 43.95)] }))
 
 	return { admin, polygons }

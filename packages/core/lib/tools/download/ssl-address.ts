@@ -36,7 +36,7 @@ const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 /**
  * One host, ~250 small records, fetched `concurrency`-wide.
  *
- * Retry is the point: a throttle or a dropped connection on ONE country previously counted as a permanent failure for
+ * Retry is the point: a throttle or a dropped connection on one country previously counted as a permanent failure for
  * that country, and the run reported `written: 249, failed: 1` — indistinguishable from a country the source does not
  * carry. No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done and the host has not
  * objected, and inventing a rate limit no measurement supports would only make a working tool slower.

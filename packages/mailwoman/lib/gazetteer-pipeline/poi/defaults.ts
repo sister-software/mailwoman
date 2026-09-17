@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The POI build's tunable defaults, and NOTHING else — no imports, so the module is free to load.
+ *   The POI build's tunable defaults, and nothing else — no imports, so the module is free to load.
  *
  *   They live apart from the builders that consume them so command specifications can interpolate the defaults without
  *   importing DuckDB, h3-js, or the resolver schema layer. The builders re-export the names, so callers need not know
@@ -13,9 +13,9 @@
 /**
  * Pinned Overture release for the places-theme ingest. Matches `overture-ingest.tsx`'s own `DEFAULT_RELEASE` pin (the
  * addresses-theme ingest) as of this writing — a monthly Overture release covers every theme at once, so the two pins
- * move together in practice. Kept as an INDEPENDENT constant here rather than imported from that `.tsx` command:
+ * move together in practice. Kept as an independent constant here rather than imported from that `.tsx` command:
  * `gazetteer-pipeline/*.ts` must stay importable under plain `node` type-stripping (no JSX transform), and
- * `commands/**\/*.tsx` files are Ink presentation that require compiling (AGENTS.md) — pulling a value FROM a `.tsx`
+ * `commands/**\/*.tsx` files are Ink presentation that require compiling (AGENTS.md) — pulling a value from a `.tsx`
  * file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides either
  * independently.
  *

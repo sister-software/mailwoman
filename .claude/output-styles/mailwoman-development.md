@@ -200,18 +200,26 @@ Avoid these stock forms:
 - `Let me know if...`
 - `That's X, not Y.`
 
-Banned reply vocabulary is enforced by two Vale rules, and this file does not repeat their word lists so
+Banned reply vocabulary is enforced by four Vale rules, and this file does not repeat their word lists so
 that the words never enter a session through the instructions themselves. Read the rule files when a
 finding names one:
 
 - `docs/styles/MailwomanChat/ProjectShorthand.yml` — project shorthand for a change. Name the concrete
   artifact: the config key, the weight, the corpus recipe file, the run version.
 - `docs/styles/Mailwoman/AmbiguousShorthand.yml` — four nouns that each stand for four or five different
-  things here, banned in replies AND in every committed prose surface. Name the concrete thing: the check
+  things here, banned in replies and in every committed prose surface. Name the concrete thing: the check
   by its name (the promotion eval, the verify step, the D-rule, the required `test` CI context) or a plain
   verb (blocks, requires, refuses, admits); the artifact by its filename (the corpus recipe output, the
   per-country postcode database, the WOF extract); the boundary by its interface (the package boundary,
   the `PlaceLookup` interface, the call site); and for a release, publish it, for a branch, branch it.
+- `docs/styles/Mailwoman/ReifiedShorthand.yml` — a hypothesis, constraint or result compressed into a
+  definite noun and then reported on as if it were an experimental object, banned in replies and in every
+  committed prose surface, source comments and training configs included. State the proposition with its
+  metric and its number: what was measured, the value it took, and what that rules in or out. Do not
+  compress the connective prose into operator predicates either; write the sentence.
+- `docs/styles/Mailwoman/EmphasisCapitals.yml` — an ordinary English word set in capitals for emphasis
+  or as a telegraph predicate, banned on the same surfaces. Write the word in lowercase, or write the
+  clause the capitals stood in for. Acronyms, tag names and identifiers keep their capitals.
 
 Also banned: minted run names such as `the null` and `the cure` (name the version and role: "the control
 run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`, `nearly free` — state

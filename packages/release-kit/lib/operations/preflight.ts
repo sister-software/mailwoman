@@ -46,7 +46,7 @@ export const preflight = defineOperation({
 			source,
 			...(input.version ? { version: input.version } : {}),
 			// Absolute, because the pack runs with each staged workspace as its cwd and would otherwise write the
-			// tarball relative to THAT directory while the audit looks relative to this one.
+			// tarball relative to that directory while the audit looks relative to this one.
 			...(input.staging ? { staging: String(resolvePath(context.repoRoot, input.staging)) } : {}),
 			keep: input.keep,
 			log: context.log,

@@ -42,7 +42,7 @@ const MIN_DIGITS_FOR_COMMA_GROUPING = 4
 const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -63,7 +63,7 @@ export interface LocaleTemplate {
 
 /**
  * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so recipes (the
- * `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse THIS list as the single source of truth for non-US
+ * `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse this list as the single source of truth for non-US
  * leaders instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
  * `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
  */
@@ -327,7 +327,7 @@ export function supportedLocales(): ReadonlyArray<string> {
 }
 
 /**
- * Locales whose standard PO-box delivery line carries NO region token — the address reads `<po_box>, <locality>
+ * Locales whose standard PO-box delivery line carries no region token — the address reads `<po_box>, <locality>
  * <postcode>` with nothing between locality and postcode (#517). NZ is the canonical case (`Private Bag 12, Auckland
  * 1010`). Consumers (e.g. the synth-po-box adapter) use this to avoid discarding region-less input tuples for these
  * locales as "missing region".

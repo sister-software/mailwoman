@@ -62,7 +62,7 @@ export interface WOFRecord {
 	 * Localized name variants from `name:*` properties.
 	 *
 	 * Keys are the raw `name:eng_x_preferred` form; values are the first non-empty string from the underlying array (WOF
-	 * stores variants as arrays even when only one form is present). The canonical `wof:name` is NOT included here —
+	 * stores variants as arrays even when only one form is present). The canonical `wof:name` is not included here —
 	 * adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
@@ -72,7 +72,7 @@ export interface WOFRecord {
  * `mz:is_current` ∈ {`1`, `-1`} → keep. `0` → drop.
  *
  * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias importer accepts `-1`
- * alongside `1`. Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute ZERO rows to the
+ * alongside `1`. Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute zero rows to the
  * corpus, silently, with nothing raised to notice it by.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
@@ -173,7 +173,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 /**
  * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s.
  *
- * `repoDir` may point at a single cloned `whosonfirst-data-*` repo OR at a parent directory holding several such repos
+ * `repoDir` may point at a single cloned `whosonfirst-data-*` repo or at a parent directory holding several such repos
  * (the corpus pipeline clones all four into a shared `wof/repos/` root and runs the adapter against that root).
  * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're alternate-geometry exports, not new
  * records.
@@ -184,6 +184,7 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
 	for await (const filePath of Globerator.from("**/*.geojson", {
 		cwd: repoDir,
+		absolute: true,
 		exclude: ["**/*-alt-*.geojson"],
 		// Preserve the recursive fast-glob walk this replaces: bundle repositories can expose data through a link.
 		followSymlinks: true,

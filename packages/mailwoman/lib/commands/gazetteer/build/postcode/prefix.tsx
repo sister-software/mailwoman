@@ -10,7 +10,7 @@
  *
  *   - `gb-codepoint` → `postcode-prefix-gb-esw.bin`. 2,863 outward codes from OS Code-Point Open
  *       (OGL v3, shippable tier), each with a centroid and its measured `radiusP95Km`. Code-Point Open
- *       covers England, Scotland and Wales ONLY — the scope slug says so, because a file named for the
+ *       covers England, Scotland and Wales only — the scope slug says so, because a file named for the
  *       whole country while missing a constituent one is the coverage confusion the database's own meta
  *       spends three keys warning about.
  *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ANCESTRY-ONLY,
@@ -56,7 +56,7 @@ interface DatabaseRecipe {
 	sourceFile: string
 	country: string
 	/**
-	 * Sub-national scope slug — the header field AND the filename suffix.
+	 * Sub-national scope slug — the header field and the filename suffix.
 	 */
 	scope: string
 	level: PostcodePrefixLevel

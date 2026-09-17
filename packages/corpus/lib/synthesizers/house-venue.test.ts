@@ -115,7 +115,7 @@ describe("synthesizeHouseVenueRow", () => {
 	it("VE renders locality-then-postcode and KEEPS the region after it (#1821)", () => {
 		// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` board rows, which the
 		// shipped model reads as `«street» «house_number»` and lands 573 km from. Neither GB's tail (which drops the
-		// region) nor the default (which puts the region BEFORE the code) is this shape.
+		// region) nor the default (which puts the region before the code) is this shape.
 		const veTuple: HouseVenueBaseTuple = {
 			locality: "Barcelona",
 			region: "Anzoátegui",
@@ -132,7 +132,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 		expect(row).not.toBeNull()
 		expect(row!.raw).toMatch(/^.+, 15 Avenida Country Club, Barcelona 6001, Anzoátegui/)
-		// The region SURVIVES — that is what separates this tail from GB's.
+		// The region survives — that is what separates this tail from GB's.
 		expect(row!.components.region).toBe("Anzoátegui")
 		expect(row!.components.postcode).toBe("6001")
 		expect(row!.components.locality).toBe("Barcelona")

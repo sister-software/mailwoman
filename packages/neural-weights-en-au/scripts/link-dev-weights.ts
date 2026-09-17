@@ -13,10 +13,11 @@
  *   SHADOW the base fallback and silently serve outdated bytes; the fr-fr manifest's header records the incident).
  *
  *   What en-au owns locally: `country-surface-lexicon-v1.json`, a checked-in repo file the country channel loads to
- *   constrain the resolver, plus the evidence lexicons its card names (the same pair the `files` array ships). en-au is INITIAL: NO postcode-au.bin (no WOF AU postcode extract exists), NO
- *   pair-index-au.bin (PIX1 not yet calibrated for AU), NO anchor-lexicon (anchor channel OFF). The overlay exists so
- *   `--locale en-AU` resolves and the resolver's country scope constrains the candidate lookup — that alone fixes the
- *   WA→Washington-State homonym class the FIRST-PASS benchmark diagnosed.
+ *   constrain the resolver, plus the evidence lexicons its card names (the same pair the `files` array ships). en-au
+ *   is initial: no postcode-au.bin (no WOF AU postcode extract exists), no pair-index-au.bin (PIX1 not yet calibrated
+ *   for AU), no anchor-lexicon (the anchor channel is off). The overlay exists so `--locale en-AU` resolves and the
+ *   resolver's country scope constrains the candidate lookup — that alone fixes the WA→Washington-State homonym class
+ *   the FIRST-PASS benchmark diagnosed.
  *
  *   FRESHNESS GUARD: none needed — no derived artifacts are built, and a checked-in lexicon symlinked in place cannot
  *   go stale.

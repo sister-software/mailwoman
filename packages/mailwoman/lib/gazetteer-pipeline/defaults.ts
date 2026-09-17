@@ -5,7 +5,7 @@
  *
  *   The canonical admin-gazetteer coverage recipe — the durable replacement for reconstruct-from-artifact
  *   (#1015: the manifest lagged the live DB by 71 Overture + 161 GeoNames countries, and the recipe had to
- *   be recovered from the artifact's synthetic-id ranges). The recipe now lives HERE, reviewed like code;
+ *   be recovered from the artifact's synthetic-id ranges). The recipe now lives here, reviewed like code;
  *   `data/gazetteer/wof-build-manifest.json` is a build LOG (what ran, when, md5), not a recipe store.
  *
  *   Provenance of the lists: reconstructed 2026-07-07 from the live `admin-global-priority.db` — WOF rows
@@ -309,7 +309,7 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
 /**
- * Staging suffix for admin rebuilds — build here, verify, THEN swap over the live name (RELEASING.md).
+ * Staging suffix for admin rebuilds — build here, verify, then swap over the live name (RELEASING.md).
  */
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
@@ -328,7 +328,7 @@ export function geonamesAdminGapCountries(): string[] {
 }
 
 /**
- * The country set a standalone fold re-derives — the SAME recipe `buildAdmin` bakes into the admin artifact
+ * The country set a standalone fold re-derives — the same recipe `buildAdmin` bakes into the admin artifact
  * ({@link DEFAULT_GEONAMES_COUNTRIES}), because the fold rewrites its whole id range and any narrower list drops the
  * difference (#1514).
  *
@@ -361,9 +361,9 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  */
 
 /**
- * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05; BE
- * was added on 2026-08-12 (the eu-mixed lane). Any change here re-freezes the artifact: rebuild, run the parity check
- * against the previous database, and rotate via the .prev workflow.
+ * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05;
+ * Belgium was added on 2026-08-12 (the eu-mixed lane). Any change here re-freezes the artifact: rebuild, run the parity
+ * check against the previous database, and rotate via the .prev workflow.
  *
  * The first ten entries are order-critical; all later countries must be appended. Ids are positional in ingest order,
  * so inserting a country shifts every following id. The parity check validates ids as well as counts for this reason.

@@ -165,7 +165,7 @@ class LinearChainCRF(nn.Module):
                   ``crf_loss_weight`` tuning. Matches AllenNLP / FLAIR defaults.
                 - ``"sum"`` — sum over batch sequences. Internal use; callers normalize.
 
-        ``mask[:, 0]`` MUST be all 1s (no leading padding) — callers control padding shape.
+        ``mask[:, 0]`` must be all 1s (no leading padding) — callers control padding shape.
         """
         if emissions.dim() != 3:
             raise ValueError(f"emissions must be (B, S, N), got {tuple(emissions.shape)}")

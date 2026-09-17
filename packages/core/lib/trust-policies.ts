@@ -8,7 +8,7 @@
  *   string; every injection site must go through a named policy, and these three are the named
  *   policies.
  *
- *   The sanitizer is `isomorphic-dompurify`, so the SAME engine answers in a browser (plain
+ *   The sanitizer is `isomorphic-dompurify`, so the same engine answers in a browser (plain
  *   DOMPurify over the page's window) and in Node (DOMPurify over a jsdom window) — server code,
  *   Docusaurus prerendering, and SDK tooling all sanitize for real instead of degrading to a
  *   passthrough. The plain {@link sanitizeHTML} and {@link stripHTML} functions are that engine

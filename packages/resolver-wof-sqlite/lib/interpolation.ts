@@ -10,7 +10,7 @@
  *
  *   Reads the per-state extract built by `scripts/build-interpolation-extract.ts` (`street_segment`: one
  *   row per TIGER edge SIDE — independent left/right ranges, ZIPs, parity). Query-side
- *   normalization is THE shared normalizer (`street-normalize.ts`) — identical to build-side, by
+ *   normalization is the shared normalizer (`street-normalize.ts`) — identical to build-side, by
  *   construction.
  *
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
@@ -38,7 +38,7 @@ import type { StreetSegmentDatabase } from "#street/segment-schema"
 /**
  * How an interpolated answer was computed (#483 Method 2):
  *
- * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 extract
+ * - `address_point` — bracketed/extrapolated between real neighbor points from the #476 extract
  *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
  * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range (`StreetInterpolator`), the
  *   fallback for streets too sparse to bracket.
@@ -100,7 +100,7 @@ export interface InterpolationQuery {
 
 /**
  * Acceptance geometry for the `near` tie-break: the winning postcode group's closest segment must sit within this many
- * kilometres of `near`, AND the runner-up group must be at least {@link NEAR_DOMINANCE} times farther. Both measured on
+ * kilometres of `near`, and the runner-up group must be at least {@link NEAR_DOMINANCE} times farther. Both measured on
  * the two live failures: Brooklyn's `st pauls place` 11226 segment is ~2 km from the Brooklyn centroid with Great
  * Neck's 11021 at ~24 km (12×); Fraser's `east 13 mile road` 48026 is ~2 km with Mecosta's namesake ~190 km away. A
  * near-tie between groups is genuine ambiguity and stays an abstention.
@@ -171,7 +171,7 @@ export class StreetInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -283,7 +283,7 @@ export class StreetInterpolator<
 		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
-		// No scope given: the covering ranges must agree on ONE postcode or the lookup abstains — a
+		// No scope given: the covering ranges must agree on one postcode or the lookup abstains — a
 		// name spanning towns is ambiguity, not an answer. Counted over the PARITY pool, not all
 		// rows: a section-line boundary road carries a different ZIP per side ("east 13 mile road"
 		// is Fraser 48026 odd / Roseville 48066 even), and the opposite side can never hold the

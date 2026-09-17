@@ -5,7 +5,7 @@ description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaur
 
 Paths below are relative to `docs/` (the workspace root). The skill directory is `docs/.claude/skills/run-docs/`.
 
-The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only; the driver is what you use to actually look at pages, surface console errors, and take screenshots.
+The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `docs/.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only; the driver is what you use to actually look at pages, surface console errors, and take screenshots.
 
 ## Prerequisites
 

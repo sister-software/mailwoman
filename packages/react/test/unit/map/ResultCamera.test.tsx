@@ -11,7 +11,7 @@
  *   start position. Any resolved place that produced a `bounds` target — every admin place with a crisp polygon or a
  *   real-extent bbox — hit it, in every browser, since the phase-2 overlays landed (#1232).
  *
- *   Nothing caught it because the camera is the one thing the map tests turn OFF: `Geocoder.test.tsx` and
+ *   Nothing caught it because the camera is the one thing the map tests turn off: `Geocoder.test.tsx` and
  *   `overlays.test.tsx` both pass `applyCamera=false`, and their comments blame "a zero-size headless canvas" for the
  *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera ON, with a bounds target, and lets a
  *   thrown RAF frame fail the run.

@@ -22,7 +22,7 @@
  *   another is expected.
  *
  *   **Every record carries provenance, and a derived fact carries it structurally.** A derived fact
- *   has no {@link SourceProvenance} of its own: its `derivation` plus its resolved `inputs` ARE its
+ *   has no {@link SourceProvenance} of its own: its `derivation` plus its resolved `inputs` are its
  *   provenance, and each input carries source provenance in turn.
  *
  *   Identifier namespaces are per-table. A {@link ConceptID} and a {@link RelationID} may read the
@@ -233,7 +233,7 @@ export interface SourceProvenance {
 }
 
 /**
- * One relation's definition. Relations are vocabulary, not claims: the record says what the relation MEANS and which
+ * One relation's definition. Relations are vocabulary, not claims: the record says what the relation means and which
  * concept kinds may stand on either side of it, and asserts nothing about any particular pair.
  */
 export interface RelationRecord {

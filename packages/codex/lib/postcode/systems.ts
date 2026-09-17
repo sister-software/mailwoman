@@ -81,7 +81,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
 
 /**
  * Postcode shapes whose code is UNIT-GRADE — a delivery-walk or street-block unit, categorically tighter than any
- * locality centroid, so an EXACT hit on one may lead the admin ladder instead of following the locality-first epoch
+ * locality centroid, so an exact hit on one may lead the admin ladder instead of following the locality-first epoch
  * convention.
  *
  * The convention exists because most postal systems are AREA-class: an FR 5-digit zone is coarser than the commune it
@@ -100,7 +100,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  *
  *   Closer on 90.4% of them. That is GB's tier on a sample fifty times larger than GB's.
  *
- * **CA RURAL is excluded, and the code says which.** Canada Post puts a `0` in the SECOND position of a rural forward
+ * **CA RURAL is excluded, and the code says which.** Canada Post puts a `0` in the second position of a rural forward
  * sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not — no lookup required. A rural LDU serves a delivery route
  * rather than a block face, and it measures like one. On the same panel, the 114 rural rows:
  *
@@ -117,14 +117,14 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * A tier claim that averages two granularities is the thing this table exists to prevent.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly (`mailwoman/geocode-core`) and the
- * demo's pin ranking consume ONE tier definition — the 2026-08-11 staged-repoint e2e measured the two disagreeing.
+ * demo's pin ranking consume one tier definition — the 2026-08-11 staged-repoint e2e measured the two disagreeing.
  */
 export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	// NL PC6 — `1012 LG` / `1012LG`.
 	/^\d{4}\s?[A-Z]{2}$/i,
 	// GB unit — outward (1-2 letters + digit + optional alnum) + inward `\d[A-Z]{2}`, the same shape
 	// `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN anchors, restated here so this module stays
-	// dependency-free within the package (the address-system modules import THIS, never the reverse).
+	// dependency-free within the package (the address-system modules import this, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
 	// CA urban LDU — `M1J 1A8`. The `[1-9]` in the second position is the whole tier claim: a `0` there marks a RURAL
 	// forward sortation area, which measures 2.08 km p50 against the locality's 929 m and does not belong here.
@@ -132,18 +132,18 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 ]
 
 /**
- * Strip everything but letters and digits, upper-cased — the comparison surface for "did the resolver hit the FULL code
+ * Strip everything but letters and digits, upper-cased — the comparison surface for "did the resolver hit the full code
  * or a coarser stem?". `N7 0BT` and `N70BT` are the same code; `N7` is not.
  */
 const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 
 /**
- * True when a resolved postcode is an EXACT hit on a unit-grade code — the #977 three-way guard, shared by the Node
+ * True when a resolved postcode is an exact hit on a unit-grade code — the #977 three-way guard, shared by the Node
  * ladder and the demo pin ranking:
  *
  * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed;
  * 2. The node resolved (a coordinate is present — checked by the caller); and
- * 3. The resolver's own hit is the FULL code, not a coarsened prefix (a 4-digit NL stem or a GB outward district is
+ * 3. The resolver's own hit is the full code, not a coarsened prefix (a 4-digit NL stem or a GB outward district is
  *    AREA-class, and promoting it is the exact trade the epoch convention forbids).
  */
 export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
@@ -168,7 +168,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  *
  * | country | rows  | locality-first | postcode point | verdict                                                                |
  * | ------- | ----: | -------------: | -------------: | ---------------------------------------------------------------------- |
- * | **DE**  | 2,997 | 5.84 km        | **1.24 km**    | postcode, on EVERY percentile incl. p99 (21.50 → 10.57)                |
+ * | **DE**  | 2,997 | 5.84 km        | **1.24 km**    | postcode, on every percentile incl. p99 (21.50 → 10.57)                |
  * | FR      | 3,000 | **0.97 km**    | 2.64 km        | locality, closer on 77.5% of rows                                      |
  * | IT      | 2,833 | **1.34 km**    | 3.05 km        | locality, closer on 66.4%                                              |
  * | ES      | 2,929 | **0.68 km**    | 0.97 km        | locality, but near a coin flip — 46.1% of rows prefer the postcode     |
@@ -187,7 +187,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * rows carrying a postcode the candidate table keys, graded on the row's own entrance point — the locality-first answer
  * is the municipality centroid, the postcode answer the code's 町域 centroid from the WOF extract.
  *
- * **SG** is the limiting case of the tier: a six-digit Singapore postcode names ONE building, so the code's point IS
+ * **SG** is the limiting case of the tier: a six-digit Singapore postcode names one building, so the code's point is
  * the address, and the only locality above it is the city-state itself. Measured on a 300-row seeded draw of the
  * Overture-SG register (`postalcode-sg-overture.db` folded, each row geocoded as `<number> <street> Singapore
  * <postcode>` and graded on its own point): the postcode point answers 300 of 300 within 1 km (p99 0.16 km);

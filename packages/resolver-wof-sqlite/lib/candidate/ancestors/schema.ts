@@ -15,7 +15,7 @@
  *   1. The admin-coherence check needs the WINNER's chain as (placetype, name) pairs in one probe.
  *      A fixed-slot `[id;8]` chain answers with ids, and every id then needs a name lookup the
  *      artifact has no per-id table for — up to 8 indirections where the closure row has zero.
- *   2. The account layer needs EVERY candidate under a `name_key` enumerable WITH its chain from
+ *   2. The account layer needs every candidate under a `name_key` enumerable with its chain from
  *      one artifact probe ("present-but-outranked, discriminated by containment"). That is the
  *      candidate probe (contiguous) followed by one `spr_id`-clustered closure probe per candidate
  *      — each a handful of adjacent pages.
@@ -41,9 +41,9 @@
  *   whole, which is exactly the regime where that cost is void.
  *
  *   THE DAG CAVEAT, and the recorded choice: WOF places can carry more than one parent (multiple
- *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps EVERY parent — the closure rows
+ *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent — the closure rows
  *   are the complete containment record. A single interval pair can only encode a tree, so the
- *   interval forest links each place to ONE canonical parent: its depth-1 edge — the finest
+ *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
  *   containment tier, lowest ancestor id — the same MIN-stability convention the candidate table's
  *   `region_id` stamp uses. A containment question about a NON-canonical hierarchy must consult the
  *   closure rows; the interval answer for it is `false`, which is why interval verdicts are
@@ -57,7 +57,7 @@
 import { sql, type Kysely } from "kysely"
 
 // Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase): Kysely's
-// DB parameter is invariant, so the DDL functions must take the FULL database type their caller
+// DB parameter is invariant, so the DDL functions must take the full database type their caller
 // holds. Erased at runtime.
 import type { CandidateDatabase } from "#candidate/schema"
 import type { NameKey } from "#street/normalize"
@@ -113,7 +113,7 @@ export interface CandidateAncestorTable {
 }
 
 /**
- * Pre/post-order labels over the canonical-parent forest — one row per place WITH recorded ancestry (see the module
+ * Pre/post-order labels over the canonical-parent forest — one row per place with recorded ancestry (see the module
  * docstring for absence semantics). `pre < post` always; labels are unique across the artifact.
  */
 export interface CandidateIntervalTable {
@@ -132,7 +132,7 @@ export interface CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate_ancestor` columns in clustered-key order — the first two ARE the primary key, and the builder's
+ * The `candidate_ancestor` columns in clustered-key order — the first two are the primary key, and the builder's
  * positional `INSERT` binds by this order. Keep in sync with {@link CandidateAncestorTable}.
  */
 export const CANDIDATE_ANCESTOR_COLUMNS = [

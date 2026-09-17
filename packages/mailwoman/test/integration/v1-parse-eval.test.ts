@@ -66,7 +66,7 @@
  *   rules baseline this check compares against is no longer produced live; it is read from the
  *   phase-0 frozen capture `mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl` (the top
  *   solution's `classifications` per input, captured byte-stable in PR #1092). That flat record is
- *   rebuilt into an `AddressTree` via `v0RecordToTree` — the SAME synthetic-token builder the live
+ *   rebuilt into an `AddressTree` via `v0RecordToTree` — the same synthetic-token builder the live
  *   arm used on `solutions[0].classifications` — and resolved through the WOF resolver exactly as
  *   before. The coordinate comparison is therefore identical to the live arm; only the source of the
  *   rules parse changed (live parser → committed snapshot of that same parser).

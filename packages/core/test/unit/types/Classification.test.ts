@@ -7,7 +7,7 @@
 import { Classifications, ClassificationsMatchMap, isVisibleClassification } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
 
-// A classification that is valid but NOT in the visible set — derived through the public API so the
+// A classification that is valid but not in the visible set — derived through the public API so the
 // test doesn't couple to the (unexported) VisibleClassification set's contents.
 const PRIVATE_CLASSIFICATION = [...Classifications].find((c) => !isVisibleClassification(c))!
 

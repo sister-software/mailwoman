@@ -12,7 +12,7 @@
  *   off-map dominant script (not Latin, not CJK — those are the in-map countries), then APPENDED to
  *   the train/val/test splits as `country: "OTHER"`.
  *
- *   Run AFTER build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
+ *   Run after build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
  *   2500]`
  */
 
@@ -44,7 +44,7 @@ export interface BuildOutlierExposureOptions {
 	 */
 	wof?: PathBuilderLike
 	/**
-	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `OTHER` rows append to. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -54,7 +54,7 @@ export interface BuildOutlierExposureOptions {
  */
 export interface BuildOutlierExposureResult {
 	/**
-	 * Total OTHER pool size (names + address-shaped variants).
+	 * Total `OTHER` pool size (names + address-shaped variants).
 	 */
 	total: number
 }
@@ -189,7 +189,7 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
+	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as `OTHER`.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)

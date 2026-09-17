@@ -55,7 +55,7 @@ export interface AgreementRow {
 	local: FloodZoneReading
 	/**
 	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point. A polygon that
-	 * contains the point but carries no zone label is NOT `null`: it is reported as `service_unlabelled`, because a
+	 * contains the point but carries no zone label is not `null`: it is reported as `service_unlabelled`, because a
 	 * service polygon with no label is a defect in the service's answer and reading it as absence would let it agree with
 	 * an artifact that answers Zone 1 by absence.
 	 */
@@ -150,7 +150,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
-			// The distance rides on EVERY row, not only the tolerated ones: it is the first thing anyone wants when a
+			// The distance rides on every row, not only the tolerated ones: it is the first thing anyone wants when a
 			// disagreement appears, and carrying it only where it was already acted on means re-running the check to see it.
 			agreement.push({
 				...point,

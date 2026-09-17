@@ -34,7 +34,7 @@
  *
  *   `place_importance.importance` VERBATIM — the pre-split conflation (encyclopedia-derived where
  *   the concordance matched, a population-derived proxy everywhere else). See
- *   {@link CandidateTable.importance} for why the split `encyclopedic` channel is deliberately NOT
+ *   {@link CandidateTable.importance} for why the split `encyclopedic` channel is deliberately not
  *   what is written here, with the measurement that settled it.
  *
  *   A place with no match gets NULL. NULL is UNMEASURED, never zero — the consumer
@@ -57,13 +57,13 @@ import { normalizeLocalityForKey } from "#street/normalize"
  *
  * What sets the radius is where that mode ENDS, and the per-kilometre density states. It falls from 1,076 places/km
  * over 3–5 km to a trough of **441 places/km over 7–10 km**, then climbs back and flattens onto a plateau of 760–780
- * places/km from 30 km out to 100 km and beyond. That plateau is the background rate of two DIFFERENT towns wearing one
+ * places/km from 30 km out to 100 km and beyond. That plateau is the background rate of two different towns wearing one
  * name in one country, and it does not decay with distance because there is no reason it should. 10 km is the floor
  * between the two populations. Admitting it scores 679,163 places (66.6% of the matched set); pushing the radius to 25
  * km provides 8,722 more, and by then better than half of each additional kilometre is the wrong town.
  *
  * The four-row bare-GB board is insensitive across this whole range — 5 km and 25 km were both measured and select
- * identical rows — so the value is chosen by what the join MEANS, not by what it scores. The radius is the definition
+ * identical rows — so the value is chosen by what the join means, not by what it scores. The radius is the definition
  * of "this is the same place"; widening it past the floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10

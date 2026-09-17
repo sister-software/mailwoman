@@ -27,7 +27,7 @@ class ConsoleCallback:
     def on_step_end(self, state: TrainState, step: int) -> None:
         if step % self._log_every:
             return
-        # Steps THIS process ran over the seconds it ran them. `state.elapsed` is time since this process started, so
+        # Steps this process ran over the seconds it ran them. `state.elapsed` is time since this process started, so
         # a resumed run's absolute step divided by it reports the steps a previous process also paid for.
         ran = step - state.start_step
         rate = ran / state.elapsed if state.elapsed > 0 else 0.0

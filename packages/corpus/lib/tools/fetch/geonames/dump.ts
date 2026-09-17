@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch GeoNames per-country GAZETTEER dumps — the 19-column `<CC>.txt` files under
- *   `https://download.geonames.org/export/dump/` (NOT the postal exports; those are `export/zip/` and
+ *   `https://download.geonames.org/export/dump/` (not the postal exports; those are `export/zip/` and
  *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `PPLC` national capital,
  *   `PPLA` first-order administrative seat), which is what the capitals reference build consumes (#1880).
  *
@@ -13,7 +13,7 @@
  *   capital — the cross-check the capitals build grades its `PPLC` extraction against. Fetch that first; derive
  *   the country set from it; then a dump absent from disk is a measured gap against the source's own catalog
  *   rather than a silent hole. The dump directory may hold files this tool did not fetch: present files are never
- *   overwritten, and a present `<CC>.txt` that is NOT a 19-column gazetteer dump (GeoNames' postal exports share
+ *   overwritten, and a present `<CC>.txt` that is not a 19-column gazetteer dump (GeoNames' postal exports share
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
@@ -80,7 +80,7 @@ export interface GeonamesDumpManifest {
 	 */
 	unavailable: string[]
 	/**
-	 * Present `<CC>.txt` files that are NOT 19-column gazetteer dumps — GeoNames' postal exports share the same basename,
+	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal exports share the same basename,
 	 * and seven tier-1 postal files sat at these paths reading as "present" until the capitals build found them
 	 * capital-less. Left in place (this tool never overwrites data it did not fetch); the fix is to move the file to its
 	 * own home and rerun.

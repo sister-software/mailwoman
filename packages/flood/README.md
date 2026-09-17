@@ -14,7 +14,7 @@ Three readings, and keeping them apart is the whole job:
 | reading              | what it means                                                                             |
 | -------------------- | ----------------------------------------------------------------------------------------- |
 | `designated`         | the authority's map assigns a zone here — `FZ2` or `FZ3`, in the authority's own spelling |
-| `designated_absence` | the authority determined here and assigns NO zone. Inside England that IS Flood Zone 1    |
+| `designated_absence` | the authority determined here and assigns no zone. Inside England that is Flood Zone 1    |
 | `unknown`            | no coverage row. Unmapped by this authority, and never a low-hazard reading               |
 
 Readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
@@ -55,7 +55,7 @@ column entirely, and a fixed fine resolution overruns h3's allocator on the last
 **The rings are stored as `float64` pairs, unsimplified — 16 bytes a vertex, so the geometry tier
 is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier contract accepts:
 geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper defensible source.
-A fixed-point encoding at 1e-7° would halve it, and is deliberately NOT done here — the source
+A fixed-point encoding at 1e-7° would halve it, and is deliberately not done here — the source
 publishes 0.1 mm precision and quantizing to 11 mm is a change to the authority's data, which needs
 its own measurement rather than a size argument.
 
@@ -116,7 +116,7 @@ and the build is bounded by construction.
   asserts every reprojected vertex against the collection's own declared extent, which is what
   catches a coordinate-order mistake the projection check cannot see.
 - **A center-containment polyfill drops most of this product.** The first feature is a 128 m²
-  square, and `polygonToCells` returns ZERO cells for it at resolutions 7, 8, 9 and 10 alike. The
+  square, and `polygonToCells` returns zero cells for it at resolutions 7, 8, 9 and 10 alike. The
   index takes overlapping containment, and a feature that reaches no cell fails the build — a
   dropped feature reads downstream as an absence, which is the one answer this layer must never
   invent.
@@ -188,7 +188,7 @@ The finding every polygon builder on this spine inherits, stated with what it co
 **The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it does not survive an
 unbounded number of `polygonToCells` calls. h3-js frees every buffer it allocates, so what
 accumulates is fragmentation across millions of interleaved tiny and large allocations. What makes it
-dangerous is HOW it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
+dangerous is how it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
 `_calloc` returns the null pointer, and in WASM address zero is ordinary writable memory — so the
 call reports success and the reader hands back an array of zeros. **An exhausted allocator answers
 "no cells" rather than raising an error.**

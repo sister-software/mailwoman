@@ -36,7 +36,7 @@
  *   THE LETTER-BEARING HOLE (2026-08-05, `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). The
  *   pilot set is DE/FR/US only, and every one of its 67,708 keys is five digits — ZERO letter-bearing.
  *   The encoder's anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
- *   `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`), so slots 3–8 took NO gradient across every
+ *   `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`), so slots 3–8 took no gradient across every
  *   run in the tree: a GB outward code is letter-bearing by construction and could never appear as a
  *   key. Shipping `postcode-gb.bin` at inference then fed slot 4 a value the model had never seen, and
  *   cost 24 exact postcodes on the 120-row gb-golden board. `--include` is the cure — it widens the key
@@ -161,7 +161,7 @@ function loadUs(): Map<string, Centroid> {
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * A GB unit's inward code is ALWAYS the last three characters (`\d[A-Z]{2}`) — the outward district is everything
+ * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`) — the outward district is everything
  * before it. Structural, not a guess; it is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on the
  * spaced form.
  */
@@ -174,7 +174,7 @@ const GB_INWARD_LENGTH = 3
 const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
 
 /**
- * A key carrying at least one letter. The pilot lookup's count is ZERO, which is the whole GB diagnosis in one number —
+ * A key carrying at least one letter. The pilot lookup's count is zero, which is the whole GB diagnosis in one number —
  * so the builder reports it on every run.
  */
 const LETTER_BEARING = /[A-Z]/
@@ -220,7 +220,7 @@ function loadGBCodePoint(): Map<string, Centroid> {
  * units' centroids. Two consumers want them, and neither is the common path:
  *
  * - The inference parity fix's outward fallback — a unit that misses (a new-build code, or an NI `BT` code Code-Point
- *   Open does not carry) still anchors its FULL span from the district;
+ *   Open does not carry) still anchors its full span from the district;
  * - A bare outward code in the text, which the train painter never looks up (`collect_matches`'s GB pattern requires the
  *   inward half) but the DEFAULT alnum-run inference scan does.
  *
@@ -365,7 +365,7 @@ function pyJSONValue(v: unknown): string {
 type LookupRow = [Record<string, number>, number, number, string | null]
 
 /**
- * The pilot country set — DE/FR/US, the ONLY set any config in `mailwoman_train/configs/` has ever trained against.
+ * The pilot country set — DE/FR/US, the only set any config in `mailwoman_train/configs/` has ever trained against.
  * Every key it produces is five digits. This is the default so an argument-free build stays byte-identical to the
  * shipped `pilot-anchor-lookup.json` recipe.
  */
@@ -451,7 +451,7 @@ export interface AnchorLookupStats {
 	 */
 	bySource: Map<string | null, number>
 	/**
-	 * Keys the `--zcta` join placed during THIS build.
+	 * Keys the `--zcta` join placed during this build.
 	 */
 	zctaFilled: number
 }

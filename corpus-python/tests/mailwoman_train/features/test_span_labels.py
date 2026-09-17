@@ -3,13 +3,13 @@
 Three checks, pre-registered in the design doc (2026-06-11-char-offset-labels-design.md, blast-radius
 items 6 + 8, plus the positive case the migration exists for):
 
-(a) **Label-stream bit-identity** — on rows WITHOUT intra-span punctuation, the spans-based
+(a) **Label-stream bit-identity** — on rows without intra-span punctuation, the spans-based
     piece-label stream must be BIT-IDENTICAL to the token-based one. Fixtures: plain US row,
     accented FR row (NFC ``é``), multi-span DE row, all-O row.
 (b) **Channel invariance** — the anchor channel (``realign_anchor_to_pieces`` vs the spans
-    sibling) and the gazetteer painting must produce IDENTICAL tensors under both paths on those
+    sibling) and the gazetteer painting must produce identical tensors under both paths on those
     fixtures (the per-piece channels key off the same underlying data the migration touches).
-(c) **The punctuation win** — a row WITH intra-span punctuation ("P.O. Box 19", one po_box span
+(c) **Punctuation inside a span** — a row with intra-span punctuation ("P.O. Box 19", one po_box span
     over chars [0, 11)) must produce the punctuation-covering label stream the token path
     structurally cannot: continuous B/I over the period pieces instead of O-fragmented.
 
@@ -59,12 +59,12 @@ class FakeTokenizer:
 
 # endregion
 
-# region Fixtures: rows WITHOUT intra-span punctuation, in both label representations
+# region Fixtures: rows without intra-span punctuation, in both label representations
 
 # Each: (name, raw, tokens, labels, span_starts, span_ends, span_tags, piece_chunks).
 # Piece chunks deliberately split inside words (Pennsylv|ania, Républi|que, Ber|lin) to exercise
 # the B→I flip, and give separator commas their own piece to pin the "comma outside both spans"
-# behavior on BOTH paths.
+# behavior on both paths.
 FIXTURES = [
     (
         "plain-us",

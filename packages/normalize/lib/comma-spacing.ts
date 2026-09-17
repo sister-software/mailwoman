@@ -9,7 +9,7 @@
  *   the segmenter still splits, and the decoder labels the glued piece as a street or a locality it is not.
  *
  *   A letter or a digit after the comma triggers the insertion, with one exception: a comma with a digit on
- *   BOTH sides is a numeric separator (`12,5`, `1,000`) and is left as typed. `Köln,50733` has a letter before
+ *   both sides is a numeric separator (`12,5`, `1,000`) and is left as typed. `Köln,50733` has a letter before
  *   the comma, so it is a list separator and gains the space. A space, punctuation or end of input after the
  *   comma is left as typed. The inserted space maps to the comma's own offset, the same rule the `…`
  *   expansion in `punctuation.ts` follows, so every span that starts after it still points into the raw input.

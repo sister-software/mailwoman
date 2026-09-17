@@ -34,9 +34,9 @@ export interface BANExtracts {
  * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its extract (with the matching street locale) once, subsequent calls reuse it.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
+ * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
  * `pathExists` for every supported country × extract-tier combination and records what exists; `for` consults that map.
- * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs AND warms before answering — a provider
+ * Prefer {@linkcode BANRegionDatabaseProvider.create}, which constructs and warms before answering — a provider
  * constructed directly must be warmed before its first `for`, or it answers `{}` for every country.
  */
 export class BANRegionDatabaseProvider implements Disposable {
@@ -104,7 +104,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 		const entry: BANExtracts = {}
 
-		// Only countries with a registered street locale AND an on-disk extract — never key with the wrong rules.
+		// Only countries with a registered street locale and an on-disk extract — never key with the wrong rules.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#addressPointsPath(cc)

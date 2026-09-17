@@ -5,10 +5,10 @@
  *
  *   #375 street-recall-on-FULL-addresses probe — DeepSeek's blind-spot guard (consult 2026-06-18) for
  *   the v1.7.0 balanced extract. Emphasizing `bare-locality` ("City, STATE" with no street) risks the
- *   model over-emitting locality and EATING the street's leading tokens on FULL addresses — a
+ *   model over-emitting locality and eating the street's leading tokens on full addresses — a
  *   regression moderate enough to clear the coarse `us.street` floor while breaking the
  *   highest-traffic case. This measures street exact-match on the held-out US golden subset where
- *   gold has BOTH a street and a locality span, compares a baseline (v1.5.1) to a candidate, and
+ *   gold has both a street and a locality span, compares a baseline (v1.5.1) to a candidate, and
  *   tallies how often a street regression coincides with the gold street's leading token landing in
  *   the candidate's locality (the "eat" mechanism). The v1.7.0 eval aborts/flags if the candidate
  *   drops >1pp below v1.5.1 here.
@@ -42,7 +42,7 @@ for (const row of rows) {
 
 	if (!gs || !gl) continue
 
-	// full-address rows only: gold has BOTH street and locality
+	// full-address rows only: gold has both street and locality
 	full++
 	const bp = (await base.parseJSON(row.raw)) as Record<string, string>
 	const cp = (await cand.parseJSON(row.raw)) as Record<string, string>

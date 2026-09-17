@@ -14,7 +14,7 @@
  *   WHY IT REFUSES RATHER THAN GUESSES. Adding is mechanical: a new entry has no prose yet, and sorted
  *   insertion is unambiguous. Removing is not — an entry with a comment block above it cannot be deleted
  *   without deciding what becomes of the measurement, and no rule this module could carry would decide
- *   that correctly. So a commented removal is REFUSED with the lines quoted, and a person moves them.
+ *   that correctly. So a commented removal is refused with the lines quoted, and a person moves them.
  *
  *   Nothing here writes to disk. The caller gets the new source and decides whether to apply it, which is
  *   what keeps an irreversible-looking step reviewable as a diff.
@@ -99,7 +99,7 @@ export function addCountry(source: string, listName: string, country: string): R
 	}
 
 	// The first entry that sorts after the new one. Comment lines are skipped as sort keys but stay attached to
-	// whatever follows them, so inserting BEFORE a comment block would separate it from its entry.
+	// whatever follows them, so inserting before a comment block would separate it from its entry.
 	let insertAt = lines.length
 
 	for (const [i, line] of lines.entries()) {

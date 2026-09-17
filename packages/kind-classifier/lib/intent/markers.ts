@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Marker derivation for the ROAD_TO_V9 §4 intent vocabulary. Pure, synchronous, and the ONLY place
+ *   Marker derivation for the ROAD_TO_V9 §4 intent vocabulary. Pure, synchronous, and the only place
  *   the classifier turns a fired rule into something a caller reads.
  *
  *   Three of the four intent kinds can raise their marker here, from the string alone. The fourth —
@@ -37,7 +37,7 @@ export interface IntentMarkerContext {
 /**
  * Build the advisories for one classified query.
  *
- * `kinds` is the FULL verdict — top plus alternatives — because two of the four intent kinds live in `alternatives` by
+ * `kinds` is the full verdict — top plus alternatives — because two of the four intent kinds live in `alternatives` by
  * design (see `intent-rules.ts`). Reading only the top kind would make them invisible, which is the mistake this
  * signature exists to prevent.
  *
@@ -65,7 +65,7 @@ export function deriveIntentMarkers(
 				tokens,
 				/**
 				 * Both readings, named. The order is stable (pair first, then the admin reading) so a consumer can index it; it
-				 * is NOT a ranking, and nothing downstream reads it as one.
+				 * is not a ranking, and nothing downstream reads it as one.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],
 			},

@@ -16,7 +16,7 @@ export type JSONValue = string | number | boolean | null | JSONValue[] | { [key:
 
 /**
  * A caller-supplied per-token normalizer (case folding, diacritic stripping, script folding — the consumer's domain).
- * This is the tokenizer-normalization boundary: the SAME function must be applied on the build side ({@link
+ * This is the tokenizer-normalization boundary: the same function must be applied on the build side ({@link
  * AncestrieBuilderOptions.normalizeToken}) and the query side ({@link AutocompleteOptions.normalizeToken}), or queries
  * will silently miss — the package never normalizes on its own.
  */
@@ -40,7 +40,7 @@ export interface AncestrieEntry {
 	id: number
 
 	/**
-	 * Direct parents in the ancestry graph, as entry ids. Empty for a root. The FIRST element is the PRIMARY parent:
+	 * Direct parents in the ancestry graph, as entry ids. Empty for a root. The first element is the primary parent:
 	 * interval containment (`contains`, `descendantsOf`) answers over the primary-parent forest only; the full list is
 	 * preserved and surfaced verbatim.
 	 */
@@ -182,7 +182,7 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
  *
  * Order contracts the algorithm observes:
  *
- * - `entriesAt(stateID)` with no limit answers EVERY accepting entry, in the reader's stored order.
+ * - `entriesAt(stateID)` with no limit answers every accepting entry, in the reader's stored order.
  * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
  *   its rank-sorted storage; an adapter over unsorted storage must select by rank itself. Order among rank TIES is the
  *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ

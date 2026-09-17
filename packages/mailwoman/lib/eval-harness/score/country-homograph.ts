@@ -43,7 +43,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	file?: string
 	/**
-	 * Gazetteer-anchor lexicon (#464): fed when the path EXISTS so a gazetteer-trained model (v0.9.12+) gets its
+	 * Gazetteer-anchor lexicon (#464): fed when the path exists so a gazetteer-trained model (v0.9.12+) gets its
 	 * candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare). Unlike
 	 * `score-affix`, this probe defaults the path to `data/gazetteer/anchor-lexicon-v1.json` rather than off.
 	 */

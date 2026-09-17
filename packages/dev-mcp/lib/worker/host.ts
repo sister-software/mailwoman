@@ -9,7 +9,7 @@
  *   never-stale shim, so it imports Node builtins only. Importing anything from the mailwoman graph (even a type-only
  *   module that transitively reaches runtime code) would re-create the staleness the split removes. The worker's
  *   message shapes are re-declared structurally rather than imported for exactly that reason; the protocol test forks
- *   the REAL worker, so a drift between the two declarations fails there, not silently.
+ *   the real worker, so a drift between the two declarations fails there, not silently.
  *
  *   Restart semantics, stated where a caller will read them:
  *
@@ -209,7 +209,7 @@ export class WorkerHost implements AsyncDisposable {
 	async restart(): Promise<RestartReport> {
 		const previousPID = this.pid
 		const previousFingerprint = this.bootFingerprint
-		// The FULL metas, not the names: a restart that adds a parameter changes what a client may send, and a
+		// The full metas, not the names: a restart that adds a parameter changes what a client may send, and a
 		// name-only compare suppressed the tools/list_changed the client needed to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
 

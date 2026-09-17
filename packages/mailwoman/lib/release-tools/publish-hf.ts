@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Publish a model release to the HF Bucket (en-us/<version>/) AND to the standalone HF model repo
+ *   Publish a model release to the HF Bucket (en-us/<version>/) and to the standalone HF model repo
  *   (sister-software/mailwoman-<locale>). Verifies every required artifact is uploaded before
  *   exiting so the demo never 404s on a missing file.
  *
@@ -70,7 +70,7 @@ const REQUIRED_FILES: RequiredFile[] = [
 	{ option: "model-card", remoteName: "model-card.json", description: "Model card JSON" },
 	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
 	// against the global candidate table, hosted version-independently at
-	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
+	// mailwoman/gazetteer/<ver>/candidate.db (not a per-release asset — it's model-independent). See
 	// RELEASING.md + project-candidate-table-byte-range. `hasWOFDB` in releases.json stays true (it now
 	// means "this version has admin resolution", which the version-independent gazetteer always provides).
 ]
@@ -101,7 +101,7 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
  * flags).
  *
  * FIXME (pre-existing latent bug — preserved, do not "fix" without an operator + release review): the original `.mjs`
- * referenced an out-of-scope `args` here, so this ALWAYS threw → caught → returned `false`; the probe never actually
+ * referenced an out-of-scope `args` here, so this always threw → caught → returned `false`; the probe never actually
  * ran. The `.sh`/`.mjs`→`.ts` conversion keeps that exact behavior so release output is byte-identical. The real fix is
  * to HEAD-probe `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
  * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a
@@ -194,7 +194,7 @@ async function stageBinaryList(spec: string | undefined, label: string): Promise
 
 /**
  * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
- * every caller of this is an artifact a locale MAY ship, not one it must.
+ * every caller of this is an artifact a locale may ship, not one it must.
  */
 async function stageOptionalBinary(spec: string | undefined, label: string): Promise<string | null> {
 	const localPath = spec || null
@@ -208,7 +208,7 @@ async function stageOptionalBinary(spec: string | undefined, label: string): Pro
 
 /**
  * Upload a verified path list flat under the version dir, keyed by basename (the postcode/pair-index/FST/Fisher pattern
- * — the local basename IS the remote name).
+ * — the local basename is the remote name).
  */
 function uploadFlatByBasename(paths: string[], remoteBase: string): void {
 	for (const localPath of paths) {
@@ -306,7 +306,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// Optional placetype-pair-index binaries (placetype-pair-prior arc): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
-	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
+	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one must have it staged.
 	const pairIndexBins = await stageBinaryList(args.pairIndexes, "pair-index binary")
 
 	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
@@ -317,19 +317,19 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	const fstBins = await stageBinaryList(args.fsts, "FST binary")
 
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
-	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
-	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
+	// anchor-lexicon-v1.json. Required for gazetteer-trained models (v4.2.0+, ONNX declares
+	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades loudly
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
 	const gazetteerLexicon = await stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
 
-	// country-surface-lexicon-v1.json (#1104). REQUIRED for country-channel models (v6.2.0+, ONNX
+	// country-surface-lexicon-v1.json (#1104). Required for country-channel models (v6.2.0+, ONNX
 	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
 	const countryLexicon = await stageOptionalBinary(args.countryLexicon, "country lexicon")
 
 	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
-	// locality-surface-lexicon-v6.json. REQUIRED for bundle-trained models (ONNX declares
+	// locality-surface-lexicon-v6.json. Required for bundle-trained models (ONNX declares
 	// street_type_features/locality_surface_features + the card requires them); the browser loader
-	// fetches them beside model.onnx and degrades LOUDLY (channel-off fragment parses) on a 404.
+	// fetches them beside model.onnx and degrades loudly (channel-off fragment parses) on a 404.
 	const streetTypeLexicon = await stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
 	const localitySurfaceLexicon = await stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 

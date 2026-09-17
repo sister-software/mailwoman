@@ -17,10 +17,10 @@
  *      fold/schema versions.
  *   2. Entry-count match — the binary's `pairCount` (read straight from the documented PIX1 layout)
  *      vs the re-derived expected set size.
- *   3. FULL membership sweep — every expected folded pair must probe OK with tag `locality`; any
+ *   3. Full membership sweep — every expected folded pair must probe OK with tag `locality`; any
  *      resolver entry beyond the expected count would surface as a count mismatch in (2).
  *   4. Named receipts — ("Springfield", "Illinois") present in US; ("Springfield", "Bretagne")
- *      ABSENT (cross-country negative control); FR communes under both their région (macroregion:
+ *      absent (cross-country negative control); FR communes under both their région (macroregion:
  *      "Bretagne") and département (WOF region: "Ille-et-Vilaine").
  *
  *   Throws (exits non-zero under `runIfScript`) on any failure.
@@ -205,7 +205,7 @@ async function main(): Promise<void> {
 			fail(`header delta ${header.delta} != 0 — a probe artifact must be uncalibrated`)
 		}
 
-		// Against the reader's OWN constant, not a re-typed literal — this script and the format cannot disagree.
+		// Against the reader's own constant, not a re-typed literal — this script and the format cannot disagree.
 		if (header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
 			fail(
 				`header schemaVersion ${header.schemaVersion} != ${KNOWN_SCHEMA_VERSION} ` +
@@ -266,7 +266,7 @@ async function main(): Promise<void> {
 			} else if (edge.tag !== "locality") {
 				wrongTag++
 			} else if (edge.parentTag !== "region") {
-				// PIX2: the sweep grades BOTH ends. The probe builder declares a locality→region edge in its
+				// PIX2: the sweep grades both ends. The probe builder declares a locality→region edge in its
 				// header, so an entry whose recorded parent tag is anything else is a builder bug the pre-PIX2
 				// sweep could not have seen.
 				wrongParentTag++

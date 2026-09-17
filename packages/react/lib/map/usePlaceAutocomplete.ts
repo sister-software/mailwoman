@@ -11,7 +11,7 @@
  *   so this stays node-safe and testable with a synchronous fake.
  *
  *   Returns the `<input>` aria/combobox props to spread onto the reused {@link QueryForm} input plus an
- *   `onInputKeyDown` (↑/↓ move the highlight, Enter accepts it AND suppresses submit, Esc dismisses), and
+ *   `onInputKeyDown` (↑/↓ move the highlight, Enter accepts it and suppresses submit, Esc dismisses), and
  *   the presentational {@link PlaceAutocomplete} listbox renders `suggestions` / `activeIndex`.
  */
 
@@ -178,7 +178,7 @@ export function usePlaceAutocomplete({
 			const next = replaceSegment(text, value)
 
 			setText(next)
-			// Suppress the fetch the rewritten text would trigger — the segment being typed IS the picked name.
+			// Suppress the fetch the rewritten text would trigger — the segment being typed is the picked name.
 			setDismissed(localitySegment(next))
 			setFetched(null)
 			setActiveIndex(-1)

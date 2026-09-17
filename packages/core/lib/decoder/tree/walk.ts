@@ -65,7 +65,7 @@ export function isGroundedNode(node: AddressNode): boolean {
 
 /**
  * The order in which a projection reads spans when one tag occurs twice: every grounded node first, then the rest, each
- * group in document order. Both the flat component map (`decodeAsJSON`) and the named result slots read THIS order, so
+ * group in document order. Both the flat component map (`decodeAsJSON`) and the named result slots read this order, so
  * they name the same span.
  *
  * The rule is the one a gazetteer-backed geocoder applies by construction: a component is what RESOLVED, and the

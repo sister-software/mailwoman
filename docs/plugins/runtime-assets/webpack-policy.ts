@@ -6,7 +6,7 @@
  *
  *   What remains here is Docusaurus-specific: the workspace source aliases for development, the SSR bundle's
  *   externals, the WASM asset rule, and a cache key that follows the alias map. Module resolution for `@mailwoman/*`
- *   is NOT rewritten here: a package the client reaches carries a `browser` export condition, and the `bundle-graph`
+ *   is not rewritten here: a package the client reaches carries a `browser` export condition, and the `bundle-graph`
  *   health check refuses a Node builtin on the client's static path.
  */
 

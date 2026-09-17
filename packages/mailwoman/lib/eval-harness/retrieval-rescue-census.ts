@@ -13,7 +13,7 @@
  *   wrong but RESOLVABLE parse (locality "COMER" → Comer, Georgia, US) silences the same on-hand answer.
  *
  *   Classification is pure and the runner is dumb: everything here is testable without a board, and the runner only
- *   feeds it results. This census emits NO verdict about any check change — it names rows; the rows then get per-row
+ *   feeds it results. This census emits no verdict about any check change — it names rows; the rows then get per-row
  *   trace reads before any decode or resolver behavior moves (the decoder-grammar contract's graduation rule).
  */
 
@@ -34,8 +34,8 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse
  *   work, not rescue plumbing.
- * - `check_protects` is NOT a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
- *   row is correct AND an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
+ * - `check_protects` is not a value here — it is a separate boolean, because it can hold alongside `correct_as_is`: the
+ *   row is correct and an unconditional entity hit exists (necessarily elsewhere, or redundant), so loosening the check
  *   puts the row at risk. The loosening decision needs both lists, not one label.
  */
 export type RescueClass =

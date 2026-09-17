@@ -81,9 +81,9 @@ test("pointInPolygon: a hole punches a void (even-odd handles holes, no orientat
 		[4, 4],
 	]
 
-	// inside outer, NOT in the hole → contained
+	// inside outer, not in the hole → contained
 	expect(pointInPolygon(1, 1, [outer, hole])).toBe(true)
-	// inside the hole → an odd-count void → NOT contained
+	// inside the hole → an odd-count void → not contained
 	expect(pointInPolygon(5, 5, [outer, hole])).toBe(false)
 	// outside everything
 	expect(pointInPolygon(20, 20, [outer, hole])).toBe(false)

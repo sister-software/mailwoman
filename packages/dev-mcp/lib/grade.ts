@@ -5,7 +5,7 @@
  *
  *   Grading a comparison, and refusing to grade one that cannot be graded.
  *
- *   This module owns NO metric. `checkCase` is the grader — the same one the regression board runs — and the
+ *   This module owns no metric. `checkCase` is the grader — the same one the regression board runs — and the
  *   projection from a geocode into the shape it asserts on is `toGauntletResult`, imported rather than re-written.
  *   What lives here is the part `checkCase` has no opinion about: whether truth exists for a set at all, what a
  *   two-arm delta means, and how large an effect this many rows could have missed.

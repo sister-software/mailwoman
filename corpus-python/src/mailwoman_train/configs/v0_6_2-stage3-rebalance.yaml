@@ -8,9 +8,9 @@
 #      street decomposition. Counter-distribution comes from #2, not from
 #      depressing the synth-street signal further.
 #
-#   2. NEW `synth-no-street` source at weight 1.0 (122K rows)
+#   2. New `synth-no-street` source at weight 1.0 (122K rows)
 #      Counter-example training data: 112K US + 10K DE/GB rows where every
-#      address has venue + admin tags but NO street-side BIO labels. 35% are
+#      address has venue + admin tags but no street-side BIO labels. 35% are
 #      "venue-adversarial" (Wall Street Industries, 5th Avenue Theatre,
 #      Memorial Drive Medical Center) — explicit B-venue/I-venue labels on
 #      tokens like Street/Avenue/Drive that the model previously mis-tagged

@@ -5,7 +5,7 @@
  *
  *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer eval battery lacks.
  *
- *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
+ *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the full stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
  *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline` + grouper
  *   audit → the demo's `runCascade` (#861: the SHARED `resolveTree` — greedy walk + admin/
@@ -115,12 +115,12 @@ interface RowResult {
 }
 
 /**
- * Run every smoke row through the FULL stack — neural parse (ship config) → `runPipeline` + grouper audit → the demo's
+ * Run every smoke row through the full stack — neural parse (ship config) → `runPipeline` + grouper audit → the demo's
  * `runCascade` over the slim hot DB — and assert the RESOLVED WOF PLACE ID of the top hit.
  *
  * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals and `explain`
  * narration go to `reportError`, which is where the child's stderr went — captured and dropped. A preflight refusal
- * therefore leaves an EMPTY `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is
+ * therefore leaves an empty `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is
  * exactly what the child process produced.
  */
 export async function demoCascadeSmoke(
@@ -132,7 +132,7 @@ export async function demoCascadeSmoke(
 	// module walk (`mailwoman --help`) loads this file in every clean install — a top-level import
 	// here failed the ci:smoke clean-install leg the day it was added (2026-08-06). The cascade leg
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
-	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
+	// runs; in a clean install without the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
 	const DB = options.db || resolveWOFHotDB(String(STAGE))
@@ -237,7 +237,7 @@ export async function demoCascadeSmoke(
 
 		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts) — same locality filter,
 		// same highest-confidence region pick, same postcode find.
-		// `city` / `state` / `postal_code` are libpostal vocabulary and are NOT `ComponentTag`s, so the
+		// `city` / `state` / `postal_code` are libpostal vocabulary and are not `ComponentTag`s, so the
 		// `|| n.tag === "…"` arms that used to sit here could never match. They compiled only while the
 		// flattener returned `{ tag: string }`; the real tag union makes them a type error.
 		const nodes = flattenTreeNodes(tree)

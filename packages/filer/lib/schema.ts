@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for filer.db — the identity crosswalk read-side layer (Phase 3a decisions 2, 6, 7).
- *   Deliberately NOT a layer-contract artifact (decision 2): filer.db has no coordinate references until
+ *   Deliberately not a layer-contract artifact (decision 2): filer.db has no coordinate references until
  *   ASR arrives in Phase 3c, and `@mailwoman/core/layers`' `layer_coverage` is H3-keyed, so conforming
  *   to that contract would mean writing coverage rows that assert nothing. Instead `filer_manifest` is
  *   filer.db's own single-row identity/provenance record — see {@link readFilerManifest}, which copies
@@ -20,36 +20,36 @@
  *
  *   Decision 7 / criterion 1 (required): `valid_from` is MANDATORY on every edge (`valid_to` is the
  *   nullable half of the pair), and the primary key is the 4-tuple `(from_node_id, to_node_id, source,
- *   valid_from)`, NOT just `(from_node_id, to_node_id)`. Two sources asserting the same relationship, or
+ *   valid_from)`, not just `(from_node_id, to_node_id)`. Two sources asserting the same relationship, or
  *   one source revising its assertion at a later vintage, produce two rows rather than a silent
  *   overwrite — that plurality is the entire point of carrying provenance. `FilerEdgeTable` has no
  *   `Generated<>`-wrapped columns, so Kysely's `Insertable<FilerEdgeTable>` requires every field
  *   (including the nullable ones, which must be passed as an explicit `null`) — an edge insert missing
  *   `source`, `source_vintage`, `assertion`, or `valid_from` is a compile error, not a runtime surprise.
  *
- *   Clustering: `filer_edge`'s primary key is enforced as a plain composite `UNIQUE` index, NOT `WITHOUT
+ *   Clustering: `filer_edge`'s primary key is enforced as a plain composite `UNIQUE` index, not `WITHOUT
  *   ROWID` — `evidence` is an inferred-match JSON blob of unbounded size, the same anti-pattern
  *   `bdc/schema.ts` calls out for `bdc_availability`'s wider columns, and the dominant read pattern (all
  *   edges out of, or into, one node) is a range scan, not a single composite-key point probe.
  *   `filer_node`'s single-column TEXT primary key stays a plain rowid table too, matching
  *   `layer_manifest.name`'s precedent — there's no second column to fold into the B-tree alongside it,
- *   and reconstructing `node_id` from a known `(identifier_type, identifier_value)` pair IS the lookup
+ *   and reconstructing `node_id` from a known `(identifier_type, identifier_value)` pair is the lookup
  *   path, so there's no secondary index for that reverse direction either.
  *
  *   **Strength and kind are two orthogonal columns (decisions 1, 2; `schema_version` 2, written by
- *   `build-filer.ts`):** {@link FilerEdgeAssertion} grades HOW STRONGLY an assertion is evidenced
- *   (authoritative vs. inferred) — it says nothing about WHAT the assertion means. `filer_edge` carries a
+ *   `build-filer.ts`):** {@link FilerEdgeAssertion} grades how strongly an assertion is evidenced
+ *   (authoritative vs. inferred) — it says nothing about what the assertion means. `filer_edge` carries a
  *   separate, orthogonal `relationship` column ({@link FilerRelationship}) for that: before this column
  *   existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (an edge into a
  *   `holding_company_name` node was "assumed" to mean ownership), a scheme that cannot distinguish a
- *   holding company from a parent CIK from a transfer-of-control. `relationship` is NOT part of
+ *   holding company from a parent CIK from a transfer-of-control. `relationship` is not part of
  *   `filer_edge`'s primary key (deliberately — see {@link createFilerEdgeTable}'s docstring): one source
  *   asserting two different relationship kinds for the same pair at the same instant is a contradiction
- *   to reject, not a plurality to store the way two DIFFERENT sources (or vintages) are.
+ *   to reject, not a plurality to store the way two different sources (or vintages) are.
  *
- *   `filer_cluster` also conflated two distinct rollups the spec keeps apart: an ENTITY cluster (same
+ *   `filer_cluster` also conflated two distinct rollups the spec keeps apart: an entity cluster (same
  *   underlying filer under different identifiers — what `filer_cluster` has always meant) and a
- *   CORPORATE FAMILY (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers).
+ *   corporate family (a holding/parent/subsidiary/management tree spanning several different filers).
  *   `filer_family` is the new table for the latter — see {@link FilerFamilyTable}. Its own primary key
  *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, naming_node_id, source,
  *   valid_from)`, `relationship` excluded from it for the identical contradiction-vs-plurality reason).
@@ -76,10 +76,10 @@
  *   membership the filer itself filed: the row records the fact and its `source` but not the STRENGTH of
  *   the claim behind it, so the check never reaches the table `familyRollup`/`filerLookup.families`
  *   actually answer family questions from. `source` is not a usable proxy for that strength either —
- *   `edgar-exhibit-21` writes BOTH an authoritative disclosure edge and an inferred corroboration edge,
+ *   `edgar-exhibit-21` writes both an authoritative disclosure edge and an inferred corroboration edge,
  *   so one source name spans both grades.
  *
- *   Deliberately NOT `evidence`: the match's raw payload is already persisted, once, on the `filer_edge`
+ *   Deliberately not `evidence`: the match's raw payload is already persisted, once, on the `filer_edge`
  *   row the builder writes in lockstep with every inferred family row, and no family reader needs it (the
  *   one family→edge join, `readFamilyDisplayNames`, selects the display name and nothing else).
  *   `match_score` is the one field a reader does need and cannot get without a join no family reader
@@ -110,9 +110,9 @@ import { sql, type Kysely } from "kysely"
  * `SubsidiaryName` is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it — `build-filer.ts`'s
  * EDGAR ingest mints one of these for every subsidiary row, the same "global name-node" shape
  * `HoldingCompanyName`/`ManagementCompanyName` already use (the raw string, unnormalized; two different parents both
- * disclosing a subsidiary under the identical spelling share one node). Deliberately its OWN namespace, never folded
- * into `HoldingCompanyName`/`ManagementCompanyName`: those name the source filer's OWN parent/manager, the opposite
- * direction of relationship from "a company THIS filer owns."
+ * disclosing a subsidiary under the identical spelling share one node). Deliberately its own namespace, never folded
+ * into `HoldingCompanyName`/`ManagementCompanyName`: those name the source filer's own parent/manager, the opposite
+ * direction of relationship from "a company this filer owns."
  */
 export const FilerIdentifierType = {
 	FRN: "frn",
@@ -140,14 +140,14 @@ export const FilerEdgeAssertion = {
 export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerEdgeAssertion]
 
 /**
- * The KIND of relationship a `filer_edge` or `filer_family` row asserts between two nodes (decisions 1, 2) — orthogonal
- * to {@link FilerEdgeAssertion}, which grades how strongly the SAME assertion is evidenced, never what it means. Before
+ * The kind of relationship a `filer_edge` or `filer_family` row asserts between two nodes (decisions 1, 2) — orthogonal
+ * to {@link FilerEdgeAssertion}, which grades how strongly the same assertion is evidenced, never what it means. Before
  * this column existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (e.g. an edge into a
  * `holding_company_name` node was "assumed" to mean ownership) — a scheme that cannot distinguish a holding company
  * from a parent CIK from a transfer-of-control, and had no way to express a corporate-family fact (`filer_family`) at
  * all.
  *
- * - `SameEntity` — the two nodes denote the SAME underlying filer under different identifiers (an FRN and its Form 499
+ * - `SameEntity` — the two nodes denote the same underlying filer under different identifiers (an FRN and its Form 499
  *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
  *   {@link FilerNodeTable} entity-clustering (`cluster-filers.ts`) ever asserts.
  * - `HoldingCompany` — the target node is the source node's holding company (an ownership fact).
@@ -159,7 +159,7 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
  *   which side is the source.
  * - `SupersededBy` — the source registration was REPLACED by the target one. Identity continuity over time, and
- *   deliberately NOT an ownership or control fact: it says this registration became that registration, and nothing
+ *   deliberately not an ownership or control fact: it says this registration became that registration, and nothing
  *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
  *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
  *
@@ -208,7 +208,7 @@ export interface FilerEdgeTable {
 	assertion: string
 	/**
 	 * One of {@link FilerRelationship} (decisions 1, 2). Orthogonal to `assertion` — see the file header and
-	 * {@link FilerRelationship}'s own docstring. NOT part of {@link createFilerEdgeTable}'s primary key: see that
+	 * {@link FilerRelationship}'s own docstring. Not part of {@link createFilerEdgeTable}'s primary key: see that
 	 * function's docstring for why a same-instant conflicting `relationship` from one source is a contradiction to
 	 * reject, not a plurality to store.
 	 */
@@ -231,9 +231,9 @@ export interface FilerEdgeTable {
 	 * valid_to` — `valid_to` is the first date the assertion no longer holds, not the last date it did.
 	 *
 	 * This is forced, not a stylistic choice: `cluster-filers.ts`'s cross-vintage supersession (`clusterInferredLinks`)
-	 * closes a superseded inferred edge with `SET valid_to = validFrom` in the SAME transaction that inserts its
+	 * closes a superseded inferred edge with `SET valid_to = validFrom` in the same transaction that inserts its
 	 * replacement at `valid_from = validFrom` — the identical date on both sides of the changeover. A closed
-	 * (inclusive-inclusive, `valid_from <= t <= valid_to`) convention would make the closed row and its replacement BOTH
+	 * (inclusive-inclusive, `valid_from <= t <= valid_to`) convention would make the closed row and its replacement both
 	 * claim to be in force on `sourceVintage` itself, double-counting that one date. Every reader that scopes a query
 	 * `asOf` a date (see `filer/sdk/filer-lookup.ts`'s `filerLookup`) must apply the matching half-open predicate —
 	 * `valid_from <= asOf AND (valid_to IS NULL OR asOf < valid_to)` — or it will silently disagree with what the writer
@@ -277,9 +277,9 @@ export interface FilerClusterTable {
 }
 
 /**
- * Corporate-family membership (decisions 1, 2) — the distinction `filer_cluster` never had for telling apart an ENTITY
- * cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
- * holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id` belongs
+ * Corporate-family membership (decisions 1, 2) — the distinction `filer_cluster` never had for telling apart an entity
+ * cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a corporate family (a
+ * holding/parent/subsidiary/management tree spanning several different filers). One row asserts that `node_id` belongs
  * to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
  * `relationship`, at a specific {@link FilerEdgeAssertion} `assertion` strength, as reported by one source at one
  * vintage — provenance-plural and temporally scoped exactly like `filer_edge` (see {@link createFilerFamilyTable}'s
@@ -297,10 +297,10 @@ export interface FilerFamilyTable {
 	 */
 	naming_node_id: string
 	/**
-	 * One of {@link FilerEdgeAssertion} — HOW STRONGLY this membership is evidenced, exactly the grading `filer_edge` has
+	 * One of {@link FilerEdgeAssertion} — how strongly this membership is evidenced, exactly the grading `filer_edge` has
 	 * carried since 3a. `authoritative` is a membership the source document states directly (a Form 499 row naming its
 	 * own holding company); `inferred` is one a matcher concluded (EDGAR's subsidiary-name→FRN corroboration). Read
-	 * surfaces MUST keep the two distinguishable — see the file header for why `source` cannot stand in for this.
+	 * surfaces must keep the two distinguishable — see the file header for why `source` cannot stand in for this.
 	 */
 	assertion: string
 	/**
@@ -401,10 +401,10 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * `WITHOUT ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges)
  * traversal path.
  *
- * `relationship` (decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as required
- * as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same source at a later
- * vintage) — two rows are a legitimate plurality there. Two rows from the SAME source at the SAME `valid_from` for the
- * SAME pair is a different situation: if `relationship` were in the key, one source could assert BOTH `"same_entity"`
+ * `relationship` (decisions 1, 2) is deliberately not part of the primary key, even though it's every bit as required
+ * as `assertion`: the PK's job is telling apart different provenance (a different source, or the same source at a later
+ * vintage) — two rows are a legitimate plurality there. Two rows from the same source at the same `valid_from` for the
+ * same pair is a different situation: if `relationship` were in the key, one source could assert both `"same_entity"`
  * and `"holding_company"` for the identical `(from, to)` pair at the identical instant, and both would silently persist
  * side by side. That's a contradiction (one source, one moment, two incompatible claims about what the pair means), not
  * a provenance plurality — the composite `UNIQUE` index leaving `relationship` out is what makes SQLite reject the
@@ -483,32 +483,32 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
 
 /**
  * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)` — mirrors
- * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart DIFFERENT provenance (a different
+ * {@link createFilerEdgeTable}'s reasoning exactly: the PK's job is telling apart different provenance (a different
  * source, or the same source at a later vintage), and `relationship` is deliberately excluded from it for the same
- * contradiction-vs-plurality reason — one source asserting BOTH `"parent_company"` and `"subsidiary"` for the identical
+ * contradiction-vs-plurality reason — one source asserting both `"parent_company"` and `"subsidiary"` for the identical
  * `(node_id, family_id)` pair at the identical instant is a contradiction to reject, not a plurality to store. The same
  * blank/whitespace-rejecting CHECK constraint applies to `relationship` here too. Call {@link createFilerFamilyIndex}
  * separately, after bulk load, for the "all members of this family" lookup path.
  *
- * **`naming_node_id` IS in the key, and that placement is required.** Two DIFFERENT raw spellings can canonicalize to
- * the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
+ * **`naming_node_id` is in the key, and that placement is required.** Two different raw spellings can canonicalize to
+ * the same `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
  * (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN files two
- * 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ ONLY in
+ * 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ only in
  * `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `INSERT OR IGNORE` would
  * silently drop the second, and the second spelling's display name would vanish from every rollup — regressing the
  * "expose the plurality within one family, never guess which spelling is right" rule this SDK follows everywhere else
  * (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, family membership never deduped
- * across sources). This is NOT the `relationship` situation: two spellings under one source at one instant are two
+ * across sources). This is not the `relationship` situation: two spellings under one source at one instant are two
  * things the filer really did report, a plurality to store — where two conflicting `relationship` values for one pair
- * are two incompatible claims about what that pair MEANS, a contradiction to reject.
+ * are two incompatible claims about what that pair means, a contradiction to reject.
  *
  * **`assertion` is excluded from the key for that same reason** and the reason it is excluded from `filer_edge`'s key
- * too: one source, at one instant, grading the identical membership BOTH `authoritative` and `inferred` is a
+ * too: one source, at one instant, grading the identical membership both `authoritative` and `inferred` is a
  * contradiction, not a plurality — two sources disagreeing about the strength of the same fact already produce two
  * rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT NULL` alone
  * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every
  * criterion-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
- * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row,
+ * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear only on an inferred row,
  * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
@@ -565,7 +565,7 @@ export async function createFilerManifestTable(db: Kysely<FilerDatabase>): Promi
 
 /**
  * Read + validate the manifest. Copies `readLayerManifest`'s (`core/layers/manifest.ts`) throw-unless- exactly-one
- * discipline WITHOUT its table or its tier/freshness-policy/spine-key validation — none of those layer-contract
+ * discipline without its table or its tier/freshness-policy/spine-key validation — none of those layer-contract
  * invariants apply to filer.db's own manifest (decision 2).
  */
 export async function readFilerManifest(db: Kysely<FilerDatabase>): Promise<FilerManifestTable> {

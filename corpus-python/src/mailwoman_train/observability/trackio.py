@@ -8,7 +8,7 @@ in a CSV. With ``space_id`` set, Trackio deploys/syncs the dashboard Space and p
 every run to a backing HF Dataset; with no ``space_id`` it logs to a local dashboard
 (``~/.cache/huggingface/trackio``).
 
-Design rule — tracking must NEVER crash training. An A100 run costs real money and the
+Design rule — tracking must never crash training. An A100 run costs real money and the
 night-shift workflow runs unattended; a metrics upload that 401s, a missing package, or
 an API drift must degrade to CSV-only, not take the run down with it. So:
 
@@ -136,7 +136,7 @@ def _run_config(cfg: Any) -> dict[str, Any]:
     return {
         # Human-readable legend shown in the run's config panel — so a viewer who isn't
         # steeped in the metrics knows how to read the charts (esp. the blank/gap ones).
-        # NB: the key must NOT start with "_" — current trackio reserves the "_" prefix and
+        # NB: the key must not start with "_" — current trackio reserves the "_" prefix and
         # raises "Config key '_legend' is reserved" from init(), which trackio_logging.py catches
         # and silently downgrades the whole run to CSV-only (no Space dashboard). Plain "legend".
         "legend": (

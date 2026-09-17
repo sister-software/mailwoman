@@ -6,9 +6,9 @@
  *   The #617 NPPES dedup benchmark — the measurable proof of the record-matcher hypothesis.
  *
  *   NPPES is NPI-keyed, so the NPI is a ground-truth entity id. We build a deliberately varied
- *   multi-record set per NPI from REAL data — the registry's primary record, each alternate
- *   organization name (`nppes_other-names`, NAME drift at the same place), and the mailing address
- *   where it differs from the practice location (ADDRESS variation) — then run the matcher BLIND to
+ *   multi-record set per NPI from real data — the registry's primary record, each alternate
+ *   organization name (`nppes_other-names`, name drift at the same place), and the mailing address
+ *   where it differs from the practice location (address variation) — then run the matcher blind to
  *   the NPI (geocode → block → Fellegi-Sunter + EM → cluster) and score the recovered clusters
  *   against the NPI grouping (pairwise P/R/F1 + adjusted Rand).
  *
@@ -89,7 +89,7 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	trainEm?: boolean
 	/**
-	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + normalizeCase OFF). Default off (the
+	 * #694 A/B: reproduce the pre-flip ingest (space-joined address columns + `normalizeCase` off). Default off (the
 	 * validated flip: comma-join + #690 all-caps normalization). Same data + GBT, only the flip toggled — so a delta here
 	 * is attributable to the flip.
 	 */
@@ -161,7 +161,7 @@ export async function nppesDedupBenchmark(
 		name: "name",
 		organization: "org",
 		address: "address",
-		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
+		// `entityTruth` rides as an attribute purely for scoring (not a discriminator → never used in
 		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
 		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
@@ -220,11 +220,11 @@ export async function nppesDedupBenchmark(
 	// Score recovered clusters against each truth grain using the held-out NPI.
 	const N = records.length
 
-	// Every grain scores against the SAME record population, so the ARI expectation is fixed for the run.
+	// Every grain scores against the same record population, so the ARI expectation is fixed for the run.
 	const score = (entities: readonly ResolvedEntity[], labelOf: TruthLabel): Score => scoreEntities(entities, labelOf, N)
 
 	// Truth labels: NPI-level (the conservative held-out NPI = record.id) and entity-level (the
-	// site-level subpart-collapsed id that rides on attributes.entityTruth). Scoring the SAME clusters
+	// site-level subpart-collapsed id that rides on attributes.entityTruth). Scoring the same clusters
 	// both ways isolates how much of the apparent over-merge is NPI over-segmentation, not model error.
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
@@ -253,11 +253,11 @@ export async function nppesDedupBenchmark(
 
 	const bestSetting = progression.at(-1)! // the full setting stack
 
-	// The SHIPPED out-of-box default (#86): no setting config at all → resolveEntities auto-computes an
+	// The shipped out-of-box default (#86): no setting config at all → resolveEntities auto-computes an
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
 	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
-	// ≈baseline — NOT a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
-	// from a sample. On a FULL-dataset dedup the input IS the corpus and this default reaches the baseline; the
+	// ≈baseline — not a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
+	// from a sample. On a full-dataset dedup the input is the corpus and this default reaches the baseline; the
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)
@@ -313,7 +313,7 @@ export async function nppesDedupBenchmark(
 	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size
 	const gbtOrgH3 = score(gbtRes.entities, orgNameH3Label)
 
-	// The adjudication packet grades the SHIPPED (GBT) clusters, because the residual over-merge is small and
+	// The adjudication packet grades the shipped (GBT) clusters, because the residual over-merge is small and
 	// approaching the measured ~1.6% irreducible ceiling — per-pair human adjudication (same entity? distinct
 	// co-located?) is the only instrument left that can separate model error from yardstick error.
 	const DUMP_OVERMERGES = options.dumpOvermerges || ""

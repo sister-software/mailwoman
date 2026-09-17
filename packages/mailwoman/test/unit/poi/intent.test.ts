@@ -389,7 +389,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
 	})
 
-	// A category two authorities reach stays when EITHER holds at the anchor; the scope is on the claim, not the id.
+	// A category two authorities reach stays when either holds at the anchor; the scope is on the claim, not the id.
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
 		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
 
@@ -625,9 +625,9 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
 
-	// Placed BEFORE the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
+	// Placed before the "poi db missing" test below on purpose: `loadDefaultReverseGeocoder` caches its
 	// result for the process/module lifetime (see default-reverse-geocoder.ts), so this test needs to be
-	// the FIRST thing in this file to touch it — otherwise a later call could observe an already-resolved
+	// the first thing in this file to touch it — otherwise a later call could observe an already-resolved
 	// promise from an earlier call made under the ambient (non-stubbed) env.
 	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
 		// Pin an empty data directory so the reverse-geocoder probe takes its missing-data branch.

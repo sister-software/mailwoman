@@ -12,8 +12,8 @@
  *   unreadable copy of a file already on disk; there is nothing to pace, because this runs once per product
  *   vintage; and axios buffers any non-stream response type in memory. `packages/osm/lib/sdk/fetch.ts`,
  *   `packages/tiger/lib/sdk/download.ts`, `packages/flood/lib/sdk/download.ts` and `packages/coastal/lib/sdk/download.ts`
- *   are the existing transfers that say the same thing in the same place. The JOB that produces this URL, and
- *   every other metadata read around it, DO go through `APIClient` — see `client.ts`.
+ *   are the existing transfers that say the same thing in the same place. The job that produces this URL, and
+ *   every other metadata read around it, do go through `APIClient` — see `client.ts`.
  *
  *   THE RESULT URL REDIRECTS AND THE FETCH MUST FOLLOW IT. The Hub download job answers
  *   `{"status":"Completed","resultUrl":…}`; the result URL itself 302s to the generated file. Node's `fetch`

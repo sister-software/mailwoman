@@ -57,7 +57,7 @@ export interface PostalCityAlias {
 export class WOFPostalCityAliasLookup implements Disposable {
 	#db: DatabaseClient<PostalCityAliasDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()

@@ -10,19 +10,19 @@ table); v196-slavic-anchor confirmed this the expensive way — it REGRESSED CZ 
 The fix is tokenizer-side and needs no GPU training:
 
 1. Train a CZ/PL SentencePiece unigram on a Slavic address corpus.
-2. Splice ONLY its diacritic-bearing pieces into the 48k vocab. Because every appended piece contains a
+2. Splice only its diacritic-bearing pieces into the 48k vocab. Because every appended piece contains a
    codepoint that never appears in English text, it can never match a span of an English string, so English
    tokenizes BYTE-IDENTICALLY by construction — the source language cannot regress. This module ASSERTS that
    invariant (0 diff over a held-out English sample); it is not a hope.
-3. Mean-init the new embedding rows from their old-tokenizer constituents (FVT): E(new) = mean over the OLD
+3. Mean-init the new embedding rows from their old-tokenizer constituents (FVT): E(new) = mean over the old
    tokenization of the new piece's surface. The encoder is left byte-for-byte untouched.
 
-The B-1 ablation (2026-07-01) showed step 3 alone IS the fix — a 2k fine-tune added nothing and started to
+The B-1 ablation (2026-07-01) showed step 3 alone is the fix — a 2k fine-tune added nothing and started to
 overfit. So the shipped artifact is the mean-init model, and US byte-identity is a guarantee (unchanged
 encoder + unchanged English input_ids -> identical logits), not an observation.
 
 Caveat: this is the right tool for alphabetic-script-with-diacritics (disjoint codepoints, real constituent
-subwords for a strong mean-init). It does NOT scale to CJK — thousands of logographs, a segmenter is needed,
+subwords for a strong mean-init). It does not scale to CJK — thousands of logographs, a segmenter is needed,
 and byte-fallback constituents make mean-init weak. CJK wants a char-level front-end instead.
 
 CLI:
@@ -137,7 +137,7 @@ def train_diacritic_sp(corpus_path: Path, out_prefix: Path, *, vocab_size: int =
 def splice_vocab(base_tokenizer: Path, diacritic_sp: Path, out_tokenizer: Path) -> list[str]:
     """Append the diacritic-bearing pieces of ``diacritic_sp`` to ``base_tokenizer``; write ``out_tokenizer``.
 
-    Only pieces whose core contains a non-ASCII codepoint AND that are absent from the base vocab are added,
+    Only pieces whose core contains a non-ASCII codepoint and that are absent from the base vocab are added,
     with their unigram scores. Returns the list of new piece strings. Raises if the English-identity
     invariant fails (see ``verify_source_identical``).
     """
@@ -204,13 +204,13 @@ def check_codepoint_overlap(
 
     The v5.1.0 splice shipped on a "byte-identical by construction" claim that turned out ASCII-only:
     FR/DE/ES share codepoints with the spliced pieces, so 52/15,000 EU rows re-tokenized — measured
-    AFTER the fact (net-positive, by luck and row-reads). This check makes the overlap visible BEFORE
+    after the fact (net-positive, by luck and row-reads). This check makes the overlap visible before
     grading: for every trained locale sample, compute the non-ASCII codepoints shared between the
-    NEW pieces and that locale's character inventory, write the per-locale report artifact, and FAIL
-    LOUD on any overlapping locale that was not explicitly accepted.
+    new pieces and that locale's character inventory, write the per-locale report artifact, and fail
+    loud on any overlapping locale that was not explicitly accepted.
 
     "Accepted" is a commitment, not a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
-    means a per-locale non-inferiority leg for it is pre-registered in the check spec BEFORE the
+    means a per-locale non-inferiority leg for it is pre-registered in the check spec before the
     first measurement (the FR n=3000 leg from v5.1.0 is the template).
     """
     accepted = accepted_overlap or set()
@@ -251,7 +251,7 @@ def mean_init_embeddings(
 ) -> tuple[int, int]:
     """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab; mean-init the new rows (FVT).
 
-    Each new row = the mean of the OLD tokenizer's constituent-piece embeddings for that piece's surface.
+    Each new row = the mean of the old tokenizer's constituent-piece embeddings for that piece's surface.
     Only token_embeddings + the config's vocab_size change; the encoder, classifier, CRF, and anchor/gaz
     heads are left byte-for-byte untouched (which is what makes source-language behaviour a guarantee).
     Returns (old_vocab, new_vocab). Torch is imported lazily so the tokenizer path stays torch-free.
@@ -289,7 +289,7 @@ def _fvt_rows(base_tokenizer: Path, spliced_tokenizer: Path, emb: Any) -> Any:
     """The FVT mean-init rows for the spliced-in pieces, computed from an existing embedding matrix.
 
     Mirrors the mean-init in ``mean_init_embeddings`` (the pytorch state-dict path) exactly, on numpy so
-    the ONNX-graph path can reuse it: each new row = the mean of the OLD tokenizer's constituent-piece
+    the ONNX-graph path can reuse it: each new row = the mean of the old tokenizer's constituent-piece
     embeddings for that piece's surface, global mean if the surface has no in-vocab constituents.
     ``emb`` is the old [old_vocab, hidden] matrix as a numpy array.
     """
@@ -326,15 +326,15 @@ def mean_init_onnx_embeddings(
 
     This is the local, checkpoint-free twin of ``mean_init_embeddings``. The prior nsplice ran mean-init
     on the Modal volume where the training ``pytorch_model.bin`` lived, then re-exported ONNX. When only
-    the shipped ONNX is on hand, the SAME surgery is exact on the graph: in this BIO token-classifier the
-    ONLY vocab-dependent tensor is ``inner.token_embeddings.weight`` (the label head is [hidden, num_labels],
+    the shipped ONNX is on hand, the same surgery is exact on the graph: in this BIO token-classifier the
+    only vocab-dependent tensor is ``inner.token_embeddings.weight`` (the label head is [hidden, num_labels],
     independent of vocab), so growing that one initializer and mean-initing the new rows is byte-for-byte what
     a re-export would produce. Every other node — encoder, CRF, anchor/gaz heads — is untouched, which is why
     source/other-locale inference stays byte-identical (their input_ids never index the appended rows).
 
     fp32: read the float initializer, append the FVT rows. int8 (optional): the embedding is stored as a
     per-tensor-quantized ``<emb>_quantized`` (uint8) + scalar ``_scale`` / ``_zero_point``; the new rows are
-    quantized with the SAME params (round(x/scale)+zp, clamped) — means of existing rows lie inside the
+    quantized with the same params (round(x/scale)+zp, clamped) — means of existing rows lie inside the
     existing value range, so no re-calibration is needed. Returns (old_vocab, new_vocab).
     """
     import numpy as np

@@ -96,7 +96,7 @@ describe("audit — config parser", () => {
 		// Configured sources should appear as warnings (no parquet files present).
 		expect(errOutput + logOutput).toContain("wof-admin")
 		expect(errOutput + logOutput).toContain("ban")
-		// Non-source keys must NOT appear — val_rows / train_rows_per_epoch / coarse_filter /
+		// Non-source keys must not appear — val_rows / train_rows_per_epoch / coarse_filter /
 		// use_crf / crf_loss_weight are config noise that the source_weights parser used to
 		// pick up incorrectly.
 		expect(errOutput + logOutput).not.toContain("val_rows")

@@ -208,7 +208,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	// The first two tests pin the reversal; the rest pin the opt-in contract itself.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
 		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
-		// graded as a pass. With no rendering contract on the row, this must FAIL again.
+		// graded as a pass. With no rendering contract on the row, this must fail again.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([

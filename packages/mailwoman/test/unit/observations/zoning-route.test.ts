@@ -6,7 +6,7 @@
  *   #1995: the zoning route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built zoning layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer ABSENT — which is every default construction —
+ *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -14,7 +14,7 @@
  *   THE REST PIN WHAT THIS LAYER SAYS AND, MORE IMPORTANTLY, WHAT IT REFUSES TO. A designation becomes one
  *   additive marker naming the verdict's own top kind; the AUTHORITY'S OWN CODE is in the sentence with the
  *   generic type beside it rather than instead of it; the plan and its window ride on the evidence; and a
- *   location with no zoning polygon raises NOTHING. That last one is the hardest case of the meaning-of-zero
+ *   location with no zoning polygon raises nothing. That last one is the hardest case of the meaning-of-zero
  *   rule: an absent zoning polygon is one of at least four different things, and the publisher proves the
  *   asymmetry by stating `UNZ - Unzoned` as a POSITIVE value where it means it.
  */

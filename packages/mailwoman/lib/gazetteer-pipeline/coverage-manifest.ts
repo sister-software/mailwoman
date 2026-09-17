@@ -15,15 +15,15 @@
  *   Doctrine (operator-ratified 2026-07-26): facts ABOUT an artifact live in the artifact's
  *   manifest, read at load — so they update at gazetteer REBUILD, not at a code PR. This module is
  *   the drawer: it owns the reviewed measurement record ({@link MEASURED_COUNTRY_COVERAGE},
- *   {@link MEASURED_COUNTRY_BBOXES} — grow THESE at promotes, like `defaults.ts` owns the build
+ *   {@link MEASURED_COUNTRY_BBOXES} — grow these at promotes, like `defaults.ts` owns the build
  *   recipe) and the emission step `buildCandidate` runs before sealing. The schema + canonical
  *   read/write functions live in `@mailwoman/resolver-wof-sqlite/coverage-manifest-schema` (the
  *   fold/build convention: canonical package functions, composed here).
  *
- *   The SHIPPED candidate gazetteer is never patched ("never patch databases — rebuild"): an
+ *   The shipped candidate gazetteer is never patched ("never patch databases — rebuild"): an
  *   artifact predating the manifest reads `undefined` at open and every consumer falls back to the
  *   code constants byte-identically. The meaning-of-zero rule is honored structurally: FI/PL are
- *   PRESENT rows with `hardFilterSafe: false` (measured, failed the check) — distinguishable from a
+ *   present rows with `hardFilterSafe: false` (measured, failed the check) — distinguishable from a
  *   country that was simply never measured (absent row).
  */
 
@@ -50,7 +50,7 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
  * the `HARD_PLACE_COUNTRY_SAFELIST` code comment; the derived safelist (`hardFilterSafe === true`) is asserted
  * byte-identical to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
  *
- * Grow THIS at promotes (with the panel receipt in `source`); the fact reaches production at the next gazetteer rebuild
+ * Grow this at promotes (with the panel receipt in `source`); the fact reaches production at the next gazetteer rebuild
  * — the constant in core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [

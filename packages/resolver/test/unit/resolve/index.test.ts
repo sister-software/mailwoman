@@ -271,7 +271,7 @@ describe("resolveTree", () => {
 	})
 
 	test("#194 hardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved contract)", async () => {
-		// The locality exists only in FR; a hardCountry of FI must NOT fall back to it globally.
+		// The locality exists only in FR; a hardCountry of FI must not fall back to it globally.
 		const places: ResolvedPlace[] = [
 			{ id: 3, name: "Lyon", placetype: "locality", country: "FR", lat: 45.76, lon: 4.84, score: 9 },
 		]
@@ -289,7 +289,7 @@ describe("resolveTree", () => {
 		expect(result.roots[0]?.lat).toBeUndefined()
 		expect(result.roots[0]?.source).toBe("neural")
 		// Three lookups since the bare-toponym races (locality + the `country` and `region` side
-		// races), and ALL carried the FI filter — there is still no country-less retry anywhere.
+		// races), and all carried the FI filter — there is still no country-less retry anywhere.
 		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
@@ -560,7 +560,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		// Vermont and Viterbo; "ME" both Maine and Messina); modeled here as two same-named regions so
 		// the fake backend's name-substring match returns both. The non-US region scores higher on
 		// name/BM25, so without a signal the wrong country wins — and because resolveTree resolves region
-		// FIRST and inherits its country down, that poisons the locality too. The postcode posterior
+		// first and inherits its country down, that poisons the locality too. The postcode posterior
 		// breaks the tie at the region.
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Vermontia", placetype: "region", country: "IT", lat: 42.4, lon: 12.1, score: 8 },
@@ -584,9 +584,9 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("anchor posterior keeps the EXACT match within the pinned country (#369) — tier-safe", async () => {
 		// The "ME → Maine, not the more-populous Missouri" guard. Three regions all match the query.
-		// With a confident US posterior the US EXACT match (Maineland) must win over (a) a higher-SCORE
-		// US PARTIAL match (Missouriland — a plain additive boost would promote it, dropping the tier)
-		// and (b) a foreign EXACT match (Messinaland — the posterior breaks that tie WITHIN the exact
+		// With a confident US posterior the US exact match (Maineland) must win over (a) a higher-score
+		// US partial match (Missouriland — a plain additive boost would promote it, dropping the tier)
+		// and (b) a foreign exact match (Messinaland — the posterior breaks that tie within the exact
 		// tier). `exactMatch` is the backend-supplied tier flag (see ResolvedPlace.exactMatch).
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Maineland", placetype: "region", country: "US", lat: 45, lon: -69, score: 5, exactMatch: true },
@@ -615,7 +615,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	// Macro-tier equivalence groups + fallback observability (#718). WOF models some countries'
 	// top-level civil division as `macroregion` (Italian regions; the post-2016 French régions) rather
 	// than `region`; likewise `macrocounty` above `county` (FR/DE/GB). The region/county placetype
-	// filter now expands through PLACETYPE_FILTER_GROUPS to reach them, but the EXACT type is still
+	// filter now expands through PLACETYPE_FILTER_GROUPS to reach them, but the exact type is still
 	// preferred, and a macro-only resolution is annotated `resolution_quality: "fallback"`.
 	test("region span resolves to a macroregion fallback when no exact region exists (#718)", async () => {
 		// Only a macroregion matches "Veneto" — the region-only filter would have returned nothing.
@@ -663,7 +663,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("borough/localadmin under a locality query are NOT fallbacks (#718 scope guard)", async () => {
 		// The locality equivalence group's borough/localadmin are genuine peers (Brooklyn-the-borough),
-		// NOT macro fallbacks — they must resolve normally with no resolution_quality annotation.
+		// not macro fallbacks — they must resolve normally with no resolution_quality annotation.
 		const places: ResolvedPlace[] = [
 			{ id: 421_205_765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
 		]
@@ -682,7 +682,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	const DUAL_ROLE_PLACES: ResolvedPlace[] = [
 		{ id: 900, name: "Germany", placetype: "country", country: "DE", lat: 51.1, lon: 10.4, score: 10 },
 		{ id: 910, name: "Berlin", placetype: "region", country: "DE", parent_id: 900, lat: 52.52, lon: 13.4, score: 9 },
-		// Brandenburg resolves as a region but is NOT in the relation (not a dual-role place).
+		// Brandenburg resolves as a region but is not in the relation (not a dual-role place).
 		{
 			id: 920,
 			name: "Brandenburg",
@@ -945,7 +945,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			interpolated_point: { lat: 44.1, lon: -72.5, source: "tiger:edges", release: "TIGER2023" },
 		})
 
-		// NEVER the exact key — an estimate must not masquerade as a situs point.
+		// Never the exact key — an estimate must not masquerade as a situs point.
 		expect(street?.metadata?.["address_point"]).toBeUndefined()
 	})
 
@@ -1048,7 +1048,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		}
 
 		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix UNDER street; street.value is
-		// the bare base name. The query must be the FULL reassembled street, ordered by offset.
+		// the bare base name. The query must be the full reassembled street, ordered by offset.
 		const nested = tree("344 East Sheldon Rd 05450", [
 			node("street", "Sheldon", 8, 15, [
 				node("house_number", "344", 0, 3),
@@ -1129,9 +1129,9 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(called).toBe(false)
 	})
 
-	// #374 doctrine (2026-07-26): the conformal multiplier is a property of the calibration set the ARTIFACT
+	// #374 doctrine (2026-07-26): the conformal multiplier is a property of the calibration set the artifact
 	// was built against — an artifact carrying it in its header (`InterpolationLookup.radiusCalibration`,
-	// read at extract open) must produce EXACTLY what the legacy caller-supplied path produced.
+	// read at extract open) must produce exactly what the legacy caller-supplied path produced.
 	test("artifact-carried radiusCalibration is byte-identical to the caller-supplied factor (#374)", async () => {
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		const artifactInterp: InterpolationLookup = { find: fakeInterp.find, radiusCalibration: 1.7 }
@@ -1265,7 +1265,7 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 	})
 
 	test("unions the RESOLVED-tree country when no hint pins it (placer mis-route recovery)", async () => {
-		// Commune resolves to France (so `resolver_country: FR` is stamped) but NO pre-resolution hint says FR.
+		// Commune resolves to France (so `resolver_country: FR` is stamped) but no pre-resolution hint says FR.
 		const places: ResolvedPlace[] = [
 			{ id: 1, name: "Bordeaux", placetype: "locality", country: "FR", lat: 44.84, lon: -0.58, score: 9 },
 		]
@@ -1319,7 +1319,7 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		const street = streetTier(out)
 		expect(street?.metadata?.["street_centroid"]).toMatchObject({ lat: 44.8364, lon: -0.5736 })
 		expect(street?.metadata?.["street_locality"]).toBe("Bordeaux")
-		// The speculative "Rue" locality is GONE — it contradicted the register's commune.
+		// The speculative "Rue" locality is gone — it contradicted the register's commune.
 		const localities = out.roots.filter((n) => n.tag === "locality")
 		expect(localities).toHaveLength(0)
 	})
@@ -1357,8 +1357,8 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 	// negative branch of that comparison is a `roots.splice`, so the miss DELETED a correct locality node.
 	//
 	// The asymmetry is what makes the fold decide. `communes[]` is built from `adminValues` first, which already
-	// holds the node's OWN value — so whenever the typed value hits the register the fold cannot matter. It matters
-	// only when the typed value MISSES and the gazetteer's accented display name is the one leg left to match on.
+	// holds the node's own value — so whenever the typed value hits the register the fold cannot matter. It matters
+	// only when the typed value misses and the gazetteer's accented display name is the one leg left to match on.
 	test("#1764: the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
 		const lookup = fakeStreetCentroids([
 			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },

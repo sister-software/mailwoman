@@ -5,13 +5,13 @@
  *
  *   Build `localities-nz-linz.db` — the NZ suburb/locality database (#1564, the NZ lane's coverage
  *   gap; #1585's data half). The candidate gazetteer carries NZ's region + major-locality tiers but
- *   NO suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row and the resolver
+ *   no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row and the resolver
  *   can only mis-answer or abstain.
  *
  *   SOURCE + LICENSE: the LINZ-derived OpenAddresses NZ countrywide extract
  *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`) — upstream is LINZ "NZ Street
  *   Address" via OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the
- *   same lane the country-evidence runbook already ships pair-index data from). NOT derived from
+ *   same lane the country-evidence runbook already ships pair-index data from). Not derived from
  *   any Nominatim import — the ODbL comparison arm stays a comparison arm. The build refuses to run
  *   unless the source's md5 sidecar matches, and stamps source md5 + vintage into the database's
  *   `database_meta` table so provenance travels with the artifact.
@@ -22,7 +22,7 @@
  *   address point (robust against depot-coded outliers); the bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
  *   parsed toponym queries — a `neighbourhood` row would be invisible to the locality filter group,
- *   and widening THAT group is a global ranking change this database must not smuggle in. Population
+ *   and widening that group is a global ranking change this database must not smuggle in. Population
  *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.
  *
@@ -94,7 +94,7 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 }
 
 /**
- * Build the sealed NZ locality database. NOT re-exported from a barrel — the command lazy-imports it (optional-peer
+ * Build the sealed NZ locality database. Not re-exported from a barrel — the command lazy-imports it (optional-peer
  * discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(

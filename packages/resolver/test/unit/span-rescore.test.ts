@@ -61,7 +61,7 @@ const PLACES: FixturePlace[] = [
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
 	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare
 	// "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier
-	// that resolves it — which is why the runner-ups have to survive THIS path to reach a consumer.
+	// that resolves it — which is why the runner-ups have to survive this path to reach a consumer.
 	{
 		id: 10,
 		name: "Springfield",
@@ -95,7 +95,7 @@ const PLACES: FixturePlace[] = [
 		prominence: 5.05,
 		exactMatch: true,
 	},
-	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored check alongside it.
+	// Sits ~5 km from id 11 — the one same-name candidate that survives a 62701-anchored check alongside it.
 	{
 		id: 13,
 		name: "Springfield",
@@ -121,8 +121,8 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	// #1546: the non-Latin-primary namesake, modeled on the LIVE shipped board. Moscow RU (pop 12.7M,
-	// primary "Москва") is admitted to a "Moscow" query ONLY through its alias surface — the backend
-	// stamps exactMatch via the "Moscow" names row — and it ranks FIRST (population-first). The old
+	// primary "Москва") is admitted to a "Moscow" query only through its alias surface — the backend
+	// stamps exactMatch via the "Moscow" names row — and it ranks first (population-first). The old
 	// span-rescore filter re-checked the PRIMARY name folded to [a-z0-9 ], and norm("Москва") is ""
 	// — so the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
 	{
@@ -177,8 +177,8 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	// The "Ave, France" guard's own place, and the name that must survive it: `Prairie` is a street
-	// suffix AND the tail of a real locality, so the two cases differ only in whether the probed span
-	// IS the affix or merely contains it.
+	// suffix and the tail of a real locality, so the two cases differ only in whether the probed span
+	// is the affix or merely contains it.
 	{ id: 60, name: "Ave", placetype: "locality", country: "FR", lat: 43.7, lon: 4.6, score: 2, exactMatch: true },
 	{
 		id: 61,
@@ -191,7 +191,7 @@ const PLACES: FixturePlace[] = [
 		exactMatch: true,
 	},
 	// #2266: a two-character name that collides with a region code, scoring far above the locality the
-	// query is actually about. Both spans are ONE token, so only character extent separates them.
+	// query is actually about. Both spans are one token, so only character extent separates them.
 	{ id: 50, name: "Wa", placetype: "locality", country: "GH", lat: 10.06, lon: -2.5, score: 20, exactMatch: true },
 	{
 		id: 51,
@@ -335,7 +335,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#2266: a street node OVERLAPPING the span is not context — the `Fort Worth` shape", async () => {
-		// The model reads a bare famous name as a street, so the dropped word and the surviving fragment sit in ONE
+		// The model reads a bare famous name as a street, so the dropped word and the surviving fragment sit in one
 		// street node. Admitting that remainder would readmit the corruption the rule exists to refuse.
 		const raw = "86-300 Grudziądz, Daliowa 4"
 
@@ -386,7 +386,7 @@ describe("findRescoreCandidate", () => {
 
 	it("#1537: the postcode check filters the runner-ups on the same rule as the winner", async () => {
 		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the check drops them
-		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
+		// from both roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
 		// postcode already excluded is not a namesake worth offering.
 		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), {
 			country: "US",
@@ -578,7 +578,7 @@ describe("resolveTree + spanRescore", () => {
 
 		// The live shape: the model tags a bare famous namesake as a `street`, so the admin walk resolves
 		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated with an empty
-		// alternatives list, so the geocode path's candidate array held ONE entry and the dominance margin
+		// alternatives list, so the geocode path's candidate array held one entry and the dominance margin
 		// `declared_ambiguity` reads could not be computed at all.
 		const out = await resolver.resolveTree(
 			tree("Springfield", [node({ tag: "street", value: "Springfield", start: 0, end: 11, confidence: 0.4 })]),

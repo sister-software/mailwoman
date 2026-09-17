@@ -14,7 +14,7 @@ import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout MUST
+ *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout must
  *   match the Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`), or
  *   the model is fed garbage at inference. These vectors are pinned to values emitted by the Python
  *   function — if the TS drifts (locale order, centroid scale, renormalization), this fails.
@@ -85,7 +85,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
  * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it, not against a hash, so
  *    the oracle is readable;
  * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
- *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's FULL extent.
+ *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**

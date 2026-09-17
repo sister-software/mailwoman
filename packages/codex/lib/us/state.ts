@@ -11,7 +11,7 @@
  *   The full FIPS-keyed table still lives in `@mailwoman/tiger` (`tiger/state.ts`) and in the
  *   corpus TIGER adapter; folding those onto this set is a deliberate follow-up, not a v1 concern.
  *
- *   Like a Canadian province code, a US state's two-letter abbreviation IS a posted surface rather than only a
+ *   Like a Canadian province code, a US state's two-letter abbreviation is a posted surface rather than only a
  *   resolver key — `ca/province.ts` states the contrast with Germany and France in its own header — so this module
  *   carries the name→abbreviation direction too.
  */
@@ -192,7 +192,7 @@ const US_STATE_NAME_TO_ABBREVIATION: ReadonlyMap<string, USStateAbbreviation> = 
 /**
  * Resolve a US state/territory surface form (USPS abbreviation or full name) to its abbreviation; null if unknown.
  *
- * The mirror of `lookupCanadianProvince`, and it exists for the same reason: the two-letter code IS the surface an
+ * The mirror of `lookupCanadianProvince`, and it exists for the same reason: the two-letter code is the surface an
  * address line writes, so a source that publishes the name (GeoNames' postal export writes `California`, never `CA`)
  * has to be turned into the posted form before it can attest one.
  */

@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Anchor-absorption counter-augmentation (#220/#723, Probe A1). Teaches the model the CONTEXT-
- *   DEPENDENT leading-5-digit disambiguation that the killed #723 override was faking, AND that the
+ *   Anchor-absorption counter-augmentation (#220/#723, Probe A1). Teaches the model the context-
+ *   dependent leading-5-digit disambiguation that the killed #723 override was faking, and that the
  *   `anchor_paint_mode=shaped` WHERE fix alone over-corrected on (Probe A0: it flipped the default
  *   to house_number, recovering CASE-H but ERODING CASE-P — postcode F1 99.3→86.5 on
  *   leading-postcode rows like "05764 Finel Hollow Road, VT").
  *
- *   THE DISCRIMINATOR the model must learn (from the CASE-H vs CASE-P contrast, NOT a flipped
+ *   The discriminator the model must learn (from the CASE-H vs CASE-P contrast, not a flipped
  *   default):
  *
- *   - A leading 5-digit WITH a trailing postcode + street context → it is the HOUSE NUMBER (CASE-H)
- *   - A leading 5-digit with NO trailing postcode (US-rural / DE) → it IS the POSTCODE (CASE-P) Both
+ *   - A leading 5-digit with a trailing postcode + street context → it is the house number (CASE-H)
+ *   - A leading 5-digit with no trailing postcode (US-rural / DE) → it is the postcode (CASE-P) Both
  *       leading tokens are real ZIPs (so the painted anchor fires on both); only the surrounding
  *       context separates them. The model attends to the trailing token to decide the leading one.
  *
  *   Template mix (the A0 learning sets a HEAVY CASE-P floor so the default doesn't flip — DeepSeek's
  *   ≥35% CASE-P; here CASE-P total = 35%): H-adversarial 30% US street, leading real-ZIP house# +
- *   TRAILING postcode → house_number P-us-rural 20% US rural, leading postcode, NO trailing →
+ *   TRAILING postcode → house_number P-us-rural 20% US rural, leading postcode, no trailing →
  *   postcode (the A0-erosion fix) P-de 15% German leading postcode "{pc} {city}, {street} {hn}" →
- *   postcode anchor-fp 10% leading 5-digit that is NOT a real ZIP + trailing postcode →
+ *   postcode anchor-fp 10% leading 5-digit that is not a real ZIP + trailing postcode →
  *   house_number locale-ambig 15% minimal context; the local token (street-type vs none) decides
  *   standard 10% normal small house# + trailing postcode → house_number (baseline)
  *
@@ -38,7 +38,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { sample } from "@mailwoman/core/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
+   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -76,7 +76,7 @@ export interface SynthesizedAnchorAbsorptionRow {
 }
 
 /**
- * A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the HARD case — a 5-digit
+ * A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the hard case — a 5-digit
  * leading number that is still a house number when a locality is present).
  */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
@@ -142,7 +142,7 @@ const DE_TUPLES = [
 
 const HOUSE_NUMS = ["5", "12", "27", "100", "212", "1450", "8"]
 /**
- * Fake 5-digit strings that are NOT real US ZIPs (so the anchor lookup MISSES them) — for anchor-fp.
+ * Fake 5-digit strings that are not real US ZIPs (so the anchor lookup misses them) — for anchor-fp.
  */
 const FAKE_ZIPS = ["00000", "99998", "99997", "00001", "99996"]
 
@@ -158,7 +158,7 @@ export function synthesizeAnchorAbsorptionRow(
 	const street = `${sample(STREET_NAMES, random)} ${sample(STREET_TYPES, random)}`
 
 	if (template === "h-adversarial") {
-		// US street, leading real-ZIP house number, WITH a trailing postcode → the leading is house_number.
+		// US street, leading real-ZIP house number, with a trailing postcode → the leading is house_number.
 		const zip = sample(realZips, random)
 		const t = sample(US_TUPLES, random)
 		const raw = `${zip} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
@@ -172,7 +172,7 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "p-us-rural") {
-		// US rural, leading postcode, NO trailing postcode → the leading IS the postcode (the A0-erosion fix).
+		// US rural, leading postcode, no trailing postcode → the leading is the postcode (the A0-erosion fix).
 		const zip = sample(realZips, random)
 		const region = sample(RURAL_REGIONS, random)
 		const raw = `${zip} ${street}, ${region}`
@@ -200,7 +200,7 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "anchor-fp") {
-		// Leading 5-digit that is NOT a real ZIP (anchor MISSES) + trailing postcode → still house_number.
+		// Leading 5-digit that is not a real ZIP (the anchor misses) + trailing postcode → still house_number.
 		const fake = sample(FAKE_ZIPS, random)
 		const t = sample(US_TUPLES, random)
 		const raw = `${fake} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
@@ -233,12 +233,12 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 
 	if (template === "h-no-trailing-locality") {
-		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing
-		// postcode → the leading number is the HOUSE NUMBER. The CONTRAST to p-us-rural (same no-trailing,
+		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with no trailing
+		// postcode → the leading number is the house number. The CONTRAST to p-us-rural (same no-trailing,
 		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 recipe output lacked this template,
 		// so p-us-rural's "leading-number + STATE → postcode" rule over-generalized to 98 golden house#
-		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits AND real 5-digit ZIPs
-		// (the hard case: 5-digit + locality is STILL a house number, distinct from p-us-rural's no-locality).
+		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits and real 5-digit ZIPs
+		// (the hard case: 5-digit + locality is still a house number, distinct from p-us-rural's no-locality).
 		const hn = houseNum(random, realZips)
 		const t = sample(US_TUPLES, random)
 		const region = random() < 0.5 ? sample(RURAL_REGIONS, random) : t.region
@@ -269,13 +269,13 @@ export function synthesizeAnchorAbsorptionRow(
 // frequencies (matches the boundary-stress ALL_TEMPLATES idiom).
 //
 // A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held CASE-H (100) + postcode
-// (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did NOT move it — so it was never a
+// (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did not move it — so it was never a
 // CASE-P-quantity problem. The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house#
 // regressions were house#->POSTCODE on "{house#} {street}, {locality}, {STATE}" no-trailing rows — the
-// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the recipe output
-// had NO counter-template for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
+// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") over-generalized because the recipe output
+// had no counter-template for the common locality-bearing house# case. A3 adds h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
-// trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/CASE-H. CASE-P = 26%.
+// trims p-us-rural 16->13. Goal: house_number recovers without re-eroding postcode/CASE-H. CASE-P = 26%.
 /**
  * Every anchor-absorption template, in one list for the recipe to sample from. Each covers a way a venue or landmark
  * name can swallow the street token that follows it.

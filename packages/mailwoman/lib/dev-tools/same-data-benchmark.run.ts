@@ -7,7 +7,7 @@
  *   gazetteer. Three phases, run separately so the expensive one happens once:
  *
  *     panel   Execute the frozen selection rules over GeoNames and write the panel.
- *     record  Parse every query with the shipped model, drive the REAL backend once per arm option set,
+ *     record  Parse every query with the shipped model, drive the real backend once per arm option set,
  *             and freeze every answer. This is the only phase that touches a gazetteer.
  *     run     Replay the frozen fixture through the three arms, score, and write the results.
  *     sweep   Re-grade the frozen results under an abstention threshold and write the trade curve (#2264).
@@ -234,7 +234,7 @@ async function recordPhase(): Promise<void> {
 }
 
 /**
- * Every arm's `ResolveOpts`, production first. The production arm's EMPTY bag is listed explicitly: an omitted default
+ * Every arm's `ResolveOpts`, production first. The production arm's empty bag is listed explicitly: an omitted default
  * is a missing replay key, and `replayBackend` would then raise on the arm the benchmark is about.
  */
 function armOptionSets(): ResolveOpts[] {

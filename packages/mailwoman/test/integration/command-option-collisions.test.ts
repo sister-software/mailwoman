@@ -21,7 +21,7 @@ async function listCommandModules(): Promise<string[]> {
 	const files: string[] = []
 
 	for (const root of COMMAND_ROOTS) {
-		for await (const file of Globerator.files(["ts", "tsx"], { cwd: root })) {
+		for await (const file of Globerator.files(["ts", "tsx"], { cwd: root, absolute: true })) {
 			if (!file.endsWith(".test.ts")) {
 				files.push(file)
 			}

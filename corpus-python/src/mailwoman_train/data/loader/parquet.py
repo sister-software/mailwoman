@@ -1,7 +1,7 @@
 """Reading rows out of one parquet file, shuffled, with the per-row filters applied.
 
 Three shuffles happen here and they are all drawn from the caller's `rng`: row-group order within
-a file, row order within a group, and file order within a source. Source weighting is NOT applied
+a file, row order within a group, and file order within a source. Source weighting is not applied
 here — that is `mixture.py`'s multinomial, and doing it per row instead produces the
 `raw_share × accept_share` mix rather than the configured one.
 """
@@ -117,7 +117,7 @@ def _file_row_iter(
                         f"null span column(s) {nulls} in a span-schema file — never a silent "
                         "fallback to token labels"
                     )
-                # EMPTY is the other way a span-schema file lies, and it is the quieter one. A writer
+                # Empty is the other way a span-schema file lies, and it is the quieter one. A writer
                 # that projects rows without the span triple emits `[]` for all three, which passes the
                 # null check above; `char_label_array_from_spans(raw, [], [], [])` then returns an
                 # all-`O` array and every such row trains as "nothing here is an address component".

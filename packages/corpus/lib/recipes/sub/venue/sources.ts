@@ -11,7 +11,7 @@
  *
  *   Every rule in this file is a rule about EVIDENCE, and each one has a measurement behind it:
  *
- *   - {@link promotedSurfacesFor} — a promotion names a designator, a phrase AND a locale, because the
+ *   - {@link promotedSurfacesFor} — a promotion names a designator, a phrase and a locale, because the
  *       same token is a designator in one language and a disaster in another (`hall` is 0-of-3,273 in
  *       Great Britain and 35-of-40 in France).
  *   - {@link hasPromotedShape} — an `identifier-required` promotion is exercised only as
@@ -21,7 +21,7 @@
  *       differs by country far more than the shared vocabulary suggests (GB gates 71% bare digit, ES
  *       35% ranges).
  *   - {@link isVenueSlotName} / {@link isSignIdentifier} — the filters that keep bus-stop codes, route
- *       descriptions and street names out of the slots they would mislabel. Both were written FROM
+ *       descriptions and street names out of the slots they would mislabel. Both were written from
  *       smoke output, not predicted; the docstrings name the strings that produced them.
  */
 
@@ -101,12 +101,12 @@ export function isCleanName(name: string): boolean {
 }
 
 /**
- * Head words that make a "name" something other than a venue name, checked on the FIRST token.
+ * Head words that make a "name" something other than a venue name, checked on the first token.
  *
  * Two populations, both found by reading the 2026-08-05 smoke output rather than predicted:
  *
  * - **Street types.** A bus stop is routinely named after the street it stands on, so the FR extract offers `Rue de la
- *   Porte Bergault` as a `porte` confound. It IS a confound, but it is a STREET, and putting it in the venue slot would
+ *   Porte Bergault` as a `porte` confound. It is a confound, but it is a street, and putting it in the venue slot would
  *   train `Rue …` as a venue name — trading one mislabel for another.
  * - **Stop qualifiers.** British stop names carry a position prefix (`OPPOSITE BRICKLEHAMPTON HALL`, `ADJ THE GREEN`)
  *   that names a relationship rather than a place.
@@ -160,7 +160,7 @@ const NON_VENUE_HEAD_WORDS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Street types that appear at the END of an anglophone street name, checked on the LAST token.
+ * Street types that appear at the end of an anglophone street name, checked on the last token.
  *
  * The head-word filter cannot see these — English streets are `<name> <type>`, so `Strawberry Hall Lane` and `Guinea
  * Hall Mews` reached the venue slot in the second smoke and would have trained a STREET as a venue name. The
@@ -448,7 +448,7 @@ export interface IdentifierModel {
 const POOLED_IDENTIFIER_DESIGNATORS: readonly string[] = ["gate", "terminal", "campus"]
 
 /**
- * Minimum usable observations before a (region, designator) uses its OWN identifier distribution.
+ * Minimum usable observations before a (region, designator) uses its own identifier distribution.
  *
  * Below this the sample is noise — ES `terminal` has 5 usable refs — so the leg falls back to the region's pooled
  * gate+terminal+campus distribution, which is what the lexicon measured at volume (452–655 refs per region). The
@@ -534,7 +534,7 @@ export interface LegPools {
 	 */
 	longerNames: string[]
 	/**
-	 * Real names carrying a PROMOTED phrase in a shape the promotion does NOT cover — `Halle Rosengarten`, `PHOENIX
+	 * Real names carrying a promoted phrase in a shape the promotion does not cover — `Halle Rosengarten`, `PHOENIX
 	 * Halle`, `Halle-Südstadt`. The other half of an `identifier-required` ruling, and the only thing that teaches the
 	 * shape boundary rather than the word: de-DE has no `reject` row at all, so without this class its 168-hit confound
 	 * (97 of them the CITY Halle) would go untaught while its 32-hit promotion got 11,000 rows.
@@ -641,7 +641,7 @@ export async function readExtractPools(path: string, query: PoolQuery): Promise<
  * `overture-subvenue.ts` REJECTED as a lexicon source ("4,071 of them are the token `airport` in the aerodrome's own
  * name") and exactly what a venue slot wants. The confound set is that file's rejection list read as a source of
  * negatives: `shoe_store` contributes 708 hits of `wing` because Red Wing sells boots, and that is the row this recipe
- * needs to see with `wing` NOT tagged `unit`.
+ * needs to see with `wing` not tagged `unit`.
  */
 const POI_VENUE_CATEGORIES: readonly string[] = [
 	"airport",

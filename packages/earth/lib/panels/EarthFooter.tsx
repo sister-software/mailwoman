@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Earth's footer strip, in ONE place.
+ *   Earth's footer strip, in one place.
  *
  *   The app mounts two runtimes — the real one, and the canned one `?runtime=fake` serves the shell smoke and the
- *   stories — and both render THIS component rather than each building its own `<MapFooter>`. The deployed page is the
+ *   stories — and both render this component rather than each building its own `<MapFooter>`. The deployed page is the
  *   real one, so anything the fake path alone carries renders nowhere a visitor can see, and a smoke reading the fake
  *   footer then attests something that does not ship. `status` is the only thing the two paths may differ by.
  */

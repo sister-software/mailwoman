@@ -8,7 +8,7 @@
  *
  *   The failing case: `12 Rue de Rivoli, 75001 Paris` under the en-US locale. `--locale` defaults to
  *   `en-US`, `localeToCountry` turns that into `ResolveOpts.defaultCountry = "US"`, and the backend
- *   turns THAT into a hard `spr.country = 'US'` WHERE clause. The candidate pool is all-US before
+ *   turns that into a hard `spr.country = 'US'` WHERE clause. The candidate pool is all-US before
  *   ranking begins, so a coarse placer that already called this address FR at confidence
  *   0.9999908844 has nothing to promote — a soft re-rank downstream of a hard filter is inert by
  *   construction. Population then picks Paris, Texas (pop 24,969). With the postal extracts attached
@@ -17,9 +17,9 @@
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See
  *   `docs/records/evals/2026-08-03-postcode-locality-scoping.md` for the instrumented diagnosis.
  *
- *   No pattern-only change can fix this. `75001` is NOT unambiguously French:
+ *   No pattern-only change can fix this. `75001` is not unambiguously French:
  *   `candidateSystemsForPostcode("75001")` returns `["us", "de", "fr"]`, and the 2026-08-04
- *   candidate gazetteer holds the literal string in FOUR countries — FR 48.863,2.336 (Paris 1er),
+ *   candidate gazetteer holds the literal string in four countries — FR 48.863,2.336 (Paris 1er),
  *   US 32.960,-96.838 (Addison TX), DE 48.844,9.367, PL 54.190,16.188 (×2 rows). The SHAPE is
  *   ambiguous four ways. The GEOMETRY is not: Addison and Paris are ~8,000 km apart, and only one
  *   of the four has a same-named locality next to its 75001.
@@ -29,7 +29,7 @@
  *   three times (`applyAdminCoherence` #263, `applyExplicitCountryCoherence` #822,
  *   `applyRegionCountryCoherence`), just keyed on the postcode instead of a region or country token.
  *
- *   ## Why it runs BEFORE the walk, not after
+ *   ## Why it runs before the walk, not after
  *
  *   Its three siblings are post-walk re-picks: the walk resolves greedily, they swap the wrong node
  *   pair for the right one. That shape cannot work here, because the thing to correct is the walk's
@@ -42,14 +42,14 @@
  *
  *   ## Why it is not a hard veto (the doctrine check)
  *
- *   Registries are SOFT priors here, positive evidence only. Two properties keep this one honest:
+ *   Registries are soft priors here, positive evidence only. Two properties keep this one honest:
  *
- *   1. **The default country is tested FIRST, and a coherent default always wins.** If (postcode,
+ *   1. **The default country is tested first, and a coherent default always wins.** If (postcode,
  *      locality) is consistent under `defaultCountry`, the pass returns `null` immediately, having
  *      spent at most two lookups, and the walk is byte-identical. Every correctly-scoped domestic
  *      parse exits here. It is not "US loses to FR"; it is "US had no answer".
  *   2. **Abstention is the default outcome.** Zero coherent countries (a wrong-for-the-city
- *      postcode, or a recall gap in the gazetteer) and MORE than one coherent country (a genuine
+ *      postcode, or a recall gap in the gazetteer) and more than one coherent country (a genuine
  *      geographic tie) both return `null`. The mechanism only ever speaks when exactly one country
  *      makes the pair consistent, and only ever when the default country could not.
  *
@@ -69,13 +69,13 @@
  *      widening can only convert an abstention into a verdict or a verdict into an abstention, never a
  *      verdict into a different one.
  *   2. **The pair was all-or-nothing.** Ten panel rows had unimpeachable one-sided evidence and no pair:
- *      the gazetteer carries no CH or BE postcodes at all (so `Sarnen` and `Kelmis` could never agree
+ *      the gazetteer carries no Swiss or Belgian postcodes at all (so `Sarnen` and `Kelmis` could never agree
  *      with anything), and `Praha 3` / `Praha 9` are municipal districts no admin gazetteer names (so
- *      `13000` had nothing to agree WITH). Each half may now speak alone — but only when the DEFAULT
- *      country corroborates NEITHER half, and only when the speaking half names exactly one country in
+ *      `13000` had nothing to agree with). Each half may now speak alone — but only when the default
+ *      country corroborates neither half, and only when the speaking half names exactly one country in
  *      the whole gazetteer. See {@link PostcodeCountryScopeEvidence}.
  *
- *   The abstention doctrine is unchanged and is what bounds the new rungs: a two-country tie is a HARD
+ *   The abstention doctrine is unchanged and is what bounds the new rungs: a two-country tie is a hard
  *   abstention that never falls through to the single-sided rungs. Corroboration at home bounds them
  *   asymmetrically: the address's own POSTCODE existing in the default country stops the pass dead,
  *   while a LOCALITY value at home neutralizes that value as a foreign witness without silencing its
@@ -120,7 +120,7 @@ export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
  * Which half (or halves) of the address bought the verdict — the firing receipt, so a reader of a scoped result can
  * tell a two-sided agreement from a one-sided uniqueness claim without re-deriving it.
  *
- * - `pair` — postcode AND locality both resolve in this country, within the radius. The strongest rung and the only one
+ * - `pair` — postcode and locality both resolve in this country, within the radius. The strongest rung and the only one
  *   that existed before #24.
  * - `locality` — the locality names exactly one country in the whole gazetteer, and the postcode names none that
  *   contradict it. This is the CH/BE class: the gazetteer carries no Swiss or Belgian postcodes at all, so the pair
@@ -152,7 +152,7 @@ export interface PostcodeCountryScope {
 	evidence: PostcodeCountryScopeEvidence
 	/**
 	 * Distance between the resolved postcode point and the nearest same-named locality, in km. Always `<= thresholdKm`.
-	 * Present ONLY for the `pair` rung — a single-sided verdict has no two points to measure between, and reporting a `0`
+	 * Present only for the `pair` rung — a single-sided verdict has no two points to measure between, and reporting a `0`
 	 * there would assert an agreement nobody tested (the meaning-of-zero rule).
 	 */
 	distanceKm?: number
@@ -169,7 +169,7 @@ export interface PostcodeCountryScope {
 export interface PostcodeCountryScopeOpts {
 	/**
 	 * The postcode string from the tree (the resolver already pre-scans for it — pass `state.postcode` so this pass and
-	 * the walk can never disagree about WHICH postcode is the address's).
+	 * the walk can never disagree about which postcode is the address's).
 	 */
 	postcode: string
 	/**
@@ -184,8 +184,8 @@ export interface PostcodeCountryScopeOpts {
 	 */
 	thresholdKm?: number
 	/**
-	 * Optional narrowing of the SHAPE half of the candidate-country set — the shape-coherence pass's intersection for a
-	 * CONFIRMED postcode span (see `resolver/postcode-shape-coherence.ts`, #31 Mechanism 1). When present it REPLACES
+	 * Optional narrowing of the shape half of the candidate-country set — the shape-coherence pass's intersection for a
+	 * confirmed postcode span (see `resolver/postcode-shape-coherence.ts`, #31 Mechanism 1). When present it REPLACES
 	 * `candidateSystemsForPostcode`'s own list; it is a pure subset of that list (codex systems ∩ confident sibling
 	 * systems). Upper-case ISO-3166 alpha-2, e.g. `["US"]` for a 5-digit code whose siblings all say US.
 	 *
@@ -214,13 +214,13 @@ const MAX_LOCALITY_VALUES = 3
  * case-insensitively deduplicated. Two passes so a real locality always beats a dependent one regardless of tree
  * order.
  *
- * Document order is required, not cosmetic. The original stack-pop traversal visited the LAST node first, so on `92
+ * Document order is required, not cosmetic. The original stack-pop traversal visited the last node first, so on `92
  * Laurell Road, Gander, NL A1V 0A9` — where the model tags both `Gander` and the province abbreviation `NL` as
  * localities — the pass keyed its whole country verdict on "NL", whose only exact locality-band bearer is an alias of
  * Nal, Afghanistan, and the walk resolved a Newfoundland street 10,000 km away. The FIRST-written locality is the one
  * the address is about.
  *
- * ALL values matter, not just the first. On `Calle Mayor 12, Aravaca, 28023 Madrid` the model tags both `Aravaca` and
+ * All values matter, not just the first. On `Calle Mayor 12, Aravaca, 28023 Madrid` the model tags both `Aravaca` and
  * `Madrid` as localities; `Aravaca` is a neighbourhood the locality band cannot see, while `Madrid` carries the ES pair
  * verdict (the ES 28023 row sits 9.6 km from the Madrid locality row). A pass keyed on a single value bets the whole
  * country verdict on whichever one a traversal order happens to pick — first-only re-scoped that address to the US ZIP
@@ -289,7 +289,7 @@ const MAX_CANDIDATE_COUNTRIES = 12
  * could possibly be right. Membership in the gazetteer is positive evidence of the same kind the pair test already runs
  * on, available for one lookup, and it is EXHAUSTIVE for postcodes at the measured cardinality.
  *
- * `exactMatch !== false` is the admission bar: a fuzzy postcode hit is a DIFFERENT postcode (the 2026-08-05 Code-Point
+ * `exactMatch !== false` is the admission bar: a fuzzy postcode hit is a different postcode (the 2026-08-05 Code-Point
  * lesson — `BT3 9QQ` trigram-matching Sheffield's `S3 9QQ`), and a fuzzy locality hit is evidence about the index, not
  * about the country. Backends that do not stamp the flag leave it undefined and still contribute.
  */
@@ -362,7 +362,7 @@ async function coherenceIn(
 		return null
 	}
 
-	// EXACT matches only. A fuzzy same-country hit ("Paris" → "Parish") is not evidence that the postcode
+	// Exact matches only. A fuzzy same-country hit ("Paris" → "Parish") is not evidence that the postcode
 	// belongs to this country; it is evidence that the FTS index is generous. Backends that do not stamp
 	// `exactMatch` therefore contribute nothing here rather than contributing noise.
 	let best: { localityPlace: ResolvedPlace; distanceKm: number } | null = null
@@ -384,7 +384,7 @@ async function coherenceIn(
 /**
  * The country in which this address's postcode and locality are geographically consistent — or `null` to abstain.
  *
- * Order matters and is the whole safety argument. The caller's `defaultCountry` is tested FIRST; a coherent default
+ * Order matters and is the whole safety argument. The caller's `defaultCountry` is tested first; a coherent default
  * short-circuits with `null` (nothing to correct, ≤2 lookups spent, the walk unchanged). Only when the default cannot
  * make the pair consistent are the codex shape's other candidate systems tried, and only a UNIQUE coherent alternative
  * produces a verdict — zero (no evidence) and two-or-more (a genuine tie) both abstain.
@@ -412,10 +412,10 @@ export async function findPostcodeCountryScope(
 	// `Maracaibo 4001, Zulia, Venezuela` is the worked case. `Zulia` is a Venezuelan REGION the parse
 	// mis-tagged `locality`, Venezuela holds no locality of that name and Colombia does, so rung 4a reads
 	// "this locality value names exactly one country" and returns CO. That override replaces
-	// `state.defaultCountry` for the WHOLE walk, so `Venezuela` itself is then probed inside Colombia and
+	// `state.defaultCountry` for the whole walk, so `Venezuela` itself is then probed inside Colombia and
 	// answers nothing — the address comes back with no country, having named one.
 	//
-	// Deliberately a HARD abstention on the presence of the token, not a test of whether the named country
+	// Deliberately a hard abstention on the presence of the token, not a test of whether the named country
 	// agrees. A pass that re-decided between the two would be the same inference wearing a tie-break, and
 	// this file's own discipline is that a contest it cannot settle abstains. Whether the named country is
 	// SPELLED correctly is a separate question, owned by the walk's own country lookup.
@@ -423,14 +423,14 @@ export async function findPostcodeCountryScope(
 
 	const localities = localityValuesInDocumentOrder(roots)
 
-	// Both halves of the pair are required. A postcode with no locality has nothing to be coherent WITH, which is what
+	// Both halves of the pair are required. A postcode with no locality has nothing to be coherent with, which is what
 	// keeps this pass inert on "Springfield, IL 62701" (the parser tags Springfield as a `street` — a separate defect)
 	// and on every bare-postcode query.
 	if (!localities.length) return null
 
 	const thresholdKm = opts.thresholdKm ?? POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM
 
-	// 1. Is the caller's own default country coherent with ANY of the address's locality values? If so we are done —
+	// 1. Is the caller's own default country coherent with any of the address's locality values? If so we are done —
 	//    positive evidence for the default, no override, and the common domestic path (one locality value) costs two
 	//    lookups and changes nothing. With no default in force (the browser cascade) there is nothing to test — the
 	//    sweep below carries the whole verdict.
@@ -463,7 +463,7 @@ export async function findPostcodeCountryScope(
 		.slice(0, MAX_CANDIDATE_COUNTRIES)
 
 	// 3. The pair sweep, per locality value in document order: the first value that produces evidence decides. A value
-	//    the band cannot see (`Aravaca`, a neighbourhood) yields zero coherent countries and the NEXT value gets its
+	//    the band cannot see (`Aravaca`, a neighbourhood) yields zero coherent countries and the next value gets its
 	//    turn — betting the verdict on a single value re-scoped that address to a US ZIP centroid (see
 	//    localityValuesInDocumentOrder). Exactly one coherent country is a verdict. Two coherent countries mean the
 	//    geometry genuinely does not decide, and guessing between them is precisely what this mechanism exists not to
@@ -500,19 +500,19 @@ export async function findPostcodeCountryScope(
 	//    So each half gets to speak alone, under conditions that keep this from becoming a guess. The
 	//    POSTCODE half is all-or-nothing: the default country holding this postcode makes the address
 	//    domestically plausible outright, and nothing foreign may be proposed. The LOCALITY half is
-	//    judged PER VALUE — a value the default country holds is domestic corroboration for THAT value
+	//    judged per value — a value the default country holds is domestic corroboration for that value
 	//    (it is neutralized as a foreign witness) without silencing its siblings. `14 Long St, Green
 	//    Point, Cape Town, 8001` is why: "Green Point" has pop-0 US namesakes, and letting that one
 	//    value abstain the whole pass handed a uniquely-ZA "Cape Town" to a hard US filter (the walk
 	//    answered Green Point, Pennsylvania). `123 Main St, Vienna, VA 22180` still holds in Virginia:
-	//    its ONLY locality value is domestic, so no foreign witness remains. The speaking value must
+	//    its only locality value is domestic, so no foreign witness remains. The speaking value must
 	//    name EXACTLY ONE country in the entire gazetteer — the same uniqueness bar the pair rung uses,
 	//    applied to one side — and all speaking values must AGREE on that country.
 	if (pcHolders.has(defaultCountry)) return null
 
 	// 4a. A locality value names exactly one country. Stronger than the postcode rung — a place name is far
 	//     more discriminative than a four-digit code — so it is tried first. A verdict stands down when that
-	//     country's OWN postcode row contradicts the locality (outside the check): the two halves disagreeing
+	//     country's own postcode row contradicts the locality (outside the check): the two halves disagreeing
 	//     inside one country is exactly what the pair test exists to catch, and a single-sided rung must not
 	//     launder it.
 	// PRIMARY-keyed rows only (#1626's re-reading discipline, applied to a country verdict): "the locality
@@ -552,13 +552,13 @@ export async function findPostcodeCountryScope(
 		}
 	}
 
-	// Every speaking value must agree: two values uniquely naming DIFFERENT countries is a genuine
+	// Every speaking value must agree: two values uniquely naming different countries is a genuine
 	// ambiguity, and guessing between them is what this mechanism exists not to do.
 	if (verdicts.size === 1) return [...verdicts.values()][0]!
 
 	if (verdicts.size > 1) return null
 
-	// 4b. The postcode is held in exactly one country and the locality half is silent EVERYWHERE — no value
+	// 4b. The postcode is held in exactly one country and the locality half is silent everywhere — no value
 	//     is domestic and no value names any country. `Biskupcova 1843/3, 13000 Praha 3`: `13000` is a CZ
 	//     code and nothing else, anywhere, and `Praha 3` (a municipal district) is in no admin gazetteer.
 	if (!anyDomestic && !anyLocalityKnown && pcHolders.size === 1) {
@@ -573,7 +573,7 @@ export async function findPostcodeCountryScope(
 }
 
 /**
- * Does `country` hold an exact, coordinate-bearing locality row for `locality`? One scoped lookup — deliberately NOT
+ * Does `country` hold an exact, coordinate-bearing locality row for `locality`? One scoped lookup — deliberately not
  * read off the unscoped holder window, which is population-first and truncated, so a small domestic bearer could fall
  * below its fold and let a foreign scope through.
  */
@@ -601,7 +601,7 @@ export function stampPostcodeCountryScope(roots: readonly AddressNode[], scope: 
 		n.metadata = {
 			...n.metadata,
 			postcode_country_scope: scope.country,
-			// WHICH rung spoke — a two-sided agreement and a one-sided uniqueness claim are different evidence,
+			// Which rung spoke — a two-sided agreement and a one-sided uniqueness claim are different evidence,
 			// and a consumer that cannot tell them apart cannot weight them differently.
 			postcode_country_scope_evidence: scope.evidence,
 			// Only the `pair` rung measured a distance. Writing a 0 for the single-sided rungs would assert an

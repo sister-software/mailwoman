@@ -59,7 +59,7 @@ export interface ConformanceSuite {
 	law: string
 	path: string
 	/**
-	 * Suite-wide checks, run BEFORE the engine loads. One message per problem, empty when the suite is runnable.
+	 * Suite-wide checks, run before the engine loads. One message per problem, empty when the suite is runnable.
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**

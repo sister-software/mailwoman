@@ -52,7 +52,7 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
 
 /**
- * A tag-rule table entry as this module reads it: a conjunction (AND) of `[key, value]` pairs. OR across tags is
+ * A tag-rule table entry as this module reads it: a conjunction (`AND`) of `[key, value]` pairs. `OR` across tags is
  * expressed as multiple rules in the table.
  */
 export interface TagRuleLike {

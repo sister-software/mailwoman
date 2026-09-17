@@ -85,7 +85,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-		// The reason this composition exists: a bare lowercase fold does NOT match them.
+		// The reason this composition exists: a bare lowercase fold does not match them.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 
@@ -240,7 +240,7 @@ describe("auditCaseFoldingSuite", () => {
 
 describe("a seeded case regression", () => {
 	/**
-	 * The pipeline stand-in that fails ONLY on the uppercase arm — the shape both live findings take. Seeding the
+	 * The pipeline stand-in that fails only on the uppercase arm — the shape both live findings take. Seeding the
 	 * regression rather than waiting for one is what proves the failure line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {

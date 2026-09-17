@@ -11,7 +11,7 @@
  *
  *   The rule set is `docs/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
  *   additions, fixture-tested by `docs/scripts/check/vale-rules.ts`. The config path resolves
- *   relative to THIS module, so a worktree checkout lints with its own rules.
+ *   relative to this module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
  *   curated to near-zero legitimate use, and the correction must REPLACE the judgment with the

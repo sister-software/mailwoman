@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode buildDiskStorage} — the on-disk `axios-cache-interceptor` storage.
  *
- *   The two rules with history behind them get dedicated, mutation-proved coverage: validate BEFORE
+ *   The two rules with history behind them get dedicated, mutation-proved coverage: validate before
  *   writing, and write atomically under a per-write-unique temp name.
  */
 
@@ -290,7 +290,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		// The contract, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
 		// `onFulfilled`, so a throwing write rejects a request whose HTTP response already succeeded. It
 		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as FALSE, so a
-		// caller is told the failure is permanent and drops the work. ANY filesystem error does this;
+		// caller is told the failure is permanent and drops the work. Any filesystem error does this;
 		// reproduced here with a `0o500` parent.
 		if (!(await makeUnwritable())) {
 			await restore()
@@ -321,7 +321,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	})
 
 	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
-		// The same repro showed one rejection and two successes for the SAME response — a request's
+		// The same repro showed one rejection and two successes for the same response — a request's
 		// outcome depending on whether it happened to be the one that lost a cache-write race.
 		if (!(await makeUnwritable())) {
 			await restore()

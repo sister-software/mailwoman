@@ -16,7 +16,7 @@
  *   `<title>` text `Document`, table header labels (`Entity Name`, `Full Legal Name`), and twelve rows
  *   whose `name` was the bullet character `•` and whose `jurisdiction` was the actual company name.
  *
- *   **`test-fixtures/edgar/expected.json` is ground truth, and it was NOT produced by this parser.** It
+ *   **`test-fixtures/edgar/expected.json` is ground truth, and it was not produced by this parser.** It
  *   comes from an independent DOM-based reference implementation, read line by line against the source
  *   documents. An expectation copied from the implementation under test certifies whatever that
  *   implementation does — including the eight zero-yield documents and the eighteen fabrications above,
@@ -44,7 +44,7 @@ interface ExpectedFixtures {
 const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
 
 // parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
-// degrade to a fallback, since it IS the contract every assertion below is measured against.
+// degrade to a fallback, since it is the contract every assertion below is measured against.
 const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
@@ -62,7 +62,7 @@ function normalized(html: string): string {
 
 /**
  * `alti-global-2025.htm` separates its entries with nothing but a double space, so no name/jurisdiction boundary exists
- * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every OTHER vendored
+ * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every other vendored
  * document states a subsidiary list a reader can follow, so zero is a parser failure there, not an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])

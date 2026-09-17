@@ -5,8 +5,8 @@
  *
  *   Byte-fallback offset-reconstruction regression (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`).
  *
- *   A byte-fallback piece's placeholder TEXT (`"<0x7B>"`, 6 chars) is NOT 6 input characters — it represents exactly
- *   ONE byte of a real character's UTF-8 encoding. An offset walker that advances the cursor by the placeholder's
+ *   A byte-fallback piece's placeholder text (`"<0x7B>"`, 6 chars) is not 6 input characters — it represents exactly
+ *   one byte of a real character's UTF-8 encoding. An offset walker that advances the cursor by the placeholder's
  *   length desyncs every SUBSEQUENT piece's `[start, end)` offsets for the rest of the input, not just the
  *   byte-fallback piece itself, which is why the assertions here reach well past the fallback run. On the small
  *   fixture tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) byte-fallback fires on curly quotes “”‘’,
@@ -22,7 +22,7 @@ import { describe, expect, test } from "vitest"
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 /**
- * Assert every piece AFTER the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`.
+ * Assert every piece after the first byte-fallback run still recovers its literal text via `raw.slice(start, end)`.
  */
 async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -32,7 +32,7 @@ async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 
 	// Offsets must never regress (non-decreasing across the whole stream) — the fundamental guarantee
 	// `tokenizer-large-parity.test.ts` checks for the "supported" subset. Its exclusion filter drops
-	// byte-fallback pieces, so this suite is the only place the guarantee is asserted WITH them present.
+	// byte-fallback pieces, so this suite is the only place the guarantee is asserted with them present.
 	for (let i = 1; i < pieces.length; i++) {
 		expect(pieces[i]!.start).toBeGreaterThanOrEqual(pieces[i - 1]!.end)
 	}
@@ -51,7 +51,7 @@ async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	}
 
 	// The final byte-fallback offset must equal `raw.length` when the run reaches the end of input, and every
-	// downstream normal piece's start must be >= the run's decoded end — i.e. the cursor is NEVER left ahead of
+	// downstream normal piece's start must be >= the run's decoded end — i.e. the cursor is never left ahead of
 	// where the real characters actually are.
 	expect(pieces.at(-1)!.end).toBeLessThanOrEqual(raw.length)
 }
@@ -97,7 +97,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)
 
-		// Only the LAST piece of each run carries the real (non-zero-width) span; earlier pieces are zero-width
+		// Only the last piece of each run carries the real (non-zero-width) span; earlier pieces are zero-width
 		// placeholders at the run's start — mirrors groupPiecesIntoWords's "own placeholder, zero contribution"
 		// idiom for a bare ▁.
 		expect(openRun[0]!.start).toBe(openRun[0]!.end)
@@ -150,7 +150,7 @@ async function encodeToTuples(raw: string): Promise<Array<[string, number, numbe
 
 describe("MailwomanTokenizer — per-character byte-fallback run splitting (CJK residual)", () => {
 	test("東京都渋谷区 — a multi-character run splits at UTF-8 character boundaries, no offset collapse", async () => {
-		// On the fixture vocab 東/谷/区 have direct tokens, while 京都渋 fall back to ONE contiguous 9-piece byte run
+		// On the fixture vocab 東/谷/区 have direct tokens, while 京都渋 fall back to one contiguous 9-piece byte run
 		// (3 bytes per character). Before the split, all 9 pieces collapsed onto [1, 4) at the run's final piece —
 		// a BIO tag boundary inside the run (e.g. B-region at 都) could never surface as its own span.
 		const tuples = await encodeToTuples("東京都渋谷区")

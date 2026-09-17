@@ -15,9 +15,9 @@
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
  *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/eval-<label>]
  *
- *   The --model dual grades RAW artifacts: its fp32↔int8 deltas are valid, but its absolute floors
- *   are NOT for any channel-trained model — the package channel siblings (anchor, gazetteer,
- *   COUNTRY) never load on that path. Package-shaped grading (--weights-cache) is the only
+ *   The --model dual grades raw artifacts: its fp32↔int8 deltas are valid, but its absolute floors
+ *   are not for any channel-trained model — the package channel siblings (anchor, gazetteer,
+ *   country) never load on that path. Package-shaped grading (--weights-cache) is the only
  *   in-distribution floor read, and a PAIR of caches (#47) grades floors and the delta cap together
  *   in one run — the release path.
  *
@@ -27,15 +27,15 @@
  *       score-country-homograph, de-order-eval, preset-compare. When --int8 is given, re-runs
  *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
  *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
- *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent; floor
- *       key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
+ *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips with a loud warning when the DB
+ *       is absent; floor key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
  *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
- *       artifact mask-off vs mask-on and FAILS the eval if any tag drops >2pp under the mask — the
+ *       artifact mask-off vs mask-on and fails the eval if any tag drops >2pp under the mask — the
  *       "second lock" beside createScorer's load-time capability delta check.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
- *   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
+ *   - Exit 0 = every floor met and the mask-regression lock held; exit 1 = any miss.
  *
- *   EVERY leg RUNS IN-PROCESS. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
+ *   Every leg runs in-process. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
  *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
  *   `fr-parse-recall`), re-serializing typed options into argv and scraping stdout back out of a
  *   pipe. They are now direct calls into sibling modules with typed options and a line sink,
@@ -49,8 +49,8 @@
  *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
  *   concatenate them in that order. `promotion-eval-sinks.test.ts` pins the table.
  *
- *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
- *   then THREW AWAY (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
+ *   One deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
+ *   then threw away (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
  *   reaches the runner's own stderr, because those modules default `reportError` to `console.error`
  *   and this file only overrides the sinks it actually files. `$.verbose = false` used to swallow
  *   them, which is why a 20-minute per-locale leg looked like a hang. Every `.md` is byte-identical
@@ -163,7 +163,7 @@ export interface PromotionEvalOptions {
 	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionEvalOptions.weightsCache} — pairing them runs
 	 * the dual fp32+int8 battery entirely package-shaped (#47). The `--model`+`--int8` dual under-feeds the country
 	 * channel (channel siblings never load), so its absolute floors are invalid and a release grade needed a second,
-	 * single-artifact `--weights-cache` run; a pair makes floors AND deltas valid in one run. Requires
+	 * single-artifact `--weights-cache` run; a pair makes floors and deltas valid in one run. Requires
 	 * {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
 	 */
 	int8WeightsCache?: string
@@ -227,7 +227,7 @@ export async function listEvalSpecs(): Promise<string[]> {
  * not be stale, and every graded artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`. Returns an
  * exit code to propagate, or `null` when the run may proceed.
  *
- * A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first eval run false-FAILed (us.postcode
+ * A FAIL is only trustworthy if you know which bytes were graded. v1.9.2's first eval run false-FAILed (us.postcode
  * 86.9) because it graded a stale/mislabeled artifact — the real model scored 97.5 under every config.
  */
 async function runLoreGuards(env: {
@@ -279,7 +279,7 @@ async function runLoreGuards(env: {
 	}
 
 	// Record the exact artifact provenance used for this evaluation.
-	// A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first eval run
+	// A FAIL is only trustworthy if you know which bytes were graded. v1.9.2's first eval run
 	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
 	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
@@ -402,9 +402,9 @@ async function runLoreGuards(env: {
 /**
  * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery lacks (the 2026-06-11
  * lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on the ship artifact against the slim hot DB
- * the demo serves. Env-restricted like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays
- * green without it — but an eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by
- * design).
+ * the demo serves. Env-restricted like the other artifact-dependent legs: skips with a loud warning when the DB is
+ * absent so CI stays green without it — but an eval spec that floors `cascade.demo_smoke` will then fail on the missing
+ * sidecar (by design).
  *
  * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling; nothing about the
  * leg's behavior changed in the lift.
@@ -466,7 +466,7 @@ async function runDemoCascadeLeg(env: {
 }
 
 /**
- * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
+ * Run the full promotion-eval battery. Returns the process exit code: 0 = every floor met and the mask-regression lock
  * held, 1 = any miss, 2 = usage / lore-guard refusal.
  */
 export async function runPromotionEval(options: PromotionEvalOptions): Promise<number> {
@@ -499,14 +499,14 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
 	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
 	//
-	// The cache layout comes from `weightsCachePackageDir` — the resolver's OWN function, not a
+	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function, not a
 	// re-typed `node_modules/@mailwoman/neural-weights-en-us` literal (2026-08-06 triage). The three
 	// artifacts are then named as siblings of that directory, which is what `resolveFromPackageDir`
 	// does one layer down.
 	//
-	// NOT `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a FALLBACK. A staged
+	// Not `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a fallback. A staged
 	// bundle missing its binaries falls through to rung 1 (the installed/workspace package), which in
-	// this repo always resolves — so a mis-staged candidate would be graded as the SHIPPED model,
+	// this repo always resolves — so a mis-staged candidate would be graded as the shipped model,
 	// silently, and the verdict would carry production's numbers under the candidate's label. Naming
 	// the directory keeps the failure an ENOENT in the provenance guard's md5 read, three lines down.
 	const WC = options.weightsCache ?? ""
@@ -539,7 +539,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
-	// A label-less spec must not crash the PASS path (the post-verdict ledger hint interpolates
+	// A label-less spec must not crash the `PASS` path (the post-verdict ledger hint interpolates
 	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
 	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
@@ -570,7 +570,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
-	// detection). Same contract discipline as the gaz flags — the spec IS the ship config.
+	// detection). Same contract discipline as the gaz flags — the spec is the ship config.
 	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
@@ -586,7 +586,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	// The answer key is part of the ship config, exactly like the gaz flags and the conventions mask.
-	// Recorded in the provenance line so a verdict says WHICH key produced it.
+	// Recorded in the provenance line so a verdict says which key produced it.
 	if (check.golden_dir) {
 		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
 	}
@@ -602,8 +602,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// carries the shipped package whatever its tag reads, so it keeps every de-order run.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
-		// Package-shaped (#718): the metric probes (which support weightsCache) load ALL channels —
-		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
+		// Package-shaped (#718): the metric probes (which support weightsCache) load all channels —
+		// anchor + gazetteer + country — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
 		// model when package-shaped. `wc` is the PER-BATTERY cache root so a paired int8 arm (#47)
 		// loads its own package, not the fp32 arm's.
@@ -671,7 +671,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					// The country probe ALWAYS suppresses gaz clues near a postcode, whether or not the spec
+					// The country probe always suppresses gaz clues near a postcode, whether or not the spec
 					// asked for the gaz channel — this flag was hard-coded on its command line.
 					suppressGazNearPostcode: true,
 					json: `${OUT_DIR}/${tag}-country.json`,
@@ -737,7 +737,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// --weights-cache alone grades the single shipped package (int8) in the primary slot; the verdict
 	// reads the `fp32-*` files (its primary-artifact slot) with withInt8=false. Paired (#47), the
-	// fp32 arm takes the primary slot and the int8 arm runs the same battery from its OWN package, so
+	// fp32 arm takes the primary slot and the int8 arm runs the same battery from its own package, so
 	// floors and the delta cap are both graded in-distribution in one run. The --model path keeps the
 	// fp32 + optional int8 dual-artifact flow (deltas valid; absolute floors under-fed — the country
 	// channel's siblings never load there).
@@ -773,8 +773,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer checks). Runs on
 	// the ship artifact against the slim hot DB the demo serves. Env-restricted like the other
-	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
-	// eval spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+	// artifact-dependent legs: skips with a loud warning when the DB is absent so CI stays green
+	// without it — but an eval spec that floors `cascade.demo_smoke` will then fail on the missing
+	// sidecar (by design).
 	await profile.time("demo-cascade", undefined, () =>
 		runDemoCascadeLeg({
 			outDir: OUT_DIR,
@@ -830,7 +831,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40) because no
-	// standing leg measured FR street parsing WITHOUT a postcode anchor. Reads a FROZEN 40-row OSM
+	// standing leg measured FR street parsing without a postcode anchor. Reads a FROZEN 40-row OSM
 	// sample (committed fixture, no live database needed), parses each bare + anchored, and fails if the
 	// bare-intact rate drops below the spec floor. The leg self-reports its verdict + exits non-zero.
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
@@ -880,7 +881,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	// Run the mask-regression check that forms the second promotion lock.
-	// Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
+	// Re-runs the ship artifact mask-off vs the declared conventions mode and fails if any tag's unfolded
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions

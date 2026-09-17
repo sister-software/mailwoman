@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Golden snapshot of the soft-feature choreography (#718). `buildSoftFeatures` is the single PURE
+ *   Golden snapshot of the soft-feature choreography (#718). `buildSoftFeatures` is the single pure
  *   home for the anchor + gazetteer feed that used to live inline in
  *   `NeuralAddressClassifier.#decode` — this pins the BYTE-STABLE extraction: known addresses →
  *   known feature tensors. If the choreography drifts (channel wiring, near-postcode suppression
  *   window), these fail.
  *
- *   Uses SMALL inline fixtures (2-3 entries), NOT the production lookup/lexicon — mirrors the style
+ *   Uses small inline fixtures (2-3 entries), not the production lookup/lexicon — mirrors the style
  *   of `anchor-inference.test.ts` / `gazetteer-inference.test.ts`. The piece offsets are hand-built
  *   so the anchor/gazetteer land on exactly the expected pieces.
  */
@@ -85,7 +85,7 @@ describe("buildSoftFeatures — homograph gazetteer hit", () => {
 
 describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)", () => {
 	// "GA 30301" — region code "GA" (chars [0,2)) sits one piece before the postcode "30301".
-	// The gazetteer fires `region` on GA; the anchor fires on the postcode. With suppression ON the
+	// The gazetteer fires `region` on GA; the anchor fires on the postcode. With suppression on, the
 	// GA clue is zeroed (it's within window=1 of the anchor hit) — the #464 v0.9.13 postcode fix.
 	const TEXT = "GA 30301"
 	const PIECES = [piece("▁GA", 0, 2), piece("▁303", 3, 6), piece("01", 6, 8)]

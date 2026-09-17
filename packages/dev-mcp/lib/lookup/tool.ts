@@ -55,7 +55,7 @@ import {
 import { syntheticIDNote } from "#place-id-provenance"
 
 /**
- * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the SAME
+ * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the same
  * queries, and the per-query delta between the returned sets.
  */
 export interface CandidateCompareResult extends LookupResult {
@@ -78,7 +78,7 @@ export interface LookupArgs {
 	limit?: number
 	config?: EngineConfig
 	/**
-	 * `candidate` only — a SECOND candidate.db to run the same queries against, answering both row sets plus a per-query
+	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets plus a per-query
 	 * delta (rows only one artifact holds; shared rows whose ranking fields moved). The two-artifact probe every staged
 	 * gazetteer diagnosis previously scripted by hand.
 	 */
@@ -88,7 +88,7 @@ export interface LookupArgs {
 /**
  * Run one source and close whatever it opened.
  *
- * `unavailable_reason` and NO rows is the answer for a missing artifact. The alternative — a row per query saying "no"
+ * `unavailable_reason` and no rows is the answer for a missing artifact. The alternative — a row per query saying "no"
  * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
  * when what it lacks is a file.
  */
@@ -253,7 +253,7 @@ export async function runLookup(
 }
 
 /**
- * The candidate gazetteer, resolved exactly as the session resolves it — with the ONE thing `resolveCandidateDBPath`
+ * The candidate gazetteer, resolved exactly as the session resolves it — with the one thing `resolveCandidateDBPath`
  * cannot say folded back in.
  *
  * That function answers `undefined` for three different situations: nothing was pinned and the convention path is
@@ -303,7 +303,7 @@ const UNAVAILABLE_NOTE =
 	"absence for every query rather than as an unavailable source."
 
 /**
- * The WOF extracts, opened as a set. Unavailable only when NO extract opens; a partial set is reported in the notes,
+ * The WOF extracts, opened as a set. Unavailable only when no extract opens; a partial set is reported in the notes,
  * because "three of six extracts" is a different reading of a miss than "all six".
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
@@ -448,7 +448,7 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
 }
 
 /**
- * The two FST sources, which need a warm session to learn WHICH artifact the decoder would read.
+ * The two FST sources, which need a warm session to learn which artifact the decoder would read.
  *
  * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will actually feed the prior, and it
  * is right to: `artifacts` reports what a session READ, not what it could have. A lookup wants the artifact the decoder

@@ -55,7 +55,7 @@ describe("checkCompiledFreshness", () => {
 
 		expect(freshness.fresh).toBe(false)
 		expect(freshness.reason).toContain("yarn compile")
-		// It must say WHY this matters, not merely that it is stale: the gauntlet would report a verdict, not an error.
+		// It must say why this matters, not merely that it is stale: the gauntlet would report a verdict, not an error.
 		expect(freshness.reason).toContain("grade code you have replaced")
 		await expect(assertCompiledFresh(root)).rejects.toThrow(/yarn compile/)
 	})

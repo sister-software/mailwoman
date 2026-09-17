@@ -34,7 +34,7 @@ describe("unknownSpans", () => {
 		// "Hôtel" parsed as locality "H" [0,1) + locality "tel" [2,5); the "ô" [1,2) drops to all-O.
 		const t = tree("Hôtel", [node("locality", 0, 1, "H"), node("locality", 2, 5, "tel")])
 		expect(unknownSpans(t)).toEqual([{ kind: "unknown", value: "ô", start: 1, end: 2 }])
-		// The round-trip HOLDS precisely because the unknown span captures the dropped char.
+		// The round-trip stays lossless precisely because the unknown span captures the dropped char.
 		expect(isLossless(t)).toBe(true)
 
 		expect(

@@ -49,7 +49,7 @@ async function emptySqliteFile(name: string): Promise<string> {
 }
 
 /**
- * A minimal REAL poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
+ * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
  * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries `poi_category_codes`
  * (see `poi-lookup.ts`), so an arbitrary empty file won't do — `openPlausibilityPOIDeps`'s "file present" branch needs
  * these tables to actually exist.

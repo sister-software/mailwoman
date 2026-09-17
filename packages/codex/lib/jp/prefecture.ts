@@ -20,7 +20,7 @@
  *       region.
  *   - 県 (ken, "prefecture") — the remaining **43**. The ordinary case.
  *
- *   Unlike a French région or a German Bundesland, the prefecture DOES appear on a normal address
+ *   Unlike a French région or a German Bundesland, the prefecture does appear on a normal address
  *   line: a Japanese address is written largest-to-smallest (prefecture → city → ward → block), so
  *   the prefecture is the first thing written, not an inferred-from-postcode afterthought. See
  *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
@@ -175,7 +175,7 @@ export const JP_PREFECTURE_NAME_TO_CODE: ReadonlyMap<string, JapanesePrefectureC
  * Resolve a Japanese prefecture surface form to its ISO 3166-2:JP code, accepting:
  *
  * - A code directly (`"13"` → `"13"`),
- * - A romaji name, case-insensitive, macrons optional, with OR without the romaji type-suffix (`Tōkyō` / `Tokyo` /
+ * - A romaji name, case-insensitive, macrons optional, with or without the romaji type-suffix (`Tōkyō` / `Tokyo` /
  *   `tokyo` / `Tokyo-to` → `"13"`),
  * - A kanji name, with or without its 都/道/府/県 suffix (`東京都` / `東京` → `"13"`).
  *

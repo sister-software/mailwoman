@@ -18,7 +18,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The official name of every current region, keyed `${country id}\0${name key}` → region id, from the source `names`
  * table's `official` bit. Empty when the source carries no `names` table (a fixture, or an extract shape).
  *
- * This is the positive evidence behind the one alias refusal below: a name is refused from a region's bag ONLY when
+ * This is the positive evidence behind the one alias refusal below: a name is refused from a region's bag only when
  * another region of the same country holds it as its official name. Three such pairs exist in the admin artifact —
  * `新竹市` on Hsinchu County (the city's official name), `嘉義市` on Chiayi County, `충청남도` on Sejong — and each let the more
  * populous holder of the variant outrank the place the name officially is, so a `新竹市` region node resolved the county

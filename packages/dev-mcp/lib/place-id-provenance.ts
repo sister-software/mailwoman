@@ -6,7 +6,7 @@
  *   Which SOURCE a gazetteer place id came from, and therefore whether it is a real Who's On First id.
  *
  *   `spr` is WOF's own table name — Standard Place Response, the flat one-row-per-place projection they ship
- *   beside the GeoJSON — and we keep their schema, so `spr.id` IS the WOF id for a WOF-sourced row. It is not
+ *   beside the GeoJSON — and we keep their schema, so `spr.id` is the WOF id for a WOF-sourced row. It is not
  *   for the rest: the Overture and GeoNames folds mint SYNTHETIC ids in reserved ranges above every real WOF
  *   id, and those look exactly like WOF ids while resolving to nothing on spelunker.
  *
@@ -14,7 +14,7 @@
  *   this prevents is silent: an id is pasted into spelunker, 404s, and reads as "our gazetteer invented a
  *   place" rather than "this place came from Overture". Turkey's `Of` is the case that prompted it —
  *   8114738869649 and 8837168432019 are Overture divisions, while WOF's own `Of` is 890463199 and carries a
- *   DIFFERENT population (31,951 against Overture's 44,212 on both rows).
+ *   different population (31,951 against Overture's 44,212 on both rows).
  */
 
 import {

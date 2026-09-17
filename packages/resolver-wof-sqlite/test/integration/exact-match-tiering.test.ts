@@ -8,13 +8,13 @@
  *   worse-matching candidate across tiers.
  *
  *   The motivating bug: querying the 2-letter region abbreviation "ME" returned Maine (which has the
- *   exact alias `ME`) AND larger-population states that also surfaced as FTS candidates; the
+ *   exact alias `ME`) and larger-population states that also surfaced as FTS candidates; the
  *   additive population boost overcame Maine's text-match edge, so "Portland, ME" resolved its
  *   region to a more-populous wrong state and the locality cascaded with it. Tiering puts exact
- *   name/alias matches in a higher tier; population only orders WITHIN a tier.
+ *   name/alias matches in a higher tier; population only orders within a tier.
  *
  *   The population-override is forced deterministically here (large `populationBoost` + a decoy state
- *   with population while Maine has NONE) rather than relying on the small in-memory fixture's BM25
+ *   with population while Maine has none) rather than relying on the small in-memory fixture's BM25
  *   balance happening to mirror the 1.8 GB production DB — where Maine's hundreds of alt-name rows
  *   dilute its FTS doc score (the real-world trigger). This isolates the TIERING logic.
  */
@@ -94,11 +94,11 @@ function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
 	return db
 }
 
-// Maine (exact alias "ME", NO population) vs a populous state whose name token also matches "ME" but
-// is NOT an exact match. "ME Plains" stands in for the real states that surfaced as non-exact "ME"
+// Maine (exact alias "ME", no population) vs a populous state whose name token also matches "ME" but
+// is not an exact match. "ME Plains" stands in for the real states that surfaced as non-exact "ME"
 // candidates. Maine has no population so the boost asymmetry is unambiguous: with a large
-// `populationBoost`, ME-Plains gets a big lift and Maine gets +0 — so WITHOUT tiering the populous
-// non-match strictly outranks the exact match (the bug), and WITH tiering the exact match wins
+// `populationBoost`, ME-Plains gets a big lift and Maine gets +0 — so without tiering the populous
+// non-match strictly outranks the exact match (the bug), and with tiering the exact match wins
 // regardless (the fix).
 const REGIONS: SeedRegion[] = [
 	{ id: 1, name: "Maine", country: "US", lat: 45.3, lon: -69.2, aliases: ["ME"] },
@@ -106,7 +106,7 @@ const REGIONS: SeedRegion[] = [
 ]
 
 // Large boost magnitude so the populous decoy's lift dwarfs any BM25 gap; Maine (no population) gets
-// +0. Makes the OFF case reliably pick the populous non-match.
+// +0. Makes the tiering-off case reliably pick the populous non-match.
 const POP_DOMINATES: Partial<RankingWeights> = { populationBoost: 1000, populationScaleLog10: 6 }
 
 let lookup: WOFSQLitePlaceLookup
@@ -131,7 +131,7 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.id).toBe(2) // the populous non-exact match — pre-fix behavior
 	})
 
-	// #912 sub-tier: the query IS one place's own name and only an ALIAS of the other. The name
+	// #912 sub-tier: the query is one place's own name and only an alias of the other. The name
 	// holder must win even when the alias holder is more populous — 'Paris' (the capital's own name)
 	// over 'Paris Township' (alias 'Paris'), scale-model edition. ME→Maine (alias-exact, no
 	// name-exact competitor) is covered by the tests above and must keep passing unchanged.
@@ -154,7 +154,7 @@ describe("findPlace — exact-match tiering", () => {
 
 		expect(results[0]?.name).toBe("Capitalia")
 		expect(results[1]?.name).toBe("Capitalia Township")
-		// Both still stamp exactMatch — the sub-tier reorders WITHIN the tier, not across the flag.
+		// Both still stamp exactMatch — the sub-tier reorders within the tier, not across the flag.
 		expect(results[0]?.exactMatch).toBe(true)
 		expect(results[1]?.exactMatch).toBe(true)
 	})
@@ -178,14 +178,14 @@ describe("findPlace — exact-match tiering", () => {
 	test("short-query over-fetch rescues an exact-abbrev region below the normal window (NY → New York)", async () => {
 		// The window-drop class (distinct from the population-override above). An exact-abbrev holder
 		// ("NY" → New York) whose BM25 for the bare 2-letter token is poor — its long multilingual
-		// alt-name document dilutes the score — sinks BELOW the normal `limit * 4` over-fetch window,
-		// behind a crowd of regions that merely TOKEN-match "ny". Without widening the window for short
+		// alt-name document dilutes the score — sinks below the normal `limit * 4` over-fetch window,
+		// behind a crowd of regions that merely token-match "ny". Without widening the window for short
 		// queries it never enters the candidate pool, so exact-match tiering can't promote it and a
 		// token-matching decoy wins (the real-DB "NY → Highland, GB" bug). With the widening, New York
 		// is in the pool and tiering lifts it. No `country` hint — this is the bare, no-context path.
 		const decoys: SeedRegion[] = Array.from({ length: 60 }, (_, i) => ({
 			id: 1000 + i,
-			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches MATCH 'ny'; short doc → good BM25
+			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches `MATCH 'ny'`; short doc → good BM25
 			country: "GB",
 			lat: 50 + i * 0.01,
 			lon: -1 + i * 0.01,
@@ -210,7 +210,7 @@ describe("findPlace — exact-match tiering", () => {
 
 	// #924: the NL retry ladder — spaced full-form queries reach unspaced full-code rows (block
 	// level), and unknown letter pairs fall to the 4-digit stem. Country-restricted: the same shape
-	// under another country must NOT retry.
+	// under another country must not retry.
 	test("#924: NL postcode ladder — joined form first, stem second, country-restricted", async () => {
 		const db = buildDB([
 			{ id: 21, name: "1012LG", country: "NL", lat: 52.377, lon: 4.898, placetype: "postalcode" },

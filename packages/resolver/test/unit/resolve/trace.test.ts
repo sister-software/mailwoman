@@ -9,7 +9,7 @@
  *      a debug opt-in, never a production cost.
  *   2. The per-stage rank vector attributes loss: a candidate first by the backend and displaced by the fame key
  *      carries `ranks.initial = 1` and `ranks.importance > 1` — "lost to the fame term" as a recorded fact.
- *   3. Every exit path emits — a lookup that resolves NOTHING still records `picked: null` with its `checks`, because an
+ *   3. Every exit path emits — a lookup that resolves nothing still records `picked: null` with its `checks`, because an
  *      absent record is indistinguishable from a lookup that never ran.
  */
 
@@ -123,7 +123,7 @@ describe("resolver-interior trace (#1721)", () => {
 	it("records the span-rescore rescue — the famous-name class no longer answers off the record", async () => {
 		// A STREET-tagged famous name never enters the walk (street is not in the placetype map), so the
 		// span-rescore tier is the only thing that resolves it — and before the #1721 follow-up it answered
-		// with an EMPTY trace beside a real coordinate.
+		// with an empty trace beside a real coordinate.
 		const backend = new StubBackend(WHITBY_PLACES)
 		const records: ResolveNodeTrace[] = []
 

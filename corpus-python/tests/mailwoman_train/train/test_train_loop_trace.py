@@ -121,7 +121,7 @@ def _events(output: str) -> list[str]:
 
 #: How far a rebuilt checksum may sit from the committed one and still count as unmoved.
 #:
-#: NOT exact equality, which is what this compared first and why it passed on the machine that wrote
+#: Not exact equality, which is what this compared first and why it passed on the machine that wrote
 #: the reference and failed on CI: a fp32 training step lands on a different last digit under a
 #: different CPU's kernels, and seventeen of the fifty tensors here differed only there. Exact
 #: equality pins the HOST alongside the code, and the failure then names the trajectory rather than

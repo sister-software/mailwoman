@@ -120,7 +120,7 @@ export interface CandidateWindow {
 	 * The pieces the probe KEY actually covers, when that is narrower than {@link pieceIndices} — i.e. a segment whose key
 	 * had a same-field postcode stripped (#1308 / the leading-postcode countries). Absent when the two coincide.
 	 *
-	 * Read ONLY by the whole-edge parent write ({@link applyParentTagBias}). The child write deliberately keeps spanning
+	 * Read only by the whole-edge parent write ({@link applyParentTagBias}). The child write deliberately keeps spanning
 	 * the whole segment, which is what it has always done. The distinction is not cosmetic: a French parent segment is
 	 * "12210 Montpeyroux", the key is "montpeyroux", and biasing the whole segment toward `locality` emits `locality =
 	 * "12210 Montpeyroux"` — postcode included. Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at
@@ -158,9 +158,9 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * fall strictly before each group's first piece's start offset (offsets, not piece-text inspection, so this is robust
  * to however the tokenizer happened to attach a comma piece to its neighboring word group — `groupPiecesIntoWords`
  * absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own piece span can land inside
- * either group depending on tokenization; counting commas strictly BEFORE a group's own start offset sidesteps that
+ * either group depending on tokenization; counting commas strictly before a group's own start offset sidesteps that
  * ambiguity entirely). Shared by {@link buildSegmentWindows} (to know where segment boundaries fall) and
- * {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the SAME segment or has already crossed
+ * {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the same segment or has already crossed
  * into the next one — see the module docstring's "Marker suppression" section).
  *
  * Without `inputText` (or an input with no commas at all), every group falls in segment 0.
@@ -208,8 +208,8 @@ export function computeGroupSegments(
 export const MAX_TRAILING_POSTCODE_WORDS = 2
 
 /**
- * Per-country postcode shape used ONLY by the segment path's trailing-postcode strip (#1308), keyed by the pair index
- * header's lowercase ISO country. Each entry is the SAME anchored shape codex owns as that system's source of truth
+ * Per-country postcode shape used only by the segment path's trailing-postcode strip (#1308), keyed by the pair index
+ * header's lowercase ISO country. Each entry is the same anchored shape codex owns as that system's source of truth
  * (`@mailwoman/codex/<system>`), so the strip and the postcode-repair / postcode-anchor passes never drift on what a GB
  * / NZ postcode is. Country-aware BY DESIGN: a header country with no entry here → no strip → byte-stable (see
  * {@link segmentParentPostcodeShape}). Grow this map only with a real codex shape for the added country.
@@ -224,7 +224,7 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
 ])
 
 /**
- * Countries whose postal convention writes the postcode BEFORE the locality on the same line ("12210 Montpeyroux"),
+ * Countries whose postal convention writes the postcode before the locality on the same line ("12210 Montpeyroux"),
  * rather than after it ("Macclesfield SK11 9PD").
  *
  * This distinction is why the FR instance (campaign R6) read 0/80 on a board whose pairs were 46% present in the index:
@@ -235,7 +235,7 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
  *
  * Membership is per-country and deliberately narrow: an entry is earned by a codex postcode shape plus a confound
  * board, not by the country merely writing the postcode first. FR/DE/ES/IT have all cleared that bar. A country absent
- * from this set is not an oversight to be corrected in passing — en-IN, for one, is absent BECAUSE the PIN goes last,
+ * from this set is not an oversight to be corrected in passing — en-IN, for one, is absent because the PIN goes last,
  * so the trailing-postcode strip already folds its parent segment correctly.
  */
 export const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
@@ -249,15 +249,15 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
 
 /**
  * Drop a TRAILING postcode-shaped run from a segment's fold tokens before it becomes a parent-candidate key (#1308).
- * The bug this closes: an idiomatic NZ / free-text GB address writes the postcode in the SAME comma-field as the post
+ * The bug this closes: an idiomatic NZ / free-text GB address writes the postcode in the same comma-field as the post
  * town ("Porirua 5026", "Macclesfield SK11 9PD"), so the whole segment folds to "porirua 5026" / "macclesfield sk11
  * 9pd" and misses the index's bare "porirua" / "macclesfield" parent — the (child, parent) pair never fires. Stripping
  * the trailing postcode lets the town alone key the parent probe.
  *
  * Guards (all three from the issue): (1) only a TRAILING run — the longest suffix of
  * ≤{@link MAX_TRAILING_POSTCODE_WORDS} tokens whose bare concatenation full-matches `shape` (longest-first so a
- * two-token GB postcode strips whole); (2) NEVER the entire segment — `tokens.length < 2` returns unchanged, so a field
- * that IS just a postcode (the comma-separated "…, 5026" form) is left exactly as today and remains inert as before;
+ * two-token GB postcode strips whole); (2) never the entire segment — `tokens.length < 2` returns unchanged, so a field
+ * that is just a postcode (the comma-separated "…, 5026" form) is left exactly as today and remains inert as before;
  * (3) country-aware — a `shape` of `undefined` (no header country, or no codex shape for it) returns the tokens
  * untouched, so the segment key is byte-identical to pre-#1308 behavior. No trailing postcode → the loop finds no match
  * and returns the input array.
@@ -280,7 +280,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * {@link LEADING_POSTCODE_COUNTRIES}).
  *
  * Anchored full-match against the country shape exactly like the trailing form, so this can only ever remove a run that
- * IS a postcode for that country — never an ordinary leading word. Only the probe KEY changes; the segment itself and
+ * is a postcode for that country — never an ordinary leading word. Only the probe key changes; the segment itself and
  * every emitted span are untouched.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
@@ -302,9 +302,9 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
  * (see {@link computeGroupSegments}) suffices.
  *
  * `parentPostcodeShape` (the index's country trailing-postcode shape, #1308) strips a trailing postcode from the
- * segment's KEY forms only (see {@link trailingSegmentPostcodeTake}) — `startPos`/`endPos`/`pieceIndices` still span the
- * WHOLE segment, so disjointness, marker suppression, the identity-repeat check, and the CHILD bias write are all
- * byte-identical to pre-#1308 behavior; ONLY the probe key of a parent-candidate segment carrying a same-field postcode
+ * segment's key forms only (see {@link trailingSegmentPostcodeTake}) — `startPos`/`endPos`/`pieceIndices` still span the
+ * whole segment, so disjointness, marker suppression, the identity-repeat check, and the child bias write are all
+ * byte-identical to pre-#1308 behavior; only the probe key of a parent-candidate segment carrying a same-field postcode
  * changes.
  *
  * The one consumer that needs the narrower span is the whole-edge PARENT write (#46), which is why the stripped range
@@ -360,7 +360,7 @@ export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 }
 
 /**
- * Do two candidates fold to an identical key under ANY of their fold forms? The identity test behind the repeated-name
+ * Do two candidates fold to an identical key under any of their fold forms? The identity test behind the repeated-name
  * convention (module docstring, "Identity pairs"). Plain repetition ("Mangawhai" / "Mangawhai") matches on `key ===
  * key`; the cross-form comparisons additionally catch a repeat written in two spellings of the same name
  * ("Stockton-on-Tees" folds to the single concat token "stocktonontees", which equals the concat form of "Stockton on

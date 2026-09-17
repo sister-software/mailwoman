@@ -88,7 +88,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 				})
 			)
 
-		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` — the second run IS
+		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` — the second run is
 		// the idempotence assertion. An async rejection is invisible to that form, so await both runs: either one
 		// failing rejects this test.
 		await spawn()

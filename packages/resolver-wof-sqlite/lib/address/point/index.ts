@@ -5,13 +5,13 @@
  *
  *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)` within a
  *   postcode (preferred), locality, or — for extracts whose points carry no scope tag (OSM, #247) —
- *   the resolved locality's BBOX. Query-side normalization is THE shared normalizer
+ *   the resolved locality's BBOX. Query-side normalization is the shared normalizer
  *   (`street-normalize.ts`), selected per the extract's `streetLocale` so build-side and probe-side
  *   stay identical by construction (US delegates to the USPS pipeline; FR/DE/NL use the locale rules).
  *
  *   Matching is exact-after-normalization only — no fuzzy street matching in this tier (measure how
  *   far exact gets first; fuzz is a later, separate decision). Scope order is most-selective first:
- *   postcode, then locality, then the bbox fall-through (only when a bbox is supplied AND the prior
+ *   postcode, then locality, then the bbox fall-through (only when a bbox is supplied and the prior
  *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
 
@@ -73,10 +73,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
-	 * @param opts.localityKeys Whether the extract's `locality_norm` is a FULL place name a query can be held to. The BAN
+	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full place name a query can be held to. The BAN
 	 *   and OSM extracts write the commune or `addr:city` in full; the US situs extract writes the NAD city field, which
 	 *   several counties abbreviate (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or
-	 *   fewer) or give as the parent town (`easton` for North Easton). A key like that can steer WHICH row answers but
+	 *   fewer) or give as the parent town (`easton` for North Easton). A key like that can steer which row answers but
 	 *   cannot refuse one, so it never contradicts. Defaults from the street locale: `"us"` is abbreviated, the rest
 	 *   full.
 	 */
@@ -146,7 +146,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				: query
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
-		// collapse and the saint↔st register swap — each variant runs the FULL number ladder below, and
+		// collapse and the saint↔st register swap — each variant runs the full number ladder below, and
 		// the first variant to answer wins, so an attested literal key is never second-guessed.
 		let row: AddressPointRow | undefined
 
@@ -169,7 +169,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * The full number ladder for ONE normalized street key: exact, then the range low-end, then letter-suffix spacing
+	 * The full number ladder for one normalized street key: exact, then the range low-end, then letter-suffix spacing
 	 * with the base-number fall — see each rung's note in place.
 	 */
 	#findForKey(
@@ -186,10 +186,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	) {
 		let row = this.#probe(streetNorm, number, query)
 
-		// Range-surface fallback: every register this reader serves stores ONE number per point
+		// Range-surface fallback: every register this reader serves stores one number per point
 		// (G-NAF `NUMBER_FIRST`, BAN, OA, OSM `addr:housenumber`), but the attested surface is often
 		// a range — "385-387 Esplanade" keys `385`. Null-only: an exact range key that matched above
-		// (some OSM points DO carry "385-387" verbatim) is never second-guessed.
+		// (some OSM points do carry "385-387" verbatim) is never second-guessed.
 		if (!row) {
 			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]
 
@@ -200,7 +200,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		// Letter-suffix spacing fallback: the registers disagree on the joint — BAN stores "3 a"
 		// (space-separated), G-NAF and most OA sources store "3a" — and the parsed surface can arrive
-		// either way. On a miss, retry the OTHER spacing; on a double miss, the BASE number (the
+		// either way. On a miss, retry the other spacing; on a double miss, the base number (the
 		// register attests no 3A but does attest 3 — the adjacent-parcel approximation, priced the
 		// same as the range fallback's low end). Null-only throughout, and only for the
 		// digits+single-letter shape (never touches "12 1/2" or unit-bearing forms).
@@ -252,7 +252,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			const localityKey = query.locality ? this.#localityKey(query.locality) : undefined
 
 			// A postcode can span several places — DE 04509 covers Schönwölkau and Werlitzsch, both with a Teichstraße 3 —
-			// so when the query names a locality the row whose own locality agrees is asked for FIRST. Only when no such
+			// so when the query names a locality the row whose own locality agrees is asked for first. Only when no such
 			// row exists does the postcode-only row answer, and then only if its locality does not name a different place
 			// (see `#scopeContradicts` for what "different" tolerates): a query naming a third village under the postcode
 			// falls through to the locality rung rather than answering the wrong rooftop.
@@ -275,12 +275,12 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		}
 
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
-		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
+		// inside the resolved locality's box. Only reached when the scoped probes missed and a bbox was supplied.
 		if (!row && query.bbox) {
 			const b = query.bbox
 			const candidate = this.#byBbox!(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon)
 
-			// A register row that carries its own scope and was NOT found by the scoped rungs is a different address that
+			// A register row that carries its own scope and was not found by the scoped rungs is a different address that
 			// happens to share the street and number inside the box: `10 rue de la République, 75008 Paris` reached
 			// Servon's `10 rue de la République` (postcode 77170) 26 km away this way, at rooftop tier and 1 m uncertainty.
 			// The rung exists for points with no scope of their own; a point whose scope disagrees with the query is a miss.
@@ -302,8 +302,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	}
 
 	/**
-	 * Whether a row's OWN postcode or locality names a different place than the query did. Absent scope on the row is not
-	 * a contradiction — it is the case the bbox rung was built for — and a rung that matched ON a field cannot contradict
+	 * Whether a row's own postcode or locality names a different place than the query did. Absent scope on the row is not
+	 * a contradiction — it is the case the bbox rung was built for — and a rung that matched on a field cannot contradict
 	 * it, so at the postcode rung only the locality can disagree and at the bbox rung either can.
 	 *
 	 * The locality is consulted only on an extract whose keys are full names (the constructor's `localityKeys`). Under

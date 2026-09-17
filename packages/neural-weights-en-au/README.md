@@ -8,13 +8,13 @@ Mailwoman neural-classifier weights for locale `en-au`. Data-only overlay — sh
 - Country-surface lexicon (shared gazetteer artifact, symlinked from `data/gazetteer/`)
 - Street-morphology FST (locale-general, symlinked from `$MAILWOMAN_DATA_ROOT/wof/`)
 
-## What this package does NOT ship (yet)
+## What this package does not ship (yet)
 
-- **No postcode-au.bin** — no WOF AU postcode database exists. The anchor channel resolves OFF for
+- **No postcode-au.bin** — no WOF AU postcode database exists. The anchor channel resolves off for
   en-au loads. Tracked as a follow-up.
 - **No pair-index-au.bin** — PIX1 placetype-pair retrieval not yet calibrated for AU. Needs the
   AU address register (GNAF/OA) for pair extraction.
-- **No anchor-lexicon** — the gazetteer channel resolves OFF. Same posture as en-nz.
+- **No anchor-lexicon** — the gazetteer channel resolves off. Same posture as en-nz.
 
 ## Purpose (2026-08-08)
 

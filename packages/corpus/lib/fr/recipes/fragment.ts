@@ -20,10 +20,10 @@
  *
  *   WHY THE EXISTING RECIPE DOESN'T COVER THIS. {@link frBareStreetRecipe} (#251) mints
  *   `<n> Rue <name>, <City>` — the bare COMMA form, no postcode. It targets postcode-anchoring
- *   imbalance, and every row it emits still carries a house number AND a locality. It cannot teach
+ *   imbalance, and every row it emits still carries a house number and a locality. It cannot teach
  *   the class above, because it never shows the model a street standing alone.
  *
- *   WHAT THIS MINTS. Five street forms — the first three carry NO house number and NO locality, which
+ *   WHAT THIS MINTS. Five street forms — the first three carry no house number and no locality, which
  *   is the whole point — plus the counter-distribution:
  *
  *   1. `bare-street`         "Rue Montmartre"
@@ -31,9 +31,9 @@
  *   3. `date-name`           "Allee du 11 Novembre 1918"
  *   4. `street-housenumber`  "12 Rue Montmartre"     — the anchor, so the licence isn't UNLEARNED
  *   5. `alnum-housenumber`   "12 bis Rue Montmartre"
- *   6. `bare-locality`       "Mery-sur-Oise"         — NEGATIVE: a bare toponym that IS a locality
+ *   6. `bare-locality`       "Mery-sur-Oise"         — negative: a bare toponym that is a locality
  *
- *   The **admin/street homonym** class (`Rue de Rome`) is deliberately NOT a separate form. Homonym
+ *   The **admin/street homonym** class (`Rue de Rome`) is deliberately not a separate form. Homonym
  *   streets are already in the register and fall into 1–3 naturally; there is nothing different to
  *   teach about them, because the lesson is identical — the designator makes it a street. The
  *   fragment board scores them separately (they need measuring, not minting), and the recipe would
@@ -44,7 +44,7 @@
  *   for the WRONG REASON — the model calls everything without a house number a locality, and on bare
  *   localities that is accidentally right. Teach bare streets alone and the model has every incentive
  *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The recipe
- *   must show BOTH bare forms so the discriminating evidence is the designator, which is the only
+ *   must show both bare forms so the discriminating evidence is the designator, which is the only
  *   thing that actually distinguishes them. This is the same counter-distribution principle
  *   {@link noStreetRecipe} established after synth-street pushed the model into "decompose mode".
  *
@@ -52,7 +52,7 @@
  *   (`mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt`). Every listed surface is
  *   skipped — source-disjoint by normalized street SURFACE, never by record row. Row-disjoint leaks
  *   the surface across the boundary and measures memorization of `Rue de Rivoli` while claiming
- *   generalization to unseen streets. The recipe REFUSES to run without the list rather than
+ *   generalization to unseen streets. The recipe refuses to run without the list rather than
  *   silently minting a contaminated recipe output.
  *
  *   MIX. The recipe output is ~145K rows off a 120K-tuple draw; the intended corpus mix is **5–10%**,

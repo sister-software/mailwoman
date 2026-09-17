@@ -48,7 +48,7 @@ import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts
 export const DOCUMENTED_GROUPS: readonly string[] = ["", "data", "skill", "clients", "registry"]
 
 /**
- * One line per top-level group the page does NOT document, stating what the group is for. Every group discovered
+ * One line per top-level group the page does not document, stating what the group is for. Every group discovered
  * outside {@link DOCUMENTED_GROUPS} must appear here — {@link collectCLISurface} throws otherwise, so a new group is
  * impossible to add without deciding whether a consumer needs it.
  */

@@ -24,7 +24,7 @@ class TranslitBatch:
     batch_id: str
     script_label: str
     script_slug: str
-    #: BCP-47 language subtag of the rendering convention, with NO region — `ja`, not `ja-JP`.
+    #: BCP-47 language subtag of the rendering convention, with no region — `ja`, not `ja-JP`.
     surface_language: str
     #: ISO 15924 code of the script the surface is written in — `Jpan`, `Cyrl`.
     surface_script: str
@@ -32,7 +32,7 @@ class TranslitBatch:
 
 
 def load_seeds(paths: list[str], limit: int) -> list[dict[str, Any]]:
-    """Every seed row, checked for the fields its transliterations inherit BEFORE a request is paid for.
+    """Every seed row, checked for the fields its transliterations inherit before a request is paid for.
 
     A transliterated row takes the seed's country and locale, so a seed file missing either produces rows
     that cannot be written. Finding that out at load time costs nothing; finding it out in the worker costs

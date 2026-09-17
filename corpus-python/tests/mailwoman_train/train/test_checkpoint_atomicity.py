@@ -7,7 +7,7 @@ promises to survive) therefore leaves a partial directory that the next ``--resu
 loads.
 
 Contract pinned here (the repair): a checkpoint directory named ``step-*`` is either
-COMPLETE or ABSENT. Writes go to a temp name the ``step-*`` glob cannot see, then rename
+complete or absent. Writes go to a temp name the ``step-*`` glob cannot see, then rename
 into place after everything (``training_state.json`` last) is written; the completeness
 marker for discovery is the presence of ``training_state.json`` — which every durable
 historical checkpoint already carries, so old volumes keep resuming.

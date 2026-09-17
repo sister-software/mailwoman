@@ -15,13 +15,13 @@
  *   costs the most.
  *
  *   QUOTE HANDLING IS NOT OPTIONAL HERE, AND THE MEASUREMENT determines the result. `sacatlog.txt` holds 594 newline
- *   bytes and exactly ONE record: its `fgdcmetadata` column carries a 43,251-character XML document with
+ *   bytes and exactly one record: its `fgdcmetadata` column carries a 43,251-character XML document with
  *   embedded newlines. `mstabcol.txt` — the column dictionary itself — holds 913 newlines and 865 records.
  *   A line-splitting reader gets 594 malformed rows from a one-row file, every one of them well-formed
  *   enough to keep going.
  *
  *   THE DECLARED DOMAINS COME OUT OF THE ARCHIVE TOO, which is stronger than transcribing them.
- *   `msdomdet.txt` carries every `Choice` column's members WITH the authority's own prose definition —
+ *   `msdomdet.txt` carries every `Choice` column's members with the authority's own prose definition —
  *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28 conditional farmland
  *   classifications, the six component kinds. The layer stores them and validates against them.
  */
@@ -72,7 +72,7 @@ export interface TabularDictionary {
 /**
  * Column positions in `mstab.txt` and `mstabcol.txt` themselves.
  *
- * These two are the ONLY positions this module hard-codes, and they cannot be looked up because they are what the
+ * These two are the only positions this module hard-codes, and they cannot be looked up because they are what the
  * lookup is built from. Both files declare themselves in `mstabcol.txt`, so the assertions below check the bootstrap
  * against the archive's own account of it rather than trusting it.
  */

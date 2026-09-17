@@ -140,7 +140,7 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 })()
 
 /**
- * Resolve a subdivision surface form WITHIN one country. Same folding and return shape as {@link matchSubdivision}, but
+ * Resolve a subdivision surface form within one country. Same folding and return shape as {@link matchSubdivision}, but
  * scoped: `WA` under `AU` is Western Australia, under `US` Washington, and under any other country null. Use this
  * whenever the country is already established; the unscoped lookup exists for the address-line case where the
  * subdivision itself is the country evidence.

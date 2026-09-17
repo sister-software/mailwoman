@@ -14,8 +14,8 @@
  *     time. Probing `name` instead reports three places as missing from the gazetteer that are all present:
  *     `Porto Petro` is stored under `porto petro`, `Illes Balears` under `illes balears` (whose stored `name` is
  *     "Balearic Islands"), `St. Margaret's Hope` under `st margarets hope`.
- *   - the WOF extracts answer through an FTS5 index over `name` AND `alt_names`, so a hit may be an alias or a postcode
- *     row's parent locality — and that index is BUILT with the `is_current`/`is_deprecated` filter already applied, so
+ *   - the WOF extracts answer through an FTS5 index over `name` and `alt_names`, so a hit may be an alias or a postcode
+ *     row's parent locality — and that index is built with the `is_current`/`is_deprecated` filter already applied, so
  *     seeing a deprecated record at all takes a second route.
  *   - the postcode anchor keys `span.replace(" ", "").toUpperCase()`, the train painter's normalization, so `SW1A 2AA`
  *     is `SW1A2AA`.
@@ -50,7 +50,7 @@ const DEFAULT_ENTRY_LIMIT = 10
  * Which key reached a candidate row.
  *
  * The runtime cascade tries these in order and a caller who only saw `exact` would read a qualifier hit as an absence.
- * `fuzzy` is deliberately NOT here: the FTS5-trigram typo tier corrects a misspelling into a DIFFERENT string, so
+ * `fuzzy` is deliberately not here: the FTS5-trigram typo tier corrects a misspelling into a different string, so
  * running it would report a hit for a surface the gazetteer has never held.
  */
 const CandidateRoute = {
@@ -100,13 +100,13 @@ interface CandidateEntry extends PlaceIDProvenance {
 	is_primary: number | null
 	importance: number | null
 	/**
-	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row. ABSENT (not null) when the
+	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row. Absent (not null) when the
 	 * artifact predates the column — the same tri-state the runtime reader uses.
 	 */
 	name_role?: string | null
 	/**
 	 * The score source's split channels for this place, joined by `spr_id` when {@link CandidateLookupOptions.importance}
-	 * was provided: an object when the source holds a row, `null` when it does not. ABSENT when no importance DB was
+	 * was provided: an object when the source holds a row, `null` when it does not. Absent when no importance DB was
 	 * given — never conflate the two.
 	 */
 	importance_split?: { referential: number; encyclopedic: number | null } | null
@@ -143,7 +143,7 @@ function candidateSelect(hasNameRole: boolean): string {
  * - `importance: null` is UNMEASURED — the score source had no row for that place — while `population: 0` and a `(0, 0)`
  *   centroid are the build's own written values (the latter its unlocated sentinel).
  * - A `country` naming no `country_codes` entry means the artifact carries no rows for that country at all, so the miss
- *   is a coverage gap; a country it DOES carry, with rows under the key elsewhere, is a filter miss and reports the
+ *   is a coverage gap; a country it does carry, with rows under the key elsewhere, is a filter miss and reports the
  *   third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
@@ -372,7 +372,7 @@ export function lookupCandidate<DB>(
 
 /**
  * The fields {@link diffCandidateRows} compares on a row present in both artifacts — the ranking-relevant columns, not
- * the identity ones (those ARE the match key).
+ * the identity ones (those are the match key).
  */
 const CANDIDATE_DELTA_FIELDS = ["importance", "population", "is_primary", "name_role"] as const
 
@@ -384,7 +384,7 @@ export interface CandidateDelta {
 	/**
 	 * Rows the primary artifact returned that the compare artifact did not, and the reverse. Identity is `(spr_id, name)`
 	 * — several names ride one key per place, and a refolded artifact re-keys Overture-minted ids, so a twin appearing on
-	 * both sides of this pair is usually the SAME settlement under a new id, not two places.
+	 * both sides of this pair is usually the same settlement under a new id, not two places.
 	 */
 	only_in_a: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
 	only_in_b: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
@@ -395,7 +395,7 @@ export interface CandidateDelta {
 }
 
 /**
- * Diff two artifacts' answers to the SAME queries, row-aligned by query index. Covers the RETURNED rows only — both
+ * Diff two artifacts' answers to the same queries, row-aligned by query index. Covers the RETURNED rows only — both
  * sides truncate at the caller's limit, so a delta over deep key populations needs the limit raised to cover them; the
  * tool's note says so beside the numbers.
  */
@@ -491,11 +491,11 @@ interface WOFEntry extends PlaceIDProvenance {
 	 */
 	parent_id: number
 	/**
-	 * `place_population.population`, or `null` when the place has NO row there.
+	 * `place_population.population`, or `null` when the place has no row there.
 	 *
 	 * Null is absence and 0 is a recorded zero, and the resolver reads them differently: `referentialFromPopulation`
 	 * treats both as no evidence, but only one of them is a claim the source made. Emitted because population is what
-	 * `neg_rank` and `referential` are computed FROM, so a ranking question cannot be answered without it.
+	 * `neg_rank` and `referential` are computed from, so a ranking question cannot be answered without it.
 	 */
 	population: number | null
 }
@@ -525,7 +525,7 @@ const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHER
 /**
  * Build the pair of statements for one route: the row SELECT and the COUNT that gives it a denominator.
  *
- * The country filter is appended to BOTH, so a scoped probe reports how many rows the key has in that country rather
+ * The country filter is appended to both, so a scoped probe reports how many rows the key has in that country rather
  * than how many it has anywhere — the difference between a filter miss and an absence, which is the distinction this
  * whole tool exists to keep.
  */
@@ -572,7 +572,7 @@ export function lookupWOF<DB>(
 		const seen = new Set<number>()
 		const suppressed: string[] = []
 		const failed: string[] = []
-		// Summed across extracts and routes, then de-duplicated below. The same place reached by BOTH routes is one
+		// Summed across extracts and routes, then de-duplicated below. The same place reached by both routes is one
 		// record, so the raw sum overstates; `matched` reports the de-duplicated figure and `scanned` the sum.
 		let scanned = 0
 
@@ -694,7 +694,7 @@ const POI_SELECT =
  * Probe `poi.db` on `name_key` — the same {@link normalizeLocalityForKey} fold the POI build writes.
  *
  * The count is exact and unbounded. Measured on the 13.68 M-row shipped `poi.db`: `mcdonalds` (19,340 rows) counts in
- * 1.3 ms warm and 3,158 ms on the FIRST probe against a cold page cache — worth knowing before reading a slow first
+ * 1.3 ms warm and 3,158 ms on the first probe against a cold page cache — worth knowing before reading a slow first
  * call as a hang, and not worth trading the true denominator for.
  */
 export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options: POILookupOptions = {}): LookupRow[] {
@@ -761,7 +761,7 @@ export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options
 }
 
 /**
- * One codex fact about a string. `table` names WHICH reference table answered, because "the codex knows this" is four
+ * One codex fact about a string. `table` names which reference table answered, because "the codex knows this" is four
  * unrelated questions and a caller acting on the wrong one is the failure mode.
  */
 interface CodexEntry {

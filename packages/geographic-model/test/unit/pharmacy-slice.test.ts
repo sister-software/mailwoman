@@ -14,7 +14,7 @@
  *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
  *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
  *   union rather than narrow to one id (#1980). So `obtain_medication` reaches two mapped kinds, and the
- *   tests below assert that the SECOND one is reachable through the same external-identifier lookup the
+ *   tests below assert that the second one is reachable through the same external-identifier lookup the
  *   first is: a mapping nothing can translate through would state the semantics and reach no rows.
  *
  *   The freshness check compares PARSED values rather than bytes. A committed artifact is the
@@ -187,7 +187,7 @@ describe("the committed artifact", () => {
 
 	it("derives nothing, because no ancestor asserts anything", async () => {
 		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants — and the only
-		// ancestor either of them has that COULD assert (`establishment`) asserts nothing, deliberately: a claim
+		// ancestor either of them has that could assert (`establishment`) asserts nothing, deliberately: a claim
 		// authored there would be inherited by every later establishment class. So `isA` inheritance has nothing to
 		// materialize. An empty table here is the truthful answer, not an unread one — `compile.test.ts` exercises
 		// the derivation itself.
@@ -295,8 +295,8 @@ describe("reading the record set through the runtime lookups", () => {
 
 	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout` returning `[]` reads
 	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
-	// CARRIES the concept and states what it affords, its external identifier DOES translate into it since W1-3
-	// landed, and nothing has been DERIVED about it — which is an empty derivation, not an unmapped class.
+	// carries the concept and states what it affords, its external identifier does translate into it since W1-3
+	// landed, and nothing has been derived about it — which is an empty derivation, not an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

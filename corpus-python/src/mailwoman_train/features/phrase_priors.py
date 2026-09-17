@@ -9,7 +9,7 @@ This module defines:
 
 - ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS contract
   (``core/pipeline/types.ts``'s ``PhraseKind`` union). The Python-side enum is a tuple
-  in declaration order; the order MUST match the TS union — the i-th kind in this tuple
+  in declaration order; the order must match the TS union — the i-th kind in this tuple
   is the same kind as the i-th branch of ``PhraseKind`` in TS, because that's the same
   index used to one-hot encode per-token features.
 
@@ -71,7 +71,7 @@ class PhraseFeatureEncoding:
     Tokens not covered by any phrase proposal: all-zero feature vector.
     Tokens covered by multiple overlapping proposals (the plan's "possibilities not
     constraints" cases like ``Saint Petersburg`` being both one ``LOCALITY_PHRASE`` and
-    two ``LOCALITY_PHRASE``s): the encoder consumes ONE feature row per token, so the
+    two ``LOCALITY_PHRASE``s): the encoder consumes one feature row per token, so the
     corpus build picks the highest-confidence proposal covering that token. Downstream
     Stage 5 reconcile (Thread D) re-introduces the multi-proposal ambiguity from the
     grouper's raw output.

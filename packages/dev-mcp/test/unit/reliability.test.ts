@@ -33,7 +33,7 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("signs the gap so overconfidence is negative", () => {
-		// The direction is the finding, not the magnitude: a confidence ABOVE the accuracy it warrants is the failure that
+		// The direction is the finding, not the magnitude: a confidence above the accuracy it warrants is the failure that
 		// lets a caller trust a wrong answer, and an unsigned gap cannot tell it from the harmless direction.
 		const overconfident = reliabilityCurve(at(0.9, 100, 50), 10)
 		const underconfident = reliabilityCurve(at(0.5, 100, 90), 10)

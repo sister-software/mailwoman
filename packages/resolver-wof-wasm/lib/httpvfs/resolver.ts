@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Sql.js-httpvfs-backed resolver for the demo. Range-loads the SAME-ORIGIN DB (served from the
- *   Pages deploy) so a session fetches ~5 MB instead of the whole 53 MB — the win that matters on
- *   mobile / metered links.
+ *   Pages deploy) so a session fetches ~5 MB instead of the whole 53 MB, which is the saving that
+ *   matters on mobile / metered links.
  *
  *   The query SQL + ranking mirror `@mailwoman/resolver-wof-wasm`'s `WOFWasmPlaceLookup` (exact-name
  *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run ASYNC over
@@ -19,7 +19,7 @@
  *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
  *
- *   `createDbWorker` (lowercase b) is sql.js-httpvfs's OWN export name — the acronym-casing
+ *   `createDbWorker` (lowercase b) is sql.js-httpvfs's own export name — the acronym-casing
  *   convention explicitly exempts external library names (AGENTS.md), and the batch-B sweep
  *   (da54bc8c) violating that here silently killed the street tier for three days: the UMD loaded,
  *   `window.createDbWorker` never existed, and the demo fell back to the admin cascade. The
@@ -44,7 +44,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street/normalize"
-// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
+// The shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
 import type { DualRole, MailwomanLookupLike } from "#browser-cascade"
@@ -83,7 +83,7 @@ const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
 /**
- * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
+ * Trim raw input into an FTS5-safe `MATCH` term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
  * Node/WASM sanitizers (which strip everything outside `\p{L}\p{N}`), this one strips a denylist — so the alias-bag
  * separator must be stripped EXPLICITLY or a pasted U+E000 could address the boundary token in the quoted phrase
  * below.
@@ -167,7 +167,7 @@ export async function loadHTTPVFSDatabase(
 	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
 	// which surfaces as "database disk image is malformed"; the assets' immutable Cache-Control means
 	// a once-poisoned cache entry is trusted indefinitely, so the only escape is a fresh URL. Try the
-	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry ONCE
+	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry once
 	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
 	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
 	const open = async (url: string): Promise<HTTPVFSWorker> => {
@@ -208,7 +208,7 @@ export async function loadHTTPVFSDatabase(
 }
 
 /**
- * All table-existence facts the lookup needs, resolved in ONE worker round trip.
+ * All table-existence facts the lookup needs, resolved in one worker round trip.
  */
 interface SchemaFacts {
 	hasPop: boolean
@@ -279,7 +279,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 			const localityID = Number(r.localityID)
 			const rel = String(r.rel)
 
-			// Resolved place is the locality → it ALSO acts as the region (the admin partner).
+			// Resolved place is the locality → it also acts as the region (the admin partner).
 			push(localityID, {
 				id: adminID,
 				name: String(r.adminName),
@@ -288,7 +288,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 				role: "region",
 			})
 
-			// Resolved place is the admin → it ALSO acts as the locality.
+			// Resolved place is the admin → it also acts as the locality.
 			push(adminID, {
 				id: localityID,
 				name: String(r.locName),
@@ -304,7 +304,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	/**
 	 * Dual-role lookup (#402): a city-state / capital-seat place holds two admin tiers under one name (Berlin is both a
 	 * region and a locality). The `coincident_roles` relation pairs an `admin_id` with the `locality_id` it doubles as;
-	 * this returns the PARTNER role for a resolved place in EITHER direction, so the demo can badge "Berlin → also a
+	 * this returns the partner role for a resolved place in either direction, so the demo can badge "Berlin → also a
 	 * region (city-state)" whether the parse resolved the city or the state. Returns `[]` when the slim DB predates the
 	 * relation (existence-guarded) — degrades silently.
 	 */
@@ -421,7 +421,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		const normQuery = normName(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
-		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
+		// pool first because the alias tier below only engages when no strict exact exists.
 		const strictExact = (row: Record<string, unknown>): boolean =>
 			normName(String(row.name)) === normQuery || abbrIDs.has(Number(row.id))
 
@@ -488,7 +488,7 @@ interface CandidateCodeMaps {
  * `MailwomanLookupLike` surface), but ~12 range fetches per session instead of 243 on the full DB, with GLOBAL
  * coverage.
  *
- * Disambiguation rides the SAME mechanism the demo cascade already uses: a parsed region resolves to its stored bbox
+ * Disambiguation rides the same mechanism the demo cascade already uses: a parsed region resolves to its stored bbox
  * (returned in `findPlace`'s result), and the locality query is point-in-bbox-filtered on the candidate centroid —
  * exactly what `runCascade` expects.
  */
@@ -507,7 +507,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	readonly #postalCityPresent = memoizeResettable(() => tableExists(this.#worker, "postal_city_candidate"))
 
 	/**
-	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
+	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against every
 	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
 	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
 	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
@@ -672,7 +672,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (!rows.length) {
 			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD", "Odense S", "Hart b.Graz").
-			// Tried ONLY on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
+			// Tried only on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 			if (strippedKey && strippedKey !== nameKey) {
@@ -697,9 +697,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				// primary preference; the walk orders by `prominence ?? score`, same as the Node reader.
 				score: -(row.neg_rank as number),
 				prominence: -Number(row.effectiveNegRank),
-				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's
+				// Every candidate row is an exact normalized-name (or alias/abbrev) match — the cascade's
 				// exact tier accepts alias-exact hits ("New York City" → New York) the same as canonical —
-				// EXCEPT a cross-country alias that lost the bounded contest to a same-key primary (`demoted`):
+				// except a cross-country alias that lost the bounded contest to a same-key primary (`demoted`):
 				// it drops out of the exact tier so a country posterior can't ride it back over the primary.
 				exactMatch: !row.demoted,
 				// The two-score split's carry + the #28 fame prior, exactly as the Node reader emits them:
@@ -721,7 +721,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			}
 		})
 
-		// Proximity re-rank (#938) — the SAME function the Node candidate reader calls, not a transcription of
+		// Proximity re-rank (#938) — the same function the Node candidate reader calls, not a transcription of
 		// it. The two copies this replaced agreed on every constant and still disagreed on which field the
 		// population term reads and on whether the combined value is written back, which is the half that
 		// decides the answer. See proximity-rerank.ts.

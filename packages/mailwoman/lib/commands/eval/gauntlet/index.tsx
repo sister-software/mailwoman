@@ -15,7 +15,7 @@
  *
  *   Since 2026-08-05 that measurement is NORMATIVE: each variant is graded against a per-row
  *   graceful-degradation ladder rather than against the undeleted anchor, so coarsening to a rung the
- *   surviving components still justify PASSES, abstaining under untenable ambiguity PASSES, and a
+ *   surviving components still justify passes, abstaining under untenable ambiguity passes, and a
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
@@ -78,7 +78,7 @@ export const spec = {
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {
-		// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
+		// The `*Off` names are CLI-only spellings of the off half of a tri-state; they are destructured out so neither
 		// ever reaches `runGauntlet` as a field of its own.
 		const {
 			postcodeCountryCoherenceOff,
@@ -100,7 +100,7 @@ const EvalGauntlet = harnessCommand(
 				// header row.
 				...(components ? { components: extractDelimited(components) } : {}),
 				// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
-				// `false` default for BOTH halves, and forwarding one verbatim would pin the change forever — which is
+				// `false` default for both halves, and forwarding one verbatim would pin the change forever — which is
 				// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 				// flag set keeps "no flag" meaning "grade whatever production does".
 				postcodeCountryCoherence: options.postcodeCountryCoherence
@@ -108,10 +108,10 @@ const EvalGauntlet = harnessCommand(
 					: postcodeCountryCoherenceOff
 						? false
 						: undefined,
-				// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
+				// #1497: two-sided since the 2026-08-16 default-on promotion. There is a production default to
 				// preserve now, so an unset flag must stay unset rather than pinning the change either way.
 				gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
-				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
+				// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the off pin
 				// grades the production default explicitly, and no flag stays "grade whatever production does".
 				adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
 				// #2266: two-sided from day one, same as the two above.
@@ -120,7 +120,7 @@ const EvalGauntlet = harnessCommand(
 					: spanRescoreRequireContextRemainderOff
 						? false
 						: undefined,
-				// #2264: three readings rather than two states, so there is no OFF spelling — an absent flag is the
+				// #2264: three readings rather than two states, so there is no off spelling — an absent flag is the
 				// production default, which is to take a `placeID` at face value and never lift the brake.
 				...(options.spanRescoreWeakResolution ? { spanRescoreWeakResolution: options.spanRescoreWeakResolution } : {}),
 			})

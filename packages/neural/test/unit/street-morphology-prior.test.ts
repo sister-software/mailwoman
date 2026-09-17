@@ -5,7 +5,7 @@
  *
  *   Unit tests for the street-morphology emission bias function. Asserts the two-pass behaviour:
  *   matched affix tokens get positive bias on street_prefix/street_suffix; adjacent name tokens get
- *   positive bias on street AND negative bias on dependent_locality.
+ *   positive bias on street and negative bias on dependent_locality.
  */
 
 import type { FSTMatcherLike, FSTMatchLike, FSTPlaceEntryLike } from "@mailwoman/neural/fst-prior"
@@ -110,7 +110,7 @@ describe("buildStreetMorphologyEmissionPriors", () => {
 		expect(afterRow[labelCol("B-street")]!).toBeGreaterThan(0)
 		expect(afterRow[labelCol("B-dependent_locality")]!).toBeLessThan(0)
 
-		// "rue" (the affix itself) → prefix + suffix bias, but NOT dependent_locality penalty
+		// "rue" (the affix itself) → prefix + suffix bias, but not dependent_locality penalty
 		const affixRow = matrix[1]!
 		expect(affixRow[labelCol("B-street_prefix")]!).toBeGreaterThan(0)
 		expect(affixRow[labelCol("B-street_suffix")]!).toBeGreaterThan(0)

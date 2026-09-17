@@ -276,7 +276,7 @@ describe("auditWhitespaceSuite", () => {
 
 describe("a seeded whitespace regression", () => {
 	/**
-	 * The pipeline stand-in that fails ONLY on the tabbed arm — the shape the live finding takes. Seeding the regression
+	 * The pipeline stand-in that fails only on the tabbed arm — the shape the live finding takes. Seeding the regression
 	 * rather than waiting for one is what proves the failure line carries enough to diagnose from.
 	 */
 	const observe: ConformanceObserver = async (query) => {

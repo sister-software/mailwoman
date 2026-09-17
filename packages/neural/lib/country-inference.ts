@@ -31,9 +31,9 @@
  *     blacklist, without dropping the surface (recall on "Republic of Georgia" is preserved).
  *
  *   WHY A DEDICATED CHANNEL rather than the gazetteer's existing `country` slot: the gazetteer slot
- *   already carries these surfaces AND the shipped model already consumes them, yet the WOF-admin
- *   case still fails (#1104). The country bit is one of a 5-hot vector sharing ONE projection with
- *   region/po_box/cedex/homograph, and it is ZEROED adjacent to a postcode by
+ *   already carries these surfaces and the shipped model already consumes them, yet the WOF-admin
+ *   case still fails (#1104). The country bit is one of a 5-hot vector sharing one projection with
+ *   region/po_box/cedex/homograph, and it is zeroed adjacent to a postcode by
  *   `suppressGazetteerNearPostcode` (exactly where "…12345 USA" sits). A separate channel gives
  *   country its own projection + confidence weight and is immune to that suppression. See
  *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
@@ -49,7 +49,7 @@ import type { TokenizedPiece } from "#tokenizer"
 
 /**
  * The country feature width. The emitted per-piece row is `[country_surface, country_ambiguous]`. Used for the ONNX
- * zero-fallback when a country-trained model is run with no lexicon supplied. MUST match the lexicon JSON's
+ * zero-fallback when a country-trained model is run with no lexicon supplied. Must match the lexicon JSON's
  * `feature_dim` and the trained model's `country_feature_dim`.
  */
 export const COUNTRY_FEATURE_DIM = 2
@@ -65,8 +65,8 @@ export const COUNTRY_AMBIGUOUS_BIT = 2
 
 /**
  * The loaded country lexicon. Structurally identical to a {@linkcode GazetteerLexicon} (the same n-gram phrase-scan
- * shape) — the type is reused deliberately so the two channels share ONE matcher. The `bits`/`slots` describe the
- * lexicon's internal bit layout (`country_surface` / `country_ambiguous`), NOT a multi-hot emitted vector.
+ * shape) — the type is reused deliberately so the two channels share one matcher. The `bits`/`slots` describe the
+ * lexicon's internal bit layout (`country_surface` / `country_ambiguous`), not a multi-hot emitted vector.
  */
 export type CountryLexicon = GazetteerLexicon
 
@@ -85,7 +85,7 @@ export function parseCountryLexicon(raw: {
 }
 
 /**
- * Per-piece country features + confidence for `text`, projected onto its SP `pieces` by the SAME char→piece rule the
+ * Per-piece country features + confidence for `text`, projected onto its SP `pieces` by the same char→piece rule the
  * labels use (a piece takes the bits of the first non-whitespace char it covers) — so the clue lands on exactly the
  * country phrase's sub-tokens. Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface,
  * country_ambiguous]`) + `(pieces,)` confidence (1.0 wherever a country surface fires).

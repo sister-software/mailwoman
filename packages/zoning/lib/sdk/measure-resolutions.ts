@@ -6,7 +6,7 @@
  *   The index resolution is a MEASUREMENT this layer takes, not a number argued to — and for this subject the
  *   inherited size contract's own statistic is not the one that decides it.
  *
- *   THE `partial` SHARE CARRIES NO SIGNAL HERE, AND THAT WAS MEASURED. Computed over all 85,330 Irish
+ *   The `partial` share carries no signal here, and that was measured. Computed over all 85,330 Irish
  *   features, the median zoning polygon is 4,497 m² against an average res-9 cell of 105,333 m²: 95.7% of
  *   them are smaller than a res-9 cell, 75.1% smaller than a res-10 cell and 34.5% smaller than a res-11 one.
  *   So the `partial` share sits near 100% at every candidate and cannot choose between them.

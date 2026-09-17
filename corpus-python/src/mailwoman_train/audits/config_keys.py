@@ -1,7 +1,7 @@
 """Scratch audit for #1248: which keys would a strict merge reject?
 
 Walks every YAML in src/mailwoman_train/configs/ recursively against the
-dataclass field tree (Config -> data/model/train/eval), collecting EVERY
+dataclass field tree (Config -> data/model/train/eval), collecting every
 unknown dotted key path (every one, where a raising `merge_into` reports only the first
 reports). Also records non-unknown-key load errors separately (e.g. the YAML
 Norway guard) so the two failure classes don't blur.

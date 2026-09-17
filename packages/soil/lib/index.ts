@@ -157,7 +157,7 @@ export interface SoilCapabilityReading {
 	 */
 	surveyArea?: SoilSurveyAreaRecord
 	/**
-	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which IS the absence.
+	 * The coverage row that licenses the reading, when there is one. Absent on `unknown`, which is the absence.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
 	/**
@@ -325,7 +325,7 @@ export class SoilCapabilityLookup implements Disposable {
 	/**
 	 * Which survey area a coordinate falls in, by the delineation bounds each area's row carries.
 	 *
-	 * A rectangle rather than the outline, and that is honest about what it is: the answer names WHICH published survey
+	 * A rectangle rather than the outline, and that is honest about what it is: the answer names which published survey
 	 * the reading came from, and two neighbouring counties' rectangles overlap at their corners. The reading itself does
 	 * not depend on it — the cell row is the answer — so a corner ambiguity costs a label rather than a determination.
 	 *

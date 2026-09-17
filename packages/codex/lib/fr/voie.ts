@@ -82,7 +82,7 @@ const VOIE_TOKEN_SET: ReadonlySet<string> = (() => {
 
 /**
  * True when a token is a French voie type word or abbreviation (case- and accent-insensitive) — `Rue`, `BD`, `Allée`,
- * `impasse`. Matches the WHOLE token (French types lead the street name, they are not fused suffixes), so a city or
+ * `impasse`. Matches the whole token (French types lead the street name, they are not fused suffixes), so a city or
  * surname is not caught the way a suffix test might.
  */
 export function isFrenchStreetWord(token: unknown): boolean {

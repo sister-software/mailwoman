@@ -89,7 +89,7 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented MORE than `source_weights:` are entries; lines with ≤ indent end the block.
+		// Lines indented more than `source_weights:` are entries; lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
 
 		if (indent <= blockIndent) {
@@ -283,7 +283,7 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
 	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
 	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
-	// when it's above 40% effective sample OR more than 1.5× the next-highest.
+	// when it's above 40% effective sample or more than 1.5× the next-highest.
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>

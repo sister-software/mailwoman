@@ -8,7 +8,7 @@
  *   This is the half the staleness guard was missing. `tree-fingerprint.ts` correctly refuses to serve an
  *   engine whose modules predate the working tree, because Node's ESM cache has no invalidation — but a
  *   refusal with no alternative just moves the work outside the tool, and the thing a maintainer most often
- *   wants to measure IS a source change. Hand-rolling it means re-deriving the engine's own
+ *   wants to measure is a source change. Hand-rolling it means re-deriving the engine's own
  *   {@linkcode resolveConfig} defaults in a throwaway script, which is the shared-constants failure mode: the
  *   two arms drift and nothing says so.
  *
@@ -17,15 +17,15 @@
  *   resolution path.
  *
  *   THE NODE_MODULES TRAP, which is the whole reason this file is longer than a `spawn` call. A git worktree
- *   has no `node_modules`, and symlinking the main checkout's directory across does NOT work: yarn links a
- *   workspace as `node_modules/@mailwoman/core -> ../../packages/core`, resolved against the symlink's REAL
+ *   has no `node_modules`, and symlinking the main checkout's directory across does not work: yarn links a
+ *   workspace as `node_modules/@mailwoman/core -> ../../packages/core`, resolved against the symlink's real
  *   path, so every `@mailwoman/*` import would silently land back in the main checkout and the child would
  *   measure exactly the code it was spawned to avoid. It would look like it worked. This builds a farm
  *   instead: third-party packages symlink across (they are identical and huge), and the workspaces whose
- *   source can change a geocode are re-pointed INTO the worktree.
+ *   source can change a geocode are re-pointed into the worktree.
  *
- *   ONLY those, and the exception is not cosmetic. The `neural-weights-*` workspaces ship `model.onnx` and
- *   `tokenizer.model`, which are NOT committed — they are materialized into the checkout from
+ *   Only those, and the exception is not cosmetic. The `neural-weights-*` workspaces ship `model.onnx` and
+ *   `tokenizer.model`, which are not committed — they are materialized into the checkout from
  *   `$MAILWOMAN_DATA_ROOT` by each package's `link-dev-weights.ts`. Re-pointing them at a fresh worktree
  *   gives the child a weights package with no weights in it, and the failure is loud but misleading:
  *   "geocode requires the neural weights. Install @mailwoman/neural-weights-en-us". The list of workspaces
@@ -138,7 +138,7 @@ async function linkNodeModules(mainRoot: string, worktree: string): Promise<void
 }
 
 /**
- * The script the child runs, written INTO the worktree rather than committed.
+ * The script the child runs, written into the worktree rather than committed.
  *
  * Written rather than committed on purpose: a committed runner would only exist at refs that already have it, so the
  * arm could not reach backwards past its own introduction — which is most of the refs anyone wants to compare against.
@@ -197,7 +197,7 @@ export interface WorktreeArmResult {
  * Run one input set through `ref`'s source, in a child process, and return its answers.
  *
  * `options` is the resolved {@linkcode GeocodeSessionOptions} the caller's own registry produced — passed through rather
- * than re-derived here, so both arms are configured by ONE function and a change added to `resolveConfig` reaches this
+ * than re-derived here, so both arms are configured by one function and a change added to `resolveConfig` reaches this
  * arm without being copied into it.
  *
  * The worktree is removed in `finally`, including on a child crash. `git worktree add --detach` never moves the
@@ -216,7 +216,7 @@ export async function runWorktreeArm(args: {
 
 	// The UNCOMMITTED working tree, which no git ref can name and which is the arm a maintainer reaches for most:
 	// "what I have edited" against "what is committed". It needs no worktree and no farm — the main checkout
-	// already has both — only its own process, which is the entire point. Spawning it through the SAME runner as a
+	// already has both — only its own process, which is the entire point. Spawning it through the same runner as a
 	// ref arm is what keeps the comparison honest: one script, one config path, so a difference between the arms
 	// is a difference in source rather than in how each side was invoked.
 	const live = ref === WORKING_TREE_REF
@@ -257,7 +257,7 @@ export async function runWorktreeArm(args: {
 		? runFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
 		: false
 
-	// A dirty working tree is NOT its HEAD, and reporting the sha alone would let a comparison claim it ran
+	// A dirty working tree is not its HEAD, and reporting the sha alone would let a comparison claim it ran
 	// that commit when it ran that commit plus uncommitted edits.
 	const commit = dirty ? `${head}+dirty` : head
 

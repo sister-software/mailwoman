@@ -59,7 +59,7 @@ def test_trainable_only_prefixes_defaults_empty():
 def test_v3120_crt_probe_config_loads_the_one_variable():
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.trainable_only_prefixes == ["classifier."]
-    # UNCHANGED-from-parent settings (same stream, same resurrection settings, same 8k) — the ONE
+    # UNCHANGED-from-parent settings (same stream, same resurrection settings, same 8k) — the one
     # variable claim is only true if these actually match v3.11.0-deploc-feed.yaml.
     parent = load_config(CONFIG_DIR / "v3.11.0-deploc-feed.yaml")
     assert cfg.data == parent.data
@@ -76,7 +76,7 @@ def test_v3120_crt_probe_config_loads_the_one_variable():
 
 
 def test_v3120_crt_probe_config_freeze_flags_stay_off():
-    """Mutual exclusivity is enforced in train.py, but the SHIPPED config itself must also not
+    """Mutual exclusivity is enforced in train.py, but the shipped config itself must also not
     trip it — trainable_only_prefixes is meant to stand alone."""
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.freeze_encoder is False
@@ -90,7 +90,7 @@ def test_v3120_crt_probe_config_freeze_flags_stay_off():
 
 def test_all_carved_out_yields_a_clean_one_group_optimizer():
     """The cRT-probe shape: everything but `classifier.` is frozen upstream (train.py), so the
-    ONLY name left in `trainable` by the time build_optimizer runs is `classifier.` itself. With
+    only name left in `trainable` by the time build_optimizer runs is `classifier.` itself. With
     classifier_learning_rate also set, the carve-out consumes 100% of `trainable` and `rest` is
     empty — build_optimizer must skip inserting a "base" group for it, not construct a permanently
     -empty phantom group."""
@@ -122,7 +122,7 @@ def test_all_carved_out_without_lr_override_is_also_one_group():
 
 
 def test_three_group_shape_unaffected_by_the_empty_group_skip():
-    """Pre-existing shape (span_head_learning_rate AND classifier_learning_rate, encoder still
+    """Pre-existing shape (span_head_learning_rate and classifier_learning_rate, encoder still
     trainable so `rest` is non-empty) must be untouched by the `if rest:` guard — the base group
     still gets inserted when it actually has params."""
     m = TinySpanClassifierModel()
@@ -146,7 +146,7 @@ def test_three_group_shape_unaffected_by_the_empty_group_skip():
 
 def test_raw_adamw_tolerates_an_empty_param_group():
     """AdamW's own behavior with a zero-params group: constructs, steps, and round-trips its
-    state_dict cleanly. This is the evidence behind choosing NOT to special-case away from an
+    state_dict cleanly. This is the evidence behind choosing not to special-case away from an
     empty group for safety reasons — the skip in build_optimizer is a shape/readability choice
     (no permanently-empty phantom "base" label), not a workaround for broken torch behavior."""
     lin = torch.nn.Linear(4, 4)
@@ -192,7 +192,7 @@ def test_raw_lambdalr_tolerates_an_empty_param_group():
 
 @pytest.mark.parametrize("config_path", sorted(CONFIG_DIR.glob("*.yaml")), ids=lambda p: p.name)
 def test_no_shipped_config_combines_trainable_only_prefixes_with_a_freeze_flag(config_path):
-    """train.py raises if trainable_only_prefixes AND freeze_encoder/freeze_token_embeddings are
+    """train.py raises if trainable_only_prefixes and freeze_encoder/freeze_token_embeddings are
     all set — pinned here at the config-sweep level so a future config can't ship the combination
     and only discover the raise at launch time."""
     raw = yaml.safe_load(config_path.read_text()) or {}

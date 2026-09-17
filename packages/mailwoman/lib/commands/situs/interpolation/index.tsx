@@ -428,7 +428,7 @@ async function buildStateDatabase(
 	}
 
 	// The child's parse-relevant facts span its Ink summary (stdout: "N segment-sides → …") + plain
-	// progress (stderr: "N county shapefiles for …") — combine + strip ANSI, then match WITHOUT line
+	// progress (stderr: "N county shapefiles for …") — combine + strip ANSI, then match without line
 	// anchors so the summary's "✓ " render prefix doesn't defeat the regex.
 	const stdout = stripAnsi(result.stdout ?? "")
 	const stderr = stripAnsi(result.stderr ?? "")

@@ -7,7 +7,7 @@ the region: the overlay's manifest, its re-sealed character vocabulary, and the 
 volume's copy of the training package is the one this recipe needs rather than a stale sync.
 
 A launcher calls these by name from the volume's own copy of the package, so an import failure here
-IS the report that the package did not land.
+is the report that the package did not land.
 """
 
 from __future__ import annotations

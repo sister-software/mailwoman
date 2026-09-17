@@ -5,7 +5,7 @@
  *
  *   Address-point interpolation — "Method 2" of the resolution ladder (#483, Phase 1 of
  *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
- *   misses a house number, bracket the number with REAL neighbor points on the same street from the
+ *   misses a house number, bracket the number with real neighbor points on the same street from the
  *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
  *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's check
  *   miss; TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
@@ -18,7 +18,7 @@
  *
  *   Bracketing contract:
  *
- *   - Neighbor candidates NEVER include the queried number itself (any unit/duplicate row of it) — in
+ *   - Neighbor candidates never include the queried number itself (any unit/duplicate row of it) — in
  *       production the exact tier would already have answered an on-file number, and in the eval
  *       this is what makes grading against the same extract non-circular by construction.
  *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the nearest known number
@@ -71,7 +71,7 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
 	 * ownership is membership rather than a flag a later branch has to check.
 	 */
 	readonly #resources = new DisposableStack()
@@ -93,7 +93,7 @@ export class AddressPointInterpolator<
 		// is skipped, deferring to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
 			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
-			// queried number itself is excluded HERE (see module doc: non-circular by construction).
+			// queried number itself is excluded here (see module doc: non-circular by construction).
 			this.#byPostcode = prepareAll(
 				this.#db,
 				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release

@@ -6,9 +6,9 @@
  *   Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from `release.config.json` — the writer half of the
  *   overlay rung in `@mailwoman/neural`'s `resolveWeights`.
  *
- *   WHY THE DATA ROOT AND NOT THE PACKAGE. Materializing the same artifacts INTO tracked package
+ *   Why the data root and not the package. Materializing the same artifacts into tracked package
  *   directories causes four separate hazards: a git worktree starts empty and cannot geocode, `yarn test`
- *   mutates tracked directories as a side effect of `weights.test.ts`, `fs.copyFile` writes THROUGH a
+ *   mutates tracked directories as a side effect of `weights.test.ts`, `fs.copyFile` writes through a
  *   leftover symlink, and a publish tarball is refused for containing one (`YN0035`). Writing outside git
  *   removes the cause of all four. Symlinks are safe here precisely because nothing tars the data root.
  *

@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-package vitest config for @mailwoman/resolver. The resolver's OWN files run from source
+ *   Per-package vitest config for @mailwoman/resolver. The resolver's own files run from source
  *   (vitest transpiles ./resolve.ts etc.); its workspace deps — @mailwoman/core, /spatial, /codex —
  *   resolve to their compiled `out/` (built by `tsc -b`). vitest's default resolution doesn't
  *   traverse a sibling workspace's package-exports for a transitive import (e.g. spatial →
  * @mailwoman/core/ objects), so the aliases below pin them explicitly. Most subpaths are
  *   directories (→ `<dir>/ index.js`); the handful that are bare files (`objects`) get a
- *   more-specific alias FIRST.
+ *   more-specific alias first.
  */
 
 import { resolvePath } from "path-ts"

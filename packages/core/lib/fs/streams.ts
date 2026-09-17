@@ -38,7 +38,7 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
 /**
  * Open a path for streaming writes.
  *
- * Unlike the file writers in `./writers.ts`, this does NOT create the parent directory: a stream that fails on the
+ * Unlike the file writers in `./writers.ts`, this does not create the parent directory: a stream that fails on the
  * first chunk rather than at open time reports the missing directory somewhere the caller is no longer looking. Call
  * `makeDirectories` first where the parent may be absent.
  */
@@ -49,9 +49,9 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * file Shift_JIS. `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than after it —
  * a line boundary found in CP949 bytes is not a line boundary.
  *
- * NOT `TextDecoder`, AND THE DIFFERENCE IS NOT SMALL. Node's WHATWG `euc-kr` implements EUC-KR proper (KS X 1001) and
+ * Not `TextDecoder`, and the difference is not small. Node's WHATWG `euc-kr` implements EUC-KR proper (KS X 1001) and
  * not the UHC extension CP949 adds in lead bytes 0x81–0xA0. Of the 17,048 two-byte sequences Python's `cp949` accepts,
- * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+FFFD and 2,349 become a DIFFERENT character with no
+ * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+FFFD and 2,349 become a different character with no
  * error raised. `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
  * It is not a rare corner. One row in 48,000 of the Korean address register carries such a sequence — `더샾오피스텔`, bytes

@@ -19,7 +19,7 @@ export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/c
 
 /**
  * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then endonym +
- * abbreviations. Curated for the corpus locales + frequent countries (NOT a full 249-entry variant table — the ISO base
+ * abbreviations. Curated for the corpus locales + frequent countries (not a full 249-entry variant table — the ISO base
  * below catches the canonical name/code for everything else). Forms are matched case-insensitively; the first entry is
  * the preferred render form.
  */
@@ -53,7 +53,7 @@ export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 
 /**
  * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built once at module load.
- * Each surface contributes its lowercased key AND its {@link foldName}-folded key when the fold leaves anything — a
+ * Each surface contributes its lowercased key and its {@link foldName}-folded key when the fold leaves anything — a
  * non-Latin surface like `日本` survives only as its lowercased self — so accented and punctuated variants resolve.
  * Canonical names + codes from the ISO base, plus the curated surface forms (surface forms win on collision — they're
  * the address-facing spellings).

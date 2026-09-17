@@ -32,7 +32,7 @@ function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
 }
 
 /**
- * The BIO tag on the FIRST token of raw (the leading 5-digit's label).
+ * The BIO tag on the first token of raw (the leading 5-digit's label).
  */
 function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	if (aligned.kind !== "labeled") return null
@@ -69,7 +69,7 @@ describe("synthesize anchor-absorption", () => {
 
 	it("CASE-P (US rural): leading postcode, NO trailing → postcode", () => {
 		const { synth, aligned } = rowFor("p-us-rural", 3)
-		expect(synth.components.house_number).toBeUndefined() // no house number — the leading IS the postcode
+		expect(synth.components.house_number).toBeUndefined() // no house number — the leading is the postcode
 		expect(leadingTag(aligned)).toBe("postcode")
 	})
 
@@ -77,7 +77,7 @@ describe("synthesize anchor-absorption", () => {
 		// The contrast to p-us-rural: same no-trailing state-bearing shape, but a LOCALITY is present, so the
 		// leading number is the house number — the discriminator the A2 recipe output lacked (98 house#->postcode).
 		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
-		expect(synth.components.locality).toBeTruthy() // a locality IS present (vs p-us-rural's none)
+		expect(synth.components.locality).toBeTruthy() // a locality is present (vs p-us-rural's none)
 		expect(synth.components.postcode).toBeUndefined() // no trailing postcode
 		expect(leadingTag(aligned)).toBe("house_number")
 	})

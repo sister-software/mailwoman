@@ -6,7 +6,7 @@
  *   Synthesis / augmentation per Phase 1 task #6.
  *
  *   An `Augmentation` is a pure function that takes a `CanonicalRow` and either returns a new
- *   `CanonicalRow` (with `raw` AND `components` transformed in lockstep so alignment still
+ *   `CanonicalRow` (with `raw` and `components` transformed in lockstep so alignment still
  *   succeeds) or `null` when the augmentation doesn't apply to the row's shape.
  *
  *   Synthesis runs **before** alignment: augmentations transform raw + components together, and the
@@ -119,7 +119,7 @@ export const dropCommas: Augmentation = (row) => {
 }
 
 /**
- * Replace single spaces with double spaces in `raw` AND in every component value. The component update is essential for
+ * Replace single spaces with double spaces in `raw` and in every component value. The component update is essential for
  * alignment: `alignRow` substring-searches each component's surface form inside `raw`, so doubling the spaces in `raw`
  * only would leave single-spaced components unfindable (this was the bug behind v0.1.1's first build attempt — 99.9% of
  * quarantined rows traced back to this augmentation). Doubling both keeps the substring contract intact.
@@ -213,9 +213,9 @@ function hashString(s: string): number {
 }
 
 /**
- * Inject ONE realistic typo — an adjacent-QWERTY-key substitution OR an adjacent-character transposition — into a
+ * Inject one realistic typo — an adjacent-QWERTY-key substitution or an adjacent-character transposition — into a
  * single alpha name component (street/locality/region…), teaching the model to recover from real-world misspellings
- * ("Cupertino" → "Cupertimo"). The edit is applied to BOTH `raw` and the component so the substring contract `alignRow`
+ * ("Cupertino" → "Cupertimo"). The edit is applied to both `raw` and the component so the substring contract `alignRow`
  * depends on holds. Number / postcode / unit components are never touched (they fail {@link ALPHA_NAME}). Deterministic
  * per row (seeded from `source_id`). Returns `null` when no eligible component exists or the edit is a no-op.
  */
@@ -660,7 +660,7 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
  * Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set.
  */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
-	// `typoInject` (#530) is deliberately NOT in the default set. It is implemented, tested, and
+	// `typoInject` (#530) is deliberately not in the default set. It is implemented, tested, and
 	// registered in {@link AUGMENTATIONS} so callers can opt in (add it here or compose it directly),
 	// but it changes the synthesized corpus distribution and its effect on the trained model is not
 	// yet measured. Per the project's default-OFF discipline, promotion into the default build is an
@@ -766,7 +766,7 @@ export function tieredNumber(random: () => number, bands: readonly TieredNumberB
  * The primary locale a synthesizer renders for a country — ISO-3166-1 alpha-2, alpha-3, or the English display name,
  * case- and whitespace-tolerant. Unknown countries render as `en-US`.
  *
- * `poBoxTemplateLocale` in `#synthesizers/po-box` narrows this one: it maps any locale WITHOUT a PO-box template back
+ * `poBoxTemplateLocale` in `#synthesizers/po-box` narrows this one: it maps any locale without a PO-box template back
  * to `en-US`, so `DE` still renders the en-US box vocabulary there. It carries its own name rather than shadowing this
  * one, because two exports called `countryToLocale` in one directory leave an importer's answer to which module they
  * happened to reach.

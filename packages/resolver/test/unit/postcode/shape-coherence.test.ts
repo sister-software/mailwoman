@@ -7,7 +7,7 @@
  *   `ResolveOpts.postcodeShapeCoherence`) — shape as CONFIDENCE and EXCLUSION, downstream of the
  *   siblings. The pre-registered bars, per `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
  *
- *   - **B1-1** — byte-stability where it must be inert: a CONFIRMED span (shape ∩ confident siblings
+ *   - **B1-1** — byte-stability where it must be inert: a confirmed span (shape ∩ confident siblings
  *     ≠ ∅) adds `postcode_shape_systems` metadata and nothing else; resolution is byte-identical to
  *     the flag-off walk.
  *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
@@ -17,13 +17,13 @@
  *     denominator — MX has no country token ("Tabasco" is not a `matchSubdivision` key), and ES has
  *     no codex address system at all.
  *   - **B1-3** — confound protection ≤2% false exclusions: "Sydney NSW 2000, Australia" stays
- *     CONFIRMED (the default country is never a signal), "10 Downing Street, London SW1A 2AA" under a
- *     US default abstains, "Ponce, 00716, Puerto Rico" stays CONFIRMED via the PR→US territory map.
+ *     confirmed (the default country is never a signal), "10 Downing Street, London SW1A 2AA" under a
+ *     US default abstains, "Ponce, 00716, Puerto Rico" stays confirmed via the PR→US territory map.
  *
  *   The rule under test (three outcomes, per span): intersection non-empty → CONFIRMED (additive
  *   stamp only); intersection empty + confident siblings → EXCLUDED (digit-only retags to
  *   `house_number`; letter-bearing keeps its tag and is stamped `postcode_shape_excluded`); no
- *   confident siblings OR no codex shape → ABSTAIN.
+ *   confident siblings or no codex shape → ABSTAIN.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -88,7 +88,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 	it("is resolution-byte-identical to the flag-off walk — only additive metadata differs", async () => {
 		const resolver = createWOFResolver(silentBackend)
 
-		// The US country sibling confirms the span (B1-1's CONFIRMED leg — where the pass must be inert
+		// The US country sibling confirms the span (B1-1's confirmed leg — where the pass must be inert
 		// for resolution) while leaving the walk lookup-less either way.
 		const mkTree = () =>
 			tree(
@@ -107,7 +107,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(onNode.placeID).toBe(offNode.placeID)
 		expect(onNode.lat).toBe(offNode.lat)
 		expect(onNode.source).toBe(offNode.source)
-		// The ONLY delta is the additive confirmation stamp.
+		// The only delta is the additive confirmation stamp.
 		expect(onNode.metadata?.["postcode_shape_systems"]).toEqual(["US"])
 	})
 
@@ -128,7 +128,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		// PR is a USPS state-or-territory abbreviation, so the Puerto Rico token is a US-system
-		// signal — the true postcode in "Ponce, 00716, Puerto Rico" is CONFIRMED, never excluded.
+		// signal — the true postcode in "Ponce, 00716, Puerto Rico" is confirmed, never excluded.
 		expect(verdict.confirmed).toEqual(["00716"])
 		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
 	})
@@ -226,7 +226,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
-		// The region's ES signal is filtered out of the SystemCode universe BEFORE the intersection,
+		// The region's ES signal is filtered out of the SystemCode universe before the intersection,
 		// so no confident siblings remain — the JP-shaped span abstains rather than false-excludes.
 		expect(verdict.abstained).toEqual(["15 07691"])
 		expect(roots[0]!.tag).toBe("postcode")
@@ -242,7 +242,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
-		// B1-3: reached under a US default, 2000 must NOT be excluded — that would delete the
+		// B1-3: reached under a US default, 2000 must not be excluded — that would delete the
 		// evidence the country-scope pass needs. The mechanism has no defaultCountry input at all;
 		// the only signals are the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]

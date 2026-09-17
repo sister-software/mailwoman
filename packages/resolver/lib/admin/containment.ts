@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The admin-containment partition (#1717 stage 2) — the ONE ordering function both deciding sites
+ *   The admin-containment partition (#1717 stage 2) — the one ordering function both deciding sites
  *   call, per the #861 rule (shared constants prove nothing; the #861 parity contract diverged at
  *   exactly the points a constant cannot express). The candidate backend partitions its row set
  *   before the limit window (so a contained candidate can reach the walk at all), and the resolver
@@ -27,8 +27,8 @@ export function firstRegionQualifier(roots: readonly AddressNode[]): string | un
 }
 
 /**
- * Stable, TIER-SAFE partition: within each match tier, candidates the containment source vouched for (`isContained`)
- * move ahead of the rest, and BOTH groups keep their incoming relative order — the same house rules every soft ranking
+ * Stable, tier-safe partition: within each match tier, candidates the containment source vouched for (`isContained`)
+ * move ahead of the rest, and both groups keep their incoming relative order — the same house rules every soft ranking
  * key here obeys (`toponym-prior.ts`): tier-safe (a contained partial match never outranks an exact one — `isExact`
  * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier warrants the
  * front), positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their

@@ -10,7 +10,7 @@
  *   env's data root regardless of the change. A dev-mcp engine with `data_root` overridden therefore measured a MIXED
  *   configuration, silently — and the FST v4→v5 battery had no warm-path A/B comparison at all.
  *
- *   The discriminating shape: a bogus data root WITH a real candidate.db passes the gazetteer check (which is
+ *   The discriminating shape: a bogus data root with a real candidate.db passes the gazetteer check (which is
  *   deliberately resolved first), so the session's next stop is weights — which must now fail against the bogus root.
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */

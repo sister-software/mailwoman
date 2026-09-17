@@ -51,8 +51,8 @@ export const ARM_SEPARATION_THRESHOLD_KM = DISTANCE_THRESHOLDS_KM[0]!
 /**
  * Whether the two arms differ at the coordinate level.
  *
- * With truth: the arms land on opposite sides of a protocol threshold (1 / 5 / 25 km), OR, when the row states its own
- * tolerance, on opposite sides of THAT. The protocol thresholds alone graded a rooftop row at kilometre scale: a 100
+ * With truth: the arms land on opposite sides of a protocol threshold (1 / 5 / 25 km), or, when the row states its own
+ * tolerance, on opposite sides of that. The protocol thresholds alone graded a rooftop row at kilometre scale: a 100
  * m-tolerance row whose answer moved from the rooftop (0 m) to an interpolated point 198 m away was inside 1 km on both
  * arms and read as no difference, and the regression was found two hours later by an instrument that read the row's
  * tolerance. Without truth: exactly one arm answered, or both answered more than the separation threshold apart.

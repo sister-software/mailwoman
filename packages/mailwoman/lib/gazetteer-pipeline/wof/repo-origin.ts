@@ -20,7 +20,7 @@
  *   A machine with no network, no `gh`, or no fork resolves upstream and says so — the plain degradation, never a
  *   hard failure.
  *
- *   NOTHING here clones. It answers "where should this come from", so a clone, a fetch and an audit all read the same
+ *   Nothing here clones. It answers "where should this come from", so a clone, a fetch and an audit all read the same
  *   answer instead of three hand-typed URLs.
  */
 

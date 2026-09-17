@@ -204,7 +204,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 
 	// Printed, not only asserted: the docstring rule in AGENTS.md is that a measured claim carries its number, and this
 	// is the number ROAD_TO_V9 §4's cost line is reporting.
-	// oxlint-disable-next-line no-console -- the measurement IS the deliverable here.
+	// oxlint-disable-next-line no-console -- the measurement is the deliverable here.
 	console.log(
 		`intent cost: ${perQueryBaselineUs.toFixed(3)} us/query baseline -> ${perQueryIntentUs.toFixed(3)} us/query ` +
 			`with intent (${ratio.toFixed(2)}x, +${(perQueryIntentUs - perQueryBaselineUs).toFixed(3)} us) ` +

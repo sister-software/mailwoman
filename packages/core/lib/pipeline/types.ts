@@ -49,7 +49,7 @@ export interface PipelineOpts {
 	 */
 	inputMode?: InputMode
 	/**
-	 * Disable fast-path shortcuts; always run the full pipeline. Does NOT bypass the poi_query branch — that's a routing
+	 * Disable fast-path shortcuts; always run the full pipeline. Does not bypass the poi_query branch — that's a routing
 	 * decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut, so a `poi_query`-classified input
 	 * still takes the poi branch regardless of this flag.
 	 */
@@ -75,7 +75,7 @@ export interface PipelineOpts {
 	 */
 	placetypePair?: PlacetypePairPassthrough
 	/**
-	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a HARD country filter
+	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter
 	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Conditioned three ways: the placer's confidence ≥
 	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔NO stay soft), the country is in the coverage
 	 * `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist} override), and no caller
@@ -264,7 +264,7 @@ export const QueryIntentCode = {
 	 *
 	 * The code is raised at RESOLVE time and names the verdict's own top kind rather than a kind of its own: the marker
 	 * is about the coordinate an answer reached, not about how the query was read, so there is no intent kind to name. A
-	 * reading the authority does not make raises NOTHING — outside its footprint there is no coverage row, and an
+	 * reading the authority does not make raises nothing — outside its footprint there is no coverage row, and an
 	 * advisory there would report a determination nobody made.
 	 */
 	AuthorityDesignation: "authority_designation",
@@ -294,7 +294,7 @@ export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentC
  * One advisory the intent vocabulary raised about a query.
  *
  * Shaped after {@link PipelineFault} on purpose, and for the same reason: the caller needs to tell "the pipeline
- * considered this and had something to say" apart from "the pipeline said nothing". A marker NEVER changes which answer
+ * considered this and had something to say" apart from "the pipeline said nothing". A marker never changes which answer
  * wins — it is additive, attributed, and always accompanied by the ordinary result. `mechanism` follows the
  * `family:rule` convention `PhraseProposal.source` established (`core/pipeline/span-proposer.ts`), so every marker
  * names the rule that produced it rather than asserting itself.
@@ -336,7 +336,7 @@ export interface QueryKindResult {
 /**
  * The input register (operator Decision A, 2026-07-28 — the Option-A evidence-bundle verdict): `fragmented` is the
  * map-search register (a human typing "belleville" or "12 rue de la paix"); `formatted` is the validation/record
- * register (a checkout form or CRM row submitting a full postal address). The evidence-bundle channels feed ONLY in
+ * register (a checkout form or CRM row submitting a full postal address). The evidence-bundle channels feed only in
  * fragmented mode — three training runs showed they lift the fragment register (admin-street homonym +0.765 lower+heal)
  * while degrading full-address parses (the flip census, `.superpowers/sdd/progress.md` 2026-07-28). Explicitly settable
  * on every surface (CLI/API); when unset, {@link deriveInputMode} maps the kind-classifier's verdict. Endpoint defaults
@@ -347,7 +347,7 @@ export type InputMode = "fragmented" | "formatted"
 /**
  * Map a {@link QueryKind} to its {@link InputMode} register. Multi-component postal specifications
  * (`structured_address`/`po_box`/`intersection`) are the formatted register; single-thing lookups (postcode, locality,
- * landmark, POI, vague) are fragments. NEVER keyed on case — lowercase is the primary user register (operator
+ * landmark, POI, vague) are fragments. Never keyed on case — lowercase is the primary user register (operator
  * doctrine).
  *
  * The four ROAD_TO_V9 §4 intent kinds are all fragments and all reach the register through the `default` arm, which is
@@ -379,7 +379,7 @@ export interface POIIntent {
 				 * Every category the subject reaches. One id unless the subject lookup returned a set to be searched together —
 				 * an activity afforded by several establishment kinds reaches one id per kind — in which case the executor
 				 * searches the union and the candidate ordering decides the answer. The order is the lookup's enumeration and
-				 * states NO preference: nothing may read position as rank.
+				 * states no preference: nothing may read position as rank.
 				 */
 				categoryIDs: string[]
 				matched: string
@@ -387,7 +387,7 @@ export interface POIIntent {
 				 * How the set was bound to the PLACE, present only when at least one reached category carried a country scope.
 				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null` when no anchor resolved to one
 				 * — and `null` admits no scoped claim. `excludedCategoryIDs` are the categories every one of whose authorities
-				 * scoped its claim to countries that do not include it; they were reached by the phrase and are NOT in
+				 * scoped its claim to countries that do not include it; they were reached by the phrase and are not in
 				 * `categoryIDs`. A set that empties this way abstains as `country_scope_excluded`.
 				 */
 				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
@@ -430,8 +430,8 @@ export interface POIResult {
 	gersID: string | null
 	/**
 	 * Read-time WOF ancestry, deepest-first — the paid-down half of the poiQueryKind register row's debt. Attached by the
-	 * executor ONLY when a reverse geocoder was wired (`runtime-pipeline.ts`'s lazy `WOFReverseGeocoder`); house
-	 * meaning-of-zero style — ABSENT (the key is omitted), never an empty array or `undefined`-valued, when no reverse
+	 * executor only when a reverse geocoder was wired (`runtime-pipeline.ts`'s lazy `WOFReverseGeocoder`); house
+	 * meaning-of-zero style — absent (the key is omitted), never an empty array or `undefined`-valued, when no reverse
 	 * geocoder is available.
 	 */
 	ancestry?: ReadonlyArray<{ placetype: string; name: string; wofID: number }>
@@ -476,7 +476,7 @@ export type PhraseKind =
  * - `confidence`: 0..1 score. Used by downstream stages to weight proposals.
  *
  * Per "possibilities not constraints", emit a proposal whenever a rule fires — overlapping proposals over the same
- * tokens are expected (e.g. `Saint Petersburg` may surface as one `LOCALITY_PHRASE` AND two `LOCALITY_PHRASE`s, with
+ * tokens are expected (e.g. `Saint Petersburg` may surface as one `LOCALITY_PHRASE` and two `LOCALITY_PHRASE`s, with
  * confidence ordering signalling which the grouper prefers).
  */
 export interface PhraseProposal {
@@ -515,7 +515,7 @@ export interface FSTMatcherLike {
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	/**
-	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately OFF; the
+	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately off; the
 	 * pipeline passes an explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
 	 */
 	inputMode?: InputMode
@@ -603,11 +603,11 @@ export interface RuntimePipelineStages {
 	/**
 	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }` predictor (a
 	 * `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"OTHER"` ⇒ off-map. When provided, a confident IN-MAP
-	 * guess becomes a SOFT country prior fed into the resolver's #369 `anchorPosterior` re-rank (boosts the right-country
+	 * guess becomes a soft country prior fed into the resolver's #369 `anchorPosterior` re-rank (boosts the right-country
 	 * candidate, never filters); it defers to a caller-supplied posterior (a stronger postcode anchor) and is a no-op on
 	 * abstain/OTHER. Off by default → byte-stable.
 	 *
-	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it IS the
+	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it is the
 	 * `anchorPosterior` (so the resolver breaks country-ambiguous ties with its own place-level evidence); when absent
 	 * the coordinator falls back to the one-hot `{ [country]: confidence }`. See
 	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
@@ -618,7 +618,7 @@ export interface RuntimePipelineStages {
 		posterior?: Record<string, number>
 	}
 	/**
-	 * POI intent stage (spec §3.1). Runs ONLY when the kind classifier emitted `poi_query`. Returns the extracted intent,
+	 * POI intent stage (spec §3.1). Runs only when the kind classifier emitted `poi_query`. Returns the extracted intent,
 	 * an abstain, or `null` to fall through to the full pipeline (the mis-detection safety valve — a `poi_query` kind
 	 * with no extractable subject parses normally). Absent by default; wired by `createRuntimePipeline({ poiQueryKind:
 	 * true })`.
@@ -637,7 +637,7 @@ export interface RuntimePipelineStages {
 	 */
 	fst?: FSTMatcherLike
 	/**
-	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed ONLY with the
+	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed only with the
 	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the check
 	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
 	 */

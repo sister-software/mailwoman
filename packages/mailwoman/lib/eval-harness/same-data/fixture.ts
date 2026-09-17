@@ -281,7 +281,7 @@ export interface ArmEvidenceObservation {
 /**
  * Whether every arm read the same evidence for every row.
  *
- * Compares the row digest, the pool size, the candidate id set and the candidate field-name set, and reports the FIRST
+ * Compares the row digest, the pool size, the candidate id set and the candidate field-name set, and reports the first
  * arm as the reference so a difference names both sides. This is the check the brief's acceptance criterion asks for,
  * and it runs over what the arms actually read rather than over the file they were handed.
  */
@@ -377,7 +377,7 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 				)
 			}
 
-			// A fresh array AND a fresh object per candidate. The array copy stops an in-place sort inside the walk from
+			// A fresh array and a fresh object per candidate. The array copy stops an in-place sort inside the walk from
 			// reordering the frozen evidence; the per-candidate copy stops the walk writing to it, because the resolver
 			// stamps verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`). A shared
 			// object would leave one arm reading evidence another arm edited.

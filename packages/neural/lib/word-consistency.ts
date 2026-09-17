@@ -9,17 +9,17 @@
  *   (byte-fallback) locality, carries diacritics, or is all-caps/reordered, the per-piece labels
  *   can DISAGREE within a single word — `VERMONT` → `VER`[B-locality] + `MONT`[B-region], `Lozère`
  *   → `Loz`[locality] + `ère`[B-region] — and the span decoder reads that as a tag-change
- *   mid-token, fracturing the admin component. The model already KNOWS the word's tag (99.7% of
+ *   mid-token, fracturing the admin component. The model already knows the word's tag (99.7% of
  *   normal rows are unanimous); the defect is the lack of a word-level consistency constraint.
  *
  *   Fix (DeepSeek-Pro consult `contested-frag`, 2026-06-19): a SentencePiece word — a `▁`-started
- *   piece + its non-`▁` continuations — must carry ONE tag. The tag is chosen by a
- *   CONFIDENCE-WEIGHTED vote, NOT first-piece-wins: sum each piece's softmax mass per TAG TYPE
+ *   piece + its non-`▁` continuations — must carry one tag. The tag is chosen by a
+ *   confidence-weighted vote, not first-piece-wins: sum each piece's softmax mass per tag type
  *   (B-X
  *
  *   - I-X collapsed; `O` included) across the word, argmax the type, and force `B-<type>` then
  *       `I-<type>` (or all `O`). The near-certain `ère`→region then pulls the whole word to region,
- *       healing both the fragment and the `Loz` bleed. Operates ONLY within a `▁`-delimited word,
+ *       healing both the fragment and the `Loz` bleed. Operates only within a `▁`-delimited word,
  *       so cross-word multi-token names ("Saint Paul" → two words) are untouched and the decoder's
  *       existing cross-word merge still joins them.
  *
@@ -30,19 +30,19 @@
  *   B-street→O; all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
  *   regression below. The vote includes `O`, so a disagreeing word can still resolve to all-`O`.
  *
- *   Promotion-eval outcome (2026-06-19, fr-admin-split-eval + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
- *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped DEFAULT-OFF,
+ *   Promotion-eval outcome (2026-06-19, fr-admin-split-eval + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): not
+ *   a clean win — net-regressed street −12.6 on the adversarial golden — so it shipped default-off,
  *   with a confidence-thresholded variant hypothesized as the path to a clean win.
  *
- *   Re-diagnosis (2026-07-15): the regression was NOT vote noise — it was two defects in this module.
+ *   Re-diagnosis (2026-07-15): the regression was not vote noise — it was two defects in this module.
  *   (1) The heal re-decoded words whose pieces already AGREED whenever the local type-mass preferred
  *   another type, overriding viterbi (`▁Broadway` B-street→O; all-street `Gamle`→locality). Fixed
  *   structurally: the vote now only runs on words whose pieces disagree in type. (2) Punctuation
  *   continuation pieces joined the preceding word's vote group (`Ave` + `,`), and their `O` mass
  *   manufactured fake disagreements that killed real spans — the `WordConsistencyOpts.splitOnPunctuation`
- *   promotion eval. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with NO confidence floor:
+ *   promotion eval. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with no confidence floor:
  *   golden us street 82.0→82.2, fr macro 42.2→51.5, adversarial flat; parity house_number .767→.808,
- *   postcode →1.000, street .543→.573; error-analysis 2pp threshold PASS. Ships ON at the pipeline call
+ *   postcode →1.000, street .543→.573; error analysis within the 2pp threshold. Ships on at the pipeline call
  *   sites via `WORD_CONSISTENCY_SHIP_DEFAULT` (core/pipeline/types.ts). A `minMeanConfidence` floor
  *   was measured NET-NEGATIVE on the parity corpus (fragment rows are low-confidence but heal
  *   correctly) — it exists as an opt, unused by the ship default.
@@ -140,7 +140,7 @@ function labelType(label: string): string {
  * over the post-prior `emissions`. See the module docstring.
  *
  * @param pieces SentencePiece pieces (the `▁`-marked surface is the word-boundary signal).
- * @param emissions Per-piece × per-label scores AFTER all priors/masks (the distribution the argmax would see).
+ * @param emissions Per-piece × per-label scores after all priors/masks (the distribution the argmax would see).
  *   Softmaxed per piece for the vote so each piece's confidence carries its weight.
  * @param labels The BIO label vocabulary (index ↔ label).
  * @param labelIndices The current per-piece decision (viterbi path or argmax). Not mutated.

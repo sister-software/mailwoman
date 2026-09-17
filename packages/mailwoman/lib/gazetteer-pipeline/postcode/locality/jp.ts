@@ -12,7 +12,7 @@
  *   Postcode --(national postal authority)--> municipality NAME (romanized) postcode --(GeoNames)-->
  *   point municipality name + point --(cross-placetype name+proximity match)--> WOF place id
  *
- *   The match searches ALL the municipality-ish WOF placetypes (locality + county + localadmin +
+ *   The match searches all the municipality-ish WOF placetypes (locality + county + localadmin +
  *   borough), because CJK municipalities are split across them (regular cities → locality, wards →
  *   county/localadmin, Tokyo special wards → borough). Matching a single placetype was the 52/60%
  *   trap; cross-placetype is 94.3%.
@@ -101,7 +101,7 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 
 	// `cp932` through iconv, not `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's WHATWG `shift_jis` reads
 	// 801 of CP932's 20,296 two-byte sequences differently — silently, since most yield a different character rather than
-	// a replacement. MEASURED on the 2026 edition: the file contains ZERO of those 801, in any column, so this changes no
+	// a replacement. Measured on the 2026 edition: the file contains zero of those 801, in any column, so this changes no
 	// value today. It is here because the file is reissued monthly and the next edition is not measured.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 

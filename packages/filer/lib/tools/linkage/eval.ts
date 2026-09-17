@@ -42,7 +42,7 @@ const EVAL_SOURCE_VINTAGE = "2026-eval-v1"
 const EVAL_VALID_FROM = "2026-01-01"
 
 /**
- * The `asOf` date every `filer_family` read in this eval is scoped to — a FIXED constant, later than the latest
+ * The `asOf` date every `filer_family` read in this eval is scoped to — a fixed constant, later than the latest
  * `lastFiledAt` in the corpus and never "today", for the same reproducibility reason as the two constants above. A
  * family membership is a temporal fact in this schema (`valid_from`/`valid_to`), so "predicted same family" is only
  * well-defined relative to a date; this is that date.
@@ -84,15 +84,15 @@ export interface LeakageCensus {
 	 */
 	scoredFamilyRows: number
 	/**
-	 * `filer_family` rows carrying a recognized relationship that asserts something OTHER than ownership — today that is
-	 * `management_company` only, since no writer emits a `same_entity` family row. Non-zero in BOTH runs:
+	 * `filer_family` rows carrying a recognized relationship that asserts something other than ownership — today that is
+	 * `management_company` only, since no writer emits a `same_entity` family row. Non-zero in both runs:
 	 * `managementCompany` is not the field under test, and the prediction ignores these.
 	 */
 	nonOwnershipFamilyRows: number
 	/**
 	 * `filer_family` rows whose relationship is not a {@linkcode FilerRelationship} value at all — impossible from any
 	 * shipped writer, so a non-zero count means a row this build did not write. Counted separately rather than folded
-	 * into either bucket, and the check REFUSES on it: an assertion the eval cannot classify is exactly what a leakage
+	 * into either bucket, and the check refuses on it: an assertion the eval cannot classify is exactly what a leakage
 	 * check should stop on, not something to file under "not ownership" and pass.
 	 */
 	unrecognizedFamilyRows: number
@@ -110,7 +110,7 @@ export interface LeakageCensus {
  *
  * **Exhaustive by construction, and that is the point.** Expressed the obvious way — two DENYLISTS typed `readonly
  * string[]`, naming the relationships that don't count — a relationship class added to `FilerRelationship` later falls
- * through to "counts as ownership" silently, in BOTH the prediction and the leakage census, scoring a fact nobody
+ * through to "counts as ownership" silently, in both the prediction and the leakage census, scoring a fact nobody
  * decided should be scored and doing it without a test failing. The `satisfies Record<FilerRelationship, boolean>` pin
  * below inverts that default: a new member is a COMPILE error here until someone classifies it deliberately. Same idiom
  * the BDC plausibility check uses (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle,
@@ -118,10 +118,10 @@ export interface LeakageCensus {
  * sits in a source file inside `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a
  * member fails with TS1360 naming the missing relationship.
  *
- * `SameEntity` is false because two identifiers denoting ONE filer say nothing about who owns it; `ManagementCompany`
+ * `SameEntity` is false because two identifiers denoting one filer say nothing about who owns it; `ManagementCompany`
  * because operational control is not ownership (spec §3.1 finding 1, and the reason this eval excludes management
  * families from both prediction and truth). `HoldingCompany`, `ParentCompany` and `Subsidiary` each assert an ownership
- * relation between two DIFFERENT entities, which is exactly what a withheld-parent run must not be able to see.
+ * relation between two different entities, which is exactly what a withheld-parent run must not be able to see.
  */
 const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.SameEntity]: false,
@@ -147,7 +147,7 @@ const OWNERSHIP_BY_RELATIONSHIP = {
  * plain object literal, so a bare index lookup inherits `Object.prototype`: `relationship === "constructor"` (or
  * `"toString"`, or `"__proto__"`) resolves to a FUNCTION, which is truthy and never nullish, so `??` does not fire and
  * the lookup answers `true` for a string it does not classify — the precise failure the paragraph above says it exists
- * to stop. Measured through the real builder: three injected `constructor` family rows score as ownership AND land in
+ * to stop. Measured through the real builder: three injected `constructor` family rows score as ownership and land in
  * the unrecognized bucket, so the three census splits sum to 8 against a published total of 5.
  */
 function assertsOwnership(relationship: string): boolean {
@@ -227,7 +227,7 @@ interface RegistrantFamilies {
 }
 
 /**
- * Read each registrant's corporate-family memberships through the SHIPPED reader (`familyRollup`), at
+ * Read each registrant's corporate-family memberships through the shipped reader (`familyRollup`), at
  * {@linkcode EVAL_AS_OF}. This is the eval's entire prediction: no query is written here that a product caller couldn't
  * make, and nothing about the clustering output is consulted.
  */
@@ -337,7 +337,7 @@ export interface LinkageEvalPassOptions {
 	 */
 	holdingCompanyWithheld: boolean
 	/**
-	 * Writes evidence into the built artifact AFTER the leakage check has passed and BEFORE the prediction is read — the
+	 * Writes evidence into the built artifact after the leakage check has passed and before the prediction is read — the
 	 * injection point the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not
 	 * exist yet. Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched.
 	 * Ordering is the point — the check still polices what the BUILDER produced from a withheld input, so a probe can add
@@ -348,7 +348,7 @@ export interface LinkageEvalPassOptions {
 
 /**
  * One pass: build a scratch `filer.db` from one projection, run the shipped clustering over it, census it, read each
- * registrant's corporate families, score. Exported so a test can run the SAME code path with injected evidence rather
+ * registrant's corporate families, score. Exported so a test can run the same code path with injected evidence rather
  * than reimplementing the pipeline beside it.
  */
 export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<LinkageEvalRun> {

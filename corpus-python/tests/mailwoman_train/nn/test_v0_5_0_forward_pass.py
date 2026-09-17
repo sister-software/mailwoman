@@ -14,13 +14,13 @@ Covered scope:
 - ``forward`` returns logits of shape ``(B, S, num_labels)``; loss is ``None`` when labels
   are omitted (forward-pass smoke skips supervision).
 - ``forward`` with ``labels`` produces a finite scalar loss — confirms CE+CRF path still
-  wires through after the phrase-prior addition, but NO backward() is called.
+  wires through after the phrase-prior addition, but no backward() is called.
 - ``predict_top_k`` returns up to k path entries per row, sorted by score desc,
   mask-trimmed to the row's real length, with each path's tag IDs in [0, num_labels).
 - Back-compat: ``use_phrase_priors=False`` (the v0.4.0 default) behaves bit-identically
   to the prior forward path, and rejects unsolicited ``phrase_features`` cleanly.
 
-NO loss.backward, NO optimizer step. The model is constructed with reduced depth
+No loss.backward, no optimizer step. The model is constructed with reduced depth
 (num_hidden_layers=2) to keep the smoke fast — geometry-correctness is the same regardless
 of depth.
 """
@@ -277,7 +277,7 @@ def test_v0_4_0_back_compat_forward_unchanged():
 
 
 def test_v0_4_0_back_compat_rejects_phrase_features():
-    """A v0.4.0-style encoder should NOT silently accept phrase features — that's exactly
+    """A v0.4.0-style encoder should not silently accept phrase features — that's exactly
     the wiring drift the smoke test is designed to catch."""
     encoder = _build_encoder(use_phrase_priors=False)
     batch = _stub_batch(bsz=1, seq_len=6)
@@ -358,7 +358,7 @@ def test_load_v0_4_0_card_back_compat(tmp_path):
 def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     """Pins the scaffold's training-config contract to the Thread C-s scope:
 
-    - phrase priors ON (the headline change)
+    - phrase priors on (the headline change)
     - hidden_size unchanged at the v0.3.0/v0.4.0 baseline (256) — the bump is out of scope
     - class_weights written against the 21-class STAGE2 BIO vocab (the active set when the
       config was authored; ACTIVE has since moved to STAGE3's 33 — the STAGE2 vocabulary is

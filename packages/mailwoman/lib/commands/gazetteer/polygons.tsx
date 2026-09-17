@@ -21,7 +21,7 @@
  *   TEXT)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
  *   Source modes: `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB
- *   (small, shippable). `--admin <admin-global-priority.db>` instead pulls EVERY admin row from the
+ *   (small, shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the
  *   full gazetteer (optionally `--countries US,DE`) — the broad-coverage build the node-side
  *   reverse geocoder (#484) wants: the slim DB excludes localadmin, which is where US town polygons
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).

@@ -6,10 +6,10 @@
  *   Pure-Node matcher scale eval — the number behind "no Elasticsearch, no server."
  *
  *   The differentiator vs Pelias/Nominatim + a bolt-on ER stack is that the whole resolve (block →
- *   Fellegi-Sunter → cluster) runs in ONE Node process with no external service. This measures how
+ *   Fellegi-Sunter → cluster) runs in one Node process with no external service. This measures how
  *   far that goes: synthetic geo-clustered records (so geo-blocking produces realistic candidate
  *   pairs, not one giant block or all singletons), resolved at increasing N, timing wall-clock +
- *   peak RSS. Geocoding is NOT in scope here (it's the per-record cost measured elsewhere) — this
+ *   peak RSS. Geocoding is not in scope here (it's the per-record cost measured elsewhere) — this
  *   isolates the matcher's block/score/cluster cost as a function of N.
  *
  *   Run: `mailwoman registry matcher-scale [--sizes 10000,50000,100000,250000,500000] [--dup 3]

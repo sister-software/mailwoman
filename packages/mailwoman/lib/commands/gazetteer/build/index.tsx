@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build` — the whole data pipeline, turnkey: `build admin` (WOF + Overture +
  *   GeoNames → verified, sealed admin gazetteer) then `build candidate` (the byte-range candidate
- *   table) FROM that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
+ *   table) from that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
  *   admin build already folds the full 161-country set upstream (a superset of the old fold list).
  *   Both artifacts land at STAGING/dated paths; swapping/promoting stays deliberate (RELEASING.md).
  */

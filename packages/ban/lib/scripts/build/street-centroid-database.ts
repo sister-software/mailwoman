@@ -7,7 +7,7 @@
  *   rooftop address-point extract (`ban/address-points-<cc>.db`, #1012). No new data source: it is a
  *   `GROUP BY street` roll-up of the register we already ingested — one row per (street_norm, postcode,
  *   commune) carrying the street's CENTROID + bounding-box EXTENT + member-point count. The output feeds
- *   `StreetCentroidSqliteLookup`, the street-level tier for a street-only query (a thoroughfare with NO
+ *   `StreetCentroidSqliteLookup`, the street-level tier for a street-only query (a thoroughfare with no
  *   house number) that no address-POINT tier can serve by definition.
  *
  *   The commune is the arrondissement-STRIPPED base commune (`stripArrondissement` — BAN names
@@ -15,7 +15,7 @@
  *   groups on the full `locality_norm` and emits the base, so a rare (street, postcode, base) collision
  *   across two arrondissements is merged harmlessly by the reader's weighted aggregate.
  *
- *   The SEALED input is opened READ-ONLY and NEVER modified. Build discipline (house rules): aggregate
+ *   The SEALED input is opened READ-ONLY and never modified. Build discipline (house rules): aggregate
  *   in SQLite → stream via `.iterate()` → positional prepared INSERT (batched) into a staging DB →
  *   indexes → ANALYZE → atomic swap into place → SEAL 0444 → record md5 + the derivation provenance in
  *   `ban/street-centroids-<cc>.ATTRIBUTION.json`. Purely additive; it never touches the rooftop extract.
@@ -131,7 +131,7 @@ async function main(): Promise<void> {
 	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
 	// `address_point.locality_norm`, which the shared schema declares a `NameKey` (the builder wrote it through
 	// `normalizeLocalityForKey`), so re-minting it here restores a fact the SQL boundary dropped rather than asserting a
-	// new one — the fold is NOT re-applied, because a second fold of an already-folded key is what would drift.
+	// new one — the fold is not re-applied, because a second fold of an already-folded key is what would drift.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
 
 		// GROUP BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
 		// member points is the exact centroid; MIN/MAX is the extent; COUNT is the weight for the reader's cross-group mean.
-		// The base commune is emitted per group (2.2M calls), NOT per source row.
+		// The base commune is emitted per group (2.2M calls), not per source row.
 		const agg = src.prepare(
 			`SELECT street_norm,
 			        postcode,
@@ -198,7 +198,7 @@ async function main(): Promise<void> {
 				source,
 				args.release,
 				// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
-				// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
+				// artifact). The rerank folds the model's street surface with this same function (the fold-parity contract).
 				foldStreetSurface(row.street_raw.replaceAll('"', ""))
 			)
 

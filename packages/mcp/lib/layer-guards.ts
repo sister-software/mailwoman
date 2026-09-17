@@ -17,7 +17,7 @@
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
  *     abstain shape exists for that tool), so a missing file becomes one friendly thrown `Error` naming the layer
  *     instead of the raw `node:sqlite` "unable to open database file" message.
- *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the SAME pairing, for filer.db.
+ *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the same pairing, for filer.db.
  *     `mailwoman_filer_lookup` requires filer.db unconditionally (mirrors `mailwoman_bdc_filing_landscape`'s own
  *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since criterion
  *     4 makes it throw rather than answer unstamped), so `cli.ts` pairs `assertFilerDatabaseExists` (the friendly
@@ -47,7 +47,7 @@ export async function openBDCDatabaseIfPresent(
  * `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}` entry `plausibilityCheck`
  * already produces when a claimed technology's physical-plant categories can't be searched. `POILookup` is dynamically
  * imported (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness) since it's only ever needed when a caller
- * actually wires a poi.db. `lookup` and `contractDB` share ONE `DatabaseSync` handle (the AGENTS.md "one connection,
+ * actually wires a poi.db. `lookup` and `contractDB` share one `DatabaseSync` handle (the AGENTS.md "one connection,
  * shared" convention) — a real poi.db's rows and its `layer_manifest`/`layer_coverage` tables live in the same file in
  * production, so disposing `contractDB` (which closes the shared handle) is enough; `POILookup` never owns it
  * (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.

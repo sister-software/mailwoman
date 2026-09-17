@@ -115,7 +115,7 @@ describe("minimal-pair ladders", () => {
 		const result = await runMinimalPairs(registry, { ladders: [{ rungs: ["a", "b"] }] })
 
 		expect(result.ladders[0]!.rungs[1]!.delta?.moved_km).toBeNull()
-		// The components are identical, so the ONLY thing that diverged is the abstention flip. It must still be caught.
+		// The components are identical, so the only thing that diverged is the abstention flip. It must still be caught.
 		expect(result.ladders[0]!.first_divergence?.step).toBe(1)
 	})
 

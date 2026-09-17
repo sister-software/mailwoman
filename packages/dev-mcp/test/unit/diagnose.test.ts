@@ -372,7 +372,7 @@ describe("assembleAccount — the terminal states", () => {
 
 	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
 		// The bd-op2-london-college class: the expectation names locality "Dhaka" and postcode "1205", the input
-		// carries both surfaces, and the parse produced NEITHER tag — the decode assigned in-vocabulary text elsewhere.
+		// carries both surfaces, and the parse produced neither tag — the decode assigned in-vocabulary text elsewhere.
 		const item: ResolvedInput = {
 			id: "row-bd",
 			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",

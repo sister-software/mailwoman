@@ -20,10 +20,12 @@
 // Node builtins on purpose. `check/docs-structure.ts` reaches this file, and the Docs workflow runs it before
 // `yarn install`, so no workspace specifier can resolve.
 /* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
-import { readdir, readFile, stat } from "node:fs/promises"
+import { readdir, readFile } from "node:fs/promises"
 import * as path from "node:path"
 import { fileURLToPath } from "node:url"
 /* oxlint-enable typescript/no-restricted-imports */
+
+import { pathExists } from "./exists.ts"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
@@ -60,18 +62,6 @@ export interface BrokenLink {
 	 * 1-indexed line the link sits on.
 	 */
 	line: number
-}
-
-// repo-health-ignore private-name-shadows-export -- `@mailwoman/core/fs/readers` exports this name, and this module
-// may not reach it: the Docs workflow runs the check before `yarn install`, so no workspace specifier resolves.
-async function pathExists(target: string): Promise<boolean> {
-	try {
-		await stat(target)
-
-		return true
-	} catch {
-		return false
-	}
 }
 
 /**

@@ -111,7 +111,7 @@ describe("readAttribution", () => {
 
 	it("decodes the full named-entity set, HTML5 legacy rules included", () => {
 		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo ⊙ Bar")
-		// The HTML5 legacy set decodes WITHOUT a semicolon, so a prefix-matching token is not "unknown":
+		// The HTML5 legacy set decodes without a semicolon, so a prefix-matching token is not "unknown":
 		expect(readAttribution({ attribution: "&notarealentity;" })).toBe("¬arealentity;")
 		expect(readAttribution({ attribution: "&zzznotanentity; stays raw" })).toBe("&zzznotanentity; stays raw")
 	})

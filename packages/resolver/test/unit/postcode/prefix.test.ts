@@ -11,10 +11,10 @@
  *     within-10-km population is a DATA property of a real PFX1 artifact (a GB one is being built
  *     build-side); what the resolver-level legs below pin is the CONTRACT the artifact rides on —
  *     a hit resolves to the index node's coordinate, the node's `radiusP95Km` rides along (never
- *     read a coordinate without its radius), and an abstention arm (no index) resolves NOTHING, so
+ *     read a coordinate without its radius), and an abstention arm (no index) resolves nothing, so
  *     a hit is never worse than abstention by construction.
  *   - **B3-3** — NI ≥95% country scope GB + NIR ancestry + correct district named, 0% coordinate.
- *     The ancestry-only tier resolves with NO lat/lon — absence, never 0,0 (meaning-of-zero) — and
+ *     The ancestry-only tier resolves with no lat/lon — absence, never 0,0 (meaning-of-zero) — and
  *     the metadata contract carries `postcode_prefix` + `postcode_prefix_ancestors`.
  *   - **B3-5** — structural: the index is `PostcodePrefixIndexLike` (`probe` + optional `country`),
  *     injected, never imported from `@mailwoman/neural`. The fake indexes below are plain objects
@@ -69,7 +69,7 @@ const gbCoordinateIndex: PostcodePrefixIndexLike = {
 }
 
 /**
- * The ancestry-only tier — NI's 80 BT districts with NO coordinate (B3-3's 0% half).
+ * The ancestry-only tier — NI's 80 BT districts with no coordinate (B3-3's 0% half).
  */
 const gbAncestryOnlyIndex: PostcodePrefixIndexLike = {
 	country: "GB",

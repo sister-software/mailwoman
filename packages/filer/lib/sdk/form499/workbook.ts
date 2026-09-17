@@ -15,7 +15,7 @@
  *   **What the workbook has that the TSV never did**, and why each matters:
  *
  *   - `note1`/`note2`/`note3` — the filer lifecycle. 11,533 rows carry one, and they parse to a closed
- *     eight-template vocabulary with ZERO unrecognized across the whole file (`form499-notes.ts`). Two of
+ *     eight-template vocabulary with zero unrecognized across the whole file (`form499-notes.ts`). Two of
  *     the eight are data the schema already has columns for: a cessation date, and a successor filer ID.
  *   - 59 per-jurisdiction TRUE/FALSE columns — the registered operating footprint. 11,256 filers operate in
  *     exactly one state, 1,780 in fifty or more.
@@ -194,7 +194,7 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
 /**
  * Convert the workbook's `M/D/YYYY` filing date to ISO `YYYY-MM-DD`.
  *
- * Returns `""` for anything that isn't that shape rather than inventing a date. That is deliberate and it is NOT
+ * Returns `""` for anything that isn't that shape rather than inventing a date. That is deliberate and it is not
  * silent: `lastFiledAt` becomes `valid_from`, and `assertISODate` throws on a non-ISO value — so an unconverted date
  * fails the build loudly at the point it would be written, which is where a reader can see which filer caused it.
  * Emitting the raw `M/D/YYYY` here would fail the same assertion; emitting a guess would not fail at all.

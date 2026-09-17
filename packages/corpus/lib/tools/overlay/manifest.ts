@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Assemble a corpus OVERLAY MANIFEST — generalized from assemble-fr-admin-split-overlay-manifest.
- *   ADDS parquet files to a base corpus, keeping every base file VERBATIM (pure overlay ADD), and
+ *   Adds parquet files to a base corpus, keeping every base file verbatim (pure overlay add), and
  *   re-roots base paths to /data (the Modal volume). Parameterized by --parquet + --source, one
  *   label per parquet, so it works for any overlay (the fr-admin-split one is the original; #148's
  *   overture-multilocale is the second user; v0.29.0's eight target-family recipe outputs are why it
@@ -77,7 +77,7 @@ interface BaseManifest {
  *
  * The rename moved this reader and the trainer's to the new key without migrating the manifests, and the trainer
  * measured the cost on 2026-09-09: `v0.28.0-reviewed-postcode-tail` declares 706 train files under the old key and the
- * loader resolved ONE. An overlay assembled from a base read as empty would carry no base files at all.
+ * loader resolved one. An overlay assembled from a base read as empty would carry no base files at all.
  */
 export function baseManifestFiles(base: BaseManifest): ManifestFile[] {
 	const files = base.slices?.length ? base.slices : base[PRE_RENAME_FILES_KEY]

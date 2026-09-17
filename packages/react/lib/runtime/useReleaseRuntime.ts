@@ -5,8 +5,8 @@
  *
  *   `useReleaseRuntime` — the headless load-orchestration hook shared by every mailwoman browser surface (the
  *   inline doc-embeds via `RuntimeEmbed`, and the geocoder). It owns the version-selection state
- *   machine, the per-version load SEQUENCING, cancellation, and the ready / loading / error state — but
- *   NOTHING model- or map-specific. The actual asset fetchers (the ONNX classifier factory, the httpvfs
+ *   machine, the per-version load sequencing, cancellation, and the ready / loading / error state — but
+ *   nothing model- or map-specific. The actual asset fetchers (the ONNX classifier factory, the httpvfs
  *   WOF opener, the FST fetch, the releases.json fetch) are INJECTED by the host as async functions, so
  *   this module imports only React: no `onnxruntime-web`, no `sql.js-httpvfs`, no `maplibre-gl`, no
  *   `fetch`-specific plumbing. That keeps it node-import-safe and root-exportable from
@@ -208,15 +208,15 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 	const [loadingByteFraction, setLoadingByteFraction] = useState<number | null>(null)
 	const [forceWASM, setForceWASMState] = useState(false)
 
-	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow) must NOT retrigger the
-	// load effects, which key ONLY on version/backend. The effects read `.current` at run time.
+	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow) must not retrigger the
+	// load effects, which key only on version/backend. The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
 	const loadAssetsRef = useRef(config.loadAssets)
 	const disposeAssetsRef = useRef(config.disposeAssets)
 	// The bundle currently owning resources, held in a ref because the cleanup that must dispose it cannot see state.
 	const liveAssetsRef = useRef<TAssets | null>(null)
 
-	// Latest manifest for the version-load effect, so it can resolve the release WITHOUT depending on `manifest`
+	// Latest manifest for the version-load effect, so it can resolve the release without depending on `manifest`
 	// identity — which would double-fire the load the instant the manifest first arrives (the selection transition
 	// null → defaultVersion already fires it once).
 	const manifestRef = useRef<ReleaseManifest<TRelease> | null>(null)
@@ -270,7 +270,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 
 		void (async () => {
 			try {
-				// Release the outgoing bundle BEFORE building its replacement, so the two models are never resident at
+				// Release the outgoing bundle before building its replacement, so the two models are never resident at
 				// once — the peak is what kills a tab, not the steady state.
 				const outgoing = liveAssetsRef.current
 

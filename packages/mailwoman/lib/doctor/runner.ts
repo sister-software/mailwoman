@@ -92,11 +92,11 @@ export interface DoctorDeps {
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
 	 * The candidate.db the TOOLS would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
-	 * on disk. NO convention-path fallback: that's exactly what geocode/serve do.
+	 * on disk. No convention-path fallback: that's exactly what geocode/serve do.
 	 */
 	envCandidatePath(): Promise<string | undefined>
 	/**
-	 * The `<data-root>/wof/candidate.db` convention path IF it exists on disk — used to detect the env-unset trap.
+	 * The `<data-root>/wof/candidate.db` convention path if it exists on disk — used to detect the env-unset trap.
 	 */
 	conventionCandidatePath(): Promise<string | undefined>
 	/**
@@ -275,7 +275,7 @@ async function gatherWeights(deps: DoctorDeps): Promise<WeightsObservation> {
 
 async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> {
 	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS databases.
-	// The convention probe must come BEFORE the databases, or a machine holding both reports the FTS database while every
+	// The convention probe must come before the databases, or a machine holding both reports the FTS database while every
 	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
 	const envCandidate = await deps.envCandidatePath()
 

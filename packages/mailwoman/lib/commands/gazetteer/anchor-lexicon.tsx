@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor LEXICON (knowledge-ladder rung
- *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by BOTH the
+ *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by both the
  *   Python trainer (gazetteer_anchor.py) and the TS inference side — so the two matchers cannot
  *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
  *
@@ -60,7 +60,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
+ * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
  * `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode letters or
  * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
  * pass through it, so "U.S.A." ≡ "u.s.a".
@@ -141,7 +141,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 		// ── cedex (FR) ──────────────────────────────────────────────────────────────────────────────
 		entries.set("cedex", (entries.get("cedex") ?? 0) | BIT.cedex)
 
-		// ── homograph bit: surface is BOTH a country and a region candidate ──────────────────────────
+		// ── homograph bit: surface is both a country and a region candidate ──────────────────────────
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {

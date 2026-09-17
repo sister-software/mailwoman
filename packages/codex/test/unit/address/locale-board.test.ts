@@ -164,7 +164,7 @@ describe("a partly-filled address drops what it cannot print, and its connectors
 	})
 
 	it("keeps the stronger separator when the middle of a line is missing", () => {
-		// Adjacent survivors collapse to the FIRST, which is the behaviour the engine this replaces produced.
+		// Adjacent survivors collapse to the first, which is the behaviour the engine this replaces produced.
 		expect(render("US", { ...base, locality: "New York", postcode: "10118" })).toBe("350 Fifth Avenue, New York, 10118")
 	})
 

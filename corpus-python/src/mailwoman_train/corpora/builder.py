@@ -33,7 +33,7 @@ SCHEMA = pa.schema(
 )
 
 # Budget for one row's field values (prefecture + municipality + street + number). The char model
-# runs at S=96 units and ``encode_row_units`` truncates past that SILENTLY, so the corpus must not
+# runs at S=96 units and ``encode_row_units`` truncates past that silently, so the corpus must not
 # contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
 # 〒NNN-NNNN + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
 # Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.

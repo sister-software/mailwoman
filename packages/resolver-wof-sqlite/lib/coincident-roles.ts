@@ -11,7 +11,7 @@
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals
  *   (Utrecht/Groningen), Shanghai. When an address surfaces only the admin role (the parser drops
  *   the locality span), the resolver has no locality to place. The hierarchy-completion step (#405)
- *   repairs that by consulting THIS relation; the table replaces #387's hardcoded 15 km constant
+ *   repairs that by consulting this relation; the table replaces #387's hardcoded 15 km constant
  *   with the gazetteer's own structure, so the runtime is an O(1) membership lookup with no
  *   distance math.
  *
@@ -27,7 +27,7 @@
  *   within a RELATIVE tolerance — `toleranceFraction × admin-bbox-diagonal`, floored at
  *   `minToleranceKm`. The relative term lets a large Italian province admit a city ~tens of km from
  *   its centroid while a tiny city-state stays tight; the floor catches city-states whose bbox is
- *   small (Bremen's centroids sit 9.3 km apart). The tolerance lives ONLY here at build time — it
+ *   small (Bremen's centroids sit 9.3 km apart). The tolerance lives only here at build time — it
  *   never enters the resolver hot path.
  *
  *   `relationship_type` is recorded for debuggability / deferred per-type behavior; v1 completion is

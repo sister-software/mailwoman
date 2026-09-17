@@ -65,7 +65,7 @@ export interface POIExecutorOpts {
 /**
  * Build the `execute` fn `createPOIIntentStage` runs after a subject match. Abstain precedence:
  *
- * 1. `requires_build_local_layer` — a build-local category with no local rows. Fires with NO lookup configured at all
+ * 1. `requires_build_local_layer` — a build-local category with no local rows. Fires with no lookup configured at all
  *    (trivially: no db, no local rows possible) as well as with a lookup present that comes back empty for the
  *    category.
  * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable center (name subjects don't need
@@ -75,7 +75,7 @@ export interface POIExecutorOpts {
  */
 export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIIntentOutcome {
 	const { lookup, requiresBuildLocal, reverseGeocode } = opts
-	// Identity fallback: no injected resolver ⇒ the seed id IS its own Overture probe id.
+	// Identity fallback: no injected resolver ⇒ the seed id is its own Overture probe id.
 	const resolveOvertureCategories = opts.resolveOvertureCategories ?? ((categoryID: string) => [categoryID])
 
 	// Bound to `results.map`, so decoration is capped at whatever `limit` bounded the search — the ≤20-calls budget
@@ -84,7 +84,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 	return (intent: POIIntent): POIIntentOutcome => {
 		const { subject } = intent
-		// EVERY category in the union, not any: a set with one member the shipped layer can answer is answerable, and
+		// Every category in the union, not any: a set with one member the shipped layer can answer is answerable, and
 		// abstaining on it would report a build-local gap the search does not have.
 		const buildLocalCategory = subject.kind === "category" && subject.categoryIDs.every(requiresBuildLocal)
 
@@ -121,7 +121,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			return { type: "intent", intent, results: lookup.search(query).map(toResult) }
 		}
 
-		// Category branch: fan EVERY canonical seed id in the union out over its Overture leaves (`supermarket` →
+		// Category branch: fan every canonical seed id in the union out over its Overture leaves (`supermarket` →
 		// grocery_store, …) and probe the lot in one search — `#searchKRing` unions the rows per cell and distance-sorts
 		// the pool, so the answer is decided by the candidate ordering the reader already owns and no weight, boost or
 		// per-category preference is applied here.
@@ -157,7 +157,7 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
  * Overture leaf id → the canonical seed id whose fan-out reached it, over the whole union.
  *
  * Insertion order is the probe order, so the map's keys are the search's `categoryIDs` with duplicates removed — two
- * seeds rolling up into a shared leaf probe it once. That shared leaf keeps the FIRST seed that reached it, which is a
+ * seeds rolling up into a shared leaf probe it once. That shared leaf keeps the first seed that reached it, which is a
  * label for a row genuinely belonging to both and not a preference between them: the row is returned either way, and
  * its position in the answer is the distance sort's.
  */
@@ -183,7 +183,7 @@ function resolveCanonicalByLeaf(
  * when the fn comes back `undefined` for this particular coordinate (e.g. open ocean, outside gazetteer coverage), or
  * when it comes back an empty array. The empty-array case is defense in depth: `runtime-pipeline.ts`'s
  * `buildSyncReverseGeocode` already collapses `hierarchy: []` to `undefined`, but a bare truthy check here would still
- * let a length-0 array from some OTHER `reverseGeocode` implementation (e.g. a test stub) slip through as "present" —
+ * let a length-0 array from some other `reverseGeocode` implementation (e.g. a test stub) slip through as "present" —
  * `[]` is truthy. The `ancestry` key is only ever added, never set to `undefined` or `[]` (house meaning-of-zero
  * style).
  */

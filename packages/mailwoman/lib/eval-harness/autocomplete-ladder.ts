@@ -10,7 +10,7 @@
  *
  *   THE LOCALE HINT IS PART OF THE INPUT. A finished address carries its own country evidence; `Ru` carries none, and a
  *   first-hit rung measured without the hint grades the gazetteer's population prior rather than autocomplete. Every
- *   rung therefore runs under the row's country, and a row with none is REFUSED rather than graded.
+ *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
  *
  *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance; the full-string rung
  *   is the ordinary board grade for that row, and a difference there is a harness defect, not a finding.
@@ -32,7 +32,7 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers ONE coordinate;
+ * The two arms. `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers one coordinate;
  * `fst` is the autocomplete tier, answering up to `topK` suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
@@ -55,7 +55,7 @@ export const LADDER_LENGTH_BANDS: ReadonlyArray<readonly [label: string, min: nu
 ]
 
 /**
- * A rung this short expects NO confident answer: one or two characters name nothing.
+ * A rung this short expects no confident answer: one or two characters name nothing.
  */
 export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 
@@ -66,7 +66,7 @@ export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
- * Which per-locale FST the `fst` arm reads for a row's country. This is NOT the weights-overlay routing
+ * Which per-locale FST the `fst` arm reads for a row's country. This is not the weights-overlay routing
  * (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back to en-US for every country without an overlay: an FST is
  * country-scoped by construction, and grading a French row against the US FST would report "never" for `Paris` as a
  * property of the tier rather than of the artifact chosen. A country with no FST here answers nothing on that arm and
@@ -158,7 +158,7 @@ export interface RowArmReading {
 	 */
 	firstHitFraction: number | null
 	/**
-	 * After the first hit, how many later rungs LOST the truth again. `0` is a stable row; `null` when it never hit.
+	 * After the first hit, how many later rungs lost the truth again. `0` is a stable row; `null` when it never hit.
 	 */
 	churn: number | null
 	/**

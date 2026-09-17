@@ -96,7 +96,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.05,
 		population: 5000,
 	},
-	// Ambiguous region: two same-name coincident localities → relation records BOTH (resolver disambiguates).
+	// Ambiguous region: two same-name coincident localities → relation records both (resolver disambiguates).
 	{ id: 60, name: "Padova", placetype: "region", country: "IT", lat: 45.4, lon: 11.87, d: 0.5 },
 	{ id: 61, name: "Padova", placetype: "locality", country: "IT", lat: 45.41, lon: 11.88, d: 0.1, population: 200_000 },
 	{ id: 62, name: "Padova", placetype: "locality", country: "IT", lat: 45.45, lon: 11.95, d: 0.1, population: 20 },

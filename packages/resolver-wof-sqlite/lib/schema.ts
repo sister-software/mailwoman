@@ -16,7 +16,7 @@
  */
 
 /**
- * The FTS5 virtual table built by this package on first open (NOT shipped by upstream WOF).
+ * The FTS5 virtual table built by this package on first open (not shipped by upstream WOF).
  *
  * `content` is unindexed — it's there so we can roundtrip the original name back to the caller without a second SELECT.
  * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
@@ -32,7 +32,7 @@ export interface PlaceSearchTable {
  * `spr` — the Who's On First "Standard Places Response": a denormalized lightweight summary of one row per place. The
  * resolver's main lookup table.
  *
- * Lifecycle flags carry TWO conventions, both meaning "currently valid": `is_current = -1` (modern Who's On First) and
+ * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1` (modern Who's On First) and
  * `is_current = 1` (legacy Mapzen-era). Only `is_current = 0` means "not current". Filters in `lookup.ts` and `fts.ts`
  * use `is_current != 0 AND is_deprecated = 0` — see #91 for the diagnostic that uncovered the mixed-convention
  * reality.
@@ -63,11 +63,11 @@ export interface SprTable {
 }
 
 /**
- * Alternate names per place, keyed by language tag subfields (BCP-47 components). Joins back to `spr.id` via `id` (NOT
+ * Alternate names per place, keyed by language tag subfields (BCP-47 components). Joins back to `spr.id` via `id` (not
  * `place_id` — the real WOF schema uses the same column name as the spr primary key; this is a normal join across two
  * tables with the same FK column name).
  *
- * No `kind` column in real WOF — the FTS build just concatenates ALL names per id.
+ * No `kind` column in real WOF — the FTS build just concatenates all names per id.
  *
  * `official` (#936 ingest bit, our unified builds only; absent in real WOF dumps) marks a PREFERRED-form name in an
  * official language of the place's country — the aliases eligible to join the name-exact tier under the option-3 rule.
@@ -144,7 +144,7 @@ export interface ConcordancesTable {
 }
 
 /**
- * `coincident_roles` (#402) — the dual-role relation: a place that is BOTH an admin region AND a locality (Berlin the
+ * `coincident_roles` (#402) — the dual-role relation: a place that is both an admin region and a locality (Berlin the
  * city-state). One row per (admin, locality) pair the resolver can complete a hierarchy with. Surfaced by
  * {@link MailwomanLookupLike.coincidentRolesFor}.
  */
@@ -164,7 +164,7 @@ export interface CoincidentRolesTable {
  * TIGER adapter).
  */
 /**
- * The provenance row every built extract carries: source fingerprints travelling WITH the database rather than in a
+ * The provenance row every built extract carries: source fingerprints travelling with the database rather than in a
  * document that can drift from it. Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
  */
 export interface ExtractMetaTable {

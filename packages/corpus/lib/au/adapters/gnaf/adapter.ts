@@ -126,7 +126,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 					components.region = t.region
 				}
 
-				// `raw` here is one of three DELIBERATE word orders, two of which no layout prints — the postcode-leading
+				// `raw` here is one of three deliberate word orders, two of which no layout prints — the postcode-leading
 				// forms this adapter exists to teach. So the question is containment against a string this adapter built,
 				// not what a layout would have printed.
 				const aligned = componentsPresentIn(components, raw)

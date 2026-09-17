@@ -159,7 +159,7 @@ export class SoilCellIndex {
 	/**
 	 * Compact the whole-cell set and report the measurement.
 	 *
-	 * Compaction is applied to the WHOLE set only — a partial cell's parent is not partial in any useful sense, and
+	 * Compaction is applied to the whole set only — a partial cell's parent is not partial in any useful sense, and
 	 * compacting it would claim the fringe covers ground it does not.
 	 */
 	finish(): SoilCellIndexMeasurement {

@@ -5,9 +5,9 @@
  *
  *   Learned-scorer CROSS-STATE generalization (#603 Tier 2, the next axis after the held-out-NPI A/B
  *   in `learned-scorer-clustering-eval.ts`). The held-out-NPI A/B showed the GBT beats the FS
- *   baseline on clustering by +5.2pp — but the GBT was trained and evaluated within ONE state (TX).
- *   The production question is whether that win GENERALIZES: train on one state, evaluate the dedup
- *   clustering F1 on a DIFFERENT state the model never saw. If it holds, the GBM is
+ *   baseline on clustering by +5.2pp — but the GBT was trained and evaluated within one state (TX).
+ *   The production question is whether that +5.2pp generalizes: train on one state, evaluate the dedup
+ *   clustering F1 on a different state the model never saw. If it holds, the GBM is
  *   production-worthy; if it collapses, the scorer is fitting state-specific structure and needs
  *   per-state training (a finding either way).
  *
@@ -96,7 +96,7 @@ export async function scorerCrossStateEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// ONE registry pass fills BOTH state buckets (the SHARED multi-state sample builder): the global
+	// One registry pass fills both state buckets (the shared multi-state sample builder): the global
 	// address-frequency table + a TRAIN-state sample + an EVAL-state sample.
 	const { byState, addressFrequency } = await buildNPPESStateSamples(
 		{
@@ -166,7 +166,7 @@ export async function scorerCrossStateEval(
 	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
 		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so
-		// without this the "FS arm" would silently BE the GBT).
+		// without this the "FS arm" would silently be the GBT).
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 
@@ -184,7 +184,7 @@ export async function scorerCrossStateEval(
 		threshold: t,
 	}))
 
-	// The SHIPPED model (the default-on candidate): the bundled DEDUP_GBT_MODEL, NOT a fresh per-run TX
+	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL, not a fresh per-run TX
 	// fit. This is the arm that justifies flipping `learnedScorer` default-on — the actual artifact every
 	// caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })

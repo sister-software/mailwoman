@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Postcode AREA → constituent country, the Royal Mail mapping — and the concrete proof of the
- *   lesson in `postcode.ts` that UK postcodes do NOT track administrative geography.
+ *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
  *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), named
- *   after the sorting town Royal Mail routes it through, NOT after a county or a constituent
+ *   after the sorting town Royal Mail routes it through, not after a county or a constituent
  *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
  *   département from the first two digits. The only honest thing we _can_ derive is which of the
  *   four UK countries an area predominantly falls in — and even that has border exceptions:

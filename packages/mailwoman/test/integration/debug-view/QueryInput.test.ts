@@ -138,7 +138,7 @@ describe("applyKey", () => {
 		expect(HOUSE).toHaveLength(5)
 		expect(applyKey(AT_END(HOUSE), "", key({ backspace: true }))).toEqual({ value: "St ", cursor: 3 })
 
-		// The arrow lands BEFORE the pair, never between its halves.
+		// The arrow lands before the pair, never between its halves.
 		expect(applyKey(AT_END(HOUSE), "", key({ leftArrow: true })).cursor).toBe(3)
 		expect(applyKey({ value: HOUSE, cursor: 3 }, "", key({ rightArrow: true })).cursor).toBe(5)
 
@@ -154,14 +154,14 @@ describe("applyKey", () => {
 	})
 
 	it("keeps a pasted multi-line address instead of dropping the whole paste", () => {
-		// A paste arrives as ONE `input`. Rejecting it because it contains a newline dropped the address on the
+		// A paste arrives as one `input`. Rejecting it because it contains a newline dropped the address on the
 		// floor with no feedback — the field simply didn't respond.
 		expect(applyKey({ value: "", cursor: 0 }, "12 Rue de Rivoli\n75001 Paris", key())).toEqual({
 			value: "12 Rue de Rivoli 75001 Paris",
 			cursor: 28,
 		})
 
-		// CRLF collapses to ONE space, and a stray control character inside the run is dropped, not the run.
+		// CRLF collapses to one space, and a stray control character inside the run is dropped, not the run.
 		expect(applyKey({ value: "", cursor: 0 }, "a\r\nb\u0000c", key())).toEqual({ value: "a bc", cursor: 4 })
 	})
 

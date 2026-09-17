@@ -7,7 +7,7 @@
  *
  *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) answers almost all of this already, and
  *   correctly: it decodes entities, survives a `<` inside an attribute value, and leaves source
- *   whitespace runs intact. What it cannot do is the ONE rule here — `textContent` inserts nothing at an
+ *   whitespace runs intact. What it cannot do is the one rule here — `textContent` inserts nothing at an
  *   element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as
  *   `"Acme FiberLLC"`, a name that appears nowhere in the document. Reach for the sanitizer from a module
  *   that already sanitizes; its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,
@@ -68,7 +68,7 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  * caller splitting on a run must include U+00A0 in its own character class, since `&nbsp;` and `&#160;` are the same
  * character and `[ \t]` matches neither.
  *
- * Markup between two text runs inserts ONE separator, and only where the source states none — so `<td>a</td><td>b</td>`
+ * Markup between two text runs inserts one separator, and only where the source states none — so `<td>a</td><td>b</td>`
  * separates into two values while `a <b>b</b>` stays single-spaced, and neither fabricates the 2+-space run a caller
  * would read as a column boundary. A run of markup is one separation, not one per tag: `</p><p>` inserts a single
  * break. An element in `lineBreakElements` makes that separator a newline, unconditionally — a line boundary the
