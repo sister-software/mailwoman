@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stream the address-bearing features of a Geofabrik `.osm.pbf` extract to the per-country corpus JSONL the
+ *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus JSONL the
  *   `@mailwoman/corpus` `osm` adapter reads. The split is the same one the Overture adapter rides: GDAL and the PBF
  *   stay here, and the corpus package, a runtime dependency of the `mailwoman` CLI, streams a light JSONL.
  *

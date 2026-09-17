@@ -116,9 +116,9 @@ async function resolveAnchorSource(
 	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
 
 	// A `shaped` card INVERTS the preference below, and this is not a style choice. `pilot-anchor-lookup.json`
-	// holds 67,708 keys, zero of them letter-bearing (US/DE/FR five-digit only) — measured, and the whole
+	// holds 67,708 keys, zero of them letter-containing (US/DE/FR five-digit only) — measured, and the whole
 	// reason the anchor-v2 retrain exists. A model that declares `shaped` was trained against a lookup
-	// with letter-bearing keys, so preferring the pilot file for it grades the candidate against a lookup
+	// with letter-containing keys, so preferring the pilot file for it grades the candidate against a lookup
 	// that cannot carry the spans it learned. Silent, and the failure looks like "the retrain did nothing".
 	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
 		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }

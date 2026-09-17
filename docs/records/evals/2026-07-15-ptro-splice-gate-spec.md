@@ -16,7 +16,7 @@ the night-3 postmortem: verify the commit landed, and rebuild `out/` after any b
 ## The candidate
 
 Training-free vocab splice + FVT mean-init (the v5.1.0 / #825 recipe, `onnx-mean-init` path — no
-GPU, no checkpoint): PT + RO diacritic-bearing pieces appended to the shipped v0.9.0-multisplice
+GPU, no checkpoint): PT + RO diacritic-containing pieces appended to the shipped v0.9.0-multisplice
 vocab (73,143), embeddings expanded off the v264 (v6.3.0) ONNX. The encoder is untouched.
 
 **Motivation** (night-3, `2026-07-15-727-stage2-kbest-plan.md`): PT and RO were never spliced. RO
@@ -26,7 +26,7 @@ unreachable from the decode side. Parity street-tag exactness: PT 0.63, RO 0.80.
 ## Build facts (measured at build time, pre-grading)
 
 - Corpus: 311,155 deduped OA PT+RO street/city lines (seed 42, cap 2M rows/file).
-- New pieces: **1,110** diacritic-bearing → vocab 73,143 → **74,253 (+1.5%)**.
+- New pieces: **1,110** diacritic-containing → vocab 73,143 → **74,253 (+1.5%)**.
 - English byte-identity: **asserted, 0 diff** (built into the tool).
 - Overlap report: `tokenizer-ptro.overlap-report.json`.
 

@@ -34,10 +34,10 @@ import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
  * Conservative FLOOR on how much CENTRE distance one unit of res-9 GRID distance buys, metres. Adjacent centres sit √3
- * × edge apart (avg edge 174.4 m → ≈302 m); the worst bearing across a ring costs a further ×0.866, and H3's projection
- * distortion shrinks edges by well under the slack this leaves (the true worst is ≈217 m per grid step). Dividing a
- * radius by this over-counts rings and can never miss a cell; multiplying a grid distance by it under-states reach and
- * can never end the ring walk early.
+ * × edge apart (avg edge 174.4 m → ≈302 m); the worst direction across a ring costs a further ×0.866, and H3's
+ * projection distortion shrinks edges by well under the slack this leaves (the true worst is ≈217 m per grid step).
+ * Dividing a radius by this over-counts rings and can never miss a cell; multiplying a grid distance by it under-states
+ * reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 

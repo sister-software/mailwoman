@@ -79,7 +79,7 @@ by default, and the run was a PURE WIN.
 Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
 `promotion-eval.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval promote` are
 backticked, so the markdown parser hands none of them to the rule — that is how a
-contract-bearing name survives the ban without being renamed.
+contract-tied name survives the ban without being renamed.
 
 Two negative assertions for Spelling.yml live on the next line, and both must stay
 quiet: the placetype identifier `neighbourhood` and the Nominatim field `licence` are

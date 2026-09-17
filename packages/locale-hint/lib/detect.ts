@@ -30,7 +30,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	}
 
 	// The writing system is a property of the INPUT, so it is the same whichever rung of the precedence ladder decides
-	// `locale`. A caller passing `--locale en-GB` for a Han-bearing address gets their tag and the fact that the
+	// `locale`. A caller passing `--locale en-GB` for a Han-containing address gets their tag and the fact that the
 	// address carries Han; those are different claims and the hint now makes both.
 	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({
 		script: entry.script,

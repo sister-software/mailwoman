@@ -6,10 +6,10 @@
  *   Tree-SHAPE predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
  *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
  *
- *   - {@link isBareTreeOf} — every value-bearing node carries the given tag (several allowed). The
+ *   - {@link isBareTreeOf} — every value-containing node carries the given tag (several allowed). The
  *     #912 / #1589 posture guards (`isBareLocalityTree`, `isBarePostcodeTree`) are this with the tag
  *     bound.
- *   - {@link loneValueBearingNode} — the tree has exactly one value-bearing node. The street-miss
+ *   - {@link loneValueNode} — the tree has exactly one value-containing node. The street-miss
  *     fallback and the resolver's bare-country race bind the tag at the call site.
  *
  *   The distinction is required: a two-segment parse can satisfy the first and never the second,
@@ -41,10 +41,10 @@ export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
 }
 
 /**
- * The tree's single value-bearing node, or null when the tree holds none or more than one. Callers check on the
+ * The tree's single value-containing node, or null when the tree holds none or more than one. Callers check on the
  * returned node's `tag` — the quantifier ("this is the whole query") is what this walk answers.
  */
-export function loneValueBearingNode(tree: AddressTree): AddressNode | null {
+export function loneValueNode(tree: AddressTree): AddressNode | null {
 	let lone: AddressNode | null = null
 
 	for (const node of walkNodes(tree.roots)) {

@@ -123,7 +123,7 @@ export interface AddressNode {
 	 */
 	interpretations?: ReadonlyArray<Interpretation>
 	/**
-	 * The ISO 15924 script this span is written in — the one that writes most of its script-bearing codepoints.
+	 * The ISO 15924 script this span is written in — the one that writes most of its script-containing codepoints.
 	 *
 	 * The span is where the question is answerable. A whole input folds to one answer and loses which PART carried which
 	 * writing system: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of the input's script

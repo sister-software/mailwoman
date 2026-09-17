@@ -79,7 +79,7 @@ export function App() {
 	// which the artifact does not, so it is kept beside the route rather than re-read from the artifact.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
-	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the bearing.
+	// The globe's handle, published by `<PlanetaryMap>` once it exists, so the compass can read the direction.
 	const [map, setMap] = useState<MapInstance | null>(null)
 	const [aboutOpen, setAboutOpen] = useState(false)
 

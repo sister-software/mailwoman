@@ -213,7 +213,7 @@ strengthens §0.1 rather than weakening it. Bundle it with the next breaking cha
 allow-list that carries a reason beside every entry. Three findings are worth keeping, because each one is a
 trap for the next vocabulary removal:
 
-1. **The instrument must read NUL-bearing files.** Five tracked sources carry raw NUL bytes (#2018), which
+1. **The instrument must read NUL-containing files.** Five tracked sources carry raw NUL bytes (#2018), which
    `grep` treats as binary and skips SILENTLY — 3,481 occurrences with `-a` against 3,427 without. A
    `grep`-based ratchet would have certified zero with 54 still standing. The counter reads through Node
    instead, which has no such blind spot.

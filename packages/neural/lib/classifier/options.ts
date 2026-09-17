@@ -116,7 +116,7 @@ export interface NeuralAddressClassifierConfig {
 	/**
 	 * Which substrings the anchor channel looks up (`AnchorSpanMode`, 2026-08-05). Defaults to `alnum-run`,
 	 * byte-identical to every parse before that date; `shaped` is PAIRED like `suppressGazetteerNearPostcode` and belongs
-	 * only to a model trained against a lookup with letter-bearing keys. Read from `requires.anchor.span_mode`.
+	 * only to a model trained against a lookup with letter-containing keys. Read from `requires.anchor.span_mode`.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 	/**

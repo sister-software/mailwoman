@@ -197,7 +197,7 @@ export interface ResolutionState {
 	 */
 	defaultCountryIsInferred: boolean
 	/**
-	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Checks the
+	 * The tree's single value-containing node when it is locality-tagged (the bare-toponym shape), else null. Checks the
 	 * country-placetype sibling race in `#lookupAndPick` — a bare name can be a country the parser tagged `locality`
 	 * ("Japan", "China"), and the locality placetype filter makes the country row unreachable no matter how it ranks.
 	 */
@@ -441,7 +441,7 @@ export async function applySpanRescore(
  * #942: find the first confident-but-UNRESOLVED postcode node whose value is a polluted compound ("1382 Kožljek"),
  * resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit
  * (`postal_compound_recovered` metadata marks the provenance). No-op when every postcode node resolved, the value has
- * no digit-bearing tokens, or the subset equals the full value (then the walk already tried it).
+ * no digit-containing tokens, or the subset equals the full value (then the walk already tried it).
  */
 async function recoverPostcodeNode(
 	roots: AddressNode[],

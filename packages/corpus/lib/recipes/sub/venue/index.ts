@@ -38,7 +38,7 @@
  *
  *   `shape: "identifier-required"` is honoured as the ledger's docstring demands: de-DE `halle` is
  *   emitted only as `Halle <identifier>`, never bare and never after a modifier, because its 168-hit
- *   confound includes the CITY Halle (Saale) and only the identifier-bearing shape separates them.
+ *   confound includes the CITY Halle (Saale) and only the identifier-containing shape separates them.
  *   {@link buildSubVenueForm} enforces it and `sub-venue.test.ts` pins it.
  *
  *   ── LABELS ───────────────────────────────────────────────────────────────────────────────────────

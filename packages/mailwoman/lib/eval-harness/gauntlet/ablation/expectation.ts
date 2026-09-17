@@ -216,7 +216,7 @@ const PLACETYPE_CONTAINMENT_DEPTH: Readonly<Record<string, number>> = {
 	microhood: 11,
 	// FINER than any admin grain on purpose. A postcode is a point-grade pin, and `matchRung` refuses to match a pin
 	// against a rung finer than itself — with `postalcode` at the unknown-placetype 0, a surviving postcode pinned
-	// nothing and every postcode-bearing variant read as a homonym takeover. Caught by the "holds the rooftop when a
+	// nothing and every postcode-containing variant read as a homonym takeover. Caught by the "holds the rooftop when a
 	// postcode and the street evidence both survive" test, which is the case the whole layer is about.
 	postalcode: 12,
 }

@@ -26,8 +26,8 @@
  */
 
 /**
- * One link of the winner's stamped lineage — the id-bearing subset of `@mailwoman/core`'s `Ancestor` (declared locally
- * so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
+ * One link of the winner's stamped lineage — the id-containing subset of `@mailwoman/core`'s `Ancestor` (declared
+ * locally so this module stays decoder/resolver-import-free, the `admin-coherence.ts` posture).
  */
 interface LineageAncestor {
 	id: number | string

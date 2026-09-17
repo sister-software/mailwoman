@@ -250,7 +250,7 @@ If postcode accuracy is still < 90% after calibration + tokenizer fix,
 the locale-router approach becomes the next change. Recommended
 architecture: lexical-feature classifier (regex + char n-grams → tiny
 MLP), `<0.1ms` latency, `<100KB` serialized. 99% accuracy on
-postcode-bearing inputs is achievable via postcode-pattern features
+postcode-containing inputs is achievable via postcode-pattern features
 alone.
 
 This is the entry point for v0.8's system-multiplicity work

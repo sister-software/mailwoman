@@ -211,7 +211,7 @@ describe("the negative half", () => {
 			expect(point.label.length).toBeGreaterThan(0)
 		}
 
-		// Both populations are load-bearing: the unpublished authority, and the other jurisdiction.
+		// Both populations are required: the unpublished authority, and the other jurisdiction.
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Donegal"))).toBe(true)
 		expect(OUTSIDE_PUBLICATION_POINTS.some((point) => point.label.includes("Northern Ireland"))).toBe(true)
 	})

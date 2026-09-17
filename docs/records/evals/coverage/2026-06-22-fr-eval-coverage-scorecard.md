@@ -72,7 +72,7 @@ OA carries truth coordinates, so held-out sets for eight locales (150 rows each,
 
 > **Read the right column as a ceiling, not an average.** The resolved-only coordinate is over only the addresses the model _chose_ to resolve, and the ones it drops are disproportionately harder — so the resolved coord flatters the model, most of all where the resolve rate is low (AU's 234 km is on **20 points**, CZ's 44 km on 64 — treat both as noisy). The unbiased signal is the resolve **rate**, which is over the full sample. 150/locale also carries a ±~8% band — rank the tiers, don't over-read small mid-tier deltas.
 
-_8 resolvable locales — the panel is ~complete for postcode-bearing OA. Tiers: top FR/IT ~80%, mid LU/PL/PT/AT ~50–57%, low-mid CZ 43%, low AU 28%. **Most resolved coords are city-to-rooftop tight (0.3–6 km)** — the "where it resolves, it's accurate" rule — **except CZ (44 km) and AU (234 km), which resolve loosely too** (wrong same-name place; the dual-axis-worst locales). DE/BE/DK/FI OA lack a POSTCODE column → not cleanly coordinate-gradeable (the resolve path needs the postcode anchor); ES is cadastral → label-only. So the postcode-bearing set is essentially mapped; broadening further needs postcode-complete sources._
+_8 resolvable locales — the panel is ~complete for postcode-containing OA. Tiers: top FR/IT ~80%, mid LU/PL/PT/AT ~50–57%, low-mid CZ 43%, low AU 28%. **Most resolved coords are city-to-rooftop tight (0.3–6 km)** — the "where it resolves, it's accurate" rule — **except CZ (44 km) and AU (234 km), which resolve loosely too** (wrong same-name place; the dual-axis-worst locales). DE/BE/DK/FI OA lack a POSTCODE column → not cleanly coordinate-gradeable (the resolve path needs the postcode anchor); ES is cadastral → label-only. So the postcode-containing set is essentially mapped; broadening further needs postcode-complete sources._
 
 **This is the night's required finding — two axes, and it reframes #148.**
 
@@ -92,7 +92,7 @@ Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,p
 | FR région (43.3 = adversarial-stress; real-FR unmeasured) | **eval-non-representativeness** — the 219 rows are synthetic multi-script + order permutations; real-FR région is unmeasured (in-dist = 99.6% gamed) | a representative real-FR région held-out set (natural orders, Latin) — the prerequisite to even state the gap |
 | FR country (precision 43%)                                | **model** — over-emission; but coordinate-invisible                                                                                                  | precision change (suppress country-without-token) — low priority, label-only                                   |
 | FR venue (n=1)                                            | **eval-thinness + coverage** — no FR venue truth, no FR venue training                                                                               | fetch FR POIs → held-out venue set + a venue training extract                                                   |
-| FR unit (n=0)                                             | **eval-thinness + coverage** (global)                                                                                                                | fetch unit-bearing addresses (FR + thicken US)                                                                |
+| FR unit (n=0)                                             | **eval-thinness + coverage** (global)                                                                                                                | fetch unit-containing addresses (FR + thicken US)                                                                |
 
 ## Data-acquisition plan (the real Phase-A unblock)
 
@@ -100,7 +100,7 @@ Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,p
 
 - **FR venue** → Overture **places** theme for FR (POI name + address) or OSM FR POIs → render `Venue, NN Street, PPPPP City`, venue = POI name. Unblocks both the held-out venue set **and** the T2 venue training extract.
 - **FR OOD région** → re-fetch OA FR (BAN) and render `département` in the varied real-world orders the model misses (NOT the in-distribution admin-split format, which would game the floor to ~96%).
-- **FR/US unit** → a real unit-bearing source (`unit-real-designators.jsonl` exists for US as an _external_ eval; fold it into the golden + find an FR analogue).
+- **FR/US unit** → a real unit-containing source (`unit-real-designators.jsonl` exists for US as an _external_ eval; fold it into the golden + find an FR analogue).
 
 ## GPU decision — no training tonight ($20 unspent)
 

@@ -28,9 +28,9 @@ export interface RequiredChannels {
 	/**
 	 * Postcode-anchor channel (#239/#240). `span_mode` declares which substrings the runtime should look up — omit (or
 	 * `alnum-run`) for every model trained before 2026-08-05, `shaped` for a model trained against a lookup with
-	 * letter-bearing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that never
-	 * saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its GB/NL
-	 * postcodes unanchored.
+	 * letter-containing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that
+	 * never saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its
+	 * GB/NL postcodes unanchored.
 	 */
 	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
 	/**

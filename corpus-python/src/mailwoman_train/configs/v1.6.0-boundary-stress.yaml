@@ -25,7 +25,7 @@
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
-#   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an AU-bearing draft as a
+#   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an Australian draft as a
 #   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage recipe):
 #   street-eats-affix street_suffix 40.7 / street 38 | comma-less(US) street 46 / locality 91 |
 #   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.

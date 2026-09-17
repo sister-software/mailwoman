@@ -117,7 +117,7 @@ export interface QueryShapeLite {
 	segments?: ReadonlyArray<{ body: string; index: number }>
 	characterClass?: string
 	/**
-	 * ISO 15924 scripts the input is written in, ranked by share of its script-bearing characters.
+	 * ISO 15924 scripts the input is written in, ranked by share of its script-containing characters.
 	 *
 	 * It stands beside `characterClass` rather than replacing it, because they answer different questions: the class says
 	 * whether a run is ideographic or numeric, which is what the tokenizer and the decoder ask, and folds Kana, Han and
@@ -148,8 +148,8 @@ export interface LocaleHint {
 	alternatives: ReadonlyArray<{ locale: Intl.UnicodeBCP47LocaleIdentifier; confidence: number }>
 	source: "caller" | "environment" | "machine" | "detected" | "ensemble"
 	/**
-	 * The ISO 15924 scripts the input is written in, ranked by share of its script-bearing characters. Empty when nothing
-	 * in the input names a script — a bare postcode does not.
+	 * The ISO 15924 scripts the input is written in, ranked by share of its script-containing characters. Empty when
+	 * nothing in the input names a script — a bare postcode does not.
 	 *
 	 * SEPARATE FROM `locale`, and added because it had nowhere else to go. `locale` is one BCP-47 tag, so a Hangul
 	 * address and a kanji address both had to be reported under one of them, and the rule that picks it answers `ja-JP`

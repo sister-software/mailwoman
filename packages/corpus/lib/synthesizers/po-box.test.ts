@@ -179,7 +179,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 	})
 
 	it("aligns cleanly through alignRow (po_box + locality + region + postcode, no quarantine)", () => {
-		// Seeds chosen to cover a box-bearing (PSC/CMR) and a bare (Unit) line.
+		// Seeds chosen to cover a box-containing (PSC/CMR) and a bare (Unit) line.
 		for (const seed of [11, 23, 42, 7, 100]) {
 			const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(seed) })
 

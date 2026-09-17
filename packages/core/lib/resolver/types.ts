@@ -633,10 +633,10 @@ export interface ResolveOpts {
 	 * recovery (a confident postcode span is avoided). Proven training-composition-insensitive on #901 — five vehicles
 	 * including a full from-scratch retrain all tip this class, so the floor lives here, model-independently.
 	 *
-	 * When on and the tree resolved nothing: the failed postcode span only blocks its CODE-shaped tokens (digit-bearing;
-	 * the residual city tokens become recoverable), the postcode-consistency anchor retries with that code subset, and
-	 * the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor, strictly
-	 * subordinate to a recovered locality). Never fires on a resolved tree (the #685 brake).
+	 * When on and the tree resolved nothing: the failed postcode span only blocks its CODE-shaped tokens
+	 * (digit-containing; the residual city tokens become recoverable), the postcode-consistency anchor retries with that
+	 * code subset, and the failed postcode NODE is decorated from the code resolution (a postcode-tier coordinate floor,
+	 * strictly subordinate to a recovered locality). Never fires on a resolved tree (the #685 brake).
 	 *
 	 * **Default ON** (operator-promoted 2026-07-03 after the pre-registered promotion eval: SI 25/25 recovery at p50 0.67
 	 * km, US/FR byte-identical, and the insurance leg — the composition-failed v2.2.0 candidate recovers all 55 lost
@@ -746,7 +746,7 @@ export interface ResolveOpts {
 	 * sibling placetype says US). This pre-walk pass intersects each postcode span's codex candidate systems with the
 	 * systems the tree's country / region / `country_hint` siblings assert: a non-empty intersection CONFIRMS the span
 	 * (additive `postcode_shape_systems` stamp, byte-identical resolution); an empty intersection with confident siblings
-	 * EXCLUDES it (a digit-only span is demoted to `house_number`, a letter-bearing one keeps its tag with a
+	 * EXCLUDES it (a digit-only span is demoted to `house_number`, a letter-containing one keeps its tag with a
 	 * `postcode_shape_excluded` stamp — either way the span's contribution to the resolve is stripped); no confident
 	 * siblings ABSTAIN. `defaultCountry` is never evidence (B1-3's confound: "Sydney NSW 2000, Australia" reached with a
 	 * US default must not have its 2000 excluded — that row is exactly what {@link postcodeCountryCoherence} rescues).

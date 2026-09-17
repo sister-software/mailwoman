@@ -404,7 +404,7 @@ class WOFResolver implements Resolver {
 
 		let resolved: CoordinateOptionalPlace | null = null
 
-		// Shape-excluded postcode spans (letter-bearing ones keep their tag; #31 Mechanism 1) are
+		// Shape-excluded postcode spans (letter-containing ones keep their tag; #31 Mechanism 1) are
 		// stripped of their resolve contribution — the walk does not look them up. Digit-only excluded
 		// spans were retagged to `house_number` and flow through their correct sibling placetype.
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
@@ -741,7 +741,7 @@ class WOFResolver implements Resolver {
 		// The bare-toponym country race (fix B of the bare-country class): a lone locality-tagged span
 		// also races the `country` placetype, because the parser tags bare country names `locality`
 		// about half the time ("Japan", "China") and the locality filter makes the country row
-		// unreachable at any rank. Runs only for the tree's single value-bearing node, so every
+		// unreachable at any rank. Runs only for the tree's single value-containing node, so every
 		// address-shaped input is byte-stable. The locality winner's prominence arbitrates below;
 		// with no locality candidates at all, a country hit resolves the span outright.
 		const isBareRace = placetype === "locality" && node === state.bareLocalityNode

@@ -402,7 +402,7 @@ export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTa
 ])
 
 /**
- * The locality-class placetypes that host address-bearing children — the parent set and the parent-coverage
+ * The locality-class placetypes that host address-containing children — the parent set and the parent-coverage
  * denominator. Matches `PARENT_PLACETYPES` in `placetype-census.ts` by construction.
  */
 export const PARENT_PLACETYPES: readonly string[] = ["locality", "localadmin"]

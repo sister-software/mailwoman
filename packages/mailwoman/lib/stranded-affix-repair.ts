@@ -30,7 +30,7 @@ import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/cor
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
 /**
- * Tags a stranded affix may be absorbed into — name-bearing place tags whose surface can legitimately end in a
+ * Tags a stranded affix may be absorbed into — name-containing place tags whose surface can legitimately end in a
  * street-type word: `Brixton Hill` the locality, `Bishop's Stortford` the venue, `Hythe Marina Village` the dependent
  * locality.
  *

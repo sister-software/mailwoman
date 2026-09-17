@@ -74,7 +74,7 @@ describe("synthesize anchor-absorption", () => {
 	})
 
 	it("h-no-trailing-locality: leading number + LOCALITY + state, no trailing → house_number (the A3 fix)", () => {
-		// The contrast to p-us-rural: same no-trailing state-bearing shape, but a LOCALITY is present, so the
+		// The contrast to p-us-rural: same no-trailing state-containing shape, but a LOCALITY is present, so the
 		// leading number is the house number — the discriminator the A2 recipe output lacked (98 house#->postcode).
 		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
 		expect(synth.components.locality).toBeTruthy() // a locality is present (vs p-us-rural's none)

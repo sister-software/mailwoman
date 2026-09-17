@@ -121,7 +121,7 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 }
 
 /**
- * #1589's sibling of the #912 guard: true when the tree's only value-bearing node is a `postcode`.
+ * #1589's sibling of the #912 guard: true when the tree's only value-containing node is a `postcode`.
  *
  * A bare postcode under a locale-inferred country scope is the same disaster shape as a bare locality: `SW1A 1AA` under
  * the default en-US locale gets a hard `defaultCountry: "US"` that filters the GB postalcode row the gazetteer holds,

@@ -24,8 +24,8 @@ $ grep -rh anchor_lookup_path corpus-python/src/mailwoman_train/configs/ | sort 
 ```
 
 One distinct value across every config in the tree. That file holds 67,708 keys, **zero** of them
-letter-bearing, and its country posteriors name exactly three countries: US (42,312 keys), DE (29,694),
-FR (27,119). A GB outward code is letter-bearing by construction, so no training example ever put a
+letter-containing, and its country posteriors name exactly three countries: US (42,312 keys), DE (29,694),
+FR (27,119). A GB outward code is letter-containing by construction, so no training example ever put a
 non-zero value in slot 4.
 
 `postcode-gb.bin` is the only artifact that does — and it is not a rare event. Replaying

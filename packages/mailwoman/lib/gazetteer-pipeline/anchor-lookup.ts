@@ -33,14 +33,14 @@
  *   --zcta $MAILWOMAN_DATA_ROOT/census/2024_Gaz_zcta_national.txt\
  *   --output $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json
  *
- *   THE LETTER-BEARING HOLE (2026-08-05, `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). The
- *   pilot set is DE/FR/US only, and every one of its 67,708 keys is five digits — ZERO letter-bearing.
+ *   THE letter-containing HOLE (2026-08-05, `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). The
+ *   pilot set is DE/FR/US only, and every one of its 67,708 keys is five digits — ZERO letter-containing.
  *   The encoder's anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
  *   `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`), so slots 3–8 took no gradient across every
- *   run in the tree: a GB outward code is letter-bearing by construction and could never appear as a
+ *   run in the tree: a GB outward code is letter-containing by construction and could never appear as a
  *   key. Shipping `postcode-gb.bin` at inference then fed slot 4 a value the model had never seen, and
  *   cost 24 exact postcodes on the 120-row gb-golden board. `--include` is the cure — it widens the key
- *   set so the letter-bearing systems get a gradient at all. Widening the lookup ALONE is not enough:
+ *   set so the letter-containing systems get a gradient at all. Widening the lookup ALONE is not enough:
  *   the retrain must ride with the inference-side parity fix (`buildAnchorFeatures`'s
  *   `spanMode: "shaped"`), because the default inference scan keys on `[A-Za-z0-9]+` runs and so can
  *   never produce the space-stripped `SW1A2AA` key the train painter writes.
@@ -177,7 +177,7 @@ const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
  * A key carrying at least one letter. The pilot lookup's count is zero, which is the whole GB diagnosis in one number —
  * so the builder reports it on every run.
  */
-const LETTER_BEARING = /[A-Z]/
+const HAS_LETTERS = /[A-Z]/
 
 /**
  * Centroid-provenance labels for the sources this builder reaches beyond `wof` (#525, the provenance-first rule).
@@ -437,7 +437,7 @@ export interface AnchorLookupStats {
 	/**
 	 * Keys carrying at least one `A-Z` character — the count the GB hole was measured by (the pilot lookup's is 0).
 	 */
-	letterBearing: number
+	letterKeyCount: number
 	/**
 	 * Keys whose posterior names more than one country.
 	 */
@@ -487,7 +487,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 	const bySource = new Map<string | null, number>()
 	let collisions = 0
 	let zctaFilled = 0
-	let letterBearing = 0
+	let letterKeyCount = 0
 
 	// Serialize from the SORTED key array, streaming: JS hoists integer-like string keys (e.g. "10000")
 	// ahead of insertion order, so an object's own iteration order would unsort the output — and at the
@@ -511,8 +511,8 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 			collisions++
 		}
 
-		if (LETTER_BEARING.test(pc)) {
-			letterBearing++
+		if (HAS_LETTERS.test(pc)) {
+			letterKeyCount++
 		}
 
 		// centroid: the first source in `include` order with a non-zero centroid; never overwritten by ZCTA.
@@ -576,12 +576,12 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 	console.log(
 		`${total.toLocaleString("en-US")} postcodes → ${args.output}  ` +
 			`(${countries.map((c) => `${c} ${byCountry[c]!.toLocaleString("en-US")}`).join(", ")}; ` +
-			`${letterBearing.toLocaleString("en-US")} letter-bearing; ` +
+			`${letterKeyCount.toLocaleString("en-US")} letter-containing; ` +
 			`${gbOutwardKeys.toLocaleString("en-US")} GB outward; ` +
 			`${collisions.toLocaleString("en-US")} collisions; ` +
 			`${zctaFilled.toLocaleString("en-US")} ZCTA-filled here; sources ${sourceRepr}; ` +
 			`${placeholders.toLocaleString("en-US")} no-centroid = ${((100 * placeholders) / total).toFixed(1)}%)`
 	)
 
-	return { total, byCountry, letterBearing, collisions, gbOutwardKeys, bySource, zctaFilled }
+	return { total, byCountry, letterKeyCount, collisions, gbOutwardKeys, bySource, zctaFilled }
 }

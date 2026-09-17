@@ -562,7 +562,7 @@ async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
 }
 
 /**
- * Truth census for a coordinate-bearing corpus, where `components` is the only non-coordinate expectation available.
+ * Truth census for a coordinate-containing corpus, where `components` is the only non-coordinate expectation available.
  */
 function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTruth"] {
 	let coordinates = 0

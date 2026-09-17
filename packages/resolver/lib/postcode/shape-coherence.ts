@@ -25,7 +25,7 @@
  *      it (a pure subset of codex's shape candidates — safe by construction).
  *   2. **Intersection empty + confident siblings → EXCLUDED.** A digit-only span is demoted to
  *      `house_number` (the correct sibling tag — B1-2's "correct sibling tag surviving"); a
- *      letter-bearing span keeps its tag and gets `postcode_shape_excluded: true` instead (the
+ *      letter-containing span keeps its tag and gets `postcode_shape_excluded: true` instead (the
  *      compound-split corner — "15 07691" — is #942 postal-compound-recovery territory, out of
  *      scope). Either way the span's contribution to the resolve is stripped: `firstPostcodeValue`,
  *      the walk's postcode lookup, and the post-walk postcode passes all skip excluded spans.
@@ -203,7 +203,7 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 
 		if (siblingSystems.size) {
 			// Confident siblings, empty intersection → EXCLUDED. A digit-only span is demoted to its
-			// correct sibling tag (B1-2); a letter-bearing span (the "15 07691" compound corner) keeps
+			// correct sibling tag (B1-2); a letter-containing span (the "15 07691" compound corner) keeps
 			// its tag and is stamped instead — either way every resolve consumer skips it.
 			verdict.excluded.push(code)
 
@@ -225,9 +225,9 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 }
 
 /**
- * True when a node is a postcode span this pass excluded but could not retag (the letter-bearing compound corner). The
- * resolve's postcode consumers (`firstPostcodeValue`, the walk's postcode lookup, the post-walk postcode passes) all
- * skip these, which is what "strip the postcode tag's contribution" means for a span that keeps its tag.
+ * True when a node is a postcode span this pass excluded but could not retag (the letter-containing compound corner).
+ * The resolve's postcode consumers (`firstPostcodeValue`, the walk's postcode lookup, the post-walk postcode passes)
+ * all skip these, which is what "strip the postcode tag's contribution" means for a span that keeps its tag.
  */
 export function isShapeExcludedPostcode(node: AddressNode): boolean {
 	return node.tag === "postcode" && node.metadata?.["postcode_shape_excluded"] === true

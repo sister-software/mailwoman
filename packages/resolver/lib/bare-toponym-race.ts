@@ -13,20 +13,20 @@
 import type { ComponentTag } from "@mailwoman/codex/component"
 import type { PlacetypeMap } from "@mailwoman/codex/placetype-map"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { loneValueBearingNode } from "@mailwoman/core/decoder"
+import { loneValueNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 /**
- * The tree's single value-bearing node when it is locality-tagged, else null — the bare-toponym shape whose
+ * The tree's single value-containing node when it is locality-tagged, else null — the bare-toponym shape whose
  * country-placetype sibling race `#lookupAndPick` runs. A bare name the parser tagged `locality` can name a country
  * ("Japan", "China" — single country names are out of the parser's training distribution), and the locality placetype
- * filter makes the country row unreachable regardless of how the ranking would order it. Any second value-bearing node
- * makes the input address-shaped and the race stays off; `dependent_locality` maps to the same placetype but is an
+ * filter makes the country row unreachable regardless of how the ranking would order it. Any second value-containing
+ * node makes the input address-shaped and the race stays off; `dependent_locality` maps to the same placetype but is an
  * address-interior tag, so only a literal `locality` qualifies.
  */
 export function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeMap): AddressNode | null {
 	if (placetypeMap["locality" as ComponentTag] !== "locality") return null
-	const lone = loneValueBearingNode(tree)
+	const lone = loneValueNode(tree)
 
 	return lone?.tag === "locality" ? lone : null
 }

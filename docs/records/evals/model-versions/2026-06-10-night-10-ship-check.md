@@ -60,7 +60,7 @@ Native-order locality 90.9% (bar ≥83.8); US/FR no-regression held (96.7 / 84.5
 
 Run B dips 2–3pp whole-parse-strict vs v4.1.0. Two caveats, then the honest residue:
 (a) `harness-v0-neural` cannot feed the gazetteer lexicon → Run B graded handicapped
-(country emissions drop without clues; intl rows in the clean arena are country-bearing);
+(country emissions drop without clues; intl rows in the clean arena are country-containing);
 (b) the harness folds affixes correctly, so the split is NOT the cause. Residue: a real
 small whole-parse cost consistent with the stated street/unit re-baselines. The noisy-arena
 lead (the lens that matters for real traffic) holds at **+19pp over v0**. The grown

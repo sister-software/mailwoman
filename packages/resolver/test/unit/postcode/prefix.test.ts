@@ -47,7 +47,7 @@ const silentBackend: ResolverBackend = {
 }
 
 /**
- * A coordinate-bearing GB outward index — the B3-2 tier (prefix centroid + measured radius).
+ * A coordinate-containing GB outward index — the B3-2 tier (prefix centroid + measured radius).
  */
 const gbCoordinateIndex: PostcodePrefixIndexLike = {
 	country: "GB",
@@ -104,7 +104,7 @@ describe("derivePostcodePrefix — the derivation laws", () => {
 	})
 
 	it("abstains on codes too short to carry a prefix", () => {
-		// "B3" is a GB area, not a unit-bearing code — no 3-character unit to strip.
+		// "B3" is a GB area, not a unit-containing code — no 3-character unit to strip.
 		expect(derivePostcodePrefix("B3", "GB")).toBeNull()
 		expect(derivePostcodePrefix("12", "US")).toBeNull()
 		expect(derivePostcodePrefix("", "GB")).toBeNull()

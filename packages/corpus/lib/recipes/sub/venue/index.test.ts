@@ -102,7 +102,7 @@ describe("promotedSurfacesFor", () => {
 describe("matchesPromotedShape", () => {
 	const halle = promotedSurfacesFor("de-DE", lexicon).find((s) => s.phrase === "halle")!
 
-	it("accepts an identifier-bearing German hall and refuses the city", () => {
+	it("accepts an identifier-containing German hall and refuses the city", () => {
 		expect(matchesPromotedShape("messe west halle 8", halle)).toBe(true)
 		expect(matchesPromotedShape("vw halle 42", halle)).toBe(true)
 		expect(matchesPromotedShape("halle", halle)).toBe(false)

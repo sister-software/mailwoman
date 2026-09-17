@@ -79,8 +79,8 @@ export interface SoftFeatureSources {
 	/**
 	 * Which substrings the anchor channel looks up (2026-08-05 train-parity fix). Defaults to `alnum-run`, the shipped
 	 * behaviour. PAIRING IS ESSENTIAL, the same way `suppressGazetteerNearPostcode` is: `shaped` reproduces the train
-	 * painter's span rule, so it belongs only to a model trained against a lookup with letter-bearing keys. Declared by
-	 * the model card (`requires.anchor.span_mode`), never guessed.
+	 * painter's span rule, so it belongs only to a model trained against a lookup with letter-containing keys. Declared
+	 * by the model card (`requires.anchor.span_mode`), never guessed.
 	 */
 	postcodeAnchorSpanMode?: AnchorSpanMode
 	/**
@@ -159,7 +159,7 @@ export function buildSoftFeatures(
 	// "Sydney, Australia") homograph-flagged locality evidence ROTATES the parse (locality → region/
 	// street — the Washington-DC class, surviving in the fragment register on world-city homographs)
 	// while the resolver already owns that register outright; withholding = the curriculum-trained
-	// absence identity, the same declared-ablation semantics as formatted mode. Street-bearing
+	// absence identity, the same declared-ablation semantics as formatted mode. street-containing
 	// fragments — every measured win class (homonym/bare-street/particle rows all carry a street-type
 	// word) — keep the full bundle. The street channel itself needs no check: it paints nothing on a
 	// street-word-less input by construction.

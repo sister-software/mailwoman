@@ -9,7 +9,7 @@
  *   beside the parser that reads it, and the generic grid machinery it is applied to sits in
  *   `@mailwoman/core/html/tables` with no knowledge of any of it.
  *
- *   `carriesLegalDesignation` is why this separation is load-bearing rather than tidy: it reaches
+ *   `carriesLegalDesignation` is why this separation is required rather than tidy: it reaches
  *   `@mailwoman/record`, which depends on `@mailwoman/formatter`, which depends on `@mailwoman/core` — so the same
  *   predicate inside core closes an import cycle across three packages.
  */

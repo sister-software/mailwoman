@@ -642,7 +642,7 @@ function printSummary(
 		skips: readonly AblationSkip[]
 	}
 ): void {
-	console.log(`\n=== Gauntlet · ablation (the load-bearing map) ===`)
+	console.log(`\n=== Gauntlet · ablation (the required map) ===`)
 	console.log(`  board            ${meta.boardID}`)
 	console.log(`  measured         ${meta.measuredAt}`)
 	console.log(`  ${meta.pinLine}`)

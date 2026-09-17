@@ -6,11 +6,11 @@
  *   `useMapBearing` — the map's rotation as React state, for a compass that appears off north and fades back.
  *
  *   The map is an external store, so it is read through `useSyncExternalStore` rather than mirrored into state by an
- *   effect: the bearing is a number, which makes a stable snapshot, and React tears nothing during a concurrent
+ *   effect: the direction is a number, which makes a stable snapshot, and React tears nothing during a concurrent
  *   render.
  *
  *   It listens on `rotate` rather than `rotateend`, because the needle has to track the gesture rather than snap once
- *   the gesture is over. `move` is subscribed too: a `flyTo` or an `easeTo` carrying a bearing rotates the map without
+ *   the gesture is over. `move` is subscribed too: a `flyTo` or an `easeTo` carrying a direction rotates the map without
  *   firing a rotate event, and a compass that misses those stays pointing north over a turned map.
  */
 

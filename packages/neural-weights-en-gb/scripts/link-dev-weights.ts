@@ -94,14 +94,14 @@ const overlay = await materializeDevOverlay({
 // The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
 // because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
 // taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
-// zero letter-bearing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
+// zero letter-containing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
 // postcodes on the 120-row gb-golden board (294/318 anchor-ON vs 318/318 anchor-OFF). Then a bare
 // `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
 // found package-dir-relative and silently re-enables the regression with no warning, because a present
 // artifact is exactly what the loader expects.
 //
 // The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
-// only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
+// only by a model trained against a lookup with letter-containing keys (`pilot-anchor-lookup-v2` and
 // after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
 // card the loader reads decides.

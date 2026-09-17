@@ -13,7 +13,7 @@ none — but it is a **tail**, not a centre, and nothing in the training distrib
 
 ## 1. What H3 claimed, and why the first count was worthless
 
-The claim: the model calls `39A` a postcode because its corpus says digit-bearing tokens are
+The claim: the model calls `39A` a postcode because its corpus says digit-containing tokens are
 postcodes.
 
 The first count said the opposite (`P(house_number | bare digit) = 0.810` vs `postcode 0.101`) and

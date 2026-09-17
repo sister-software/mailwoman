@@ -183,7 +183,7 @@ systems."
 
 **The existing change declines on purpose.** `countryFromPostcodeFormat` (#928, default-ON since
 2026-07-06) is the one postcode→country mechanism in the tree. It covers GB, CA and IE — the
-letter-bearing formats — and its docstring is explicit that these "never match a US ZIP / NL / FR
+letter-containing formats — and its docstring is explicit that these "never match a US ZIP / NL / FR
 code." It returns `null` for every 5-digit code. Extending it to 5-digit shapes is not a fix; it is
 a coin-flip between four countries.
 

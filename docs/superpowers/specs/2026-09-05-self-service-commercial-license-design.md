@@ -320,7 +320,7 @@ Public status answers carry no reason.
 
 Carried from #2121 and kept: a distinct deploy credential and service from the tile worker; production and sandbox
 separated in every binding; secrets only through Wrangler secret bindings and never in git, build output, or logs; the
-Stripe API version and SDK pinned; exact-origin CORS and `no-store` on every token-bearing route; rate limits on claim,
+Stripe API version and SDK pinned; exact-origin CORS and `no-store` on every token-containing route; rate limits on claim,
 refresh, and status; a CI step that scans the worker bundle and its source maps for private-key markers and test-key
 prefixes; and a kill switch that stops issuance without stopping verification or refresh.
 

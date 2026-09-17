@@ -53,7 +53,7 @@
 #    duplicate means two extractions were merged without SUMMING `unit_count`.
 #
 # 4. `prefix` is stored in the sanitized-query token shape (#920): every non-letter/number stripped,
-#    uppercased for the letter-bearing systems. A probe with unsanitized text will miss; the
+#    uppercased for the letter-containing systems. A probe with unsanitized text will miss; the
 #    sanitization is not part of this format, it is a contract with the consumer.
 #
 # 5. The ancestor DICTIONARY is the anti-repetition device. A country's prefixes assert a handful of

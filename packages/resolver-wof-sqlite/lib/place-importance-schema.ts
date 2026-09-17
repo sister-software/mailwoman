@@ -144,7 +144,7 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
  *   scored 0.1173 and REPLACED its referential 0.4716 under the old `COALESCE`, so a 418-person Aude hamlet outranked
  *   it 4.8x); the cap half repairs the upward one (`Tó`, above).
  *
- * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-bearing rows, 209,738 sit above the cap and
+ * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-containing rows, 209,738 sit above the cap and
  * 13,888 sit below their referential floor; the 305,168 article-without-population rows pass through unchanged.
  */
 export function blendImportance(referential: number, encyclopedic: number | null | undefined): number {

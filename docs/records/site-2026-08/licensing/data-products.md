@@ -354,7 +354,7 @@ obligation. No formal identifier (CC0 or otherwise) is given.
 **Tier:** build-local. `@mailwoman/un-locode-lookup` is published to npm at 8.3.0; the `.db` is not.
 
 **Row counts.** 116k entries, of which roughly 93k carry coordinates. (An older docstring in the
-package puts the coordinate-bearing share at about a third; the README and recipe figures above are
+package puts the coordinate-containing share at about a third; the README and recipe figures above are
 the ones to use.)
 
 **Build.** `npx @mailwoman/un-locode-lookup build --csv code-list.csv --out un-locode.db`.

@@ -38,7 +38,7 @@ const ES = [
 ]
 
 describe("unitFieldIsDesignator", () => {
-	it("keeps a digit-bearing or one-word unit and drops a name or NIL", () => {
+	it("keeps a digit-containing or one-word unit and drops a name or NIL", () => {
 		expect(unitFieldIsDesignator("2A")).toBe(true)
 		expect(unitFieldIsDesignator("#05-67")).toBe(true)
 		expect(unitFieldIsDesignator("EG")).toBe(true)

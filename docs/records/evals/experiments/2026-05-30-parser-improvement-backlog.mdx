@@ -86,7 +86,7 @@ failure modes, not one:
    (`MAIN ST NW STE 12`) gets swallowed into the `street` span. A regex repair
    **cannot** safely carve a unit out of a confident street span — that's a
    **coverage** gap (units underrepresented in training), the same lesson as
-   intersections. The fix is a unit-bearing synth extract (a B-list item), not a
+   intersections. The fix is a unit-containing synth extract (a B-list item), not a
    post-decode pass.
 
 Net: the repair patches the locality-mislabel half cleanly and safely; the

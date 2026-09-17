@@ -1,5 +1,5 @@
 /**
- * What a script-reading router does to the regression board's CJK-bearing rows (#2282, #2305).
+ * What a script-reading router does to the regression board's CJK-containing rows (#2282, #2305).
  *
  * `scriptFamilyForText` once routed on the FOLDED character class alone, so only an input that was CJK end to end
  * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, HEILONGJIANG, CHINA`

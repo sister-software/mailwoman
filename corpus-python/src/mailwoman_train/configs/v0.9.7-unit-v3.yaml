@@ -29,7 +29,7 @@
 #
 # PRE-REGISTERED CHECK (stop at 20k; the v2 verdict reframed the floors as RECOVERY targets):
 #   - `unit` F1 >= 80% on the real-designator eval — bank most of v2's 95.4% (floor was 20%; v1=60%).
-#   - `street` F1 >= +4pp vs v0.9.3 on the unit-bearing arena — negative space still holds at lower weight.
+#   - `street` F1 >= +4pp vs v0.9.3 on the unit-containing arena — negative space still holds at lower weight.
 #   - RECOVERY (the v2 breach must close): US house_number >= 82 (v0.9.3=83.1, v2=79.6) — within ~1pp.
 #   - NO-REGRESSION (within ~1pp vs v0.9.3): US postcode >=80 / locality >=77 / street >=86;
 #     FR per-class floors (compare fp32-to-fp32 to avoid the int8 confound); DE native postcode >=83 /

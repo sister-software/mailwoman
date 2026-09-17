@@ -10,7 +10,7 @@
  *
  *   THE TABLES ARE DISCOVERED, NOT LISTED. A check that names its subjects cannot see the eighth table somebody
  *   adds, which is the failure it exists to prevent. A declaration qualifies when at least two of its entries pair
- *   a country code with a locale tag and those are at least half of what it holds — both halves load-bearing,
+ *   a country code with a locale tag and those are at least half of what it holds — both halves required,
  *   since two pairs alone admits a table of something else carrying a couple, and the ratio alone admits a
  *   two-entry map of anything. The rule finds seven where the first version named four.
  *
@@ -53,8 +53,8 @@ const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
  * DISCOVERED RATHER THAN LISTED, because a check that names its subjects cannot see the fifth table somebody adds. The
  * first version named four files; the rule below finds seven, and the three it gained are `corpus`'s `LOCALE_TAG`,
  * `localeFor` and `LOCALE_BY_COUNTRY` — the last of which the constant inventory (#2219) lists as unmeasured. Both
- * halves of the rule are load-bearing: two pairs alone admits a table of something else that happens to carry a couple,
- * and the ratio alone admits a two-entry map of anything.
+ * halves of the rule are required: two pairs alone admits a table of something else that happens to carry a couple, and
+ * the ratio alone admits a two-entry map of anything.
  */
 const MINIMUM_LOCALE_PAIRS = 2
 

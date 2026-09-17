@@ -167,7 +167,7 @@ describe("AddressPointSqliteLookup", () => {
 		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530" })).toBeNull()
 	})
 
-	it("never range-splits or suffix-folds the unit-bearing and box shapes", () => {
+	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
 		// AU slash convention: '5/7' is unit 5 of house 7 — NOT a range. The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
 		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.
@@ -182,7 +182,7 @@ describe("AddressPointSqliteLookup", () => {
 	it("unit siblings share the building coordinate through every rung", () => {
 		// The fixture has unit rows for 32 (unit 6 etc. in the real register; here the plain row) — a
 		// range surface resolving through the low-end rung lands the same building coordinate the
-		// plain-number probe returns, so a unit-bearing query can never be worse than its base.
+		// plain-number probe returns, so a unit-containing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
 		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })
 

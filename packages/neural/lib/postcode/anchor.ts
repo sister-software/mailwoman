@@ -67,7 +67,7 @@ export interface PostcodeAnchor {
 	 */
 	normalized: string
 	/**
-	 * Coordinate-bearing gazetteer hits — best-effort centroid(s), one representative per country.
+	 * Coordinate-containing gazetteer hits — best-effort centroid(s), one representative per country.
 	 */
 	candidates: PostcodePlace[]
 	/**
@@ -357,7 +357,7 @@ export function extractPostcodeAnchors(
 			posterior[c] = 1 / k
 		}
 
-		// Placement: one representative coordinate-bearing hit per country (the first with real coords).
+		// Placement: one representative coordinate-containing hit per country (the first with real coords).
 		const candidates: PostcodePlace[] = []
 
 		for (const c of countries) {

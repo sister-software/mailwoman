@@ -60,9 +60,9 @@ export interface SpanRescoreOptions {
 	/**
 	 * #942 postal-compound recovery. A globbed postcode span ("1382 Kožljek") normally (a) fails to anchor (the compound
 	 * matches no bare-code gazetteer row) and (b) blocks its own trailing city tokens from recovery. When on: the anchor
-	 * retries with the postcode's code-shaped (digit-bearing) token subset, and an UNRESOLVED postcode node blocks only
-	 * those code tokens — the residual name tokens become span material. Street/affix blocking is untouched (the "Ave,
-	 * France" guard). Default false.
+	 * retries with the postcode's code-shaped (digit-containing) token subset, and an UNRESOLVED postcode node blocks
+	 * only those code tokens — the residual name tokens become span material. Street/affix blocking is untouched (the
+	 * "Ave, France" guard). Default false.
 	 */
 	postalCompoundRecovery?: boolean
 	/**
@@ -150,7 +150,7 @@ function tokenizeRaw(raw: string): RawTok[] {
 }
 
 /**
- * The code-shaped (digit-bearing) token subset of a postcode string — "1382 Kožljek" → "1382", "SW1A 1AA London" →
+ * The code-shaped (digit-containing) token subset of a postcode string — "1382 Kožljek" → "1382", "SW1A 1AA London" →
  * "SW1A 1AA". The #942 recovery resolves this against the gazetteer's bare-code rows when the globbed compound fails.
  * Empty string when no token carries a digit.
  */

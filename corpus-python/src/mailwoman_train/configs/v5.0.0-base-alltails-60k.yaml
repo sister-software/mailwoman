@@ -10,7 +10,7 @@
 #   v4.8.0    admin source @ 9.4%                    -18    25
 #   v4.9.0    + dependent locality                   -20    31
 #   v4.10.0   exposure -> 3.1%                       -13    22
-#   v4.11.0   venue-bearing, no new source or weight -13    18
+#   v4.11.0   venue-containing, no new source or weight -13    18
 #   v4.12.0   EWC brake x10                          -12    19
 #   v4.14.0   steps -> 1,000                          -6    10
 #   v4.13.0   NULL — no added data at all             -5    10

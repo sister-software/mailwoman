@@ -146,7 +146,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 }
 
 /**
- * Stream every `addr:housenumber`-bearing feature from a PBF extract (nodes + building polygons), geometry reduced to a
+ * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a
  * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can COUNT
  * the association gap before deciding to write them.
  */

@@ -68,12 +68,12 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 ]
 
 /**
- * 85% id-bearing designators, 15% standalone.
+ * 85% id-containing designators, 15% standalone.
  */
 const ID_WEIGHT = 0.85
 
 /**
- * Share of id-bearing rows written with the `#` sigil instead of a word designator.
+ * Share of id-containing rows written with the `#` sigil instead of a word designator.
  *
  * A minority rather than a replacement: `#` reads as a unit designator here and as a private-mailbox leader in
  * `synthesizers/po-box.ts`, so the token cannot decide between them and the context has to. `US_PMB_LEADERS` excludes

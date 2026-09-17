@@ -257,7 +257,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 
 describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 	// A rooftop parse of "123 East Sheldon Rd 75001 Paris": the street node is stamped `address_point`, and its
-	// name-bearing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
+	// name-containing subtree (prefix + base + suffix) plus the house_number nest under it (per the containment schema).
 	const rooftopTree = (tier: "address_point" | "interpolated" | "admin"): AddressTree => ({
 		raw: "123 east sheldon rd 75001 paris",
 		roots: [

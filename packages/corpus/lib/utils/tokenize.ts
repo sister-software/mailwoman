@@ -105,7 +105,7 @@ export function cjkAwareTokenizer(): Tokenizer {
 				}
 
 				// A Han run may carry Latin letters or digits inside it (`3分场2队`); those stay glued to their neighbours
-				// only if they are Han too, so every code point of a Han-bearing token becomes its own token.
+				// only if they are Han too, so every code point of a Han-containing token becomes its own token.
 				let offset = token.start
 
 				for (const codePoint of token.text) {

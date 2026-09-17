@@ -31,7 +31,7 @@ export interface PlanetaryMapProps {
 	onSelect: (feature: SelectedFeature) => void
 	/**
 	 * The live map, once react-map-gl has instantiated it, and `null` again on unmount. The chrome sits outside this
-	 * component and cannot reach the handle through `useMap()`; the compass reads its bearing from here.
+	 * component and cannot reach the handle through `useMap()`; the compass reads its direction from here.
 	 */
 	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }

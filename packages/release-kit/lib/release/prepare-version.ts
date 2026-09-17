@@ -45,7 +45,7 @@ export interface PrepareReleaseVersionReport {
 	currentVersion: string
 	resolvedVersion: string
 	/**
-	 * Version-bearing files written: root + every release workspace + `release.config.json`. Zero under `checkOnly`.
+	 * Versioned files written: root + every release workspace + `release.config.json`. Zero under `checkOnly`.
 	 */
 	filesWritten: number
 }
@@ -149,7 +149,7 @@ export async function prepareReleaseVersion(
 		filesWritten = parsed.length + 1
 
 		log(
-			`bumped ${filesWritten} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
+			`bumped ${filesWritten} versioned files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
 		)
 	}
 

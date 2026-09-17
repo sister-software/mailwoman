@@ -150,7 +150,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
-		// Restrict to the polygon-bearing tiers — the deepest is then county A, PIP-confirmed.
+		// Restrict to the polygon-containing tiers — the deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44, -72, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })

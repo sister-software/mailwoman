@@ -11,7 +11,7 @@
  *   recipe trained against, and the set whose 67,708 keys are all five digits, which is why the
  *   encoder's GB/JP/ES/IT/NL anchor slots never took a gradient
  *   (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Pass `--include DE,FR,US,GB,NL,ES,IT` for
- *   the letter-bearing v2 set. Widening the lookup only pays off on a run that also carries the
+ *   the letter-containing v2 set. Widening the lookup only pays off on a run that also carries the
  *   inference-side parity fix — see the pipeline module docstring.
  */
 
@@ -52,7 +52,7 @@ const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) 
 			gbOutward: options.gbOutward,
 		})
 
-		return `anchor lookup → ${options.out} (${stats.total} keys, ${stats.letterBearing} letter-bearing)`
+		return `anchor lookup → ${options.out} (${stats.total} keys, ${stats.letterKeyCount} letter-containing)`
 	})
 
 	return <CommandTaskResult state={state} />

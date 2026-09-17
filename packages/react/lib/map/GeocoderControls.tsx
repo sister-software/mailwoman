@@ -74,7 +74,7 @@ export interface GeocoderControlsProps {
 	 */
 	placeholder: string
 	/**
-	 * The live map, for the controls that read it: the compass takes its bearing, the host's layer control reads its
+	 * The live map, for the controls that read it: the compass takes its direction, the host's layer control reads its
 	 * style. `null` until react-map-gl instantiates the map.
 	 */
 	map?: MapInstance | null

@@ -77,7 +77,7 @@ describe("labelCNOrganizationalRow", () => {
 })
 
 describe("the recipe", () => {
-	it("emits one per-character BIO row per chain-bearing CN string and counts the rest as skipped", async () => {
+	it("emits one per-character BIO row per chain-containing CN string and counts the rest as skipped", async () => {
 		const { stats, rows } = await run(
 			[
 				{ raw: "赵光三分场二十九队, Heilongjiang, China", country: "CN" },

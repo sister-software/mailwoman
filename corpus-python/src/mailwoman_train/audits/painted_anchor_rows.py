@@ -85,9 +85,9 @@ def main() -> int:
     args = ap.parse_args()
 
     lookup = load_anchor_lookup(args.lookup)
-    letter_bearing = sum(1 for k in lookup if any("A" <= c <= "Z" for c in k))
+    letter_key_count = sum(1 for k in lookup if any("A" <= c <= "Z" for c in k))
     print(f"lookup {args.lookup}")
-    print(f"  keys {len(lookup):,}   letter-bearing {letter_bearing:,}")
+    print(f"  keys {len(lookup):,}   letter-containing {letter_key_count:,}")
 
     zeroes: list[str] = []
     for jsonl_path in args.jsonl:

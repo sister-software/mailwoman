@@ -180,7 +180,7 @@ export const INPUT_SET_SCHEMA = z
 				status: z.string().optional(),
 			})
 			.describe(
-				"The autocomplete ladder over a board filter: every truth-bearing row expanded into its prefix rungs, each graded at the row's own truth and tolerance with the row's country as the locale hint. Rows read as <id>@<rung length>."
+				"The autocomplete ladder over a board filter: every truth-containing row expanded into its prefix rungs, each graded at the row's own truth and tolerance with the row's country as the locale hint. Rows read as <id>@<rung length>."
 			),
 		z.object({
 			kind: z.literal("literal"),

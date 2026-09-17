@@ -10,7 +10,7 @@ table); v196-slavic-anchor confirmed this the expensive way — it REGRESSED CZ 
 The fix is tokenizer-side and needs no GPU training:
 
 1. Train a CZ/PL SentencePiece unigram on a Slavic address corpus.
-2. Splice only its diacritic-bearing pieces into the 48k vocab. Because every appended piece contains a
+2. Splice only its diacritic-containing pieces into the 48k vocab. Because every appended piece contains a
    codepoint that never appears in English text, it can never match a span of an English string, so English
    tokenizes BYTE-IDENTICALLY by construction — the source language cannot regress. This module ASSERTS that
    invariant (0 diff over a held-out English sample); it is not a hope.
@@ -135,7 +135,7 @@ def train_diacritic_sp(corpus_path: Path, out_prefix: Path, *, vocab_size: int =
 
 
 def splice_vocab(base_tokenizer: Path, diacritic_sp: Path, out_tokenizer: Path) -> list[str]:
-    """Append the diacritic-bearing pieces of ``diacritic_sp`` to ``base_tokenizer``; write ``out_tokenizer``.
+    """Append the diacritic-containing pieces of ``diacritic_sp`` to ``base_tokenizer``; write ``out_tokenizer``.
 
     Only pieces whose core contains a non-ASCII codepoint and that are absent from the base vocab are added,
     with their unigram scores. Returns the list of new piece strings. Raises if the English-identity

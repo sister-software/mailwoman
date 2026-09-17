@@ -63,13 +63,13 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * even the 0,0 unlocated sentinel), and the prefix prior's ancestry-only tier must express absence as `undefined`
  * instead — B3-3: inventing a centroid would reproduce the `BT3 9QQ` → Sheffield defect #1480. `decorateNode` copies
  * `lat`/`lon` onto the node verbatim, so an undefined coordinate stays absent on the node — the meaning-of-zero rule.
- * Widened only at this boundary: gazetteer places (always coordinate-bearing) remain plain `ResolvedPlace`.
+ * Widened only at this boundary: gazetteer places (always coordinate-containing) remain plain `ResolvedPlace`.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
 /**
  * The MINIMUM compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
- * is a GB area, not a unit-bearing code).
+ * is a GB area, not a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 

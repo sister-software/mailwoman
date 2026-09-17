@@ -7,7 +7,7 @@ refuse — a config that sets `char_mode` without `use_char_embed`, a freeze tha
 parameter, an EWC lambda with no Fisher artifact — and a refusal should name the stage it came
 from rather than a line number in a 400-line function.
 
-ORDER IS LOAD-BEARING in exactly one place, and it is marked where it happens: the live learning
+ORDER IS required in exactly one place, and it is marked where it happens: the live learning
 rates are captured before any checkpoint load, and re-stamped after both of them, because either
 load silently overwrites them with the checkpoint's saved values.
 """

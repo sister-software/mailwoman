@@ -526,7 +526,7 @@ written at all — almost everything asked for was already measured by someone w
 they measured.
 
 **The v9 anchor cure.** The #1467 root cause — every training config used a 67,708-key anchor lookup
-with _zero letter-bearing keys_, so the GB slot never took gradient — was found, cured, and proven
+with _zero letter-containing keys_, so the GB slot never took gradient — was found, cured, and proven
 with Fisher mass on the GB slot at 11.28% against CA/JP exact-zero controls. gb-golden went 294 → 318
 of 318 across three registers; GB `dependent_locality` went 0 → 205/207. That is a real capability
 gain with a mechanism-level receipt, not a metric that moved.

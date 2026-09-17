@@ -44,7 +44,7 @@ export type ScriptCode = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "
 export interface ScriptShare {
 	script: ScriptCode
 	/**
-	 * Proportion of the input's SCRIPT-BEARING codepoints, so digits and punctuation are outside both halves of the
+	 * Proportion of the input's script-containing codepoints, so digits and punctuation are outside both halves of the
 	 * fraction. Shares sum to 1 across the list, and the list is empty when nothing in the input names a script.
 	 */
 	share: number
@@ -83,8 +83,8 @@ export interface TokenClass {
 	class: TokenCharacterClass
 	length: number
 	/**
-	 * The ISO 15924 script this token is written in. `Zyyy` for a token carrying no script-bearing codepoint, such as a
-	 * bare house number.
+	 * The ISO 15924 script this token is written in. `Zyyy` for a token carrying no script-containing codepoint, such as
+	 * a bare house number.
 	 */
 	script: ScriptCode
 }
@@ -136,7 +136,7 @@ export interface RegionAbbreviationHit {
 export interface QueryShape {
 	characterClass: CharacterClass
 	/**
-	 * Every ISO 15924 script the input is written in, ranked by share of its script-bearing codepoints.
+	 * Every ISO 15924 script the input is written in, ranked by share of its script-containing codepoints.
 	 *
 	 * This is what `characterClass` cannot say. The class folds Kana, Han and Hangul to one `cjk` value, and answers
 	 * `mixed` for an input carrying a non-Latin span beside a Latin one — so a Han venue inside a London address, and a

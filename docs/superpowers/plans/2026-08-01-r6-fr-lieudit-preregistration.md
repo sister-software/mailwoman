@@ -36,7 +36,7 @@ under test is that a lieu-dit pair index moves it the way GB's moved 0/69 → 69
   (cedex, the comma-free Rue du Chevaleret row) must not move.
 - **B-R6.2 (venue-confound floor).** A held-out FR confound board — lieu-dit surfaces opening venue
   names, the law-1 class. French lieux-dits are heavily article-led ("La Croix", "Le Moulin", "Les
-  Granges") and collide with commercial names, so this is the risk-bearing bar. Bar: **≤2%**
+  Granges") and collide with commercial names, so this is the risky bar. Bar: **≤2%**
   dependent-locality false positives, the shipped GB floor.
 - **B-R6.3 (the positive side, on the pre-existing board).** The 120-row `fr-lieudit-golden.jsonl`,
   graded for dependent-locality emission and tag-correctness. Bar: **≥70% tag-correct**, matching

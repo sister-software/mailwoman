@@ -310,7 +310,7 @@ export function scriptForCodepoint(cp: number): ScriptCode {
 }
 
 /**
- * The script a token is written in: the one the most of its script-bearing codepoints carry.
+ * The script a token is written in: the one the most of its script-containing codepoints carry.
  *
  * A token that carries none — `10118`, `-` — answers `Zyyy` rather than guessing from its neighbours. The tokenizer
  * breaks at a script transition, so a token mixing two scripts is rare and comes from a connector joining them
@@ -346,9 +346,9 @@ export function classifyTokenScript(text: string): ScriptCode {
 /**
  * Every script the input is written in, ranked by how much of it they write.
  *
- * `share` is the proportion of SCRIPT-BEARING codepoints, so the digits and the commas are out of both halves of the
+ * `share` is the proportion of script-containing codepoints, so the digits and the commas are out of both halves of the
  * fraction: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` answers `Latn` 0.82 / `Hani` 0.18 rather than burying both under
- * the punctuation. An input carrying no script-bearing codepoint at all — a bare postcode — answers an empty list,
+ * the punctuation. An input carrying no script-containing codepoint at all — a bare postcode — answers an empty list,
  * which is the honest reading: nothing in `10118` names a script.
  *
  * This is the field that carries what the folded `CharacterClass` cannot. `cjk` is one value for three scripts, and a

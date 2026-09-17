@@ -608,7 +608,7 @@ describe("findPostcodeCountryScope", () => {
 		expect(scope?.localityPlace?.id).toBe(BERLIN_DE.id)
 	})
 
-	it("recovers GB for a letter-bearing shape the default country cannot place", async () => {
+	it("recovers GB for a letter-containing shape the default country cannot place", async () => {
 		const backend = await makeBackend([PC_SW1A_GB, LONDON_GB, LONDON_OH])
 
 		const scope = await findPostcodeCountryScope(addressTree("SW1A 1AA", "London").roots, backend, {

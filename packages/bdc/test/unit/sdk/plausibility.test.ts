@@ -925,7 +925,7 @@ describe("§7-2b criteria", () => {
 	})
 
 	describe("Criterion 3 — layer absent: abstain, no fabricated evidence (fuller proof: 'bdc layer absent/insufficient' and 'physical evidence + poi layer absence' suites above)", () => {
-		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-bearing evidence shape) is fabricated", async () => {
+		it("poi layer absent -> abstain requires_build_local_layer, and no physical_plant (the only distance-related evidence shape) is fabricated", async () => {
 			const bundle = await plausibilityCheck(
 				{
 					point: SPRINGFIELD_POINT,

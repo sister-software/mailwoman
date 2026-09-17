@@ -162,7 +162,7 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(record).toBeDefined()
 		expect(record!.picked).toBeNull()
 		expect(record!.candidates).toEqual([])
-		// The bare-toponym race ran (single value-bearing locality node) and still found nothing — the
+		// The bare-toponym race ran (single value-containing locality node) and still found nothing — the
 		// check says the mechanism participated, which is what separates "raced and lost" from "never ran".
 		expect(record!.checks).toContain("bare_race")
 	})

@@ -6,7 +6,7 @@
  *   V0 -> AddressTree adapter (Direction C, Phase 1 — the linchpin).
  *
  *   The WOF resolver's `resolveTree` consumes an `AddressTree` (neural's native, nested,
- *   containment-bearing output). The v0 rule parser emits a flat `ClassificationRecord` ({tag:
+ *   containment-containing output). The v0 rule parser emits a flat `ClassificationRecord` ({tag:
  *   string[]}) with no hierarchy and no char spans. To put v0's parse through the same resolver —
  *   and run the "v0-via-adapter" baseline that tests whether the capability map's clean-input win
  *   translates end-to-end — we must turn that flat record into a tree.

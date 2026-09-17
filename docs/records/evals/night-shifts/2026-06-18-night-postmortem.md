@@ -170,7 +170,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 - **Weigh the us.street −4.3 tradeoff.** Locality up / street down is the bare-locality emphasis (11%) shifting
   the guardrail. It's above floor and the gains outweigh it, but if street matters more, a future iteration could
   trim bare-locality to ~8-9% (less street erosion, keep most of the locality recovery). Tuning note, not a blocker.
-- **Country PATCH staged (optional, not a must-fix)** — a country-bearing bare-locality variant (~12%
+- **Country PATCH staged (optional, not a must-fix)** — a country-containing bare-locality variant (~12%
   "…, United States"/"…, France"; #511-linted, "USA" DROPPED as locality-dominant). Pushes country UP if the
   operator wants it: rebuild extract v0.6.2 + a short fine-tune from v1.7.0. Not needed to promote (the floor's stale).
 - If the boundary shapes ever bottleneck production: revisit with a bigger model / a specialized second-pass

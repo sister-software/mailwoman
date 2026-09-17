@@ -155,7 +155,7 @@ candidate.
 
 Three of those five exemplars are correct answers. The withheld-gold stratum removes the ids the
 `gn:id` concordance links, and the gazetteer carries many settlements twice — once as a `locality`,
-once as the `localadmin` bearing the same name at the same centroid — so removing the concorded id
+once as the `localadmin` with the same name at the same centroid — so removing the concorded id
 leaves the twin answerable:
 
 | row             | query       | withheld gold | selected                |     km |

@@ -526,7 +526,7 @@ describe("bare-country class", () => {
 		expect(root.metadata?.["bare_country_repick"]).toBeUndefined()
 	})
 
-	it("never fires on an address-shaped tree — a second value-bearing node keeps the race off", async () => {
+	it("never fires on an address-shaped tree — a second value-containing node keeps the race off", async () => {
 		const tree = {
 			raw: "Japan, Pennsylvania",
 			roots: [

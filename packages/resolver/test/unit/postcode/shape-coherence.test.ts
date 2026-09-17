@@ -22,7 +22,7 @@
  *
  *   The rule under test (three outcomes, per span): intersection non-empty → CONFIRMED (additive
  *   stamp only); intersection empty + confident siblings → EXCLUDED (digit-only retags to
- *   `house_number`; letter-bearing keeps its tag and is stamped `postcode_shape_excluded`); no
+ *   `house_number`; letter-containing keeps its tag and is stamped `postcode_shape_excluded`); no
  *   confident siblings or no codex shape → ABSTAIN.
  */
 
@@ -198,7 +198,7 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		expect(excluded).toBe(9)
 	})
 
-	it("letter-bearing spans keep their tag and are stamped instead", () => {
+	it("letter-containing spans keep their tag and are stamped instead", () => {
 		const roots = [postcodeNode("SW1A 2AA"), node({ tag: "region", value: "CA" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -281,7 +281,7 @@ describe("isShapeExcludedPostcode", () => {
 
 describe("firstPostcodeValue integration — excluded spans never become the address's postcode", () => {
 	it("skips a stamped-excluded span when selecting the tree's postcode", async () => {
-		// Two postcode spans; the letter-bearing one is excluded, the US 5-digit one is not.
+		// Two postcode spans; the letter-containing one is excluded, the US 5-digit one is not.
 		const excluded = postcodeNode("SW1A 2AA")
 		const good = postcodeNode("80503")
 

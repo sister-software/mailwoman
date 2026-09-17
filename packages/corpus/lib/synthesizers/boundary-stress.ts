@@ -13,7 +13,7 @@
  *
  *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the recipe output never
  *   introduces tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier
- *   AU-bearing draft: AU 4-digit postcodes collide with US house numbers, and AU localities are
+ *   Australian draft: AU 4-digit postcodes collide with US house numbers, and AU localities are
  *   absent from the US/FR/DE base — a real contradiction). Each component is a whitespace-separated
  *   token run, so `alignRow` labels it cleanly:
  *

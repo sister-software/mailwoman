@@ -51,7 +51,7 @@ affix confidently — the other way.
 
 Sampled 1M rows across 5 base extracts (v0.3.0 train):
 
-- **69.4%** of street-bearing rows label an affix surface monolithically
+- **69.4%** of street-containing rows label an affix surface monolithically
   (30.8% start with a directional, 64.5% end with a common suffix —
   `South County Road 175 West` is all `B/I-street`).
 - Effective gradient mass: ~467M contradictory examples vs 90K × 5.0 = 450K extract-weighted
