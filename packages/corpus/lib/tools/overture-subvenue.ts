@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Overture Places source for the sub-venue lexicon (#35 wave 2) — read the sub-venue-bearing
+ *   Overture Places source for the sub-venue lexicon (#35 wave 2) — read the sub-venue-containing
  *   category subsets of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/poi/poi.db`) and yield
  *   {@link SubVenueHarvestRow}s the lexicon builder consumes exactly like an OSM extract.
  *
@@ -155,7 +155,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 }
 
 /**
- * Read the sub-venue-bearing category subsets of `poi.db`.
+ * Read the sub-venue-containing category subsets of `poi.db`.
  *
  * Cold path, already async, no interface constraint — so Kysely, per the repo's inline-SQL rule.
  *

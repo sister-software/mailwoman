@@ -231,7 +231,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 })
 
 describe("resolveInputSet — ladder", () => {
-	it("expands every truth-bearing board row into prefix rungs that carry the row's truth and locale hint", async () => {
+	it("expands every truth-containing board row into prefix rungs that carry the row's truth and locale hint", async () => {
 		const board = await resolveInputSet({ kind: "board", country: "GB" })
 		const ladder = await resolveInputSet({ kind: "ladder", country: "GB" })
 		const truthRows = board.inputs.filter((row) => typeof row.truthLat === "number")

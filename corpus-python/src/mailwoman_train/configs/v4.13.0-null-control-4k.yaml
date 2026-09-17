@@ -8,7 +8,7 @@
 #   v4.8.0    admin source @ 9.4%                    net -18   12 venue-led
 #   v4.9.0    + dependent locality                   net -20   15 venue-led
 #   v4.10.0   exposure -> 3.1%                       net -13    9 venue-led
-#   v4.11.0   venue-bearing, no new source or weight net -13    9 venue-led
+#   v4.11.0   venue-containing, no new source or weight net -13    9 venue-led
 #   v4.12.0   EWC brake x10                          net -12    9 venue-led
 #
 # Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME

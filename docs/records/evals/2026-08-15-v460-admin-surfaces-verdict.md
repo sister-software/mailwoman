@@ -108,7 +108,7 @@ One row of twenty-five, and a coherent one: `Dearborn` carries **no street suffi
 directional has no suffix anchor to lean on. v4.6.0 declines to call it a prefix.
 
 That reading is strengthened by the board, where v4.6.0 newly passes a whole family of
-directional-bearing street names — `george-street-north`, `bloor-street-west`, `yonge-street-north`,
+directional street names — `george-street-north`, `bloor-street-west`, `yonge-street-north`,
 `wellington-street-west`, `robson-street-west`, `ocean-parkway-south`. The model has shifted how it
 treats directionals: better on trailing ones attached to a full street name, worse on a leading one
 with nothing after the name.

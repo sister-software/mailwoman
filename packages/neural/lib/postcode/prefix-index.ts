@@ -120,7 +120,7 @@ export interface PostcodePrefixAncestor {
 export interface PostcodePrefixNode {
 	/**
 	 * The prefix in the sanitized-query token shape (#920) — every non-letter/number stripped, uppercased for the
-	 * letter-bearing systems: `"941"`, `"SW1A"`, `"BT9"`.
+	 * letter-containing systems: `"941"`, `"SW1A"`, `"BT9"`.
 	 */
 	prefix: string
 	/**

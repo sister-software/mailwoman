@@ -88,7 +88,7 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
 
 	// Condition 3a — name-key exact equality only. An FTS partial ("comer" matching "Comer Park") is not
-	// the entity bearing this name.
+	// the entity with this name.
 	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
 
 	if (!exact.length) return null
@@ -283,7 +283,7 @@ export function probeVenueNearAnchor(
  * 1. The fork→entity probe (#1585's entity half): a DECLARED fork whose incumbent resolution produced no coordinate takes
  *    the worldwide-unique entity. Default-on under the D-rule — a null is the only thing that can change.
  * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that resolved only to its admin anchor
- *    upgrades to the entity bearing the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
+ *    upgrades to the entity with the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
  *    local-uniqueness discipline). Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows name a
  *    poi.db-visible venue, 15 of them tracked failures; measured effect at first light: 7 of 57 rows upgrade
  *    admin→venue, all within 0.14 km of their anchors. Never fires over an address_point/interpolated answer — a

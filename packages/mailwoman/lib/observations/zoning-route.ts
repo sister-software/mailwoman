@@ -27,7 +27,7 @@
  *   stated validity window; an observation that dropped either would report a designation nobody could trace
  *   to a plan.
  *
- *   ONLY A DESIGNATION REACHES A CALLER, AND THE SILENCE IS LOAD-BEARING. There is no absence observation
+ *   ONLY A DESIGNATION REACHES A CALLER, AND THE SILENCE IS required. There is no absence observation
  *   here, and zoning is the hardest case for the rule: a location with no zoning polygon is outside any
  *   adopted plan area, or inside one on land the plan does not zone, or in a jurisdiction that has never
  *   adopted zoning, or in a jurisdiction whose records nobody has published — and no product distinguishes

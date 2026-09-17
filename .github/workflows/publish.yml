@@ -177,7 +177,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
-          # The explicit release allowlist (#1891): version-bearing manifests + the generated
+          # The explicit release allowlist (#1891): versioned manifests + the generated
           # surfaces the bump stales. Anything else dirty is a fault to surface, never to ship —
           # a release commit that silently carries an unexpected file is how drift hides.
           git add package.json '*/package.json' release.config.json \

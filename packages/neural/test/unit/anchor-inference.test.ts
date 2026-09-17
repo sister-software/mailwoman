@@ -151,7 +151,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys PLUS the letter-bearing ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys PLUS the letter-containing ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],

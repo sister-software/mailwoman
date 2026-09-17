@@ -18,7 +18,7 @@
  *   compulsory here is licensing as much as epistemics: an observed land-use layer is ODbL, and merging one
  *   of its rows into this table would relicense the table.
  *
- *   `signed_area_m2` IS THE INGEST'S OWN RECEIPT AND ITS SIGN IS LOAD-BEARING. The service encodes hole roles
+ *   `signed_area_m2` IS THE INGEST'S OWN RECEIPT AND ITS SIGN IS required. The service encodes hole roles
  *   by ring orientation with clockwise as the exterior, so a correctly-read feature stores a POSITIVE signed
  *   sum; the national total of those sums is what the build compares against the Department's own
  *   `Shape__Area` statistic. Read with the holes it is 5,444.5 km²; read without them, 5,666.6 km².

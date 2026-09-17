@@ -85,7 +85,7 @@ export interface AnnotationSet {
 	geohash?: string
 	mercator?: Mercator
 	/**
-	 * Initial bearing (degrees) to Mecca.
+	 * Initial direction (degrees) to Mecca.
 	 */
 	qiblaBearing?: number
 	sun?: SunTimes

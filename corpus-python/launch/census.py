@@ -229,7 +229,7 @@ def digit_prior(
     rows: int = 400000,
     seed: int = 42,
 ) -> None:
-    """Which tag owns a bare digit-bearing token, as the SAMPLER draws it?
+    """Which tag owns a bare digit-containing token, as the SAMPLER draws it?
 
     The question is whether the model's `39A -> postcode` habit contradicts its training prior or
     reflects it. A previous count said P(house_number | bare digit)=0.810 vs P(postcode|·)=0.101 —
@@ -424,7 +424,7 @@ def piece_prior(
     arithmetic about them. (A hand-derivation predicted P(postcode | continuation) = 0.688 assuming
     fertility == digit count; multi-digit pieces like `16` exist, so the real number can differ.)
 
-    Reports, for digit-bearing pieces only:
+    Reports, for digit-containing pieces only:
       - P(tag | START piece of a digit run)        vs the model's measured B-house_number 0.604
       - P(tag | CONTINUATION piece of a digit run) vs the model's measured I-postcode 0.587-0.765
       - the same split by run length, since length is the variable doing the work
@@ -473,7 +473,7 @@ def piece_prior(
         pieces = [tok.sp.id_to_piece(i) for i in ex.input_ids]
         labels = ex.labels
 
-        # Walk maximal runs of digit-bearing pieces. The run is the unit under investigation:
+        # Walk maximal runs of digit-containing pieces. The run is the unit under investigation:
         # its first piece is where the model emits B-*, the rest are where it emits I-*.
         i = 0
         while i < len(pieces):

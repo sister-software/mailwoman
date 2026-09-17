@@ -42,7 +42,7 @@ class DataConfig:
     # the weight is derived at launch from the source's row count and the run's total samples, beside the
     # fixed ``source_weights`` (see ``source_reps.py``). A source takes a weight or a reps target, never both.
     source_reps: dict[str, float] | None = None
-    # Hypothesis-bearing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
+    # hypothesis-containing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
     # historical configs unchanged. A run must not start until its audit passes.
     required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
     # Hard cap on how many rows the streaming loader yields per epoch (None = unlimited).

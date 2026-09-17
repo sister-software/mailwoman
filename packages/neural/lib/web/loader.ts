@@ -315,8 +315,8 @@ function defaultStreetTypeLexiconURL(modelURL: string, declaredName?: string): s
 /**
  * Default location of the locality-surface evidence lexicon: a sibling of the model file, under the card-declared
  * generation when the card names one. The bare name is the LEGACY fallback for pre-declaration bundles — deriving it
- * for a card-bearing bundle is how the demo ran a locality_surface-required model with the channel silently unfed (the
- * tolerant fetch turns a wrong generation into a 404 into channel-off, with no error anywhere).
+ * for a card-containing bundle is how the demo ran a locality_surface-required model with the channel silently unfed
+ * (the tolerant fetch turns a wrong generation into a 404 into channel-off, with no error anywhere).
  */
 function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName?: string): string {
 	return siblingURL(modelURL, declaredName ?? "locality-surface-lexicon-v6.json")

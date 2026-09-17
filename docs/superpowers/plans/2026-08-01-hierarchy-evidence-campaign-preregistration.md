@@ -176,7 +176,7 @@ neighbourhood records — coverage, not fact, and the reader treats it as neutra
 **Rung outcome: the artifact ships, un-wired, with its ceiling stated.**
 
 - It is genuine conditional evidence: a hit rules out two thirds of GB's parent population
-  (B-C2′) and is available on three quarters of real dependent-locality-bearing rows (B-C3′).
+  (B-C2′) and is available on three quarters of real dependent-locality-containing rows (B-C3′).
 - It cannot do span-level work (D-C4). Every law-1 confound row shares London with the true
   positives. A census delta alone would raise dependent-locality odds on the venue span exactly as
   much as on the real one — which is why no delta is written and why the calibration rung, if it

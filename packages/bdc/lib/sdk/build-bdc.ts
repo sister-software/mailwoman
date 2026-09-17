@@ -384,7 +384,7 @@ async function groupProviderListRows(
  * providers. `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema` and `#frn` (measured
  * 2026-09-01), so the heavy graph is no longer on this path at all. The laziness is kept because it also defers opening
  * the filer database, and a static import here is now a viable simplification if someone wants to measure it — but it
- * is no longer load-bearing for import time.
+ * is no longer required for import time.
  */
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,

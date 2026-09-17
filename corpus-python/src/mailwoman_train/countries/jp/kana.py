@@ -97,7 +97,7 @@ def municipality_kana_from_admin_db(db_path: Path | str) -> dict[str, str]:
         generic_names = [name for name in kanji_names if name.endswith(MUNICIPALITY_GENERICS)]
         if not generic_names:
             continue
-        # The reading belongs to the SHORTEST generic-bearing kanji name (北区); a longer name that ends with it carries
+        # The reading belongs to the SHORTEST generic-containing kanji name (北区); a longer name that ends with it carries
         # a prefix the reading does not cover (大阪市北区), which stays kanji: 大阪市きた区, never きた区.
         base = min(generic_names, key=len)
         stem = pick_kana_stem(base, kana)

@@ -88,9 +88,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	poiLookup?: POIExecutorLookup
 	/**
-	 * OPT-IN venue tier (#1684's POI half): upgrade a venue-led address's admin/street answer to the poi.db entity
-	 * bearing the venue's exact name-key near the resolved anchor. Off by default — the ceiling is measured (15 tracked
-	 * gb_venue rows are data-visible) but the D-rule promotion needs its own full-board battery.
+	 * OPT-IN venue tier (#1684's POI half): upgrade a venue-led address's admin/street answer to the poi.db entity with
+	 * the venue's exact name-key near the resolved anchor. Off by default — the ceiling is measured (15 tracked gb_venue
+	 * rows are data-visible) but the D-rule promotion needs its own full-board battery.
 	 */
 	poiVenueTier?: boolean
 	/**
@@ -315,8 +315,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Postcode-shape coherence (#31, Mechanism 1, `ResolveOpts.postcodeShapeCoherence`) — shape as confidence and
 	 * EXCLUSION: a postcode span whose codex shape intersects no confident sibling system is demoted (digit-only →
-	 * `house_number`; letter-bearing → stamped `postcode_shape_excluded`). **Default OFF** — demotion is the failure mode
-	 * with teeth; pass `true` to opt in (the pre-registered B1 criterion set lives in
+	 * `house_number`; letter-containing → stamped `postcode_shape_excluded`). **Default OFF** — demotion is the failure
+	 * mode with teeth; pass `true` to opt in (the pre-registered B1 criterion set lives in
 	 * `resolver/postcode-shape-coherence.ts`).
 	 */
 	postcodeShapeCoherence?: boolean

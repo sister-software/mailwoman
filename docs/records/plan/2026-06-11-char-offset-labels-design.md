@@ -42,7 +42,7 @@ What this cost, concretely:
   the format can't express directly.
 - The paired-delimiter future (#518): quoted venues and parenthetical annotations cannot be
   labeled AROUND — `"Big Company HQ"` needs venue on the inner span and nothing on the quotes;
-  the token format can only label the quote-bearing token whole.
+  the token format can only label the quote-containing token whole.
 
 ## The proposal
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a coordinate-bearing held-out eval set for a non-US locale from a standard-schema
+ *   Build a coordinate-containing held-out eval set for a non-US locale from a standard-schema
  *   OpenAddresses country dump (#229 Phase A).
  *
  *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street

@@ -184,7 +184,7 @@ describe("alignRow — fuzzy fallback", () => {
 		const result = alignRow(
 			baseRow({
 				raw: "75008 Paris",
-				components: { locality: "Pâris", postcode: "75008" }, // accent-bearing version
+				components: { locality: "Pâris", postcode: "75008" }, // accent-containing version
 			}),
 			{ maxEditDistance: 0 }
 		)

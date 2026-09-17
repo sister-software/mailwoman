@@ -62,7 +62,7 @@ export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
 ])
 
 /**
- * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-bearing). Appear as the LEADING
+ * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-containing). Appear as the LEADING
  * token of a French street name (`Rue Sainte-Catherine`, `Chemin du Roy`). Folded for matching in
  * {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key alike.
  */

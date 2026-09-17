@@ -49,7 +49,7 @@ def verify_corpus_receipt_binding(
     required_receipts: list[CorpusReceiptConfig],
     token: str,
 ) -> None:
-    """Refuse a receipt-bearing GPU run unless the CPU audit bound these bytes."""
+    """Refuse a receipt-containing GPU run unless the CPU audit bound these bytes."""
     if not required_receipts:
         return
     if token != corpus_receipt_binding(config_path, corpus_dir):

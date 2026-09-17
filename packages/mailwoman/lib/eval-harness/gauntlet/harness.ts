@@ -150,10 +150,10 @@ export interface GauntletResolverPins {
 	variantAliasExemption?: boolean
 	/**
 	 * #1684's POI half — the opt-in venue tier (`GeocodeDeps.poiVenueTier`): upgrade a venue-led address's admin or
-	 * street answer to the poi.db entity bearing the venue's name near the resolved anchor. Library default off (the
-	 * D-rule battery is what this pin exists to run); `true` pins it on. It reads through the poi.db reader the harness
-	 * already loads for the fork-entity probe, so on a machine without poi.db a `true` pin degrades to the incumbent
-	 * answer the same way that probe does.
+	 * street answer to the poi.db entity with the venue's name near the resolved anchor. Library default off (the D-rule
+	 * battery is what this pin exists to run); `true` pins it on. It reads through the poi.db reader the harness already
+	 * loads for the fork-entity probe, so on a machine without poi.db a `true` pin degrades to the incumbent answer the
+	 * same way that probe does.
 	 */
 	poiVenueTier?: boolean
 	/**

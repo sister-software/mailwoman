@@ -16,7 +16,7 @@
  *       Great Britain and 35-of-40 in France).
  *   - {@link hasPromotedShape} — an `identifier-required` promotion is exercised only as
  *       `<phrase> <identifier>`. The de-DE `halle` board is the founding case: its 168-hit confound
- *       includes the CITY Halle (Saale), and only the identifier-bearing shape separates them.
+ *       includes the CITY Halle (Saale), and only the identifier-containing shape separates them.
  *   - {@link buildIdentifierModel} — the identifier distribution is measured per REGION, because it
  *       differs by country far more than the shared vocabulary suggests (GB gates 71% bare digit, ES
  *       35% ranges).

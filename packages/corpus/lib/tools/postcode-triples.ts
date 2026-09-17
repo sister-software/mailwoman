@@ -457,10 +457,10 @@ export type AdminPair = Omit<PostcodeTriple, "postcode" | "postcodePlacement">
 /**
  * Read `(locality, region, country)` pairs for a country straight from the admin gazetteer, with no postcode.
  *
- * The postcode-bearing readers each need a source that pairs a code with a place, and for a country that publishes no
- * such source there is nothing they can return. Canada is the worked example: GeoNames publishes 1,657 CA rows, every
- * postcode a three-character FSA and column 3 an area label (`Vancouver (North Grandview-Woodlands)`) rather than a
- * locality, while `postalcode-ca-overture.db` carries 843,739 full codes with `parent_id = -1` on every row. Neither
+ * The postcode-containing readers each need a source that pairs a code with a place, and for a country that publishes
+ * no such source there is nothing they can return. Canada is the worked example: GeoNames publishes 1,657 CA rows,
+ * every postcode a three-character FSA and column 3 an area label (`Vancouver (North Grandview-Woodlands)`) rather than
+ * a locality, while `postalcode-ca-overture.db` carries 843,739 full codes with `parent_id = -1` on every row. Neither
  * reader yields a single CA tuple, so `trailing-region`'s Canadian region-code surface has never had one to act on.
  *
  * The admin gazetteer answers the pair without a postcode — 12,995 CA localities carry a region ancestor — and the

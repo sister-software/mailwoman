@@ -7,7 +7,7 @@
 # anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
 # `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`). Every recipe in this directory — all of
 # them, one distinct value — pointed `anchor_lookup_path` at `/data/anchor/pilot-anchor-lookup.json`:
-# 67,708 keys, US/DE/FR only, zero of them letter-bearing. So slots 3–8 took no gradient in 60,000
+# 67,708 keys, US/DE/FR only, zero of them letter-containing. So slots 3–8 took no gradient in 60,000
 # steps. When `postcode-gb.bin` was shipped at inference it fed slot 4 a value the encoder had never
 # seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
 # mitigation (en-gb ships no bin, the channel resolves off). This run is the cure.
@@ -19,7 +19,7 @@
 # MEASURED, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
 # --include DE,FR,US,GB,NL,ES,IT`), 2026-08-05:
 #
-#   keys 2,286,339 (was 67,708) · letter-bearing 2,214,803 (was 0)
+#   keys 2,286,339 (was 67,708) · letter-containing 2,214,803 (was 0)
 #   DE 29,694 · FR 27,119 · US 42,312 · GB 1,749,839 (1,746,976 units + 2,863 outward districts)
 #   NL 464,964 · ES 11,331 · IT 4,936 · 32,540 collisions · 0.2% without a centroid (was 6.8%)
 #
@@ -152,7 +152,7 @@ data:
   augment_glue_prob: 0.25
   augment_ordinal_prob: 0.3
   augment_punct_drop_prob: 0.3
-  # THE ONE NAMED DELTA. 2,286,339 keys / 2,214,803 letter-bearing, vs the pilot's 67,708 / 0.
+  # THE ONE NAMED DELTA. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
   # Rebuild with: mailwoman gazetteer build anchor-lookup --include DE,FR,US,GB,NL,ES,IT --output <path>
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json

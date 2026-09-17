@@ -127,13 +127,13 @@ describe("the Japanese Overture gold set", () => {
 		//
 		// It is a FLOOR rather than a rate: these rows carry a postcode, a prefecture and a municipality and nothing
 		// finer. A set with building lines would carry more kana.
-		const kanaBearing = japaneseRows.filter((row) => {
+		const kanaRowCount = japaneseRows.filter((row) => {
 			const scripts = scriptsOf(row)
 
 			return scripts.includes("Kana") || scripts.includes("Hira")
 		})
 
-		expect(kanaBearing).toHaveLength(178)
+		expect(kanaRowCount).toHaveLength(178)
 		expect(japaneseRows.filter((row) => scriptsOf(row).includes("Hani"))).toHaveLength(3982)
 	})
 })

@@ -235,7 +235,7 @@ export function synthesizeAnchorAbsorptionRow(
 	if (template === "h-no-trailing-locality") {
 		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with no trailing
 		// postcode → the leading number is the house number. The CONTRAST to p-us-rural (same no-trailing,
-		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 recipe output lacked this template,
+		// state-containing shape) is the LOCALITY: present here, absent there. The A2 recipe output lacked this template,
 		// so p-us-rural's "leading-number + STATE → postcode" rule over-generalized to 98 golden house#
 		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits and real 5-digit ZIPs
 		// (the hard case: 5-digit + locality is still a house number, distinct from p-us-rural's no-locality).
@@ -273,7 +273,7 @@ export function synthesizeAnchorAbsorptionRow(
 // CASE-P-quantity problem. The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house#
 // regressions were house#->POSTCODE on "{house#} {street}, {locality}, {STATE}" no-trailing rows — the
 // p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") over-generalized because the recipe output
-// had no counter-template for the common locality-bearing house# case. A3 adds h-no-trailing-locality (15%)
+// had no counter-template for the common locality-containing house# case. A3 adds h-no-trailing-locality (15%)
 // to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
 // trims p-us-rural 16->13. Goal: house_number recovers without re-eroding postcode/CASE-H. CASE-P = 26%.
 /**

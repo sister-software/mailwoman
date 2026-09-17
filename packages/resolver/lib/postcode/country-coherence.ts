@@ -279,7 +279,7 @@ const LOCALITY_HOLDER_FETCH = 30
 const MAX_CANDIDATE_COUNTRIES = 12
 
 /**
- * Countries that hold an exact, coordinate-bearing row for `text` at `placetype`, mapped to their best (first) such
+ * Countries that hold an exact, coordinate-containing row for `text` at `placetype`, mapped to their best (first) such
  * row. One UNSCOPED lookup.
  *
  * This is the #24 candidate source, and it replaces a proxy with the thing itself. The pass used to ask codex "which
@@ -573,7 +573,7 @@ export async function findPostcodeCountryScope(
 }
 
 /**
- * Does `country` hold an exact, coordinate-bearing locality row for `locality`? One scoped lookup — deliberately not
+ * Does `country` hold an exact, coordinate-containing locality row for `locality`? One scoped lookup — deliberately not
  * read off the unscoped holder window, which is population-first and truncated, so a small domestic bearer could fall
  * below its fold and let a foreign scope through.
  */

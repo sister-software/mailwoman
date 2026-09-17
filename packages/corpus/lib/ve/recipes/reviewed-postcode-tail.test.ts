@@ -48,7 +48,7 @@ function collapsedComponents(labels: readonly string[]): string[] {
 }
 
 describe("reviewed Venezuela postcode tuples", () => {
-	it("loads four provenance-bearing, unique after-locality facts", async () => {
+	it("loads four provenance-containing, unique after-locality facts", async () => {
 		const tuples = await readReviewedPostcodeTuples()
 
 		expect(tuples).toHaveLength(4)

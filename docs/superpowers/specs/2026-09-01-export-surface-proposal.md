@@ -33,7 +33,7 @@ list (an expression statement, a bare `import "x"` or a top-level await RUNS; a 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
 defence in depth. **It does not.** Measured after landing it: repointing one demo import from
 `street/normalize` back to the `street` barrel still produces 27
-`'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still load-bearing, and
+`'x' is not exported from 'node:fs/promises'` errors. The leaf rule is still required, and
 `webpack-policy.test.ts` now refuses a barrel import by name in ~30 ms — because the only other thing that
 catches it is a five-minute `docusaurus build`.
 

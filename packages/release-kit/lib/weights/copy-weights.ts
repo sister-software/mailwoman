@@ -9,7 +9,7 @@
  *   time.
  *
  *   The source model + tokenizer FILENAMES come from `release.config.json` (`weights.model` /
- *   `weights.tokenizer`) so the version-bearing names live in one place rather than hardcoded here.
+ *   `weights.tokenizer`) so the versioned names live in one place rather than hardcoded here.
  *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
  *   at release time via env vars:
  *

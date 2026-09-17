@@ -162,11 +162,11 @@ a measured state, not a gap.
 `scoreByScript` answers `ja-JP` at 0.8 for all of them. Counting ISO 15924 blocks over the per-country sets the
 repository holds:
 
-| Source                                            | CJK-bearing rows | Kana decides Japanese | Hangul decides Korean |       Han-only |
-| ------------------------------------------------- | ---------------: | --------------------: | --------------------: | -------------: |
-| `data/eval/external/jp-overture-gold.jsonl`       |           11,946 |            356 — 3.0% |                     0 | 11,590 — 97.0% |
-| `corpus-python/tests/.../kr-build-reference.json` |               37 |                     0 |             37 — 100% |              0 |
-| `gauntlet cases/cn/organizational-units.jsonl`    |               59 |                     0 |                     0 |      59 — 100% |
+| Source                                            | CJK-containing rows | Kana decides Japanese | Hangul decides Korean |       Han-only |
+| ------------------------------------------------- | ------------------: | --------------------: | --------------------: | -------------: |
+| `data/eval/external/jp-overture-gold.jsonl`       |              11,946 |            356 — 3.0% |                     0 | 11,590 — 97.0% |
+| `corpus-python/tests/.../kr-build-reference.json` |                  37 |                     0 |             37 — 100% |              0 |
+| `gauntlet cases/cn/organizational-units.jsonl`    |                  59 |                     0 |                     0 |      59 — 100% |
 
 Korean is categorical: the address vocabulary itself — 로, 길, 동, 시 — is Hangul, and every Korean row today is
 labeled `ja-JP`. Japanese is not: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are

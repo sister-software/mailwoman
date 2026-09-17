@@ -28,8 +28,8 @@ export interface Box {
 }
 
 /**
- * How far off north the compass check turns the map. Any bearing past the control's own dead zone would do; this one is
- * far enough that a needle drawn at the wrong angle is visible in a failure screenshot.
+ * How far off north the compass check turns the map. Any direction past the control's own dead zone would do; this one
+ * is far enough that a needle drawn at the wrong angle is visible in a failure screenshot.
  */
 const BEARING_OFF_NORTH = 42
 
@@ -285,7 +285,7 @@ export async function expectPointerQueriesStayScoped(page: Page, handle: string)
  * The compass appears once the map leaves north and hides again when it returns, and pressing it is what returns it.
  *
  * `setBearing` drives the map directly rather than synthesising a rotate gesture: the gesture is MapLibre's to test,
- * and what this asserts is the chrome's response to a bearing.
+ * and what this asserts is the chrome's response to a direction.
  */
 export async function expectCompassFollowsBearing(page: Page, handle: string): Promise<void> {
 	const compass = page.locator(".mw-map-compass")

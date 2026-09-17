@@ -551,7 +551,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	/**
 	 * The postcode-containment anchor: the postcode's own centroid row in the candidate table, keyed whitespace-stripped
 	 * (#920 — the same fold the build applies to postcode rows), country-scoped when the query is, first
-	 * coordinate-bearing row wins. null when the candidate table carries no such postcode — the re-rank then abstains,
+	 * coordinate-containing row wins. null when the candidate table carries no such postcode — the re-rank then abstains,
 	 * because a recall gap is not evidence for the name match. Meaning-of-zero: a 0,0 row is the build's unlocated
 	 * sentinel, never a real centroid.
 	 */
@@ -925,7 +925,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				// produced this row — the re-admission path. Absence means the question never arose.
 				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
 				// #1717 stage 2 — the containment stamp, tri-state: emitted only when the question was
-				// asked (a `regionQualifier` query over a sidecar-bearing artifact); its absence is what
+				// asked (a `regionQualifier` query over a with-sidecar artifact); its absence is what
 				// the resolver walk reports as `unavailable` (meaning-of-zero).
 				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
 				// #1893 — the exemption's firing mark, carried only when the ranker actually spared this row

@@ -148,13 +148,13 @@ One variable against v4.11.0: `ewc_lambda` 1e4 -> 1e5. Same corpus, source, weig
 **7 improved / 19 regressed, net -12. Venue-led still 9. FR -3, GB -5, IE -3.** A ten-fold stronger
 brake moved the net by one row and the venue class by none.
 
-| run     | change changed                            | net | venue-led |
-| ------- | ----------------------------------------- | --: | --------: |
-| v4.8.0  | admin extract @ 9.4%                      | -18 |        12 |
-| v4.9.0  | + dependent locality                      | -20 |        15 |
-| v4.10.0 | share -> 3.1%                             | -13 |     **9** |
-| v4.11.0 | venue-bearing rows, same source and share | -13 |     **9** |
-| v4.12.0 | EWC brake x10                             | -12 |     **9** |
+| run     | change changed                               | net | venue-led |
+| ------- | -------------------------------------------- | --: | --------: |
+| v4.8.0  | admin extract @ 9.4%                         | -18 |        12 |
+| v4.9.0  | + dependent locality                         | -20 |        15 |
+| v4.10.0 | share -> 3.1%                                | -13 |     **9** |
+| v4.11.0 | venue-containing rows, same source and share | -13 |     **9** |
+| v4.12.0 | EWC brake x10                                | -12 |     **9** |
 
 Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME
 NINE venue-led rows. A floor that three independent changes cannot move is not a property of any of
@@ -232,15 +232,15 @@ fixed cost of touching this base at all. No shorter run avoids it.
 
 Eight runs. Every change that exists for an additive fine-tune, each isolated:
 
-| run         | change                               | net vs shipped | regressed |
-| ----------- | ------------------------------------ | -------------: | --------: |
-| v4.8.0      | admin extract @ 9.4%                 |            -18 |        25 |
-| v4.9.0      | + dependent locality                 |            -20 |        31 |
-| v4.10.0     | share -> 3.1%                        |            -13 |        22 |
-| v4.11.0     | venue-bearing, same source and share |            -13 |        18 |
-| v4.12.0     | EWC brake x10                        |            -12 |        19 |
-| v4.14.0     | steps -> 1,000                       |             -6 |        10 |
-| **v4.13.0** | **NULL — no added data at all**      |         **-5** |    **10** |
+| run         | change                                  | net vs shipped | regressed |
+| ----------- | --------------------------------------- | -------------: | --------: |
+| v4.8.0      | admin extract @ 9.4%                    |            -18 |        25 |
+| v4.9.0      | + dependent locality                    |            -20 |        31 |
+| v4.10.0     | share -> 3.1%                           |            -13 |        22 |
+| v4.11.0     | venue-containing, same source and share |            -13 |        18 |
+| v4.12.0     | EWC brake x10                           |            -12 |        19 |
+| v4.14.0     | steps -> 1,000                          |             -6 |        10 |
+| **v4.13.0** | **NULL — no added data at all**         |         **-5** |    **10** |
 
 The null is the best of them. Every arm that adds data is worse than adding none, and the arm that adds
 data most cautiously converges on the null rather than beating it.

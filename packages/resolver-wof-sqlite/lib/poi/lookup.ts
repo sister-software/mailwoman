@@ -37,12 +37,12 @@ import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 export const POI_H3_RESOLUTION = 9
 
 /**
- * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-bearing. Category path only — the brand path
+ * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-case. Category path only — the brand path
  * ignores rings entirely.
  *
  * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary miss for SPARSE categories: the
  * nearest `trail` instance sits at 3.90 km, but the res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its
- * worst bearing — the cell holding that trail isn't covered until ring 13 (maxRings 14). Dense categories are
+ * worst direction — the cell holding that trail isn't covered until ring 13 (maxRings 14). Dense categories are
  * unaffected: the loop breaks the ring it accumulates `limit` rows (cafe@Paris fills 20 by ring 2), so this ceiling
  * never enters their probe budget. Only sparse-but-present categories that never reach `limit` scan the fuller budget —
  * a cold, one-shot `mailwoman poi` path, not per-keystroke. 16 (not the bare threshold 14) leaves ~2 rings of margin so

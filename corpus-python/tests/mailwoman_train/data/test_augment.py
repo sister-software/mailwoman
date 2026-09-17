@@ -482,7 +482,7 @@ def test_punct_drop_fires_via_augment_row():
 # The expansions must never rebuild raw via " ".join(tokens): the join destroys whitespace
 # geometry (newlines, double spaces) and re-quantizing spans to token boundaries absorbs
 # punctuation the v0.5.0 spans deliberately exclude. The canonical probe is a dotted P.O. Box
-# beside a comma-bearing token.
+# beside a comma-containing token.
 
 
 def _dotted_po_box_row() -> dict:

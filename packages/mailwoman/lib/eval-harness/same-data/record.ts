@@ -150,7 +150,7 @@ export interface RecordResult {
 }
 
 /**
- * How far apart two rows bearing the same folded name may sit and still denote one settlement. 5 km is the radius the
+ * How far apart two rows with the same folded name may sit and still denote one settlement. 5 km is the radius the
  * `same-data-resolver-v1` correction re-graded at, where it credited 10 of 100 withheld-gold rows; at 25 km it credits
  * 15, so the figure moves with the radius and the radius is stated wherever the figure is.
  */

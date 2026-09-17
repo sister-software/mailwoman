@@ -333,7 +333,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		})
 	}
 
-	// Chinese name forms (zho + Han-bearing und) and romanized eng variants; canonical spr.name is romanized.
+	// Chinese name forms (zho + Han-containing und) and romanized eng variants; canonical spr.name is romanized.
 	for (const row of admin
 		.prepare(
 			`SELECT n.id, n.name, n.language FROM names n JOIN spr s ON s.id = n.id

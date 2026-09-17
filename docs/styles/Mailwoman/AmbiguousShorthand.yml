@@ -44,7 +44,7 @@
 ##
 ## A BARE `promotion-eval` in running prose does trip this rule:
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
-## remedy is the backticks, not a rename. Renaming a contract-bearing
+## remedy is the backticks, not a rename. Renaming a contract-tied
 ## identifier is a separate, operator-approved change.
 extends: existence
 message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb; backtick it if it is an identifier, path, or command."

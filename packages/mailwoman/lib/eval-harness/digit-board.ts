@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The NO DIGIT-OWNERSHIP BOARD — which tag owns a digit-bearing token (Track B).
+ *   The NO DIGIT-OWNERSHIP BOARD — which tag owns a digit-containing token (Track B).
  *
  *   The third standing board. Board 1 is the global parity floor (`parity-corpus.ts`, broad, "do no
  *   harm"); board 2 is the FR locale fragment board (`fragment-board.ts`, street polarity); this is

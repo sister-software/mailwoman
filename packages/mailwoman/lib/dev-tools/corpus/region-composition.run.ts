@@ -124,7 +124,7 @@ const bySource = new Map<string, SourceComposition>()
  * street share does not separate the regions — 47 of 50 sit between 89% and 99.5% — because it counts a street anywhere
  * in the row rather than in front.
  */
-const streetBearing = new Map<
+const streetShapes = new Map<
 	string,
 	{
 		rows: number
@@ -164,7 +164,7 @@ for (const row of reader.getRowObjects()) {
 	if (code) {
 		entry.byRegion.set(code, (entry.byRegion.get(code) ?? 0) + rows)
 
-		const shape = streetBearing.get(code) ?? {
+		const shape = streetShapes.get(code) ?? {
 			rows: 0,
 			withStreet: 0,
 			bareAdmin: 0,
@@ -194,7 +194,7 @@ for (const row of reader.getRowObjects()) {
 		const opening = row.first_tag == null ? "none" : String(row.first_tag)
 
 		shape.openingTag.set(opening, (shape.openingTag.get(opening) ?? 0) + rows)
-		streetBearing.set(code, shape)
+		streetShapes.set(code, shape)
 	} else {
 		entry.unfolded.set(surface, (entry.unfolded.get(surface) ?? 0) + rows)
 	}
@@ -207,7 +207,7 @@ function regionRows(entry: SourceComposition): number {
 }
 
 /**
- * The share of a source's region-bearing rows held by its largest five regions. A source that writes all 56 codes
+ * The share of a source's region-containing rows held by its largest five regions. A source that writes all 56 codes
  * evenly reads near 5/56; one that writes a corner of the country reads near 1.
  */
 function topFiveShare(entry: SourceComposition): number {
@@ -242,7 +242,7 @@ for (const entry of sources) {
 
 console.log(
 	`\nPooled over every source — ${pooled.size}/${US_STATE_ABBREVIATIONS.length} regions, ` +
-		`${pooledTotal.toLocaleString()} region-bearing US rows\n`
+		`${pooledTotal.toLocaleString()} region-containing US rows\n`
 )
 
 console.log(`| region | rows | share | opens on a locality | bare admin | code-form rows | bare of code-form |`)
@@ -252,7 +252,7 @@ const ranked = [...pooled].toSorted((a, b) => b[1] - a[1])
 const detail = Number(values.detail)
 
 for (const [code, n] of [...ranked.slice(0, detail), ...ranked.slice(-detail)]) {
-	const shape = streetBearing.get(code)
+	const shape = streetShapes.get(code)
 
 	console.log(
 		`| ${code} | ${n.toLocaleString()} | ${formatPercent(n, pooledTotal)} ` +
@@ -274,8 +274,8 @@ if (values["out-json"]) {
 			split: values.split,
 			files: mixture.files.length,
 			pooled: Object.fromEntries(ranked),
-			street_bearing: Object.fromEntries(
-				[...streetBearing].map(([code, shape]) => [
+			street_shapes: Object.fromEntries(
+				[...streetShapes].map(([code, shape]) => [
 					code,
 					{
 						rows: shape.rows,

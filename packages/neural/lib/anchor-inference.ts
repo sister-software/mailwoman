@@ -108,7 +108,7 @@ export function parseAnchorLookup(
  *   keys are all five digits, so this never mattered — no space-containing postcode had a key.
  * - `shaped` — the postcode-SHAPED spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`), keyed the way
  *   `mailwoman_train/tokenizer.py::_paint_anchor_chars` keys them: `span.replace(" ", "").toUpperCase()`. This is the
- *   TRAIN-PARITY mode. Pair it with a lookup that has letter-bearing keys and a model trained on both; on its own
+ *   TRAIN-PARITY mode. Pair it with a lookup that has letter-containing keys and a model trained on both; on its own
  *   against a shipped model it is a no-op, because no shaped GB/NL span will resolve. The shape SCAN runs over an
  *   ASCII-uppercased copy of the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot silently cost
  *   the channel. The KEY is unchanged.

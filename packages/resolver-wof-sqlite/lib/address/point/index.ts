@@ -203,7 +203,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		// either way. On a miss, retry the other spacing; on a double miss, the base number (the
 		// register attests no 3A but does attest 3 — the adjacent-parcel approximation, priced the
 		// same as the range fallback's low end). Null-only throughout, and only for the
-		// digits+single-letter shape (never touches "12 1/2" or unit-bearing forms).
+		// digits+single-letter shape (never touches "12 1/2" or unit-containing forms).
 		if (!row) {
 			const joined = /^(\d+)\s+([a-z])$/.exec(number)
 			const spaced = /^(\d+)([a-z])$/.exec(number)

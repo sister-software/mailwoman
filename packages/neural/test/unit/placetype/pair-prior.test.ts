@@ -545,7 +545,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		// Henbury (the child) is biased dependent_locality — it only resolves once "Macclesfield SK11 9PD" strips to the
 		// bare "macclesfield" parent key.
 		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6)
-		// The parent was probed under the STRIPPED key, never the postcode-bearing fold.
+		// The parent was probed under the STRIPPED key, never the postcode-containing fold.
 		expect(index.calls).toContainEqual(["henbury", "macclesfield"])
 		expect(index.calls.some(([, parent]) => parent.includes("sk11") || parent.includes("9pd"))).toBe(false)
 	})
@@ -616,7 +616,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 
 	it("a country with no known codex shape (au) → no strip, byte-stable: the same-field postcode stays in the parent key and the pair does NOT fire", () => {
 		// AU is 4-digit too, but is deliberately not in SEGMENT_PARENT_POSTCODE_SHAPES — the strip checks on the prior's
-		// own country map, not on whether some shape exists. So "Porirua 5026" keeps its postcode-bearing fold and misses
+		// own country map, not on whether some shape exists. So "Porirua 5026" keeps its postcode-containing fold and misses
 		// the bare "porirua" parent, exactly as pre-#1308.
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "au")
 		const text = "Plimmerton, Porirua 5026"

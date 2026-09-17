@@ -19,8 +19,8 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 /**
  * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the
- * `cz-full-praha-100-00` board row, whose absence from the street-bearing orders was the v4.5.0 no-promote's measured
- * gap.
+ * `cz-full-praha-100-00` board row, whose absence from the street-containing orders was the v4.5.0 no-promote's
+ * measured gap.
  */
 const STREETLESS_ORDER = 3
 
@@ -75,7 +75,7 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			} else {
 				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the
 				// cz-full-praha-100-00 board row. The v4.5.0 no-promote receipt measured the gap: every
-				// prior order was street-bearing, so the model never saw a spaced PSČ beside a bare
+				// prior order was street-containing, so the model never saw a spaced PSČ beside a bare
 				// locality and mangled 'Praha 100 00, Czechia' into house_number spans. Street/number
 				// stay OUT of the components for this form (they are not in the surface).
 				raw = `${city} ${postcodeSurface}, Česko`

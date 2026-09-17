@@ -99,7 +99,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
 	// Japan's 7-digit codes from WOF (142,604 rows; 48,216 carry the 0,0 unlocated sentinel, which the candidate fold
-	// skips by construction). The located 94,388 answer a 町域 centroid: on 637 postcode-bearing JP board rows the
+	// skips by construction). The located 94,388 answer a 町域 centroid: on 637 postcode-containing JP board rows the
 	// centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point, against the 15–19 km municipality centroid
 	// the admin walk otherwise reaches; every located row passes @15 km and 36 of 2,000 that failed on the municipality
 	// pass on the code. The fold arrives with the next candidate rebuild.

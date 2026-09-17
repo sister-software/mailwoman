@@ -81,7 +81,7 @@ export class UNLocodeLookup implements Disposable {
 	}
 
 	/**
-	 * The nearest coordinate-bearing UN/LOCODE within `maxKm`, or null.
+	 * The nearest coordinate-containing UN/LOCODE within `maxKm`, or null.
 	 */
 	nearest(lat: number, lon: number, maxKm = 25): string | null {
 		const dLat = maxKm / 111

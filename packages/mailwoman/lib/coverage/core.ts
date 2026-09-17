@@ -71,7 +71,7 @@ export interface CoverageBuildOptions {
 	 */
 	rollup: number[]
 	/**
-	 * Parent resolution whose data-bearing cells define the fog neighborhood (6 ≈ 3.2 km).
+	 * Parent resolution whose data-containing cells define the fog neighborhood (6 ≈ 3.2 km).
 	 */
 	domainRes: number
 	/**

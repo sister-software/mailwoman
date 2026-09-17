@@ -36,7 +36,7 @@ const FRN_EPSILON = toFRN("0003333333")!
 const FRN_ZETA = toFRN("0004444444")!
 
 /**
- * Row A: a fully-populated 499 filing — FRN present, both company fields present, every attribute-bearing field
+ * Row A: a fully-populated 499 filing — FRN present, both company fields present, every attribute-containing field
  * populated. Row B: an unregistered filer (no FRN — legitimate per decision 3, NOT malformed) with most optional fields
  * blank.
  */

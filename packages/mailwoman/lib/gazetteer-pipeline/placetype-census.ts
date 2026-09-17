@@ -142,7 +142,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 
 /**
  * The projection every census parent is keyed by — a census node describes the children of a PLACE, and the placetypes
- * that host address-bearing children are the locality-class ones.
+ * that host address-containing children are the locality-class ones.
  */
 const PARENT_PLACETYPES = ["locality", "localadmin"] as const
 

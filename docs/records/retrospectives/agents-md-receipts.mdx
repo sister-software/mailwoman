@@ -230,12 +230,12 @@ an earlier comment, and re-deriving them against the files gave:
 | Source                                              | Claimed |  Measured |
 | --------------------------------------------------- | ------: | --------: |
 | `data/eval/external/jp-overture-gold.jsonl`         |  11,946 | **3,982** |
-| …of those, kana-bearing                             |     356 |   **178** |
+| …of those, kana-containing                          |     356 |   **178** |
 | `corpus-python/…/countries/kr-build-reference.json` |      37 |    **20** |
 | `…/gauntlet/cases/cn/organizational-units.jsonl`    |      59 |    **21** |
 
 11,946 is 3,982 × 3 exactly, and 356 is 178 × 2 exactly. The first count had walked `text`, `muni` and
-`pref` as three rows each, and kana appears in two of those three fields on a kana-bearing row. Neither
+`pref` as three rows each, and kana appears in two of those three fields on a kana-containing row. Neither
 number was a typo or a stale file; both were the right file counted at the wrong unit, and the integer
 ratio is what says so.
 

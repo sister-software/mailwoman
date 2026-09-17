@@ -9,7 +9,7 @@
  *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
  *   agreed replacement.
  *
- *   Three remedies, in ascending cost. A CONTRACT-BEARING name keeps its spelling and only needs backticks, because Vale
+ *   Three remedies, in ascending cost. A contract-tied name keeps its spelling and only needs backticks, because Vale
  *   skips inline code. A MODIFIED reference carries the check's real name in the word before it, so `street-context
  *   gate` becomes `the street-context check`. A BARE reference says only "the gate", and which check that is can be
  *   learned solely by reading the surrounding paragraph.
@@ -31,11 +31,11 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Names that keep their spelling — `AGENTS.md` lists them as contract-bearing. A hit naming one of these is a
- * formatting fix, not a rewrite. Empty: every contract-bearing identifier that carried a banned word has been renamed;
- * add a name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * Names that keep their spelling — `AGENTS.md` lists them as contract-tied. A hit naming one of these is a formatting
+ * fix, not a rewrite. Empty: every contract-tied identifier that carried a banned word has been renamed; add a name
+ * here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
-const CONTRACT_BEARING = /(?!)/
+const CONTRACT_TOKEN = /(?!)/
 
 /**
  * The remedy a hit needs.
@@ -165,9 +165,9 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
-		// A contract-bearing name is decided by the WHOLE line, not the modifier: `mailwoman eval
+		// A contract-tied name is decided by the WHOLE line, not the modifier: `mailwoman eval
 		// gate` and `` `promotion-eval.ts` `` put different words immediately before the hit.
-		const remedy = CONTRACT_BEARING.test(source)
+		const remedy = CONTRACT_TOKEN.test(source)
 			? Remedy.backtick
 			: EMPTY_MODIFIERS.has(modifier)
 				? Remedy.readContext

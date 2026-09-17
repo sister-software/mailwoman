@@ -73,7 +73,7 @@ export const HARD_CASE_CLASSES = [
 	 */
 	"comma_free",
 	/**
-	 * The comma-bearing control for a `comma_free` row: same truth, punctuation restored.
+	 * The comma-containing control for a `comma_free` row: same truth, punctuation restored.
 	 */
 	"comma_control",
 	/**

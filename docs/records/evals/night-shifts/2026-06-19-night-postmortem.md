@@ -15,7 +15,7 @@ without operator GO (merge wall)._
 >
 > **Morning wrap (2026-06-19 ~12:53 UTC):** operator GO — the 7 night commits rebased + pushed to
 > main (`00ae8f56`, Test + Docs CI green), and **v1.8.1 launched** (`ap-K2x5hDTbABeEhdaW3i5WUS`,
-> the country-bearing extract that closes fr.country; loss-abort passed). On v1.8.1's completion: check
+> the country-containing extract that closes fr.country; loss-abort passed). On v1.8.1's completion: check
 > (FR centroid + US/FR guardrails) → test → publish the chosen candidate. v1.8.0 stays the fallback.
 
 ## The arc (how we got here)

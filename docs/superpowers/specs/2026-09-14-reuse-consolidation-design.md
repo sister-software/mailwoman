@@ -151,7 +151,7 @@ What generalizes: `sdk/cells.ts`, `sdk/download.ts`, `sdk/measure-resolutions.ts
 `packages/mailwoman/lib/commands/gazetteer/build/*.tsx`.
 
 What must not: each layer's vocabulary, its reading kinds, its scenario scoping, and its coverage semantics. These
-differ by design and the differences are load-bearing — `flood` represents Zone 1 by absence, `coastal` and
+differ by design and the differences are required — `flood` represents Zone 1 by absence, `coastal` and
 `zoning` license no negative claim at all, and `soil` answers a distribution rather than a winner class. A generic
 implementation parameterizes over them; it never averages them.
 

@@ -13,7 +13,7 @@
  *   Japan (name-primary): postcode --KEN_ALL--> municipality NAME (romaji) ; GeoNames --> point ;
  *   match NAME (+ proximity tiebreak) against romanized `spr.name`. -> 94.9% Korea (point-primary):
  *   GeoNames postal file already carries postcode -> (place_name, admin1, lat, lon) in one source.
- *   `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor` + Hangul-bearing
+ *   `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor` + Hangul-containing
  *   `und`) variants. So we resolve by NEAREST locality POINT (always available, sub-km dense) and
  *   use the Hangul name as an authoritative CONFIRMATION signal where it exists.
  *
@@ -110,7 +110,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		grid.add({ pid: id, la: latitude, lo: longitude })
 	}
 
-	// Hangul locality-name index (kor + Hangul-bearing und): bare-stem -> set(ids).
+	// Hangul locality-name index (kor + Hangul-containing und): bare-stem -> set(ids).
 	const nameIdx = new Map<string, Set<number>>()
 
 	for (const lang of ["kor", "und"]) {

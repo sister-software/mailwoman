@@ -89,7 +89,7 @@ function failingTree(): AddressTree {
 }
 
 describe("postcodeCodeSubset", () => {
-	it("extracts digit-bearing tokens", () => {
+	it("extracts digit-containing tokens", () => {
 		expect(postcodeCodeSubset("1382 Kožljek")).toBe("1382")
 		expect(postcodeCodeSubset("SW1A 1AA London")).toBe("SW1A 1AA")
 		expect(postcodeCodeSubset("Kožljek")).toBe("")

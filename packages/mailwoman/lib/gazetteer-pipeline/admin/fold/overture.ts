@@ -76,11 +76,11 @@ const NAME_MAX_LENGTH = 120
  * Whether a `names.common` entry is a NAME. Admission never tests which script writes it.
  *
  * The rule this replaced kept Latin-script entries only, reasoning that the local-script form survives as
- * `names.primary` — which it does, and load-bearingly: Russia keeps Москва because Москва is Overture's primary for
- * Moscow. That premise fails for a country whose primary is ALREADY Latin, where `common` is the only place the local
- * script lives. Measured on the shipped artifact over the fold's own id range: Singapore 0 of 228 names in Han, Sri
- * Lanka 0 of 6,588 in Sinhala, Malaysia 6 of 9,111 in Jawi — against Russia's 159,478 Cyrillic and Myanmar's 54,835,
- * which the old rule never touched.
+ * `names.primary` — which it does, and required: Russia keeps Москва because Москва is Overture's primary for Moscow.
+ * That premise fails for a country whose primary is ALREADY Latin, where `common` is the only place the local script
+ * lives. Measured on the shipped artifact over the fold's own id range: Singapore 0 of 228 names in Han, Sri Lanka 0 of
+ * 6,588 in Sinhala, Malaysia 6 of 9,111 in Jawi — against Russia's 159,478 Cyrillic and Myanmar's 54,835, which the old
+ * rule never touched.
  *
  * Constructed languages are the tell. Singapore's surviving names include Volapük, Lojban and Esperanto, all written in
  * Latin, and no Chinese. Script is not a proxy for whether anyone types a name.

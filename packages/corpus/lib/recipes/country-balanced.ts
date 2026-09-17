@@ -181,7 +181,7 @@ function pickCountry(random: () => number): string | null {
 	return sample(pool, random)
 }
 
-// Country-bearing rows: 80% full, 12% full-nl, 8% bare.
+// country-containing rows: 80% full, 12% full-nl, 8% bare.
 const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 

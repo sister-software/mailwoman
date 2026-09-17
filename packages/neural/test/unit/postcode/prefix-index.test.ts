@@ -77,7 +77,7 @@ describe("PFX1 postcode-prefix index", () => {
 		expect(bt9.ancestors.map((a) => a.name)).toEqual(["United Kingdom", "Northern Ireland"])
 	})
 
-	it("sums unitCount across every node, coordinate-bearing or not", () => {
+	it("sums unitCount across every node, coordinate-containing or not", () => {
 		const resolver = new PostcodePrefixIndexResolver(serializePostcodePrefixIndex(header, nodes))
 		const total = [...resolver.nodes()].reduce((sum, node) => sum + node.unitCount, 0)
 
@@ -237,7 +237,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 
 	it("the ancestry-only tier survives as ABSENCE, never as a 0,0 sentinel", () => {
 		// A magnitude never carries its own absence: BT9's coordinate-less record must be shorter than
-		// a coordinate-bearing one by exactly the 4 + 4 bytes the two optional fields occupy.
+		// a coordinate-containing one by exactly the 4 + 4 bytes the two optional fields occupy.
 		const withCoordinate = serializePostcodePrefixIndex(header, [
 			{ prefix: "AA1", ancestors: [uk], lat: 51, lon: 0, radiusP95Km: 1, unitCount: 1 },
 		])
