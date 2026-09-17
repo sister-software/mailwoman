@@ -26,7 +26,7 @@ This basically comprehensive paragraph inside the details block should also be i
 
 This design is obviously, basically, and clearly a robust and comprehensive rewrite.
 
-This module is load-bearing and it's not just a convenience wrapper; it is the north star.
+This module is load bearing and it's not just a convenience wrapper; it is the north star.
 
 The controls are real and worth preserving.
 

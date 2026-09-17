@@ -51,7 +51,7 @@ Browser-embedded geocoder clients call this cross-origin, so the server sends pe
 ## Annotations
 
 Every result carries an OpenCage-style `annotations` block — coordinate formats (DMS, MGRS, geohash,
-Maidenhead, Mercator), qibla bearing, sun times, country flag, calling code, and currency, plus the IANA
+Maidenhead, Mercator), qibla direction, sun times, country flag, calling code, and currency, plus the IANA
 timezone, UN/LOCODE, and EU NUTS codes when their data bundles are present. Plain Nominatim returns none
 of these.
 

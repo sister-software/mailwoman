@@ -276,7 +276,7 @@ curl -s "http://127.0.0.1:8088/search?q=10+Downing+Street,+London+SW1A+2AA&addre
 ```
 
 The `annotations` block is an addition, in OpenCage's shape. Everything derived from the coordinate
-alone is always there — the formats, the qibla bearing, the sun times. Three more, `flag`, `currency`
+alone is always there — the formats, the qibla direction, the sun times. Three more, `flag`, `currency`
 and `callingcode`, need a country in the resolved hierarchy, which this result has not got and
 `?q=Berlin,+Germany` has. The IANA timezone, UN/LOCODE and EU NUTS codes join them when those lookup
 databases are present in the data root. A Nominatim client that ignores unknown keys will not notice
