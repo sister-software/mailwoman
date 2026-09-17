@@ -26,14 +26,27 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 
+/**
+ * The coarsest and finest H3 resolutions the library defines. A cell index outside 0–15 is not a
+ * resolution the H3 bindings can address, so this bound is the format's, not a tuning choice.
+ */
+const MAX_H3_RESOLUTION = 15
+
+/**
+ * The deepest zoom a tile pyramid addresses. Tippecanoe and the Web Mercator tile scheme both stop at
+ * 22, so a higher value names a tile no renderer will request.
+ */
+const MAX_TILE_ZOOM = 22
+
 const h3 = (description: string, defaultValue: number) =>
 	({
 		type: "number",
 		default: defaultValue,
-		validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= 15,
-		validationMessage: `${description} must be an integer from 0 to 15.`,
+		validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= MAX_H3_RESOLUTION,
+		validationMessage: `${description} must be an integer from 0 to ${MAX_H3_RESOLUTION}.`,
 		description,
 	}) as const
+
 const unit = (description: string, defaultValue: number) =>
 	({
 		type: "number",
@@ -42,6 +55,13 @@ const unit = (description: string, defaultValue: number) =>
 		validationMessage: `${description} must be between 0 and 1.`,
 		description,
 	}) as const
+
+/**
+ * The command-line contract the filesystem command router reads for `mailwoman coverage build`.
+ *
+ * Its option names and descriptions are the source the CLI reference page is generated from, so a
+ * rename here moves `docs/articles/developers/reference/cli.mdx` and the docs check refuses the drift.
+ */
 export const spec = {
 	name: "build",
 	description: "Build address-coverage PMTiles.",
@@ -83,7 +103,7 @@ export const spec = {
 		"max-zoom": {
 			type: "number",
 			default: 12,
-			validate: (value) => Number.isInteger(value) && value >= 0 && value <= 22,
+			validate: (value) => Number.isInteger(value) && value >= 0 && value <= MAX_TILE_ZOOM,
 			description: "Max zoom",
 		},
 		out: {
@@ -103,6 +123,7 @@ export const spec = {
 
 const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
+
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("#coverage/core")
 

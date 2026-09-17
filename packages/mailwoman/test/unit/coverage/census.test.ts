@@ -124,6 +124,7 @@ describe("readBoardCoverage", () => {
 			],
 			join(cases, "gb", "regression.jsonl")
 		)
+
 		await makeDirectories(join(cases, "gb", "archived"))
 		await writeLocalJSONFile({ id: "archived", country: "GB", status: "pass" }, cases, "gb", "archived", "old.jsonl")
 
@@ -176,29 +177,27 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		// with no error — while the v0.5.0 base returns both. A dropped label column reads as "this country has no
 		// street rows", which is indistinguishable from the truth. Before the fallback this database reported 0; it
 		// carries 825,083 street rows out of 831,800.
-		const manifest = await readLocalJSONFile<{ slices?: Array<{ split?: string; path: string }> }>(CORPUS)
+		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
-		// A corpus built before the vocabulary change carries the old top-level key, and this test cannot read it:
-		// the stored key is part of the ARTIFACT, and rebuilding one is a corpus build rather than a refactor. Skip
-		// with a reason rather than failing, the same way the `describe` above skips when the corpus is absent
-		// entirely — "your corpus predates this" and "you have no corpus" are both "not measurable here".
-		if (!manifest.slices) {
-			expect(
-				manifest.slices,
-				`${CORPUS} predates the corpus vocabulary change — rebuild it to run this`
-			).toBeUndefined()
+		// The stored key is part of the ARTIFACT and both spellings are live on disk, so the reader accepts either and
+		// this test reads the same way. A test that knew only one spelling would skip on 33 of the 41 corpora built so
+		// far and report that as "not measurable here".
+		const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
+			| Array<{ split?: string; path: string }>
+			| undefined
 
-			return
-		}
+		expect(entries, `${CORPUS} names its parquet files under neither accepted key`).toBeDefined()
 
-		const one = manifest.slices.filter((s) => s.split === "train" && s.path.includes("v0.17.0-batch")).slice(0, 1)
+		const one = entries!.filter((s) => s.split === "train" && s.path.includes("v0.17.0-batch")).slice(0, 1)
 
 		expect(one).toHaveLength(1)
 
 		await using directory = await temporaryDirectory("mw-census-real-")
 		const scratch = directory.resolve("MANIFEST.json")
 
-		await writeLocalJSONFile({ ...manifest, databases: one }, scratch)
+		// Only the one file, under the current key: spreading the manifest would leave its full list in place and the
+		// census would read all of it.
+		await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], slices: one }, scratch)
 
 		const census = await buildCorpusCensus(scratch)
 

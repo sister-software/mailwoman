@@ -70,7 +70,14 @@ const config = createOxlintConfig({
 		],
 	},
 	ignorePatterns: [
-		...DefaultIgnorePatterns,
+		// `**/coverage` is dropped and re-added anchored, for the reason `.gitignore` records at its own
+		// coverage entry: bare, it matches a directory of that name at any depth, and this repository has four
+		// that are source — `mailwoman/lib/coverage/`, `mailwoman/lib/commands/coverage/`,
+		// `mailwoman/test/unit/coverage/` and `cartographer/lib/coverage/`. Those files were never linted, and
+		// because the pre-commit hook hands oxlint the staged paths and oxlint errors when a path list resolves
+		// to nothing, staging one of them refused the commit outright.
+		...DefaultIgnorePatterns.filter((pattern) => pattern !== "**/coverage"),
+		"/coverage/",
 		".pi",
 		"**/scratchpad",
 		"docs/build",
