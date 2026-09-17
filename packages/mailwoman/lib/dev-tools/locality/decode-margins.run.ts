@@ -20,15 +20,14 @@
  *   nothing here claims one.
  *
  *   `--by` chooses what the rows are grouped into, which is what lets #2308's word effect and #2311's region effect be
- *   read in the same units on the same panel. `region-suffix` is the crossed one: within each region, the rows whose
- *   locality ends in a USPS suffix word beside the rows that do not. Two effects reported as pass rates cannot be
- *   compared; two margins in logits can be added.
+ *   read in the same units on the same panel. `region-shape` is the crossed one: within each region, the three name
+ *   shapes side by side. Two effects reported as pass rates cannot be compared; two margins in logits can be added.
  *
  *   Run:
  *
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --weights-cache <dir>
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --regions AR --swap-postcode 05842
- *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --by region-suffix --per-group 20
+ *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --by region-shape --per-group 8
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -47,8 +46,8 @@ const { values } = parseArguments({
 		 */
 		regions: { type: "string" },
 		/**
-		 * What the rows are grouped into: `region`, `tail` (the locality's USPS-suffix last word), `suffix` (whether it has
-		 * one at all), or `region-suffix` (both, which is the crossed read).
+		 * What the rows are grouped into: `region`, `tail` (the locality's USPS-suffix last word), `shape` (suffix tail,
+		 * multi-word, or single word), or `region-shape` (both, which is the crossed read).
 		 */
 		by: { type: "string", default: "region" },
 		/**
@@ -73,11 +72,24 @@ const asked = values.regions?.split(",").map((code) => code.trim().toUpperCase()
 const perGroup = Number(values["per-group"] ?? values["per-region"])
 
 /**
+ * The three name shapes #2308 splits on, in the order its buckets report them.
+ *
+ * `multi-word` is the control a suffix tail needs, and `(plain)` is not: 3,709 of this panel's 4,803 places are a
+ * single word against 577 multi-word and 517 suffix-tailed, so a suffix-versus-everything-else contrast is mostly a
+ * contrast between one word and two. Word count moves the rate on its own — #2308 measured single-word names at 79.7%
+ * against other multi-word at 59.7% — so it has to be held rather than pooled.
+ */
+function shapeOf(locality: string): string {
+	if (suffixTail(locality)) return "suffix tail"
+
+	return locality.trim().split(/\s+/).length > 1 ? "multi-word" : "single word"
+}
+
+/**
  * The grouping axes, each a function from a panel place to the group it counts in.
  *
- * `suffix` is the boolean form of `tail`, and both name the word by its own spelling rather than "yes"/"no": a table
- * row reading `-park` says which word carried it, and one reading `(plain)` says the locality ends in no suffix word at
- * all. The `-` prefix keeps the two apart when `region-suffix` joins them.
+ * `tail` names the word by its own spelling — a table row reading `-park` says which word carried it — and the `-`
+ * prefix keeps a word apart from a shape when a region key is joined to it.
  */
 const GROUPERS = {
 	region: (place: (typeof localities)[number]) => place.region,
@@ -86,9 +98,8 @@ const GROUPERS = {
 
 		return tail ? `-${tail}` : "(plain)"
 	},
-	suffix: (place: (typeof localities)[number]) => (suffixTail(place.locality) ? "suffix tail" : "(plain)"),
-	"region-suffix": (place: (typeof localities)[number]) =>
-		`${place.region} ${suffixTail(place.locality) ? "suffix tail" : "(plain)"}`,
+	shape: (place: (typeof localities)[number]) => shapeOf(place.locality),
+	"region-shape": (place: (typeof localities)[number]) => `${place.region} ${shapeOf(place.locality)}`,
 } as const
 
 type GroupAxis = keyof typeof GROUPERS
