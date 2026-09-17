@@ -16,6 +16,7 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { stripParentheticalQualifier } from "#eval-harness/oa/locality-qualifier"
 import type { Resolved } from "#eval-harness/oa/resolver/tree-hits"
 import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
@@ -196,6 +197,19 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 		if (!e) return false
 
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
+		// Gold carries the source's own parenthetical delivery marker (`Manilla (Rural)`), which normalizes to a bare
+		// trailing word and so reaches the ancestry near-miss below, where no county is ever named `Rural`. Compared
+		// after the raw surfaces because a gazetteer name can carry a parenthetical too — see `../locality-qualifier.ts`.
+		const withoutQualifier = normName(stripParentheticalQualifier(expected))
+
+		if (
+			withoutQualifier &&
+			withoutQualifier !== e &&
+			(normName(locNode.name) === withoutQualifier || altNamesFor(locNode.id).has(withoutQualifier))
+		) {
+			return true
+		}
+
 		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when every trailing qualifier is an
 		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
 		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.

@@ -11,6 +11,8 @@ import { US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { stripParentheticalQualifier } from "#eval-harness/oa/locality-qualifier"
+
 /**
  * One row of a coordinate eval set, as the files on disk write it.
  */
@@ -56,16 +58,6 @@ export interface CoordPanel {
 }
 
 /**
- * A trailing postal qualifier in parentheses, which an expected string sometimes carries and no locality name ever
- * does: `Manilla (Rural)` is the town of Manilla reached on a rural route.
- *
- * Grading against the raw expectation marks a correct answer wrong — the model answers `Manilla`, which is the place —
- * and a gold lookup keyed on the name finds nothing either. The strip applies to the EXPECTATION only, never to what
- * the run answered.
- */
-const PARENTHETICAL_QUALIFIER = /\s*\([^)]*\)\s*$/
-
-/**
  * Read a coordinate eval set into one row per place.
  *
  * Keyed by country, region and name: 30 US states hold a Springfield, and a name-only key collapses them into one row
@@ -83,7 +75,7 @@ export async function readCoordPanel(
 		const raw = row.expected?.locality?.trim()
 		const region = row.expected?.region?.trim()
 		const postcode = row.expected?.postcode?.trim()
-		const locality = raw?.replace(PARENTHETICAL_QUALIFIER, "").trim() || raw
+		const locality = raw ? stripParentheticalQualifier(raw) : raw
 
 		if (raw && locality !== raw) {
 			qualifiersStripped++
