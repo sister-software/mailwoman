@@ -288,7 +288,7 @@ export function probeVenueNearAnchor(
  *    poi.db-visible venue, 15 of them tracked failures; measured effect at first light: 7 of 57 rows upgrade
  *    admin→venue, all within 0.14 km of their anchors. Never fires over an address_point/interpolated answer — a
  *    street+number that resolved rooftop IS the venue's address — and the flag stays opt-in until a full-board battery
- *    earns the D-rule promotion.
+ *    warrants the D-rule promotion.
  */
 export function applyEntityTiers(
 	result: ForkEntityAnswerTarget & {

@@ -107,10 +107,10 @@ const overlay = await materializeDevOverlay({
 // card the loader reads decides.
 //
 // Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-OFF mitigation)
-// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it back).
+// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
 
 /**
- * Where the GB anchor binary lives when the card earns it.
+ * Where the GB anchor binary lives when the card warrants it.
  */
 const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
 

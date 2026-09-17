@@ -109,8 +109,8 @@ for (const board of await loadRegressionCases()) {
 }
 
 /**
- * What a rule costs and buys over the rows it newly routes: a row whose character-model agreement is higher is a gain,
- * lower is a regression, equal is neither.
+ * What a rule costs and provides over the rows it newly routes: a row whose character-model agreement is higher is a
+ * gain, lower is a regression, equal is neither.
  */
 function verdict(newlyRouted: ArmRow[]): { gained: number; regressed: number; unchanged: number } {
 	let gained = 0

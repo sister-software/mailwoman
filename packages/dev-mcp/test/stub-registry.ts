@@ -80,8 +80,8 @@ export interface StubEngineOverrides {
 	 *
 	 * `unknown` rather than `Partial<GeocodeSession>`: a partial checks each member it DOES carry against the real
 	 * signature, and every case here returns a trimmed geocode result on purpose, so the partial rejects them all. One
-	 * documented assertion in one place is what this file buys — the eight it replaces each asserted the whole registry,
-	 * so a renamed registry method went unnoticed in all of them.
+	 * documented assertion in one place is what this file provides — the eight it replaces each asserted the whole
+	 * registry, so a renamed registry method went unnoticed in all of them.
 	 */
 	session: unknown
 	engineID?: string

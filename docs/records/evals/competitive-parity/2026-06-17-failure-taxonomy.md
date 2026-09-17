@@ -16,7 +16,7 @@ carry their eval's date so staleness is visible.
 - **fixed** — a shipped change moved the number and an eval confirms it.
 - **open** — measured, unfixed, no committed fix.
 - **deferred** — measured, a fix exists or was tried, and we consciously did not ship it (with a reason).
-- **rejected** — a fix was built and the eval said it didn't earn its place.
+- **rejected** — a fix was built and the eval said it didn't warrant its place.
 
 The most important column is **change / root cause**: it's what turns a number into a next step.
 
@@ -49,13 +49,13 @@ not another loss-mask or weight bump.
 
 ## 3. Format failures (po_box, intersection, unit, delimiters)
 
-| class                             | measured                                                 | engine | status       | change / root cause                                                                                               | source                         |
-| --------------------------------- | -------------------------------------------------------- | ------ | ------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| po_box (dotted leader)            | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                     | 2026-06-11-v4.4.0-ship-check   |
-| intersection (real TIGER extract) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real extract beats synthetic templates                                                                          | 2026-06-11-v4.4.0-ship-check   |
-| po_box / unit vs v0               | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the negative-space win                                                            | 2026-06-17-per-type-headtohead |
-| cedex (FR real)                   | 96% (v4.4.0)                                             | neural | fixed        | deterministic regex path moved into the model                                                                     | 2026-06-11-v4.4.0-ship-check   |
-| paired-delimiter span proposer    | −3.9pp vs 77% baseline                                   | neural | rejected     | the Stage 2.7 proposer's annotation bias has the wrong sign (merges where it should strip) — did not earn revival | 2026-06-14-punctuation-stress  |
+| class                             | measured                                                 | engine | status       | change / root cause                                                                                                  | source                         |
+| --------------------------------- | -------------------------------------------------------- | ------ | ------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| po_box (dotted leader)            | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                        | 2026-06-11-v4.4.0-ship-check   |
+| intersection (real TIGER extract) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real extract beats synthetic templates                                                                             | 2026-06-11-v4.4.0-ship-check   |
+| po_box / unit vs v0               | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the negative-space win                                                               | 2026-06-17-per-type-headtohead |
+| cedex (FR real)                   | 96% (v4.4.0)                                             | neural | fixed        | deterministic regex path moved into the model                                                                        | 2026-06-11-v4.4.0-ship-check   |
+| paired-delimiter span proposer    | −3.9pp vs 77% baseline                                   | neural | rejected     | the Stage 2.7 proposer's annotation bias has the wrong sign (merges where it should strip) — did not warrant revival | 2026-06-14-punctuation-stress  |
 
 This is Mailwoman's strongest quadrant: the structured types (po_box, unit, intersection, cedex) are
 either fixed or a rout against the rules engine. The one rejected fix (paired-delimiter proposer) is a
@@ -116,6 +116,6 @@ gap.
 1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
 2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem, not a model one (§4).
 3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
-4. **The eval check earns its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).
+4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).
 
 _Sources: all rows cite a dated eval under `docs/articles/evals/`. Re-run the named eval to refresh._

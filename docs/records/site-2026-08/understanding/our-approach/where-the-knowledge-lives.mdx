@@ -51,7 +51,7 @@ heavy.
 
 **LLM-era parsers put everything in parameters.** Systems in the AddrKG-LLM direction hand the
 task to a large generative model, sometimes coupled to a knowledge graph. The model _is_ the
-grammar, the dictionary, and a lossy copy of the atlas all at once. That buys flexibility and
+grammar, the dictionary, and a lossy copy of the atlas all at once. That provides flexibility and
 costs everything else: billions of parameters, GPU serving, no character-offset guarantees for
 the labels it emits, and confidence you can't calibrate. When it doesn't know a place, it can
 invent one — a failure mode the other architectures structurally cannot have.
@@ -71,7 +71,7 @@ known locality surface, with this ambiguity class" — and learned during traini
 trust that evidence against context. Memorization was deliberately kept _out_ of the parameters
 and moved into files you can read, diff, replace, and license independently.
 
-## What the factoring buys
+## What the factoring provides
 
 **Deployability.** The parser plus its runtime data fits in a browser tab — the
 [demo](https://mailwoman.ai/demo/) downloads the real model and runs it locally.

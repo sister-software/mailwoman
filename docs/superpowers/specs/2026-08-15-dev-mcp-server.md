@@ -235,7 +235,7 @@ the measurement: on a shared multi-GB WOF SQLite, throughput peaked at **2 worke
 _degraded_ from there — 4 workers ≈ baseline, 6 ≈ no gain, because memory bandwidth and the shared DB
 are the ceiling, not core count. The supervisor therefore defaults to a small concurrency budget and
 serializes within an engine. `session.run()` in `onnxruntime-node` blocks the thread it is on, so
-in-worker parallelism buys nothing.
+in-worker parallelism adds nothing.
 
 ### 3.2 The engine registry
 
@@ -1011,7 +1011,7 @@ These need a decision from the operator; each is a real fork, not a detail.
    is reported by `mwdev_runs`, which exists because inferring "pruned" from a failed recorded arm is the
    guessing this surface exists to remove.
 
-9. **Does `mwdev_compare` earn the right to write a board case?** The natural end of an investigation is
+9. **Does `mwdev_compare` warrant the right to write a board case?** The natural end of an investigation is
    "this row now resolves correctly — pin it." That is a repo write, and it is the single highest-value
    thing the surface could do next. It is also the thing most likely to grow the corpus by capture
    rather than by judgment, which `gauntlet/schema.ts:6-11` warns about by name ("the Pelias acceptance-

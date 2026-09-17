@@ -6,7 +6,7 @@
 
 ## Decisions (operator-confirmed 2026-07-09)
 
-1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, AND the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path buys nothing).
+1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, AND the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path adds nothing).
 2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/` (Pastel file-routing requires they live there).
 3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDB` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
 4. **Lookup bins (timezone/nuts/un-locode):** stay lean `parseArgs` — the sanctioned exception (consumer-facing micro-packages; ink+react+zod+commander dep weight is hostile there). Documented below as policy.

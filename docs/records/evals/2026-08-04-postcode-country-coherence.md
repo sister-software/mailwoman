@@ -99,7 +99,7 @@ $ node mailwoman/out/cli.js geocode "12 Rue de Rivoli, 75001 Paris" --postcode-c
 ```
 
 The second is the BAN rooftop for 12 Rue de Rivoli, to the metre — byte-identical to the
-`--default-country none` receipt the diagnosis recorded, which is the point: the override buys back
+`--default-country none` receipt the diagnosis recorded, which is the point: the override recovers
 exactly what removing the default bought, without removing the default.
 
 On `parse --resolve` against the candidate gazetteer with the country pinned, the same two nodes move:

@@ -192,7 +192,7 @@ export function renderDecisionTable(verdict: BenchmarkVerdict): string[] {
 }
 
 /**
- * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding buys on the
+ * One arm's abstention-threshold curve, with both sides of the trade in the same row: what withholding provides on the
  * withheld-gold rows and what it costs on the rows that hold a gold.
  */
 export function renderThresholdCurve(arm: string, curve: readonly ThresholdPoint[]): string[] {

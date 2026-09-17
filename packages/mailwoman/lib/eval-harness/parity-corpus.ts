@@ -205,7 +205,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
 		// (which fixed this same divergence for the drop-in servers). Without it this check graded a
 		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
-		// `street, city` class is byte-stable; it earns its keep on the digit-span / region-abbrev rows.
+		// `street, city` class is byte-stable; it warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,

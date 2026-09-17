@@ -172,7 +172,7 @@ export const IssuedLicense: React.FC<{ sessionID: string | null }> = ({ sessionI
 	if (!sessionID) {
 		return (
 			<p>
-				This page is where Stripe sends you after payment. To buy a license, start at{" "}
+				This page is where Stripe sends you after payment. To provide a license, start at{" "}
 				<a href="/license">the license page</a>.
 			</p>
 		)

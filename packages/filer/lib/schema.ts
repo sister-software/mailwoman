@@ -383,7 +383,7 @@ export interface FilerDatabase {
 }
 
 /**
- * Create `filer_node`. Plain rowid table — see the file header for why a single-column TEXT PK doesn't earn `WITHOUT
+ * Create `filer_node`. Plain rowid table — see the file header for why a single-column TEXT PK doesn't warrant `WITHOUT
  * ROWID` here (no second column to cluster in alongside it).
  */
 export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<void> {

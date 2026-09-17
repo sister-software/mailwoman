@@ -47,7 +47,7 @@ documented as a tuning knob, and it had never done anything. Setting it to 1 and
 same throughput to three digits. `POST /v1/batch` is a sequential loop now, which is what it had been
 in practice all along.
 
-The same change works in Python, where `intra_op=1` plus 16 threads buys 1.64x, because Python's ORT
+The same change works in Python, where `intra_op=1` plus 16 threads provides 1.64x, because Python's ORT
 releases the GIL during a run. That conclusion doesn't port. The binding is what differs.
 
 ## Batching does not pay

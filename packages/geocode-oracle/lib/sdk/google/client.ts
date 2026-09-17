@@ -100,7 +100,7 @@ const MS_PER_MINUTE = 60_000
  * drift — Google's Place IDs, which its own documentation warns to treat as stale after a few days — is carried on the
  * result for provenance and is not what any assertion is pinned to.
  *
- * Not permanent, either. `sec-client.ts` earns a century-long TTL because a filed SEC document is immutable by law;
+ * Not permanent, either. `sec-client.ts` warrants a century-long TTL because a filed SEC document is immutable by law;
  * nothing here is. Thirty days bounds how long a re-authored case can disagree with a fresh geocode without anyone
  * noticing, and deleting the cache directory is always the override.
  */
@@ -267,7 +267,7 @@ type GeocodeParams = Record<string, string>
 /**
  * Build the cache key for one request, with the API key REMOVED.
  *
- * Two things this buys, in order of how much they matter:
+ * Two things this provides, in order of how much they matter:
  *
  * 1. **The cache survives key rotation.** The key is an instance-level Axios `params` default, so the interceptor's stock
  *    key generator would fold it in and a rotated key would silently orphan every entry — on an API where a miss is a

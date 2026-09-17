@@ -87,7 +87,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **#590 — punctuation-stress eval verdict (closes the measurement half of #518).** Ran the 200-row
   paired-delimiter / punctuation-stress dataset (already on `main`) across v0, neural, and neural +
   span-proposer at three bias settings. **Verdict: the Stage 2.7 paired-delimiter span proposer doesn't
-  earn its revival** — no-op at default, −0.7pp gentle, **−3.9pp** strong (a strong annotation bias
+  warrant its revival** — no-op at default, −0.7pp gentle, **−3.9pp** strong (a strong annotation bias
   _merges_ the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
   v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural

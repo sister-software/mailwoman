@@ -240,7 +240,7 @@ function refusalFor(verification: LicenseKeyVerification): string | undefined {
 		case "valid":
 			return undefined
 		case "expired":
-			return `this token expired on ${verification.payload.expires}; refresh it or buy again.`
+			return `this token expired on ${verification.payload.expires}; refresh it or purchase again.`
 		case "unknown_key":
 			return `this release does not trust key id ${verification.kid}; upgrade mailwoman to a release that lists it, then try again.`
 		default:

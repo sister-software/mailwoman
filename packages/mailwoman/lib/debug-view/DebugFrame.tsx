@@ -414,7 +414,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 /**
  * Takes the four fields it reads rather than the whole {@link DebugData} bag, for the same reason {@link MapPane} does:
  * `data` gets a new identity on every rendered map frame, and a pane that re-renders on someone else's pan is a `memo`
- * that buys nothing.
+ * that adds nothing.
  */
 const OutputPane = memo(function OutputPane(props: {
 	result: GeocodeResult
@@ -476,8 +476,8 @@ const OutputPane = memo(function OutputPane(props: {
  * The expensive pane, and the one that depends on nothing the input row changes — so it takes the fields it reads
  * rather than the shared {@link DebugData} bag, which is what lets `memo` see stable props across a keystroke.
  *
- * Know what this buys and what it does not. It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms of
- * the 12.9 ms keystroke against React's DEVELOPMENT build, and inside the noise floor against its production build
+ * Know what this provides and what it does not. It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms
+ * of the 12.9 ms keystroke against React's DEVELOPMENT build, and inside the noise floor against its production build
  * (measured 2026-08-13, 120×36, six interleaved pairs each). It cannot touch the dominant cost, because Ink's
  * `render-node-to-output` walks the whole yoga tree and re-serializes it every frame no matter which subtrees React
  * skipped — that is what `incrementalRendering` is for, and the two are complementary rather than redundant.

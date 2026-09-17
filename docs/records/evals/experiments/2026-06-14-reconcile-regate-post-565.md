@@ -3,7 +3,7 @@
 _2026-06-14. We retired joint-reconcile to argmax (#566) after an audit found it broke the
 street + house-number geocode precondition on 77–84% of clean US addresses. The root cause — the
 phrase grouper bundling the house number into the street phrase — was then fixed (#565). This report
-answers the obvious follow-up: now that the destructive mechanism is gone, does reconcile earn its way
+answers the obvious follow-up: now that the destructive mechanism is gone, does reconcile warrant its way
 back as the default (or at least FR-scoped, the locale #427 claimed it helped)? Graded on the assembled
 pipeline in both modes, the answer is no. #565 repaired the structural break, but reconcile is still
 strictly worse than argmax on tag values — worst on the exact locale it was supposed to help. Argmax

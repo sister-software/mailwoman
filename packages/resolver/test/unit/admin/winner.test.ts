@@ -42,7 +42,7 @@ const US_ZIP = { value: "62701", resolverName: "62701" }
  */
 const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
 /**
- * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose SYSTEM earns the lead.
+ * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose SYSTEM warrants the lead.
  */
 const DE_PLZ = { value: "12623", resolverName: "12623" }
 

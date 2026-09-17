@@ -72,7 +72,7 @@ Ltd`) — they are BUILT from real place names, so a place-pair index matches fr
   floods false positives. The confound is the mechanism's shadow, not an edge case.
 - The related **healthy-tag reassignment** hypothesis (re-tagging namesakes) was also FALSIFIED:
   the parse was never wrong there (189/189 region tagging held). A prior that fires where the model
-  is already right buys nothing and risks regressions.
+  is already right adds nothing and risks regressions.
 
 The dividing line: a pair index biases a span the model _reads as one place_. If the target span is
 routinely embedded inside a longer generative name, you are on the open-vocab side of the wall and
@@ -183,7 +183,7 @@ Two structural findings worth internalizing before you design a new country's ge
   pseudo-segment → no pair). The boundary source **must be non-model** (textual anchors). See the
   brainstorm-response Q1 verdict.
 - **The model's weak heads can't be a veto signal.** v385's venue head is itself starved on GB
-  (measured inert, 0/20 candidate positions), so "veto where the model reads venue" buys nothing.
+  (measured inert, 0/20 candidate positions), so "veto where the model reads venue" adds nothing.
   The child-side _street_ veto (fail-open) survives only as a contingency for the residual
   street-verbatim-child class, switched on only by a pre-registered FP>5% trigger.
 

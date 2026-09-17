@@ -98,7 +98,7 @@ Three absences, each stated so that nobody later reads it as a null result.
   (§5.5's first bound), and no traffic census exists anywhere in the repository. How often a real
   caller types an activity-phrased POI query is **unknown**, not zero.
 - **Recognition breadth.** Ten phrases, four of them registered, six never graded against anything.
-  §11's positive control shows two of the six ungraded phrasings — "buy medicine" and "collect a
+  §11's positive control shows two of the six ungraded phrasings — "purchase medicine" and "collect a
   prescription" — firing and claiming a subject. Breadth is untested by design, which is #1962's
   scope.
 - **The 3/4 ceiling is structural.** `sem-act-fr-01` is unreachable by this route without changing
@@ -365,7 +365,7 @@ that can be waived; it is the reason the default posture is what it is.
 
 **While opt-in.** Rollback is removing the argument at the one call site. A consumer who never
 passed `poiSemanticLookup` is unaffected by any of this program's work, which is the property the
-posture buys. No republish is required of anyone.
+posture provides. No republish is required of anyone.
 
 **After a hypothetical default change.** The suppression must exist before the change, not after —
 `poiSemanticLookup: false`, added in the same commit, with its own test (§4.2). A default change
@@ -550,7 +550,7 @@ same zero as a real absence:
 "where can i pick up a prescription near Denver CO"  (no subject) → where can i pick up a prescription → pharmacy
 "prescription near Denver CO"                        (no subject) → prescription → pharmacy
 "i need my prescription refilled near Tijuana"       (no subject) → i need my prescription refilled → pharmacy
-"buy medicine near Chicago IL"                       (no subject) → buy medicine → pharmacy
+"purchase medicine near Chicago IL"                      (no subject) → purchase medicine → pharmacy
 "collect a prescription near London"                 (no subject) → collect a prescription → pharmacy
 ```
 

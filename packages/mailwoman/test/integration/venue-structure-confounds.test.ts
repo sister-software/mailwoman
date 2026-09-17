@@ -7,7 +7,7 @@
  *
  *   `venueStructureBiasScale` pushes venue-INTERIOR designators ("concourse", "terminal", "gate",
  *   "wing", …) toward `unit` harder than the postal designators they share a vocabulary with. The
- *   risk that buys is false units on surfaces where one of those words appears WITHOUT being a
+ *   risk that provides is false units on surfaces where one of those words appears WITHOUT being a
  *   designator: the GB `-gate` street names, "Gate House" venues, "Terminal" industrial estates,
  *   "Wing" as a personal or business name, and designators used as street names.
  *

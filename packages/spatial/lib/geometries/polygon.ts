@@ -128,7 +128,7 @@ export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean 
  * Deliberately looser than {@link LineStringPath} — the ray cast only ever indexes `[0]` and `[1]`, and the callers
  * arrive with different position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader, plain
  * `number[][]` from a `JSON.parse` of a stored geometry column). A tight tuple type here would force a cast at every
- * call site and buy nothing the predicate uses.
+ * call site and add nothing the predicate uses.
  */
 export type ContainmentRing = readonly (readonly number[])[]
 

@@ -44,7 +44,7 @@
  *
  *   This is the API-request side of `AGENTS.md`'s split: small JSON bodies, several calls per run, and
  *   a host that publishes a rate policy and enforces it with 429s. Pacing, bounded `Retry-After`-aware
- *   retry, response caching and `ResourceError` mapping all earn their keep, so it extends
+ *   retry, response caching and `ResourceError` mapping all warrant their keep, so it extends
  *   {@link APIClient}. `ourairports.ts` is four static file transfers off a CDN and correctly does not.
  *
  *   WDQS also REQUIRES a descriptive `User-Agent` naming the tool and a contact — an anonymous or

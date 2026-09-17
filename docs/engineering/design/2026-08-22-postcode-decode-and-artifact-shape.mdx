@@ -382,7 +382,7 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   no binary search. It is a fine container for pre-sorted opaque blobs.
 - **Parquet/GeoParquet** fit bulk analytical postcode work — row groups are byte-range addressable —
   but need a WASM decoder and have poor point-query latency.
-- **Entropy coding (Huffman)** buys little here: postcodes share prefixes _and_ suffixes, so the
+- **Entropy coding (Huffman)** provides little here: postcodes share prefixes _and_ suffixes, so the
   FST/DAWG already exploits the redundancy that matters, and a decode cost on every read is the wrong
   trade at these sizes.
 

@@ -55,7 +55,7 @@ export interface PairIndexLike {
 }
 ```
 
-Layout (PCB1 pattern, magic `PIX1`): header block (JSON-encoded, u32-length-prefixed — pairs are strings of variable length, a fixed-width key table buys nothing at 20k entries; document the departure from PCB1's fixed keys) + u32 pairCount + per-pair `u16 childLen, child utf8, u16 parentLen, parent utf8, u8 tagIdx` sorted by (child,parent) bytes; `probe` via binary search or a built Map (20k entries → Map is fine; build once in ctor). Tag table = `COMPONENT_TAGS` index (core types).
+Layout (PCB1 pattern, magic `PIX1`): header block (JSON-encoded, u32-length-prefixed — pairs are strings of variable length, a fixed-width key table adds nothing at 20k entries; document the departure from PCB1's fixed keys) + u32 pairCount + per-pair `u16 childLen, child utf8, u16 parentLen, parent utf8, u8 tagIdx` sorted by (child,parent) bytes; `probe` via binary search or a built Map (20k entries → Map is fine; build once in ctor). Tag table = `COMPONENT_TAGS` index (core types).
 TDD: round-trip test (serialize → construct → probe hits/misses), bad-magic throw, unknown-schema throw, header fidelity. Commit `feat(neural): PIX1 pair-index format — writer + reader (PCB1 single-file pattern)`.
 
 ### Task 3: Builder command + the GB artifact

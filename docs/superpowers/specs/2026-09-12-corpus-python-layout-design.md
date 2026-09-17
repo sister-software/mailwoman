@@ -58,7 +58,7 @@ raises at first call rather than at import, so a broken module reaches a trainin
 
 Their comment claims they keep `tokenizer.py` import-light. Measured, that claim does not hold: `gazetteer_anchor`
 adds 2,263 µs and `country_lexicon` 117 µs on top of `tokenizer`'s 36,869 µs, which is 6.5%. Neither module reaches
-torch. Deferred imports elsewhere in the tree do buy real weight and stay — see §11.
+torch. Deferred imports elsewhere in the tree do provide real weight and stay — see §11.
 
 Both `huggingface/nanotron` and `allenai/OLMo-core` hold value types in a `data/types.py` that everything imports.
 A package-root `types.py` holding `PieceSpan` removes all five deferred imports.
@@ -302,7 +302,7 @@ Steps 1 through 7 touch nothing a Modal run reads before merge. Step 8 changes e
   A deferred import is not a defect on its own. Measured on this branch: `mailwoman_train.cli` imports in 22,340 µs
   while `mailwoman_train.train` takes 1,458,740 µs, so the 32 deferred imports in `cli.py` keep torch's 1.46 s off
   every `--help`. Of the 63 deferred intra-package imports in the tree, five are cycle-dodgers — `tokenizer.py` at
-  541, 550, 566, 583 and 598 — and the other 58 buy startup weight.
+  541, 550, 566, 583 and 598 — and the other 58 provide startup weight.
 
 - A corpus version is added to `launch/corpora.py` as one table row, verified by adding the most recent existing
   version through the new path and diffing the generated command set against the current literal strings.

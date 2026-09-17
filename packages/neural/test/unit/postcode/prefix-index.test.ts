@@ -228,7 +228,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			o += 4
 		}
 
-		// The dictionary earns its place: more references than entries.
+		// The dictionary warrants its place: more references than entries.
 		expect(totalRefs).toBeGreaterThan(ancestorCount)
 
 		// The walk consumed the buffer exactly — no trailing bytes, no short read.

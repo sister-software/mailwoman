@@ -23,7 +23,7 @@ Inverse-frequency weighting uses the corpus-wide table (3,317,267 distinct addre
 |                    16 |     45.5% |  38.0% |    **41.4%** | 0.413 |      512 |          33 |
 |                    20 |     46.5% |  38.0% |    **41.8%** | 0.417 |      515 |          32 |
 
-Best F1 is at the **default threshold** (58.6%): raising it only trades recall away faster than it buys precision. So the threshold knob alone can't separate co-located distinct providers — the over-merge is structural, in the comparison model, not the cutoff.
+Best F1 is at the **default threshold** (58.6%): raising it only trades recall away faster than it provides precision. So the threshold knob alone can't separate co-located distinct providers — the over-merge is structural, in the comparison model, not the cutoff.
 
 ## Shape + where the errors are (at the default threshold)
 

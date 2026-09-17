@@ -1113,12 +1113,12 @@ US scale reached independently: the National Zoning Atlas says outright that "Al
 (yet) understand the nuances of lengthy, complex zoning codes to the level of accuracy we require", and
 Regrid says its conversion is done "**manually**".
 
-**The local code alone is unreadable, which is why the crosswalk earns its place.** South Dublin's 16
+**The local code alone is unreadable, which is why the crosswalk warrants its place.** South Dublin's 16
 local codes are `RES`, `OS`, `SDZ`, `EE`, `RU`, `REGEN`, `RES-N`, `VC`, `LC`, `HA-DM` and six more.
 Nobody outside South Dublin can read them, and they collide with other authorities' codes for other
 meanings.
 
-**And the crosswalk alone is lossy, which is why the verbatim code earns its place.** 560 labels
+**And the crosswalk alone is lossy, which is why the verbatim code warrants its place.** 560 labels
 collapsing to 55 types discards, among other things, the difference between South Dublin's `RES` and
 `RES-N`, which the authority itself keeps.
 
@@ -1470,7 +1470,7 @@ here. This verifies what fixtures structurally cannot: the actual field names, t
 where Ireland is, that the signed-ring sum matches the source's own `Shape__Area`, and the seal.
 
 **Full.** All 85,330 features. Memory must stay flat in row count, and any coverage insert must be chunked
-— `writeLayerCoverage` already batches at `COVERAGE_INSERT_BATCH`, and a hand-rolled insert re-earns
+— `writeLayerCoverage` already batches at `COVERAGE_INSERT_BATCH`, and a hand-rolled insert re-warrants
 SQLite's 32,766 bound-variable ceiling.
 
 **And two agreement checks against a second path**, because both catch a class of defect that is otherwise

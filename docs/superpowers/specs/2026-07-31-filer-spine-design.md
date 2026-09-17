@@ -189,7 +189,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 - **D3 — Naming: `@mailwoman/filer` → `filer.db`.** Controller call. Domain-accurate ("filer" is the
   FCC's own term) and `registry` is taken by the record-matching app.
 - **D4 — Federal-only for v1; no state registries.** Controller call. Fifty heterogeneous scrapers
-  buy the long tail of small privately-held operators — precisely where the corporate-family question
+  provide the long tail of small privately-held operators — precisely where the corporate-family question
   is least interesting (a single-county WISP is not a national carrier in a trench coat). The federal
   pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is actually about.
   OpenCorporates is excluded by the same call, which moots its licensing question for v1.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The fix registry: the checks that can plan their own repair, listed the way `registry.ts` lists the checks.
  *
- *   Membership is deliberately narrow. A check earns a fix when the repair is a MECHANICAL consequence of the
+ *   Membership is deliberately narrow. A check warrants a fix when the repair is a MECHANICAL consequence of the
  *   diagnostic — a file belongs at another path, and every specifier that named it follows. A check whose repair is a
  *   judgment call has no entry here, and adding one to save an argument is how a health check starts deciding what
  *   the code should say.

@@ -97,7 +97,7 @@ license-enforcement instrument, and the docs must say so in those words, because
 on everything already published is irrevocable and the pricing page publishes that commitment
 ("Published releases stay published").
 
-### 3.1 What a key buys us
+### 3.1 What a key provides us
 
 - **A name.** An email address and a company, attached to a download. Today an embedder is
   invisible until they file an issue. This is the entire GeoLite mechanic: MaxMind's free tier

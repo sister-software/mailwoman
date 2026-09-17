@@ -171,7 +171,7 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
  * anything else throws, and the caller turns it into the fatal phase.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	// `trace: true` is the debug view's own opt-in — it buys the evidence rows one extra decode per input, which
+	// `trace: true` is the debug view's own opt-in — it provides the evidence rows one extra decode per input, which
 	// no other caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = await resolveTilesPath(options.tiles)

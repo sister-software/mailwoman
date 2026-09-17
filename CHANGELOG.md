@@ -383,7 +383,7 @@ with whether the renewed expiry is the new period end plus the grace.
 
 ### Added — self-service license: the site and the CLI
 
-`/license` gains a Buy section (the two Payment Links and the billing portal, rendered once the operator fills them in
+`/license` gains a Purchase section (the two Payment Links and the billing portal, rendered once the operator fills them in
 `docs/src/license/shop.ts`), a section on keeping the key current, and the reason a refunded license keeps verifying
 offline until its date. `/license/issued` is the page Stripe returns a buyer to: it polls the worker's claim route and
 shows the key, the one-time refresh secret, the `.env` fragment and the two commands to run. `mailwoman license adopt

@@ -35,8 +35,8 @@ export const BIAS_BOOST = 4
 export const POP_BOOST = 4
 
 /**
- * `log10(population + 1)` at which the population term saturates — 6 means a population of one million earns the whole
- * {@link POP_BOOST}, and larger populations earn no more.
+ * `log10(population + 1)` at which the population term saturates — 6 means a population of one million warrants the
+ * whole {@link POP_BOOST}, and larger populations warrant no more.
  */
 export const POP_SCALE_LOG10 = 6
 
@@ -80,7 +80,7 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 	const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 	let proxTerm = 0
 
-	// A candidate at the null island has no coordinate, not a coordinate at 0,0 — it earns no nearness term rather
+	// A candidate at the null island has no coordinate, not a coordinate at 0,0 — it warrants no nearness term rather
 	// than an enormous one.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {

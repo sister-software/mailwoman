@@ -306,7 +306,7 @@ policy:
 | oa-resolver US (≤25 km)                |  1200 |   1167 |  **1185** |
 
 **Defaulting the candidate backend on is safe.** It costs one known POI-anchor case (`Ottawa ON`
-without a comma) and buys the exonym class plus a materially shorter error tail on both US and
+without a comma) and provides the exonym class plus a materially shorter error tail on both US and
 international data. There is no country, no placetype, and no query shape where it loses
 systematically — the one loss is a reproducible singleton with a clear owner, and the fine-precision
 p50 cost (1.5 → 2.4 km international) is real but small next to the p90 gain (180 → 47 km).

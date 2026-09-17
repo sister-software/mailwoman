@@ -47,7 +47,7 @@ the registry does not list.
 
 ## Fixes
 
-A check earns a fix when the repair is a mechanical consequence of its diagnostic. `lib/fixes.ts` is that second,
+A check warrants a fix when the repair is a mechanical consequence of its diagnostic. `lib/fixes.ts` is that second,
 much shorter registry, and `mwops health fix <check> [--dry-run]` runs it. A fix plans module moves; it never writes,
 because writing belongs to `lib/move/`.
 

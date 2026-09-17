@@ -61,7 +61,7 @@ registers: BAN, GNAF, LINZ, …) is roughly 500–800M points. At the measured 2
 
 **Memory: ~1–2 GB floor.** The fixed cost is the ORT session + tokenizer + FST + lexicons
 (~300–500 MB resident). Every layer is memory-mapped and probed by key, so the rest is page
-cache: more RAM buys latency, never correctness. There is no heap that must hold an index.
+cache: more RAM provides latency, never correctness. There is no heap that must hold an index.
 
 For context — the incumbents this trades against (public deployment guidance for their own
 full-planet installs, approximate): a planet Pelias is on the order of 600 GB of
@@ -105,7 +105,7 @@ Three changes, held behind the five-arm benchmark's per-query-class latency and 
    build-time artifacts that make hot, stable queries single lookups (H3-ring KNN lists,
    interpolation-ready per-street tables). The candidate table and postcode bins already ARE
    this pattern, and the 40× receipt shows probe-shaped precompute costs less than the
-   general form it replaces. Only stable + hot queries earn an artifact; precompute freezes a
+   general form it replaces. Only stable + hot queries warrant an artifact; precompute freezes a
    query distribution.
 
 Changes 1 and 3 are not opposed: specializing to the probe shape is simultaneously the

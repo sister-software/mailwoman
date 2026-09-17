@@ -29,7 +29,7 @@ There is also a structural fact that inverts the "A is the big rebuild" intuitio
 - **A (char-level CharCNN):** the CJK model's front-end. Word-composition-from-characters, so there is no subword vocab to fragment CJK. Already scaffolded, ONNX-clean (Embedding + Conv1d + ReLU + masked max-pool + Linear — all runtimes accept it).
 - **C (script-routing):** the _deployment_. Detect script (trivial: Unicode block histogram on the raw string — the `query-shape` stage already computes character-class priors and is the natural home). Route CJK → char model, Latin → the untouched SP model. Ship side-by-side.
 
-This buys the one property the operator demanded — "a new capability, not a trade" — **by construction**. The Latin model is not retrained, not spliced, not touched. Its regression is provably zero.
+This provides the one property the operator demanded — "a new capability, not a trade" — **by construction**. The Latin model is not retrained, not spliced, not touched. Its regression is provably zero.
 
 The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-honest end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation blocked on a Latin bake-off (§3).
 

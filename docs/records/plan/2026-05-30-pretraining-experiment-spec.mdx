@@ -63,7 +63,7 @@ the whole sequence is available at inference, the objective must be bidirectiona
 Is there a real case for CLM here? **A partial, conditional one.** Pure CLM is the
 wrong default — a tagger consumes the full sequence bidirectionally, and CLM
 trails on every task family except (contestedly) token classification. The _only_
-scenario where CLM earns a place is if mailwoman later wants a **generative repair
+scenario where CLM warrants a place is if mailwoman later wants a **generative repair
 / rewrite / canonicalization head** — the AddrLLM pattern (JD Logistics combined
 address _parsing_ + _rewriting_ in one model, reducing parcel re-routing ~43%). If
 that lands on the roadmap, adopt the biphasic CLM→MLM recipe rather than pure CLM:

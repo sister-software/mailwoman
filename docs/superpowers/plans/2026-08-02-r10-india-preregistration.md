@@ -38,7 +38,7 @@ shape most likely to collide with an unrelated word.
 
 **Enabled for India only, deliberately.** Applied globally it took the US index from 47,878 to
 101,560 — more than double, on surfaces no board has ever graded. Every increment in this campaign
-cleared a venue-confound board before shipping, and a 2× expansion of the flagship locale earns its
+cleared a venue-confound board before shipping, and a 2× expansion of the flagship locale warrants its
 own board rather than riding in on India's evidence. The existing surface-expansion probe
 (`pair-index-hierarchy-probe.ts`) checks on `official = 1`; that is right for name-exactness and too
 strict here, because the rows a rename leaves behind are exactly the non-official ones.

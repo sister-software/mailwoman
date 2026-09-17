@@ -407,7 +407,7 @@ export function geocodeParseInputs(
 	// `parseInput` (the exact text handed to the model), matching the pipeline (which computes it on the normalized
 	// text, before the classifier's internal case-normalization). It is a NO-OP whenever the shape carries no known
 	// format and no region abbreviation (the bare `street, city` class) — `buildEmissionPriors` returns an all-zeros
-	// matrix — so both bare-form and well-formed inputs are byte-stable; it earns its keep only on the ambiguous
+	// matrix — so both bare-form and well-formed inputs are byte-stable; it warrants its keep only on the ambiguous
 	// digit-span / region-abbrev cases the model isn't already confident about.
 	const queryShape = computeQueryShape(parseInput)
 

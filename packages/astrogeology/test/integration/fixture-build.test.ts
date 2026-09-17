@@ -84,7 +84,7 @@ test("the Moon fixture builds a nomenclature archive whose tiles carry the five 
 
 	expect(tile.stdout.length).toBeGreaterThan(0)
 
-	// The search artifact: five names plus the one alias whose clean name differs (Buys-Ballot H → Buys Ballot H).
+	// The search artifact: five names plus the one alias whose clean name differs (Provides-Ballot H → Provides Ballot H).
 	const index = resolvePath(scratch.path, "moon-search.ancestrie")
 
 	expect(await buildSearchIndex(features, String(index))).toBe(6)

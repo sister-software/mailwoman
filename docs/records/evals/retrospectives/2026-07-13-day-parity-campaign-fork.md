@@ -105,7 +105,7 @@ Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
 
 Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did NOT
 exercise the promote/publish grant: v253/v254 fail the 2pp default check, v255 fails the gauntlet
-— experimental-shipping a blocked-for-default artifact buys nothing the fork decision doesn't
+— experimental-shipping a blocked-for-default artifact adds nothing the fork decision doesn't
 supersede. Treadmill compliance outranked grant flexing.
 
 ## Numbers

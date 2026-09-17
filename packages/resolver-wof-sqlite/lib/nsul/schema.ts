@@ -122,7 +122,7 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 /**
  * The `pcds_compact` index the `uprnsForPostcode` probe reads. Builders call this AFTER the bulk load
  * (index-after-load). There is no index on the spaced `pcds`: it is derivable from `pcds_compact` through
- * {@link compactPostcode}, and a second index over 40 million rows would buy nothing a caller cannot get by compacting
+ * {@link compactPostcode}, and a second index over 40 million rows would add nothing a caller cannot get by compacting
  * its key first.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {

@@ -669,7 +669,7 @@ function isDescendingFromLength(node: AstNode): boolean {
  * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index WRITES to the same base.
  *
  * Reads the body's own statements rather than walking the subtree. A generic walk over an oxlint node's values follows
- * its back-references and never terminates, and depth buys nothing here: a shuffle writes its swap at the top of the
+ * its back-references and never terminates, and depth adds nothing here: a shuffle writes its swap at the top of the
  * loop, so a swap nested inside a branch is a different algorithm.
  */
 function swapsTwoIndices(body: AstNode): boolean {

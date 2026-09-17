@@ -9,7 +9,7 @@
 estimated as the running mean of squared per-parameter gradients over the final N batches of the
 base run (proposed N = 2,000 batches ≈ the last ~2k steps' micro-batches — the converged-model
 regime, which is what EWC's quadratic approximation assumes). Diagonal-only (D4 default):
-blockwise buys accuracy the first consumer can't yet use and multiplies storage; revisit if λ
+blockwise provides accuracy the first consumer can't yet use and multiplies storage; revisit if λ
 calibration shows the diagonal is too blunt.
 
 **Per-locale Fisher matrices: not in v1.** One Fisher over the full feed. A per-locale family

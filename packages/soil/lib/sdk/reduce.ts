@@ -48,7 +48,7 @@ import { SOIL_SHARE_WEIGHTING } from "#vocabulary"
  *
  * Two, giving 49 children per cell and a 2.04% share granularity. That is deliberately matched to the finest share the
  * authority itself publishes — `muaggatt.niccdcdpct`'s observed minimum is 2% — because a lattice finer than the
- * source's own reporting grain buys precision this layer cannot source, at 7× the cost per level.
+ * source's own reporting grain provides precision this layer cannot source, at 7× the cost per level.
  */
 export const WEIGHT_LATTICE_DEPTH = 2
 

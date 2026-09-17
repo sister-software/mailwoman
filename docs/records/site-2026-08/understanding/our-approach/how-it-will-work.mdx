@@ -91,7 +91,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 
 ### What stays the same
 
-- **Rule classifiers are not replaced.** They stay deterministic, fast, and reliable. The neural classifier earns each component one at a time.
+- **Rule classifiers are not replaced.** They stay deterministic, fast, and reliable. The neural classifier warrants each component one at a time.
 - **The model stays small.** The transformer is staying at roughly 9 million parameters. The win comes from better architecture (phrase grouper, joint decode) and better training, not from scaling up.
 - **Browser support is a hard constraint.** The pipeline must stay under ~60MB cold load. The demo is the canary.
 - **Locale parity is tracked but not urgent.** The en-us model has had the most attention. fr-fr will catch up, ja-jp is the validation stress test.

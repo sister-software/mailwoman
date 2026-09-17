@@ -147,7 +147,7 @@ console.log(
 	)
 )
 
-console.log(`\nthin boards ranked by gazetteer share — where a checking row buys the most:\n`)
+console.log(`\nthin boards ranked by gazetteer share — where a checking row provides the most:\n`)
 console.log(
 	table(
 		["country", "checking", "places"],

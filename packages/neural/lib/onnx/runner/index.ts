@@ -86,9 +86,9 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  * - FOUR concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
  *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
- * Two is the compromise: it costs a single process ~35% latency against its own optimum, and buys a four-process server
- * ~36% throughput against the single-process optimum applied blindly. A server that knows its own worker count should
- * set `MAILWOMAN_INTRA_OP_THREADS` to roughly cores/workers instead of accepting this.
+ * Two is the compromise: it costs a single process ~35% latency against its own optimum, and provides a four-process
+ * server ~36% throughput against the single-process optimum applied blindly. A server that knows its own worker count
+ * should set `MAILWOMAN_INTRA_OP_THREADS` to roughly cores/workers instead of accepting this.
  *
  * Re-derive both curves before changing it. They are properties of the model and the box, and the single-process one
  * alone will point at the wrong answer.

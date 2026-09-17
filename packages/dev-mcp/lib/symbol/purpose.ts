@@ -75,8 +75,9 @@ function exportedName(statement: ts.Statement): string | null {
 /**
  * Words that appear in nearly every sentence here, so matching one says nothing about which declaration is meant.
  *
- * Prepositions earn their place on this list the hard way: `over` is a word in `bestOver`, and a name match is enough
- * on its own to report a finding, so an unlisted preposition answers an unrelated question with a confident hit.
+ * Prepositions warrant their place on this list the hard way: `over` is a word in `bestOver`, and a name match is
+ * enough on its own to report a finding, so an unlisted preposition answers an unrelated question with a confident
+ * hit.
  */
 const STOP_WORDS = new Set([
 	"a",

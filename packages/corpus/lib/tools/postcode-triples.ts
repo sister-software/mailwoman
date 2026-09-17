@@ -180,9 +180,9 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
  * one city's postcode list.
  *
  * SPENT BY REGION, in rounds. Source order is postcode order, and a postcode sorts geographically, so spending the
- * budget in file order buys one corner of a country. Measured on the tuples this tool had already produced: the US took
- * its 16,000 from 23 of 56 states (`AK` through the alphabet and stop), Mexico 7 regions, Portugal 5, India 24 of 36. A
- * round-robin over the region takes one row from each before any region takes a second, so a cap smaller than the
+ * budget in file order provides one corner of a country. Measured on the tuples this tool had already produced: the US
+ * took its 16,000 from 23 of 56 states (`AK` through the alphabet and stop), Mexico 7 regions, Portugal 5, India 24 of 36.
+ * A round-robin over the region takes one row from each before any region takes a second, so a cap smaller than the
  * source still reaches every region the source has.
  *
  * Within a region the source order is kept, so the same budget selects the same rows.

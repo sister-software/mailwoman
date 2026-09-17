@@ -35,7 +35,7 @@ The resolver bootstrap-publish (DeepSeek, from post-haversine-dedup code) had sk
 
 ## The headline result (PRIMARY A)
 
-mailwoman exposes a **precision change no geocoder does**: dial a confidence threshold τ and buy precision at a predictable recall cost. On 472 messy held-out OA goldens (us/it/pt/pl/fr/au), shipped v4.13.0, right-place @25km: precision climbs **84.3% → 97.3%** as τ rises (recall 67% → 16%), and the discrimination **holds out-of-sample** (held-out high-conf 85.9% vs low-conf 72.1%). The signal is the model flagging its own coverage — precise+confident where covered (US/IT/FR), correctly unsure where building (PL/PT/AU). Framing (DeepSeek 019ef808): pitch to the precision-critical caller (record-matcher / compliance) who routes on "trust only high-confidence answers," not the coverage-seeker.
+mailwoman exposes a **precision change no geocoder does**: dial a confidence threshold τ and provide precision at a predictable recall cost. On 472 messy held-out OA goldens (us/it/pt/pl/fr/au), shipped v4.13.0, right-place @25km: precision climbs **84.3% → 97.3%** as τ rises (recall 67% → 16%), and the discrimination **holds out-of-sample** (held-out high-conf 85.9% vs low-conf 72.1%). The signal is the model flagging its own coverage — precise+confident where covered (US/IT/FR), correctly unsure where building (PL/PT/AU). Framing (DeepSeek 019ef808): pitch to the precision-critical caller (record-matcher / compliance) who routes on "trust only high-confidence answers," not the coverage-seeker.
 
 The planned Nominatim head-to-head was **withheld**: the messy-input fetch hit rate-limiting (AU 100% null, FR 45%, PT 38%) and is unreliable. The clean competitive win stands from 06-23 (#775, US 99 vs 84).
 

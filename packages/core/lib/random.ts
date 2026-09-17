@@ -10,7 +10,7 @@
  *   NOTE — this is deliberately NOT a bit-exact port of CPython's MT19937. The source scripts draw
  *   their rows with SQL `ORDER BY RANDOM()` (already non-deterministic across runs) and the
  *   postcodes are synthetic shape-data ("the model learns the SHAPE, not the exact mapping"), so a
- *   byte-identical random stream buys nothing observable. What is preserved is what matters: a
+ *   byte-identical random stream adds nothing observable. What is preserved is what matters: a
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
  *

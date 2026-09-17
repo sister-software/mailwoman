@@ -67,7 +67,7 @@ export const GZT_MIN_REQUEST_INTERVAL_MS = 500
  *
  * Six hours, chosen against the product's own cadence rather than a wall-clock intuition. The Department publishes no
  * maintenance-frequency statement at all; what is observable is that the item's `modified` date and the data's latest
- * `UPLOAD_DATE` move a handful of times a year, so a shorter TTL buys nothing.
+ * `UPLOAD_DATE` move a handful of times a year, so a shorter TTL adds nothing.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 

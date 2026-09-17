@@ -73,7 +73,7 @@ a geocode. `ban/street-centroids-fr.db` contains every FR street name; asking wh
 
 That is a lexicon lookup, not resolution — a different signal with a different failure surface, and
 it interacts directly with #1142 (the `matched` vs `importance` split: "is this a known name" is
-_exactly_ the `matched` bit that today's multiply destroys). It earns a probe only with the same bar
+_exactly_ the `matched` bit that today's multiply destroys). It warrants a probe only with the same bar
 the others got: a pre-registered check and a measured win.
 
 **Two signals have now failed** (plausibility veto: inert; resolution specificity: −16, rewards the

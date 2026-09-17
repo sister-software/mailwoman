@@ -6,7 +6,7 @@
  *
  *   The classifier decides how ~2,000 comments get rewritten, so a case it silently reclassifies
  *   moves work between buckets with no failing check — the same shape as a false negative in any
- *   other measuring tool. Each case below states one line of real source and the remedy it earns.
+ *   other measuring tool. Each case below states one line of real source and the remedy it warrants.
  */
 
 import { classify, Remedy } from "@mailwoman/repo-health/checks/vocab-census"
@@ -24,7 +24,7 @@ function hitFor(source: string, word: string): ReturnType<typeof classify> {
 	)
 }
 
-describe("a modifier that names the check earns the rename remedy", () => {
+describe("a modifier that names the check warrants the rename remedy", () => {
 	it.each([
 		["\t// then fail the ambiguity gate for Nassau's rows", "gate", "ambiguity"],
 		["\t * the street-context gate's signal is the deciding one", "gate", "street-context"],
@@ -37,7 +37,7 @@ describe("a modifier that names the check earns the rename remedy", () => {
 	})
 })
 
-describe("a bare reference earns the read-context remedy", () => {
+describe("a bare reference warrants the read-context remedy", () => {
 	it.each([
 		["\t// The gate needs BOTH matchers.", "gate"],
 		["\t// surfaced as a gate — the resolver never sees it", "gate"],

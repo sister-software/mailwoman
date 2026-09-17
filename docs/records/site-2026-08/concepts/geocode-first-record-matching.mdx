@@ -31,7 +31,7 @@ resolves every record to a coordinate and a hierarchy first, then links records
 by _where they are_ and _who they are_ — not by how their address strings happen
 to be spelled.
 
-Every clause earns its place:
+Every clause warrants its place:
 
 - **Entity resolution.** The classical problem — blocking, pairwise matching,
   clustering into canonical entities. Not a new field; a very old, very
@@ -170,14 +170,14 @@ Calibrate the thresholds against mailwoman's _own_ measured error distribution,
 not the literature's older-geocoder constants. Our rooftop tier is tighter; the
 shape of the lesson holds, the numbers are ours to measure.
 
-## Where a model earns its place
+## Where a model warrants its place
 
 The classical core is the v1. Models are selective changes bolted on where the
 evidence says they pay — never the foundation:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. Regex can't see
   `Comcast Cable Communications LLC` ≈ `Xfinity` (a DBA) or survive OCR noise; an
-  embedding + ANN index can. Embedding/ANN blocking earns its keep _specifically_
+  embedding + ANN index can. Embedding/ANN blocking warrants its keep _specifically_
   on noisy, textual fields — not as a blanket replacement (DeepBlocker).
 - **A gradient-boosted matcher** over the comparison vector once labels exist. A
   tree over `{distance, name-sim, street-sim}` already clears ~90% matched-class F1
@@ -187,7 +187,7 @@ evidence says they pay — never the foundation:
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
   Fellegi-Sunter core by ~5pp dedup F1 held-out within a state and by ~+22pp on
   states it never trained on (TX→CA, TX→NY), reducing the co-located over-merge — so
-  it earns the default slot, shipped with a calibrated link threshold (its logit
+  it warrants the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
   domain, A/B it or drop back to the hand-weighted core with
   `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT

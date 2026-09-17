@@ -21,7 +21,7 @@
  *
  *   Clustering decision (implementer's pick — the brief allows either): a PLAIN rowid table, NOT
  *   `WITHOUT ROWID`, and NOT a composite `(h3_cell, provider_id, technology_code)` primary key.
- *   `WITHOUT ROWID` earns its keep on small, PK-probed rows — poi.db's clustered key and
+ *   `WITHOUT ROWID` warrants its keep on small, PK-probed rows — poi.db's clustered key and
  *   `layer_coverage`'s per-cell probe both read by their exact PK and nothing else, so folding the row
  *   into the B-tree removes a second lookup. `bdc_availability` doesn't fit that shape: it's a wider,
  *   10-column row read two different ways — an h3-range scan ("everything near this cell", the

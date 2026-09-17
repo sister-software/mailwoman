@@ -25,7 +25,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **Ceiling.** Not found. 512 is the next natural step (doubles the FFN intermediate from 1536 to 2048). Expected cost: ~2× wall time per step, ~4× parameter count (~68M vs 29M at h384). Whether the additional capacity helps depends on whether the model is capacity-limited or data-limited. The v0.5.1 overfitting past step 65K suggests data-limited at h384 — going larger without more data would overfit faster.
 
-**What 256 buys you.** ~17M params, trains at 6.9 sps on A100 (h256 batch=16 ga=8) or ~120 sps (h256 batch=128 direct — untested but estimated). Fits on any GPU including consumer iGPUs.
+**What 256 provides you.** ~17M params, trains at 6.9 sps on A100 (h256 batch=16 ga=8) or ~120 sps (h256 batch=128 direct — untested but estimated). Fits on any GPU including consumer iGPUs.
 
 ### `num_attention_heads`
 

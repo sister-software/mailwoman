@@ -178,7 +178,7 @@
  *   | 4     |    28,606 |  0.3%  |
  *   | 5     |       287 | <0.01% |
  *
- *   p50=1, p90=2, **p99=3**, max=5. Going to the observed max (5) buys negligible additional recall
+ *   p50=1, p90=2, **p99=3**, max=5. Going to the observed max (5) provides negligible additional recall
  *   against real over-matching risk on short common words — 3 is the frozen scale; widening it is a
  *   future tunable, not a free lunch.
  *

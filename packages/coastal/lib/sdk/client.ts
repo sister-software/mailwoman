@@ -73,7 +73,7 @@ export const EA_MIN_REQUEST_INTERVAL_MS = 500
  *
  * Six hours, chosen against the product's cadence rather than a wall-clock intuition. The ISO
  * `MD_MaintenanceFrequencyCode` is `annually` and no prose names a publication month, so the revision date moves at
- * most once a year. A shorter TTL buys nothing.
+ * most once a year. A shorter TTL adds nothing.
  */
 const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 

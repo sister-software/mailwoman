@@ -18,7 +18,7 @@
 #   * Score BOTH arms (this run and v8-cjk-kana) on the same scorer in the same session; a scorer patch between two
 #     reads is a comparison of scorers.
 #   * At 2,000 steps the bars above are read at the step's own level: KR street / house_number ≥ 0.95 says the
-#     surface is learnable from the mixture and earns the 24k run (`v8-cjk-kr.yaml`); lower is the finding.
+#     surface is learnable from the mixture and warrants the 24k run (`v8-cjk-kr.yaml`); lower is the finding.
 #
 # Launch:
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk_kr

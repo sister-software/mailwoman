@@ -284,7 +284,7 @@ describe("WOFWasmPlaceLookup", () => {
 			const straddle = await lookup.findPlace({ text: "York New", placetype: "locality", limit: 5 })
 			expect(straddle.length).toBeGreaterThan(0) // still token-reachable…
 			expect(straddle.some((m) => m.exactMatch === true)).toBe(false) // …but never exact
-			// A single alias still earns the exact tier from the bag alone.
+			// A single alias still warrants the exact tier from the bag alone.
 			const alias = await lookup.findPlace({ text: "New City", placetype: "locality", limit: 5 })
 			expect(alias[0]).toMatchObject({ id: 240, name: "Twin Hamlet" })
 			expect(alias[0]?.exactMatch).toBe(true)

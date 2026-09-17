@@ -31,7 +31,7 @@ That's the win, and we staged it to ship. It's the part you'd put in the changel
 
 With coverage handled, we asked a different question: when mailwoman does parse a foreign address, does it land in the right place? We ran the assembled-coordinate eval on Portugal, Poland, and Australia — real addresses, scored on distance to truth.
 
-The numbers were ugly. Portugal's median error came back at 47 kilometers. Poland 116. Australia 798. The parser was reading the street name as the city and resolving to a same-named town three regions over. Feed it a perfect parse and the error dropped under a kilometer. Clean story: the parser is the bottleneck, this earns a GPU retrain, write it up as a GO.
+The numbers were ugly. Portugal's median error came back at 47 kilometers. Poland 116. Australia 798. The parser was reading the street name as the city and resolving to a same-named town three regions over. Feed it a perfect parse and the error dropped under a kilometer. Clean story: the parser is the bottleneck, this warrants a GPU retrain, write it up as a GO.
 
 I almost did. Then I checked which model the eval had loaded.
 

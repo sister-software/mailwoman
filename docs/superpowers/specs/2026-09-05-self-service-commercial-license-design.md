@@ -12,7 +12,7 @@ WebCrypto and the worker imports it by subpath under export conditions.
 
 A commercial license exists (`COMMERCIAL-LICENSE.md`, `LicenseRef-Commercial`), a signed key format exists
 (`mwl1.<payload>.<signature>`, Ed25519, verified offline against the public keys each release ships), and the
-operator can mint one by hand with `mailwoman license issue`. There is no way for a customer to buy one without
+operator can mint one by hand with `mailwoman license issue`. There is no way for a customer to provide one without
 writing an email and waiting for a person. The pricing page (`docs/articles/pricing.mdx`, routed at `/docs/pricing`)
 already publishes two prices, $250 a month or $2,400 a year per legal entity, so the shop must sell both.
 
@@ -271,7 +271,7 @@ with ids only.
 
 ## The docs site
 
-**`/license`** (`docs/src/pages/license.mdx`, already live) gains a "Buy" section with the two Payment Links, the
+**`/license`** (`docs/src/pages/license.mdx`, already live) gains a "Purchase" section with the two Payment Links, the
 "Manage billing" portal link, and a paragraph on the refresh command. The contact address stays for enterprise and
 negotiated terms.
 

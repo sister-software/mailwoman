@@ -19,7 +19,7 @@ providers in the same markets).
 Every input was public. None of it was assembled from a durable substrate — it was web fetches plus
 arithmetic plus recall, which is unreproducible, unsourced, and unauditable. **The product is that
 assembly made systematic.** Not the conclusion: the conclusion stays the customer's, per doctrine.
-What the customer buys is not having to spend a day in EDGAR, FCC dockets, and trade press to reach
+What the customer provides is not having to spend a day in EDGAR, FCC dockets, and trade press to reach
 the point where judgment can start.
 
 ## 2. The concrete gap: a transaction layer, and where family-edge dates come from

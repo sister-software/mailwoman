@@ -1,4 +1,4 @@
-# A prominence floor cannot buy abstention (2026-09-14)
+# A prominence floor cannot provide abstention (2026-09-14)
 
 `ResolveOpts.minWinningScore` rejects a candidate whose score falls below a floor. The backend's score is a
 log-population rank, so a floor of F rejects any place under 10^F people. The registered claim was:
@@ -6,7 +6,7 @@ log-population rank, so a floor of F rejects any place under 10^F people. The re
 > A `minWinningScore` floor reduces the withheld-gold false-selection rate against the default arm in EVERY
 > population band, without costing more than 5 points of selection accuracy in any band.
 
-**The claim does not hold, at any of the four registered floors.** Every floor buys refusal by discarding
+**The claim does not hold, at any of the four registered floors.** Every floor provides refusal by discarding
 correct answers, and the smaller the place the more it discards: at floor 4 the selection accuracy for
 villages under 1,000 people falls from 71.0% to 21.0%.
 

@@ -49,7 +49,7 @@ Both emit country posteriors; they must not double-count.
 - **Off by default → byte-identical.** Like `resolve`/`fst`, absent the stage the pipeline is unchanged.
   PR-and-flag; promotion to default is a separate, evidence-conditional step.
 
-## Threshold ~0.9 (and why the soft framing earns it)
+## Threshold ~0.9 (and why the soft framing warrants it)
 
 `abstainBelow = 0.9` (vs the code default 0.5). Below 0.9 → `abstained` → **no posterior** → byte-stable.
 

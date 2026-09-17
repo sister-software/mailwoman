@@ -59,7 +59,7 @@ const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstree
  * Minimum spacing between two dispatches to an external arm, in milliseconds.
  *
  * A JUDGEMENT, not a measurement, and stated as one: these endpoints are self-hosted, so no upstream publishes a rate
- * for them and there is no limit to honour. What the interval buys is that a 400-row loop cannot saturate a service
+ * for them and there is no limit to honour. What the interval provides is that a 400-row loop cannot saturate a service
  * sharing this box's memory bandwidth with the resident gazetteer — 20 dispatches per second is far above what a
  * sequential comparison reaches anyway, so it costs a well-behaved run nothing and bounds a pathological one.
  *

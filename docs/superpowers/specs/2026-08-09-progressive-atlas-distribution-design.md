@@ -18,7 +18,7 @@ The knowledge graph makes that naming problem structural. We need answers to fou
 adding more databases:
 
 1. What is installed with the engine, the model, and the atlas?
-2. How can every installation retain worldwide coverage while a consumer chooses where to buy disk
+2. How can every installation retain worldwide coverage while a consumer chooses where to provide disk
    and precision?
 3. Where do country-specific address systems live when the atlas is globally partitioned?
 4. How does the CLI explain, plan, fetch, verify, and diagnose the resulting installation?

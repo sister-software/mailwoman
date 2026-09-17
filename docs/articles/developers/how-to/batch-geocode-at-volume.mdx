@@ -1,6 +1,6 @@
 ---
 title: Geocode a large file at volume
-description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process buys nothing.
+description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process adds nothing.
 role: guide
 verified-with: mailwoman 8.7.0
 ---
@@ -126,7 +126,7 @@ thread back. Everything queues behind the row in front of it.
 
 ## 3. Put each geocode in its own runtime
 
-A separate runtime per row is the thing that buys throughput, and a worker thread is a separate runtime.
+A separate runtime per row is the thing that provides throughput, and a worker thread is a separate runtime.
 Two files: a worker that builds its own geocoder and answers batches, and a pool that hands out work.
 
 Save this as `geocode-worker.mjs`:
@@ -224,7 +224,7 @@ out.end()
 console.log(`${workerCount} workers: ${done} rows in ${s.toFixed(2)} s → ${(done / s).toFixed(1)} rows/s`)
 ```
 
-Two details in there earn their space. Work is pulled, not pushed: a worker asks for the next batch when
+Two details in there warrant their space. Work is pulled, not pushed: a worker asks for the next batch when
 it finishes one, so a slow batch never leaves a worker idle behind a fixed share. And the batch size of
 32 amortizes the message round-trip without letting one worker sit on a queue the others could drain.
 
@@ -248,7 +248,7 @@ Fastest of three runs per size:
 | 6 workers                     | 161.6  | 1.16×       |
 | 8 workers                     | 157.0  | 1.13×       |
 
-The curve peaks and then falls. Sixteen cores did not buy 16×, and eight workers were worse than two.
+The curve peaks and then falls. Sixteen cores did not provide 16×, and eight workers were worse than two.
 One worker is the baseline plus a message hop, which is the sanity check that the pool itself costs
 nothing.
 

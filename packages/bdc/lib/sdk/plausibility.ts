@@ -90,7 +90,7 @@
  *   distinguishing "falsifier that only fires positively" and reserves `"high"` for genuine two-channel
  *   corroboration (§7-2b criterion 2: "matching filing + nearby plant in covered cells… high"); a tech
  *   that structurally can never offer a second channel should not be able to claim the same top
- *   confidence a fiber claim earns by actually having one available. This reading is more conservative
+ *   confidence a fiber claim warrants by actually having one available. This reading is more conservative
  *   than the alternative (treating the missing axis as inert and reporting `"high"` off filing alone),
  *   and nothing pins it: none of the four §7-2b criteria exercises a no-physical-falsifier tech code.
  *
@@ -218,7 +218,7 @@ export type PlausibilityCoverageAxisState =
 	/**
 	 * Physical axis only: the claimed technology maps to no physical-plant category at all (see
 	 * {@link PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES}) — there is no applicable second channel for this tech, ever,
-	 * regardless of layer availability. Distinct from every other state: this claim can never earn `"high"`.
+	 * regardless of layer availability. Distinct from every other state: this claim can never warrant `"high"`.
 	 */
 	| "not_applicable"
 

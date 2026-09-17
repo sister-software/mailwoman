@@ -39,7 +39,7 @@ fr-fragment arc has been about: **a bare name gives no structural evidence of wh
 locality, or a region.** Deciding that requires knowing which names are which — the atlas or the model —
 which is precisely what a shape detector, by construction, does not have. On this domain, ease-of-shape
 and ease-of-parse are anti-correlated: long inputs are self-disambiguating (a house number licenses the
-street, a postcode anchors the locality); short inputs are pure ambiguity. **The model earns its keep
+street, a postcode anchors the locality); short inputs are pure ambiguity. **The model warrants its keep
 most on the smallest queries** — the opposite of the cascade's premise. Note the model itself scores only
 0.588 on the absorbed rows: they are hard for everyone; the front tier just makes hard rows 5× worse.
 
@@ -55,7 +55,7 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
 - **Atlas-verified fronting** — absorb a bare name only after a candidate-table hit confirms it is a
   known locality — is the one honest form left. But that front tier is a gazetteer lookup, i.e. the
   resolver; the model + atlas channel already perform that arbitration with learned weighting (M1 priced
-  the channel at +10.4). Building it as a bypass buys ~0.5 ms and a second code path to keep honest.
+  the channel at +10.4). Building it as a bypass provides ~0.5 ms and a second code path to keep honest.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
   shape knowledge helps: small, priced, scoped — inside the model's decode, not in front of it.
 

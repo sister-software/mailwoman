@@ -205,7 +205,7 @@ const FIXTURE: FixturePlace[] = [
 
 	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase
 	// "York New". The exact tier must never promote this place for that straddling query, while
-	// each alias on its own ("New City") still earns the exact tier.
+	// each alias on its own ("New City") still warrants the exact tier.
 	{
 		id: 999_000_001,
 		parent_id: 85_633_147,
@@ -441,7 +441,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		try {
 			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
 			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
-			// A single alias still earns the exact tier from the bag alone.
+			// A single alias still warrants the exact tier from the bag alone.
 			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
 			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {

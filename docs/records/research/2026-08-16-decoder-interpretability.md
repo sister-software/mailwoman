@@ -47,7 +47,7 @@ What is a research program at LLM scale is a nightly board metric here: a full c
 every row of the 558-row dev board is a lunch-break job on the lab GPU. We don't even need AtP
 approximations, though they come free (one backward pass) since we own the PyTorch side.
 
-**What it buys.** The literal answer to "WHERE did this labeling decision form": layer/position/
+**What it provides.** The literal answer to "WHERE did this labeling decision form": layer/position/
 component coordinates for each B/I decision, and — by patching the _channel input rows_
 specifically — a causal (not correlational) measure of whether the decision used the evidence
 channels at all. Two probe directions matter: (a) zero the channels (a no-op when they were already
@@ -80,12 +80,12 @@ production, browser included. Because our channels are _named, human-meaningful 
 over the channel inputs is far more meaningful than IG over token embeddings is for an LLM — the
 concept bottleneck is at the input, so input attribution _is_ concept attribution.
 
-**What it buys.** The cheapest deployable "evidence-silent" detector: per decision, the share of
+**What it provides.** The cheapest deployable "evidence-silent" detector: per decision, the share of
 attribution mass on channel inputs vs. token embeddings. Report it per parse; alarm when a
 high-confidence parse carries ~zero channel share. Note the degenerate case: when channels are
 all-zero, occlusion is a no-op and IG attribution to them is trivially ~0 — the flag can be
 computed _without any attribution at all_ as an input predicate ("all channel confidences zero"),
-which soft-features.ts can emit today. Attribution earns its keep on the _mixed_ cases where
+which soft-features.ts can emit today. Attribution warrants its keep on the _mixed_ cases where
 channels fired but may have been ignored.
 
 **Pitfalls.** IG's baseline choice matters (zero-embedding baselines are out-of-manifold [M]);
@@ -165,7 +165,7 @@ and re-doing it every retrain (mailwoman retrains constantly — the ~1-hour ite
 project's core asset — and SAE features do not transfer across retrains; seed-instability results
 above make this worse).
 
-**What it buys vs. a tagger's alternatives — and why it's overkill here.** For an LLM, SAEs exist
+**What it provides vs. a tagger's alternatives — and why it's overkill here.** For an LLM, SAEs exist
 because you _don't know what the concepts are_. Our situation is inverted: the interesting concepts
 (postcode-ness, gazetteer membership, country, street-type) are already named input columns, and
 the label vocabulary is 33 BIO tags. For "does the model internally represent German-place
@@ -205,7 +205,7 @@ Concept Bottleneck Models_ (NeurIPS) [S]; Shin et al. 2023, _A Closer Look at th
 Procedure of Concept Bottleneck Models_ (ICML) [S]; _Avoiding Leakage Poisoning: Concept
 Interventions Under Distribution Shifts_ (2025) [S]; a 2025 survey of risks/limitations of
 concept-based models and even a 2026 _In Defense of Information Leakage in Concept-based Models_
-[S] — the field now recognizes leakage as a tradeoff, not a sin. Hard bottlenecks buy intervention
+[S] — the field now recognizes leakage as a tradeoff, not a sin. Hard bottlenecks provide intervention
 validity and pay in accuracy exactly on inputs the concept vocabulary doesn't cover — which for us
 is every place the gazetteer doesn't know. **Weimar is the proof we want the leak**: a hard
 bottleneck (parse only from channels) would have had literally zero input and been forced to

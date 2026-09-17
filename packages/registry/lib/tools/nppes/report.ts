@@ -214,7 +214,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	lines.push(
 		best.t === 0
 			? `Best F1 is at the **default threshold** (${pct(base.score.f1)}%): raising it only trades recall away faster ` +
-					`than it buys precision. So the threshold knob alone can't separate co-located distinct providers — the ` +
+					`than it provides precision. So the threshold knob alone can't separate co-located distinct providers — the ` +
 					`over-merge is structural, in the comparison model, not the cutoff.`
 			: `Best F1 **${pct(best.score.f1)}%** (ARI ${best.score.ari.toFixed(3)}) at threshold ${best.t}, vs **${pct(base.score.f1)}%** at the ` +
 					`default — the threshold knob moves it ${(100 * (best.score.f1 - base.score.f1)).toFixed(0)}pp. Higher thresholds trade recall for precision.`

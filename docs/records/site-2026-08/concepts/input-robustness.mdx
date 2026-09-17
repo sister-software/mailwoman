@@ -33,7 +33,7 @@ It does the transforms that are always safe because they have a single correct
 answer: Unicode NFC, so a composed `é` and a decomposed `é` stop being different
 strings; punctuation folding; whitespace collapse, where a run of spaces becomes
 one and a trailing `.`/`,`/`;`/`:` is trimmed off the tail (`normalize/whitespace.ts`).
-That last one earns its keep: a stray period glued onto the final token
+That last one warrants its keep: a stray period glued onto the final token
 (`…Washington DC.`) used to drop the street tier from `address_point` to `admin`,
 and trimming it is free.
 

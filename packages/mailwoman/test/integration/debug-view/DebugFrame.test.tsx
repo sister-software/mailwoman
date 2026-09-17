@@ -102,7 +102,7 @@ const BASE_DATA = {
 
 /**
  * Ink's raw write ends with a trailing "\n" (an empty final split element, not an extra row). The string being split is
- * one already-rendered terminal frame — small, bounded, and never re-split or grown — so a spliterator buys nothing.
+ * one already-rendered terminal frame — small, bounded, and never re-split or grown — so a spliterator adds nothing.
  */
 function frameLines(text: string): string[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame, not a stream

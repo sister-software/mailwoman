@@ -84,7 +84,7 @@ describe("decideArc", () => {
 	})
 
 	it("blocks a D-rule locale regression regardless of a winning net", () => {
-		// Iron rule 6. Net +37 does not buy a regression in France.
+		// Iron rule 6. Net +37 does not add a regression in France.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 0, 0),
@@ -121,7 +121,7 @@ describe("decideArc", () => {
 		)
 
 		expect(arc.verdict).toBe("ship")
-		// +24 gross, and it still buys back the null's -6.
+		// +24 gross, and it still recovers the null's -6.
 		expect(arc.attributableNet).toBe(30)
 	})
 

@@ -255,7 +255,7 @@ function candidateKeyOf(candidate: ResolveCandidateTrace): string {
  *
  * A `parentID` or a region qualifier the coarse query could not supply re-points the lookup at a different population.
  * A country scope is deliberately NOT read here — it is a per-candidate predicate the candidate row can be tested
- * against, so it earns the sharper {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
+ * against, so it warrants the sharper {@linkcode CANDIDATE_ACCOUNTS} `contradicted` account instead.
  */
 function rescopedPath(base: LookupScope, variant: LookupScope): string | null {
 	const parts: string[] = []

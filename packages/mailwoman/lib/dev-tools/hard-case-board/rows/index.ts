@@ -265,7 +265,7 @@ export const FRAGMENT_ROWS: Curated[] = [
 	//#endregion
 
 	//#region comma_control
-	// The byte-stability twins. These must NOT be where an arm earns its score.
+	// The byte-stability twins. These must NOT be where an arm warrants its score.
 	{
 		id: "us-cc-moscow-idaho",
 		input: "Moscow, Idaho",

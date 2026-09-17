@@ -273,7 +273,7 @@ export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSo
 /**
  * Build the ladder from the anchor's answer plus its resolved place chain (deepest place first, then its ancestors).
  *
- * Two rules earn their keep here:
+ * Two rules warrant their keep here:
  *
  * - **Radii are made monotonic going up.** A locality with a real 30 km bbox inside a county whose bbox is degenerate
  *   (floor 75 km) is fine, but the reverse happens too — an ancestor whose recorded extent is TIGHTER than its child's,

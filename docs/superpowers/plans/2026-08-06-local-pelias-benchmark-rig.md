@@ -21,7 +21,7 @@ geocoding only.
 schema (one-shot), api, libpostal, placeholder (importers consult it for admin hierarchy — keeping
 it is cheaper than proving they don't), interpolation (**required**: street-centroid fallback would
 deflate the exact @1km metric under comparison). PIP omitted (no reverse). One custom project, one
-ES index — N per-country projects buy complexity, not accuracy, at 420 queries.
+ES index — N per-country projects provide complexity, not accuracy, at 420 queries.
 
 **Pinning:** the `pelias/docker` release is pinned by commit AND image digests, never floating
 tags. Data vintages pinned by SHA-256 manifest (§4).

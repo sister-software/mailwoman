@@ -71,7 +71,7 @@
 			"requiresSemanticRoute": true,
 			"searchedCategories": ["drugstore", "pharmacy"],
 			"anchorDerivation": "The same anchor as abs-c-01, reached through the activity phrase.",
-			"guards": "The activity phrase must not buy an absence claim the venue noun cannot. At a US anchor the phrase reaches drugstore AND pharmacy — the US-scoped drugstore claim holds where the search looks (#1999) — and the pilot layer surveyed pharmacy alone, so the route refuses on the category before it reaches the cell. Paired with abs-c-01 it shows the semantic route supplies recognition and no epistemics."
+			"guards": "The activity phrase must not provide an absence claim the venue noun cannot. At a US anchor the phrase reaches drugstore AND pharmacy — the US-scoped drugstore claim holds where the search looks (#1999) — and the pilot layer surveyed pharmacy alone, so the route refuses on the category before it reaches the cell. Paired with abs-c-01 it shows the semantic route supplies recognition and no epistemics."
 		},
 		{
 			"id": "abs-c-03",

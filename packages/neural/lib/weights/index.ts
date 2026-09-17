@@ -84,9 +84,9 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
  *
  * THE ONE PLACE THAT LAYOUT IS SPELLED OUT. Hand-assembling a `node_modules/...` path is normally the smell that says a
  * package should have been located with `import.meta.resolve` or an exports subpath; this is the one site in the tree
- * where it is the correct answer, and it earns that by being the inverse of a resolution rather than a substitute for
- * one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse --download-weights` runs
- * `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
+ * where it is the correct answer, and it warrants that by being the inverse of a resolution rather than a substitute
+ * for one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse --download-weights`
+ * runs `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
  * `packages/release-kit/lib/weights/stage-weights-cache.ts` — so there is nothing for a resolver to resolve.
  * `import.meta.resolve` would also answer from THIS module's graph (the monorepo), which is precisely the bundle the
  * candidate is being graded against.
@@ -760,7 +760,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * probe outputs live, and it ships in NO weights tarball. That is a deliberate deferral, not an oversight. The
  * 2026-08-04 wiring assessment ruled that the census gets no decode wiring until a calibration rung measures a δ (the
  * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime READS it,
- * adding 137–165 KB per locale to a published package buys nothing. When a calibration rung earns that cost, this
+ * adding 137–165 KB per locale to a published package adds nothing. When a calibration rung warrants that cost, this
  * function grows a package-sibling probe ahead of the data-root one — the same shape as
  * {@link resolveAnchorLookupSibling}'s binary-then-JSON ladder.
  *

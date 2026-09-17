@@ -17,7 +17,7 @@ coordinates, no non-US locale, no geocoding, and a baseline from a model several
 Three floors, all of which must hold:
 
 1. **Net improved-minus-regressed ≥ 0 on the full regression board.**
-2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
+2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not add one.
 3. **The promotion battery passes every floor declared by the eval spec**
    (`mwdev_promotion_eval` with `check: "v9.0.0-base.json"` and a package-shaped `weights_cache`). The command reports the passed and total floor counts; do not
    copy a count into this runbook because adding a floor would make it stale.

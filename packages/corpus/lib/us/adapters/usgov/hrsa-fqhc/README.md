@@ -7,7 +7,7 @@ US, the second member of Phase 1.6's "adversarial sources" class.
 
 HRSA's Health Center Service Delivery Site Locations dataset is the
 authoritative federal directory of FQHCs and look-alikes. Compared to
-gazetteer rows it earns its adversarial-source label on two fronts:
+gazetteer rows it warrants its adversarial-source label on two fronts:
 
 1. **Venue + address co-occurrence**: every row carries a hand-typed
    site name (e.g. "Buffalo Health Center Inc.") alongside the postal

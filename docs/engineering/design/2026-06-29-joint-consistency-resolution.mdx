@@ -28,7 +28,7 @@ region it already picked. The one question that would have saved it — _which "
 under it?_ — never gets asked.
 
 We did once ask it. Stage 5 (the cross-component reconcile, see `plan/reference/STAGES.mdx`) scored
-whole assignments and vetoed an impossible parent chain (`Houston → New York` earns `-Infinity`
+whole assignments and vetoed an impossible parent chain (`Houston → New York` warrants `-Infinity`
 because Who's On First says Houston descends from Texas). That reconcile was retired to argmax in #566
 because, bundled as it was, it broke the street/house-number precondition on the majority of US
 addresses. The admin-coherence check went out with the bathwater. The greedy fallback that replaced it
@@ -118,7 +118,7 @@ scopes two things we do not have today (#265):
 - A **supplementary address-system model**. The "don't memorize" rule is task-scoped: the open-world job
   (which Portland, of thousands) must generalize and retrieve; address-_system_ identification is a
   closed, small taxonomy where densely encoding the format-to-system structure is learning the real
-  distribution, not overfitting. Such a model earns its keep on the fuzzy tier the rules and the graph
+  distribution, not overfitting. Such a model warrants its keep on the fuzzy tier the rules and the graph
   both miss. It stays **advisory** — it proposes a system, it never vetoes where geography lands an
   address. Its larger payoff may be routing (which normalizer, which abbreviations, which field order,
   which gazetteer extract), not disambiguation.

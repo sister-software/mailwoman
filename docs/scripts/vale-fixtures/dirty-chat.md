@@ -8,7 +8,7 @@ One line per rule token, so a token that stops firing is visible per line.
 The negative twin was mis-constructed — misconstructed, in the unhyphenated
 spelling — so nothing is deleted.
 
-Proving the test earns its place by reverting the one-line fix.
+Proving the test warrants its place by reverting the one-line fix.
 
 The refutation is decisive and belongs on the issue.
 
@@ -26,7 +26,7 @@ Happy to help; good question; that is absolutely right and absolutely
 correct; hope this helps.
 
 The fix recovered 5,274 km, and the rerun recovers 12 km more; overall we
-regained 300 km against main, which buys 40 km of headroom.
+regained 300 km against main, which provides 40 km of headroom.
 
 The control row shows 7 km recovered as well.
 
@@ -57,7 +57,7 @@ Here's the result, and here’s what changed.
 
 For completeness, the same result appears below.
 
-The gauntlet earns their keep as the acid test — battle-tested, bulletproof,
+The gauntlet warrants their keep as the acid test — battle-tested, bulletproof,
 a game-changer, the silver bullet for low-hanging fruit that moves the needle.
 
 The cache is the chokepoint and the assertion is a tripwire. This footgun is
@@ -88,7 +88,7 @@ cheap win, done for free. It also costs approximately nothing.
 
 Price the change first, then price it in; we priced the ratio and priced out
 the rest. It is worth the cost, it pays for itself, it paid for itself at zero
-cost, and it buys you a clean board.
+cost, and it provides you a clean board.
 
 That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.

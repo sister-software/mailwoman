@@ -91,7 +91,7 @@ const pharmacy: ConceptRecord = {
 const obtainMedication: ConceptRecord = {
 	id: toConceptID("obtain_medication"),
 	label: "Obtain medication",
-	description: "A person collects or buys medication.",
+	description: "A person collects or provides medication.",
 	kind: ConceptKind.Activity,
 	isA: [],
 	assertions: [],

@@ -41,8 +41,8 @@ import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
- * Minimum address points a (CITY, DISTRICT) group needs before it earns a database row. Below this the "centroid" is a
- * handful of rural delivery points and the name is as likely a farm check as a locality; 5 keeps 3,000-odd real
+ * Minimum address points a (CITY, DISTRICT) group needs before it warrants a database row. Below this the "centroid" is
+ * a handful of rural delivery points and the name is as likely a farm check as a locality; 5 keeps 3,000-odd real
  * localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5

@@ -9,7 +9,7 @@
  *   This re-grades committed results; it does not re-run a resolver, so it holds the WALK fixed. A resolver
  *   that actually refused a node could ask different questions afterwards, through `parentFallback` and
  *   `hierarchyCompletion`, and reach a different final selection. The curve is an upper bound on what a
- *   threshold over this confidence signal can buy at the final selection, not a prediction of what the
+ *   threshold over this confidence signal can provide at the final selection, not a prediction of what the
  *   shipped knob would do.
  *
  *   The signal it thresholds is the arm's own margin — the winner's lead over the runner-up within the set

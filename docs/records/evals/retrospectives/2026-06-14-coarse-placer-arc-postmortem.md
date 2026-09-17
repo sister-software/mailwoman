@@ -103,7 +103,7 @@ the default-on flip were authorized, not self-granted._
 - **Open-set via `p_inmap`, not the pre-registered Mahalanobis/reject-head** — evidence-driven; the simpler
   rule dominated and made Phase 2 (a retrain) unnecessary.
 - **Threshold stays 0.9.** On the assembled check the operating point is a flat optimum in [0.5, 0.9]
-  (identical wins/regressions). The asymmetry favors recall, but a lower threshold buys nothing here while
+  (identical wins/regressions). The asymmetry favors recall, but a lower threshold adds nothing here while
   raising misroute _exposure_, so 0.9 (inject only when confident) is the conservative pick.
 - **Flip default-on** after the misroute check came back clean — the operator's call (a user-facing default
   change), taken with the check as evidence.

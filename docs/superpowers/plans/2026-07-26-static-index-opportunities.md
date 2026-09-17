@@ -125,7 +125,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 ### 7. Conventions / per-locale emission masks → artifact (L — defer until it grows)
 
 - `codex/address-system-conventions.ts` (87 lines, consumed via `addressSystemConventions: "auto"`,
-  `neural/classifier.ts:432-453`) is already static-in-code and small — moving it buys little
+  `neural/classifier.ts:432-453`) is already static-in-code and small — moving it provides little
   today. It becomes an artifact the day the locality-conditional-hierarchy direction lands
   (per-country emission masks derived from WOF ancestry statistics — the memory's "admin FST →
   per-country emission mask"). Flagged so the eventual home is planned, not accreted.

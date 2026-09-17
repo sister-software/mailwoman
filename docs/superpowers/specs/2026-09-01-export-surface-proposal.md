@@ -26,7 +26,7 @@ of this record now.
 
 ### §0.2 — `sideEffects: false` is correct, but not for the reason given
 
-Landed on the **43 of 59** published packages that earn it, by walking each module's top-level statement
+Landed on the **43 of 59** published packages that warrant it, by walking each module's top-level statement
 list (an expression statement, a bare `import "x"` or a top-level await RUNS; a declaration does not). The
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 

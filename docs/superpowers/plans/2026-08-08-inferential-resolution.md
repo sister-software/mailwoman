@@ -140,7 +140,7 @@ exclusion masks and fitted CPT parameters are all build-time artifacts keyed to 
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
 the targeted-precompute change already filed as
 [#1549](https://github.com/sister-software/mailwoman/issues/1549) — with the caution recorded there
-intact: precompute freezes a query distribution, so only stable and hot query classes earn an
+intact: precompute freezes a query distribution, so only stable and hot query classes warrant an
 artifact.
 
 ## Benchmarks are discovery instruments

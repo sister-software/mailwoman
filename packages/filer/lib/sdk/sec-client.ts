@@ -96,10 +96,10 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * preceding second then holds 9). Against a true sliding-window limiter that is a violation, and it happens on a
  * schedule that is arithmetically compliant — which is exactly the kind of correctness nobody can debug after a block.
  *
- * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy, and buys a schedule
- * that stays inside the published limit even when the event loop is late. `SEC_MAX_REQUESTS_PER_SECOND` remains the
- * clamp — a caller may ask for anything up to it — but the DEFAULT is this. Raise it only with a measurement showing
- * the arrival-time distribution stays under 10/s, not merely the grant times.
+ * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy, and provides a
+ * schedule that stays inside the published limit even when the event loop is late. `SEC_MAX_REQUESTS_PER_SECOND`
+ * remains the clamp — a caller may ask for anything up to it — but the DEFAULT is this. Raise it only with a
+ * measurement showing the arrival-time distribution stays under 10/s, not merely the grant times.
  *
  * THE RATE ALONE IS NOT ENOUGH, and this constant did not meet its own bar when it was introduced. `1000 / 9` is
  * `111.111…`, and a fractional interval puts the 10th grant at exactly 1000.0 ms after the first — so sub-millisecond

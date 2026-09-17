@@ -79,7 +79,7 @@ Pelias deletes the locality; we call Italy a country.
 
 So the thesis is not "we win." It is narrower and more defensible:
 
-> **Holding an ambiguity is not the same as resolving it.** The architecture buys us the ability to be
+> **Holding an ambiguity is not the same as resolving it.** The architecture provides us the ability to be
 > wrong _recoverably_ — `Italy, TX` is the country-channel homograph class, and its knob is
 > `country_ambiguous_scale`, which v263 set hard, over-suppressed, and v264 relaxed to 0.5 and
 > measured (homograph F1 82.6 → 85.1, WOF-admin 89.3 → 91.1%, no trade). Pelias's equivalent knob is a

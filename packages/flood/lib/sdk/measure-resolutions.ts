@@ -12,7 +12,7 @@
  *   one.
  *
  *   ONE STREAM, EVERY RESOLUTION. Re-reading a 367 MB geodatabase per candidate costs minutes each and
- *   buys nothing — the classification is per feature, so every candidate index folds the same feature in
+ *   adds nothing — the classification is per feature, so every candidate index folds the same feature in
  *   turn. The cost is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */

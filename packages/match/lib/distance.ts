@@ -87,7 +87,7 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
  *   toward worthless while a rare one keeps full weight.
  * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs "123 Main Street Apt
- *   2" that geocode to the same rooftop still earns near-agreement (the geo-first point of the whole design).
+ *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
  * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own; index 0 must be the

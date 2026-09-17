@@ -20,14 +20,14 @@
 #   PRIMARY (must at least MATCH v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
 #     Polskiego 178` -> house_number; contextful classes hold at v352's recovered levels.
 #   THE 2-DIGIT WIN (the reason to prefer 10-999) — FR date-name rises ABOVE v352's 0.367 toward the
-#     full range's 0.682. If it does NOT, the 2-digit pieces buy nothing and 3-digit is the reduce.
+#     full range's 0.682. If it does NOT, the 2-digit pieces add nothing and 3-digit is the reduce.
 #   GUARD (must HOLD) — parity postcode holds at ~0.986 (as v352 did); board 3 bare-pc holds; the 6
 #     demo presets hold. If postcode drops, a 2-digit piece IS colliding — unexpected; 3-digit is the reduce.
 #   DO-NO-HARM — FR fragment OVERALL + global parity hold.
 #
 # DECISION TABLE:
 #   guard HOLDS + date-name UP -> 10-999 dominates; take THIS to 8k, then promote.
-#   guard HOLDS + date-name FLAT -> 2-digit buys nothing; take 100-999 (v352) to 8k instead.
+#   guard HOLDS + date-name FLAT -> 2-digit adds nothing; take 100-999 (v352) to 8k instead.
 #   guard DROPS -> a 2-digit piece collides (unexpected); fall back to 100-999 (v352).
 #
 # NOT A SHIP. A PASS justifies an 8k. Promotion is the operator's act.

@@ -58,7 +58,7 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 
 /**
- * How an input set was chosen. `hand-picked` is the one that earns the extra sentence — a full board carries its own
+ * How an input set was chosen. `hand-picked` is the one that warrants the extra sentence — a full board carries its own
  * denominator, and a declared subset carries the predicate that chose it.
  *
  * `random-draw` is separate from `subset` because the two support opposite claims. A declared subset is chosen by a

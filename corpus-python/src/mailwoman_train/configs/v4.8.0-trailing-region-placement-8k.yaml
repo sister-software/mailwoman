@@ -48,7 +48,7 @@
 #
 # COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
 # per-row admission check applied INSIDE each source's stream, and the source multinomial fixes each
-# source's draw share — so admitting CN's 11.36M rows does not buy CN 1.7% of the run. CN's rows live
+# source's draw share — so admitting CN's 11.36M rows does not add CN 1.7% of the run. CN's rows live
 # almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
 #
 # 101 of the 134 codes have ZERO rows in the corpus. They admit nothing today and are declarations of

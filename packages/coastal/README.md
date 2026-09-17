@@ -206,7 +206,7 @@ Resolution 9 is refused because its index answers 0.5 % to 0.7 % of in-layer pro
 candidates and nothing more. Resolution 11 costs **3.9× the rows** (2.28 M against 0.59 M) to raise
 the index-answered share from about 5.5 % to about 24 %, and the ray cast stays the common path
 either way. Since the candidate set per cell is tiny — a coastal frontage is not a river network —
-the probe saving does not buy four times the cell tier. Resolution 10 keeps that tier under 600 k
+the probe saving does not add four times the cell tier. Resolution 10 keeps that tier under 600 k
 rows and still narrows every probe to a handful of polygons.
 
 ## The build, as it ran

@@ -8,8 +8,8 @@ import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
 
 /**
- * Surfaces the glossary auto-linker must never link, whatever term claims them. Two false-positive classes earn a word
- * a place here, both measured across the built site:
+ * Surfaces the glossary auto-linker must never link, whatever term claims them. Two false-positive classes warrant a
+ * word a place here, both measured across the built site:
  *
  * 1. A common English word that is also a glossary ALIAS. `state` is an alias of `region`, so every ordinary use — "the
  *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and

@@ -450,7 +450,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"## Caveats",
 		"",
 		`This is a synthetic ${truthForm499Rows.length}-filer corpus, not a run against real FCC Form 499 data — no ` +
-			"such corpus ships in this repo with a stable hash to pin to, so the eval buys exactness and reproducibility " +
+			"such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility " +
 			"at the cost of scale. What the withheld number does NOT say is that ownership is hard to recover in " +
 			"general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale " +
 			"is the honest limitation, and it limits confidence rather than the mechanism: a larger corpus of the same " +

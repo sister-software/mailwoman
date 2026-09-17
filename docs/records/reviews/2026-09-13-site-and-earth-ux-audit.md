@@ -22,8 +22,8 @@ Why half of this was hard to check at all is its own record: `.yarnrc.yml` decla
 | `/nope-not-a-page`                             | 404, carrying the new body; upstream's "contact the owner of the site" is gone |
 | `/docs/reviews/2026-08-02-mailfail-robustness` | 404 — the orphan is off the published site                                     |
 | Font preloads in `index.html`                  | 4, all `rel=preload as=font type=font/woff2 crossorigin=anonymous`             |
-| Buy cards                                      | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines        |
-| `/docs/pricing`                                | "Buying one" + "Buy a commercial license" CTA                                  |
+| Purchase cards                                 | `$250`, `$2,400`, "Works out to $200 a month", both billing-basis lines        |
+| `/docs/pricing`                                | "Buying one" + "Purchase a commercial license" CTA                             |
 | Footer                                         | `href=/license>License`                                                        |
 | `rebeccapurple`                                | absent from the built CSS                                                      |
 | Card example lines                             | `white-space:normal; overflow-wrap:anywhere` shipped                           |
@@ -220,7 +220,7 @@ Either hold it behind the Resources door until it has real data, or drop the foo
 The two halves of the money path never reference each other:
 
 - `/docs/pricing` (`docs/articles/pricing.mdx`) states the prices and ends in a **mailto**. It has no link
-  to `/license` and no buy CTA at all.
+  to `/license` and no provide CTA at all.
 - `/license` (`docs/src/pages/license.mdx`) holds the actual Stripe checkout (`BuyLicense`), and its two
   plan cards carry **no price** — only "Renews every month; the key follows the paid period plus 14 days."
   A buyer has to hold the $250 figure in their head from another page.

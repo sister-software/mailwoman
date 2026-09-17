@@ -298,7 +298,7 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
  * Match-length scaling mode for the importance bias (#1142). A single-token place match is weak evidence (a place name
  * that is also a surname / street head / common word); a multi-token match is reliable. `both` scales the positive
  * locality bias AND the street suppression by match length; `suppression` scales only the suppression (leaving the
- * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias earns its keep); `off`
+ * positive bias intact — safe for the bare-fragment regime where the positive gazetteer bias warrants its keep); `off`
  * disables it.
  */
 export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
@@ -667,7 +667,7 @@ function applyBias(
 	// match ("New York", "Saint Louis") is far more reliable. Without this, real gazetteer importance
 	// pulls the leading token of a bare/comma-free street into locality ("Sweeney Ranch Road" → loc
 	// "Sweeney"; measured US golden −22, the no-anchor comma-free class). `suppression` scales only the
-	// street-suppression term (safe for the bare-fragment regime where the positive bias earns its keep);
+	// street-suppression term (safe for the bare-fragment regime where the positive bias warrants its keep);
 	// `both` also scales the positive locality bias; `off` disables. Locale-general — no word list.
 	const matchLen = groups.length
 	const lengthScale = FST_MATCH_LENGTH_SCALE.get(matchLen) ?? FULL_FST_MATCH_SCALE

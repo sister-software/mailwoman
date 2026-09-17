@@ -6,7 +6,7 @@
  *   Typed schema for `uprn.db` — the OS Open UPRN spatial layer: every GB Unique Property Reference
  *   Number with its WGS84 point, so mailwoman results can carry UPRN as an interoperability key
  *   beside our own `@mailwoman/address-id`. One rowid table keyed `uprn INTEGER PRIMARY KEY` (the
- *   rowid alias — the optimal shape for an integer-PK point table; `WITHOUT ROWID` buys nothing
+ *   rowid alias — the optimal shape for an integer-PK point table; `WITHOUT ROWID` adds nothing
  *   here), plus a secondary res-9 `h3_cell` index for the bounded nearest-point probe.
  *
  *   ## Coordinates are OS's own WGS84 columns

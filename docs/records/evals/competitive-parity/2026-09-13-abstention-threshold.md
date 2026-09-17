@@ -11,7 +11,7 @@ re-grading in the
 
 **Exploratory, and outside that pre-registration.** Every threshold here was read off results that
 were already visible, which is the one thing the registered rule forbids. Nothing below re-decides the
-frozen verdict, and no threshold earns a claim until it is registered ahead of a panel it has not
+frozen verdict, and no threshold warrants a claim until it is registered ahead of a panel it has not
 seen.
 
 Four findings, in the order they constrain each other:
@@ -43,7 +43,7 @@ committed results: a selection whose confidence falls below the threshold is re-
 No resolver is re-run, so the walk is held fixed. A resolver that actually refused a node could ask
 different questions afterwards, through `parentFallback` and `hierarchyCompletion`, and reach a
 different final selection. Everything in the next two sections is therefore an upper bound on what a
-threshold over this signal can buy at the final selection, not a prediction of shipped behaviour. The
+threshold over this signal can provide at the final selection, not a prediction of shipped behaviour. The
 knob section below is the opposite: a real replay, and it shows what that caveat costs.
 
 ## The trade curve

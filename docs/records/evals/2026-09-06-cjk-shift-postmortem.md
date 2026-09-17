@@ -81,4 +81,4 @@ operator set to end at 13:00 UTC; the last four hours held nothing that did not 
 2. The candidate rebuild carrying `postalcode-jp.db` (#2176) — and the WOF county fixes (#2128, #2129) with it.
 3. The named slots (`locality`, `region`) on a JP result stay null while `components` and `hierarchy` carry the tiers.
 4. Korean: the four decisions in the spec (package, KOGL text, the `subregion` route, when to spend the probe).
-5. #2178: whether a 市-inside-name register earns a run.
+5. #2178: whether a 市-inside-name register warrants a run.

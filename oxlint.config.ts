@@ -118,9 +118,9 @@ const NODE_TIER_NEURAL_FILES = [
 /**
  * Node-only modules the browser tier must not pull into the bundle.
  *
- * `./onnx-runner.ts` earns its place twice over now that `@mailwoman/neural/onnx-runner` carries a `browser` condition:
- * export conditions do not apply to relative specifiers, so the package-name form is safe and the relative one silently
- * is not. Naming the relative path is what makes that difference visible at the point of the mistake.
+ * `./onnx-runner.ts` warrants its place twice over now that `@mailwoman/neural/onnx-runner` carries a `browser`
+ * condition: export conditions do not apply to relative specifiers, so the package-name form is safe and the relative
+ * one silently is not. Naming the relative path is what makes that difference visible at the point of the mistake.
  */
 const NODE_ONLY_NEURAL_MODULES = [
 	"./onnx-runner.ts",

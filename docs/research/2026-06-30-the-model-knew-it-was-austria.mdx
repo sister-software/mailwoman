@@ -40,7 +40,7 @@ There's a tempting shortcut here, and it's worth naming because we've watched it
 
 The fix instead asks the parse and the resolve to be consistent with _each other_. When the address carries an explicit country and the locality it resolved to lives somewhere else, re-pick the locality to the one that actually sits inside the country the address named. The country code comes from the model's own `country` emission, normalized through an ISO table we already had on the shelf; the gazetteer's own `country` column does the rest. No list. No prior. It generalizes to every country at once, because it isn't about any particular country — it's about the address agreeing with itself.
 
-There's a guard rail worth mentioning, because it's where this kind of fix usually goes wrong. It only fires when the country is the nearest thing the address says about geography. Write `Springfield, IL, USA` and the state is right there doing the disambiguating, so the new pass stays out of the way and Springfield stays in Illinois — not the largest Springfield in America. The fix earns its keep precisely by knowing when not to act.
+There's a guard rail worth mentioning, because it's where this kind of fix usually goes wrong. It only fires when the country is the nearest thing the address says about geography. Write `Springfield, IL, USA` and the state is right there doing the disambiguating, so the new pass stays out of the way and Springfield stays in Illinois — not the largest Springfield in America. The fix warrants its keep precisely by knowing when not to act.
 
 ## What it bought, and what it cost
 

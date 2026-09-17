@@ -38,8 +38,8 @@ const TRACE_CANDIDATE_CAP = 10
  * The fine end of the probe window: `microhood` and no finer.
  *
  * Everything above it — `postalcode`, `venue`, `campus`, `building`, `address` — is excluded because a mislabeled ADMIN
- * span lands on another admin band, and probing every venue in a country per miss buys a long tail of coincidental name
- * matches for a diagnostic that is meant to be read.
+ * span lands on another admin band, and probing every venue in a country per miss provides a long tail of coincidental
+ * name matches for a diagnostic that is meant to be read.
  */
 const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give a customer the two ends of the worker that merged in #2160: the docs site's Buy section and `/license/issued` claim page, and the CLI's `license adopt` and `license refresh` over a config-root key file, with the per-license status beside the key-id publication in `verify --online` and the doctor.
+**Goal:** Give a customer the two ends of the worker that merged in #2160: the docs site's Purchase section and `/license/issued` claim page, and the CLI's `license adopt` and `license refresh` over a config-root key file, with the per-license status beside the key-id publication in `verify --online` and the doctor.
 
 ## Execution notes
 
@@ -20,7 +20,7 @@
 - **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-contract`
   requires.
 
-**Architecture:** Core gains two small modules beside the ones the worker already made: `license/key-file.ts` (the config-root key and refresh-credential files, read by `verifyConfiguredLicenseKey` after the environment variable) and `license/status.ts` (the HTTP client for the worker's refresh and status routes, on `APIClient`, outside the barrel like `publication.ts`). The CLI's `license` command grows two actions over them; the doctor's runtime license check reports the lid status as a fifth word beside the publication. The docs site gets a constants module for the shop's URLs, a Buy section on `/license`, and a `/license/issued` page whose polling is a pure reducer with a unit test, rendered through `BrowserOnly`.
+**Architecture:** Core gains two small modules beside the ones the worker already made: `license/key-file.ts` (the config-root key and refresh-credential files, read by `verifyConfiguredLicenseKey` after the environment variable) and `license/status.ts` (the HTTP client for the worker's refresh and status routes, on `APIClient`, outside the barrel like `publication.ts`). The CLI's `license` command grows two actions over them; the doctor's runtime license check reports the lid status as a fifth word beside the publication. The docs site gets a constants module for the shop's URLs, a Purchase section on `/license`, and a `/license/issued` page whose polling is a pure reducer with a unit test, rendered through `BrowserOnly`.
 
 **Tech Stack:** `@mailwoman/core` (`APIClient`, `fs/readers`, `fs/writers`, `data-root`), the native CLI spec in `packages/mailwoman/lib/cli-native/`, the doctor registry in `packages/mailwoman/lib/doctor/`, Docusaurus 3 pages in `docs/src/pages/`, `useClipboard` from `@mailwoman/react`, Vitest.
 
@@ -35,7 +35,7 @@
 - The CLI never writes a token this build does not trust: `refresh` and `adopt` verify offline against `trustedLicenseSigningKeys()` first and refuse `unknown_key` with the remedy (upgrade mailwoman).
 - Public status words are the worker's: `active`, `lapsed`, `revoked`, `unknown`; the client adds `unreachable`. No reason, name or date travels with them.
 - Site: exact-origin CORS on the worker admits `https://mailwoman.ai`, so the claim call is a plain `fetch` from the page; the page never stores the token or the secret anywhere but the DOM.
-- The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in ONE constants module and start `undefined`; the Buy section renders only when both Payment Links are set, so the live page never shows a dead button.
+- The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in ONE constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
 - Prose follows `docs/.vale-vocab.ini` (README, plan) and the site's `.vale.ini` (pages); acronyms cap as whole components; snake_case wire keys stay.
 - Tests sit under `test/unit/` or `test/integration/` and import helpers by the package contract, never relatively (`test-contract` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
@@ -652,7 +652,7 @@ function refusalFor(verification: LicenseKeyVerification): string | undefined {
 		case "valid":
 			return undefined
 		case "expired":
-			return `this token expired on ${verification.payload.expires}; refresh it or buy again.`
+			return `this token expired on ${verification.payload.expires}; refresh it or purchase again.`
 		case "unknown_key":
 			return `this release does not trust key id ${verification.kid}; upgrade mailwoman to a release that lists it, then try again.`
 		default:
@@ -865,7 +865,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 
 ---
 
-### Task 4: The Buy section on `/license`
+### Task 4: The Purchase section on `/license`
 
 **Files:**
 
@@ -880,7 +880,7 @@ export const LICENSE_WORKER_URL = "https://license.mailwoman.ai"
 export const SUPPORT_EMAIL = "teffen@sister.software"
 export const AGREEMENT_VERSION = "commercial-2026-10"
 export const TERMS_PATH = `/license/terms/${AGREEMENT_VERSION}`
-/** Operator-owned. `undefined` until the Payment Links exist; the Buy section renders only when both are set. */
+/** Operator-owned. `undefined` until the Payment Links exist; the Purchase section renders only when both are set. */
 export const PAYMENT_LINK_MONTHLY: string | undefined = undefined
 export const PAYMENT_LINK_YEARLY: string | undefined = undefined
 export const BILLING_PORTAL_URL: string | undefined = undefined
@@ -922,7 +922,7 @@ export const BuyLicense: React.FC = () => {
 	}
 
 	return (
-		<div className={styles.buy}>
+		<div className={styles.provide}>
 			<div className={styles.plans}>
 				<a className={styles.plan} href={PAYMENT_LINK_MONTHLY}>
 					<strong>Monthly</strong>
@@ -949,7 +949,7 @@ export const BuyLicense: React.FC = () => {
 }
 ```
 
-`styles.module.css`: `.buy`, `.plans` (two-column grid, one column under 640px), `.plan` (bordered card, `var(--ifm-color-emphasis-300)` border, no underline), `.fine` (smaller text). Follow `docs/src/components/PricingTiers/styles.module.css` for tokens.
+`styles.module.css`: `.provide`, `.plans` (two-column grid, one column under 640px), `.plan` (bordered card, `var(--ifm-color-emphasis-300)` border, no underline), `.fine` (smaller text). Follow `docs/src/components/PricingTiers/styles.module.css` for tokens.
 
 - [x] **Step 2: The page**
 
@@ -958,7 +958,7 @@ In `license.mdx`, replace the last sentence of "The commercial branch" ("To obta
 ```mdx
 import { BuyLicense } from "@site/src/components/License/BuyLicense"
 
-### Buy a license
+### Purchase a license
 
 <BuyLicense />
 
@@ -1001,13 +1001,13 @@ Update the frontmatter description if the page's scope grew. Run `yarn workspace
 
 - [x] **Step 3: Render it**
 
-Start the docs dev server as `docs/.claude/skills/run-docs/SKILL.md` describes, then `node .claude/skills/run-docs/driver.mts --check /license/` and `--screenshot /license/ <scratch>/license.png`; read the screenshot. Expected: the Buy section renders the contact paragraph (links unset), the two new sections render, no console error.
+Start the docs dev server as `docs/.claude/skills/run-docs/SKILL.md` describes, then `node .claude/skills/run-docs/driver.mts --check /license/` and `--screenshot /license/ <scratch>/license.png`; read the screenshot. Expected: the Purchase section renders the contact paragraph (links unset), the two new sections render, no console error.
 
 - [x] **Step 4: Commit**
 
 ```bash
 git add docs/src
-git commit -m "feat(docs): the Buy section, the refresh paragraph and the refunds explanation on /license
+git commit -m "feat(docs): the Purchase section, the refresh paragraph and the refunds explanation on /license
 
 Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 ```
@@ -1200,7 +1200,7 @@ The docs site is a browser bundle; raw `fetch` is right here (the `APIClient` ru
 - `revoked`: "This license has been revoked. Write to <SUPPORT_EMAIL>."
 - `not_found`: "Stripe does not know this session. Use the link Stripe sent you, or write to <SUPPORT_EMAIL>."
 - `unreachable`: "license.mailwoman.ai did not answer. The key arrives by email on its own; reload to try again."
-- No `session_id` in the query: "This page is where Stripe sends you after payment. Buy at /license." with a link.
+- No `session_id` in the query: "This page is where Stripe sends you after payment. Purchase at /license." with a link.
 
 `docs/src/pages/license/issued.tsx`:
 
@@ -1233,7 +1233,7 @@ Add `<meta name="robots" content="noindex">` for this page through Docusaurus `H
 - [x] **Step 5: Run the test and render the page**
 
 Run: `yarn vitest run docs/test/unit/license-claim.test.ts`. Expected: PASS.
-With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/license/issued/?session_id=cs_test_probe"` and a screenshot. Expected: the page reaches `unreachable` or `not_found` (the real worker is not deployed yet), renders the matching copy, and logs no console error other than the failed fetch. Also `--check /license/issued/` without a query: the "buy at /license" copy.
+With the dev server up: `node .claude/skills/run-docs/driver.mts --check "/license/issued/?session_id=cs_test_probe"` and a screenshot. Expected: the page reaches `unreachable` or `not_found` (the real worker is not deployed yet), renders the matching copy, and logs no console error other than the failed fetch. Also `--check /license/issued/` without a query: the "provide at /license" copy.
 
 - [x] **Step 6: Commit**
 
@@ -1253,7 +1253,7 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 ```markdown
 ### Added — self-service license: the site and the CLI
 
-`/license` gains a Buy section (the two Payment Links and the billing portal, rendered once the operator fills them),
+`/license` gains a Purchase section (the two Payment Links and the billing portal, rendered once the operator fills them),
 a section on keeping the key current, and the reason a refunded license keeps verifying offline until its date.
 `/license/issued` is the page Stripe returns a buyer to: it polls the worker's claim route and shows the key, the
 one-time refresh secret, the `.env` fragment and the two commands to run. `mailwoman license adopt <token> --secret <s>`
@@ -1280,4 +1280,4 @@ Then `yarn test`. Run `yarn lint` on the EXACT tree being pushed, after the last
 
 - [ ] **Step 4: Push and PR**
 
-Push `feat/license-site-and-cli`; open the PR against `main` with the template; state: the key-file read joins the launcher path at N modules (from Task 0); `refresh` refuses an untrusted token and why; the doctor's fifth word and that `appliedLicenseBranch` is untouched; the Buy section's render condition; that the terms page and the Payment Link URLs are issue A's. Closes the tracking issue created at execution start.
+Push `feat/license-site-and-cli`; open the PR against `main` with the template; state: the key-file read joins the launcher path at N modules (from Task 0); `refresh` refuses an untrusted token and why; the doctor's fifth word and that `appliedLicenseBranch` is untouched; the Purchase section's render condition; that the terms page and the Payment Link URLs are issue A's. Closes the tracking issue created at execution start.

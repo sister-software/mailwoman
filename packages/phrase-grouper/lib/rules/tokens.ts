@@ -66,7 +66,7 @@ export const SHORT_VENUE_RUN_CONFIDENCE = 0.5
 
 /**
  * Confidence added to a place-name run by its token count. Longer runs are less likely to be a coincidental adjacency,
- * so they earn more — the curve flattens past four tokens.
+ * so they warrant more — the curve flattens past four tokens.
  */
 export const PLACE_RUN_LENGTH_BONUS: ReadonlyMap<number, number> = new Map([
 	[2, 0.15],

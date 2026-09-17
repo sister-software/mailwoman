@@ -389,14 +389,14 @@ predecessor stand in_" is not.
   level-k ancestor" which interval labels cannot, and it round-trips through the FST place entry
   unchanged.
 - **Add a pre/post interval pair (two u32s) per place at seal time** over the primary hierarchy.
-  This buys the two things the chain is bad at: O(1) `is X inside Y` in the ranker _without
+  This provides the two things the chain is bad at: O(1) `is X inside Y` in the ranker _without
   scanning 8 slots or knowing Y's level_ (nested-set containment test [S]), and descendant
   enumeration as a contiguous range scan (`WHERE pre BETWEEN y.pre AND y.post`) — which is the
   candidate-table analog of the FST's BFS-descendants and what a "constrain to region" candidate
   probe wants. The textbook objection — relabeling on update [S] — is void here: our databases are
   sealed read-only artifacts rebuilt whole (house doctrine), which is precisely the regime interval
   labeling was always safe in. Nobody in shipped geo appears to have done this; the toponym
-  literature's containment heuristics [S] say the check earns its place in ranking.
+  literature's containment heuristics [S] say the check warrants its place in ranking.
 - **The DAG caveat decides the fallback.** WOF places can carry multiple hierarchies [M] and
   Overture keeps `hierarchies` plural [S]. A single interval pair encodes one tree. Policy:
   intervals over the _primary_ hierarchy (what the chain already commits to); if cross-hierarchy

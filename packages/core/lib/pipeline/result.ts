@@ -21,7 +21,7 @@ import type {
  * One stage crash the coordinator caught and degraded past.
  *
  * A fault is NOT an error return: `runPipeline` still resolves, and `tree` still carries whatever the remaining stages
- * could prove. What the fault buys the caller is the ability to tell "the model faulted and the rule-based stages
+ * could prove. What the fault provides the caller is the ability to tell "the model faulted and the rule-based stages
  * filled the tree back in" apart from "the model ran and found nothing" — which, before #40, was impossible from the
  * outside. See the `safeClassify` docstring for the measured failure this was written against.
  */

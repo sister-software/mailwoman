@@ -93,7 +93,7 @@ config header before launch:
   whitespace-separated surfaces read higher than JP's at the same step in every prior run, and lower than that is the
   finding.
 
-A passing probe earns the 24k run, exported into the same served package (one `model.onnx`, one `char-vocab.json`,
+A passing probe warrants the 24k run, exported into the same served package (one `model.onnx`, one `char-vocab.json`,
 one card), with the KR attribution line in the card.
 
 ## 6. Decisions the operator takes

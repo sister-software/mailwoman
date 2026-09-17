@@ -30,10 +30,10 @@ export function firstRegionQualifier(roots: readonly AddressNode[]): string | un
  * Stable, TIER-SAFE partition: within each match tier, candidates the containment source vouched for (`isContained`)
  * move ahead of the rest, and BOTH groups keep their incoming relative order — the same house rules every soft ranking
  * key here obeys (`toponym-prior.ts`): tier-safe (a contained partial match never outranks an exact one — `isExact`
- * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier earns the front),
- * positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their incoming
- * rank, so an incapable backend is a no-op by construction), and stable (the backend's own ordering survives within
- * each (tier, containment) cell).
+ * splits the population exactly as `rankWithinTier`'s tri-state rule does, only a stated exact tier warrants the
+ * front), positive-evidence-only (only a stated `true` moves a row; `false` and "never evaluated" both hold their
+ * incoming rank, so an incapable backend is a no-op by construction), and stable (the backend's own ordering survives
+ * within each (tier, containment) cell).
  *
  * Implemented with the slot idiom (`reorderMeasured`'s mechanics): each tier's members permute only among the positions
  * that tier already occupies, so a tier-interleaved list — the walk's no-importance path never regrouped tiers — cannot

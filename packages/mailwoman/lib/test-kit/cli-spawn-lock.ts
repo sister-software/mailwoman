@@ -10,7 +10,7 @@
  *   graph, before any model loads — so a handful in parallel saturate the machine and every one of them slows down.
  *
  *   A lock rather than a vitest concurrency setting: the constraint is a property of the CHILD process, which the
- *   runner cannot see. Timeouts alone buy margin without stopping the stacking.
+ *   runner cannot see. Timeouts alone provide margin without stopping the stacking.
  *
  *   The lock is a DIRECTORY, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
  *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases

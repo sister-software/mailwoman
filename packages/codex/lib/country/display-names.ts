@@ -26,7 +26,7 @@
  * Greek, Thai) or a major Latin-script exonym set that diverges from English.
  *
  * Adding a locale is additive and safe — surfaces are deduplicated — but every addition grows the candidate table, so
- * it earns its place by contributing surfaces a user would plausibly type.
+ * it warrants its place by contributing surfaces a user would plausibly type.
  */
 export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] = [
 	"en",

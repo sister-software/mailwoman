@@ -37,7 +37,7 @@ than the last.
 > each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
 > span?" instead of discovering boundaries and types at once. Splitting the two costs a page of plumbing and
-> buys a smaller question at the point where errors are expensive, because a boundary the grouper proposes
+> provides a smaller question at the point where errors are expensive, because a boundary the grouper proposes
 > can be reconsidered, while a boundary a joint decoder has already committed to cannot.
 
 <!-- illustrative -->

@@ -231,7 +231,7 @@ Ordered by what is buildable today, not by expected value.
 
 `uprn.db` carries designated coverage and no names, so the GB probe is spatial, not lexical: _does
 any designated address point exist within R of this candidate?_ A candidate landing in a designated
-cell with no UPRN inside R earns one negative bit.
+cell with no UPRN inside R warrants one negative bit.
 
 No new artifact. `R` is a parameter with a measured default, not a tuned weight.
 

@@ -17,7 +17,7 @@
  *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is NOT versioned by this
  *   change, deliberately — versioning it would have declared a corpus that did not change to be a new board.
  *
- *   Everything else here is the loader's error surface. A corpus spread across 121 files earns its keep only
+ *   Everything else here is the loader's error surface. A corpus spread across 121 files warrants its keep only
  *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 

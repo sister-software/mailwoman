@@ -193,7 +193,7 @@ The baseline for grading a candidate is the NULL RUN, not the shipped model. A c
 ten rows has cost nothing; one that costs eighteen has cost eight. Every check in this arc used the
 wrong denominator.
 
-It also sets a floor on what a fine-tune can deliver: **it must buy back five net rows before it breaks
+It also sets a floor on what a fine-tune can deliver: **it must recover five net rows before it breaks
 even**, because that is what 4,000 steps against this base costs on its own. None of the six came
 close, and no extract-side change can, since the tax is charged before the extract is read.
 
@@ -221,7 +221,7 @@ should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
 **4 improved / 10 regressed, net -6.**
 
 Regressions fell 18 -> 10. But ten IS the null's tax, so the extract now costs nothing beyond it — and
-buys nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
+adds nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
 The finding is in the shape of the tax, not the net. **It is paid in the first 1,000 steps and barely
@@ -246,7 +246,7 @@ The null is the best of them. Every arm that adds data is worse than adding none
 data most cautiously converges on the null rather than beating it.
 
 **No fine-tune of this base can ship an additive surface.** The tax is fixed, immediate, and larger
-than anything an additive extract has been able to buy back. That is not a judgement about these extracts;
+than anything an additive extract has been able to recover. That is not a judgement about these extracts;
 it is a property of the starting point, and it holds across exposure, composition, regularization and
 distance.
 

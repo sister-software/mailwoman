@@ -51,14 +51,14 @@ const Plan: React.FC<PlanProps> = ({ href, name, price, basis, note, renewal }) 
 		<span className={styles.planRenewal}>{renewal}</span>
 
 		<span aria-hidden="true" className={styles.planCTA}>
-			Buy {name.toLowerCase()} →
+			Purchase {name.toLowerCase()} →
 		</span>
 	</a>
 )
 
 export const BuyLicense: React.FC = () => {
 	return (
-		<div className={styles.buy}>
+		<div className={styles.provide}>
 			<div className={styles.plans}>
 				<Plan
 					href={PAYMENT_LINK_MONTHLY}

@@ -6,7 +6,7 @@
 
 ## The idea in one paragraph
 
-The decoder consults the gazetteer _as it parses_: candidate word-spans of the input are probed against a precomputed **index of (child-place, parent-place) pairs** built from authoritative registers (PPD for GB; LINZ for NZ later). A two-sided hit — child span + parent span co-occurring in the same input, pair present in the country's index — adds a calibrated log-bias δ to the corresponding tag's emissions before Viterbi. Presence boosts; absence is neutral (positive evidence only — register absence is coverage gap, not fact). This surfaces a placetype's _conditional_ prevalence ("this parent has children of this type") to a small model at decode time — the structural information giant parsers buy with parameters.
+The decoder consults the gazetteer _as it parses_: candidate word-spans of the input are probed against a precomputed **index of (child-place, parent-place) pairs** built from authoritative registers (PPD for GB; LINZ for NZ later). A two-sided hit — child span + parent span co-occurring in the same input, pair present in the country's index — adds a calibrated log-bias δ to the corresponding tag's emissions before Viterbi. Presence boosts; absence is neutral (positive evidence only — register absence is coverage gap, not fact). This surfaces a placetype's _conditional_ prevalence ("this parent has children of this type") to a small model at decode time — the structural information giant parsers provide with parameters.
 
 ## Evidence (zero-GPU ladder on frozen checkpoints; full record `.superpowers/sdd/task-8-report.md`)
 

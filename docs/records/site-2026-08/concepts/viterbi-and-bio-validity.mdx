@@ -162,11 +162,11 @@ probe), every config from v0.6.3 on has stayed at `0.0` — the current
 one included. [Dual-loss curvature
 conflict](./dual-loss-curvature-conflict.mdx) has the full diagnostic
 story of why the two losses fought instead of cooperating. There's no
-active plan to revisit it — the structural mask alone already buys the
+active plan to revisit it — the structural mask alone already provides the
 concrete win (no orphan-I), and the encoder's attention covers most of
 the rest.
 
-## What a learned CRF would buy (if one ever ships)
+## What a learned CRF would provide (if one ever ships)
 
 A learned transition layer would add soft transition preferences on
 top of the hard structural mask. For example:
@@ -178,7 +178,7 @@ B-street` — a learned matrix could encode that preference.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
 B-locality` is rare — a learned matrix could rank these apart.
 
-It would not buy:
+It would not provide:
 
 - Better encoder representations. The encoder is the upstream learner;
   a CRF layer is downstream of it, not a substitute for it.

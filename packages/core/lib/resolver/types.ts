@@ -887,7 +887,7 @@ export interface ResolveOpts {
 	 * When a lookup resolves NOTHING, re-probe the same value across the other admin bands and record which ones hold it
 	 * ({@link ResolveNodeTrace.reachableIn}) — a DIAGNOSTIC that never changes the answer.
 	 *
-	 * The distinction it buys is the one a `null` cannot carry: a key we hold under a different placetype is a
+	 * The distinction it provides is the one a `null` cannot carry: a key we hold under a different placetype is a
 	 * REACHABILITY failure — the model's tag chose the band, and a wrong tag makes a row we own unreachable — while a key
 	 * that exists nowhere is a coverage fact. Those call for opposite work and today reach a caller identically.
 	 *

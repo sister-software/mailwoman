@@ -224,7 +224,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 
 /**
  * Scan cap for {@linkcode countShapedOnlyKeys}. The answer is used as "any, and roughly how many" in an error message;
- * walking all 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 buys nothing.
+ * walking all 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 adds nothing.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 

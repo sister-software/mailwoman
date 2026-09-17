@@ -1,6 +1,6 @@
 """A deferred intra-package import may not dodge an import cycle.
 
-A deferred import is legitimate when it buys startup weight: `cli.py` defers 32 of them and keeps
+A deferred import is legitimate when it provides startup weight: `cli.py` defers 32 of them and keeps
 torch's 1.46 s off every `--help` (measured — `mailwoman_train.cli` imports in 22,340 us against
 `mailwoman_train.train`'s 1,458,740 us). It is a defect when the target module imports this one back,
 because then the deferral is hiding a circular graph and an ImportError surfaces at first call rather

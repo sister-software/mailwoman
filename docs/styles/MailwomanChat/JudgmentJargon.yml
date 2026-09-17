@@ -20,7 +20,8 @@ ignorecase: true
 tokens:
   - mis-constructed
   - misconstructed
-  - earn(s|ed|ing)? (?:its|their) (?:place|keep)
+  - earns?
+  - earn(?:ed|ing)? (?:its|their) (?:place|keep)
   - decisive(ly)?
   - paid for itself
   - unattributed delta

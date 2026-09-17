@@ -190,7 +190,7 @@ concept the page is about — that is the recursive-hop failure the Mapbox surve
 definition on the third page that needs it either; that is the repetition cost the Felt survey records. One
 sentence locally, the registry for the rest.
 
-**Adding a term.** A concept used on two or more pages earns a registry entry. Add it to
+**Adding a term.** A concept used on two or more pages warrants a registry entry. Add it to
 `glossary/glossary.json` with its aliases, so the drift spellings resolve to one tooltip rather than to
 nothing.
 

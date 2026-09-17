@@ -36,9 +36,9 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
  * body is untenable and response caching is nonsense. These objects sit on the API side of that line: the largest is
  * `model.onnx` at 39,419,629 bytes and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0
  * directory), each one is md5-checked after arrival, and each is fetched exactly once per run — so a buffered body
- * costs one artifact's worth of memory and a stream would buy nothing. What `APIClient` does buy is the reason the YAML
- * this replaces passed `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public bucket from CI,
- * and a 429 read as a missing artifact is the one answer that would have a release believe its weights were never
+ * costs one artifact's worth of memory and a stream would add nothing. What `APIClient` does provide is the reason the
+ * YAML this replaces passed `--retry 6 --retry-all-errors` to every curl: Hugging Face throttles the public bucket from
+ * CI, and a 429 read as a missing artifact is the one answer that would have a release believe its weights were never
  * staged.
  *
  * No pacer, deliberately. One run is a score of concurrent HEADs and then sequential whole-object GETs against a public

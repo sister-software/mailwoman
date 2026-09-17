@@ -1,7 +1,7 @@
 # === v8-cjk-regs-probe — 2,000-step probe of the JP + CN + KR + TW + registries mixture (#2204). ====================#
 # The probe of `v8-cjk-regs.yaml`: the same corpus, head, geometry and seed, stopped at 2,000 steps. Its bars are read
 # at the step's own level, as the KR probe's were: KR `street` / `house_number` ≥ 0.95 and TW `street` / `house_number`
-# ≥ 0.90 say the surfaces are learnable from the mixture and earn the 8,000-step run; JP blended ≥ 0.9924 − 0.01 at
+# ≥ 0.90 say the surfaces are learnable from the mixture and warrant the 8,000-step run; JP blended ≥ 0.9924 − 0.01 at
 # 2,000 steps says the added sources do not cost JP. Lower is the finding, and the recipe changes before the run.
 #
 # Launch:

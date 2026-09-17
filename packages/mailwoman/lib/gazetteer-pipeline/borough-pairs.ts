@@ -94,7 +94,7 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	//
 	// NOT enabled globally, deliberately. Applying it everywhere took the US index from 47,878 to 101,560 — more than
 	// double, on surfaces no board has ever graded. Every other increment in this campaign cleared a venue-confound
-	// board before shipping, and a 2× expansion of the flagship locale is exactly the kind of change that earns one
+	// board before shipping, and a 2× expansion of the flagship locale is exactly the kind of change that warrants one
 	// rather than riding in on another country's evidence.
 	IN: {
 		children: ["borough", "neighbourhood"],

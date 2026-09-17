@@ -30,7 +30,7 @@
  *   decode side derived the parent's from `WESTERN_PARENT_OF` — which cannot express the edges the
  *   builders actually extract (the US WOF source emits a `dependent_locality` under a BOROUGH, itself
  *   a `dependent_locality`; containment says a `dependent_locality`'s only parent is `locality`). One
- *   byte per pair buys the source's own answer instead of a re-derived guess.
+ *   byte per pair provides the source's own answer instead of a re-derived guess.
  *
  *   This departs from PCB1's fixed-width key table on purpose: postcodes are bounded (~7 ASCII
  *   chars), but place names vary widely in byte length, so a fixed-width key would either truncate

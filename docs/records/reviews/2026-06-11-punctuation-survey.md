@@ -212,7 +212,7 @@ fall through to the standard tokenizer, which discards them as symbol chars.
 **(d) Lessons.** [#314 (0.3 release notes)](https://github.com/komoot/photon/issues/314) lists
 punctuation filtering as a headline fix — for a retrieval-only system, the entire punctuation
 problem reduces to "make index-time and query-time token streams agree," and a two-line
-char_filter buys most of it.
+char_filter provides most of it.
 
 ## 5. Commercial geocoders (publicly documented only — brief)
 

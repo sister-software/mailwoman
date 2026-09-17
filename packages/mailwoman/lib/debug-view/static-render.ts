@@ -25,7 +25,7 @@ import type React from "react"
  * The assertion at the call site goes through `unknown`, and that is correct here rather than a checker bypass worth
  * removing: Ink types `stdout` as `NodeJS.WriteStream` — a `tty.WriteStream` over a socket, carrying `fd`, `rows`,
  * `cursorTo`, `getColorDepth` and the rest of `net.Socket` — while reading only `columns`, `isTTY` and `write`. No
- * double can be assignable in either direction, so no single assertion is legal. What the shape below buys is that
+ * double can be assignable in either direction, so no single assertion is legal. What the shape below provides is that
  * everything OTHER than the gap is still checked: the frames live outside the class and `write` keeps the base
  * signature, so the only unchecked claim is the one the comment names.
  */

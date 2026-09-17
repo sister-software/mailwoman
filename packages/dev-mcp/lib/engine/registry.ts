@@ -274,7 +274,7 @@ export interface EngineSummary {
  * The cap is small on purpose. `geocode-stream.ts:23-28` records the measurement that sets it: on a shared multi-GB WOF
  * SQLite, throughput peaked at 2 workers (~1.4×) and DEGRADED beyond — memory bandwidth and the shared database are the
  * ceiling, not core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
- * holding more engines buys nothing and can cost the box.
+ * holding more engines adds nothing and can cost the box.
  */
 /**
  * What a tool needs from the engine registry.

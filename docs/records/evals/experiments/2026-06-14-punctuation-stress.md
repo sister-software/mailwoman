@@ -1,10 +1,10 @@
-# Punctuation-stress + paired-delimiter eval — the span proposer doesn't earn its revival (2026-06-14)
+# Punctuation-stress + paired-delimiter eval — the span proposer doesn't warrant its revival (2026-06-14)
 
 _Closes the measurement half of #518. The question was narrow and conditional: our eval surfaces (OA/NAD/golden)
 are government data, punctuation-poor by construction, so neither engine had ever been graded on the
 quadrant where real user input lives — quoted venue names, parenthetical annotations, `c/o` lines,
 unbalanced delimiters. #518 said: measure the class first, and only revive the abandoned Stage 2.7
-paired-delimiter span proposer if the numbers say it earns its keep. They don't._
+paired-delimiter span proposer if the numbers say it warrants its keep. They don't._
 
 ## What was measured
 
@@ -46,7 +46,7 @@ fails every component, which is exactly what the unbalanced-delimiter rows exist
 
 `*` = paired-delimiter classes (the proposer's target). Component accuracy %, 200 rows, folded gold.
 
-## Verdict: the span proposer does not earn its revival (as implemented)
+## Verdict: the span proposer does not warrant its revival (as implemented)
 
 At **every** bias tested, the Stage 2.7 span proposer is a no-op or a regression on the paired-delimiter
 classes it was built for:

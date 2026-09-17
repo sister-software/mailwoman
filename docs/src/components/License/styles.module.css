@@ -1,10 +1,10 @@
 /**
- * The license pages' components: the Buy section's two plan cards and the claim page's key and secret blocks. Every
+ * The license pages' components: the Purchase section's two plan cards and the claim page's key and secret blocks. Every
  * color comes from Infima vars so both themes hold without theme-specific rules; the plan cards follow the pricing
  * tiers' flat, quiet shape.
  */
 
-.buy {
+.provide {
 	margin-block: 1rem 1.5rem;
 }
 
@@ -81,7 +81,7 @@
 	text-underline-offset: 3px;
 }
 
-/* The card is the link, so its focus ring has to be visible — a keyboard user tabbing the buy section had nothing. */
+/* The card is the link, so its focus ring has to be visible — a keyboard user tabbing the provide section had nothing. */
 .plan:focus-visible {
 	outline: 2px solid var(--ifm-color-primary);
 	outline-offset: 2px;

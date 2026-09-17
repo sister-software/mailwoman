@@ -8,7 +8,7 @@ every exclusion carries, and how the GB prototype is built and graded.
 
 | Input                                         | Result                                                                                                                                                                                                                                                                                                                                        |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not earn a place as a candidate filter. Recorded on #1975.                            |
+| #1684 experiment 3 (GHSL habitability mask)   | NO-GO on the pre-registered rule: the only mask with a clean control excludes 7 of 46 FIRST_PASS tail rows and 0 of 5 on the current tail; the mask with power also excludes 50 of 420 truth points, which are rural rooftops. A habitability mask does not warrant a place as a candidate filter. Recorded on #1975.                         |
 | License position (operator, 2026-09-03)       | Exploration and validation of these inputs are free. Packages ship separately, so a customer chooses which data-license posture to engage with; `mailwoman doctor` reports the posture of every attached layer (PR #2117). Counsel review stays the condition for shipping beyond `build-local`.                                              |
 | #1571 (inferential resolution)                | Physical plausibility is its fourth constraint source. Its prohibitions bind here: positive evidence only, soft priors, never an inferred point served as retrieved, a bounded region with stated confidence rather than a fabricated coordinate.                                                                                             |
 | Exclusion-grade coverage (PR #1973)           | `supportsExclusion` is true only for `basis = designated` or `surveyed`. `source_present` supports presence and nothing else. A cell with no footprint data is not a cell excluded by physics.                                                                                                                                                |
@@ -131,7 +131,7 @@ footprint input's measured contribution.
 
 **Pre-registered rule.** If rule 2 does not lift exact assignment by at least 5 percentage points
 over rule 1 on `PO`, the footprint input is dropped from the design and the artifact is the null model
-with its measured error. If the null model itself is under 80% exact, the assignment does not earn a
+with its measured error. If the null model itself is under 80% exact, the assignment does not warrant a
 runtime surface at any tier and the artifact stays a measurement.
 
 ## 7. Northern Ireland — the hard test

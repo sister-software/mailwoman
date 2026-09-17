@@ -260,7 +260,7 @@ class MailwomanCoarseEncoder(
 
         # PR3 self-conditioning: infer a locale posterior from the WHOLE sequence, then let it
         # reshape the per-token reps before the BIO head. This is the "globally, before per-token
-        # labels" step the design calls for — and the reason it earns its keep is the probe: the
+        # labels" step the design calls for — and the reason it warrants its keep is the probe: the
         # postcode alone settles the country <50% of the time, so the model has to read the city
         # and street to know where it is, then condition on that. Runs at inference too (predict()
         # routes through here), so the conditioning shapes real emissions, not just the loss.

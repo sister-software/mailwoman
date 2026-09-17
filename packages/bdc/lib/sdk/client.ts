@@ -89,7 +89,7 @@ const PERCENT = 100
  * 24h, chosen against the FILING CADENCE rather than a wall-clock intuition. `listAsOfDates` gains an entry when FCC
  * publishes a new BDC vintage — twice a year (a June 30 and a December 31 `as_of_date`) — and `listAvailabilityData`
  * gains entries when a provider refiles inside an existing vintage, which happens in bursts over the weeks after a
- * vintage drops. Neither moves hour to hour, so a shorter TTL buys nothing except six seconds of throttle per repeat
+ * vintage drops. Neither moves hour to hour, so a shorter TTL adds nothing except six seconds of throttle per repeat
  * call: at 10 requests/minute every cache hit is worth six seconds, and a `gazetteer build bdc` re-run over a handful
  * of states re-asks the same two endpoints many times.
  *

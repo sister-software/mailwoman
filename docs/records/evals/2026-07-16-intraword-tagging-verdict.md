@@ -17,7 +17,7 @@ at 0.604 on the first digit piece and `I-postcode` at 0.587/0.765 on its continu
 legally resolves to postcode, discarding the piece that was right.
 
 That is a real liability. But the flexibility that lets us be wrong is the same flexibility that lets
-us be right, so the question is not "is incoherence bad" — it is **whether the per-piece unit buys
+us be right, so the question is not "is incoherence bad" — it is **whether the per-piece unit provides
 more than it costs**. Two arms, one axis:
 
 - **BENEFIT** — rows where the correct answer requires splitting _inside_ a whitespace word. Not in a
@@ -39,7 +39,7 @@ This is not deepparse scoring lower. **The correct answer is not in its output s
 one tag; there is no assignment of tags-to-words that yields unit=12 _and_ house_number=345. No amount
 of training or data fixes that — it is the unit of decision.
 
-An existence proof needs one instance and it has one. The per-piece unit buys a class of answers a
+An existence proof needs one instance and it has one. The per-piece unit provides a class of answers a
 word unit cannot express.
 
 ## The cost arm: 5 losses, of which only 3 are this defect
@@ -96,7 +96,7 @@ counter-distribution, without touching the architecture at all.
 
 **Vindicating:**
 
-- The per-piece unit buys answers a word unit cannot represent, demonstrated (`Unit 12/345 Main St`).
+- The per-piece unit provides answers a word unit cannot represent, demonstrated (`Unit 12/345 Main St`).
 - Our ≥4-digit boundary is _learned_, not structural: on the 351/376 parity rows we get right, the
   per-piece posterior tracks the length-conditioned corpus (2d continuation → postcode 0.0270 vs the
   corpus's 0.0427) and crosses over at 4 digits — the same boundary a word-unit tagger gets from its

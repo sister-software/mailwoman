@@ -49,8 +49,8 @@ export function foldStreetSurface(surface: string): string {
 
 /**
  * FR street-type + particle vocabulary — the G1 guard. A street surface made ONLY of these words carries no NAME (bare
- * `rue`/`chemin` is a truncation, and it IS in the index), so it earns no evidence credit. Folded forms (particles are
- * pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact, not a tuned weight (the anti-Pelias
+ * `rue`/`chemin` is a truncation, and it IS in the index), so it warrants no evidence credit. Folded forms (particles
+ * are pre-folded: `l'` → `l`). Kept small and lexical — it is a dictionary fact, not a tuned weight (the anti-Pelias
  * line).
  */
 const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([

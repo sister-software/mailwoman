@@ -14,7 +14,7 @@
  *   is theorized, never observed. Before building any locale-conditioning architecture we must
  *   first measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no
  *   current interference ⇒ conditioning is premature. A gap ⇒ interference conditioning
- *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
+ *   warrants its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
  *   the interference regression check firing.
  *
  *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
