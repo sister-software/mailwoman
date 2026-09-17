@@ -19,17 +19,23 @@
  *   crossed 2x2 can be read at the logit level, before any decision threshold. A crossed pairing denotes no place and
  *   nothing here claims one.
  *
+ *   `--by` chooses what the rows are grouped into, which is what lets #2308's word effect and #2311's region effect be
+ *   read in the same units on the same panel. `region-suffix` is the crossed one: within each region, the rows whose
+ *   locality ends in a USPS suffix word beside the rows that do not. Two effects reported as pass rates cannot be
+ *   compared; two margins in logits can be added.
+ *
  *   Run:
  *
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --weights-cache <dir>
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --regions AR --swap-postcode 05842
+ *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --by region-suffix --per-group 20
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 
-import { readCoordPanel, renderAdmin } from "#dev-tools/coord-panel"
+import { readCoordPanel, renderAdmin, suffixTail } from "#dev-tools/coord-panel"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 const { values } = parseArguments({
@@ -40,6 +46,15 @@ const { values } = parseArguments({
 		 * Regions to read, comma-separated. Every region in the panel when absent.
 		 */
 		regions: { type: "string" },
+		/**
+		 * What the rows are grouped into: `region`, `tail` (the locality's USPS-suffix last word), `suffix` (whether it has
+		 * one at all), or `region-suffix` (both, which is the crossed read).
+		 */
+		by: { type: "string", default: "region" },
+		/**
+		 * Rows to read per group. `--per-region` is the older spelling of the same cap and still works.
+		 */
+		"per-group": { type: "string" },
 		"per-region": { type: "string", default: "40" },
 		country: { type: "string", default: "US" },
 		/**
@@ -55,22 +70,50 @@ const { values } = parseArguments({
 
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
 const asked = values.regions?.split(",").map((code) => code.trim().toUpperCase())
-const perRegion = Number(values["per-region"])
-const byRegion = new Map<string, typeof localities>()
+const perGroup = Number(values["per-group"] ?? values["per-region"])
+
+/**
+ * The grouping axes, each a function from a panel place to the group it counts in.
+ *
+ * `suffix` is the boolean form of `tail`, and both name the word by its own spelling rather than "yes"/"no": a table
+ * row reading `-park` says which word carried it, and one reading `(plain)` says the locality ends in no suffix word at
+ * all. The `-` prefix keeps the two apart when `region-suffix` joins them.
+ */
+const GROUPERS = {
+	region: (place: (typeof localities)[number]) => place.region,
+	tail: (place: (typeof localities)[number]) => {
+		const tail = suffixTail(place.locality)
+
+		return tail ? `-${tail}` : "(plain)"
+	},
+	suffix: (place: (typeof localities)[number]) => (suffixTail(place.locality) ? "suffix tail" : "(plain)"),
+	"region-suffix": (place: (typeof localities)[number]) =>
+		`${place.region} ${suffixTail(place.locality) ? "suffix tail" : "(plain)"}`,
+} as const
+
+type GroupAxis = keyof typeof GROUPERS
+
+if (!Object.hasOwn(GROUPERS, values.by!)) {
+	throw new Error(`--by ${values.by} is not one of: ${Object.keys(GROUPERS).join(", ")}`)
+}
+
+const groupOf = GROUPERS[values.by as GroupAxis]
+const byGroup = new Map<string, typeof localities>()
 
 for (const place of localities) {
 	if (asked && !asked.includes(place.region)) continue
 
-	const bucket = byRegion.get(place.region)
+	const key = groupOf(place)
+	const bucket = byGroup.get(key)
 
-	if (bucket && bucket.length < perRegion) {
+	if (bucket && bucket.length < perGroup) {
 		bucket.push(place)
 	} else if (!bucket) {
-		byRegion.set(place.region, [place])
+		byGroup.set(key, [place])
 	}
 }
 
-if (!byRegion.size) {
+if (!byGroup.size) {
 	throw new Error(
 		`${values.eval} holds none of the regions asked for. It carries: ` +
 			`${[...new Set(localities.map((place) => place.region))].toSorted().join(", ")}.`
@@ -107,7 +150,7 @@ function localityMargin(row: readonly number[], labels: readonly string[]): numb
 	return bestLocality === Number.NEGATIVE_INFINITY ? Number.NEGATIVE_INFINITY : bestLocality - best
 }
 
-interface RegionMargins {
+interface GroupMargins {
 	rows: number
 	decodedAsLocality: number
 	rawMargin: number
@@ -121,10 +164,10 @@ interface RegionMargins {
 	unlocated: number
 }
 
-const results = new Map<string, RegionMargins>()
+const results = new Map<string, GroupMargins>()
 
-for (const [region, bucket] of [...byRegion].toSorted()) {
-	const entry: RegionMargins = {
+for (const [group, bucket] of [...byGroup].toSorted()) {
+	const entry: GroupMargins = {
 		rows: 0,
 		decodedAsLocality: 0,
 		rawMargin: 0,
@@ -199,7 +242,7 @@ for (const [region, bucket] of [...byRegion].toSorted()) {
 		}
 	}
 
-	results.set(region, entry)
+	results.set(group, entry)
 }
 
 const swaps: string[] = []
@@ -214,11 +257,13 @@ if (values["swap-postcode"]) {
 
 const swapped = swaps.join(", ")
 
-console.log(`#2311 decode margins — ${values.eval}, ${results.size} region(s)${swapped ? `, ${swapped}` : ""}\n`)
-console.log(`| region | rows | decoded as locality | raw margin | post-prior margin | what won instead |`)
+console.log(
+	`#2311 decode margins — ${values.eval}, by ${values.by}, ${results.size} group(s)${swapped ? `, ${swapped}` : ""}\n`
+)
+console.log(`| ${values.by} | rows | decoded as locality | raw margin | post-prior margin | what won instead |`)
 console.log(`| --- | --: | --: | --: | --: | --- |`)
 
-for (const [region, entry] of [...results].toSorted(
+for (const [group, entry] of [...results].toSorted(
 	(a, b) => b[1].decodedAsLocality / b[1].rows - a[1].decodedAsLocality / a[1].rows
 )) {
 	const won = [...entry.decodedAs]
@@ -228,7 +273,7 @@ for (const [region, entry] of [...results].toSorted(
 		.join(", ")
 
 	console.log(
-		`| ${region} | ${entry.rows} | ${formatPercent(entry.decodedAsLocality, entry.rows)} ` +
+		`| ${group} | ${entry.rows} | ${formatPercent(entry.decodedAsLocality, entry.rows)} ` +
 			`| ${(entry.rawMargin / entry.rows).toFixed(3)} | ${(entry.decodedMargin / entry.rows).toFixed(3)} ` +
 			`| ${won || "—"} |`
 	)
