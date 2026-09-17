@@ -1,35 +1,26 @@
-## Mailwoman chat style: monetary metaphors for non-monetary costs.
+## Mailwoman chat style: avoid money metaphors for non-money costs.
 ##
-## Vale existence rule. "The fine-tune tax", "nearly free", "costs nothing" —
-## nothing is free: every decision costs time, rows, or opportunity, and the
-## metaphor hides which one. State the actual cost with its unit. A REAL
-## dollar figure ("$29 of the $40 Modal budget") is not a metaphor and no
-## token here matches it.
+## This Vale existence rule catches phrases like "the fine-tune tax", "nearly free", and "costs nothing".
 ##
-## `price` AS A VERB is the same move one step further in: "price that ratio",
-## "price the change first" say that something should be weighed without
-## saying against what, in what unit, or by which measurement. Write the
-## measurement — "run the census over all 241", "measure the label ratio in
-## `suffix-boundary-v2.jsonl`".
+## Nothing is free: every decision uses time, rows, dollars, or opportunity.
+## Say what the cost is, and name the unit. A real dollar amount ("$29 of the $40 Modal budget") is fine.
 ##
-## THE NOUNS ARE NOT BANNED, and the distinction is required rather than a
-## carve-out. `cost` with a unit is this rule's own REMEDY — the message below
-## asks for it by name — and 135 sites already write it that way. `Price` with
-## a capital P is a Stripe API object: 106 sites in `packages/license-worker`
-## and `@mailwoman/ops-cli` name Price ids, the Price allowlist and the two
-## Prices the shop provisions, which is a third-party contract in the same
-## class as axios's `HttpStatusCode`. A rule that refused those would be
-## refusing correct writing, and its first fix would be an exemption list.
+## `price` as a verb has the same problem. Phrases like "price that ratio" and
+## "price the change first" tell readers to weigh something without saying by what measure.
+## Name the measure instead: "run the census over all 241" or "measure the label ratio in `suffix-boundary-v2.jsonl`".
+##
+## Nouns are not banned per se. `cost` with a unit is the fix this rule asks for.
+## `Price` with a capital P is also allowed when it names the Stripe AP object.
+## Blocking those uses would block correct writing and force a long exemption list.
 extends: existence
 message: "'%s' is a monetary metaphor — state the actual cost and its unit (rows regressed, minutes, dollars of which budget)."
 level: error
 ignorecase: true
 tokens:
-  # `tax` in ANY form. There is no non-metaphorical tax in this project: every one of the 116
-  # word-boundary occurrences in the tree is the metaphor, and the word boundary protects the 970
-  # `taxonomy`/`taxonomies` occurrences (`@mailwoman/poi-taxonomy`) and the `tax` inside `syntax`
-  # by construction. A real sales tax would be a Stripe concern and would arrive as a dollar figure,
-  # which the rule below already admits.
+  # `tax` in ANY form.
+  # There is no non-metaphorical tax in this project: every one of the 116 word-boundary occurrences in the tree is the metaphor.
+  # - The word boundary protects `taxonomy`/`taxonomies` in (`@mailwoman/poi-taxonomy`) and the `tax` inside `syntax`.
+  #- A real sales tax would be a Stripe concern and would arrive as a dollar figure,
   - tax(?:es|ed|ing)?
   - '\w+[- ]tax\b'
   - pay(s|ing)? the tax
