@@ -1,6 +1,6 @@
 ---
 title: "Design note: postcode decode as encoded intent, and the artifact shape it needs"
-description: A postal code carries its own location. What we can decode without retrieval, what the on-disk formats already do, and the two decisions blocking the first artifact.
+description: A postcode carries its own location. What we can decode without retrieval, what the on-disk formats already do, and the two decisions blocking the first artifact.
 role: decision
 status: design-note
 ---
@@ -20,7 +20,7 @@ normative layout).
 
 ## The claim
 
-A postal code is not an opaque key. It is **compressed, locale-specific information about where it
+A postcode is not an opaque key. It is **compressed, locale-specific information about where it
 is**, and much of it is readable without asking a gazetteer anything.
 
 This matters exactly where retrieval helps least. `800 E Monroe St, Springfield, IL 62701` is
@@ -30,7 +30,7 @@ evidence a decoder can read with no database.
 
 Pelias penalizes numeric spans positionally: is this five-digit run a house number or a postcode,
 given where it sits? That is a prior on the SPAN. Nothing asks whether the code's own content
-**corroborates** the neighbouring spans, or lets that corroboration move confidence.
+**corroborates** the neighboring spans, or lets that corroboration move confidence.
 
 ## What already exists
 
@@ -120,7 +120,7 @@ DISAGREEING ZIPs on a shared coordinate: 2,153/3,283 (65.6%)
 A 14.5× enrichment. `38.8933,-77.0146` carries 133 codes across five SCFs; `40.1604,-75.4090` carries
 48 codes across **29 unrelated** SCFs.
 
-### 4. Ranked state shares do NOT separate signal from artifact
+### 4. Ranked state shares do not separate signal from artifact
 
 The first proposal was to return `Array<[state, share]>` and let a threshold decide. Measured, it
 fails:
@@ -137,10 +137,10 @@ plausible and implausible share distributions overlap (medians 6.9% and 5.1%). A
 ship mostly noise with a number attached, which is worse than shipping nothing because it looks
 calibrated.
 
-### 5. Point-in-polygon beats parentage by 12×, and needs no licence
+### 5. Point-in-polygon beats parentage by 12×, and needs no license
 
 PIP depends on neither parentage nor a USPS database — only the code's own coordinate and a state
-boundary, both of which we already ship under permissive licences.
+boundary, both of which we already ship under permissive licenses.
 
 |                                         | WOF parentage | **point-in-polygon** |
 | --------------------------------------- | ------------: | -------------------: |
@@ -163,7 +163,7 @@ wrongness:
 
 Whole run: 2.4 seconds. The 38% locality miss is a polygon gap — only 45,113 of 160,077 US localities
 carry geometry — not a PIP failure. `localadmin` returning _Capital Township_ confirms locality is the
-rung to aim at, with county as the honest fallback.
+rung to aim at, with county as the fallback.
 
 ## What the implementation run settled
 
@@ -205,7 +205,7 @@ interpolation extract could place: rural, sparsely covered, exactly where a loca
 and a ZIP zone is wide. Graded over all 10,000 the US reads as a postcode-first country (2.41 vs
 3.63 km) — **a selection effect, measured on a population production never sends to the ladder.**
 
-Read finding 5 with this in mind. The SCF tier is real and the PIP result stands, but the US is the
+Read finding 5 with this in mind. The SCF tier is real and the PIP measurement holds, but the US is the
 locale where an admin-tier measurement describes the smallest share of what users get.
 
 ### 8. Canada is two systems, and the code says which
@@ -287,7 +287,7 @@ So `10048` — the World Trade Center ZIP, retired in 2001 — sits at `0,0` fla
 is indistinguishable from `00501` (the IRS at Holtsville, live) and `12345` (General Electric, live),
 which carry the same three flags and differ only in having a coordinate.
 
-**The one real signal is `lastmodified`**, which is genuinely varied — 6,665 distinct values. But it
+**The one real signal is `lastmodified`**, which varies — 6,665 distinct values. But it
 answers a different question (when the upstream record was last touched) and it stops at
 **2021-01-21**, so the extract's provenance is four and a half years old.
 
@@ -297,17 +297,17 @@ Census ZCTAs are the free, permissive approximation of ZIP areas, and the extrac
 `centroid_source` table with **979 rows stamped `census-zcta-2024`** — so someone has already reached
 for exactly that. Two facts kill it as a currency source:
 
-- Every one of those 979 is a **territory** code (969xx Guam and neighbours). The enrichment was
+- Every one of those 979 is a **territory** code (969xx Guam and neighbors). The enrichment was
   scoped to the places WOF could not place, not to currency.
 - **Zero of the 414 null-island ZIPs were enriched by it.** Those 414 spread across 210 sectional
-  centres with no concentration — 100xx (Manhattan PO boxes) is the densest at twelve — which is the
+  centers with no concentration — 100xx (Manhattan PO boxes) is the densest at twelve — which is the
   signature of PO-box-only and organisation codes. ZCTAs are built from populated address blocks and
   **exclude PO-box-only ZIPs by design**, so a ZCTA join is structurally blind to exactly the
   population whose currency is most in doubt.
 
 #### What this means for a consumer
 
-The honest posture is the one the artifact already takes elsewhere: **do not claim what the source
+The cautious posture is the one the artifact already takes elsewhere: **do not claim what the source
 cannot say.** Concretely —
 
 1. **Never read these five columns for US postcodes.** A filter on `is_current` selects everything and
@@ -338,7 +338,7 @@ codes with a 3.24 km median p95 radius.
 - **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **nothing**
   where neither does. PFX1 already treats empty ancestry as a legitimate answer.
 
-## Two decisions that block the NEXT artifact
+## Two decisions that block the next artifact
 
 Neither blocked the US SCF index, which shipped as a PFX1 instance rather than a new format. Both
 still stand for whatever comes after it.
@@ -362,7 +362,7 @@ identifier belongs in the payload.
 ### Decision 2 — a seventh hand-rolled format, or a shared header
 
 Six formats exist: `PCN1`, `PCB1`, `PIX1`, `PFX1`, `ANCT`, and the FST. Each carries a per-file
-"this file owns BOTH ends" discipline and no shared code. That has held — but the conventions have
+"this file owns both ends" discipline and no shared code. That has held — but the conventions have
 already forked:
 
 - header: `u32 headerLen` + UTF-8 JSON (`PCN1`/`PIX1`/`PFX1`) vs a fixed 48-byte binary (`ANCT`);
@@ -416,8 +416,8 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   outward), LDU the unit tier — and no FSA index has been built.
 - **Feeding the decode back into span confidence.** `postcode_prefix_ancestors` records what a prefix
   asserts, as metadata on a resolved node. Nothing lets it raise or lower confidence that a
-  neighbouring span is really a locality. This is the piece that genuinely does not exist, and it is
-  what the Pelias observation is actually about.
+  neighboring span is really a locality. This is the piece that does not exist, and it is
+  what the Pelias observation addresses.
 
 ## Appendix — reproducing the numbers
 

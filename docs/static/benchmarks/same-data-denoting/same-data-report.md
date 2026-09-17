@@ -101,7 +101,7 @@ Withheld-gold rule: `every-denoting-row`. Ruler: `same-data-resolver-v1` 1.2.0.
 | exact McNemar             | p at most 0.05      | 6.532e-19                         | yes |
 | no per-stratum regression | none                | gold_absent: false-selection rate | no  |
 
-**Verdict: the registered claim does NOT hold.**
+**Verdict: the registered claim does not hold.**
 
 ## Rows the baseline won and Mailwoman did not
 

@@ -23,7 +23,7 @@ resolves to Viterbo and refuses to move even when you pin the country prior to t
 
 The shape underneath all three: the resolver works **greedily**. It resolves the region token "ME" on
 its own — by name match, population, and the soft country prior — and Messina wins on population before
-anything checks whether a "Portland" actually sits beneath it. Then it scopes the locality into the
+anything checks whether a "Portland" sits beneath it. Then it scopes the locality into the
 region it already picked. The one question that would have saved it — _which "ME" has a "Portland"
 under it?_ — never gets asked.
 
@@ -99,12 +99,12 @@ by `name_key`, denormalized so a resolve is a single probe, population-ranked. T
 not replace it; it **re-ranks within it**, choosing the joint-consistent candidate over the merely
 most-populous one. Anything that looks like a curated list of famous places must instead be derived
 from the gazetteer's own structure and provenance-tracked — the moment a hand-list can override where
-the gazetteer says an address actually is, we have rebuilt Pelias in a nicer font. (#264.)
+the gazetteer places an address, we have rebuilt Pelias in a nicer font. (#264.)
 
 The MVP shipped on this branch (`opts.adminCoherence`, default-on for the geocode path). It fixes the
 clean class — a region whose child locality fell through — and the build surfaced exactly the residual
 this document predicted. "Augusta, ME" stays at Augusta, Sicily: "Augusta" resolves to a real town
-_under_ Messina, so the locality is not unresolved, and both Messina **and** Maine genuinely contain an
+_under_ Messina, so the locality is not unresolved, and both Messina **and** Maine contain an
 Augusta. Two consistent pairs, and geography alone cannot break the tie. That is the forward
 address-system prior's job (US-format ⇒ prefer the US state), and it is the next section.
 
@@ -128,7 +128,7 @@ scopes two things we do not have today (#265):
 
 ## Non-goals
 
-- No hand-curated country list, safe-list, or famous-place list as a source of truth. Derived and
+- No hand-curated country list, safe-list, or famous-place list as the authority. Derived and
   provenance-tracked, or it does not ship.
 - No re-enabling of the full #566 beam reconcile. The admin-coherence check returns scoped and alone.
 - No supplementary model built ahead of the residual that justifies it.

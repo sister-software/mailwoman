@@ -99,7 +99,7 @@
 | exact McNemar             | p at most 0.05      | 3.488e-17                         | yes |
 | no per-stratum regression | none                | gold_absent: false-selection rate | no  |
 
-**Verdict: the registered claim does NOT hold.**
+**Verdict: the registered claim does not hold.**
 
 ## Rows the baseline won and Mailwoman did not
 

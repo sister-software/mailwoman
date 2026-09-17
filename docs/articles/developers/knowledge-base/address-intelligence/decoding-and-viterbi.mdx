@@ -71,7 +71,7 @@ Walk the failure it rules out. Suppose the model is unsure about `Saint` in `Sai
 scoring `O` a shade above `B-locality` — and confident about `Petersburg` as `I-locality`. Per-piece
 argmax takes both winners and emits `O`, `I-locality`, which the span walk reads as a one-word town.
 The best-path search never considers that pair, because the transition is impossible. Its best legal
-option pays the small cost on `Saint` to take `B-locality` and keeps the large gain on `Petersburg`.
+option pays the small cost on `Saint` to take `B-locality` and keeps the higher score on `Petersburg`.
 The model was not more sure; the reading was better.
 
 Here is the part worth knowing about the shipped model, because it changes what the guarantee is

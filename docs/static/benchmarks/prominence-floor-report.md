@@ -4,7 +4,7 @@ Gold from FR, DE, GB, JP, 1000 rows across
 5 population bands. Every rate is measured over the 1000 of
 1000 rows that every arm scored without a replay miss.
 
-**The claim does NOT hold.** No registered floor reduces the false-selection rate by 10 points in every band while costing at most 5 points of selection accuracy.
+**The claim does not hold.** No registered floor reduces the false-selection rate by 10 points in every band while costing at most 5 points of selection accuracy.
 
 ## The registered rule, per arm
 

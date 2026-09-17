@@ -25,11 +25,11 @@ The trap in fixing it naively: `ME → Maine` (alias-exact, no name-exact compet
 `Paris → Paris, France` (name-exact over a more populous alias holder is exactly what we want)
 must both keep working.
 
-## Why "Åbo" is not actually an alias
+## Why "Åbo" is not an alias
 
 Finland is officially bilingual. "Åbo" is Turku's **official Swedish name** — the same class as
 Karjaa/Karis (the #743 bilingual-recall fix already treats these as first-class names on ingest).
-Our gazetteer stores ONE primary (`spr.name` = "Turku") and demotes every other official-language
+Our gazetteer stores one primary (`spr.name` = "Turku") and demotes every other official-language
 name into the alias bag. The defect is not the sub-tier's ordering; it is that **"name-exact" only
 consults a single primary in a world with multilingual official names.**
 
@@ -43,7 +43,7 @@ consults a single primary in a world with multilingual official names.**
    Workable but heavy: a new data artifact + maintenance surface for something the gazetteer's
    `names` table already encodes (language-tagged names with WOF provenance). Violates the spirit
    of no-irrelevant-trivia if hand-grown.
-3. **Official-language names ARE names** _(recommended)_: widen the name-exact sub-tier's
+3. **Official-language names are names** _(recommended)_: widen the name-exact sub-tier's
    definition from `spr.name` to "any OFFICIAL-language name of the place" — the language-tagged
    name rows the gazetteer already carries (`name_swe` for Turku, per WOF). Alias-exact remains
    the tier for abbreviations, colloquialisms, and historical forms. Turku becomes name-exact for
@@ -62,7 +62,7 @@ consults a single primary in a world with multilingual official names.**
   US-2k ni + the quad panel ni set — the same battery #927 ran, plus the Åbo row flipping to
   conditional.
 - Risk probe (RUN, 2026-07-03): 6,910 names are shared by 2+ localities above 100k population —
-  but that's the UPPER BOUND across ALL name classes, because today's `names` table cannot
+  but that's the upper bound across all name classes, because today's `names` table cannot
   distinguish official-language rows from transliterations/colloquialisms ("A-shih-ko" counts the
   same as "Åbo"). The official-only subset is certainly far smaller but is UNQUANTIFIABLE until
   the ingest bit exists — i.e., option 3's ingest work is a prerequisite for its own risk

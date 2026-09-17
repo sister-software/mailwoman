@@ -5,7 +5,7 @@ description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaur
 
 Paths below are relative to `docs/` (the workspace root). The skill directory is `docs/.claude/skills/run-docs/`.
 
-The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `docs/.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only; the driver is what you use to actually look at pages, surface console errors, and take screenshots.
+The site is **Docusaurus 3.10** + React 19, served on `http://localhost:7770`. The agent-facing driver is `docs/.claude/skills/run-docs/driver.mts` — a Playwright wrapper around an already-running dev server. `yarn start` is human-only; the driver is what you use to inspect pages, surface console errors, and take screenshots.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ You don't need to build for dev. Two optional pre-steps:
 
 ## Run (agent path)
 
-The driver assumes the dev server is already up. Start it once, in the background, then drive it as many times as you want:
+The driver assumes the dev server is already up. Start it once, in the background, then reuse it for repeated checks:
 
 ```bash
 yarn start > /tmp/docs-start.log 2>&1 &
@@ -94,7 +94,7 @@ driver above is the right tool.
 ## Gotchas
 
 - **Docusaurus serves its 404 page with HTTP 200.** A `curl -o /dev/null -w '%{http_code}' http://localhost:7770/some/typo` returns `200` even though the page renders "Page Not Found." The driver's `check`/`smoke` commands sniff the rendered `<h1>` and flag this as `SOFT-404` — trust that, not the status code. If you're writing your own check, do the same.
-- **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labelled "Docs" points there. The smoke list reflects this; don't add `/docs/` thinking it'll be a sanity check.
+- **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labeled "Docs" points there. The smoke list reflects this; don't add `/docs/` thinking it'll be a sanity check.
 - **`/research/` has a known React console error.** A research blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug, not driver flakiness — if you're not the one fixing it, ignore the `/research/` failure and check the other three routes individually.
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770, not the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
