@@ -7,7 +7,7 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 
 import { perLocaleF1 } from "#eval-harness/per/locale-f1"
 
@@ -42,10 +42,7 @@ async function main(): Promise<void> {
 		...(values["golden-dir"] != null ? { goldenDir: values["golden-dir"] as string } : {}),
 		...(values["files"] != null
 			? {
-					files: (values["files"] as string)
-						.split(",")
-						.map((s) => s.trim())
-						.filter((file) => file.length),
+					files: extractDelimited(values["files"]),
 				}
 			: {}),
 		...(values["weights-cache"] != null ? { weightsCache: values["weights-cache"] as string } : {}),

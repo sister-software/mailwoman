@@ -41,6 +41,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -82,12 +83,7 @@ async function wofPaths(): Promise<string[]> {
 
 	// The env override is comma-split and probed like the convention set: a listed database that is not on
 	// disk is dropped here rather than handed to the resolver to fail on open.
-	const explicit = env
-		? env
-				.split(",")
-				.map((p) => p.trim())
-				.filter((p) => p.length)
-		: undefined
+	const explicit = env ? extractDelimited(env) : undefined
 
 	return await existingWOFDatabasePaths(explicit)
 }

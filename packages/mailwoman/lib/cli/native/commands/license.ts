@@ -36,6 +36,7 @@ import {
 import { confirmLicenseKeyPublished, licenseKeysWellKnownURL } from "@mailwoman/core/license/publication"
 import { checkLicenseStatus, licenseWorkerURL, refreshLicenseKey } from "@mailwoman/core/license/status"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
@@ -209,13 +210,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 
 	const scopeRaw = stringValue(parsed.values, "scope") ?? "all"
 
-	const scope: LicenseKeyPayload["scope"] =
-		scopeRaw === "all"
-			? "all"
-			: scopeRaw
-					.split(",")
-					.map((name) => name.trim())
-					.filter((name) => name.length)
+	const scope: LicenseKeyPayload["scope"] = scopeRaw === "all" ? "all" : extractDelimited(scopeRaw)
 
 	const expires = stringValue(parsed.values, "expires")
 

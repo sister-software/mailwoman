@@ -51,8 +51,8 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON, stringifyJSON, prettyJSON } from "@mailwoman/core/json"
-import { isPresent } from "@mailwoman/core/objects"
 import { SeededRandom } from "@mailwoman/core/random"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
@@ -203,10 +203,7 @@ async function loadSeeds(
 	includeSources: Set<string> | null,
 	report?: (line: string) => void
 ): Promise<Seed[]> {
-	const paths = corpusPath
-		.split(",")
-		.map((p) => p.trim())
-		.filter(isPresent)
+	const paths = extractDelimited(corpusPath)
 
 	report?.(`reading seeds from ${paths.length} parquet file(s) (target: ${count}, stratified)`)
 

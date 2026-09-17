@@ -35,7 +35,7 @@ import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
 import { prettyJSON } from "@mailwoman/core/json"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { extractDelimited, parseArguments } from "@mailwoman/core/scripting/arguments"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -85,12 +85,7 @@ async function parse(): Promise<BuildArgs> {
 	const release = values.release ?? "2026-05-18"
 	const output = resolvePath(values.out ?? dataRootPath("ban", `address-points-${country}.db`))
 
-	const depts = values.depts
-		? values.depts
-				.split(",")
-				.map((d) => d.trim())
-				.filter((d) => d.length)
-		: null
+	const depts = values.depts ? extractDelimited(values.depts) : null
 
 	return { country, csvDir, release, output, depts }
 }

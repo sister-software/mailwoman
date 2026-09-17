@@ -8,6 +8,7 @@
  *   flag becomes a boolean and a comma list becomes an array.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { z } from "zod"
 
 /**
@@ -37,11 +38,4 @@ export const text = z.string().optional()
 export const list = z
 	.string()
 	.optional()
-	.transform((value) =>
-		value
-			? value
-					.split(",")
-					.map((entry) => entry.trim())
-					.filter((entry) => entry.length)
-			: []
-	)
+	.transform((value) => (value ? extractDelimited(value) : []))

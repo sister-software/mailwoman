@@ -22,6 +22,7 @@
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { wofExtractPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
@@ -82,10 +83,7 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
-		return raw
-			.split(",")
-			.map((path) => path.trim())
-			.filter((path) => path.length)
+		return extractDelimited(raw)
 	}
 
 	return [...wofExtractPaths(dataRoot)]
@@ -291,12 +289,7 @@ export async function resolvePOIResolverPaths(options: {
 
 	if (candidateDB) return { candidateDB, wofPaths: [] }
 
-	const explicit = options.resolveDB
-		? options.resolveDB
-				.split(",")
-				.map((path) => path.trim())
-				.filter((path) => path.length)
-		: undefined
+	const explicit = options.resolveDB ? extractDelimited(options.resolveDB) : undefined
 
 	return { candidateDB, wofPaths: await existingWOFDatabasePaths(explicit) }
 }

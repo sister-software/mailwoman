@@ -29,6 +29,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { readReleaseConfig, shippingLocales } from "@mailwoman/core/release-config"
 import { readScopeConfig, SCOPE_TIER_KEYS, tieredCountries } from "@mailwoman/core/scope-config"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
@@ -70,10 +71,7 @@ export function declaredTiers(markdown: string): Map<string, string[]> {
 
 		tiers.set(
 			match[1],
-			locales
-				.split(",")
-				.map((entry) => entry.trim())
-				.filter((entry) => COUNTRY_CODE.test(entry))
+			extractDelimited(locales).filter((entry) => COUNTRY_CODE.test(entry))
 		)
 	}
 

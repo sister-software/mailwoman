@@ -48,13 +48,15 @@ export function scriptEntryPath(): string {
  *
  * @returns An array of non-empty trimmed entries.
  */
-export function extractDelimited(value?: string | null, delimiter = ","): string[] {
-	return (
-		value
-			?.split(delimiter)
-			.map((entry) => entry.trim())
-			.filter(Boolean) ?? []
-	)
+export function extractDelimited(value?: unknown, delimiter = ","): string[] {
+	const normalized = typeof value === "string" ? value.trim() : null
+
+	if (!normalized) return []
+
+	return normalized
+		.split(delimiter)
+		.map((entry) => entry.trim())
+		.filter(Boolean)
 }
 
 /**

@@ -11,6 +11,7 @@
  *   a codex table already depends on it. Putting the folding rules next to the tables they fold
  *   means a lookup and its table can never disagree about what counts as the same name.
  *
+ *   TODO: Not true, or at least should not be true if importing a specific export from core.
  */
 
 /**

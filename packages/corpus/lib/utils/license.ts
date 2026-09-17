@@ -20,6 +20,8 @@
  *   proprietary-weights build via `--exclude-share-alike`.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
 /**
  * Licenses that require share-alike / create a copyleft obligation on derived works (Tier C). The
  * `--exclude-share-alike` convenience expands to this; `allowShareAlike: false` adapters also use it.
@@ -33,11 +35,7 @@ export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-S
  * regex.
  */
 export function compileLicenseExcludes(spec: string): RegExp[] {
-	return spec
-		.split(",")
-		.map((s) => s.trim())
-		.filter((entry) => entry !== "")
-		.map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))
+	return extractDelimited(spec).map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))
 }
 
 /**
