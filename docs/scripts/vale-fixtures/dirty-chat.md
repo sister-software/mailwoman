@@ -82,6 +82,8 @@ The seam between the two runs is where the extract was cut, and the gate read it
 the seams are what extract routing produced, the gates fire on the attached rows, and
 cutting the run short left the gated step gating nothing.
 
+The probe validated the guard, the result stands, the gain held, and the regression was carried by postcode tokens.
+
 The fine-tune tax means the run pays the tax twice; yesterday paid the tax,
 but this one is nearly free — it costs nothing: a free lunch, a free win, a
 cheap win, done for free. It also costs approximately nothing.

@@ -16,6 +16,7 @@
 // clause below must trip it: the probe confirmed the guard, the guard holds, we recover the win
 // and keep the affix win, the cost was carried entirely by one class, 3-digit is the reduce, and
 // we take this to 8k.
+// The probe validated the guard, the result stands, the gain held, and the regression was carried by postcode tokens.
 
 // `Mailwoman/EmphasisCapitals.yml` refuses an ordinary word set in capitals between lowercase neighbours,
 // and each shape below must trip it: the parser is RESTRICTED to one locale, the row is ABSENT.

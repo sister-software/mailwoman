@@ -1,58 +1,74 @@
-## Reject nouns that hide a hypothesis or result.
+## Reject prose that packages an observation or hypothesis into an abstract
+## object and then reports the object's "state" instead of stating what happened.
 ##
-## This existence rule runs over published prose (.vale.ini), root and
-## engineering markdown (.vale-vocab.ini), source comments and training configs
-## (.vale-code.ini), and agent replies (.vale-chat.ini). It catches a stated
-## proposition compressed into a definite noun and treated as an object. For
-## example, "the guard" can hide a hypothesis about a narrower splice range,
-## "the win" can hide a measured rise on one metric, "the reduce" can hide a
-## scope reduction, and "the cost" can hide a measured fall. A later verb such
-## as confirmed, held, dropped, recovered, or carried then reports on that noun;
-## readers who did not write the earlier sentence cannot tell what was measured.
+## Two related failures appear repeatedly in model-written engineering prose:
 ##
-## Replace each rejected noun with the full proposition, including its metric
-## and value:
+## 1. IMPLICIT PROPOSITION ACCOMMODATION / ENCAPSULATION
+##
+##    A proposition is compressed into a definite noun such as "the guard",
+##    "the win", "the contract", or "the cost". The noun may summarize earlier
+##    text, or it may be introduced as though the reader already knows what
+##    proposition it denotes.
+##
+## 2. EPISTEMIC INFLATION
+##
+##    The compressed noun is then given a truth, persistence, or structural
+##    predicate such as HOLDS, STANDS, SURVIVES, or CARRIES. This makes a local
+##    observation sound like a general property or established result without
+##    adding evidence.
+##
+## Replace the compressed object with the proposition itself. State behavior,
+## scope, metric, and value where applicable:
 ##
 ##   REJECTED: "the probe confirmed the guard"
 ##      -> "the probe showed that excluding 4-5 digit tokens keeps parity
 ##          postcode at 0.986"
+##
 ##   REJECTED: "guard HOLDS + date-name UP"
 ##      -> "parity postcode stays at 0.986 and FR date-name rises above 0.367"
+##
+##   REJECTED: "MessageBus DELIVERS confirming the contract holds"
+##      -> "MessageBus delivered the message, and the test suite now passes"
+##
 ##   REJECTED: "recover the win" / "keep the unit win"
 ##      -> "recover the 2-digit half of the FR date-name rise" /
 ##         "keep `unit` at or above 88%"
+##
 ##   REJECTED: "the cost was carried entirely by the 4-5 digit pieces"
 ##      -> "the 4-5 digit pieces account for the whole postcode drop (-9.7pp)"
+##
 ##   REJECTED: "3-digit is the reduce"
 ##      -> "the 100-999 range is the one to keep"
+##
 ##   REJECTED: "take THIS to 8k"
 ##      -> "train this config to 8,000 steps"
 ##
-## These ordinary uses are not tokens. An indefinite "a win" ("a pure win", "a
-## 10x win") is plain English for an improvement with no cost, and `win` as a
-## verb ("the higher score wins") is not a noun. The definite patterns below
-## allow up to two modifiers, so a subject before the verb ("the hand-authored
-## entries win") can match accidentally; rewrite that sentence as "take
-## precedence". A code guard — a check in source — is also allowed. The rule
-## rejects only a guard that HOLDS, DROPS, or is CONFIRMED, because that wording
-## treats the check as the hypothesis rather than naming what the check does.
+## Do not reject ordinary precise technical uses merely because they contain
+## these verbs. "The invariant holds for every returned candidate" is useful
+## when the invariant is locally named or written out. A source-code guard is
+## also an ordinary noun when it names an actual check. The defect is that the
+## reader must expand an abstract noun into an unstated proposition to learn
+## what was observed.
 ##
-## Emphasis capitals ("the parser is RESTRICTED", "is ABSENT") are house
-## register and are not what this rule catches; the case-insensitive tokens
-## match the noun-plus-predicate shape whatever its case.
+## `win` as a verb ("the higher score wins") is also ordinary English. The
+## definite `win` patterns below may still catch subjects such as "the
+## hand-authored entries win"; rewrite those rare cases as "take precedence".
 extends: existence
-message: "'%s' names a hypothesis or result as if it were an object — state the proposition with its metric and number instead (what was measured, what value it took, what that rules in or out)."
+message: "'%s' hides the observed proposition behind an abstract noun or stronger state claim — state the behavior/result directly, with scope and metric/value where applicable."
 level: error
 ignorecase: true
 tokens:
-  - 'confirm(?:s|ed|ing)? (?:the |a |its )?(?:[\w-]+ )?(?:guard|win)\b'
-  - 'confirm(?:s|ed|ing)? guard \+ win'
-  - '\b(?:guard|win|lift|gain|reduce) (?:holds|hold|held|drops|dropped|survives|survived|stands|up|down|flat)\b'
-  - '\bwin absent\b'
-  - '\b(?:the|its|their|half the|half of the) (?:[\w-]+ ){0,2}win\b'
-  - '\bthe (?:[\w-]+ ){0,2}wins (?:were|are|hold|held|survive|survived|stand)\b'
+  # Confirmation or proof applied to an accommodated/encapsulated object.
+  - '\b(?:confirm(?:s|ed|ing)?|validat(?:e|es|ed|ing)|prov(?:e|es|ed|ing)|establish(?:es|ed|ing)?) (?:the |this |that |a |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|win|gain|lift|result|finding|signal|case)\b'
+  # Truth/stability predicates over an abstract result noun.
+  - '\b(?:the |this |that |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|win|gain|lift|result|finding|signal|case|story) (?:holds?|held|stands?|stood|survives?|survived|sticks?|stuck|carries|carried|lands?|landed|remains? intact|remained intact)\b'
+  # Definite result nouns that usually hide the actual metric/result.
+  - '\b(?:the|its|their|half the|half of the) (?:[\w-]+ ){0,2}(?:win|gain|lift)\b'
   - '\b(?:the|a|this|that) reduce\b'
-  - 'cost (?:was|is|were|are) carried'
-  - 'carried entirely by'
-  - 'carr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression)\b'
-  - 'take (?:this|it|that|the [\w-]+) to \d+k\b'
+  - '\bwin absent\b'
+  # "Cost"/regression language that replaces a measured delta with a metaphor.
+  - '\b(?:cost|loss|regression) (?:was|is|were|are) carried\b'
+  - '\bcarried entirely by\b'
+  - '\bcarr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression)\b'
+  # Training shorthand that omits the actual operation.
+  - '\btake (?:this|it|that|the [\w-]+) to \d+k\b'

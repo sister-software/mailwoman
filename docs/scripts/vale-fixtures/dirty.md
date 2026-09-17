@@ -73,6 +73,11 @@ The 3-digit probe confirmed the guard, so the guard holds and the win survives; 
 recover the win, keep the unit win, and forgo half the date-name win, because the cost was
 carried entirely by the 4-5 digit pieces and 3-digit is the reduce; take this to 8k.
 
+The guard held, the unit win survived, the result stands, the finding survived, and the gain held.
+The probe validated the guard, the experiment proved the result, and the report established the finding.
+The contract holds, MessageBus DELIVERS confirming the contract holds, the regression was carried by postcode
+tokens, and the loss landed on the 4-5 digit pieces.
+
 The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
 by default, and the run was a PURE WIN.
 
