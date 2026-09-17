@@ -47,9 +47,9 @@ interface ConfoundRow {
 	xfail?: string
 }
 
-const BOARD = String(workspacePath("mailwoman", "lib", "eval-harness", "fixtures", "venue-structure-confounds.jsonl"))
+const BOARD = workspacePath("mailwoman", "lib", "eval-harness", "fixtures", "venue-structure-confounds.jsonl")
 
-const rows: ConfoundRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<ConfoundRow>(BOARD))
+const rows: ConfoundRow[] = await JSONSpliterator.fromAsync<ConfoundRow>(BOARD).toArray()
 
 let classifier: NeuralAddressClassifier | undefined
 

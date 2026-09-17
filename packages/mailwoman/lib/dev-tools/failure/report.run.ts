@@ -97,9 +97,10 @@ async function loadCorpus(
 		return { fixtures, kind: "golden", name: `golden:${basename(dir!)}` }
 	}
 
-	const fixtures = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_PATH)))
+	const fixtures = await JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_PATH)
 		.filter((f) => !f.dropped && f.expect)
 		.map((f) => ({ id: f.id, input: f.input, country: f.country, source: f.source, expect: f.expect! }))
+		.toArray()
 
 	return { fixtures, kind: "parity", name: PARITY_FIXTURES_PATH.split("/").pop()! }
 }

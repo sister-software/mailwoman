@@ -267,7 +267,7 @@ async function main(): Promise<void> {
 	const seed = Number(values["seed"] || "20260614")
 
 	// Load the held-out rows before running the calibration cascade.
-	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
+	const rows: HoldoutRow[] = await JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath).toArray()
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
 	console.error(`[conformal-calibrate] situs: ${addressPointsDB}  interp: ${interpolationDB}`)

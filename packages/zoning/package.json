@@ -148,7 +148,7 @@
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.5",
 		"path-ts": "^2.4.1",
-		"spliterator": "^7.10.1"
+		"spliterator": "^7.11.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

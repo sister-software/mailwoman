@@ -488,7 +488,7 @@ export async function perLocaleF1(
 		let rows: GoldenRow[]
 
 		try {
-			rows = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenRow>(path))
+			rows = await JSONSpliterator.fromAsync<GoldenRow>(path).toArray()
 		} catch (error) {
 			reportError(`  skip ${file}: ${(error as Error).message}`)
 

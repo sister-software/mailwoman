@@ -58,13 +58,13 @@ beforeAll(async () => {
 
 	koreanRows = KOREAN_ROW_KEYS.flatMap((key) => (korean[key] ?? []).map((row) => row.raw))
 
-	chineseRows = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<{ input: string }>(repoRootPath(CHINESE_BOARD).toString()))
-	).map((row) => row.input)
+	chineseRows = await JSONSpliterator.fromAsync<{ input: string }>(repoRootPath(CHINESE_BOARD))
+		.map((row) => row.input)
+		.toArray()
 
-	japaneseRows = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<{ text: string }>(repoRootPath(JAPANESE_GOLD).toString()))
-	).map((row) => row.text)
+	japaneseRows = await JSONSpliterator.fromAsync<{ text: string }>(repoRootPath(JAPANESE_GOLD))
+		.map((row) => row.text)
+		.toArray()
 })
 
 describe("the Korean reference set", () => {

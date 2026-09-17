@@ -127,7 +127,7 @@ export async function scoreAffix(
 		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
 	})
 
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<PerTagEvalRow>(file))
+	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
 	const stat = await scorePerTagCounts(
 		rows,

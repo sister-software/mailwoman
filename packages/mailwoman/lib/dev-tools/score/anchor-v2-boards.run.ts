@@ -113,11 +113,9 @@ async function tagsFor(text: string): Promise<Map<string, string[]>> {
 }
 
 if (board === "gb") {
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
-			"packages/mailwoman/lib/eval-harness/fixtures/gb-golden.jsonl"
-		)
-	)
+	const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
+		"packages/mailwoman/lib/eval-harness/fixtures/gb-golden.jsonl"
+	).toArray()
 
 	const postcode = emptyBoard()
 	const depLoc = emptyBoard()
@@ -175,9 +173,9 @@ if (board === "gb") {
 } else {
 	const country = board.toUpperCase()
 
-	const rows = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH))).filter(
-		(row) => row.country === country
-	)
+	const rows = await JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH)
+		.filter((row) => row.country === country)
+		.toArray()
 
 	const boards = new Map<string, Board>()
 	const serialization: string[] = []

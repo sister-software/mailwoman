@@ -59,9 +59,9 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 
 const pipeline = createRuntimePipeline({ classifier })
 
-const rows = await Array.fromAsync(
-	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(values.fixtures!)
-)
+const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
+	values.fixtures!
+).toArray()
 
 /**
  * The fragment shapes, each with the text it builds and the tag it is graded on.

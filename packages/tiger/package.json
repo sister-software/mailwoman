@@ -86,7 +86,7 @@
 		"@turf/boolean-contains": "^7.4.0",
 		"kysely": "^0.29.5",
 		"path-ts": "^2.4.1",
-		"spliterator": "^7.10.1",
+		"spliterator": "^7.11.0",
 		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {

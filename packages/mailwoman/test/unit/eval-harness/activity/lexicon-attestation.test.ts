@@ -24,9 +24,7 @@ import { describe, expect, it } from "vitest"
 
 const lexicon = await readActivityLexicon()
 
-const board = new Map(
-	(await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))).map((row) => [row.id, row])
-)
+const board = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toMap((row) => [row.id, row])
 
 const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
 const model: CompiledGeographicModel = await readCompiledGeographicModel()

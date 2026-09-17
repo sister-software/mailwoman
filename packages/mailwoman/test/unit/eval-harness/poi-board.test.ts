@@ -26,7 +26,7 @@ import { canonicalJSON, loadProbeDefinition } from "mailwoman/eval-harness/seman
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
+const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES).toArray()
 const probeDefinition = await loadProbeDefinition()
 
 function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {

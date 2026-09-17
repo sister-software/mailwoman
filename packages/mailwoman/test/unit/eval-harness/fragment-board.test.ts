@@ -15,7 +15,7 @@ import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES))
+const fixtures = await JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES).toArray()
 
 describe("wilson", () => {
 	it("brackets the point estimate", () => {

@@ -623,7 +623,7 @@ function computeStats(values: number[]): QuantileStats | null {
 export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
 
-	const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(fixturesPath))
+	const fixtures = await JSONSpliterator.fromAsync<POIBoardFixture>(fixturesPath).toArray()
 
 	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 

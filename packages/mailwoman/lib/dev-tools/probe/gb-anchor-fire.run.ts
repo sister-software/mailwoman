@@ -53,9 +53,9 @@ const lookup = new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(v
 console.log(`anchorLookupPath ${values.bin}`)
 console.log(`anchor lookup keys: ${lookup.size.toLocaleString()}`)
 
-const rows = await Array.fromAsync(
-	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(values.fixtures!)
-)
+const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
+	values.fixtures!
+).toArray()
 
 /**
  * `parse` builds the anchor from the CASE-NORMALIZED text, not the raw input. That matters more here than anywhere

@@ -89,9 +89,9 @@ export async function buildTransitionTable(goldenDir: string): Promise<(from: st
 		let goldenRows: Array<{ raw?: string; components?: Record<string, string> }>
 
 		try {
-			goldenRows = await Array.fromAsync(
-				JSONSpliterator.fromAsync<{ raw?: string; components?: Record<string, string> }>(`${goldenDir}/${file}`)
-			)
+			goldenRows = await JSONSpliterator.fromAsync<{ raw?: string; components?: Record<string, string> }>(
+				`${goldenDir}/${file}`
+			).toArray()
 		} catch {
 			continue
 		}

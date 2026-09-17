@@ -126,7 +126,7 @@ export async function scoreCountryHomograph(
 		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
 	})
 
-	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<PerTagEvalRow>(file))
+	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
 	// over-fire diagnostics
 	let overfire = 0 // gold region/locality token tagged as country
@@ -137,7 +137,7 @@ export async function scoreCountryHomograph(
 	const stat = await scorePerTagCounts(
 		rows,
 		TAGS,
-		async (raw) => decodeAsJSON(await neural.parse(raw)) as Record<string, string>,
+		async (raw) => decodeAsJSON(await neural.parse(raw)),
 		(row, got) => {
 			const exp = row.components
 

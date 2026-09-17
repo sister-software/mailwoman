@@ -91,7 +91,7 @@ async function main(): Promise<void> {
 	const toleranceKm = Number(values["tolerance-km"])
 	const traceRows = Number(values.trace)
 
-	const all = await Array.fromAsync(JSONSpliterator.fromAsync<BoardRow>(boardPath))
+	const all = await JSONSpliterator.fromAsync<BoardRow>(boardPath).toArray()
 	const random = mulberry32(Number(values.seed))
 
 	const rows = all

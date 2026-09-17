@@ -132,10 +132,7 @@ async function main(): Promise<void> {
 	const outPath = values["out"] || "data/eval/calibration/confidences.jsonl"
 	const limit = Number(values["limit"] || "0") || Infinity
 
-	const rows: CalibRow[] = (await Array.fromAsync(JSONSpliterator.fromAsync<CalibRow>(setPath))).slice(
-		0,
-		limit === Infinity ? undefined : limit
-	)
+	const rows: CalibRow[] = await JSONSpliterator.fromAsync<CalibRow>(setPath).take(limit).toArray()
 
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")

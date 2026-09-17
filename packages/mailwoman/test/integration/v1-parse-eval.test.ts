@@ -214,13 +214,11 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 			using backend = new WOFSQLitePlaceLookup({ databasePath: [resolvePath(ADMIN_DB), resolvePath(POSTCODE_DB)] })
 			const resolver = createWOFResolver(backend)
 
-			const fixtures = (
-				await Array.fromAsync(
-					JSONSpliterator.fromAsync<ParityFixture>(
-						"packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
-					)
-				)
-			).filter((f) => !f.dropped && f.expect)
+			const fixtures = await JSONSpliterator.fromAsync<ParityFixture>(
+				"packages/mailwoman/lib/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+			)
+				.filter((f) => !f.dropped && f.expect)
+				.toArray()
 
 			const rows: Measured[] = []
 

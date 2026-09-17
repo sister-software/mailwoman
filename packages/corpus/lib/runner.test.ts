@@ -86,9 +86,7 @@ describe("runAdapter", () => {
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
-		const lines = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl"))
-		)
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")

@@ -317,7 +317,7 @@
 		"parquet-wasm": "0.7.2",
 		"path-ts": "^2.4.1",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.10.1",
+		"spliterator": "^7.11.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {
