@@ -32,6 +32,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isoDate } from "@mailwoman/core/utils"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -48,7 +49,7 @@ export interface TrainCrossSourceGBTOptions {
 	/**
 	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
-	sources?: string
+	sources?: PathBuilderLike
 	/**
 	 * State filter. Default TX.
 	 */
@@ -82,7 +83,7 @@ export async function trainCrossSourceGBT(
 	options: TrainCrossSourceGBTOptions,
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
-	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
 	const OUT = options.out || "packages/registry/lib/models/crosssource-gbt-en-us.ts"

@@ -96,7 +96,7 @@
 	},
 	"dependencies": {
 		"kysely": "^0.29.5",
-		"path-ts": "^2.3.0"
+		"path-ts": "^2.4.1"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"

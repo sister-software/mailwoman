@@ -12,6 +12,7 @@
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { UNLocodeDatabase } from "#schema"
 
@@ -53,7 +54,7 @@ export class UNLocodeLookup implements Disposable {
 	#byName: ReturnType<DatabaseClient["prepare"]>
 	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { db: DatabaseClient<UNLocodeDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { db: DatabaseClient<UNLocodeDatabase> }) {
 		this.#db =
 			"db" in opts
 				? opts.db

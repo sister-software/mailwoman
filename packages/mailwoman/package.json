@@ -487,9 +487,9 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.5",
 		"onnxruntime-node": "^1.29.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"react": "^19.2.8",
-		"spliterator": "^7.9.0",
+		"spliterator": "^7.10.1",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},

@@ -29,7 +29,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { workspacePath } from "@mailwoman/core/paths"
+import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
@@ -60,8 +60,8 @@ export function defaultPOIDatabasePath(): PathBuilder {
  * (`mailwoman/out/gazetteer-pipeline/poi/`) trees, so a fixed `../../../` would resolve to the wrong package under
  * `yarn compile`'s output.
  */
-export function defaultBrandTableOutPath(): string {
-	return workspacePath("poi-taxonomy", "data", "brands.json")
+export function defaultBrandTableOutPath(): PathBuilder {
+	return workspacePathBuilder("poi-taxonomy", "data", "brands.json")
 }
 
 /**
@@ -242,7 +242,7 @@ export function serializeBrandTable(table: POIBrandTable): string {
 /**
  * Writes `table` to `out` (creating parent directories as needed) via {@link serializeBrandTable}.
  */
-export async function writeBrandTable(table: POIBrandTable, out: string): Promise<void> {
+export async function writeBrandTable(table: POIBrandTable, out: PathBuilderLike): Promise<void> {
 	await makeDirectories(dirname(out))
 	await writeLocalFile(serializeBrandTable(table), out)
 }

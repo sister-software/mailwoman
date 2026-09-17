@@ -201,9 +201,9 @@
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.9.0",
+		"spliterator": "^7.10.1",
 		"type-fest": "^5.9.0",
 		"zod": "^4.5.4"
 	},

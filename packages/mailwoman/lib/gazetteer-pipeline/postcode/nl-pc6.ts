@@ -28,6 +28,7 @@ import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 export interface BuildNLPC6Options {
@@ -35,11 +36,11 @@ export interface BuildNLPC6Options {
 	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring). Default
 	 * `<data-root>/cbs/pc6-centroids.csv`.
 	 */
-	csvPath?: string
+	csvPath?: PathBuilderLike
 	/**
 	 * Output database. Default `<data-root>/wof/postalcode-nl-pc6.db`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 }
 
 /**
@@ -53,8 +54,8 @@ export async function buildNLPC6Database(
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const csvPath = opts.csvPath ?? String(dataRootPath("cbs", "pc6-centroids.csv"))
-	const outPath = opts.out ?? String(dataRootPath("wof", "postalcode-nl-pc6.db"))
+	const csvPath = (opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv")).toString()
+	const outPath = (opts.out ?? dataRootPath("wof", "postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	await removePathIfPresent(tmpPath)

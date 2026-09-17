@@ -318,7 +318,7 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
 	const warning = await fstFreshnessWarning({
 		fstPath,
-		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
+		sourceDBPath: resolvePath(dataRootPath("wof", "admin-global-priority.db")),
 		rebuildCommand: `node packages/mailwoman/out/cli/index.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-conditional)`,
 	})
 
@@ -334,7 +334,7 @@ export async function warnIfFSTStale(fstPath: string, locale: string): Promise<v
  * artifact. The publish flow stages the real binary (release-sequenced).
  */
 export async function linkLocaleFST(destDir: string, locale: string): Promise<void> {
-	const source = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
+	const source = resolvePath(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
 
 	const linked = await linkSoftFeedSibling(
 		source,
@@ -355,7 +355,7 @@ export async function linkLocaleFST(destDir: string, locale: string): Promise<vo
  */
 export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 	await linkSoftFeedSibling(
-		String(dataRootPath("wof", "fst-street-morphology.bin")),
+		resolvePath(dataRootPath("wof", "fst-street-morphology.bin")),
 		resolvePath(destDir, "fst-street-morphology.bin"),
 		"the street-context check falls back to the per-process dictionary build."
 	)
@@ -470,7 +470,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	/**
 	 * Checked-in WOF-derived admin pairs — the default source, and the whole source list for the small overlays.
 	 */
-	const WOF_ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+	const WOF_ADMIN_DB = resolvePath(dataRootPath("wof", "admin-global-priority.db"))
 	const sources = overlay.sources ?? [WOF_ADMIN_DB]
 	const inputs = overlay.inputs ?? sources
 	const extraArgs = overlay.extraArgs ?? ["--borough-db", WOF_ADMIN_DB]
@@ -655,15 +655,15 @@ const EVIDENCE_LEXICON_SOURCES: ReadonlyArray<{
 	channel: "street_type" | "locality_surface"
 	source: (name: string) => string
 }> = [
-	{ channel: "street_type", source: (name) => String(repoRootPath("data", "gazetteer", name)) },
-	{ channel: "locality_surface", source: (name) => String(dataRootPath("gazetteer", name)) },
+	{ channel: "street_type", source: (name) => resolvePath(repoRootPath("data", "gazetteer", name)) },
+	{ channel: "locality_surface", source: (name) => resolvePath(dataRootPath("gazetteer", name)) },
 ]
 
 /**
  * Read a weights workspace's committed card, or `undefined` when the workspace carries none.
  */
 async function readWeightsCard(workspace: string): Promise<WeightsCard | undefined> {
-	const path = resolvePath(String(workspacePath(workspace)), "model-card.json")
+	const path = resolvePath(workspacePath(workspace), "model-card.json")
 
 	if (!(await pathExists(path))) return undefined
 
@@ -686,7 +686,7 @@ async function linkCharModel(destDir: string, family: string): Promise<void> {
 		throw new Error(`release.config.json declares no charWeights.${family} — nothing to link for the ${family} base`)
 	}
 
-	const dataRoot = String(dataRootPath())
+	const dataRoot = dataRootPath()
 
 	for (const [name, relative] of [
 		["model.onnx", recipe.model],
@@ -705,7 +705,7 @@ async function linkCharModel(destDir: string, family: string): Promise<void> {
 
 	// The card is what tells `resolveWeights` this package owes a vocabulary rather than a tokenizer (its `encoder`
 	// block), so the overlay carries the workspace's committed card beside the two binaries.
-	const card = resolvePath(String(workspacePath(`neural-weights-${family}`)), "model-card.json")
+	const card = resolvePath(workspacePath(`neural-weights-${family}`), "model-card.json")
 
 	await linkForce(card, resolvePath(destDir, "model-card.json"))
 	await removeIfPresent(resolvePath(destDir, "tokenizer.model"))
@@ -714,7 +714,7 @@ async function linkCharModel(destDir: string, family: string): Promise<void> {
 async function linkBaseModelPair(destDir: string, digestCard: string | undefined): Promise<void> {
 	const recipe = await readReleaseConfig()
 
-	const dataRoot = String(dataRootPath())
+	const dataRoot = dataRootPath()
 	const digests = digestCard ? (await readWeightsCard(digestCard))?.files_md5 : undefined
 
 	const pair = [

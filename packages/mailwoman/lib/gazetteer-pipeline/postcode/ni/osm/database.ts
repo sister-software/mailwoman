@@ -51,7 +51,7 @@ import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -113,12 +113,12 @@ export interface BuildPostcodeNIOSMOptions {
 	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`. Default
 	 * `<data-root>/osm-ni-postcodes/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
 	 */
-	sourceDir?: string
+	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<YYYY-MM-DD>.db` — a NEW dated path every build.
 	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if `response.json` is not there. This
 	 * is the NORMAL mode for a rebuild: the saved response is the reproducibility artifact, and re-querying a volunteer
@@ -177,9 +177,9 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = options.sourceDir ?? String(dataRootPath("osm-ni-postcodes", stamp))
-	const out = options.out ?? String(dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`))
-	const responsePath = String(join(sourceDir, "response.json"))
+	const sourceDir = (options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp)).toString()
+	const out = (options.out ?? dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`)).toString()
+	const responsePath = join(sourceDir, "response.json")
 
 	// Acquire the source; offline operation is the normal path described by the option.
 	if (!options.offline) {

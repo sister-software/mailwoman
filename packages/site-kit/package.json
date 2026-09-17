@@ -55,7 +55,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@playwright/test": "^1.63.0",
-		"path-ts": "^2.3.0",
+		"path-ts": "^2.4.1",
 		"vite": "^8.2.2",
 		"vite-plugin-pwa": "^1.3.0"
 	},

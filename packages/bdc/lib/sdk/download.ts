@@ -48,8 +48,8 @@ export async function downloadBDCFile(
 
 	const csvBuffer = await extractSingleFileZip(Buffer.from(zippedArrayBuffer))
 
-	await makeDirectories(destinationDir.toString())
-	await writeLocalFile(csvBuffer, csvPath.toString())
+	await makeDirectories(destinationDir)
+	await writeLocalFile(csvBuffer, csvPath)
 
 	return csvPath.toString()
 }

@@ -138,7 +138,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadCoastalGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: String(dataRootPath("coastal", "cache")),
+				cacheRoot: dataRootPath("coastal", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -162,8 +162,8 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("coastal", "coastal-england.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = options.out ?? dataRootPath("coastal", "coastal-england.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		// The declared count comes from the source's own per-layer totals, so a short read throws rather than building a
 		// shorter coastline. A `--limit` run declares the limited total for the same reason.

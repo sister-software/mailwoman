@@ -143,7 +143,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 			exportPath = await downloadZoningExport({
 				url: await client.readExportURL(),
 				vintage,
-				cacheRoot: String(dataRootPath("zoning", "cache")),
+				cacheRoot: dataRootPath("zoning", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -175,8 +175,8 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 		const sourceVintage = vintage
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("zoning", "zoning-ireland.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = options.out ?? dataRootPath("zoning", "zoning-ireland.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		// A narrowed run reads a SUBSET on purpose, so its declared count is the subset's own and the build asserts the sum
 		// against that rather than against the whole product.

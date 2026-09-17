@@ -28,6 +28,7 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { isoDate } from "@mailwoman/core/utils"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -44,7 +45,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 	/**
 	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
-	sources?: string
+	sources?: PathBuilderLike
 	/**
 	 * Care Compare facilities sampled. Default 6000.
 	 */
@@ -75,7 +76,7 @@ export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
-	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
+	const SOURCES = resolvePath(options.sources ?? dataRootPath("record-matcher", "sources"))
 	const CAP = options.cap ?? 6000
 	const OUT = options.out || "packages/registry/lib/models/org-crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"

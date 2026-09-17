@@ -13,7 +13,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryResolvePackageSpecifier } from "@mailwoman/core/module/resolve-from"
-import { dirname, resolvePath } from "path-ts"
+import { dirname, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * Copy a file to the static directory, but only if it differs (by size) from what's already there.
@@ -22,7 +22,11 @@ import { dirname, resolvePath } from "path-ts"
  *
  * @returns True if the file was copied
  */
-export async function syncArtifact(sourcePath: string, destPath: string, label: string): Promise<boolean> {
+export async function syncArtifact(
+	sourcePath: PathBuilderLike,
+	destPath: PathBuilderLike,
+	label: string
+): Promise<boolean> {
 	if (!(await pathExists(sourcePath))) {
 		console.warn(`[host-assets] ${label}: source missing at ${sourcePath}`)
 
@@ -52,7 +56,7 @@ export async function syncArtifact(sourcePath: string, destPath: string, label: 
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
-export async function stageSQLJSAssets(destDir: string): Promise<boolean> {
+export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolean> {
 	// The runtime files live under the package's `dist/`, so the anchor is the bundle inside it, not the manifest at
 	// the package root.
 	const entry = tryResolvePackageSpecifier(import.meta.url, "sql.js-httpvfs", "dist/index.js")

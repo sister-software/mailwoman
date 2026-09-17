@@ -291,14 +291,14 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 	}
 
 	await makeDirectories(destDir)
-	const archivePath = String(join(destDir, download.fileName))
+	const archivePath = join(destDir, download.fileName)
 
 	const writeSidecars = async (md5: string, bytes: number): Promise<void> => {
 		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
 		await writeLocalTextFile(
 			prettyJSON({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }),
-			String(join(destDir, "acquisition.json"))
+			join(destDir, "acquisition.json")
 		)
 	}
 
@@ -380,12 +380,12 @@ function decodeProvenanceText(bytes: Uint8Array): string {
  * anything about our copy's completeness.)
  */
 export async function extractOpenUPRN(options: {
-	archivePath: string
-	destDir: string
+	archivePath: PathBuilderLike
+	destDir: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }): Promise<ExtractOpenUPRNResult> {
 	const phase = options.onPhase ?? (() => {})
-	const extractedDir = String(join(options.destDir, "extracted"))
+	const extractedDir = join(options.destDir, "extracted")
 
 	await makeDirectories(extractedDir)
 
@@ -395,7 +395,7 @@ export async function extractOpenUPRN(options: {
 	const csvEntry = entries.find((entry) => /^osopenuprn_.*\.csv$/i.test(entry.name))
 
 	if (csvEntry) {
-		csvPath = String(join(extractedDir, csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1)))
+		csvPath = join(extractedDir, csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1))
 		csvBytes = csvEntry.uncompressedSize
 		const existing = await tryStat(csvPath)
 
@@ -413,8 +413,8 @@ export async function extractOpenUPRN(options: {
 		skipExisting: true,
 	})
 
-	const licensePath = String(join(extractedDir, "licence.txt"))
-	const versionsPath = String(join(extractedDir, "versions.txt"))
+	const licensePath = join(extractedDir, "licence.txt")
+	const versionsPath = join(extractedDir, "versions.txt")
 
 	const licenseText = await readLocalBuffer(licensePath)
 		.then(decodeProvenanceText)
@@ -448,7 +448,7 @@ export interface BuildUPRNLayerOptions {
 	/**
 	 * Output artifact. Default `<data-root>/uprn/uprn.db`. Built to a staging path and atomically swapped into place.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if no archive is there.
 	 */
@@ -547,7 +547,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
 	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
-	const out = options.out ?? String(dataRootPath("uprn", "uprn.db"))
+	const out = options.out ?? dataRootPath("uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire the source; offline rebuilds recover provenance from acquisition.json, and when that
@@ -791,12 +791,12 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
-	phase("seal", out)
+	phase("seal", out.toString())
 	await sealDatabase(ingestPath)
 	await swapDatabaseIntoPlace(ingestPath, out)
 
 	return {
-		out,
+		out: out.toString(),
 		sourceDir,
 		read,
 		inserted,

@@ -47,7 +47,7 @@ import { isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -85,12 +85,12 @@ export interface BuildPostcodeCodePointOptions {
 	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree. Default
 	 * `<data-root>/codepoint/<YYYY-MM-DD>` — a NEW dated directory per acquisition.
 	 */
-	sourceDir?: string
+	sourceDir?: PathBuilderLike
 	/**
 	 * Output artifact. Default `<data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db` — a NEW dated path every build.
 	 * Promoting it into `DEFAULT_POSTCODE_DATABASES` is a deliberate, separate swap.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if the CSVs are not there.
 	 */
@@ -148,8 +148,8 @@ export async function buildPostcodeCodePoint(
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = options.sourceDir ?? String(dataRootPath("codepoint", stamp))
-	const out = options.out ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`))
+	const sourceDir = (options.sourceDir ?? dataRootPath("codepoint", stamp)).toString()
+	const out = (options.out ?? dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`)).toString()
 
 	// Acquire the Code-Point source archive.
 	//
@@ -178,7 +178,7 @@ export async function buildPostcodeCodePoint(
 		osVersion = download.version
 	}
 
-	const archivePath = String(join(sourceDir, "codepo_gb.zip"))
+	const archivePath = join(sourceDir, "codepo_gb.zip")
 	const extracted = await extractCodePointOpen({ archivePath, destDir: sourceDir, onPhase: phase })
 
 	phase(

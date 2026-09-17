@@ -9,6 +9,7 @@
 
 import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { PathBuilderLike } from "path-ts"
 
 import type { RepoContext } from "#check"
 
@@ -19,6 +20,6 @@ import type { RepoContext } from "#check"
  * returned that call unchanged, which is a second public name for one function and exactly what `export-name-affix`
  * reports.
  */
-export async function collectRepoContext(repoRoot = String(repoRootPath())): Promise<RepoContext> {
-	return { repoRoot, trackedFiles: await trackedFiles(repoRoot) }
+export async function collectRepoContext(repoRoot: PathBuilderLike = repoRootPath()): Promise<RepoContext> {
+	return { repoRoot: repoRoot.toString(), trackedFiles: await trackedFiles(repoRoot) }
 }

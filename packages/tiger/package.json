@@ -85,8 +85,8 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@turf/boolean-contains": "^7.4.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.3.0",
-		"spliterator": "^7.9.0",
+		"path-ts": "^2.4.1",
+		"spliterator": "^7.10.1",
 		"type-fest": "^5.9.0"
 	},
 	"devDependencies": {

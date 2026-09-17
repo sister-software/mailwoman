@@ -35,6 +35,7 @@ import { APIClient, type APIClientConfig, type ClockLike, assertNoOGCServiceExce
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import { saverestToISODate } from "#sdk/tabular"
 
@@ -161,7 +162,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 
 export interface CreateSoilDataAccessClientOptions {
 	clock?: ClockLike
-	cacheDirectory?: string
+	cacheDirectory?: PathBuilderLike
 	minRequestIntervalMs?: number
 }
 
@@ -177,7 +178,7 @@ export function createSoilDataAccessClient(options: CreateSoilDataAccessClientOp
 		caching: {
 			ttl: SDA_CACHE_TTL_MS,
 			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath("soil", "cache", "http")),
+				directory: (options.cacheDirectory ?? dataRootPath("soil", "cache", "http")).toString(),
 			}),
 		},
 	})

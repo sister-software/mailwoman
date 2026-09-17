@@ -18,6 +18,7 @@ import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { inTXBBOX } from "#tools/shared"
@@ -29,7 +30,7 @@ export interface TXHHSCConvertOptions {
 	/**
 	 * The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
 	 */
-	src?: string
+	src?: PathBuilderLike
 	/**
 	 * Output OaRow JSONL path. Default `/tmp/txhhsc-oarow.jsonl`.
 	 */
@@ -45,7 +46,7 @@ export async function convertTXHHSC(
 	options: TXHHSCConvertOptions = {},
 	report?: (line: string) => void
 ): Promise<{ written: number; skipped: number; out: string }> {
-	const src = options.src || String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
+	const src = options.src ?? dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv")
 	const out = options.out || tempRootPath("txhhsc-oarow.jsonl")
 
 	const records: string[] = []

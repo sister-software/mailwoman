@@ -262,8 +262,8 @@
 		"@mailwoman/locale-hint": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"path-ts": "^2.3.0",
-		"spliterator": "^7.9.0",
+		"path-ts": "^2.4.1",
+		"spliterator": "^7.10.1",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

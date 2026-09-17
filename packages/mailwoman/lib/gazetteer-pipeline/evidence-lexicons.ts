@@ -60,7 +60,7 @@ import { resourceDictionaryPath, repoRootPathBuilder } from "@mailwoman/core/pat
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { dirname, join, resolvePath } from "path-ts"
+import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "#gazetteer-pipeline/fst"
@@ -320,11 +320,11 @@ export interface BuildLocalitySurfaceLexiconOpts {
 	/**
 	 * WOF admin DB (default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
 	 */
-	dbPath?: string
+	dbPath?: PathBuilderLike
 	/**
 	 * Output path (default `$MAILWOMAN_DATA_ROOT/gazetteer/locality-surface-lexicon-v6.json`).
 	 */
-	output?: string
+	output?: PathBuilderLike
 	onProgress?: (line: string) => void
 }
 
@@ -348,7 +348,7 @@ export interface BuiltLexicon {
 export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
-	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
+	const dbPath = opts.dbPath ?? dataRootPath("wof", "admin-global-priority.db")
 	const output = resolvePath(opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json"))
 	const progress = opts.onProgress ?? (() => {})
 
@@ -380,7 +380,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		}
 	}
 
-	const countryCounts = await computeSurfaceCountryCounts(dbPath)
+	const countryCounts = await computeSurfaceCountryCounts(dbPath.toString())
 	const personNames = await loadPersonNameSurfaces()
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
@@ -535,7 +535,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	await writeLocalJSONLFile([lexicon], output)
 
 	return {
-		path: output,
+		path: output.toString(),
 		entries: entries.size,
 		homographs,
 		skippedDegenerate,
@@ -552,7 +552,7 @@ export interface BuildStreetTypeLexiconOpts {
 	/**
 	 * Output path (default `<repo>/data/gazetteer/street-type-lexicon-v3.json` — small, committed).
 	 */
-	output?: string
+	output?: PathBuilderLike
 }
 
 /**
@@ -576,7 +576,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		import("@mailwoman/codex/us"),
 	])
 
-	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json"))
+	const output = opts.output ?? repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json")
 
 	const isShortCode = (s: string): boolean => {
 		const letters = s.replaceAll(/[^\p{L}]/gu, "")
@@ -700,7 +700,7 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	await writeLocalJSONFile(lexicon, output)
 
 	return {
-		path: output,
+		path: output.toString(),
 		entries: entries.size + codeEntries.size,
 		homographs: 0,
 		skippedDegenerate: 0,

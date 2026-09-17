@@ -5664,7 +5664,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -5728,9 +5728,9 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     ink: "npm:^7.1.1"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     react: "npm:^19.2.8"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     wrangler: "npm:^4.129.0"
     zod: "npm:^4.5.4"
   bin:
@@ -5749,8 +5749,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -5766,8 +5766,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     type-fest: "npm:^5.9.0"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -5840,10 +5840,10 @@ __metadata:
     iconv-lite: "npm:^0.7.3"
     isomorphic-dompurify: "npm:^4.1.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     pino: "npm:^10.3.1"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     trusted-types: "npm:^2.0.0"
     type-fest: "npm:^5.9.0"
     yauzl-promise: "npm:^4.0.0"
@@ -5871,9 +5871,9 @@ __metadata:
     fastest-levenshtein: "npm:^1.0.16"
     kysely: "npm:^0.29.5"
     parquet-wasm: "npm:0.7.2"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     read-excel-file: "npm:^9.3.10"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     write-excel-file: "npm:^4.1.1"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -5895,8 +5895,8 @@ __metadata:
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
     "@vvago/vale": "npm:^3.20.0"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     zod: "npm:^4.5.4"
   bin:
@@ -5943,12 +5943,12 @@ __metadata:
     mailwoman: "workspace:*"
     maplibre-gl: "npm:^6.7.0"
     onnxruntime-web: "npm:1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     prism-react-renderer: "npm:^2.4.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.3"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     storybook: "npm:^10.6.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     unist: "npm:^0.0.1"
@@ -6021,9 +6021,9 @@ __metadata:
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     read-excel-file: "npm:^9.3.10"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     type-fest: "npm:^5.9.0"
     write-excel-file: "npm:^4.1.1"
     zod: "npm:^4.5.4"
@@ -6053,7 +6053,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:^26.4.1"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
@@ -6064,7 +6064,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     type-fest: "npm:^5.9.0"
   languageName: unknown
   linkType: soft
@@ -6225,7 +6225,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6315,9 +6315,9 @@ __metadata:
     esbuild: "npm:0.28.2"
     onnxruntime-node: "npm:^1.29.0"
     onnxruntime-web: "npm:1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     playwright: "npm:^1.63.0"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     zod: "npm:^4.5.4"
   peerDependencies:
     onnxruntime-node: ^1.26.0
@@ -6351,8 +6351,8 @@ __metadata:
     "@mailwoman/un-locode-lookup": "workspace:*"
     hono: "npm:^4.13.7"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     zod: "npm:^4.5.4"
   bin:
     nominatim: ./out/cli.js
@@ -6401,8 +6401,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -6471,8 +6471,8 @@ __metadata:
   resolution: "@mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy"
   dependencies:
     "@mailwoman/core": "workspace:*"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -6549,9 +6549,9 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:^26.4.1"
     h3-js: "npm:^4.5.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     playwright: "npm:^1.63.0"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -6564,9 +6564,9 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@types/semver": "npm:^7.8.0"
     mailwoman: "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     semver: "npm:^7.8.5"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
   languageName: unknown
@@ -6579,7 +6579,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/release-kit": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     zod: "npm:^4.5.4"
   bin:
     mwrelease-mcp: ./lib/cli.ts
@@ -6595,8 +6595,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     "@vvago/vale": "npm:^3.20.0"
     esbuild: "npm:0.28.2"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     typescript: "npm:@typescript/typescript6@^6.0.2"
   languageName: unknown
   linkType: soft
@@ -6615,8 +6615,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     type-fest: "npm:^5.9.0"
     zod: "npm:^4.5.4"
   languageName: unknown
@@ -6648,7 +6648,7 @@ __metadata:
     "@mailwoman/evidence": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6665,7 +6665,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@playwright/test": "npm:^1.63.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     vite: "npm:^8.2.2"
     vite-plugin-pwa: "npm:^1.3.0"
   languageName: unknown
@@ -6680,8 +6680,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -6711,7 +6711,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
   languageName: unknown
   linkType: soft
 
@@ -6725,8 +6725,8 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@turf/boolean-contains": "npm:^7.4.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
     type-fest: "npm:^5.9.0"
   languageName: unknown
   linkType: soft
@@ -6764,7 +6764,7 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
   bin:
     un-locode-lookup: ./out/cli.js
   languageName: unknown
@@ -6794,10 +6794,10 @@ __metadata:
     onnxruntime-web: "npm:1.29.0"
     oxfmt: "npm:0.66.0"
     oxlint: "npm:1.81.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     release-it: "npm:^19.2.4"
     sherif: "npm:^1.13.0"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     ts-morph: "npm:^28.0.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     vitest: "npm:4.1.11"
@@ -6823,8 +6823,8 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.5"
-    path-ts: "npm:^2.3.0"
-    spliterator: "npm:^7.9.0"
+    path-ts: "npm:^2.4.1"
+    spliterator: "npm:^7.10.1"
   languageName: unknown
   linkType: soft
 
@@ -19638,9 +19638,9 @@ __metadata:
     ink: "npm:^7.1.1"
     kysely: "npm:^0.29.5"
     onnxruntime-node: "npm:^1.29.0"
-    path-ts: "npm:^2.3.0"
+    path-ts: "npm:^2.4.1"
     react: "npm:^19.2.8"
-    spliterator: "npm:^7.9.0"
+    spliterator: "npm:^7.10.1"
     zod: "npm:^4.5.4"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -22222,10 +22222,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-ts@npm:^2.1.0, path-ts@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "path-ts@npm:2.3.0"
-  checksum: 10/a74238a106cbf4a0f7884dbd216d67e008f20e1cdc36b561095186aecdcd952e56505db4157f1192a7247f105618f2652ed7c68a28de5f748d6ab35f812fc81d
+"path-ts@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "path-ts@npm:2.4.1"
+  checksum: 10/281c31af1489f4e775c0bf694e0712203dd77d608a6f2d467eae144ce29583786aeecb3384718cf0eb41c19752746b361ddb9ae87ec6723e362b3149da26e2b7
   languageName: node
   linkType: hard
 
@@ -25819,12 +25819,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^7.9.0":
-  version: 7.9.0
-  resolution: "spliterator@npm:7.9.0"
+"spliterator@npm:^7.10.1":
+  version: 7.10.1
+  resolution: "spliterator@npm:7.10.1"
   dependencies:
     change-case: "npm:^5.4.4"
-    path-ts: "npm:^2.1.0"
     type-fest: "npm:^5.8.0"
   peerDependencies:
     read-excel-file: ^9.3.5
@@ -25836,7 +25835,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/58886793471efacfda721c86fb470b443d8683653316a7a0e395700ebe665deb3c6cb2d371ccc92b8e9dfb1d821b48373f7ff9558901b1b0fc3c13a4c94c713b
+  checksum: 10/88ef603802a982120d38cb4f63c146f9e770b19f14ca5186f149f34a6a24eb8d00c7a3ee81dfc801c3e123d286df1c941e4f5bb001b0fa0f633277a602a6dd4b
   languageName: node
   linkType: hard
 

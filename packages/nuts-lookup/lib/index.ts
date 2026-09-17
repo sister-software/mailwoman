@@ -12,6 +12,7 @@
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { NUTSDatabase } from "#schema"
 
@@ -126,7 +127,7 @@ export class NUTSLookup implements Disposable {
 	 */
 	readonly #geometryCache = new Map<string, MultiPolygonCoords>()
 
-	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { database: DatabaseClient<NUTSDatabase> }) {
 		this.#ownedDatabase =
 			"database" in opts ? undefined : new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true })
 

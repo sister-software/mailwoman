@@ -10,12 +10,13 @@
 
 import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import type { Plugin } from "vite"
 
 /**
  * @param destDir The directory to stage into, relative to Vite's root (the package directory), e.g. `public/sqljs`.
  */
-export function stageSQLJSPlugin(destDir: string): Plugin {
+export function stageSQLJSPlugin(destDir: PathBuilderLike): Plugin {
 	let root = ""
 
 	return {

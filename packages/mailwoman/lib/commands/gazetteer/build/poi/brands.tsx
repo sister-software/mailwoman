@@ -51,7 +51,7 @@ const GazetteerBuildPOIBrands: CommandComponent<typeof spec> = ({ options }) => 
 		console.error(`▸ writing ${out}`)
 
 		await writeBrandTable(table, out)
-		runFileSync("yarn", ["oxfmt", out])
+		runFileSync("yarn", ["oxfmt", out.toString()])
 
 		const top5 = table.brands
 			.slice(0, 5)

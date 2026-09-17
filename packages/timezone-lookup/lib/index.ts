@@ -12,6 +12,7 @@
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { TimezoneDatabase } from "#schema"
 
@@ -103,7 +104,7 @@ export class TimezoneLookup implements Disposable {
 	readonly #resources = new DisposableStack()
 	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseClient<TimezoneDatabase> }) {
+	constructor(opts: { databasePath: PathBuilderLike } | { database: DatabaseClient<TimezoneDatabase> }) {
 		this.#db =
 			"database" in opts
 				? opts.database

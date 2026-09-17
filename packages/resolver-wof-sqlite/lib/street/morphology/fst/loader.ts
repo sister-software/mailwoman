@@ -24,6 +24,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 import type { FSTMatcher } from "#fst/matcher"
 import { deserializeFST, readFSTProvenance } from "#fst/serialize"
@@ -38,8 +39,8 @@ export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 /**
  * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
  */
-export function defaultStreetMorphologyArtifactPath(): string {
-	return String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME))
+export function defaultStreetMorphologyArtifactPath(): PathBuilder {
+	return dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)
 }
 
 export interface LoadStreetMorphologyFSTOpts {
@@ -47,11 +48,11 @@ export interface LoadStreetMorphologyFSTOpts {
 	 * Explicit artifact path (e.g. a weights-package sibling). When given it is the ONLY artifact probed — missing or
 	 * unreadable degrades straight to the dictionary build, never a throw.
 	 */
-	artifactPath?: string
+	artifactPath?: PathBuilderLike
 	/**
 	 * Dictionaries dir for the build fallback. Defaults to core's bundled libpostal dictionaries.
 	 */
-	dictionariesDir?: string
+	dictionariesDir?: PathBuilderLike
 	/**
 	 * Unreadable-artifact diagnostics. Defaults to silent (the caller owns its warn channel).
 	 */
@@ -67,7 +68,7 @@ export interface LoadedStreetMorphologyFST {
 	/**
 	 * The artifact path when `source === "artifact"`.
 	 */
-	path?: string
+	path?: PathBuilderLike
 	/**
 	 * Build provenance — read from the artifact trailer, or carried fresh off the fallback build.
 	 */
@@ -98,7 +99,7 @@ export async function loadStreetMorphologyFST(
 	}
 
 	const built = await buildStreetMorphologyFST({
-		dictionariesDir: opts.dictionariesDir ?? resourceDictionaryPath("libpostal"),
+		dictionariesDir: (opts.dictionariesDir ?? resourceDictionaryPath("libpostal")).toString(),
 	})
 
 	return { matcher: built.matcher, source: "built", provenance: built.provenance }

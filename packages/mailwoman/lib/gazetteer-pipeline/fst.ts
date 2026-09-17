@@ -43,7 +43,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, resolvePath } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -406,11 +406,11 @@ export interface BuildLocaleFSTsOpts {
 	/**
 	 * WOF admin DB (default: `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`).
 	 */
-	dbPath?: string
+	dbPath?: PathBuilderLike
 	/**
 	 * Output dir (default: `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated`). Never the shipped dir.
 	 */
-	outputDir?: string
+	outputDir?: PathBuilderLike
 	/**
 	 * Skip the curation (an A/B control build with the SAME current DB).
 	 */
@@ -428,8 +428,8 @@ export interface BuiltLocaleFST {
 
 export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
-	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const outputDir = resolvePath(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
+	const dbPath = opts.dbPath ?? dataRootPath("wof", "admin-global-priority.db")
+	const outputDir = resolvePath(opts.outputDir ?? dataRootPath("wof", "fst-per-locale-curated"))
 	const progress = opts.onProgress ?? (() => {})
 
 	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()
@@ -442,7 +442,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 
 	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control stays a pure
 	// pre-curation byte baseline. One global scan shared by every locale.
-	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
+	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath.toString())
 
 	if (surfaceCountryCounts) {
 		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)

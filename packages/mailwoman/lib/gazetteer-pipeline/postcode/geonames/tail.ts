@@ -42,7 +42,7 @@ import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/
 import type { ExtractMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -125,12 +125,12 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip). Default
 	 * `<data-root>/geonames-postal`.
 	 */
-	postalDir?: string
+	postalDir?: PathBuilderLike
 	/**
 	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db` — a NEW dated path every build;
 	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Build clock, stamped into `meta.built_at` and the default output name. Passed in so the module never reads the
 	 * clock implicitly (the `defaultGazetteerVersion` convention).
@@ -169,8 +169,8 @@ export async function buildPostcodeGeonamesTail(
 	const phase = opts.onPhase ?? (() => {})
 	const now = opts.now ?? new Date()
 	const countries = [...(opts.countries ?? DEFAULT_GEONAMES_TAIL_COUNTRIES)].map((c) => c.toUpperCase())
-	const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
-	const out = opts.out ?? String(dataRootPath("wof", `postalcode-geonames-tail-${isoDate(now)}.db`))
+	const postalDir = (opts.postalDir ?? dataRootPath("geonames-postal")).toString()
+	const out = (opts.out ?? dataRootPath("wof", `postalcode-geonames-tail-${isoDate(now)}.db`)).toString()
 
 	if (!(await pathExists(postalDir))) {
 		throw new Error(

@@ -129,7 +129,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			geodatabasePath = await downloadFloodGeodatabase({
 				url,
 				revisionDate: sourceVintage,
-				cacheRoot: String(dataRootPath("flood", "cache")),
+				cacheRoot: dataRootPath("flood", "cache").toString(),
 				onProgress: (message) => console.error(`  [download] ${message}`),
 			})
 		}
@@ -175,8 +175,8 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		// The authority's ids run 1..featureCount contiguously, and the batched build walks that range.
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
-		const out = options.out ?? String(dataRootPath("flood", "flood.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = options.out ?? dataRootPath("flood", "flood.db").toString()
+		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		const result = await buildFloodDatabase({
 			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
