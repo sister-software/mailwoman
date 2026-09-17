@@ -74,6 +74,14 @@ export async function loadClassifierFromWeights(
 		 * loader's header check.
 		 */
 		placetypeCensusPath?: string
+		/**
+		 * Override the card's `suppress_gazetteer_near_postcode` declaration — the near-postcode gazetteer choreography.
+		 *
+		 * A DECLARED ABLATION for measurement, never a production setting: the choreography pairs with the train-time half,
+		 * so a model trained with it and served without it is a mismatch. `createScorer` has carried the same override
+		 * since the channel shipped; this makes the package-shaped path able to answer the same question.
+		 */
+		suppressGazetteerNearPostcode?: boolean
 	} = {}
 ): Promise<NeuralAddressClassifier> {
 	// The sanctioned crossing into the three Node-only modules. `webpackIgnore` leaves the import
@@ -307,7 +315,9 @@ export async function loadClassifierFromWeights(
 	// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
 	// The anchor span mode is card-declared too, never inferred: an undeclared card leaves it
 	// undefined and the channel keeps the alnum-run scan verbatim.
-	const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
+	const suppressGazetteerNearPostcode =
+		opts.suppressGazetteerNearPostcode ?? declared?.suppress_gazetteer_near_postcode ?? false
+
 	const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
 	return new NeuralAddressClassifier({

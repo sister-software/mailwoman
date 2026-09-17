@@ -93,6 +93,15 @@ const { values } = parseArguments({
 		 * Drop the postcode from the rendered surface, leaving `«locality», «region»`.
 		 */
 		"drop-postcode": { type: "boolean" },
+		/**
+		 * Serve with the near-postcode gazetteer choreography off, whatever the card declares.
+		 *
+		 * The choreography zeroes the gazetteer clue within one piece of a postcode-anchor hit. It was added to stop the
+		 * clue on a region token from making the `B-region → B-postcode` transition uncompetitive, which cost about 3
+		 * points of postcode. A DECLARED ABLATION for measurement: the model was trained with the choreography, so serving
+		 * it without is a mismatch and never a shipping configuration.
+		 */
+		"no-gazetteer-suppression": { type: "boolean" },
 	},
 })
 
@@ -160,7 +169,10 @@ if (!byGroup.size) {
 	)
 }
 
-const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
+const deps = await buildGauntletDeps({
+	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
+	...(values["no-gazetteer-suppression"] ? { suppressGazetteerNearPostcode: false } : {}),
+})
 
 /**
  * A BIO label names its tag after the prefix, so both `B-locality` and `I-locality` count as the locality reading.
@@ -330,6 +342,10 @@ if (values["spell-region"]) {
 
 if (values["drop-postcode"]) {
 	swaps.push("postcode dropped")
+}
+
+if (values["no-gazetteer-suppression"]) {
+	swaps.push("near-postcode gazetteer choreography OFF")
 }
 
 if (values["swap-region"]) {

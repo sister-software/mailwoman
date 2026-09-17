@@ -95,6 +95,14 @@ export interface GauntletDepsOptions {
 	 */
 	candidateDB?: string
 	/**
+	 * Override the card's near-postcode gazetteer choreography for this run.
+	 *
+	 * A DECLARED ABLATION, for measuring what the channel is worth on a surface. The choreography pairs with the
+	 * train-time half, so serving a model trained with it under `false` is a deliberate mismatch and never a shipping
+	 * configuration.
+	 */
+	suppressGazetteerNearPostcode?: boolean
+	/**
 	 * Resolver-side pin pins applied to every geocode this deps object performs.
 	 */
 	pins?: GauntletResolverPins
@@ -399,8 +407,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
+	const ablation =
+		opts.suppressGazetteerNearPostcode === undefined
+			? {}
+			: { suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode }
+
 	const classifier = opts.weightsCacheRoot
-		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
+		? await NeuralAddressClassifier.loadFromWeights({
+				locale: "en-US",
+				cacheRoot: opts.weightsCacheRoot,
+				...ablation,
+			})
 		: opts.tokenizerPath
 			? await createScorer({
 					// Same rule as the stamp above: when the caller overrides only the TOKENIZER, the model still comes
@@ -414,8 +431,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 					locale: "en-us",
 				})
 			: opts.modelPath
-				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolvePath(opts.modelPath) })
-				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+				? await NeuralAddressClassifier.loadFromWeights({
+						locale: "en-US",
+						modelPath: resolvePath(opts.modelPath),
+						...ablation,
+					})
+				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", ...ablation })
 
 	// Per-country overlay classifiers (2026-08-01): a case's country selects the weights OVERLAY so
 	// GB rows grade with en-GB's pair-index + transition-beta exactly as production's locale-hint
