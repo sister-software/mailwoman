@@ -23,6 +23,15 @@
  *   read in the same units on the same panel. `region-shape` is the crossed one: within each region, the three name
  *   shapes side by side. Two effects reported as pass rates cannot be compared; two margins in logits can be added.
  *
+ *   Group by a region-crossed axis whenever the claim is about shape. A pooled `--by shape` run takes its rows in panel
+ *   order, panel order is region order, and the rarer shape therefore spans more states than the common one — measured
+ *   on the v5.7.0 candidate, the pooled and crossed reads of the same word-count contrast disagree in sign, +0.751
+ *   against −0.739 logits.
+ *
+ *   Pass `--weights-cache` for a candidate. Without it the run grades the installed weights, and the two are not
+ *   interchangeable: on the bare admin surface the v5.7.0 candidate sits about 2.5 logits above the shipped line, far
+ *   enough that the shipped one saturates against a floor near −6 and the candidate stays additive.
+ *
  *   Run:
  *
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --weights-cache <dir>
@@ -64,6 +73,12 @@ const { values } = parseArguments({
 		 * Re-render each subject's postcode as this literal, leaving its locality and region alone.
 		 */
 		"swap-postcode": { type: "string" },
+		/**
+		 * Resolve each row as well as tracing it, so the decode reading and the answer reading sit in one table.
+		 *
+		 * Off by default because it doubles the work: every row costs a trace and then a geocode.
+		 */
+		"with-geocode": { type: "boolean" },
 	},
 })
 
@@ -164,6 +179,19 @@ function localityMargin(row: readonly number[], labels: readonly string[]): numb
 interface GroupMargins {
 	rows: number
 	decodedAsLocality: number
+	/**
+	 * Rows whose RESOLVED locality is the expected one, counted only under `--with-geocode`.
+	 *
+	 * A different question from {@linkcode decodedAsLocality}, and the two are easy to read as one: the decode reading
+	 * asks what label the locality's own tokens took, and this asks what the pipeline finally answered. A row can lose
+	 * the locality span and still answer the right place from its region and postcode, so the second number is the higher
+	 * one and the gap between them is how much the region and postcode are carrying.
+	 */
+	answeredExpected: number
+	/**
+	 * Rows the pipeline answered with no locality at all.
+	 */
+	answeredNothing: number
 	rawMargin: number
 	decodedMargin: number
 	priorsApplied: Map<string, number>
@@ -181,6 +209,8 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 	const entry: GroupMargins = {
 		rows: 0,
 		decodedAsLocality: 0,
+		answeredExpected: 0,
+		answeredNothing: 0,
 		rawMargin: 0,
 		decodedMargin: 0,
 		priorsApplied: new Map(),
@@ -225,6 +255,18 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 
 		entry.rows++
 
+		if (values["with-geocode"]) {
+			// `defaultCountry` here, not `caseCountry`: this call is the resolver's, and the country it takes is the scope
+			// prior the answer is produced under.
+			const answered = (await deps.geocode(input, { defaultCountry: place.country })).locality ?? null
+
+			if (answered === null) {
+				entry.answeredNothing++
+			} else if (answered === place.locality) {
+				entry.answeredExpected++
+			}
+		}
+
 		const first = covering[0]!
 
 		const won = trace.labels[trace.path[first.index]!] ?? "?"
@@ -268,11 +310,25 @@ if (values["swap-postcode"]) {
 
 const swapped = swaps.join(", ")
 
+// The weights go in the header because leaving them out cost a whole reading: #2308's rates are measured on a
+// candidate, a bare run grades the installed weights instead, and the two sit about 2.5 logits apart on this surface.
+// A table that does not name its model can be compared against one that was never its arm.
+const weights = values["weights-cache"]
+	? `candidate ${values["weights-cache"]}`
+	: "INSTALLED weights (no --weights-cache)"
+
 console.log(
-	`#2311 decode margins — ${values.eval}, by ${values.by}, ${results.size} group(s)${swapped ? `, ${swapped}` : ""}\n`
+	`#2311 decode margins — ${values.eval}, by ${values.by}, ${results.size} group(s)${swapped ? `, ${swapped}` : ""}\n` +
+		`weights: ${weights}\n`
 )
-console.log(`| ${values.by} | rows | decoded as locality | raw margin | post-prior margin | what won instead |`)
-console.log(`| --- | --: | --: | --: | --: | --- |`)
+
+const answerColumns = values["with-geocode"] ? ` answered expected | answered nothing |` : ""
+const answerRule = values["with-geocode"] ? ` --: | --: |` : ""
+
+console.log(
+	`| ${values.by} | rows | decoded as locality |${answerColumns} raw margin | post-prior margin | what won instead |`
+)
+console.log(`| --- | --: | --: |${answerRule} --: | --: | --- |`)
 
 for (const [group, entry] of [...results].toSorted(
 	(a, b) => b[1].decodedAsLocality / b[1].rows - a[1].decodedAsLocality / a[1].rows
@@ -283,9 +339,13 @@ for (const [group, entry] of [...results].toSorted(
 		.map(([label, n]) => `${label} ${n}`)
 		.join(", ")
 
+	const answers = values["with-geocode"]
+		? ` ${formatPercent(entry.answeredExpected, entry.rows)} | ${entry.answeredNothing} |`
+		: ""
+
 	console.log(
-		`| ${group} | ${entry.rows} | ${formatPercent(entry.decodedAsLocality, entry.rows)} ` +
-			`| ${(entry.rawMargin / entry.rows).toFixed(3)} | ${(entry.decodedMargin / entry.rows).toFixed(3)} ` +
+		`| ${group} | ${entry.rows} | ${formatPercent(entry.decodedAsLocality, entry.rows)} |${answers}` +
+			` ${(entry.rawMargin / entry.rows).toFixed(3)} | ${(entry.decodedMargin / entry.rows).toFixed(3)} ` +
 			`| ${won || "—"} |`
 	)
 }
