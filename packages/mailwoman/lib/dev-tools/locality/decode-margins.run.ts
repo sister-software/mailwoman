@@ -39,6 +39,7 @@
  *       node packages/mailwoman/lib/dev-tools/locality/decode-margins.run.ts --by region-shape --per-group 8
  */
 
+import { matchSubdivisionIn } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
@@ -79,6 +80,19 @@ const { values } = parseArguments({
 		 * Off by default because it doubles the work: every row costs a trace and then a geocode.
 		 */
 		"with-geocode": { type: "boolean" },
+		/**
+		 * Write each row's own region as its canonical name rather than its code — `Illinois` for `IL`.
+		 *
+		 * Separates the FRAME from the name: `Orland Park, IL 60467` answers no locality at all while `Orland Park,
+		 * Illinois` answers the place, so a penalty read under the coded frame may belong to the frame rather than to the
+		 * locality's own shape. A row whose region the codex cannot spell is skipped and counted, never rendered under its
+		 * code as though the arm had applied.
+		 */
+		"spell-region": { type: "boolean" },
+		/**
+		 * Drop the postcode from the rendered surface, leaving `«locality», «region»`.
+		 */
+		"drop-postcode": { type: "boolean" },
 	},
 })
 
@@ -219,12 +233,22 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 	}
 
 	for (const subject of bucket) {
+		const spelled = values["spell-region"] ? matchSubdivisionIn(subject.country, subject.region)?.name : undefined
+
+		// A region the codex cannot spell is skipped rather than rendered under its code: leaving it in would put coded
+		// rows inside an arm whose whole claim is that they are spelled.
+		if (values["spell-region"] && !spelled) {
+			entry.unlocated++
+
+			continue
+		}
+
 		// A crossed pairing denotes no place, and nothing here claims one: the grade is the locality label's margin at
 		// the tokens the locality occupies, which is a reading of what the decode conditions on.
 		const place = {
 			...subject,
-			region: values["swap-region"] ?? subject.region,
-			postcode: values["swap-postcode"] ?? subject.postcode,
+			region: spelled ?? values["swap-region"] ?? subject.region,
+			postcode: values["drop-postcode"] ? "" : (values["swap-postcode"] ?? subject.postcode),
 		}
 
 		const input = renderAdmin(place)
@@ -299,6 +323,14 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 }
 
 const swaps: string[] = []
+
+if (values["spell-region"]) {
+	swaps.push("region spelled")
+}
+
+if (values["drop-postcode"]) {
+	swaps.push("postcode dropped")
+}
 
 if (values["swap-region"]) {
 	swaps.push(`region → ${values["swap-region"]}`)
