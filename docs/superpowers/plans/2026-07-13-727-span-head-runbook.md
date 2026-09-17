@@ -15,19 +15,19 @@ messy input) points at structured span prediction.
    span-boundary aux head to `model.py` (`use_span_boundary_head`): per-token BCE on span START
    (B-*) + END (entity token whose successor doesn't continue it), supervised from the BIO labels,
    fp32 BCE, weight 0.5. init_from stable v257, 2k. **Result: US region→street flips 5 → 2** (3 of
-   the VT cases fixed), gauntlet regression + metamorphic BOTH still PASS, aggregate parity street
-   flat (boundary cases are a small share of the 267 slots — the win is in the targeted class).
+   the VT cases fixed), gauntlet regression + metamorphic both still pass, aggregate parity street
+   flat (boundary cases are a small share of the 267 slots — the result is in the targeted class).
    Inference-invariant (head off the logits path, never exported → no #378 SLO cost — that is what
    made it the cheap falsifier). The hypothesis held: span-consistency pressure fixes boundary
    absorption without touching the BIO head. **v2.6.1 (full 8k, same head/weight) running** to test
    whether it deepens + lifts aggregate street.
    **Stage-1 CONCLUSIVE (2026-07-14):** the simple head plateaus at 3/5 boundary cases (flips 5→2)
-   on BOTH knobs — v2.6.0 (2k, w0.5), v2.6.1 (8k, w0.5), v2.6.2 (2k, w1.5) are IDENTICAL on the
+   on BOTH knobs — v2.6.0 (2k, w0.5), v2.6.1 (8k, w0.5), v2.6.2 (2k, w1.5) are identical on the
    boundary class (2 flips: `VT 05068, New St` + `n main st nd 58852`) and aggregate parity street
-   (0.5281), and w1.5 slightly hurt house_number (0.767→0.753). So the partial win is real, stable,
-   and free — but the residual is NOT weight- or duration-limited. The 2 stubborn cases are
+   (0.5281), and w1.5 slightly hurt house_number (0.767→0.753). So the result is real, stable,
+   and free — but the residual is not weight- or duration-limited. The 2 stubborn cases are
    multi-boundary (region between a postcode and a street), which start/end pressure alone can't
-   resolve; that is genuinely FSemi-CRF territory.
+   resolve; that is in fact FSemi-CRF territory.
 2. **FSemi-CRF head** — the confirmed next arc (stage-1 exhausted the cheap change). The full #727
    design: span enumeration + filtered semi-Markov decode, so the model scores whole (start, end,
    type) spans instead of per-token tags. Architecture change: new export path, #378 browser-SLO
@@ -35,7 +35,7 @@ messy input) points at structured span prediction.
    span-boundary head (`use_span_boundary_head`) as a co-trained auxiliary; it's free and helps.
    **Stage-2 is now fully scoped — see `2026-07-15-727-stage2-kbest-plan.md`** (night-3): k-best
    decode + resolver rerank ratified by the operator, design consult-reviewed, and the zero-training
-   falsifier probe run — naive decode hardening does NOT clear the residual (seg@1 0.453 vs ship
+   falsifier probe run — naive decode hardening does not clear the residual (seg@1 0.453 vs ship
    0.584) but oracle@10 street = 0.749 (+16.5pt headroom for k-best + rerank). The bare-fragment
    recall class (66% of street failures, measured night-3) needs the kind-posterior soft channel +
    recall-weighted loss ON TOP of the span head — the head alone won't fix polarity.
@@ -66,7 +66,7 @@ fixture** (`token@1 0.429 → seg@1 0.762`). The arc's premise holds. PR #1141; 
    on a CPU-only box AT ALL. Fixed; this affected every local grading run in the repo.
 3. **A python-side check is CHANNEL-STARVED (#718).** `scripts/eval_seg_at_1.py` feeds no
    anchor/gazetteer/country channels, so its token@1 reads ~0.49 where the JS harness reads 0.573 on
-   the SAME model. Its absolutes are NOT comparable across harnesses — only the internal
+   the SAME model. Its absolutes are not comparable across harnesses — only the internal
    seg-vs-token comparison is valid (both heads read the same starved encoder). Say so in any report.
 4. **Never diff two runs through `eval parity --failing 50`** — the list is truncated, so fixtures
    shift in and out of the window and manufacture phantom regressions. Diff the full per-fixture set.
@@ -79,15 +79,15 @@ Fixed — the boundary class, including the arc's own archetype:
 'Korunni 810, Praha'  →  Korunni:street  810:house_number  Praha:locality      (v264: street='Korunní 8' + hn='10')
 ```
 
-NOT fixed — the **bare-fragment polarity class** (66% of street failures, night-3 partition).
+not fixed — the **bare-fragment polarity class** (66% of street failures, night-3 partition).
 `Rue Montmartre` → `locality`. This is option C's target (kind-posterior soft channel +
 recall-weighted street loss) and was deliberately out of Phase 1's scope. Its survival is the plan's
 prediction holding, not a surprise.
 
 ### Why "Rue" doesn't already clue the model (the 2026-07-15 operator question — MEASURED)
 
-The intuition "`Rue` at the front should mark what follows as a street" is right, and the model DOES
-use it — **but a strong toponym in the name outvotes it, and a house number is what breaks the tie**:
+The intuition "`Rue` at the front should mark what follows as a street" is right, and the model does
+use it — **but a strong toponym under outvotes it, and a house number is what breaks the tie**:
 
 ```
 Rue Montmartre        → Rue Montmartre : locality        ✗   (Montmartre IS a Paris district)
@@ -99,7 +99,7 @@ Avenue Victor Hugo    → Avenue:street  Victor Hugo:street ✓  (a person, not 
 
 **The house number is the anchor, not the prefix.** Measured on `paris-streets.jsonl` (v264, ship
 config): contextful/homonym **6/6**, the operator's "particularly tricky" list **9/10** — the exotic
-morphology (`Chat-qui-Pêche`, `l'Hôtel-de-Ville`, `18-Juin-1940`) is NOT the problem — while
+morphology (`Chat-qui-Pêche`, `l'Hôtel-de-Ville`, `18-Juin-1940`) is not the problem — while
 bare-fragment/famous is **3/15** and `Avenue des Champs-Élysées` returns the **empty string**.
 
 Structurally: under flat BIO each token votes independently, so `Rue` has no mechanism to _govern_
@@ -109,14 +109,14 @@ competes with the BIO head at the same decode position. **#1103's own pre-regist
 condition is "after the #727 span-head work changes boundary placement" — that condition has now
 landed.** Under a segment decode a prefix clue can govern a whole span's type via the segment
 transition grammar (`street_prefix → street`), which is the level where "Rue governs the next thing"
-is actually well-posed. Re-probe it locale-hintd per #1103's criteria; do NOT re-probe it globally
+is well-posed. Re-probe it locale-hintd per #1103's criteria; do not re-probe it globally
 (the AU compact-form regression, 55 → 40, is what parked it).
 
 ## Standing constraints
 
 One variable per run. fp32 for any CRF/transition learning (bf16 NaN scar). Grade with
 `--weights-cache` package-shaped dirs only. Floors and the 2pp check are immutable; the triaged
-gold's default-flip awaits operator ratification. Treadmill guard applies across THIS arc too:
+gold's default-flip awaits operator ratification. Treadmill guard applies across this arc too:
 two opposite-direction failures = stop and fork, don't tune. **A mis-specified probe is not a
 treadmill** — repairing an LR that was never chosen for the thing it trains is fixing the
 instrument, not oscillating a knob (v3.0.0 → v3.0.1 is the worked example).

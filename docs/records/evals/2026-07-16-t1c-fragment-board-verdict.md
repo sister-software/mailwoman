@@ -1,4 +1,4 @@
-# T1c — the FR fragment board: the house number is a licence, not a hint
+# T1c — the FR fragment board: the house number is a license, not a hint
 
 **Deliverable (2026-07-16 review, Tier 1c):** replace the n=63 Paris anecdote with a BAN-sampled board
 carrying confidence intervals per phenomenon class, and make it the grading set for the T2 extract.
@@ -34,7 +34,7 @@ Nothing here needs squinting at: the numbered classes and the bare classes are s
 intervals nowhere near touching. Contrast the Paris board's 3/15 cell, whose interval is [0.07, 0.45] —
 this is the difference between a measurement and an anecdote with a decimal point.
 
-## 2. What the model actually says
+## 2. What the model says
 
 The rates undersell it. The parses:
 
@@ -64,17 +64,17 @@ number** and fragments the street around the hole. 5.5% correct, the worst class
 
 ## 3. One mechanism explains every cell
 
-> **The house number is not a hint. It is the licence.** The model has learned "digits ⇒ this is a
-> street address"; the street reading is conditioned on that licence, not on the designator.
+> **The house number is not a hint. It is the license.** The model has learned "digits ⇒ this is a
+> street address"; the street reading is conditioned on that license, not on the designator.
 
-| class                | licence?          | consequence                                   | rate  |
+| class                | license?          | consequence                                   | rate  |
 | -------------------- | ----------------- | --------------------------------------------- | ----- |
 | street-housenumber   | yes, clean        | parses correctly                              | 0.925 |
 | alnum-housenumber    | yes, clean        | parses correctly                              | 0.925 |
 | bare-street          | none              | designator-led phrase → locality              | 0.215 |
 | street-particle      | none              | same                                          | 0.273 |
 | admin-street-homonym | none              | same, and the toponym _is_ a place → stronger | 0.087 |
-| date-name            | yes, but spurious | licence granted, digits stolen, street split  | 0.055 |
+| date-name            | yes, but spurious | license granted, digits stolen, street split  | 0.055 |
 | bare-locality        | none              | → locality — **correct**                      | 0.980 |
 
 **The negative class passes for the wrong reason.** `bare-locality` scores 0.980 not because the model
@@ -104,7 +104,7 @@ The board is the grading set. Registered as baselines; the extract is graded aga
 - The global parity floor (`eval parity`) must hold. Board 2 moving is not a verdict alone.
 
 **Split discipline:** the board reserves its 2,400 street surfaces in `ban-fragments-fr.surfaces.txt`.
-The T2 extract MUST exclude every one — source-disjoint by normalized **surface**, never by record row.
+The T2 extract must exclude every one — source-disjoint by normalized **surface**, never by record row.
 Row-disjoint leaks the surface across the boundary and measures memorization of `Rue de Rivoli` while
 claiming generalization to unseen streets.
 

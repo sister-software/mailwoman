@@ -526,7 +526,7 @@ Expected: new commit hash.
 **Files:**
 
 - Create: `core/layers/index.ts`
-- Modify: `core/package.json` (BOTH exports maps)
+- Modify: `core/package.json` (both exports maps)
 
 **Interfaces:**
 
@@ -552,7 +552,7 @@ export * from "./manifest.ts"
 export * from "./schema.ts"
 ```
 
-- [ ] **Step 2: Add the subpath to BOTH exports maps in `core/package.json`**
+- [ ] **Step 2: Add the subpath to both exports maps in `core/package.json`**
 
 In the dev `exports` map (alphabetically near `"./env"`), insert:
 
@@ -1305,5 +1305,5 @@ Expected: clean status (or one lint-fix commit first), branch pushed.
 ## Execution notes for reviewers
 
 - Task 4's `yarn install` is the only step that touches the lockfile; if it produces a larger-than-expected diff, stop and check you're on the worktree's yarn version (`yarn --version` should match `.yarnrc.yml`).
-- The seed taxonomy's Overture-namespace hierarchies are provisional by design (spec §3.3): Plan 3's snapshot build is the correction mechanism. Reviewers should check synonym→id integrity (the test does) and NOT bikeshed category ancestry.
+- The seed taxonomy's Overture-namespace hierarchies are provisional by design (spec §3.3): Plan 3's snapshot build is the correction mechanism. Reviewers should check synonym→id integrity (the test does) and not bikeshed category ancestry.
 - Plan 2 (pipeline: `poi_query` kind + intent record + routing) and Plan 3 (poi.db builder + MCP server) are separate documents; nothing in this plan touches the runtime pipeline, so golden parses are byte-identical by construction.

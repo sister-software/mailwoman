@@ -40,7 +40,7 @@ The stack matters — #1136 and #1137 are based on #1132, not `main`.
 | parity street                | 0.543 | **0.573** |
 | golden exact-match           | 24.5% | 25.5%     |
 
-2pp promote check PASS (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Check
+2pp promote check pass (worst: country −0.4pp, n=245). Presets 6/6, zero grouper-audit. Check
 revision declared explicitly: `eval parity` now grades the ship-config parse; floors untouched.
 
 ## What we learned (the measurements that change the plan)
@@ -49,7 +49,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
   **bare fragments with no house number** — a recall/polarity failure (26/34 empty-street rows have
   _zero_ street-family label in the raw argmax; the model refuses, the decode doesn't drop it).
   Leading-number inputs fail only 21.6%.
-- **The digit-atomicity splice is counter-evidenced, not just unvalidated.** Multi-digit house
+- **The digit-atomicity splice is counter-evidenced, notunvalidated.** Multi-digit house
   numbers are the _best_-performing form (17.3% fail) vs short-digit 29.2% and alphanumeric 73.3%.
   Per-digit shattering does not correlate with failure. Deprioritized in the runbook.
 - **Diacritics: "visibility, not regression" — confirmed.** Resolve-locality is 100% on every
@@ -112,7 +112,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 - **Declared the parity check revision explicitly** (grade the ship-config parse) instead of leaving
   the check measuring a parse production no longer performs. Floors untouched; `--no-word-consistency`
   preserves the old baseline. Per the no-silent-check-drift rule, this is stated, not slipped in.
-- **Did NOT ship v267.** It fixes both target rows and breaks a Brazilian one, and its overlap
+- **Did not ship v267.** It fixes both target rows and breaks a Brazilian one, and its overlap
   surface now includes FR — the exact locale of the v5.1.0 "net-positive by luck" incident. A
   six-leg battery finished near the shift boundary with the operator asleep is the artifact I'd be
   least comfortable defending. Staged and characterized instead.
@@ -150,5 +150,5 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 | NaN incidents              | 0                                              |
 | CI failures                | 0 (2 PRs untestable by CI — annotated)         |
 | Demo regressions           | 0                                              |
-| Production behavior change | word-consistency heal ON (pending #1132 merge) |
+| Production behavior change | word-consistency heal on (pending #1132 merge) |
 | Local test suite           | 3450 pass / 23 skip, 0 fail                    |

@@ -35,7 +35,7 @@ This is how Google Maps, Apple Maps, and every ride-sharing app work. The user t
 - **[Batch processing](../../../recipes/batch-geocoding.md).** You cannot show suggestions to a million addresses in a CSV file. Human-in-the-loop requires a human. Batch geocoding requires a parser that works without one.
 - **Automation.** Every address that needs human confirmation is a step in a workflow that could have been automatic. If 95% of addresses are unambiguous and 5% need confirmation, the 5% drives your support costs.
 - **The user's patience.** `Springfield, IL` has one obvious candidate. Showing a dropdown of 34 Springfields is noise. The system should recognize when there's a single high-confidence match and skip the confirmation. Knowing when to skip requires a confidence signal — which requires a parser.
-- **The user who doesn't know their address.** A gift recipient, a new mover, a tourist types what they think the address is, and it might be wrong. The system shows candidates, and the user picks whichever looks right — which can also be wrong. Without ground truth in the loop, this is just two layers of guessing.
+- **The user who doesn't know their address.** A gift recipient, a new mover, a tourist types what they think the address is, and it might be wrong. The system shows candidates, and the user picks whichever looks right — which can also be wrong. Without ground truth in the loop, this istwo layers of guessing.
 - **Addresses not in the autocomplete index.** The user types a new construction address that isn't in any database. The autocomplete returns nothing. The user cannot proceed. The system needs a fallback — free-text parsing — for addresses outside the index.
 
 ## Where Mailwoman fits

@@ -1,7 +1,7 @@
 # Boundary-instability: the current model's gap, quantified (#375)
 
 The failure taxonomy named boundary instability the #1 parser change and the within-token decomposition
-(#702) showed it surfacing under many names. The boundary-stress extract (#703) is the training-data fix.
+(#702) showed it surfacing under several names. The boundary-stress extract (#703) is the training-data fix.
 This is the **"before" baseline** — how badly today's model places these boundaries, on the exact
 synthetic shapes the extract teaches (`scripts/eval/boundary-stress-baseline.ts`, 300 rows/shape through
 the current neural model, exact-match per tag). The extract is **base-locales-only (US/FR/DE)** — see the
@@ -42,7 +42,7 @@ caught two things, only one of them a true problem:
 - **The affix-tag flags are train-time-relabel artifacts** (`Ave`/`Place`/`NW` → suffix/prefix): the lint
   compares pre-relabel parquets, and the affix-relabel lexicon (verified) maps every suffix + directional. Safe.
 - **The locality/street overlap was RESOLVED by deriving the vocabulary from the base itself.** A targeted
-  scan (what label does the base give each extract locality?) found the original **US** vocab was a genuine
+  scan (what label does the base give each extract locality?) found the original **US** vocab was an actual
   contradiction — `Madison` 96% street, `Portland` 95%, `Springfield IL` 84% (the "5th Avenue Theatre"
   class, well-sampled across ~23 US extracts). Fixed: the US vocab is now **derived + verified
   locality-dominant** (Albuquerque 258584:8, Indianapolis 219700:29, Sacramento, Jacksonville…). The
@@ -57,7 +57,7 @@ caught two things, only one of them a true problem:
 
 - The model is **38–51%** on the boundary-stress cases vs ~95%+ on clean canonical — a large, real gap.
 - **The street boundary is the common casualty** (38% / 46% / 43% / 49% across all four shapes): when an
-  adjacent component is ambiguous, the street span absorbs or surrenders tokens. One failure, many faces.
+  adjacent component is ambiguous, the street span absorbs or surrenders tokens. One failure, several faces.
 - **house-number-after-street 51%** is the fr.house_number plateau in miniature (the FR/DE
   number-follows-street order) — this extract's `house-number-after-street` shape targets that change too.
 

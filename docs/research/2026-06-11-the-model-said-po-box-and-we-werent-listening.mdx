@@ -1,6 +1,6 @@
 ---
 slug: the-model-said-po-box-and-we-werent-listening
-title: "The model said P.O. Box all along. We just weren't listening."
+title: "The model said P.O. Box all along. Weweren't listening."
 authors: [playpen-agent]
 tags: [neural, evals, architecture]
 date: 2026-06-11
@@ -32,7 +32,7 @@ truncation at the first period. The model would emit `p` and stop.
 Here's the part that made us sit up. We dumped the raw per-piece labels for
 `P.O. BOX 3274`, and the model had labeled _every piece correctly_: `P` as po*box at
 0.93 confidence, `O` as po_box at 0.94, `BOX 3274` as po_box at 0.96. The knowledge was
-all there, loud and unambiguous. The span just shattered at the periods, because our
+all there, loud and unambiguous. The spanshattered at the periods, because our
 corpus format — which tokenizes on whitespace and drops standalone punctuation — has no
 way to put a label \_on a dot*. No training row in 670 million could ever have taught the
 span to stay whole, and ten times more training data had moved the score by exactly 2.9
@@ -50,7 +50,7 @@ Then the re-check failed on French postcodes, and this failure was the better
 teacher. The bridge had been merging across commas too, and commas are where the bodies
 are buried: when the model saw `Sainte-Livrade-sur-Lot 47110, 9016 Route de Lablasie`,
 it sometimes double-labeled that house number as a second postcode — and the comma was
-the only thing keeping the two spans honest. Our bridge had been helpfully gluing the
+the only thing keeping the two spans direct. Our bridge had been helpfully gluing the
 mistake together into `47110, 9016`. A period lives _inside_ a surface form;
 a comma separates two of them. The bridge needed to know the difference, and once it
 did, French postcodes came back and po_box climbed another two points for free.

@@ -16,7 +16,7 @@ An intersection address names a location by the crossing of two streets. Unlike 
 
 ## Why intersections exist
 
-Intersections predate street numbering. Before municipalities assigned sequential numbers to buildings, people described locations by nearby landmarks and crossroads. "Meet me at the corner of Main and Elm" was a precise location description before "meet me at 123 Main St" existed.
+Intersections predate street numbering. Before municipalities assigned sequential numbers to buildings, people described locations by near landmarks and crossroads. "Meet me at the corner of Main and Elm" was a precise location description before "meet me at 123 Main St" existed.
 
 Today, intersections persist for three reasons:
 
@@ -108,12 +108,12 @@ The intersection tags are part of the schema but the resolver path for intersect
 
 ## What intersections tell us about address structure
 
-Intersection addresses show that **the "housenumber + street" format is one convention among many**, not a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
+Intersection addresses show that **the "housenumber + street" format is one convention among several**, not a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
 
 This is the same principle behind the Japanese street-free addressing system (Phase 6 of the implementation plan): the schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest version of this; block-based addressing (Japan) and informal addressing (rural areas, developing economies) are harder versions of the same problem. A schema that handles intersections without an architectural change is better positioned to handle those harder cases too.
 
 ## See also
 
-- [How mail delivery actually works](./how-mail-delivery-works.mdx) — the delivery system that handles intersections
+- [How mail delivery works](./how-mail-delivery-works.mdx) — the delivery system that handles intersections
 - [The knowledge ladder](../our-approach/the-knowledge-ladder.mdx) — where QueryShape and kind classification fit in the pipeline
 - [Implementation plan — Phase 6 Japan](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_6_japan.mdx) — the architecture stress test for non-street-based addressing

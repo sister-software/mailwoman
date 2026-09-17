@@ -71,7 +71,7 @@ has not cleared the bar #518 set.)
 
 The head-to-head is the real takeaway:
 
-- **Neural beats v0 overall (77.3 vs 75.7) and is categorically more robust — 0 parse deaths vs 2.** On the
+- **Neural beats v0 overall (77.3 vs 75.7) and is categorically more resilient — 0 parse deaths vs 2.** On the
   unbalanced-delimiter rows that exist to test "degrade, don't die," neural degrades gracefully (82.5%) while
   v0 throws on the malformed input.
 - **The two engines fail differently.** v0 **shatters on quotes and poisons neighbors**: `"Big Company HQ"`
@@ -87,7 +87,7 @@ The head-to-head is the real takeaway:
 The implication for the roadmap: the highest-changeage punctuation-stress change is **not** a new span
 proposer — it's reducing neural's span **over-extension at delimiters** (a boundary/decode problem, kin to
 the Saint-Albans fragmentation and the #555 `locateSpan` over-run). That's where the paired-delimiter rows
-actually break, and it's a sharper, cheaper target than reviving Stage 2.7.
+break, and it's a sharper, cheaper target than reviving Stage 2.7.
 
 ## Reproduce
 

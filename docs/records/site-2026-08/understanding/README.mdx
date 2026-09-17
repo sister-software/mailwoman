@@ -14,7 +14,7 @@ This track is for readers who want to understand **why** Mailwoman exists, **wha
 The fundamentals of postal addressing — the things a parser parses and a resolver resolves.
 
 1. **[What is an address?](./the-problem/what-is-an-address.mdx)** — the data model, moved from concepts.
-2. **[How mail delivery actually works](./the-problem/how-mail-delivery-works.mdx)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
+2. **[How mail delivery works](./the-problem/how-mail-delivery-works.mdx)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
 3. **[What is a postcode?](./the-problem/what-is-a-postcode.mdx)** — postcodes are routing instructions, not geographic areas. International comparison.
 4. **[What is a ZIP Code and how is it structured?](./the-problem/what-is-a-zip-code.mdx)** — the US 11-digit system in detail. Why US-trained parsers fail on non-US postcodes.
 5. **[How can a building have two addresses?](./the-problem/how-can-a-building-have-two-addresses.mdx)** — mailing vs 911 vs utility vs management. An address is a protocol, not a property.
@@ -60,7 +60,7 @@ _Steel-manning the reasonably defensible compromises that work for most applicat
 27. **[Close-enough](./alternatives/simple/simple-close-enough.mdx)** — define your precision requirement, pick the cheapest approach, stop.
 28. **[Human-in-the-loop](./alternatives/simple/simple-human-in-the-loop.mdx)** — don't parse, suggest, let the user confirm.
 
-29. **[Why not just use Google's API?](./alternatives/why-not-google-api.mdx)** — pricing, terms, lock-in, and when renting is the right choice.
+29. **[Why notuse Google's API?](./alternatives/why-not-google-api.mdx)** — pricing, terms, lock-in, and when renting is the right choice.
 30. **[Why not use geocode.earth?](./alternatives/why-not-geocode-earth.mdx)** — the open-source hosted alternative and its Pelias parser ceiling.
 
 ### Our Approach (articles 31–39)
@@ -84,7 +84,7 @@ _Not every geocoder query is an address. A large fraction of real-world searches
 40. **[Overview](./exotic-poi/exotic-point-of-interest-queries.mdx)** — what counts as a POI query vs an address query.
 41. **[Amenity queries](./exotic-poi/amenity-queries.mdx)** — water fountain, gas station, ATM, pharmacy.
 42. **[Franchise and brand queries](./exotic-poi/franchise-queries.mdx)** — Walmart, McDonalds, Hilton, Starbucks.
-43. **[Regional variants](./exotic-poi/regional-variant-queries.mdx)** — servo, bodega, マクド, off-licence, chemist.
+43. **[Regional variants](./exotic-poi/regional-variant-queries.mdx)** — servo, bodega, マクド, off-license, chemist.
 44. **[Landmark queries](./exotic-poi/landmark-queries.mdx)** — Eiffel Tower, Golden Check Bridge, Empire State Building.
 45. **[Transit queries](./exotic-poi/transit-queries.mdx)** — subway station, bus stop, airport, train station.
 
@@ -104,7 +104,7 @@ If you want to **go deeper**, see the [`concepts/`](../concepts/README.mdx) trac
 
 ## A note on language
 
-The team behind Mailwoman speaks many languages, and English is a second language for many readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that is a documentation bug — please open an issue.
+The team behind Mailwoman speaks several languages, and English is a second language for several readers. Our goal in these docs is **plain English with technical terms defined on first use**. If a sentence is hard to follow, that is a documentation bug — please open an issue.
 
 ## Where this lives in the repo
 

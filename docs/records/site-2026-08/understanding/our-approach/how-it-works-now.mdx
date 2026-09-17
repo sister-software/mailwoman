@@ -66,7 +66,7 @@ Spans:  [{text:"350", kind:NUMERIC}, {text:"5th Ave", kind:STREET_PHRASE},
          {text:"10118", kind:POSTCODE}]
 ```
 
-The grouper does not know what the spans _mean_. It only knows where the _boundaries_ are. This moves boundary discovery out of the classifier — the classifier now answers "what type is this proposed span?" instead of "where do spans start AND what type are they?"
+The grouper does not know what the spans _mean_. It only knows where the _boundaries_ are. This moves boundary discovery out of the classifier — the classifier now answers "what type is this proposed span?" instead of "where do spans start and what type are they?"
 
 A learned phrase-grouper variant (1-2M-param span proposer) is scoped for v0.5.1 or later.
 
@@ -112,7 +112,7 @@ score = phrase_conf × classifier_score × resolver_score × concordance_bonus
 
 The concordance bonus rewards parent-chain consistency in the WOF gazetteer. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space. An explicit contradiction (`region=NY` when the locality's parent is Illinois) is a hard veto.
 
-Joint decode is **opt-in**, off by default. It was briefly the default and then retired on 2026-06-14: joint reconcile broke the street + house_number precondition on [77–84% of clean US addresses](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-14-reconcile-retirement.md) while fixing none, and the damage stayed invisible because the evals graded the raw neural labels rather than the assembled parse a user actually receives. The default is now plain argmax (spans sorted by start position); reconcile stays behind a flag until it can be graded on the assembled coordinate. The successor mechanism for rule-vs-neural disagreement is the opt-in **arbitration** layer (#478), which edits the neural tree in a containment-preserving way and is also off by default.
+Joint decode is **opt-in**, off by default. It was briefly the default and then retired on 2026-06-14: joint reconcile broke the street + house_number precondition on [77–84% of clean US addresses](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-14-reconcile-retirement.md) while fixing none, and the damage stayed invisible because the evals graded the raw neural labels rather than the assembled parse a user receives. The default is now plain argmax (spans sorted by start position); reconcile stays behind a flag until it can be graded on the assembled coordinate. The successor mechanism for rule-vs-neural disagreement is the opt-in **arbitration** layer (#478), which edits the neural tree in a containment-preserving way and is also off by default.
 
 ### Stage 6 — Resolve
 

@@ -6,7 +6,7 @@ A third-party review synthesizing the project's documentation, blog posts, retro
 
 Mailwoman is on the right strategic track. The strongest idea in the project is the Knowledge Ladder — a staged decomposition that assigns structural priors (phrase grouping, kind classification, locale detection) to cheap rule-based layers, semantic tagging to a small neural model, sequence validity to a CRF with a frozen structural transition mask, cross-component coherence to a joint-decoding reconciler, and world hierarchy to a WOF gazetteer. This is the correct line. It is better than "rules forever" or "one model does everything."
 
-The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset product checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a measured step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset product checks before spending H100/LLM/human-labeling budget at scale.
 
 **Recommended posture: continue, but narrow the next cycle.** Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -37,11 +37,11 @@ The staged pipeline is the project's strongest intellectual contribution:
 | 5. Reconcile         | Joint-coherent interpretation across candidates                  | Opt-in; mocked top-k in tests                            |
 | 6. Resolve           | World hierarchy — WOF gazetteer                                  | Yes (WOF SQLite)                                         |
 
-This decomposition is bitter-lesson-aligned in exactly the right way. The bitter lesson says "general methods that leverage computation win over hand-engineered domain knowledge." It does NOT say "make one model do everything." It says don't hand-engineer things the system could learn from data. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup, not a learning problem; boundary discovery is structural, not semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
+This decomposition is bitter-lesson-aligned in exactly the right way. The bitter lesson says "general methods that use computation win over hand-engineered domain knowledge." It does not say "make one model do everything." It says don't hand-engineer things the system could learn from data. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup, not a learning problem; boundary discovery is structural, not semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
 
 ### 2. Parse/resolve split stays intact
 
-Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure — this is where Mailwoman can be meaningfully better than old geocoders: not just "more correct top-1," but more honest about ambiguity.
+Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure — this is where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity.
 
 ### 3. Small, TypeScript-first neural runtime
 
@@ -149,7 +149,7 @@ The [Codex review](./2026-05-24-codex-project-direction-review.mdx) (same date) 
 
 **1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the single highest-changeage unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
 
-**2. The model capacity wall.** The Codex review describes the 9M-param model as "reasonable for address tagging." This review flags that the divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — is consistent with a model hitting a capacity wall where memorization is more stable than generalization. spaCy's analogous Japanese NER model uses 110M params (12× larger). The task IS narrower, but the loss surface instability across 9 runs suggests the current capacity may be insufficient for stable training from scratch.
+**2. The model capacity wall.** The Codex review describes the 9M-param model as "reasonable for address tagging." This review flags that the divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — is consistent with a model hitting a capacity wall where memorization is more stable than generalization. spaCy's analogous Japanese NER model uses 110M params (12× larger). The task is narrower, but the loss surface instability across 9 runs suggests the current capacity may be insufficient for stable training from scratch.
 
 Both hypotheses should be tested before the expensive validation run. Combined cost: ~4 GPU hours.
 
@@ -197,7 +197,7 @@ Run the next cheap-but-informative experiments before any full retrain:
 
 Decision:
 
-- If A1 + v0.3.0 trains cleanly: ship tokenizer win without B2 mass; defer transliteration training.
+- If A1 + v0.3.0 trains directly: ship tokenizer win without B2 mass; defer transliteration training.
 - If v0.1 + v0.4.0 diverges: corpus composition is the blocker. Stratify B2 rows and test per-family.
 - If only A1 diverges: investigate vocab/embedding frequency; consider reducing vocab or initializing from A0 differently.
 - If all combinations diverge: the destabilizer is the dual-loss interaction under sustained peak LR. Try CE-only training as a control.
@@ -283,7 +283,7 @@ Then spend on a full C-train. Not before.
 The project should aim to become the **TypeScript-native open geocoding front end**: parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - Easy to deploy (npm install, no C compilation).
-- Honest about ambiguity (candidate surfaces, calibration, graceful-failure signals).
+- direct about ambiguity (candidate surfaces, calibration, graceful-failure signals).
 - Cheap enough for browsers and serverless (current ~60MB cold load is competitive).
 - Retrainable on open data (corpus pipeline is the moat).
 - Calibrated enough that downstream systems can decide when to ask for more context.

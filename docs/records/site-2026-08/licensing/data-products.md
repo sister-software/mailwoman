@@ -22,7 +22,7 @@ side rather than the artifact side.
 
 **Tier** is the distribution posture, defined by the
 [spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx#tiers) and used here for every
-artifact, not just the ones that formally embed the layer manifest:
+artifact, notthe ones that formally embed the layer manifest:
 
 - **shipped** — permissive sources only. We build it and publish it.
 - **build-local** — share-alike or otherwise unpublishable sources. We ship the **builder**; you
@@ -32,7 +32,7 @@ artifact, not just the ones that formally embed the layer manifest:
 - **planned** — designed, not built. Listed so the roadmap is legible, marked so nobody plans
   around vapor.
 
-**Cadence** is honest rather than aspirational. Most of these are rebuilt when coverage changes or
+**Cadence** is direct rather than aspirational. Most of these are rebuilt when coverage changes or
 an ingest bug is fixed, not on a schedule. Where that is the case, the entry says so.
 
 Every artifact is a **sealed** SQLite file: built to a temp path, verified, swapped into place,
@@ -259,7 +259,7 @@ bounding box, and member-point count, for street-only queries.
 
 **Upstream source.** Base Adresse Nationale, from `adresse.data.gouv.fr`, release 2026-05-18.
 
-**License.** **Licence Ouverte / Open Licence 2.0 (Etalab)** — attribution only, **no share-alike**.
+**License.** **license Ouverte / Open license 2.0 (Etalab)** — attribution only, **no share-alike**.
 BAN is dual-licensed and we elect the permissive option, which is why the extract ships under the same
 terms as the permissive core and needed no counsel check.
 
@@ -276,8 +276,8 @@ row count, and md5 at build time.
 **Build.** `node ban/out/scripts/build-address-point-extract.js --csv-dir <dir> --release 2026-05-18`.
 A `--depts` flag builds a transient sample for validation first.
 
-**Not included.** No interpolation extract exists for France. The exact-point tier covers the win;
-house numbers BAN does not carry are simply not interpolated.
+**Not included.** No interpolation extract exists for France. The exact-point tier covers the result;
+house numbers BAN does not carry are only not interpolated.
 
 ---
 

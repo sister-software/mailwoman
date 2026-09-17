@@ -137,7 +137,7 @@ The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (
 
 BIO validity is universal; addressing grammar is not. French street types are leading
 particles ("Rue de Rivoli"), so `street_suffix` is not a tag that can occur in a French
-parse — and RUE being a genuine USPS Pub-28 suffix variant means a model trained on
+parse — and RUE being an actual USPS Pub-28 suffix variant means a model trained on
 consistent US splits will emit it on French soil (measured: the v4.3.0 check's
 FAIL→corrective→PASS story). The conventions mask is the rung that makes the model's own
 address-system detection essential: detected system → the codex conventions row →
@@ -178,7 +178,7 @@ WOF SQLite today (Phase 4.3). Knows place IDs, parent_id chains, placetypes, lat
 
 ## Why this decomposition is bitter-lesson aligned
 
-Bitter lesson says "general methods that leverage computation" win in the long run. It does NOT say "make one model do everything." It says don't hand-engineer domain knowledge in places where the system could learn it from data.
+Bitter lesson says "general methods that use computation" win in the long run. It does not say "make one model do everything." It says don't hand-engineer domain knowledge in places where the system could learn it from data.
 
 What we want to learn from data: per-token semantic type distribution (Stage 3), structural transition validity (Stage 4 if learned-CRF replaces structural-mask).
 
@@ -188,7 +188,7 @@ What we should compose: input shape priors (Stages 2, 2.5, 2.7), output coherenc
 
 ## What v0.4.0 taught us about the missing rungs
 
-The v0.4.0 ablation campaign's failure modes mapped almost cleanly to two missing information layers. v0.5.0 closed both:
+The v0.4.0 ablation campaign's failure modes mapped almost directly to two missing information layers. v0.5.0 closed both:
 
 | v0.4.0 failure                                                              | Missing layer                                                      | v0.5.0 fix                                                                              |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |

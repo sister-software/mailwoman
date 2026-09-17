@@ -1,10 +1,10 @@
 # Address-point tier — VT prototype measurement (2026-06-10, night-10)
 
 The #476 prototype: exact `(street, number)` → exact situs point, in front of admin-centroid
-resolution. Extract from Overture release 2026-05-20.0 (NAD lineage), keyed by THE shared
+resolution. Extract from Overture release 2026-05-20.0 (NAD lineage), keyed by the shared
 normalizer (`resolver-wof-sqlite/street-normalize.ts`) on both build and lookup sides.
 
-## VT holdout (1,428 honest rows, v4.2.0 int8, tier on vs off)
+## VT holdout (1,428 direct rows, v4.2.0 int8, tier on vs off)
 
 | tier                             | locality-match | region-match |  coord p50 |  coord p90 |  coord p99 |              hit rate |
 | -------------------------------- | -------------: | -----------: | ---------: | ---------: | ---------: | --------------------: |
@@ -26,7 +26,7 @@ interpolation (#483) exists for — and this extract is its gold standard.
 - **Postcode scope first, locality fallback.** Postcode is the selective key and dodges the
   municipal-legal-name trap: NAD localities are charter names (`Barre City`,
   `Saint Albans City`) while parses say "Barre" — and VT's Barre City ≠ Barre Town, so the
-  locality key stays EXACT (no suffix stripping; conflating those two would be a real
+  locality key stays exact (no suffix stripping; conflating those two would be a real
   wrong-answer class). Rows lacking a postcode in the query lean on locality and will miss
   more — measured, accepted for the prototype.
 - **No fuzz.** Exact-after-normalization got 93.1% on real holdout traffic; fuzzy street

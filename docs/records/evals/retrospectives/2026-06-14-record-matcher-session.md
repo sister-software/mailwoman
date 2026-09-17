@@ -2,7 +2,7 @@
 
 _For the next Claude. You have no memory of this session beyond the auto-loaded
 `project-record-matcher.md` memory file; this is the full narrative + file map so you
-can pick up cleanly. Everything below is on branch `feat/record-matcher-foundation`,
+can pick up directly. Everything below is on branch `feat/record-matcher-foundation`,
 draft PR #607, Project #5._
 
 ## TL;DR
@@ -57,7 +57,7 @@ version works where the string-first v0 imploded.
   - `name.ts`: `parsePersonName` — rule-based positional parser (the python-nameparser
     recipe), comma-inversion, leading titles, trailing suffixes, surname **particle stored
     separately** (`de la Vega` to particle `de la` + family `Vega`), nickname extraction.
-    Western/romanized only; does NOT map nicknames to roots (lossy/gendered — that belongs
+    Western/romanized only; does not map nicknames to roots (lossy/gendered — that belongs
     in the matcher as a fuzzy agreement level).
   - `organization.ts`: `canonicalizeOrganizationName` — Winkler designation-strip (`Acme
 Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
@@ -73,7 +73,7 @@ Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-toke
     (overflow-safe), `scorePair` (returns `{ weight, probability, contributions }`),
     `decide` (link/review/non-link). Also the `TermFrequencyAdjustment` hook.
   - `em.ts`: `estimateParameters` (Winkler EM — **label-free** m/u + lambda fitting),
-    `agreementPattern`. The keystone: trains with NO ground truth.
+    `agreementPattern`. The keystone: trains with no ground truth.
   - `tf.ts`: `buildTermFrequencyTable` (on-the-fly relative freqs — no Census table),
     `withTermFrequency` (rare-value agreement counts more; `Vijayan` beats `Smith`).
   - `blocking.ts`: `geoCellKey` (generous neighbour-expanded lat/lon grid — the geo-first
@@ -106,13 +106,13 @@ Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-toke
    repo). isp-nexus holds the legacy "bones" we ported from
    (`isp-nexus/universe/mailwoman/contacts`, `/organization`, `/postal`).
 2. **Matcher v1:** classical **Fellegi-Sunter core + EM (label-free)**, with models as
-   _selective_ additions — NOT model-first, NOT heuristics-only. Evidence-backed.
+   _selective_ additions — NOT model-first, not heuristics-only. Evidence-backed.
 3. **Schema:** plain TS interfaces, no ORM/JSON-schema generation. Kysely if a DB is needed.
 4. **Address-first**, then org/contact normalization structured on top of it.
 
 ## Research grounding (3 adversarially-verified deep-research passes)
 
-Key findings that shaped the build: (1) **FS + EM trains a calibrated matcher with ZERO
+Key findings that shaped the build: (1) **FS + EM trains a calibrated matcher with zero
 labels** — the exact wall the original effort hit. (2) **Config dominates the model** —
 so the matcher is tunable and we didn't chase one model. (3) **Geography as the primary
 blocking key** is documented production practice (Grab, Geo-ER). (4) **Geocode quality
@@ -137,7 +137,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 - **After adding a workspace:** add it to root `package.json` workspaces, `tsconfig.json`
   references, `vitest.config.ts` aliases, then `yarn install` (updates the lockfile — keep
   it clean for CI's `--immutable`).
-- **The heavy geocoder (weights + situs/interp extracts) is NOT in this worktree**, so the
+- **The heavy geocoder (weights + situs/interp extracts) is not in this worktree**, so the
   real end-to-end geocode run can't be unit-tested here — it's operator-verifiable via the
   CLI. That's why geocoding is an injected boundary.
 - Another agent was active on `eval/oa-offmap-pull` in the shared checkout during this

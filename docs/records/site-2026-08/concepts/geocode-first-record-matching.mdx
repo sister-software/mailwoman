@@ -48,7 +48,7 @@ The v0 matcher was **string-first**: classify the address into components, slot
 them into templates, compare the strings. Strings are the wrong key for
 addresses, and there's a single fact that proves it. `Jyllandsgade 15` and
 `Jyllandsgade 75` differ by one character — Levenshtein similarity **0.963** —
-and they are **650 metres apart** (Isaj et al., SSTD 2019). String similarity has
+and they are **650 meters apart** (Isaj et al., SSTD 2019). String similarity has
 the wrong _topology_: it pulls different buildings together and pushes spellings
 of the same building apart. A matcher built on it spends its life drowning in
 false pairs and missing real ones, and ours did.
@@ -73,7 +73,7 @@ this two-axis view omits. Generator:
 `scripts/record-matcher/viz/geocode-first-surface.ts`.)_
 
 What changed is that mailwoman is now a **geocoder with calibrated confidence.**
-Every record can become a rooftop coordinate (± calibrated metres) plus a
+Every record can become a rooftop coordinate (± calibrated meters) plus a
 Who's-on-First hierarchy plus structured components, each with a confidence. That
 hands you matching keys with the _right_ topology:
 
@@ -100,7 +100,7 @@ et al., 2021):
    calibrated decision layer.
 3. **Cluster** — pairwise scores are _not transitive_ (A~B at 0.6 and B~C at 0.6
    does not make A~C a match), so a separate stage closes pairs into canonical
-   entities. Skip it and your "entities" quietly fracture or fuse (Dedupe; the
+   entities. Skip it and your "entities" without output fracture or fuse (Dedupe; the
    non-transitivity is essential, not a footnote).
 
 Upstream of all three is **canonicalize**: parse the name, sanitize the org name,
@@ -162,9 +162,9 @@ and non-Gaussian, with a hard urban→rural gradient (street-interpolation media
    sharing a _PO-box or multi-unit_ coordinate is barely location agreement at all.
    This is not a new idea we have to invent — NAACCR's cancer-registry geocoder
    already propagates exactly this (interpolation type, feature-match geography,
-   PO-box/rural-route flags, a Match/Review/Non-Match triage). It maps cleanly onto
+   PO-box/rural-route flags, a Match/Review/Non-Match triage). It maps directly onto
    our situs → interp → admin tier cascade and conformal radii. We have the quality
-   class already; the matcher just has to spend it.
+   class already; the matcherhas to spend it.
 
 Calibrate the thresholds against mailwoman's _own_ measured error distribution,
 not the literature's older-geocoder constants. Our rooftop tier is tighter; the
@@ -228,13 +228,13 @@ The four rules the geocoder already lives by govern the matcher too:
 
 Two records at the same address might be the same clinic — or two of the forty
 providers who share a hospital campus. The matcher's strongest precision change is
-[inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how many distinct
+[inverse-address-frequency](./spatial-expectation-and-density.mdx): down-weight a shared address by how several distinct
 entities sit on it, so a lonely address is strong evidence of identity and a
 crowded one is nearly none. It's on by default.
 
-But rarity is only meaningful against a population. The change counts how often each
+But rarity is only meaningful against a population. The change counts how frequently each
 address appears across the records you hand it — so when you dedupe a _whole_
-dataset, the input is the corpus and it just works. Hand it a thin sample and
+dataset, the input is the corpus and it works. Hand it a thin sample and
 there's nothing to be rare against: every address looks unique, the signal
 flattens, and the change degrades to baseline with no warning. The fix is cheap — the frequency
 table is a parse-free string scan, no geocoding — so when you're matching a subset,

@@ -42,7 +42,7 @@ Each layer's contribution is additive and non-overlapping. Examples:
 | `Piccadilly Lane` (novel) | matches "Lane" affix → "Piccadilly" → street     | "piccadilly_lane" has moderate co-occurrence      | (not in OSM)               |
 | `Piccadilly` (no suffix)  | no signal                                        | "piccadilly" has London co-occurrence             | direct match in London FST |
 | `Plein 1944`              | no signal                                        | "plein_1944" has Nijmegen co-occurrence           | direct match in NL FST     |
-| `Health Clinic`           | matches no street affix                          | zero locality co-occurrence → strongly NOT street | (not in OSM as a street)   |
+| `Health Clinic`           | matches no street affix                          | zero locality co-occurrence → strongly not street | (not in OSM as a street)   |
 
 Layer 4 (brand FST for franchise venues) is parallel, not subordinate. Layer 5 (locality-conditional hierarchy blocking) is meta — it modulates which layers are active per country.
 
@@ -53,7 +53,7 @@ Mailwoman's tag schema lives in two files:
 - `core/types/component.ts` — `ComponentTag` TypeScript discriminated union
 - `core/decoder/containment.ts` — `PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>>` child→parent map
 
-**This stays the source of truth.** A tempting alternative is to store our extensions in WOF placetype JSON format (`wof:id`, `wof:name`, `wof:role`, `wof:parent`) so tooling that already consumes WOF placetypes works transparently. That alternative is rejected:
+**This stays the authoritative record.** A tempting alternative is to store our extensions in WOF placetype JSON format (`wof:id`, `wof:name`, `wof:role`, `wof:parent`) so tooling that already consumes WOF placetypes works transparently. That alternative is rejected:
 
 1. **Ontology mismatch.** WOF placetypes answer "what kind of geographical feature is this?" Mailwoman component tags answer "what role does this span play in an address?" `street` is a linear feature with no WOF identity, not a placetype. `house_number` is not a place at all. `unit` is a building subdivision, not a feature.
 2. **ID-space fragility.** WOF issue #246 explored adding `lane`, `block`, `parish`. Any "private" ID range is a latent collision with a future WOF allocation.
@@ -85,7 +85,7 @@ Proposed: `street → intersection → [intersection_a, intersection_b]` mirrori
 
 **Initially framed as zero-risk during the design consult. On verification it isn't.** Two problems:
 
-1. **BIO dim coupling.** `ComponentTag` is the BIO label space — adding `intersection` extends `BIO_LABELS` from 33 to 35 entries, which doesn't directly match v0.6.0/v0.6.1 weight output dim. This part is sidestep-able via tail-append (the same trick `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS` already uses): existing 33-dim weights still index-align with the first 33 labels, and the new B-intersection/I-intersection labels at the tail simply never get argmaxed.
+1. **BIO dim coupling.** `ComponentTag` is the BIO label space — adding `intersection` extends `BIO_LABELS` from 33 to 35 entries, which doesn't directly match v0.6.0/v0.6.1 weight output dim. This part is sidestep-able via tail-append (the same trick `STAGE1_BIO_LABELS` → `STAGE2_BIO_LABELS` already uses): existing 33-dim weights still index-align with the first 33 labels, and the new B-intersection/I-intersection labels at the tail only never get argmaxed.
 2. **PARENT_OF rewiring breaks current behavior, even with tail-append.** If `intersection_a/b` no longer parent to `street`/`locality` and the model can't emit `intersection` proposals (no training labels for it), then `intersection_a/b` fall through to root. The existing containment carries real parsing semantics that the rewrite would lose.
 
 The right path: defer the intersection restructure to v0.7+ when the new tag can be properly added to the training corpus + golden set + retrained model bundle. Until then, the current flat `intersection_a/b → street` containment stays — it's a known limitation but not a regression vector.
@@ -102,7 +102,7 @@ This is a useful reminder: schema changes that look like "just one line in PAREN
 
 ### Venue + po_box stay as siblings
 
-`CULLEN INSULATION INC, POBOX 3211 FARGO ND 58108`: venue is the addressee, po_box is the delivery endpoint. The containment should NOT make po_box a venue-parent. Both remain siblings under locality; the resolver cross-references them at lookup time.
+`CULLEN INSULATION INC, POBOX 3211 FARGO ND 58108`: venue is the addressee, po_box is the delivery endpoint. The containment should not make po_box a venue-parent. Both remain siblings under locality; the resolver cross-references them at lookup time.
 
 ## Locality-conditional hierarchy blocking
 
@@ -159,7 +159,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 **Inference:** `neural/street-morphology-prior.ts` — two-pass bias function:
 
 1. **Pass 1.** For each token that matches an affix entry, bias toward `B/I-street_prefix` (if affix is locale-prefix-position) or `B/I-street_suffix` (if locale-suffix-position).
-2. **Pass 2.** For each matched affix span, identify the adjacent name-token (preceding for suffix-position, following for prefix-position). Bias adjacent token toward `B/I-street` AND **away from** `B/I-dependent_locality`. The negative bias is the critical piece — it closes the vacuum identified in the v0.6.1 failure mechanism.
+2. **Pass 2.** For each matched affix span, identify the adjacent name-token (preceding for suffix-position, following for prefix-position). Bias adjacent token toward `B/I-street` and **away from** `B/I-dependent_locality`. The negative bias is the critical piece — it closes the vacuum identified in the v0.6.1 failure mechanism.
 
 **Wiring:** Add `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts` in `neural/classifier.ts`. Apply via `addEmissionMatrix` after the existing admin FST bias. Same 3.0-logit cap.
 
@@ -243,7 +243,7 @@ Applied to span-level confidence scores only. Zero contamination of emission or 
 | v0.8+            | Mannheim grid, Nicaragua landmarks, dependent_street              | scope work            |
 
 **Important caveat from the 2026-05-28 Layer 1 eval:** Layer 1 alone, applied as a decoder-only
-fix on v0.6.1 weights, does NOT suppress v0.6.1's 1066 dep_locality hallucinations. The
+fix on v0.6.1 weights, does not suppress v0.6.1's 1066 dep_locality hallucinations. The
 mechanism works monotonically (hallucinations drop as the dep_locality penalty is strengthened)
 but the model's overconfidence on synth-street-induced predictions is too high for any practical
 decoder-time bias to flip. **Layer 1's correct deployment is alongside a v0.6.2 retrain that

@@ -1,7 +1,7 @@
 # Progressive atlas distribution
 
-**Date:** 2026-08-09  
-**Status:** direction approved; implementation plan pending  
+**Date:** 2026-08-09
+**Status:** direction approved; implementation plan pending
 **Related:** [issue #1577](https://github.com/sister-software/mailwoman/issues/1577),
 [spatial-layer contract](../../engineering/reference/layer-contract.mdx),
 [WOF granularity scorecard](./2026-08-02-wof-granularity-scorecard-design.md),
@@ -70,7 +70,7 @@ copying the shared ONNX model. npm remains the distribution mechanism because th
 coupled to runtime versions and belong in the application's dependency lockfile.
 
 Country is a strong address-system prior. Language is a separate observation. Multilingual
-countries, exonyms, native-script venue names, and transliterated queries all require a many-to-many
+countries, exonyms, native-script venue names, and transliterated queries all require a several-to-several
 relationship between country, script, locale, and address system. A future `AddressSystemID` may
 make that relationship explicit; an ISO country code alone should never become a claim that the
 country has one language.
@@ -212,7 +212,7 @@ broker that:
 ## Catalog and embedded manifests
 
 The remote catalog answers what can be installed. Each SQLite database's embedded layer manifest
-answers what is actually installed. Both are required.
+answers what is installed. Both are required.
 
 ```ts
 interface AtlasArtifact {
@@ -374,5 +374,5 @@ No distribution migration begins until a prototype answers these with receipts:
    clean consumer project.
 
 The architecture can grow one layer at a time. The first implementation increment is the census and
-catalog plan, because both are read-only and tell us whether the proposed starter is actually small
+catalog plan, because both are read-only and tell us whether the proposed starter is small
 before we ask consumers to depend on it.

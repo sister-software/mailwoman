@@ -99,7 +99,7 @@ classify(tokens: Token[], context: Context): ClassificationProposal[] {
 
 Notes:
 
-- **Confidence is moderate** (0.6) because dictionary hits can be misleading. "New" is the start of many city names, so a 1-token match on "New" is weaker than a 3-token match on "New York City".
+- **Confidence is moderate** (0.6) because dictionary hits can be misleading. "New" is the start of several city names, so a 1-token match on "New" is weaker than a 3-token match on "New York City".
 - **N-gram sweep** is how multi-word cities work. The classifier tries spans of length 1, 2, and 3 and emits a proposal for each match.
 - **No exclusion logic.** If "New York" matches as a locality and "New" matches as a different component, both proposals exist; the solver picks one self-consistent combination.
 

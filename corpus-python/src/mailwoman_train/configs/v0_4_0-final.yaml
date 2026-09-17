@@ -12,7 +12,7 @@
 #
 # Conclusion: §1 per_token CRF NLL × crf_loss_weight=1.0 is a relative destabilizer
 # even at v0.3.0-stable LR. §3 class_weights on top of v0.3.0 dual-loss recipe is
-# the cleanest gain. Recipe = v0.3.0 base + §3 + §4 at lr=1.5e-4.
+# the largest measured improvement. Recipe = v0.3.0 base + §3 + §4 at lr=1.5e-4.
 #
 # Identical to v0_4_0-stableLR-cw-only.yaml in every field EXCEPT:
 #   - output_dir: /data/models/checkpoints/v0_4_0-final (smoke checkpoints preserved)

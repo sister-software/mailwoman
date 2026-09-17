@@ -6,7 +6,7 @@ The failure taxonomy flagged within-token punctuation as the clearest open neura
 the 61 apostrophe/hyphen/slash rows): **the punctuation token itself rarely fails.** The gap decomposes
 into four distinct mechanisms, three of which are already top-priority changes under other names.
 
-## What actually fails
+## What fails
 
 | class      | rows with ≥1 miss | dominant missed components                       |
 | ---------- | ----------------: | ------------------------------------------------ |
@@ -36,7 +36,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
 
 4. **OOD-token leading-char drop — the #690 family.** `N9W16851` (a Wisconsin grid address) parses to
    house_number `9W16851` — the leading `N` is dropped, exactly the artifact behind all-caps
-   `PALESTINE`→`ALESTINE` (#690). Plus genuine foreign-postcode-format gaps: Irish `V94 DPF3` splits to
+   `PALESTINE`→`ALESTINE` (#690). Plus actual foreign-postcode-format gaps: Irish `V94 DPF3` splits to
    locality `Limerick V` + postcode `94`; hyphenated ranges (`55-57`) mis-split.
 
 ## Why it matters

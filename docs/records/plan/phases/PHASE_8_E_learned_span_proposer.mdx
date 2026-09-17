@@ -25,7 +25,7 @@ A learned proposer is the bitter-lesson-safe answer: train a small (1-2M paramet
 **Model:** small encoder-only transformer.
 
 - **Tokenizer:** the v0.5.0 multi-script sentencepiece tokenizer (Thread A). Shared with the main classifier — no separate vocab.
-- **Embedding:** ~256-dim per token. Reused from the main classifier as a starting point (LoRA / linear adapter on top), OR trained from scratch with a tied vocabulary.
+- **Embedding:** ~256-dim per token. Reused from the main classifier as a starting point (LoRA / linear adapter on top), or trained from scratch with a tied vocabulary.
 - **Encoder:** 3-4 transformer blocks, hidden 256, 4 attention heads. Total ~1-2M params (a fraction of the main classifier's ~10M).
 - **Heads:** two parallel heads —
   - **Boundary head:** per-token binary classifier "is this token a phrase boundary?" (BIO-shaped: begin, inside, outside).
@@ -36,7 +36,7 @@ A learned proposer is the bitter-lesson-safe answer: train a small (1-2M paramet
 
 Comes from Thread B (corpus-v0.4.0). Two sources:
 
-1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). Free at training time, no new labelling required. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE) but the lossy direction is in the structural-shape vocabulary, which is exactly what we want here.
+1. **Derived labels from the existing BIO corpus.** Each contiguous run of same-tag tokens is one phrase; map the BIO tag to a `PhraseKind` via a lookup table (e.g. `B-locality ... I-locality` → LOCALITY_PHRASE). Free at training time, no new labeling required. The mapping is lossy at the edges (POI tags collapse to VENUE_PHRASE) but the lossy direction is in the structural-shape vocabulary, which is exactly what we want here.
 2. **Synthetic adversarial expansion.** The kryptonite-catalogue generation pipeline (Thread B) prompt-engineers DeepSeek to produce inputs where the rule-based grouper systematically gets boundaries wrong. The learned model trains on those cases as hard negatives.
 
 Validation: held-out subset of the kryptonite catalogue + the v0.4.0 bio_slip class (the 6% of cases where boundaries were demonstrably wrong in production).
@@ -47,7 +47,7 @@ The reconciler weighs phrase proposals against classifier proposals against reso
 
 ## When to ship
 
-- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget AND the rule-based grouper proves to need the assist on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). Triggered by the v0.5.0 eval, not pre-committed.
+- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget and the rule-based grouper proves to need the assist on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). Triggered by the v0.5.0 eval, not pre-committed.
 - **v0.5.1 fallback:** if v0.5.0 ships on the rule version alone. Allocate ~3-5 days of compute + engineering for the learned version once the corpus is in place.
 
 ## Out of scope for this doc

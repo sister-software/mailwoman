@@ -53,4 +53,4 @@ effort — this probe's first step was exactly that, which is why it cost ~1 hou
   TRAINING time (where the model learns whatever vocab exists), not post-hoc surgery.
 - The 13.7% never-fired band is real but small; the 100–999 band (37.2%) says the mid-frequency
   tail is the vocab's working mass — an argument AGAINST aggressive vocab shrinkage in any
-  future retrain, not just against this prune.
+  future retrain, notagainst this prune.

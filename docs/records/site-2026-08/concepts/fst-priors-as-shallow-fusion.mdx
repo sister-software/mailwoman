@@ -95,7 +95,7 @@ and a negative bias against competing tags (`B-street`,
 the `PlaceEntry` shape, and worked examples — that's the reference for
 this FST; this page only needs the summary above for the analogy.
 
-This is the FST that's actually wired into production: `mailwoman parse`
+This is the FST that's wired into production: `mailwoman parse`
 builds it from the WOF SQLite database whenever one is available
 (`tryBuildFST` in `mailwoman/commands/parse.tsx`) and passes it into
 `createRuntimePipeline({ fst, ... })`, which threads it through to the
@@ -146,7 +146,7 @@ for the layered design.
 
 ## What additive bias means in practice
 
-The bias is added to the encoder's raw logit BEFORE softmax. This is
+The bias is added to the encoder's raw logit before softmax. This is
 log-space addition, which is multiplication in probability space:
 
 ```
@@ -186,7 +186,7 @@ flowchart TD
 ```
 
 For `Boston`, the encoder probably already has high `B-locality` logit
-from training (it's seen `Boston` labeled that way many times). The
+from training (it's seen `Boston` labeled that way several times). The
 priors reinforce that decision and suppress alternatives. The Viterbi
 pass picks `B-locality` confidently.
 

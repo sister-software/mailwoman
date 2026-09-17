@@ -14,7 +14,7 @@
 
 - Every DB artifact a builder produces is sealed `0o444` at the end; writable staging is only ever `<out>.ingest`-style temp paths. Never mutate a shipped DB in place (build → verify → swap).
 - Kysely for DDL where tables are created (existing `unified-schema.ts` already complies); hot positional INSERT loops stay raw (`AGENTS.md` "Database / inline SQL").
-- Acronym casing: whole camelCase components (`buildFTS`, `ingestWOF`, `foldGeoNames` — note GeoNames is CamelCase already, keep as `foldGeonames` to match the existing `foldGeonamesIntoAdmin`/`ingestGeonamesAliases` family; do NOT half-rename the family).
+- Acronym casing: whole camelCase components (`buildFTS`, `ingestWOF`, `foldGeoNames` — note GeoNames is CamelCase already, keep as `foldGeonames` to match the existing `foldGeonamesIntoAdmin`/`ingestGeonamesAliases` family; do not half-rename the family).
 - No `npx tsx`; scripts run with bare `node` (type-stripping). Ink commands need `yarn compile` first; run compiled CLI as `node mailwoman/out/cli.js`.
 - Lint/format: `yarn oxlint <paths>` + `yarn oxfmt <paths>` before each commit. `yarn typecheck:scripts` must stay green.
 - Commits reference the tracking issue for this cleanup; end commit messages with the standard co-author trailer.
@@ -196,7 +196,7 @@ export * from "./sealed-db.js"
 - [ ] **Step 5: Run the test to verify it passes**
 
 Run: `yarn vitest run core/utils/sealed-db.test.ts`
-Expected: 4 tests PASS.
+Expected: 4 tests pass.
 
 - [ ] **Step 6: Lint, format, commit**
 
@@ -914,7 +914,7 @@ export function buildAdmin(opts?: BuildAdminOptions): Promise<BuildAdminResult>
 - [ ] **Step 2: `build/admin.tsx`** — Ink command in the house pattern (zod options schema; progress via `console.error`; summary `<Text>` on stdout; `process.exit` in `useEffect`, exactly like `gazetteer/build.tsx` today). Options: `data?`, `out?`, `overtureCountries?` (csv), `geonamesCountries?` (csv), `overtureRelease?`, `skipVerify` (boolean, default false). Body: `buildAdmin({...})`, phases streamed to stderr; summary lines: output path, rows, `verify: PASS (N checks)`, `sealed 0444`, `next: mailwoman gazetteer build candidate`.
 - [ ] **Step 3: `build/index.tsx`** — the turnkey chain: `buildAdmin()` → `foldGeonamesIntoAdmin` + `buildCandidate` (the exact body of today's bare `gazetteer build`, reusing its defaults) — summary names both artifacts. Zod options: union of admin's and candidate's, all optional.
 - [ ] **Step 4: `verify.tsx`** — options: `db?` (default the live admin DB path), `reversePanel` (boolean, default true). Runs `verifyAdmin` + optionally `verifyReversePanel`, prints one ✓/✗ line per check, exits non-zero on any failure.
-- [ ] **Step 5: Compile + smoke** — `yarn compile && node mailwoman/out/cli.js gazetteer --help` shows `build`, `verify`, …; `node mailwoman/out/cli.js gazetteer build --help` shows `admin`/`candidate` subcommands; `node mailwoman/out/cli.js gazetteer verify --db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db` runs (expect: **node-census FAILS on the #1026 countries** — correct behavior, the live DB is known-regressed; every other check passes; overall exit 1).
+- [ ] **Step 5: Compile + smoke** — `yarn compile && node mailwoman/out/cli.js gazetteer --help` shows `build`, `verify`, …; `node mailwoman/out/cli.js gazetteer build --help` shows `admin`/`candidate` subcommands; `node mailwoman/out/cli.js gazetteer verify --db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db` runs (expect: **node-census fails on the #1026 countries** — correct behavior, the live DB is known-regressed; every other check passes; overall exit 1).
 - [ ] **Step 6: Commit** — `git add -A mailwoman/commands && git commit -m "feat(cli): gazetteer build admin|candidate + turnkey build + structural verify"`
 
 ---
@@ -976,7 +976,7 @@ keeping the existing Step-4 swap/restart text (mv → bak, promote, restart serv
 **Files:** none (runbook execution; findings recorded in the PR description)
 
 - [ ] **Step 1: Full staging build** — `node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.E2E-PRB.db` (~8 min). Expected: every phase streams; **verify may FAIL `node-census`** if the Overture/GeoNames country-node interplay (#1026's suspected mechanism) reproduces — that is a CORRECT check result, not a task failure.
-- [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology), NOT this PR — the check exists precisely to block the swap.
+- [ ] **Step 2: If node-census fails** — capture the missing list into #1026 (comment with the exact `(country, placetype)` set). The fix belongs to #1026/PR C (fold-order archaeology), not this PR — the check exists precisely to block the swap.
 - [ ] **Step 3: If verify passes** — diff old-vs-new per-country/per-placetype census (`SELECT country, placetype, COUNT(*) FROM spr WHERE is_current!=0 GROUP BY 1,2` on both, joined) — attach the diff summary to the PR; the E2E artifact is a swap candidate for #1026 itself (operator decides; swap follows the RELEASING.md runbook).
 - [ ] **Step 4: Confirm the seal** — `ls -l` shows `-r--r--r--`; `node -e` RW-open via `openBuiltDatabase` throws `SealedArtifactError`.
 - [ ] **Step 5: Clean up** — remove the E2E artifact unless it's being promoted; push the branch; open the PR (B) referencing the spec, with the E2E findings.

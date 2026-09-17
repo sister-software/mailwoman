@@ -9,7 +9,7 @@ mailwoman 9.0.0 and same-day hosted geocode.earth.
 Method notes: designed across a three-turn DeepSeek consult (session
 `019fd8b2-63e4-71f6-931b-0f197276cdf8`). Per the consult calibration discipline, its structural
 contributions are adopted; its three required factual claims are **preregistered as falsifiers
-to run BEFORE any import** (§2) rather than trusted. Nothing below runs until the falsifiers are
+to run before any import** (§2) rather than trusted. Nothing below runs until the falsifiers are
 graded.
 
 ## §1 — The build, scoped
@@ -23,22 +23,22 @@ it is cheaper than proving they don't), interpolation (**required**: street-cent
 deflate the exact @1km metric under comparison). PIP omitted (no reverse). One custom project, one
 ES index — N per-country projects provide complexity, not accuracy, at 420 queries.
 
-**Pinning:** the `pelias/docker` release is pinned by commit AND image digests, never floating
+**Pinning:** the `pelias/docker` release is pinned by commit and image digests, never floating
 tags. Data vintages pinned by SHA-256 manifest (§4).
 
 **Data mapping (ours → Pelias):**
 
 | Source          | Ours                                                                    | Pelias path                                                                                    |
 | --------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| WOF admin       | official per-country `whosonfirst-data-admin-XX` SQLites (we hold them) | `data/whosonfirst` verbatim — our combined 5.3 GB product is NOT used                          |
+| WOF admin       | official per-country `whosonfirst-data-admin-XX` SQLites (we hold them) | `data/whosonfirst` verbatim — our combined 5.3 GB product is not used                          |
 | OpenAddresses   | standard-schema per-country CSVs (~20 countries held)                   | `data/openaddresses` verbatim; fetch `us` + `fr` (OA-fr ≈ BAN, which is upstream of it)        |
 | TIGER           | 2024 shapefiles                                                         | `pelias/tiger` importer; 2020 unused                                                           |
-| GNAF (AU)       | derived, non-official schema                                            | NOT used — OA au countrywide instead                                                           |
-| Code-Point Open | postcode centroids                                                      | NOT used (no importer; postcode-level anyway)                                                  |
+| GNAF (AU)       | derived, non-official schema                                            | not used — OA au countrywide instead                                                           |
+| Code-Point Open | postcode centroids                                                      | not used (no importer; postcode-level anyway)                                                  |
 | OSM             | none on disk                                                            | Geofabrik country PBFs: DE, GB, AT, CH, CZ, DK, BE, NL, AU, NZ (+US pending the §2 falsifiers) |
 
 **Per-country @1km attribution, assigned pre-hoc** (what the metric will ride on, and where the
-scoped build genuinely diverges from hosted geocode.earth):
+scoped build in fact diverges from hosted geocode.earth):
 
 | Country  | @1km rides on                          | Scoped-build divergence risk                                                                         |
 | -------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -84,9 +84,9 @@ before any import runs:
   without a US OSM Elasticsearch import.
 - **(b) FALSIFIED, favorably**: per-country polyline extraction from any PBF is documented
   (`docker_extract.sh`, osmium-based) plus pre-reduce regional extracts exist. Planet file not needed.
-- **(c) HOLDS with override**: `pelias/docker`'s large projects default `ES_JAVA_OPTS=-Xmx8g`; our
+- **(c) holds with override**: `pelias/docker`'s large projects default `ES_JAVA_OPTS=-Xmx8g`; our
   project pins 4g. Runtime smoke deferred to staging as planned.
-- **(d) NEW, from check-in 1 (pro)**: `pelias/api` checks interpolation on
+- **(d) new, from check-in 1 (pro)**: `pelias/api` checks interpolation on
   `hasResultsAtLayers('street')` (`routes/v1.js:182-187`) — OA/TIGER emit address-layer docs only,
   so a US build without street docs would never trigger interpolation. ABSORBED: the `polylines`
   IMPORTER writes exactly those street-layer ES docs; one per-state polyline reduce feeds both the ES
@@ -124,7 +124,7 @@ before any arm runs: `truth_type` (`rooftop / venue / city-only`) and `local_cov
 dies on `truth_type` — reported per stratum, never blended silently.
 
 **Scoring, locked before running:** top-1 result only; haversine; thresholds 1/5/25 km; no-result =
-empty result array (a low-confidence fallback counts as a result and is ALSO reported as a
+empty result array (a low-confidence fallback counts as a result and is also reported as a
 fallback-rate column); the exact same raw query string to all three arms — no per-arm
 normalization; arms executed round-robin in one order; hosted responses cached with timestamps;
 scorer deterministic (run twice, byte-identical), its command + hash recorded; bootstrap CIs

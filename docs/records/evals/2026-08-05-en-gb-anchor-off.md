@@ -4,11 +4,11 @@
 prescription filed separately.
 
 `@mailwoman/neural-weights-en-gb` no longer ships `postcode-gb.bin`. The postcode-anchor channel now
-resolves OFF for `en-gb` loads, the same posture `@mailwoman/neural-weights-en-nz` has always had. The
+resolves off for `en-gb` loads, the same posture `@mailwoman/neural-weights-en-nz` has always had. The
 placetype-pair prior (`pair-index-gb.bin`) is untouched, and so is every other locale.
 
 This page is the receipt. The diagnosis it implements is elsewhere; what follows is the measurement
-taken against the change as it actually landed.
+taken against the change as it landed.
 
 ## Why
 
@@ -56,14 +56,14 @@ to uppercase with whitespace stripped.
 `mailwoman/eval-harness/fixtures/gb-golden.jsonl`, 120 rows — 106 carry a postcode, 69 carry a
 `dependent_locality`.
 
-| board                                   |   n | anchor ON (before) | anchor OFF (shipped) |
+| board                                   |   n | anchor on (before) | anchor off (shipped) |
 | --------------------------------------- | --: | -----------------: | -------------------: |
 | exact `postcode`, 3 registers           | 318 |            294/318 |          **318/318** |
 | exact `dependent_locality`, 3 registers | 207 |            207/207 |          **207/207** |
 | the same, comma-STRIPPED                | 207 |            201/207 |              198/207 |
 
-Per register, anchor OFF: postcode 106/106 · 106/106 · 106/106; `dependent_locality` 69/69 · 69/69 ·
-69/69. The postcode gain is uniform across registers — it is not a casing artifact.
+Per register, anchor off: postcode 106/106 · 106/106 · 106/106; `dependent_locality` 69/69 · 69/69 ·
+69/69. The outcome is uniform across registers — it is not a casing artifact.
 
 **The comma-stripped row is the cost, and it is one row.** `Goulbourne Road St Georges Telford TF2 9LE`
 loses `St Georges` to a clipped `St`, in all three registers; the other two misses (`Sonning Common`,
@@ -122,7 +122,7 @@ verdict: PASS (with 3 tracked xfails)
 VERDICT: FAIL — do not ship
 ```
 
-After (anchor OFF, shipped):
+After (anchor off, shipped):
 
 ```
 === Gauntlet · regression (62/70 counted cases pass, 64 tracked) ===
@@ -138,7 +138,7 @@ VERDICT: FAIL — do not ship
 **Conditional: 62/70 in both arms, and the eight failures are the same eight rows verbatim** (`si-sentinel-apace`,
 `de-r9-nippes-koeln`, `in-r10-indiranagar-bengaluru`, `es-r11-aravaca-madrid`, `it-r11-trastevere-roma`,
 `us-subvenue-googleplex-building`, `fr-rivoli-us-scoped`, `de-linden-us-scoped`). None is GB. The overall
-FAIL predates this work and is unchanged by it. Zero newly-failing counted cases.
+fail predates this work and is unchanged by it. Zero newly-failing counted cases.
 
 The tracked (`improvement_target`, non-blocking) population moves 66 → 64: `gb-venue-north-face-covent`
 and `gb-op2-via-emilia` now pass outright. Within the rows that still fail, most GB entries lose their
@@ -149,14 +149,14 @@ metamorphic layer is byte-identical.
 
 ## What holds the line
 
-Re-adding the binary is silent — nothing errors, GB just gets worse — so the guards are assertions
+Re-adding the binary is silent — nothing errors, GBgets worse — so the guards are assertions
 rather than documentation:
 
 - `neural/test/weights.test.ts` pins `resolveWeights({locale: "en-gb"}).anchorLookupPath` **undefined**,
   and separately pins that the package's `files` array names no `postcode-*` entry. The two can
   disagree (a tarball ships `files`; a dev worktree resolves the directory), so both are asserted.
 - `neural-weights-en-gb/scripts/link-dev-weights.ts` deletes any `postcode-gb.bin` it finds, loudly. A
-  checkout predating this change would otherwise keep one around and quietly grade against it.
+  checkout predating this change would otherwise keep one around and without output grade against it.
 - `release.config.json`'s `softFeed.postcodeDBByCountry` has no `gb` key, so `copy-weights.ts` skips it
   at release time; the publish workflow no longer fetches `postcode-gb.bin` from the bucket.
 

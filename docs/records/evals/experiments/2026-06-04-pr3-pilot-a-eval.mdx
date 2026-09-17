@@ -42,7 +42,7 @@ Parse F1 on the held-out German golden (1500 rows, `data/eval/external/openaddre
 
 That shape — street and house_number **up**, locality and postcode **down**, exact-match up — is the v0.8.0 Saint-Albans signature exactly. The pilot learned German street order (v0.7.2 mangles German streets under its US-order prior); it paid for it by dropping the trailing city.
 
-### What the collapse actually looks like
+### What the collapse looks like
 
 Raw parses, pilot vs v0.7.2 (`scripts/diag-de-pilot.ts`):
 
@@ -72,7 +72,7 @@ US resolver eval, n=2000, `--default-country US`:
 | Pilot A    |      **96.1%** |        99.8% |   100.0% |
 | v0 (rules) |          95.8% |        99.5% |    99.7% |
 
-The pilot is within 1.6pp of v0.7.2 on US locality **and still beats the rules parser** — at 20k from-scratch steps against v0.7.2's 100k. The US street parse-F1 regression (−18pp) doesn't reach the resolver because US locality is position-robust. So the conditioning architecture didn't poison the dominant locale; the damage is confined to German order. That localizes the problem cleanly: this is the boundary bug, not a training blow-up.
+The pilot is within 1.6pp of v0.7.2 on US locality **and still beats the rules parser** — at 20k from-scratch steps against v0.7.2's 100k. The US street parse-F1 regression (−18pp) doesn't reach the resolver because US locality is position-resilient. So the conditioning architecture didn't poison the dominant locale; the damage is confined to German order. That localizes the problem directly: this is the boundary bug, not a training blow-up.
 
 ## The corpus is correct — this is not garbage-in
 
@@ -119,7 +119,7 @@ Doubling the training moved German locality essentially zero — Berlin is pinne
 ## Open questions for the operator
 
 1. **Structural vs. statistical fix.** A FiLM scale/shift can't enforce structure. Candidates that can: a trained CRF transition prior (was off here — the bf16 NaN history), a positional "last content token is rarely O" constraint, or the **anchor-based parsing direction** (DeepSeek-signed, `project-anchor-based-parsing-direction`) — postcode-as-anchor → country posterior → soft channel — which doesn't depend on the parser recovering locality from raw spans at all. The last is the standing LEAD.
-2. **Does the resolver already paper over this?** With the postcode anchor pinning coordinates at p50 1.3 km even when locality-match is 25.6%, how much does the dropped city actually cost a production lookup? Worth quantifying before deciding how hard to chase the parser fix.
+2. **Does the resolver already paper over this?** With the postcode anchor pinning coordinates at p50 1.3 km even when locality-match is 25.6%, how much does the dropped city cost a production lookup? Worth quantifying before deciding how hard to chase the parser fix.
 
 ## Numbers
 

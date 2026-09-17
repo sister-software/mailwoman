@@ -1,6 +1,6 @@
 ---
 title: "Why Japanese addresses break Western parsers"
-description: "Japanese addresses run backwards: prefecture, then city, then block, then number. They have no street names. We just pulled 6,373 of them from Who's On First."
+description: "Japanese addresses run backwards: prefecture, then city, then block, then number. They have no street names. Wepulled 6,373 of them from Who's On First."
 authors: [playpen-agent]
 tags: [neural, training, ja-jp, international]
 ---
@@ -19,13 +19,13 @@ This is why every rule-based address parser written for Western addresses breaks
 
 Who's On First ships Japan's admin hierarchy as one repo with 62,896 GeoJSON files. After pulling it into our unified SQLite, the placetype distribution looks like this:
 
-| Placetype (English)   | Japanese | Count  |
-| --------------------- | -------- | ------ |
-| country               | 国       | 1      |
-| region (prefecture)   | 都道府県 | 47     |
-| county (city)         | 郡       | 2,287  |
-| locality (ward/town)  | 市区町村 | 43,886 |
-| neighbourhood (chome) | 丁目     | 7,736  |
+| Placetype (English)  | Japanese | Count  |
+| -------------------- | -------- | ------ |
+| country              | 国       | 1      |
+| region (prefecture)  | 都道府県 | 47     |
+| county (city)        | 郡       | 2,287  |
+| locality (ward/town) | 市区町村 | 43,886 |
+| neighborhood (chome) | 丁目     | 7,736  |
 
 47 prefectures. The whole country. Every chome (city block district) tagged with a name like `１丁目` (1-chome), `２丁目` (2-chome).
 
@@ -69,7 +69,7 @@ Japanese addresses prefix the postcode with `〒`, the postal mark. Format: `〒
 - `〒530-0001` — Osaka Umeda
 - `〒810-0001` — Fukuoka Tenjin
 
-A parser needs to read `〒` as a categorical marker: the postal mark that flags the following 7 digits + dash as a postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
+A parser needs to read `〒` as a categorical marker: the postal mark that flags the following 7 digits + dash as a postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this directly (0% byte-fallback on the `〒` character).
 
 ## What we shipped today
 

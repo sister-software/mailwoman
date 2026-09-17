@@ -21,7 +21,7 @@ before its run:
    holdout median error (WEAK), pharmacy at 75.3% (KILLED) — but poi.db's own register asserts
    `completeness = 1.0` everywhere (the board's meaning-of-zero violation), so observed counts are
    lower bounds with unknown coverage and the residual conflates theory error with data absence.
-   The fit cannot be graded better than WEAK until the register is honest.
+   The fit cannot be graded better than WEAK until the register is direct.
 3. **The largest benchmark deficit is a coverage gap wearing a mechanism defect** (#1585). The
    en-nz lane sits at 3/60 @1km; a local nz-only OSM import answers 58/60. The missing admin layer
    is ~7,630 place nodes (963 suburbs — `Stanmore Bay` among them). The resolver's fuzzy
@@ -34,7 +34,7 @@ and today no layer can say what it holds.**
 
 ## What already exists
 
-The layer contract (`docs/engineering/reference/layer-contract.mdx`) already REQUIRES a
+The layer contract (`docs/engineering/reference/layer-contract.mdx`) already requires a
 `layer_coverage` table in every layer database, and the meaning-of-zero rule already states that a
 magnitude never carries its own absence. The contract is right; the FILLINGS are dishonest or
 absent:
@@ -48,10 +48,10 @@ absent:
 
 ## The register's contract (proposed)
 
-Phase 1 carries TWO kinds of coverage, because the two questions a resolver asks arrive with
+Phase 1 carries two kinds of coverage, because the two questions a resolver asks arrive with
 different keys (operator correction, 2026-08-11 handoff §4):
 
-- **Spatial coverage** answers "how complete is this layer HERE?" — it needs a geometry, so it can
+- **Spatial coverage** answers "how complete is this layer here?" — it needs a geometry, so it can
   only be asked about a claim that already resolved to a coordinate.
 - **Scope coverage** answers "was this layer's NAMESPACE surveyed at all?" — the question an
   UNRESOLVED lookup asks. `Stanmore Bay` has no candidate row, therefore no coordinate, therefore
@@ -75,8 +75,8 @@ Per layer, per H3 cell (res 7 for admin/locality layers, res 9 where the layer a
 
 ### Scope coverage (`layer_scope_coverage`, per unresolved name lookup)
 
-Per layer, per (country, placetype-or-namespace), one assertion row with the SAME state vocabulary
-and the SAME basis / vintage / source-release discipline as cell coverage:
+Per layer, per (country, placetype-or-namespace), one assertion row with the same state vocabulary
+and the same basis / vintage / source-release discipline as cell coverage:
 
 ```
 (layer_id, country, namespace, state, basis, as_of, source_release)
@@ -85,7 +85,7 @@ and the SAME basis / vintage / source-release discipline as cell coverage:
               `layer_scope_coverage` holds until schema review picks the final term
 ```
 
-The row a resolver reads BEFORE it has a coordinate: `(candidate, NZ, locality)` →
+The row a resolver reads before it has a coordinate: `(candidate, NZ, locality)` →
 `surveyed_partial` (region/locality tiers exist; the suburb tier does not) is a different answer
 from `(candidate, US, locality)` → `surveyed_partial` with a miss — and both differ from a
 namespace nobody ever extracted. The #1585 fuzzy-scope mechanism (shipped 2026-08-11) is the
@@ -94,7 +94,7 @@ by absence of candidates.
 
 Three disciplines carried over from the OSM-ingest section of the design record, now generalized:
 
-1. **`surveyed_complete` is earned, not defaulted.** A basis names HOW the claim is known (an
+1. **`surveyed_complete` is earned, not defaulted.** A basis names how the claim is known (an
    authority's own completeness statement, a reconciliation against a second source above a
    threshold, a census denominator). No basis → `surveyed_partial`. This is the exact inversion of
    the poi.db defect.
@@ -112,12 +112,12 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
    targets a namespace whose `layer_scope_coverage` row is not `surveyed_complete` abstains at that
    tier with a named reason, instead of falling through to world-fuzzy — the SCOPE row, not a cell,
    because the query has no coordinate to key a cell with. This alone converts the NZ failure mode
-   from silently-wrong to honestly-empty before any new data ships. (The transport shipped as the
+   from silently-wrong to directly-empty before any new data ships. (The transport shipped as the
    #1585 fuzzy-tier country restriction; today it abstains by candidate absence, without a named
    reason.)
-2. **The NZ locality extract lands honest**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
+2. **The NZ locality extract lands direct**: ~7.6k rows (LINZ for the permissive tier; the OSM copy
    stays build-local under the ODbL posture), with `surveyed_complete` asserted from the
-   authority's own coverage statement — the first layer whose register is honest from birth.
+   authority's own coverage statement — the first layer whose register is direct from birth.
 3. **Falsifier 1 becomes re-runnable with teeth**: negative evidence scoped to
    `surveyed_complete` locality cells; the count of usefully-shrinking candidate sets is the
    register's own acceptance metric.
@@ -138,9 +138,9 @@ exclusion, and any `inferred` result emission. Provenance-in-the-result-shape (`
 ## Falsifiers for the register itself (before building)
 
 The five scope-contract proof cases (operator handoff §4 — all five must pass on a prototype
-BEFORE the full register is built; receipts in `scratchpad/falsifiers/f4-scope-coverage.mjs`):
+before the full register is built; receipts in `scratchpad/falsifiers/f4-scope-coverage.mjs`):
 
-1. Query NZ locality coverage WITHOUT a candidate coordinate — the scope row answers where no cell
+1. Query NZ locality coverage without a candidate coordinate — the scope row answers where no cell
    key exists.
 2. Distinguish an unsurveyed locality namespace from a surveyed namespace with no match — two
    different stored states, not one shared absence.
@@ -154,9 +154,9 @@ BEFORE the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
 
 And the three carried from the night design:
 
-6. Does an honest poi.db register change falsifier 3's grade? Re-fit on `surveyed_complete` cells
+6. Does an direct poi.db register change falsifier 3's grade? Re-fit on `surveyed_complete` cells
    only; if MARE stays ≥ 60%, the CPT prior dies on theory, not coverage — useful either way.
 7. Do `surveyed_complete` claims survive audit? Sample N cells claimed complete, reconcile against
-   a second source; the disagreement rate IS the claim's calibration.
+   a second source; the disagreement rate is the claim's calibration.
 8. Does tier-abstention (#1) regress any currently-correct answer? The guard board + panel-v2,
    abstention on vs off — the D-rule applies before it defaults on.

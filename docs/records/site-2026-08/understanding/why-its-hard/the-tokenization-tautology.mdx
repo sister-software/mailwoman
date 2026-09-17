@@ -44,7 +44,7 @@ Consider `Saint Petersburg, FL`. The tokenizer produces:
 [Saint] [Petersburg] [,] [FL]
 ```
 
-The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence — it IS a common street prefix. "Petersburg" matches the WOF locality gazetteer — over 30 populated places are named Petersburg. "FL" matches the US state abbreviation list.
+The classifier now sees each token independently. "Saint" matches the `street_prefix` dictionary with high confidence — it is a common street prefix. "Petersburg" matches the WOF locality gazetteer — over 30 populated places are named Petersburg. "FL" matches the US state abbreviation list.
 
 Each individual classification is **correct in isolation**. The error is in the combination: "Saint Petersburg" is one locality, not a street prefix followed by a city name. But the classifier cannot know this because it classifies tokens before grouping them.
 
@@ -61,7 +61,7 @@ The solver tries to build a valid address from these pieces. It can produce:
 - `street_prefix=Saint, locality=Petersburg, region=FL` (wrong — "Saint" is not a directional)
 - `locality=Saint Petersburg, region=FL` (correct — but requires merging two tokens the classifier already labeled differently)
 
-Option 2 requires the solver to **override the classifier's decisions** — to say "you labeled 'Saint' as `street_prefix`, but I'm going to treat it as part of `locality`." This is what the solver actually does, via a penalty system that allows spans to be reassigned. But the penalty system was tuned for the US address shapes the developers tested against. Every new address shape that requires a different reassignment pattern needs new penalty tuning.
+Option 2 requires the solver to **override the classifier's decisions** — to say "you labeled 'Saint' as `street_prefix`, but I'm going to treat it as part of `locality`." This is what the solver does, via a penalty system that allows spans to be reassigned. But the penalty system was tuned for the US address shapes the developers tested against. Every new address shape that requires a different reassignment pattern needs new penalty tuning.
 
 ## Act 2 — Classification commits before phrase grouping resolves
 
@@ -71,7 +71,7 @@ The problem compounds with multi-word components:
 P'tit St. Denis' Street Café, 75010 Paris
 ```
 
-The tokenizer splits on whitespace AND punctuation (commas, apostrophes):
+The tokenizer splits on whitespace and punctuation (commas, apostrophes):
 
 ```
 [P] ['tit] [St] [.] [Denis] ['] [Street] [Café] [,] [75010] [Paris]

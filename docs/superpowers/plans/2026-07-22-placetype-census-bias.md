@@ -26,7 +26,7 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 2. **Soft additive bias, never a mask.** Composed as **the sixth emission prior** at the existing `addEmissionMatrix` pre-Viterbi slot in `classifier.ts#decode`, alongside query-shape/FST/street-morphology/span-proposer/conventions (Kimi #2) — NOT a bespoke hook. New `neural/placetype-pair-prior.ts` returns the standard `[seqLen][numLabels]` log-bias matrix; `matrixHasBias` applied-flag convention; new `TRACE_PRIOR_KINDS` entry for flip attribution; probe injected via structural typing (`PairIndexLike { probe(child, parent): boolean }`), loader never imported by `neural/` internals.
 3. **Segmentation = word-span windows** over the `▁`-grouped pieces, the `fst-prior.ts` walk pattern (Kimi #4) — uniform across comma/comma-free input; the comma-segment check is the degenerate case. Window N from the PPD CITY length distribution (measure in the builder task; expect ≤3). **Window-mode enablement checks on the venue-confound board** (DeepSeek): FP = 0 on ≥5k confounds built from FSA/CQC venue names colliding with index child names; plus a marker-suppression filter (child span followed by "House"/"Road"/"Flat"-class structural markers → no bias). If the confound board fails: comma-segments-only v1 (zero-FP by construction), window mode behind the flag.
 4. **δ is flat per-country, calibrated** (p-style from held-out register rows), shipped in the artifact header. **No model-veto parameter** (DeepSeek turn 2: a veto fights exactly the deficit the bias compensates — either kills deep-buried recall or is toothless). The encoder's veto is the existing prior-composition semantics + word-consistency vote over post-prior emissions.
-5. **Country scoping is hard**: index selected by locale/postcode-anchor context; **no country context → no bias** (Kimi #5, explicit test). Probe-all fallback NOT enabled (colonial-name overlap = named FP vector; would require a cross-country confusables board first).
+5. **Country scoping is hard**: index selected by locale/postcode-anchor context; **no country context → no bias** (Kimi #5, explicit test). Probe-all fallback not enabled (colonial-name overlap = named FP vector; would require a cross-country confusables board first).
 6. **Normalization single-sourced from the FST bridge fold** (NFKC, lowercase, strip non-alnum — hyphen/space equivalence included); builder and probe share the module (Kimi #7). Diacritic policy documented there; ES equal-value guard discussion points at it.
 7. **Schema is tag-typed**: (child, parent, placetype_tag, count). `count` is UNUSED v1 (presence-only) — reserved as the future confidence-scaling change; do not "finish the job" mid-implementation.
 8. **GB-only this train; NZ held** (Kimi #6): the v385 control proves index-without-resurrected-weights is inert, and the base package serves non-resurrected weights — an NZ index there is dead payload. NZ rung-3 stands as the schema-generalization proof.
@@ -45,13 +45,13 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 
 ## Parallel training-side experiment (DeepSeek's surviving recommendation)
 
-**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission WITHOUT re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis, not a check.
+**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission without re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis, not a check.
 
 ## Plan (tasks; expand to TDD step level next)
 
 1. **Pair-index builder** — `mailwoman gazetteer pair-index`: register sources → per-country sealed artifacts; PPD CITY length distribution measured here (sets window N); provenance header per decision 9.
 2. **Index loader + probe** — weights-package sibling resolution (postcode-bin pattern); shared fold module with the builder; `PairIndexLike` structural type.
-3. **`placetype-pair-prior.ts`** — the sixth emission prior + `TRACE_PRIOR_KINDS` entry + runtime flag (SCOPE register; default OFF until battery); marker-suppression filter; no-country → zero-bias path + test.
+3. **`placetype-pair-prior.ts`** — the sixth emission prior + `TRACE_PRIOR_KINDS` entry + runtime flag (SCOPE register; default off until battery); marker-suppression filter; no-country → zero-bias path + test.
 4. **Boards + falsifiers** — venue-confound board (FSA/CQC × index child names, ≥5k, FP=0 bar for window mode); comma-stripped variants of the four dep-loc boards; pair-holdout (10%) index rebuild + degradation curve; out-of-register coverage vs EPC; word-consistency + span-bridge interaction test classes.
 5. **δ calibration + full battery + checkpoint selection** — bars re-anchored to the holdout numbers; battery incl. non-GB byte-identical presets flag-ON, 2pp error-analysis, gauntlet. cRT probe result folds in here if it landed.
 6. **Packaging + ship train** — GB index into `@mailwoman/neural-weights-en-gb`; release-path wiring per the #1249 checklist; CI release; demo GB preset + redeploy.
@@ -59,8 +59,8 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 
 ## Pre-registered acceptance (rev 2 — re-anchored per Kimi #1)
 
-1. Pair-holdout sensitivity: boards re-run against the 90% index; degradation recorded; the production bar anchors to THIS number (rev-1's "rung-3 −5pp" is void — leaked ceiling).
+1. Pair-holdout sensitivity: boards re-run against the 90% index; degradation recorded; the production bar anchors to this number (rev-1's "rung-3 −5pp" is void — leaked ceiling).
 2. Comma-stripped boards through the full pipeline: the comma-free gap measured; window mode ships only if confound board FP=0 AND comma-stripped recall ≥ comma-mode recall −5pp.
 3. Word-consistency interaction tests per the two registered classes.
-4. Non-GB outputs byte-identical with flag ON (structural test), no-country → zero bias (explicit test).
-5. Full battery: us/fr golden ±0.7pp, bare-locality ≥0.90, digit adjudicated in the checkpoint matrix, presets, val ±1.0pp, no tag >2pp down vs v385, gauntlet PASS. Promotion = operator's act.
+4. Non-GB outputs byte-identical with flag on (structural test), no-country → zero bias (explicit test).
+5. Full battery: us/fr golden ±0.7pp, bare-locality ≥0.90, digit adjudicated in the checkpoint matrix, presets, val ±1.0pp, no tag >2pp down vs v385, gauntlet pass. Promotion = operator's act.

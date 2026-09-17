@@ -6,7 +6,7 @@ title: "Night shift 2026-06-19 — v1.8.0 international admin-split (surpass-v1.
 
 _Goal: produce a candidate that beats the production default **v1.5.0** on the **assembled
 anchor-ON coordinate** (not label-F1), by fixing the one admin-deciding, coordinate-coupled failure
-class — on non-US formats the model fuses the trailing admin token into the locality. NOT promoted
+class — on non-US formats the model fuses the trailing admin token into the locality. not promoted
 without operator GO (merge wall)._
 
 > **STATUS: COMPLETE.** Training finished (40k steps, loss-abort passed), conditional, verdict below —
@@ -25,10 +25,10 @@ without operator GO (merge wall)._
    data-bound (meter-grade via the situs cascade for ~90%). A US-parse retrain risks another label
    win that never reaches the coordinate.
 2. **4-turn DeepSeek-Pro consult** (`surpass-v150`) reframed: only parse decisions that change the
-   admin polygon matter. **International** is the headroom (no situs extracts → the coordinate IS the
+   admin polygon matter. **International** is the headroom (no situs extracts → the coordinate is the
    admin centroid). The arena confirmed the class: postal-standards 68% both-fail, intl-format 29%
    v0-only; the unifying failure is "fails to split locality from the adjacent admin token."
-3. **The anchor-positional unlock:** the v0.9.2 "intl washes anchor-on" scar was _positional_
+3. **The anchor-positional enable:** the v0.9.2 "intl washes anchor-on" scar was _positional_
    (German leading postcode); AU/FR have _trailing_ postcodes like the US → the anchor reinforces
    the split. Scar tissue is conditional, not universal (operator-named principle, now in memory).
 4. **Pre-GPU self-validation PASSED** (`db8ac933`): splitting the département reduces collision-commune
@@ -93,7 +93,7 @@ pair):
 | region-match   |  99.9% |     99.9% |
 
 The −2.2pp us.locality _label_ regression does **not reach the coordinate** — locality-match is
-actually +0.1, coord identical. The day's lesson reproduced: a label moves, the assembled coordinate
++0.1, coord identical. The day's lesson reproduced: a label moves, the assembled coordinate
 doesn't. Precision-only label blips on fragment rows are invisible in real full-address geocoding.
 
 **Standard FR golden** — `per-locale-f1` on `fr.jsonl` (anchor-ON), matched pair (the FR-side
@@ -112,19 +112,19 @@ guardrail, complementing the custom centroid golden):
 Net FR improvement (incl. `fr.house_number` held at 99.5 — v1.5.0's raison d'être) **except
 fr.country −3.5pp**. Likely mechanism: the extract's bare `Commune, Département` rows carry
 `country: FR` metadata but **no country token in the text**, so the model learns to emit country less
-often on FR. Coordinate-invisible for the FR coord eval (which is given `--default-country FR`), but
-over the 2pp check — a clean v1.8.1 refinement is to mix in FR rows that DO carry "France".
+frequently on FR. Coordinate-invisible for the FR coord eval (which is given `--default-country FR`), but
+over the 2pp check — a clean v1.8.1 refinement is to mix in FR rows that do carry "France".
 
 ## Verdict — v1.8.0 is a net win on the shipped coordinate; RECOMMEND promote (operator GO), with two flagged label deltas
 
 **FR coordinate massively up (p50 42→2 km, −40% mean), US coordinate flat.** This is the first model
-in the arc (v1.6.0 and v1.7.0 both HOLD) to surpass v1.5.0 on the metric we ship. **Two
+in the arc (v1.6.0 and v1.7.0 both hold) to surpass v1.5.0 on the metric we ship. **Two
 label deltas exceed the 2pp check, and both are coordinate-invisible:** us.locality −2.2pp
 (precision-only — 0 recall misses; spurious-fp on fragment rows) and fr.country −3.5pp (the resolver
 is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
 on #728; the promote is the operator's call with the full picture.
 
-Per the merge wall this is **NOT auto-promoted** — the artifact is staged beside the canonical
+Per the merge wall this is **not auto-promoted** — the artifact is staged beside the canonical
 (int8 `model-v180-step-40000-int8.onnx`, md5 `d163396ce30869e117bf29ffb939177b`, on the volume +
 `./out/v180/`) and flagged for operator GO. The 2pp label check technically fired, but the coordinate
 (the canonical metric) is flat-to-better, so this is the "regression is coordinate-invisible — state
@@ -163,7 +163,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 - **Cloned v1.5.0-fr-order verbatim** except the one added extract (one headline variable).
 - **AU iteration deferred — and now known to be BLOCKED:** the resolver DB (`admin-global-priority.db`)
   has **zero AU rows** (US+DE+FR only), so AU places can't be resolved → no AU coordinate check is
-  possible without first expanding the resolver DB to AU. FR-only wasn't just the min-viable reduce, it
+  possible without first expanding the resolver DB to AU. FR-only wasn'tthe min-viable reduce, it
   was the only feasible one. (Verify-before-build caught this during training-window prep.)
 
 ## Open questions (operator)
@@ -196,4 +196,4 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
 | Loss-abort check  | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                                                                                                                                 |
 | GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                                                                                                                                                                                                                    |
 | Verdict           | v1.8.0 = net win on shipped coordinate (FR −40%, US flat); 2 coordinate-invisible label deltas (us.locality −2.2 precision-only, fr.country −3.5); RECOMMEND promote (operator GO)                                                                                                   |
-| Promoted          | YES — shipped as **v4.11.0** (2026-06-19 PM, operator GO with the two coordinate-invisible deltas); HF + R2 + npm verified at md5 `d163396c`, clean `npm install mailwoman@4.11.0` resolves; npm leg needed one `publish_only` retry (transient OIDC E401). Runbook in RELEASING.md. |
+| Promoted          | yes — shipped as **v4.11.0** (2026-06-19 PM, operator GO with the two coordinate-invisible deltas); HF + R2 + npm verified at md5 `d163396c`, clean `npm install mailwoman@4.11.0` resolves; npm leg needed one `publish_only` retry (transient OIDC E401). Runbook in RELEASING.md. |

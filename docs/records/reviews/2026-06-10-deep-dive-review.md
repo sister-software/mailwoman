@@ -8,7 +8,7 @@
 
 The model refactor has earned the word "mature" — and the external research backs it harder than expected: **no open-source geocoder ships a neural parser in production**. Every published neural-vs-libpostal comparison (Huppert's SOTA survey, Continuity's transformer parser, the arXiv fraud-detection work) reaches the same conclusion mailwoman bet on: transformers beat CRFs exactly where real geocoder queries live (typos, prefixes, degraded input), at under 80 MB instead of libpostal's 2.2 GiB. The ONNX-in-browser parser is ahead of the field, not behind it.
 
-The Elasticsearch-free architecture is also no longer a contrarian bet. Pelias's Placeholder/PIP sidecars exist _because_ ES can't do admin hierarchy; Photon just finished a multi-year forced OpenSearch port; Nominatim 5.0 (Feb 2025) shipped as a pip-installable library; addok serves all of France from Redis+SQLite in 6 GB. The field is drifting toward "geocoder as a library" — which is what the ancestors-table-in-SQLite design already is.
+The Elasticsearch-free architecture is also no longer a contrarian bet. Pelias's Placeholder/PIP sidecars exist _because_ ES can't do admin hierarchy; Photonfinished a multi-year forced OpenSearch port; Nominatim 5.0 (Feb 2025) shipped as a pip-installable library; addok serves all of France from Redis+SQLite in 6 GB. The field is drifting toward "geocoder as a library" — which is what the ancestors-table-in-SQLite design already is.
 
 The weaknesses are not in the model or the architecture. They are operational: **stale doc entry points, a reproducibility crater in training, scattered promotion checks, and three missing geocoder table stakes** (interpolation, reverse, autocomplete integration). All fixable; none require rethinking the design.
 
@@ -35,7 +35,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 
 ## 2. Parser implementation
 
-**Strong.** The 6-stage runtime pipeline (`mailwoman/runtime-pipeline.ts` → `core/pipeline/runtime-pipeline.ts`) composes via injection — every stage optional with graceful defaults, workspace boundaries respected. Anchor and gazetteer features are _additive_ model inputs with zero-filled fallbacks (the architectural intent of "soft anchor, never override" is visible in the code, not just the docs). `build-tree.ts` is robust: boundary trimming, same-tag whitespace merge (the Saint-Paul fix), distance-based parent attachment. Three lossless serializers. ~755 tests.
+**Strong.** The 6-stage runtime pipeline (`mailwoman/runtime-pipeline.ts` → `core/pipeline/runtime-pipeline.ts`) composes via injection — every stage optional with graceful defaults, workspace boundaries respected. Anchor and gazetteer features are _additive_ model inputs with zero-filled fallbacks (the architectural intent of "soft anchor, never override" is visible in the code, notthe docs). `build-tree.ts` is resilient: boundary trimming, same-tag whitespace merge (the Saint-Paul fix), distance-based parent attachment. Three lossless serializers. ~755 tests.
 
 **Ranked weaknesses:**
 
@@ -60,13 +60,13 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 4. **Overlay extract resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path; the loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.
 5. **Int8 toolchain pinning is undocumented.** The value_info-strip fix and the Safari-WebGPU opset≤17 invariant live in code comments; a well-meaning dep bump re-breaks iOS undetected. Add a version-verification script + a toy export/quant CI check.
 
-Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, honest-eval) — better than memory-only, but the promotion-check consolidation is what makes it survivable.
+Eval-hygiene lore (tokenizer-F1 incomparability, name-match vs coordinate truth, German native-order rendering) is _partially_ encoded in tooling (`--tokenizer` flag, `de-order-eval.sh`, direct-eval) — better than memory-only, but the promotion-check consolidation is what makes it survivable.
 
 ---
 
 ## 4. Distance to a full geocoder
 
-Capability checklist (evidence-based, from the resolver/data-layer pass):
+Capability checklist (evidence-based, from the resolver/data layer pass):
 
 | Capability                               | Status                                                                                                                                                                                                                                                                                             |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -88,13 +88,13 @@ Capability checklist (evidence-based, from the resolver/data-layer pass):
 
 ## 5. Recommended roadmap
 
-**Phase A — Consolidate the parser win (now → ~2 weeks).** Land #466/#468 (affix-ml extract + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; remove the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
+**Phase A — Consolidate the result (now → ~2 weeks).** Land #466/#468 (affix-ml extract + gazetteer choreography) into the consolidation retrain; re-benchmark the arenas against Senzing's retrained libpostal; remove the v1.0-parity model. This finishes the campaign already in flight — don't start geocoder work mid-retrain.
 
 **Phase B — Hygiene sprint (~1 week, parallelizable).** AGENTS.md links + status.mdx + version matrix; `promotion-check.sh` + ledger auto-append; REPRODUCIBILITY.md; strict extract resolution; `buildTokens()` dedup + libpostal TLA removal. Cheap, and everything after gets safer.
 
-**Phase C — Geocoder table stakes (~6–8 weeks).** In order of leverage: (1) house-number interpolation off TIGER (biggest coverage win, check on honest-eval coord p50 dropping from ~10 km admin-centroid toward street-level), (2) reverse geocoding off wof-polygons.db (symmetric tree output), (3) autocomplete endpoint wiring the existing FST tier with parser engagement past a token threshold. Add batch as a thin layer over all three.
+**Phase C — Geocoder table stakes (~6–8 weeks).** In order of use: (1) house-number interpolation off TIGER (biggest coverage win, check on direct-eval coord p50 dropping from ~10 km admin-centroid toward street-level), (2) reverse geocoding off wof-polygons.db (symmetric tree output), (3) autocomplete endpoint wiring the existing FST tier with parser engagement past a token threshold. Add batch as a thin layer over all three.
 
-**Phase D — Data + service maturity (~quarter).** Overture/GERS conflation layer for addresses; RemoteResolver + multi-instance deployment; delta-sync builds; observability (latency SLOs, per-country coverage metrics, periodic honest-eval on production traffic). addok (full France, 6 GB RAM, minutes to deploy) is the ops-simplicity benchmark to cite and beat.
+**Phase D — Data + service maturity (~quarter).** Overture/GERS conflation layer for addresses; RemoteResolver + multi-instance deployment; delta-sync builds; observability (latency SLOs, per-country coverage metrics, periodic direct-eval on production traffic). addok (full France, 6 GB RAM, minutes to deploy) is the ops-simplicity benchmark to cite and beat.
 
 **Positioning:** "the geocoder that's a library" — pip/npm-installable, embedded SQLite, runs in the browser, no ES cluster. Nominatim 5 legitimated the frame; nobody owns it with a neural parser.
 

@@ -33,7 +33,7 @@ flowchart LR
     A --> H["10010"]
 ```
 
-Each token carries metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. The grouping idea — Mailwoman calls these **sections** — is important: tokens that are separated by commas usually belong to different address components, so the solver treats them differently.
+Each token carries metadata: its character position in the original string, what kind of separator came before it (`comma`, `space`, `tab`, `newline`), and what other tokens it is grouped with. The grouping idea — Mailwoman calls these **sections** — is important: tokens that are separated by commas typically belong to different address components, so the solver treats them differently.
 
 Tokenization is also the place where pre-processing happens: lowercase normalization, abbreviation expansion (`St.` → `Street`), and accent handling for non-English input.
 
@@ -48,7 +48,7 @@ Examples of rule classifiers in Mailwoman v1:
 - `house_number` — does this token look like a number (with optional letter suffix like `123A`)?
 - `postcode` — does this token match a country-specific postcode pattern? (`10010` matches the US 5-digit pattern; `75008` matches the FR 5-digit pattern.)
 - `street_prefix` — is this token a known direction (`North`, `West`, `SE`) or a known street-type prefix (`Avenue`, `Rue`, `Boulevard`)?
-- `whos_on_first` — is this token (or this short phrase) found in the Who's On First gazetteer as the name of a country, region, locality, or neighbourhood?
+- `whos_on_first` — is this token (or this short phrase) found in the Who's On First gazetteer as the name of a country, region, locality, or neighborhood?
 
 Each classifier produces zero or more **classifications** for each token. A classification is a triple:
 

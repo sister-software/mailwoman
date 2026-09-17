@@ -285,7 +285,7 @@ theme("dark", ({ variable: themeVariable }) => {
 	themeVariable(controlForeground, ref(neutral100))
 	themeVariable(controlBorder, "oklch(100% 0 264 / 0.16)")
 
-	// The state hues lift in a dark ground: the same hue at higher lightness reads at the same strength.
+	// The state hues brighten on a dark ground: the same hue at higher lightness reads at the same strength.
 	themeVariable(stateSuccess, "oklch(76% 0.16 150)")
 	themeVariable(stateSuccessBackground, "oklch(76% 0.16 150 / 0.18)")
 	themeVariable(stateWarning, "oklch(84% 0.15 75)")

@@ -21,7 +21,7 @@
  *      `"crs":{"type":"name","properties":{"name":"EPSG:2157"}}` and its coordinates are Irish Transverse
  *      Mercator metres. A strict RFC 7946 reader ignores the member and places Ireland at latitude 735,435;
  *      GDAL honours it, which is why `sdk/ingest.ts` reads the archive through ogr2ogr and asserts the
- *      reprojected result lands inside the Department's own declared extent.
+ *      reprojected result falls inside the Department's own declared extent.
  *   3. THE PUBLISHER'S OWN AREA STATISTIC IS NOT IN THE ARCHIVE. `Shape__Area` is a service field and the
  *      GeoJSON export drops it, so the area cross-check has to come from {@linkcode readShapeAreaSum} — which
  *      makes it a genuine two-path check rather than the archive agreeing with itself. Measured:

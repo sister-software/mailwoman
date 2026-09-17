@@ -59,7 +59,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Demo-refinement tier (#338 / #339 / #340 / #343, + the S38 design doc #342)** — the operator's "visualizer
   breakdown + polish" ask, shipped as four additive demo PRs once GPU was off the table:
   - **#338 (S34) — span-highlight visualizer.** The raw input rendered as a displaCy-style ribbon, each tagged
-    span tinted by its confidence (the table's red→amber→green tiering) with the tag labelled beneath; dropped
+    span tinted by its confidence (the table's red→amber→green tiering) with the tag labeled beneath; dropped
     spans read as literal colour gaps. The decoder already carried char offsets — `flattenTree` was dropping
     them.
   - **#339 (S37) — per-stage timing breakdown.** A stacked bar (shape+kind / classify / resolve) sized by each
@@ -67,10 +67,10 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
     the one-time DB load excluded so resolve isn't skewed.
   - **#340 (S40) — copy-result-as-JSON.** A "Copy JSON" button that yields a clean paste-into-an-issue object
     (input + components with offsets + resolved place). Enter-submit and the loading splash already existed.
-  - **#343 (S35) — containment hierarchy tree.** The parse as the tree it actually is —
+  - **#343 (S35) — containment hierarchy tree.** The parse as the tree it is —
     `region ⊃ locality ⊃ {street ⊃ house_number, postcode}` — in a collapsed `<details>`, read straight from
     `result.tree.roots` (the nesting the flat table throws away).
-  - **#342 (S38 design doc)** — the service-worker cache groundwork. We did NOT ship a SW: the heavy assets are
+  - **#342 (S38 design doc)** — the service-worker cache groundwork. We did not ship a SW: the heavy assets are
     fetched cross-origin from HF by version, HF 302s to an hourly-expiring signed CDN URL, so a blind cache
     would store a dead redirect. Documented the gotchas + a hand-rolled Cache-API sketch + a 5-behavior
     Playwright check, so a focused session starts fast instead of half-shipping at the shift tail.
@@ -82,7 +82,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   the anchor's role.
 - **The corpus pipeline mirrored v0.4.1-de exactly** — overlay manifest, base extracts by reference, no
   rebuild of 677M rows. Clean, fast, verified on the volume before launch.
-- **Pivoting cleanly when GPU was called off.** DeepSeek's "(b), no more GPU" verdict could have read as a dead
+- **Pivoting directly when GPU was called off.** DeepSeek's "(b), no more GPU" verdict could have read as a dead
   end; instead it freed the back half for the demo tier the operator had explicitly asked for. Three small
   additive PRs, each typechecked + logic-validated + e2e-safe, none touching the v0.6.0 production path.
 - **The demo work degraded gracefully by design.** `SpanHighlight` and `TimingPanel` both render `null` when
@@ -96,9 +96,9 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   traced it to the branch base. Lesson logged: an anchor eval needs #322 on the branch.
 - **The generalized builder (S3) hit real walls** I should have anticipated: FR's OA CSV is 2.5 GB (over
   the 1 GB buffer → needs streaming + reservoir sampling), NL's template reformats the postcode. DE-parity
-  is proven; the rest is held, honestly documented, not half-shipped.
+  is proven; the rest is held, directly documented, not half-shipped.
 - **The demo tier serialized on merges.** S34/S37/S40 each touch `ResultPanel.tsx`, so each waited on the
-  previous to merge before it could branch cleanly (the last one rebased onto the prior). It worked, but a
+  previous to merge before it could branch directly (the last one rebased onto the prior). It worked, but a
   single demo PR bundling all three would have spent less wall-clock on merge-poll loops. Worth batching
   same-file UI changes next time.
 - **I couldn't visually verify the demo in-shift.** The ribbon/timing/copy UI only renders after a real parse
@@ -107,7 +107,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 
 ## Decisions made autonomously
 
-- **Did NOT bump the critical dependabot alert (vitest, dev-scoped).** The exploit needs the Vitest UI
+- **Did not bump the critical dependabot alert (vitest, dev-scoped).** The exploit needs the Vitest UI
   server listening (never run); bumping the test runner mid-shift risked destabilizing the CI check I depend
   on. Logged for the operator instead. _(Alternative: bump it — rejected as higher-risk-than-reward.)_
 - **Held `build-locale-extract.mjs`** rather than ship a generalizer that doesn't yet beat the German builder.
@@ -116,11 +116,11 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 
 ## Surprises (captured fresh)
 
-- **S1 — the anchor is essential in BOTH orders, not a US-order band-aid.** v0.9.1 anchor-on model, DE
+- **S1 — the anchor is essential in both orders, not a US-order band-aid.** v0.9.1 anchor-on model, DE
   locality, 2×2: US/off 35.9 · US/on 45.8 · native/off 48.4 · **native/on 83.8**. The anchor adds +35.4pp
   on native order (vs +9.9 on US). Revises the #321 guess that the anchor merely rescued a US-order symptom.
   Caveat: `c=0` deprives an anchor-_trained_ model of a learned signal; the clean test is whether v0.9.2
-  reaches native perf WITHOUT the anchor (the check's 2×2).
+  reaches native perf without the anchor (the check's 2×2).
 - **S2 — the order artifact is systemic but the anchor is the bigger change.** Re-measured the PR3
   v0.9.0-selfcond model (no anchor): US-order 35.5 → native **48.2** (+12.7pp, Sachsen-driven 36.8→62.2;
   Berlin flat 34.2 both). So the earlier "collapses" were partly the eval order — but the no-anchor native
@@ -133,12 +133,12 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 
 ## Open questions for the operator
 
-- **THE fork (#327) — RESOLVED by DeepSeek (delegated authority), ~11:50 UTC → (b) accept the asymmetry.**
+- **the fork (#327) — RESOLVED by DeepSeek (delegated authority), ~11:50 UTC → (b) accept the asymmetry.**
   Three retrains — both-order corpus (v0.9.2), region tail (v0.9.3), **and the architectural fix,
   dual-injection (v0.9.4)** — ALL left the anchor-on international number immovable at ~44% (gap to native
   ~40pp). The anchor's native-help (+35) / international-hurt (−4) asymmetry is **fundamental** — not corpus,
   not region, not injection position. With the operator away, the third DeepSeek turn made the call: **(b)** —
-  the native gain is large/robust/generalizing (US 96.4, FR 84.9 hold), the intl penalty small/stable, and
+  the result is large/resilient/generalizing (US 96.4, FR 84.9 hold), the intl penalty small/stable, and
   anchor-off intl already ~48% (the `c=0` path serves international order), so burn no more GPU. The turn's
   mechanistic read reframes the multi-locale plan: the anchor's direction is **learned per locale** from the
   dominant training order (US trains postcode-after-city → anchor looks left → never hurt US; German native is

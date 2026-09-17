@@ -22,7 +22,7 @@ fixtures, 20 countries, deliberately fragment-heavy):
 | house_number | 0.808        | 0.97     |
 | **street**   | **0.573**    | **0.90** |
 
-Coarse geography is ~99%. The model knows _what things are_. What it cannot reliably do is say **where
+Coarse geography is ~99%. The the system _what things are_. What it cannot reliably do is say **where
 one thing ends and the next begins**.
 
 The archetype, on the shipped model:
@@ -37,7 +37,7 @@ It knows there's a street and a number. It puts the boundary inside the number.
 
 Under flat BIO, the output **factorizes** into T per-token decisions. The encoder is shared, so the
 tokens are not independent in any representational sense — but the loss and the decode treat them as
-separable. "These five subwords are ONE street" is therefore not a decision the model is ever scored
+separable. "These five subwords are one street" is therefore not a decision the model is ever scored
 on; it's an emergent property of five separate votes that happen to agree. There is no object anywhere
 in the objective or the decode that represents _the solution_.
 
@@ -118,7 +118,7 @@ The partition counter-evidenced it before it cost a training run.
 
 ### The two failure mechanisms
 
-Of 30 unfixed Paris cases, 26 have no digit at all, and they split cleanly:
+Of 30 unfixed Paris cases, 26 have no digit at all, and they split directly:
 
 **17 — the model calls the whole string a `locality`.** Not silence; _confidence_.
 `Avenue des Champs-Élysées → locality`. This is a **recall/polarity** failure.
@@ -145,7 +145,7 @@ schema anticipated the structure; flat BIO can't execute it.
 Additive-biaffine span scorer over start/end projections → per-type scores for every span ≤8 tokens;
 segment transition table; fp32 semi-Markov CRF loss co-trained alongside the untouched BIO head.
 Both DP routines (log-partition, Viterbi) verified against **brute-force enumeration of every valid
-segmentation** — a DP that's subtly wrong still trains, it just trains toward the wrong thing.
+segmentation** — a DP that's subtly wrong still trains, ittrains toward the wrong thing.
 
 **The pre-registered check:** `seg@1 > token@1`, plus a secondary read (oracle@10 must rise).
 
@@ -322,7 +322,7 @@ Both near-misses had the same signature: **a number that couldn't reproduce some
 
 - Phase 1's check reported `token@1` 0.348 against a known 0.573. Cause: a Python harness feeding no
   soft channels, plus a bug welding words together (`▁5|th|▁|Ave` → `"5thAve"` — it dropped the
-  `O`-labelled separator). Nearly published as an architecture verdict.
+  `O`-labeled separator). Nearly published as an architecture verdict.
 - Phase 4a's first rerank showed one signal inert and another −16. Cause: the harness resolver had no
   street extracts and reached street tier **0 times in 267 fixtures**. Nearly published as _"resolution
   evidence can't work."_

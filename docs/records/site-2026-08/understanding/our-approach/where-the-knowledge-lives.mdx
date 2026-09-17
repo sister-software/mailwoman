@@ -27,7 +27,7 @@ three different kinds of knowledge, and they have very different shapes:
    even for streets nobody has written down yet.
 2. **Spelling** — how raw text becomes units a model can read. Subwords, characters, bytes: the
    representational plumbing.
-3. **The world** — which places actually exist, where they are, what they contain. Enormous,
+3. **The world** — which places exist, where they are, what they contain. Enormous,
    ambiguous ("Washington" is a state, dozens of cities, and thousands of streets), and it changes
    every month.
 
@@ -45,8 +45,8 @@ its knowledge is inspectable or swappable from the outside.
 
 **Pelias puts the knowledge in an index.** The parser is thin (Pelias calls libpostal); the
 intelligence lives in an Elasticsearch cluster — synonym files, analyzers, and query-time
-heuristics over a many-gigabyte import of the planet. The dictionary became infrastructure: to
-know what Pelias knows, you stand up the cluster and feed it. Operationally honest, operationally
+heuristics over a several-gigabyte import of the planet. The dictionary became infrastructure: to
+know what Pelias knows, you stand up the cluster and feed it. Operationally direct, operationally
 heavy.
 
 **LLM-era parsers put everything in parameters.** Systems in the AddrKG-LLM direction hand the
@@ -89,7 +89,7 @@ ablated to show exactly what the gazetteer contributes, and the parser's confide
 [calibrated](../../concepts/confidence-calibration.mdx) rather than asserted. A fused system can
 only be evaluated end-to-end; a factored one can be interrogated a layer at a time.
 
-**Honest failure.** When Mailwoman meets a place it has never heard of, the gazetteer offers no
+**direct failure.** When Mailwoman meets a place it has never heard of, the gazetteer offers no
 evidence, the model parses on structure alone, and the confidence score says so. Nothing invents
 a coordinate.
 

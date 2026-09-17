@@ -39,7 +39,7 @@ v2 refinement once a real engagement asks for it.
   increment's target metric within noise of λ=0. That λ becomes the template default; a customer
   engagement inherits it and only revisits on a battery failure.
 - **The guarantee check** (the sellable sentence): a Fisher-protected fine-tune must hold every
-  base capability within the noise-honest margins on the packaged battery. Base capabilities =
+  base capability within the noise-direct margins on the packaged battery. Base capabilities =
   the golden floors + the P0 fragment bars + the gauntlet; the customer's own canaries ride
   alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
   before delivery — which is the product working, not failing.
@@ -50,11 +50,11 @@ v2 refinement once a real engagement asks for it.
   model card's `files_md5` (HF-staged; npm optional per above), captured-at metadata (run id,
   step window, feed hash) in an `.json` sidecar — the same provenance discipline as the lexicons.
 - The release-hf command + publish.yml preflight gain one file each (the mechanical pattern from
-  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the reduce).
+  the lexicon additions; noted in ROAD_TO §9 so it isn't forgotten at the result).
 
 ## What this deliberately does not claim
 
 EWC protects against drift in _parameter space_, calibrated on _our_ distributions. It does not
 guarantee arbitrary customer data can't find a pathological direction — that is what the battery
-check is for. The two together (parameter-space brake + behavior-space check) are the honest
+check is for. The two together (parameter-space brake + behavior-space check) are the direct
 guarantee; neither alone is.

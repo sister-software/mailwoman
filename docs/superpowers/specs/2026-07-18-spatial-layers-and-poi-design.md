@@ -68,7 +68,7 @@ build-then-swap) from reference data to analysis layers.
 | `spine_keys`                                         | which spine columns this layer carries, and H3 resolution                |
 
 **Coverage metadata — the meaning-of-zero rule.** Layers derived from incomplete surveys (OSM
-above all) MUST carry a `layer_coverage` table: per-H3-cell (coarse res) completeness signal, so
+above all) must carry a `layer_coverage` table: per-H3-cell (coarse res) completeness signal, so
 consumers can distinguish "mapped and absent" from "unmapped." Absence of a row is never
 evidence by itself. Scorers built on layers emit `{claim, evidence_found, coverage_confidence}`,
 never a bare score. This field is contract-mandatory from day one because retrofitting
@@ -181,7 +181,7 @@ ISP-adjacent categories are one part of it. It therefore splits from `variant-al
 
 ### 3.5 Infrastructure classes (build-local)
 
-`fire_hydrant`, `post_box`, `drinking_water`, `data_center` etc. have NO permissive source:
+`fire_hydrant`, `post_box`, `drinking_water`, `data_center` etc. have no permissive source:
 they live in OSM and in Overture's _base_ theme, both ODbL. Ship `poi build --source osm`
 (reuse `osm/sdk` ingestion) producing a build-local layer conforming to the same schema.
 The category lexicon still recognizes these subjects when the layer is absent — the answer is
@@ -226,7 +226,7 @@ into the existing `tiger/` workspace, H3 utilities into `@mailwoman/spatial`, fe
 
 Known gaps (new work): no ECFS/ULS clients, no CAF/RDOF/tribal ingest, H3-keyed storage is new
 (Nexus joined on GEOID). CostQuest fabric IDs are treated as opaque join keys; we work at the
-granularity the public filings actually support and grade claims against physics, not against
+granularity the public filings support and grade claims against physics, not against
 the fabric's own map.
 
 Layers implied: `bdc.db` (shipped; US-gov public filings), `infra.db` (build-local, ODbL),
@@ -253,7 +253,7 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
 3. **`@mailwoman/mcp`** — thin; can land in parallel with (2) once the intent record is typed.
 4. **Fable spec Phases 0–2** (coordinate kind, venue resolve, venue-fragment retrain) —
    unchanged, interleaved as operator schedules them.
-5. **Phase 2 BDC spec** — after (1)–(3) prove the contract on poi.db.
+5. **Phase 2 BDC spec** — after (1)–(3) the result on poi.db.
 
 ## 7. Decisions (resolved 2026-07-18, operator)
 

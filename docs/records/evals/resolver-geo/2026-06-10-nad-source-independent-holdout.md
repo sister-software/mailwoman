@@ -30,18 +30,18 @@ answer is clean.
 > misses is alias-explained — NAD's locality field carries _census/municipal_ names, not
 > postal names, so this eval cannot exhibit the vanity-city failure mode at all.
 
-What the misses actually are (classified, n=461 with a resolved-but-wrong name):
+What the misses are (classified, n=461 with a resolved-but-wrong name):
 
 - **54.0% are the SAME PLACE under a different name surface** — census designations:
   `College CDP` ↔ WOF `Fox Farm-College`, `City and Borough of Juneau`, `X Township` ↔
   `X` (NJ alone is 148 of 461 — townships). This is the Plauen-Vogtl name-match-artifact
   class, US edition; the fix lane is the #386-style hierarchy-aware designation credit
   generalized to US census surfaces — filed as its own issue with these numbers.
-- The remainder are genuine ranking/disambiguation misses (e.g. Juneau → Wrangell).
+- The remainder are actual ranking/disambiguation misses (e.g. Juneau → Wrangell).
 
 Consumers: the designation-credit issue (primary); **#478** still gets its
 complementarity row (v0 locality 86.7 vs neural region 100.0). **#475's alias table is
-NOT validated by this eval** — it needs an eval whose _inputs_ carry postal surfaces
+not validated by this eval** — it needs an eval whose _inputs_ carry postal surfaces
 (real-traffic shaped); noted on the issue.
 
 Caveats: admin-centroid coord errors are expected to be tens of km (the harness's own

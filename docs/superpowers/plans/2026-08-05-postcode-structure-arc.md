@@ -2,8 +2,8 @@
 
 Opened 2026-08-05 from the operator's sketch. Three claims, in the operator's order:
 
-1. We cannot enumerate every postcode, but we CAN enumerate their RULES per country. Shape validity
-   builds confidence — and works as EXCLUSION: many things look like postcodes and are only
+1. We cannot enumerate every postcode, but we can enumerate their RULES per country. Shape validity
+   builds confidence — and works as EXCLUSION: several things look like postcodes and are only
    postcodes when the other placetypes make sense relative to one another.
 2. A postcode-looking token is confirmed BY the coherence of its sibling placetypes; in REVERSE, an
    ambiguous place-name token gains validity if the given postcode CONTAINS it.
@@ -94,14 +94,14 @@ is close to useless as a spatial prior. The FR table is also the only one wired 
 | ------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
 | `applyPostcodeConsistency` (#370/#945)      | `resolver/resolve.ts:266-331`, called `:849`                                 | Post-walk, no backend queries. Finds the first resolved postcode's coordinate; for every `locality`/`dependent_locality` beyond `postcodeConsistencyThresholdKm` (50 km), re-picks from `node.alternatives`, else overwrites the node's lat/lon with the postcode's and stamps `postcode_city_mismatch`                 | **ON** (`!== false`)               | 2             |
 | Postcode-country coherence (#42/#1477)      | `resolver/postcode-country-coherence.ts`, called `resolve.ts:790`            | The only PRE-walk pass and the only thing allowed to override `defaultCountry`. Geometric: postcode centroid vs exact-match locality centroid within 25 km (`:86`). Candidate set = `candidateSystemsForPostcode`. Abstains on 0 or ≥2 coherent countries (`:269`)                                                      | **ON**                             | 1 + 2         |
-| `(name_key, postcode)` short-circuit (#741) | `resolver-wof-sqlite/candidate-lookup.ts:310-333`                            | On a locality-wanting query with a postcode, probes `postal_city_candidate` and returns a single synthetic candidate immediately — the whole ranking cascade below is never reached. This is direction 2's REVERSE arrow, already shipped, for one country                                                              | ON when the table exists (`:258`)  | **2 reverse** |
+| `(name_key, postcode)` short-circuit (#741) | `resolver-wof-sqlite/candidate-lookup.ts:310-333`                            | On a locality-wanting query with a postcode, probes `postal_city_candidate` and returns a single synthetic candidate immediately — the whole ranking cascade below is never reached. This is direction 2's REVERSE arrow, already shipped, for one country                                                              | on when the table exists (`:258`)  | **2 reverse** |
 | Postcode abstention (#1480)                 | `resolver-wof-sqlite/candidate-lookup.ts:429-443`, `:300`                    | A `placetype: "postalcode"` query that misses exact + strip now skips the FTS trigram rung entirely instead of returning a trigram-nearest code. Cause: `BT3 9QQ` matched Sheffield's `S3 9QQ`, 200+ km wrong at full confidence                                                                                        | ON                                 | 1             |
-| `LEADING_POSTCODE_COUNTRIES`                | `neural/placetype-pair-prior.ts:701`                                         | `{fr, de, es, it}`. Checks whether the leading-postcode strip runs. `en-IN` is absent on purpose — the PIN goes last                                                                                                                                                                                                    | ON where the index country matches | 3             |
+| `LEADING_POSTCODE_COUNTRIES`                | `neural/placetype-pair-prior.ts:701`                                         | `{fr, de, es, it}`. Checks whether the leading-postcode strip runs. `en-IN` is absent on purpose — the PIN goes last                                                                                                                                                                                                    | on where the index country matches | 3             |
 | Segment postcode strip                      | `neural/placetype-pair-prior.ts:677-684`, `:725-756`, `:773-813`             | `SEGMENT_PARENT_POSTCODE_SHAPES` (6 countries, patterns imported from codex so they cannot drift). Strips ≤2 trailing (and, for the 4 leading countries, leading) postcode words from a segment before it becomes a pair-index key. Whole-edge went 96.3% → 0.0% on `fr-lieudit-golden.jsonl` without it (`:1126-1128`) | ON                                 | 3             |
 | PCB1 anchor channel                         | `neural/postcode-binary-resolver.ts`, `neural/anchor-inference.ts`           | Per-piece feature vector: country posterior over `LOCALE_ORDER` (`anchor-inference.ts:24`) + quantized lat/lon. `ANCHOR_FEATURE_DIM = 11`                                                                                                                                                                               | Model-declared (`weights.ts:693`)  | 1 + 3         |
-| **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-containing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by NOT shipping the artifact          | GB channel now resolves OFF        | —             |
+| **The GB hole in PCB1**                     | `docs/records/evals/2026-08-05-en-gb-anchor-off.md`                          | Every training config points at one `pilot-anchor-lookup.json` holding 67,708 keys, **zero letter-containing**, covering US/DE/FR only. GB slot 4 never took a gradient. `postcode-gb.bin` fired on 106/120 gb-golden rows and cost exact postcode 318/318 → 294/318. Fixed #1467 by not shipping the artifact          | GB channel now resolves OFF        | —             |
 | PCN1 census                                 | `neural/placetype-census.ts`, wired `neural/placetype-pair-prior.ts:836-859` | Per-parent child-tag distribution with per-tag lift. **Observability only — nothing reads it back**, and the header carries no `delta` until a calibration measures one                                                                                                                                                 | Opt-in, zero-cost when off         | 2             |
-| Convention strategy weights                 | `resolver-wof-sqlite/convention.ts:63-67`                                    | Built-in default `["postcode_area_resolution", "fallback_fuzzy_name_match"]` at 0.6/0.3/0.1 (postcode/name/population)                                                                                                                                                                                                  | Effectively ON in the FTS backend  | 2             |
+| Convention strategy weights                 | `resolver-wof-sqlite/convention.ts:63-67`                                    | Built-in default `["postcode_area_resolution", "fallback_fuzzy_name_match"]` at 0.6/0.3/0.1 (postcode/name/population)                                                                                                                                                                                                  | Effectively on in the FTS backend  | 2             |
 | `coincident-roles`                          | `resolver-wof-sqlite/coincident-roles.ts`                                    | **No postcode relationship at all** — build-time (admin, locality) same-name pairs, REGION tier, ~124 places. Listed here only to record that it is not part of this arc                                                                                                                                                | build-time                         | —             |
 
 Two docstrings are stale and should be corrected by whoever touches these files next:
@@ -313,7 +313,7 @@ a conventions-plus-mask change — realized as a fifth member of the joint-consi
 alongside the four in A.3. Zero GPU, no retrain.
 
 **Where it lives.** `resolver/postcode-shape-coherence.ts`, called from `resolver/resolve.ts` in the
-pre-walk block beside `findPostcodeCountryScope` (`resolve.ts:790-816`). It runs BEFORE the country
+pre-walk block beside `findPostcodeCountryScope` (`resolve.ts:790-816`). It runs before the country
 scope pass, because its output narrows that pass's candidate set.
 
 **What it does.** For each span the parse tagged `postcode`, compute
@@ -347,7 +347,7 @@ and demotion is the failure mode with teeth, so a default-on promotion needs the
   extension of the same shape — 4-digit house numbers in US/MX/PR addresses, 5-digit house numbers in
   DE/FR addresses. Bar: **≥90% of the shape-only-foreign spans lose the `postcode` tag, with the
   correct sibling tag surviving.**
-- **B1-3 (the confound).** A board of addresses where the span IS a foreign postcode in a
+- **B1-3 (the confound).** A board of addresses where the span is a foreign postcode in a
   mixed-country string — an AU postcode in a `"Sydney NSW 2000, Australia"` line reached with a US
   `defaultCountry`, a GB code in a US-defaulted query. Bar: **≤2% false exclusions**, the shipped GB
   floor. This is the bar that can kill the mechanism: the whole point of
@@ -399,7 +399,7 @@ outcome may be that mechanism 2 replaces #370 rather than joining it.
   Gauntlet cases. Bar: **≥85% correct locality at ≤5 km**, and — reported beside it — the rate with
   the postcode span removed from the input. If removing the postcode does not move the number, the
   mechanism is not doing what this document claims.
-- **B2-3 (the double-repair confound).** The same board run with `postcodeConsistency` ON and OFF.
+- **B2-3 (the double-repair confound).** The same board run with `postcodeConsistency` on and off.
   Bar: **the two arms agree on ≥98% of cases.** Disagreement means the two passes are fighting, and
   the promotion question becomes replace-or-check, not stack.
 - **B2-4 (cost).** The rung adds one postcode lookup per locality query that misses the fast path.
@@ -515,7 +515,7 @@ separate evidence, because their radius profiles differ by 45×.
   grade a US board the same way as B3-2. Bar: **≥40% within 100 km** — deliberately weak, because
   M-3 measured a 145 km median p95 and a bar tighter than the data cannot be met. If a reviewer wants
   a tighter US bar, the answer is a 5-digit artifact, which is a different artifact.
-- **B3-5 (no channel is fed an untrained value).** Before ANY decode wiring, confirm that no shipped
+- **B3-5 (no channel is fed an untrained value).** Before any decode wiring, confirm that no shipped
   weights bundle declares a channel this artifact would populate. Bar: **the offline probe path
   touches zero model inputs.** The GB hole cost 24 exact postcodes on gb-golden by feeding slot 4 a
   value it was never trained on; that receipt is why this bar is written before the wiring exists,
@@ -547,7 +547,7 @@ the taxonomy says a retrain is the tool for open-vocab distributional tags, whic
    headroom is 6 spans and the confound is the risk.
 7. **B3-4** — needs a ZCTA acquisition, the only real data work in the arc.
 
-**What would ride a training batch, and is NOT in this document:** feeding a prefix prior into the
+**What would ride a training batch, and is not in this document:** feeding a prefix prior into the
 anchor channel (mechanism 3's second consumer). That requires a channel that has seen prefix-shaped
 values during training, and the GB hole is the standing receipt for what shipping it untrained
 costs. If a batch is being reduce anyway, the cheap rider is extending

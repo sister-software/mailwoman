@@ -1,6 +1,6 @@
 # Static-index opportunities — serializing runtime decisions into sealed artifacts
 
-**Date:** 2026-07-26 · **Status:** read-only survey (fork agent), ranked by leverage-to-effort ·
+**Date:** 2026-07-26 · **Status:** read-only survey (fork agent), ranked by use-to-effort ·
 **Directive:** "every opportunity we find to serialize runtime decisions into static indexes… Who's
 on First's hierarchy is under-changeaged for this sort of thing."
 
@@ -33,9 +33,9 @@ cascade, AddrKG-LLM's prompt rulebook).
   independently at `mailwoman/eval-harness/parity-corpus.ts:101-102` and
   `scripts/eval/harness-neural.ts:738`.
 - **The kicker:** a repo-wide grep shows **no browser surface builds it at all** — `neural-web/`,
-  `react/`, `docs/src` have zero references. The browser demo runs WITHOUT the street-context check
+  `react/`, `docs/src` have zero references. The browser demo runs without the street-context check
   (#1315) that node runtimes apply by default. That violates standing invariant 2 ("the demo is the
-  geocoder — must not silently trail"); serializing isn't just latency hygiene, it closes a real
+  geocoder — must not silently trail"); serializing isn'tlatency hygiene, it closes a real
   behavioral fork between runtimes.
 - **Artifact:** `fst-street-morphology.bin` in the existing FST wire format, built by the gazetteer
   pipeline (locale-general, one artifact), shipped beside `fst-<locale>.bin` and loaded by the same
@@ -132,7 +132,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 
 ---
 
-## Deliberately runtime — do not bake (honest flags)
+## Deliberately runtime — do not bake (direct flags)
 
 - **Word-consistency heal** (`neural/word-consistency.ts:134`) — arbitration over the model's
   per-parse disagreement; input-dependent by definition.
@@ -142,7 +142,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 - **`normalizeCase` detection, `bridgePunctuationGaps`** — input-shape responses.
 - **`spanRescore`, `adminCoherence`, `postcodeConsistency` joint checks, `parentFallback`** —
   per-candidate-set math over live lookups; candidate 3 can **assist** them with precomputed
-  admissibility, but the joint decision is genuinely runtime.
+  admissibility, but the joint decision is in fact runtime.
 - **Coarse placer, reconcile, the model itself** — model-owns-ambiguity; artifacts inform, never
   override (registry-backed structured-prediction doctrine).
 
@@ -151,4 +151,4 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 1 + 5 + 6 are small and independent; 6 rides the in-flight FST rebuild. 2 lands with the next
 gazetteer rebuild cycle. 3 and 4 are the strategic pair — both feed Track 2's Option-A evidence
 bundle, so their builders should be designed once, together (same WOF ancestry pass emits pair
-extracts AND ambiguity classes).
+extracts and ambiguity classes).

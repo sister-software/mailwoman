@@ -2,7 +2,7 @@
 
 **Verdict: PROMOTED** (npm 8.3.0). The v8.3.0 arc's golden master: from scratch, 60k cosine s42,
 one recipe, one provenance — the first base since the v264 era, and the first mailwoman model
-whose locality evidence channel actually trained (#1349).
+whose locality evidence channel trained (#1349).
 
 ## The two-run envelope, as executed
 
@@ -34,9 +34,9 @@ whose locality evidence channel actually trained (#1349).
   set shows zero over-splitting cost). Clears the new spec.
 - **New check spec: `v7.0.0-base`** — reduce from this candidate's ship-config readings with
   support-aware WILSON margins (the v6 spec's 2.0pp fallback and the boundary-reading
-  under-margining both retired). Final verdict vs the new spec: PASS.
-- Gauntlet (the pre-ship flip): regression **47/47 conditional**, metamorphic PASS (5 tracked xfails,
-  one fewer than shipped), held-out PASS.
+  under-margining both retired). Final verdict vs the new spec: pass.
+- Gauntlet (the pre-ship flip): regression **47/47 conditional**, metamorphic pass (5 tracked xfails,
+  one fewer than shipped), held-out pass.
 - G8 (the DE fragment board, new): the v7-fold value check MISSED → the revert executed. The
   board itself (overture-fragments-de) joins the standing instruments.
 - Capability manifest regenerated on the shipped bytes (register-pinned formatted).
@@ -48,7 +48,7 @@ whose locality evidence channel actually trained (#1349).
   Designed fix = the char-path lineage (no subword fragmentation; the #825 thesis the JP probe
   validated at 0.9925). Retires when a char-lineage Latin model grades.
 
-## Intake corrections recorded (the honest ledger)
+## Intake corrections recorded (the direct ledger)
 
 - Run 1's gauntlet was initially reported as 3 fails; it was 4 (si-sentinel under-counted).
 - The operator's 9-probe set was first "graded" against a stale regression DB — absence of

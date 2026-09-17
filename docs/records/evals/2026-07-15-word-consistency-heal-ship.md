@@ -17,7 +17,7 @@ Night-3 re-diagnosis: the regression was **two defects in the heal**, not vote n
    type-mass preferred another type, silently overriding viterbi's global decision. Single-piece
    `▁Broadway` (B-street) flipped to O; all-street `Gamle` rewrote to locality. The module docstring
    had always claimed "a word whose pieces already agree is left byte-identical" — the code only
-   honored that when the vote happened to agree. Now enforced structurally: the vote runs ONLY on
+   honored that when the vote happened to agree. Now enforced structurally: the vote runs only on
    words whose pieces disagree in type.
 2. **Grouping bug.** Punctuation continuation pieces joined the preceding word's vote group
    (`Ave` + `,` — the comma piece carries no `▁` sentinel), and their `O` mass manufactured a fake
@@ -44,15 +44,15 @@ street ≥ 0.90; golden 2pp per-tag promote check; demo presets 6/6.
 | fr          | 42.2 → **51.5**   | 90.8 → **91.8**    |
 | adversarial | 66.0 → **66.5**   | 85.7 → 85.7        |
 
-The historical −12.6 street regression is not just neutralized — every file improves or holds.
+The historical −12.6 street regression is notneutralized — every file improves or holds.
 
 ### Parity floors (triaged corpus, 321 live, canonical `eval parity`)
 
 | label        | off    | on (ship)  | floor | verdict           |
 | ------------ | ------ | ---------- | ----- | ----------------- |
-| house_number | 0.7671 | **0.8082** | 0.97  | FAIL (arc target) |
+| house_number | 0.7671 | **0.8082** | 0.97  | fail (arc target) |
 | postcode     | 0.9722 | **0.9861** | 0.97  | **PASS**          |
-| street       | 0.5431 | **0.5730** | 0.90  | FAIL (arc target) |
+| street       | 0.5431 | **0.5730** | 0.90  | fail (arc target) |
 
 ### Golden error-analysis (2pp promote check): PASS
 

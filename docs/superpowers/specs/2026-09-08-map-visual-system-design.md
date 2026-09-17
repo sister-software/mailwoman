@@ -59,7 +59,7 @@ both set `"text-font": ["Fira Sans Regular"]`. Probing `https://public.mailwoman
 | `Noto Sans Bold`, `Iosevka Nexus Regular`, `Arial Unicode MS Regular` | 404               |
 
 MapLibre renders no text at all when a glyph range fails, so naming an absent stack is a defect on its own
-terms and `#styles/fonts` now holds the served names. It is NOT what blanks the planetary labels: after the
+terms and `#styles/fonts` now holds the served names. It is not what blanks the planetary labels: after the
 repair deployed on `9504425c7`, `mars.mailwoman.ai` still draws none.
 
 ### No nomenclature tile is ever requested, and the cause is above the style
@@ -312,13 +312,13 @@ Five presentational components in `@mailwoman/react/map`, each taking tokens and
 app logic. The placement follows the operator's layout: search on top, examples beneath it, controls in a
 right-hand column, footer near the bottom.
 
-| Component           | Behavior                                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------------------- |
-| `<MapSearchBar>`    | Fully rounded glass pill, leading and trailing icon slots. Wraps the host's input.                |
-| `<MapChipRow>`      | Horizontal scroll, never wrap. Replaces Earth's 3/3/2/1/1/1 stack.                                |
-| `<MapControlStack>` | Right-hand column of glass buttons, grouped into pills the way Apple groups map-type with locate. |
-| `<MapCompass>`      | Enters the stack when bearing leaves north, fades out on return. Honors `prefers-reduced-motion`. |
-| `<MapFooter>`       | Attribution and identity strip.                                                                   |
+| Component           | Behavior                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `<MapSearchBar>`    | Fully rounded glass pill, leading and trailing icon slots. Wraps the host's input.                  |
+| `<MapChipRow>`      | Horizontal scroll, never wrap. Replaces Earth's 3/3/2/1/1/1 stack.                                  |
+| `<MapControlStack>` | Right-hand column of glass buttons, grouped into pills the way Apple groups map-type with locate.   |
+| `<MapCompass>`      | Enters the stack when direction leaves north, fades out on return. Honors `prefers-reduced-motion`. |
+| `<MapFooter>`       | Attribution and identity strip.                                                                     |
 
 A result view arrives as a bottom sheet with a drag handle and rounded top corners, translucent over the
 map, rather than inside a full-height panel.

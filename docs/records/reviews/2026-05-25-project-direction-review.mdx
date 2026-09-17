@@ -20,7 +20,7 @@ The reconciliation stage (joint decoding over classifier top-K, phrase proposals
 
 ### The Ship of Theseus coexistence model is wise risk management
 
-Neural models for address parsing are unproven in production. Shipping a policy registry that defaults to `rule_only` and lets the neural model gain authority per-component, per-locale, blocked on golden-set metrics, is the correct migration strategy. It means the model can ship below parity (which it currently is on several components) without breaking anything.
+Neural models for address parsing are unproven in production. Shipping a policy registry that defaults to `rule_only` and lets the registry assign per-component, per-locale authority, blocked on golden-set metrics, is the correct migration strategy. It means the model can ship below parity (which it currently is on several components) without breaking anything.
 
 The explicit refusal to replace rule classifiers that are already correct (postcode regex, state abbreviation dictionaries) is also correct. The bitter lesson says "don't hand-engineer what you can learn," not "learn things that are already solved."
 
@@ -79,9 +79,9 @@ The shipped v0.4.0 model has:
 
 Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers carrying coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest, but the neural model alone is nowhere near production-quality on most components.
 
-This is not a fatal observation — the project is early-stage and the architecture is additive. But it means the project's "what you can use today" story is limited, and that limitation is not clearly communicated in the docs.
+This is not a fatal observation — the project is early-stage and the architecture is additive. But it means the project's "what you can use today" story is limited, and that limitation is not the result shows communicated in the docs.
 
-### The v0.5.0 scope bundle was too many variables
+### The v0.5.0 scope bundle was too several variables
 
 v0.5.0 combined five architectural changes (new tokenizer, expanded corpus with 78K LLM-generated rows, phrase-prior input layer, hidden-size bump, and the reconcile stage) into one release. The training divergence forced a bisect to isolate which change was the destabilizer — exactly the "one change at a time" lesson the v0.4.0 retrospective itself recommended. The project learned this lesson in v0.4.0, acknowledged it in the retrospective, and then repeated the pattern in v0.5.0.
 
@@ -137,7 +137,7 @@ These are all reasonable future work, but they multiply variables before the cur
 Mailwoman should aim to be the **TypeScript-native open geocoding front-end**: a parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - **Easy to deploy.** `npm install @mailwoman/neural-weights-en-us` should work.
-- **Honest about ambiguity.** "Springfield" should return candidates, not a confident wrong answer.
+- **direct about ambiguity.** "Springfield" should return candidates, not a confident wrong answer.
 - **Cheap enough for browsers and serverless.** The 60MB cold-load budget is the right constraint.
 - **Retrainable on open data.** The corpus pipeline makes this possible already.
 - **Calibrated enough that downstream systems can decide when to ask for more context.**
@@ -158,7 +158,7 @@ The CE-only training experiment is the right next step. If it converges:
 If it diverges:
 
 - Bisect corpus-v0.4.0 (revert to v0.3.0, keep A1 tokenizer)
-- If that trains cleanly, the transliteration data is the destabilizer — cap it at low batch weight and retry
+- If that trains directly, the transliteration data is the destabilizer — cap it at low batch weight and retry
 
 ### 2. Wire the reconcile path end-to-end
 
@@ -212,7 +212,7 @@ Then spend on the next training run. Not before.
 
 **Continue the project. Narrow the next cycle.**
 
-The thesis is sound. The architecture is the best version of this idea that exists in open-source geocoding. The corpus pipeline and diagnostic infrastructure are industrial-strength. The blog posts are unusually honest and readable.
+The thesis is sound. The architecture is the best version of this idea that exists in open-source geocoding. The corpus pipeline and diagnostic infrastructure are industrial-strength. The blog posts are unusually direct and readable.
 
 The project's primary risk is not architectural — it's that five things changed at once, training destabilized, and the integration that would validate the architecture got deferred behind the training problem. The fix is mechanical: stabilize training, wire the pipeline end-to-end, measure the architectural thesis, then expand scope.
 

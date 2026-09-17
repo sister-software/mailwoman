@@ -44,13 +44,13 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
     over-merge interaction features (spatial-exact × name-disagree) rank matches above non-matches better than
     Fellegi-Sunter? Methodology: 1500 TX NPIs → 4182 records, block → pairs, split **by NPI** (no record
     leakage), L2 logistic regression vs the EM-fit FS scorer, pairwise ROC-AUC, **averaged over 8 seeds**.
-    **Result: ΔAUC +0.0057 ± 0.0030 (8/8 seeds, ≈5σ), ΔF1 +4.3pp (72.6% → 76.9%).** A _small-but-robust_
+    **Result: ΔAUC +0.0057 ± 0.0030 (8/8 seeds, ≈5σ), ΔF1 +4.3pp (72.6% → 76.9%).** A _small-but-resilient_
     positive — the interaction features carry real, consistent signal concentrated at the decision boundary,
     but FS already ranks well (0.942), so the linear headroom is modest. **Qualified greenlight for the GBM**
     (#603 Tier 2): the principled next step, but it widens a real-but-small margin — the reliable secondary
     identifier (#625) is the larger change. The 8-seed design earned its keep: seed 1 alone read a misleading
     +0.054; across 8 it settled at +0.0057. Merged via **#637**.
-- **#603 GBT arm (#640) — the tree EXTENDS the linear gain.** Added the non-linear arm (a compact pure-Node
+- **#603 GBT arm (#640) — the tree EXTENDS the result.** Added the non-linear arm (a compact pure-Node
   gradient-boosted-trees scorer, the model #603 names) to the probe. On the same 1500-NPI/8-seed harness:
   **GBT AUC 0.9597 (+0.0177 vs FS, +0.0121 vs LR, 8/8 seeds, ±0.0015), best-F1 79.1% (vs FS 72.6%, +6.6pp).**
   ~2× the linear margin — real non-linear structure the hand-crafted interactions miss. The smoke's inflated
@@ -61,21 +61,21 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   records clustered three ways through the same pipeline; multi-seed). **Result (2000 NPIs, 4 seeds, ~1917
   eval records): FS baseline F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
   large precision gain that **reduces the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
-  The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup change**, greenlit.
+  the result (#640) DOES translate to clustering; the #603 GBM is a **real dedup change**, greenlit.
   **Two methodology catches en route** (both decisive — the result inverted without them): (1) a 300-NPI
   smoke MISLED (FS ahead by 5pp) — too few co-located collisions to exhibit the over-merge, which only bites
   at scale → trust the larger eval; (2) a coarse 6-point threshold sweep understated the learned scorers by
   ~9pp — a fine 33-point sweep corrected it. _Always sweep finely + size the eval to the phenomenon before
   declaring a clustering verdict._
-- **#603 cross-STATE generalization (folds into #641) — the GBT win TRANSFERS, strongly.** Built
+- **#603 cross-STATE generalization (folds into #641) — the result TRANSFERS, strongly.** Built
   `learned-scorer-crossstate-eval.ts` (train on TX, evaluate dedup clustering F1 on held-out **CA** — a state
   the model never saw). **Result (2000 TX-train / 2000 CA-eval, ~5.6K records each): FS baseline F1 15.0% (P 10%,
   239 over-merged!), LR 13.9% (−1.0pp, collapses to over-merging), GBT 35.5% (+20.5pp, P 59%, over-merged
   239→47).** The GBT — trained only on TX — generalizes and _fixes CA's severe over-merge_; the over-merge
-  signal it learns is transferable, not TX-specific. The LR does NOT generalize. **Confirmed on a SECOND
+  signal it learns is transferable, not TX-specific. The LR does not generalize. **Confirmed on a SECOND
   independent held-out state — TX→NY: GBT +19.6pp** (38.2% vs FS 18.6%), ≈ the +20.5pp on CA. Two states,
-  same ~+20pp result → the generalization is robust, not a CA artifact. **Strongest evidence yet for the
-  production GBM.** Honest framing: single seed per state pair, and the absolute FS F1 (15–19%) is far below
+  same ~+20pp result → the generalization is resilient, not a CA artifact. **Strongest evidence yet for the
+  production GBM.** direct framing: single seed per state pair, and the absolute FS F1 (15–19%) is far below
   TX's 55% because the eval states' over-merge is denser — so the ~+20pp is **directional** (the FS baseline
   _craters_ as over-merge scales, the GBT holds), not a precise production number. **The 250-NPI smokes
   misled THREE times** (FS-ahead / LR-ahead / attenuation; the 2000-NPI runs all showed the GBT winning) —
@@ -88,7 +88,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   fully client-side, byte-ranged — green against both local and prod. **But it caught the fatal trap (#638):**
   the sql.js-httpvfs `serverMode: "full"` _open_ path downloads the **entire extract once** to learn the file
   length (a redundant 114 MB GET for DC, **~3.2 GB for CA → demo-breaking**), on top of the efficient ranged
-  lookup reads (5 × 64 KB). Confirmed critical + live in prod; `config.fileLength` does NOT fix it (tried,
+  lookup reads (5 × 64 KB). Confirmed critical + live in prod; `config.fileLength` does not fix it (tried,
   reverted). Filed #638 with the diagnosis + fix options (chunked serverMode + per-extract config.json — touches
   the shipped demo + R2 hosting, so flagged not self-fixed). The spec ships the correctness assertion green +
   a `test.fixme` efficiency guard that goes green when #638 lands.
@@ -104,20 +104,20 @@ landed as PRs awaiting operator merge (the classifier holds the merge-to-main wa
 circumvented).
 
 - **#669 — the geocode-first decision surface (Tier 1A).** Twin 3D Plotly landscapes of `P(match)` over
-  (string-similarity × geo-distance), scored by the same Fellegi-Sunter model with the REAL per-level
+  (string-similarity × geo-distance), scored by the same Fellegi-Sunter model with the real per-level
   Bayes factors (`NAME_LEVELS` ±6.32 exact, `DEFAULT_DISTANCE_LEVELS` ±9.45 same-building). String-first
   is a vertical wall blind to geography; geocode-first is a basin carved by distance. The two canonical
   traps annotated (far-apart namesakes string-first fuses; same-building drifted strings it splits).
   Embedded in the geocode-first concept doc.
-- **#670 — org-name as the honest yardstick (Tiers 2C + 2D + the reframed 1B).** New concept doc "why
-  org-name, not NPI" + a slope-chart SVG. **The dedup F1 climbs as the ruler gets honest, on IDENTICAL
+- **#670 — org-name as the direct yardstick (Tiers 2C + 2D + the reframed 1B).** New concept doc "why
+  org-name, not NPI" + a slope-chart SVG. **The dedup F1 climbs as the ruler gets direct, on IDENTICAL
   clusters: NPI 53.6% → site 55.3% → org-name(string) 60.7% → org-name(coord) 68.1%** (+14.5pp). Tier 2D
   re-keys the org-name truth on the geocoded BUILDING (haversine ≤50 m) instead of the address STRING,
   catching same-building/different-string pairs (`1504 Taub Loop` vs `1504 Taub Lp Ste 100`) → +7.4pp.
-  The `--max-npis 1000` re-run reproduced the string-grain baseline EXACTLY (EM is deterministic). The
+  The `--max-npis 1000` re-run reproduced the string-grain baseline exactly (EM is deterministic). The
   benchmark report now leads with the org-name headline. **Tier 1B was reframed:** the planned
   corroboration/over-merge surface would have visualized the #625-_disproven_ hypothesis, so it became
-  the honest yardstick figure instead.
+  the direct yardstick figure instead.
 - **#671 — context-aware legal designations (Tier 3E, #668).** A two-axis `canonicalizeOrganizationName`
   (a jurisdiction + a domain option): the strip-set is `(base ∪ jurisdiction-pack) − domain-protect-pack`.
   The collision-prone forms (`pt`/`sca`/`scs`) are blocked behind a known jurisdiction (ID/FR); a
@@ -128,7 +128,7 @@ circumvented).
   across sources with no shared key, on the HOUSE stack (MapLibre + Protomaps via `toMapHTML`, rendered
   with `render-map.mjs` — SwiftShader WebGL + the localhost-serve the tile CORS requires). **Generator
   only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the
-  cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
+  cross-_agency_ links are **28, all pairwise (2 agencies); zero span all three agencies** (no entity
   resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
   counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the cross-agency 28-link subset; the
   framing is an operator call, and map renders are the operator's to verify.
@@ -141,13 +141,13 @@ circumvented).
 **Process catch (cost one CI round-trip):** `yarn start` (dev) does not enforce `onBrokenLinks` and
 `docusaurus build` (prod) _excludes_ `draft: true` pages — so a non-draft eval doc linking to a draft
 concept doc passed the dev-server check but failed the prod build. Fixed by dropping the link; the lesson
-is to run a full `cd docs && yarn build` before pushing any docs link change, not just the run-docs driver.
+is to run a full `cd docs && yarn build` before pushing any docs link change, notthe run-docs driver.
 
 ## Backlog triage + verification (the shift's tail, after the 6 PRs)
 
 With the plan shipped, the remaining hours went to working the backlog — which turned out to be mostly
 **stale**, so the value was triage + grooming + one real fix, not new features. The recurring discipline:
-**reproduce before fixing.** Twice the right call was to NOT ship.
+**reproduce before fixing.** Twice the right call was to not ship.
 
 - **#675 — un-staled the `--default-country none` NY test (#595).** The assertion expected unfiltered
   `NY` to flip to a Scottish homonym (lat ~57); reproduced via the CLI that WOF now ranks US NY State
@@ -166,7 +166,7 @@ With the plan shipped, the remaining hours went to working the backlog — which
 - **Verification:** full suite green — **2264 unit + 472 e2e** (the lone failure being the #595 test
   #675 fixes); `main` CI green (Docs + Test).
 
-**Honest read:** the autonomous-clean backlog is exhausted. What remains is operator-supervised — the
+**direct read:** the autonomous-clean backlog is exhausted. What remains is operator-supervised — the
 #481 TLA removal, the epics (#598/#603/#488), the greenlit #603 GBM default-on flip, publishing the
 draft concept docs, and merging the PRs. The discipline I'd most want carried forward: I shipped 0
 speculative fixes for non-reproducing bugs, which (the #642/#555 reverts) I'd argue beats padding the
@@ -182,7 +182,7 @@ Two more landed while closing the shift with the operator:
   effectively complete** (only import-graph hygiene + a minor gazetteer schema-validate remain) and
   groomed it.
 - **#677 — the research blog: "Match where it is, not how it's spelled."** Extended the #631 geocode-first draft
-  into a two-figure "how we measure matching honestly" post — the decision surface (match on the right
+  into a two-figure "how we measure matching directly" post — the decision surface (match on the right
   KEY) + the yardstick (measure against the right RULER, with the over-merge-is-a-phantom finding).
   Both figures verified rendering; stays `draft: true` pending the operator's read.
 
@@ -215,7 +215,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   every cluster — O(clusters × links), so 50K records took 19s. Indexing record→cluster and accumulating
   the min intra-weight in one pass made it ~linear: a **13× speedup** (50K: 19s → 1.5s), 100K in 4.4s.
   That's the value of a scale eval — it pays for itself the first time it runs.
-- **The fix generalizes.** The address-frequency win reproduces on a second held-out state (CA: 45.0% →
+- **The fix generalizes.** the result reproduces on a second held-out state (CA: 45.0% →
   58.6%), so it isn't TX-overfit — magnitude is state-dependent (TX +20pp, CA +12pp), the direction holds.
 - **The first change to beat the baseline — and a general mechanism for it.** Built `SourceRecord.attributes`
   - a model `discriminators` option (extra secondary-identifier comparisons + corroborators — taxonomy,
@@ -231,12 +231,12 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 
 - **A1 was a near-null (+0.1pp).** Hypothesis: the address+distance double-count was already largely
   absorbed by EM's m/u fitting, so removing the redundancy is architecturally cleaner (one spatial
-  parameter set) but not a metric change. Honest result — kept it for the cleaner model, not the number.
+  parameter set) but not a metric change. direct result — kept it for the cleaner model, not the number.
 - **A2 as a hard name/org-only check was catastrophic (−20pp, F1 63.9% → 43.8%, recall 74.6% → 40.5%).**
   This is the empirical confirmation of DeepSeek's turn-3 tension: "co-located distinct entities" and
   "co-located same entity with name drift" look identical to a name/org-only check, so requiring name/org
   agreement throws away the geo-first recall the address signal was carrying. The fix (DeepSeek's own
-  answer) is a **secondary identifier** — corroboration = name OR org OR **phone** (A3). The drift records
+  answer) is a **secondary identifier** — corroboration = name or org or **phone** (A3). The drift records
   share the NPI's practice line, so phone rescues them while distinct providers at a shared address keep
   distinct numbers. A3 wired (phone as comparison + corroborator); the A1+A3+A2 progression is the result
   to read.
@@ -250,7 +250,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   name-drift. The real changes (out of tonight's CPU scope): a reliable secondary identifier
   (authorized-official name / taxonomy / license) or the learned GBM scorer (#603). A1 + A4 ship as tested
   default-off options; the address-frequency baseline (63.9%) is the operating point. The frontier is now
-  fully characterized — a clean, honest "we mapped exactly why this is hard" outcome, not a 0.85 number.
+  fully characterized — a clean, direct "we mapped exactly why this is hard" outcome, not a 0.85 number.
 
 ## Decisions made autonomously
 
@@ -278,13 +278,13 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   (LR + GBT over the FS feature vector, by-NPI split, 8 seeds): both beat FS, the tree more (GBT +0.0177 AUC
   / +6.6pp pairwise F1). Then the **definitive clustering A/B** (#641, 2000 NPIs, 4 seeds): **GBT clustering
   F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by reducing the over-merge (94→69 clusters). **The GBM is a real
-  dedup change — greenlit.** Cross-**STATE** generalization is now also DONE (in #641): trained on TX, the GBT
+  dedup change — greenlit.** Cross-**STATE** generalization is now also done (in #641): trained on TX, the GBT
   beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
   generalize). Remaining for the operator: (1) review/merge **#641** (it adds the shipped `scorer?` hook +
   the full eval methodology — within-state 4-seed + cross-state); (2) the production build — a tuned offline
   XGBoost/LightGBM → tree-JSON + the `scorer` hook for pure-Node inference; (3) decide whether to flip a
   trained scorer on by default (currently the hook is default-off / byte-stable).
-- **#638 — demo httpvfs downloads the WHOLE extract on open (live in prod, CA-breaking).** The client-side
+- **#638 — demo httpvfs downloads the whole extract on open (live in prod, CA-breaking).** The client-side
   street geocoder is verified working (#639: White House → exact building, ≤10 m, client-side), but the
   `serverMode: "full"` open path full-downloads each extract to learn its length — 114 MB for DC, ~3.2 GB for
   CA. Not a config fix (chunked mode needs split files; `fileLength` ineffective). Flagged for a deliberate

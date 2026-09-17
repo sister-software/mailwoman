@@ -22,7 +22,7 @@ tracked xfails**, the Chevaleret comma-drop among them (`address_point→admin`,
 A decode-time prior can only add a constant to `B-locality` at the terminal piece. It flips the piece
 from `I-street` to `B-locality` when the bias exceeds the model's own emission gap
 (`max(I-street, B-street) − B-locality`). So the prior works iff a single bias threshold separates the
-class that should flip (terminal token IS the locality) from the class that must not (the street
+class that should flip (terminal token is the locality) from the class that must not (the street
 legitimately ends in a place-word). It does not:
 
 | class                                    |                           example | terminal gap |
@@ -73,7 +73,7 @@ Two practical failures compound these: the terminal-single-token scope misses mu
 (`15 Rue de Paris **Lyon**` parses `street="de Paris Lyon"` — the model sweeps the real trailing
 locality into the street too, so flipping one terminal piece leaves a broken street tail).
 
-## The honest fix — the resolver-as-arbiter, with its evidence interface
+## The direct fix — the resolver-as-arbiter, with its evidence interface
 
 The split is decidable, just not from token identity. It is decidable from **whole-parse atlas
 consistency**, which is the registry-backed doctrine's positive-evidence street/locality existence, and
@@ -86,7 +86,7 @@ parses and scores each against the atlas:
 - **Parse B** — `house="181" street="du Chevaleret Paris"`. Evidence: does any register contain a
   thoroughfare literally named `du Chevaleret Paris`? No → B is atlas-inconsistent.
 - For the false-positive `15 Rue de Paris`: parse B (`street="de Paris"`) **is** atlas-consistent —
-  `Rue de Paris` is a real thoroughfare in many communes — so the arbiter keeps it. Same terminal
+  `Rue de Paris` is a real thoroughfare in several communes — so the arbiter keeps it. Same terminal
   token, opposite verdict, because the evidence is joint, not lexical.
 
 This is the interface **B1 (#727 stage-2)** should consume — a per-candidate-parse evidence vector, not

@@ -121,9 +121,9 @@ regression board may catch a US regression by other means; what is measured here
 
 Absent: **CN, IT, JP, NZ** — all four ship a locale. The constant's own docstring states what absence costs:
 
-> A country absent here simply never trips the guard (fail-open).
+> A country absent here only never trips the guard (fail-open).
 
-So guard B, "is this coordinate obviously in the wrong country", cannot fire for Japan, China, Italy or New
+So guard B, "is this coordinate in the wrong country", cannot fire for Japan, China, Italy or New
 Zealand. JP and CN published in the CJK arc at 9.3.0, after the boxes were measured on 2026-07-15.
 
 This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` answering Wa in Ghana (11,279 km)
@@ -133,14 +133,14 @@ or Chinese answer there is no box to check against.
 Adding four boxes is a small data change and a real behaviour change — the guard would begin firing where it
 never has — so it needs the board rather than a commit.
 
-## Where the country tables' centre of gravity still is
+## Where the country tables' center of gravity still is
 
 35 country sets across 29 files, found by taking every declaration whose NAME says so (`*_COUNTRIES`,
 `*_BY_COUNTRY`, `COUNTRY_*`) **and** that holds at least three ISO 3166-1 alpha-2 literals. Both tests are needed:
 the name alone admits `TIGERClassCode`, the literals alone admit every US state table, since `AL`, `CA` and `DE`
 are each a state and a country.
 
-Ranked by how many of the 35 name them:
+Ranked by how several of the 35 name them:
 
 ```
 DE 26   FR 25   US 24   GB 23   ES 20   IT 16   AU 14   CA 14   NL 14
@@ -148,7 +148,7 @@ NZ 11   IN 10   PL 10   JP  9   BR  9   BE  8   CZ  8   HR  8   NO  8
 ```
 
 **CA (14) and NL (14) outrank JP (9) and match IN (10), and neither ships a locale.** The tables encode a
-Europe-and-North-America centre the release list has already moved past. That is not itself a defect — most of
+Europe-and-North-America center the release list has already moved past. That is not itself a defect — most of
 these subsets are deliberate — but it is the shape to expect a twelfth locale to meet.
 
 One class of absence is correctly handled and is recorded here so it is not re-reported: `HARD_PLACE_COUNTRY_SAFELIST`
@@ -175,7 +175,7 @@ Han, so script does almost nothing for the Japanese/Chinese distinction.
 The Japanese figure is a floor with a narrow denominator. That gold set carries postcode + prefecture +
 municipality and nothing below it — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
 河口湖町` — which is the most Han-heavy part of a Japanese address. A full address with a building name
-(マンション, ハイツ, ビル) would carry Kana far more often, and this set cannot say how much more.
+(マンション, ハイツ, ビル) would carry Kana far more frequently, and this set cannot say how much more.
 
 ## What the gazetteer holds, per country
 
@@ -217,7 +217,7 @@ Named so the next reader does not mistake silence for absence:
 - **Whether any ranking change is safe.** Needs the regression board and the promotion battery. Every open item on
   #2266, plus #2267, #2268, #2269 and #2272, sits behind this.
 - **The real Kana rate in full Japanese addresses.** Needs a JP corpus with building lines.
-- **Whether the 119 thinly-covered countries are actually wrong.** A board row is the only instrument, and 78 of
+- **Whether the 119 thinly-covered countries are wrong.** A board row is the only instrument, and 78 of
   130 countries have one checking row or none.
 - **Why the NL `spr` count fell**, and what consequence it has.
 

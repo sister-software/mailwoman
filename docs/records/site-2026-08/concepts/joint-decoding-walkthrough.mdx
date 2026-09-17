@@ -14,7 +14,7 @@ tags:
 
 # Joint decoding — a walkthrough
 
-[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they actually do_ on one concrete input, end-to-end.
+[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they do_ on one concrete input, end-to-end.
 
 We use the operator's kryptonite case:
 
@@ -26,11 +26,11 @@ If you have not read [The staged pipeline](../understanding/our-approach/the-sta
 
 ## Stage 1 + 2 + 2.5 (warm-up)
 
-Stage 1 normalises the bytes. Nothing interesting happens here for our input — no NFC fix-ups, no abbreviation expansion. The string passes through unchanged.
+Stage 1 normalizes the bytes. Nothing interesting happens here for our input — no NFC fix-ups, no abbreviation expansion. The string passes through unchanged.
 
 Stage 2 is the locale check. For Latin-only input like this, the default is `en-US` with a moderate confidence. The downstream resolver weights will tilt toward US gazetteer hits.
 
-Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalisation, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode, not a single locality. The full pipeline runs.
+Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalization, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode, not a single locality. The full pipeline runs.
 
 These three stages are not the interesting part for this example. Skip ahead.
 
@@ -50,7 +50,7 @@ For our input it produces (the actual scores come from [`phrase-grouper/kryptoni
 Three things to notice here:
 
 1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with overlapping start positions. The grouper does not pick. It proposes both and lets Stage 5 decide. A `HYPHENATED_COMPOUND` is one structural unit; a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent ways to read the same prefix.
-2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalised word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
+2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalized word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
 3. **No span covers `,` or whitespace.** The grouper proposes only over real input tokens. The character offsets in the body column refer to the original input string.
 
 What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
@@ -71,7 +71,7 @@ For the spans the phrase grouper proposed, Stage 3 returns:
 
 This is the moment where everything goes wrong if we stop here. The classifier's **argmax** for `NY-NY` is `region` (score 0.70) — because in the training data, `NY` is overwhelmingly the abbreviation for the New York region. The `venue` reading is second-best (0.60). A pre-v0.5.0 system would emit `region: NY-NY, region: TX` and the resolver would have no idea what to do.
 
-Notice though that the `venue` interpretation is _not_ far behind. The classifier knows it could be a venue; it just thinks region is slightly more likely _in isolation_. The top-k output preserves that information so Stage 5 can use it.
+Notice though that the `venue` interpretation is _not_ far behind. The classifier knows it could be a venue; itthinks region is slightly more likely _in isolation_. The top-k output preserves that information so Stage 5 can use it.
 
 ## Stage 4 — sequence corrector
 
@@ -99,7 +99,7 @@ Houston   →  locality (0.85 × ?)
 TX        →  region   (0.95 × ?)
 ```
 
-This is what every Mailwoman version before v0.5.0 returned. Two regions in one address (`NY` and `TX`), one locality. The resolver tries to satisfy this and fails — it cannot find a `parent_id` chain where Houston is a locality in both New York and Texas. The output is incoherent.
+This is what every Mailwoman version before v0.5.0 returned. Two regions in one address (`NY` and `TX`), one locality. The the system satisfy this and fails — it cannot find a `parent_id` chain where Houston is a locality in both New York and Texas. The output is incoherent.
 
 **Interpretation Y** — take the `venue` reading for `NY-NY`:
 
@@ -159,7 +159,7 @@ The full v0.5.0 output for `NY-NY Steakhouse, Houston, TX` is:
 }
 ```
 
-The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest — `Houston` only had 0.65 from the phrase grouper, the venue tag was a second-best from the classifier, etc. But the parse is _correct_, which is the headline win for v0.5.0.
+The confidence is the product of the winning interpretation's per-stage scores. It is modest (0.42) because the underlying signals are modest — `Houston` only had 0.65 from the phrase grouper, the venue tag was a second-best from the classifier, etc. But the parse is _correct_, which is the result for v0.5.0.
 
 ## Why this was impossible before v0.5.0
 

@@ -53,7 +53,7 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - **Checks (pre-registered before launch, per the iron rules):** the full promotion battery — golden
   us/fr floors, **invariance suite `--baseline v385`** (the probe chain never ran it; the P-B
   comma-drop signature is the named watch), gauntlet ×3 layers, presets byte-check, fragment boards
-  **with lowercase legs** (doctrine), and the NEW **evidence-ablation check**: channels-zeroed parse
+  **with lowercase legs** (doctrine), and the new **evidence-ablation check**: channels-zeroed parse
   ≥ v385 baseline on unaffected spans — this check joins the standing battery permanently.
 
 ### Phase 4 — ship + retire (S)

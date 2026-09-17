@@ -21,7 +21,7 @@ at `basis = surveyed`, `completeness = 0.6665`. The shipped `poi.db` is not touc
 ## Why a separate artifact and not a rebuild
 
 A `layer_coverage` row describes the layer it lives in — `observed_rows` is defined as "rows this
-layer actually holds in the cell". Coverage about one layer's rows cannot honestly be written into a
+layer holds in the cell". Coverage about one layer's rows cannot directly be written into a
 different layer's table. That settles the artifact shape on its own:
 
 - Writing exclusion cells into `poi.db` would mean rebuilding the shipped artifact, which the pilot
@@ -38,13 +38,13 @@ to reach an exclusion-grade basis, only a builder willing to write one.
 **Two-source capture-recapture between two independently-built inventories of one class in one
 bounded region.** Named data on both sides, with provenance:
 
-| role      | source                                                                       | vintage      | licence             |
+| role      | source                                                                       | vintage      | license             |
 | --------- | ---------------------------------------------------------------------------- | ------------ | ------------------- |
 | subject   | OpenStreetMap, Geofabrik `ile-de-france-260627.osm.pbf`, `amenity=pharmacy`  | 2026-06-27   | ODbL-1.0            |
 | reference | Overture Places via the shipped `poi.db`, category `pharmacy`                | 2026-07-22.0 | CDLA-Permissive-2.0 |
 | region    | OSM relation 8649, `boundary=administrative`, `admin_level=4`, Île-de-France | 2026-06-27   | ODbL-1.0            |
 
-The two inventories are independently built, and the licences are the evidence: Overture Places is
+The two inventories are independently built, and the licenses are the evidence: Overture Places is
 CDLA-Permissive-2.0, which it could not be if OSM were in its lineage. The class correspondence is
 not improvised either — `@mailwoman/poi-taxonomy` already declares `pharmacy` with
 `osmTag: "amenity=pharmacy"`, so both sides are selected by one shipped declaration rather than by
@@ -54,8 +54,8 @@ two hand-written predicates.
 
 The region is **the union of res-6 H3 cells lying wholly inside the Île-de-France outline**, and both
 inventories are clipped to exactly that cell set. A cell is interior when its whole `gridDisk(cell, 1)`
-is in the region's own polyfill AND all six of its boundary vertices are inside the outline. The
-polyfill keeps a cell whose centre is inside, so its edge ring is half outside the region; the vertex
+is in the region's own polyfill and all six of its boundary vertices are inside the outline. The
+polyfill keeps a cell whose center is inside, so its edge ring is half outside the region; the vertex
 test catches a boundary that re-enters between two neighbours. Measured: 371 polyfilled cells, 290
 interior.
 
@@ -90,7 +90,7 @@ defensible reading of "the same pharmacy", so the claim is only as strong as the
 
 A candidate pair clears a NEAR band, or a FAR band, or — when either row is unnamed — a distance
 alone. Names are compared with `@mailwoman/codex`'s `foldName` and `@mailwoman/match`'s
-`nameSimilarity`; distance is haversine metres. Assignment is one-to-one and greedy, best pair first,
+`nameSimilarity`; distance is haversine meters. Assignment is one-to-one and greedy, best pair first,
 so one row cannot answer for three.
 
 | protocol | near              | far               | unnamed |
@@ -101,7 +101,7 @@ so one row cannot answer for three.
 
 The grid was fixed before any completeness value was read off it. The bands come from the
 nearest-neighbour distance distribution, which is strongly bimodal: over OSM rows with any Overture
-row nearby, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m; past ~150 m the near row is
+row near, p25 = 8 m and p50 = 133 m. True co-locations sit under ~25 m; past ~150 m the near row is
 a different pharmacy.
 
 ### Uniform completeness across the region, and the measurement that licenses it
@@ -110,7 +110,7 @@ One estimate covers all 290 cells. Per-cell capture-recapture is not available a
 290 cells over 3,248 subject rows is ~11 rows a cell — so a per-cell number would be noise dressed as
 precision.
 
-Applying a regional number uniformly is only honest if the region is not a mixture, so that was
+Applying a regional number uniformly is only direct if the region is not a mixture, so that was
 measured rather than assumed, stratifying on an external variable neither inventory can influence:
 the eight départements. Summing the per-stratum Chapman estimates against the pooled one:
 
@@ -135,7 +135,7 @@ that transfers to another region unmeasured.
 - The shipped `poi.db` is unchanged — 158,813 cells, all `source_present`, `supportsExclusion` false,
   file mtime and size as they were.
 
-## What this basis does NOT establish
+## What this basis does not establish
 
 Two-source capture-recapture bounds **sampling error only**. It cannot see **dependence between the
 sources**: if a pharmacy is more likely to be in both inventories than chance would have it — a chain
@@ -187,7 +187,7 @@ on their own disk. It is not published and not in the data-bundles registry.
 | `packages/mailwoman/lib/gazetteer-pipeline/poi/exclusion-coverage.ts`  | composition into coverage cells, pure                            |
 | `packages/mailwoman/lib/gazetteer-pipeline/poi/reference-inventory.ts` | the read-only probe of a sealed reference layer                  |
 | `packages/osm/lib/sdk/extract-boundary.ts`                             | the named administrative outline, refusing a multi-match         |
-| `packages/core/lib/layers/manifest.ts`                                 | coverage-cell invariants, now enforced at write AND read         |
+| `packages/core/lib/layers/manifest.ts`                                 | coverage-cell invariants, now enforced at write and read         |
 
 To rebuild it:
 

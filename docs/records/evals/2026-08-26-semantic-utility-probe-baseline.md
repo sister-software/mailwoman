@@ -56,7 +56,7 @@ only thing that varies.
 | `cat-us-05`  | `same_category` | `pharmacy near Denver CO` | the venue-noun form at two target rows' anchor     |
 | `cat-mx-02`  | `same_category` | `pharmacy near Tijuana`   | the venue-noun form at `sem-act-mx-01`'s anchor    |
 | `cat-fr-03`  | `same_category` | `pharmacy near Toulouse`  | the venue-noun form at `sem-act-fr-01`'s anchor    |
-| `syn-01`     | `adjacent`      | `er near Denver CO`       | a different healthcare category at the SAME anchor |
+| `syn-01`     | `adjacent`      | `er near Denver CO`       | a different healthcare category at the same anchor |
 | `cat-us-04`  | `adjacent`      | `bank near Seattle WA`    | an unrelated category at an unrelated anchor       |
 | `abstain-05` | `adjacent`      | `hospital`                | a bare category — an arm must not invent an anchor |
 

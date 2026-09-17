@@ -13,7 +13,7 @@ tags:
 
 # What is a concordance?
 
-In Mailwoman's architecture, a **concordance** is the resolver's answer to the question: "Do these parsed components form a coherent place in the real world?" It is the mechanism that prevents the parser from emitting a parse that is structurally valid but geographically impossible — like "Paris, Texas" labelled as "Paris, Île-de-France" or "NY-NY Steakhouse, Houston TX" with "NY" tagged as a region.
+In Mailwoman's architecture, a **concordance** is the resolver's answer to the question: "Do these parsed components form a coherent place in the real world?" It is the mechanism that prevents the parser from emitting a parse that is structurally valid but geographically impossible — like "Paris, Texas" labeled as "Paris, Île-de-France" or "NY-NY Steakhouse, Houston TX" with "NY" tagged as a region.
 
 ## Why concordance exists
 
@@ -28,7 +28,7 @@ Traditional address parsers validate their output structurally: the parse must h
 | `locality=Springfield, region=IL`      | Yes                 | Yes — Springfield, IL exists              |
 | `locality=Springfield, region=MA`      | Yes                 | Yes — Springfield, MA ALSO exists         |
 
-The last two rows are the hard case: both parses are structurally valid AND geographically valid. The parser cannot tell them apart from the text alone — "Springfield" without a state is ambiguous, and "Springfield, IL" vs "Springfield, MA" with a state is unambiguous but requires knowing which states contain a Springfield. That knowledge lives in the gazetteer, not the parser.
+The last two rows are the hard case: both parses are structurally valid and geographically valid. The parser cannot tell them apart from the text alone — "Springfield" without a state is ambiguous, and "Springfield, IL" vs "Springfield, MA" with a state is unambiguous but requires knowing which states contain a Springfield. That knowledge lives in the gazetteer, not the parser.
 
 Concordance is the mechanism that brings gazetteer knowledge into the parsing decision.
 
@@ -38,7 +38,7 @@ Mailwoman's resolver (Stage 6) maintains a gazetteer — currently Who's On Firs
 
 - A `wof:id` (unique numeric identifier).
 - A `parent_id` pointing to the containing administrative entity.
-- A `placetype` (country, region, locality, neighbourhood, etc.).
+- A `placetype` (country, region, locality, neighborhood, etc.).
 - A name and alternate names.
 
 The parent-child chain encodes geographic containment:

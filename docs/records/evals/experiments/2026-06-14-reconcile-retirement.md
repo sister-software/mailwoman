@@ -1,6 +1,6 @@
 # Retiring joint-reconcile as the default decode path
 
-_2026-06-14. A reconcile-vs-raw-neural audit, run during the geocoder campaign to quantify how often
+_2026-06-14. A reconcile-vs-raw-neural audit, run during the geocoder campaign to quantify how frequently
 the shipped pipeline degrades a parse, found the joint-reconcile path (#427's default since Route A
 Phase II) breaks the street + house-number geocode precondition on 77–84% of clean US addresses and
 fixes none. This report records the measurement, the mechanism, and the decision to de-promote it back

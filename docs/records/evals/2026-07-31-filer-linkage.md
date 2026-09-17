@@ -4,7 +4,7 @@
 
 ## The question
 
-A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both sources contribute rows to the control build below. The open question this eval exists to baseline is whether that membership is recoverable for a filer that discloses NOTHING — from names, identifiers, or any other signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a later build with more evidence has something to beat.
+A corporate family is a set of operating companies under one parent. `filer.db` builds families from the parent name a filer discloses — on its Form 499, or on the broadband provider list, whichever carries it; both sources contribute rows to the control build below. The open question this eval exists to baseline is whether that membership is recoverable for a filer that discloses nothing — from names, identifiers, or any other signal already in the pipeline. Today the answer is no, and the number below is what "no" measures as, so that a later build with more evidence has something to beat.
 
 ## The two runs
 
@@ -13,7 +13,7 @@ Both runs build a real scratch `filer.db` from the same authored corpus with the
 - **withheld** — `holdingCompany` cleared on every Form 499 row and every provider-list row before the builder sees it. The measurement.
 - **control** — the identical corpus, that field intact. The check on the harness.
 
-The control run is not an achievement and should not be read as one. A pipeline whose entire family mechanism is "copy the parent name the filer wrote down, canonicalize it, and group by the result" is supposed to score 1.000 when handed that name. Its job here is narrower and more important: it proves this harness reads a table the truth can actually reach. Without it, the withheld run's zero is unfalsifiable — an eval pointed at the wrong table reports zero too, and reports it just as confidently with the answer sitting in the artifact. The two runs differ in exactly one field, and the input hashes below differ accordingly.
+The control run is not an achievement and should not be read as one. A pipeline whose entire family mechanism is "copy the parent name the filer wrote down, canonicalize it, and group by the result" is supposed to score 1.000 when handed that name. Its job here is narrower and more important: it proves this harness reads a table the truth can reach. Without it, the withheld run's zero is unfalsifiable — an eval pointed at the wrong table reports zero too, and reports itas confidently with the answer sitting in the artifact. The two runs differ in exactly one field, and the input hashes below differ accordingly.
 
 ### What counts as a prediction
 
@@ -25,7 +25,7 @@ Membership rows that exist only because two filers named the same MANAGEMENT com
 
 The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a fact about the company, not about that registration. Scoring FRNs individually would have let the truth partition put a single legal entity in two different families at once.
 
-Treating a shared provider id as proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay apart. That failure is not silent here. Folding two registrants that belong to different families puts a truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below 1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.
+Treating a shared provider id as proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have been observed reporting different parents, which would mean the fold is joining companies that ought to stay apart. That failure is not silent here. Folding two registrants that belong to different families puts a truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below 1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.
 
 ## Corpus
 
@@ -48,7 +48,7 @@ Treating a shared provider id as proof of one registrant is a modelling choice, 
 
 ## Input record shape
 
-Every field the builder receives in the withheld run, and how much of it the corpus actually fills in. The empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because nothing on the family path reads them (see "What would move this number" below). They are listed so the corpus's sparsity is not mistaken for the reason the withheld run scores zero.
+Every field the builder receives in the withheld run, and how much of it the corpus fills in. The empty columns are worth reading, but not for the obvious reason: filling them in changes nothing, because nothing on the family path reads them (see "What would move this number" below). They are listed so the corpus's sparsity is not mistaken for the reason the withheld run scores zero.
 
 | Form499Row field             | in the withheld input? | populated in the corpus | note                                                                                                                                                                                          |
 | ---------------------------- | ---------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,9 +108,9 @@ The 6 registrant pairs the withheld field puts together. Every other pair of the
 | 9100000004   | 9100000010   | `holding_company_name:meridian communications group` | withheld: no · control: yes |
 | 9100000005   | 9100000010   | `holding_company_name:meridian communications group` | withheld: no · control: yes |
 
-## What is actually in each artifact
+## What is in each artifact
 
-Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge, no family row the prediction would score and no family row carrying a relationship this eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld score if any of those four counts is non-zero. It DOES contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
+Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no ownership edge, no family row the prediction would score and no family row carrying a relationship this eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld score if any of those four counts is non-zero. It does contain 2 corporate-family rows, from the management-company disclosures the eval does not withhold; they are namespaced separately from ownership families and the prediction skips them. An earlier version of this page claimed no family row could exist here at all, which was wrong on its own artifact.
 
 The family counts are split by what the prediction does with a row, not by relationship name, into three buckets that partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket is the relationships this eval recognizes and deliberately does not score — `management_company` and `same_entity`. The third is anything else: a relationship string no shipped writer can produce, which the check refuses on rather than filing under either of the other two. The total is printed alongside all three so nothing can hide between them.
 
@@ -127,7 +127,7 @@ The family counts are split by what the prediction does with a row, not by relat
 
 ## Why the withheld run recovers nothing
 
-Nothing else in the build produces an ownership fact. Two mechanisms account for that, and both are deliberate. First, the builder writes a corporate-family row only where an input row names a parent — there is no path from a filing to a family that does not run through a disclosed name. Second, the entity-resolution pass (which ran here, over 12 records) answers a different question: it decides whether two identifiers denote the same legal entity, and it will not merge two records that share no identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are NOT the same company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the veto refuses it, which is what a veto is for.
+Nothing else in the build produces an ownership fact. Two mechanisms account for that, and both are deliberate. First, the builder writes a corporate-family row only where an input row names a parent — there is no path from a filing to a family that does not run through a disclosed name. Second, the entity-resolution pass (which ran here, over 12 records) answers a different question: it decides whether two identifiers denote the same legal entity, and it will not merge two records that share no identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are not the same company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the veto refuses it, which is what a veto is for.
 
 ## What would move this number
 
@@ -151,8 +151,8 @@ SHA-256 of the withheld run's inputs — the exact bytes the builder received: `
 
 SHA-256 of the control run's inputs: `86f4c23616835425615960dabbf22df214fb2001b325e9b0128f9e0abf45f802`.
 
-The corpus is a fixed literal with no sampling and no randomness; the builder and the clustering pass are deterministic; every date the runs depend on is a constant rather than "today". Re-running reproduces both scores and both hashes byte for byte. The test suite regenerates this entire page and compares it to the committed copy, so editing the corpus without republishing fails, rather than quietly leaving the numbers above stale.
+The corpus is a fixed literal with no sampling and no randomness; the builder and the clustering pass are deterministic; every date the runs depend on is a constant rather than "today". Re-running reproduces both scores and both hashes byte for byte. The test suite regenerates this entire page and compares it to the committed copy, so editing the corpus without republishing fails, rather than without output leaving the numbers above stale.
 
 ## Caveats
 
-This is a synthetic 12-filer corpus, not a run against real FCC Form 499 data — no such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility at the cost of scale. What the withheld number does NOT say is that ownership is hard to recover in general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale is the honest limitation, and it limits confidence rather than the mechanism: a larger corpus of the same shape scores the same, for the reason given above. The control number says nothing about how often real filers report a parent, or report it accurately — only that when they do, this pipeline groups them correctly.
+This is a synthetic 12-filer corpus, not a run against real FCC Form 499 data — no such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility at the cost of scale. What the withheld number does not say is that ownership is hard to recover in general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale is the direct limitation, and it limits confidence rather than the mechanism: a larger corpus of the same shape scores the same, for the reason given above. The control number says nothing about how frequently real filers report a parent, or report it accurately — only that when they do, this pipeline groups them correctly.

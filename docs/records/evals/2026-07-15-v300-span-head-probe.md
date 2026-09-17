@@ -9,11 +9,11 @@ title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained), not falsified
 > `seg@1 > token@1` on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
 > segment decode over the SUMMED-BIO stand-in scored 0.453.
 > Secondary read: oracle@10 must RISE from 0.749.
-> If seg@1 < token@1: do NOT tune span_loss_weight and re-run — that is the treadmill. One
+> If seg@1 < token@1: do not tune span_loss_weight and re-run — that is the treadmill. One
 > diagnostic (is the loss decreasing?), then fork to the operator.
 
-**Result: the check reads FAIL, but it does not adjudicate the arc.** Per the pre-registered
-diagnostic, this is **under-trained, not falsified** — and the honest call is the fork, which is why
+**Result: the check reads fail, but it does not adjudicate the arc.** Per the pre-registered
+diagnostic, this is **under-trained, not falsified** — and the direct call is the fork, which is why
 this doc exists rather than a relaunch.
 
 ## What ran
@@ -74,7 +74,7 @@ confirmed under real gradient. That much of Phase 1 is proven.
 `eval_seg_at_1.py` runs Python-side against the torch checkpoint, deliberately, to avoid depending on
 the Phase-2 ONNX export. But the Python side **feeds no anchor/gazetteer/country channels, no
 postcodeRepair, no word-consistency heal** — the #718 channel-starvation trap. So its token@1 reads
-0.348 where the JS harness reads **0.573 on the same model**. The absolute numbers here are NOT
+0.348 where the JS harness reads **0.573 on the same model**. The absolute numbers here are not
 comparable to `mailwoman eval parity --weights-cache`, and the script now prints that in its output.
 
 The _relative_ check survives (both heads read the same starved encoder state), but any future
@@ -84,8 +84,8 @@ Two harness bugs were found and fixed getting here, both by refusing to accept a
 couldn't reproduce a known baseline:
 
 1. `from_pretrained()` never passed `map_location`, so a GPU-trained checkpoint **could not load on a
-   CPU-only box at all**. This affects every local grading run, not just this one.
-2. The check concatenated street-family _pieces_, dropping the `O`-labelled bare `▁` separator and
+   CPU-only box at all**. This affects every local grading run, notthis one.
+2. The check concatenated street-family _pieces_, dropping the `O`-labeled bare `▁` separator and
    welding words (`▁5|th|▁|Ave` → `"5thAve"`). Now takes the substring by char offsets. token@1 0.285 → 0.348.
 
 ## The fork (operator's call — the pre-registration says so)
@@ -102,7 +102,7 @@ The arc is **not** falsified. The question the probe was meant to answer is stil
    the 66% bare-fragment class is the bigger prize anyway).
 
 My recommendation is (1): it is one variable (the head's LR), it costs ~30 min of A100, and it is the
-only option that actually tests the architecture rather than re-testing a random head.
+only option that tests the architecture rather than re-testing a random head.
 
 ## Artifacts
 

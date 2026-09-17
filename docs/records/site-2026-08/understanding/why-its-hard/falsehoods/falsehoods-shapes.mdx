@@ -22,13 +22,13 @@ The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes in
 
 UK postcodes cover ~15 addresses on average — effectively points. But UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
-Irish Eircodes are unique per delivery point — the postcode IS the point. French postcodes correspond to commune boundaries — the postcode IS the polygon. The same concept ("postcode") has fundamentally different spatial semantics in different countries.
+Irish Eircodes are unique per delivery point — the postcode is the point. French postcodes correspond to commune boundaries — the postcode is the polygon. The same concept ("postcode") has fundamentally different spatial semantics in different countries.
 
 ### "An address is a polygon."
 
 No address is a polygon in the geospatial sense. A building footprint is a polygon. A parcel boundary is a polygon. An address is a label applied to one or more of these spatial objects, but the address itself has no shape.
 
-Buildings with multiple addresses (apartment buildings, office towers) are one polygon with many address labels. A single-family home is one polygon with one address label. A rural route is a path with many address labels distributed along it. A PO box is an address label with no spatial object at all — it exists only at the post office counter.
+Buildings with multiple addresses (apartment buildings, office towers) are one polygon with several address labels. A single-family home is one polygon with one address label. A rural route is a path with several address labels distributed along it. A PO box is an address label with no spatial object at all — it exists only at the post office counter.
 
 Geocoders that return a polygon for an address are returning the polygon of the spatial object the address is associated with (a building, a parcel, a ZIP code approximation). The address itself is the label, not the shape.
 
@@ -87,7 +87,7 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 
 ## What the neural approach changes
 
-**The resolver (Stage 6) returns each candidate's placetype alongside its coordinates.** A WOF record has a `placetype` (country, region, locality, neighbourhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
+**The resolver (Stage 6) returns each candidate's placetype alongside its coordinates.** A WOF record has a `placetype` (country, region, locality, neighborhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
 
 **The resolver returns top-K candidates, not a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver does not pretend that there is one correct coordinate for an ambiguous address.
 

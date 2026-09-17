@@ -53,7 +53,7 @@ specifically — a causal (not correlational) measure of whether the decision us
 channels at all. Two probe directions matter: (a) zero the channels (a no-op when they were already
 zero, as in Weimar), and (b) **counterfactual injection** — feed the channel values the retrieval
 side _would_ have produced had it known the place, and measure the logit/label delta. Direction (b)
-is the honest "evidence sensitivity" measurement.
+is the direct "evidence sensitivity" measurement.
 
 **Pitfalls.** Choice of corruption distribution changes conclusions (Gaussian-noise vs.
 counterfactual-token patching disagree; discussed across the patching literature [M]). Patching
@@ -170,8 +170,8 @@ because you _don't know what the concepts are_. Our situation is inverted: the i
 (postcode-ness, gazetteer membership, country, street-type) are already named input columns, and
 the label vocabulary is 33 BIO tags. For "does the model internally represent German-place
 morphology?" a supervised linear probe answers in minutes and — per the 2025 results — likely
-better. The one genuine SAE use-case for us: an _exploratory inventory_ of what grammar features a
-trained checkpoint contains that we did NOT think to probe for (e.g., a "Latin-script diacritic +
+better. The one actual SAE use-case for us: an _exploratory inventory_ of what grammar features a
+trained checkpoint contains that we did not think to probe for (e.g., a "Latin-script diacritic +
 Germanic suffix" feature), run once as a weekend experiment, treated as hypothesis generation whose
 outputs get confirmed by probes/patching. Sparse feature circuits (Marks et al. 2024 [M]) would be
 the follow-on if that inventory proves rich.
@@ -225,16 +225,16 @@ _Finding Alignments Between Interpretable Causal Variables and Distributed Neura
 (DAS) [S]; Boundless DAS (Wu et al. 2023) [S]. These _train_ the model so that named causal
 variables (e.g., "country", "this-span-is-a-locality") live in designated activation subspaces and
 respond correctly to interventions. Since we own the PyTorch training loop and a retrain costs
-~1 hour, IIT is actually affordable here in a way it is not for LLM labs: add an interchange loss
+~1 hour, IIT is affordable here in a way it is not for LLM labs: add an interchange loss
 tying a small residual subspace to the country variable, and the model acquires a _guaranteed
 read-out port_ — per-decision explanation becomes reading a register instead of running forensics.
 
 **Measuring reliance (auditing, no retraining).** The clean instrument our architecture enables:
-paired inputs where ONLY channels differ (same token string, different simulated "world") — the
+paired inputs where only channels differ (same token string, different simulated "world") — the
 output delta is the causal channel-reliance, measurable per tag, per locale, per checkpoint, as a
 standing board metric. This is an input-level interchange intervention; no model surgery. Related
 framings: permutation-style model reliance (Fisher, Rudin & Dominici 2019, _All Models are Wrong,
-but Many are Useful_, JMLR [M]); shortcut-learning auditing (Geirhos et al. 2020, _Shortcut
+but several are Useful_, JMLR [M]); shortcut-learning auditing (Geirhos et al. 2020, _Shortcut
 Learning in Deep Neural Networks_, Nature MI [M]); rationale-faithfulness metrics —
 comprehensiveness/sufficiency from ERASER (DeYoung et al. 2020 [S]; rationale extraction lineage
 Lei et al. 2016, _Rationalizing Neural Predictions_ [S]) transfer directly: "sufficiency of the
@@ -289,13 +289,13 @@ under workload constraints 2024 [S].
 _Algorithmic Learning in a Random World_, 2005 [M]; Angelopoulos & Bates 2021, _A Gentle
 Introduction to Conformal Prediction_ [M]) turns any score into prediction _sets_ with finite-
 sample coverage guarantees, using only a calibration split of the ledger. For diagnosis, sets are
-the honest output shape: "this failure is `{resolver-country-flip, evidence-silent}` at 90%" is more
+the direct output shape: "this failure is `{resolver-country-flip, evidence-silent}` at 90%" is more
 useful to a triager than a single guess, and **abstention falls out naturally** (defer when the set
 is large; alarm when the set is empty at the working level). Two specifics for our shape:
 
 - **Class-conditional (Mondrian) coverage.** Marginal conformal under-covers rare classes —
   measured collapses to near-0% minority coverage in a 2026 multi-domain benchmark, with Mondrian
-  restoring it (+61.7pp average) [S]; see also _Class-Conditional Conformal Prediction with Many
+  restoring it (+61.7pp average) [S]; see also _Class-Conditional Conformal Prediction with several
   Classes_ (Ding et al. 2023) [S]. Diagnosis ledgers are exactly this: a few common shapes, a long
   tail. Mondrian's per-class calibration also has a governance bonus below. Rule of thumb: ~20–40
   triaged rows per class before that class's guarantee means anything (coverage resolution is

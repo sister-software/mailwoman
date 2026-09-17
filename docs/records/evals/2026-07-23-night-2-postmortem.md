@@ -9,7 +9,7 @@ the pre-registered checks).
 - **HF backfill**: `pair-index-gb.bin` staged to `en-us/v6.6.0/` and md5-verified round-trip
   (`1e63a8c1…`). The publish preflight is now fully green (all six binaries HEAD-check OK) — the
   standing action item from the placetype-pair arc is closed.
-- **PR #1253** (open, CI green, mergeable): the v3.12.0-comma-robust config as a run record + the
+- **PR #1253** (open, CI green, mergeable): the v3.12.0-comma-resilient config as a run record + the
   deploc redesign dossier (`docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md`). The
   night-merge classifier blocked self-merge, as designed — one click in the morning.
 - **No model shipped. No npm release shipped.** Both outcomes were check-driven, not omissions
@@ -22,14 +22,14 @@ missing=0, reinit rows [7,8], classifier LR group 12,705 params @ 0.001). Graded
 pre-registration — all 8 checkpoints, invariance suite in `--baseline v385` mode + gauntlet per
 checkpoint:
 
-| Checkpoint | Invariance NEW violations | Gauntlet                                  |
+| Checkpoint | Invariance new violations | Gauntlet                                  |
 | ---------- | ------------------------- | ----------------------------------------- |
 | 1k–4k      | 6–9                       | 3                                         |
 | 5k–7k      | 5–7                       | **1** (Pennsylvania only; NY-trio healed) |
 | 8k         | 8                         | 3 (+ NEW 1295 km mislocation — regresses) |
 
 - **PRIMARY FAIL**: zero gauntlet-clean checkpoints. The `INV[comma-drop]` Pennsylvania-Ave break
-  is a NEW violation vs v385 at every checkpoint.
+  is a new violation vs v385 at every checkpoint.
 - **Comma-share hypothesis FALSIFIED**: matching the base corpus's 37.7% comma-free share
   (`augment_punct_drop_prob` 0.3→0.6, the one pre-registered variable) did not move the break.
   Fourth falsified mechanism in the arc.
@@ -70,7 +70,7 @@ any re-dispatch safe.
   mechanical read instead of a judgment call.
 - The long-lived grading agent (all harnesses + model caches warm) turned an 8-checkpoint ladder
   plus the battery decision around in ~16 minutes.
-- The falsification chain is now a genuine asset: four mechanisms closed with receipts is what
+- The falsification chain is now an actual asset: four mechanisms closed with receipts is what
   makes the morning redesign discussion short.
 
 ## What could've gone better
@@ -123,7 +123,7 @@ any re-dispatch safe.
   parameter is the phase boundary, 2000 vs 3000).
 - If the release path reopens: re-dispatch `publish.yml -f version=7.6.0` — everything upstream
   is verified green; then the demo repoint question (separate task, unchanged tonight).
-- Deferred backlog: EMPTY — all three items closed during the shift (see the idle-backlog
+- Deferred backlog: empty — all three items closed during the shift (see the idle-backlog
   addendum).
 
 ## Idle-backlog addendum (worked after the wrap sections above were drafted)
@@ -133,7 +133,7 @@ any re-dispatch safe.
   present at 8k — the identical failure signature as the full fine-tune. The break originates in
   classifier-head dynamics; hypothesis (c) substantially weakened; **option B (two-phase LR
   anneal) is now the mechanistically favored run.** Dossier postscript on #1253.
-- **CJK byte-fallback residual FIXED — PR #1256.** Per-character run splitting at UTF-8 sequence
+- **CJK byte-fallback residual fixed — PR #1256.** Per-character run splitting at UTF-8 sequence
   boundaries; +4 exact-tuple characterization tests (東京都渋谷区, mixed-script, curly-quote
   no-op, emoji surrogate span); neural suite 380 → 384 green, Latin byte-identical. Reviewed
   in-session. Closes the v8 non-Latin hard blocker pending merge.
@@ -149,7 +149,7 @@ any re-dispatch safe.
 | Metric               | Value                                                      |
 | -------------------- | ---------------------------------------------------------- |
 | Shift window         | 04:50–12:10 UTC                                            |
-| Models trained       | 1 (v3.12.0-comma-robust, 8k steps, A100 ~25 min)           |
+| Models trained       | 1 (v3.12.0-comma-resilient, 8k steps, A100 ~25 min)        |
 | Modal spend          | ~$1.50                                                     |
 | Checkpoints graded   | 8 (invariance + gauntlet each; battery withheld by design) |
 | NaN incidents        | 0                                                          |

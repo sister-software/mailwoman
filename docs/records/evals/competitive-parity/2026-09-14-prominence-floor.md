@@ -85,7 +85,7 @@ The largest band reads worst at the default arm — 19.0% accuracy and 70.1% wro
 every other band. That is backwards, and checking it found the reason.
 
 The eligibility rule requires a name borne exactly once across the four registered countries. A large city
-usually shares its name with something — its own arrondissement, district or a namesake abroad — so it is
+typically shares its name with something — its own arrondissement, district or a namesake abroad — so it is
 excluded. An administrative division carries a long unique name and survives. Counted by a leading
 administrative noun in the four registers' languages:
 

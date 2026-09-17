@@ -64,7 +64,7 @@ context-dependent biases without explicit grammar rules.
 **The model is a learned soft transducer over the full input, anchored by
 world-knowledge priors, with structural validity enforced by Viterbi.**
 
-## Where context-sensitivity actually lives
+## Where context-sensitivity lives
 
 When the operator asks "are the right-side discovered placetypes influencing
 the left-side specificity?" — yes, in three different places:
@@ -103,7 +103,7 @@ knows this is a place, here's negative evidence against the alternatives."
 The morphology FST does the symmetric thing for street-typing affixes. When
 `Avenue` matches the libpostal street-types dictionary, the prior boosts
 B/I-street_suffix on `Avenue` AND boosts B/I-street on the adjacent name
-token AND suppresses B/I-dependent_locality on the adjacent name token.
+token and suppresses B/I-dependent_locality on the adjacent name token.
 
 The priors are **additive logit biases** capped at 3.0 logits, composed with
 the encoder's emissions via `addEmissionMatrix`:
@@ -125,7 +125,7 @@ can only follow `B-X` or another `I-X`; you can't go from `B-locality` to
 chosen, the next token's label space is constrained.
 
 This is structural context-sensitivity at the label level. The encoder's
-per-token decision for `OR` doesn't just depend on `OR`'s context; it
+per-token decision for `OR` doesn'tdepend on `OR`'s context; it
 depends on whether the previous token was labeled `B-locality` (in which
 case `I-locality` is a candidate but B-region is too) or labeled something
 else.

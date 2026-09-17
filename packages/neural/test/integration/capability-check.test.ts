@@ -14,7 +14,7 @@
  *        emit (no capability entry → legal); the certified FR `street_prefix` (maskOff 80) is no
  *        longer forbidden, so nothing trips.
  *   2. Throws when a synthetic FR forbid re-adds `street_prefix` (a certified tag at maskOff 80) — the
- *        exact #719 shape. This proves the guard would have caught the original bug at load time.
+ *        exact #719 shape. This verifies that the guard would have caught the original bug at load time.
  *
  *   Requires the production v1.5.0 int8 + its real feed channels on disk; skips otherwise (mirrors
  *   weights.test.ts) so stripped-down CI still passes.

@@ -4,7 +4,7 @@
 
 **Goal:** Swap the three production surfaces off the v1 rules parser — `/v1/parse` to native neural output, libpostal `/parse` to a neural-backed engine behind the existing wire contract, nominatim `streetParts` deleted in favor of fields the geocode already returns — each conditional against the phase-0 goldens.
 
-**Architecture:** Raw `classifier.parse` everywhere (NOT the runtime pipeline — its reconcile stage merges street into house_number, #566). The libpostal projection extends in place (`libpostal/engine.ts`): a tree-aware `treeToParseMatches` assembles the street-name family into one match so the untouched route layer + `COMPONENT_TO_LIBPOSTAL` keep producing libpostal wire shapes. Checks are structured comparisons with pre-registered per-label agreement floors (spec §Projection layer, Plan-2 amendments) — byte-equality is unattainable across the engine swap by design.
+**Architecture:** Raw `classifier.parse` everywhere (not the runtime pipeline — its reconcile stage merges street into house_number, #566). The libpostal projection extends in place (`libpostal/engine.ts`): a tree-aware `treeToParseMatches` assembles the street-name family into one match so the untouched route layer + `COMPONENT_TO_LIBPOSTAL` keep producing libpostal wire shapes. Checks are structured comparisons with pre-registered per-label agreement floors (spec §Projection layer, Plan-2 amendments) — byte-equality is unattainable across the engine swap by design.
 
 **Tech Stack:** `NeuralAddressClassifier.loadFromWeights` (`@mailwoman/neural`), `decodeAsTuples`/`decodeAsXML` (`@mailwoman/core` decoder), Hono `app.request()` in-process checks, vitest `describe.skipIf` for data-bound suites.
 
@@ -14,11 +14,11 @@
 
 ## Global Constraints
 
-- **Pre-registered check floors (set before any check run; do NOT adjust to green a failing check — a miss is an adjudication, not a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
+- **Pre-registered check floors (set before any check run; do not adjust to green a failing check — a miss is an adjudication, not a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
 - **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse entry point** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
 - **Wire contracts:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
 - **Goldens are readonly** — checks read them, never rewrite them.
-- Tabs; 4-line license headers on new files; explicit `.ts` relative imports; ZERO raw `process.env`/`process.argv`; acronym casing (`decodeAsJSON`-style).
+- Tabs; 4-line license headers on new files; explicit `.ts` relative imports; zero raw `process.env`/`process.argv`; acronym casing (`decodeAsJSON`-style).
 - **Compile receipts mandatory:** every task reports `yarn tsc -b <workspace>` output; `yarn compile` before any spawned `out/cli.js`.
 - Never kill by pattern — spawned servers die by their own child PID only.
 - Commit per task; push + PR at the end. CI must stay green on every commit (check suites skip where data is absent).
@@ -325,7 +325,7 @@ describe.skipIf(!weightsPresent())("v1-parse golden check (neural vs rules basel
 
 - [ ] **Step 6: Run everything, capture receipts**
 
-Run: `yarn vitest --run mailwoman/test/v1-parse-check.test.ts mailwoman/test/api-engine.test.ts` (expect check PASS with printed per-label rates — paste them in the report) → `yarn tsc -b` → `yarn compile && node mailwoman/out/cli.js openapi 2>/dev/null | head -5`? No — the openapi emit for the API surface: `node api/out/cli.js openapi 2>/dev/null || true`; if the api workspace has no CLI, emit via `mailwoman openapi`. Verify the emitted `ParseOutcome` component shows `components`/`tree` (grep the JSON). If a floor FAILS: do not lower it — report the per-label rate and the first 10 disagreeing inputs, then STOP for adjudication.
+Run: `yarn vitest --run mailwoman/test/v1-parse-check.test.ts mailwoman/test/api-engine.test.ts` (expect check pass with printed per-label rates — paste them in the report) → `yarn tsc -b` → `yarn compile && node mailwoman/out/cli.js openapi 2>/dev/null | head -5`? No — the openapi emit for the API surface: `node api/out/cli.js openapi 2>/dev/null || true`; if the api workspace has no CLI, emit via `mailwoman openapi`. Verify the emitted `ParseOutcome` component shows `components`/`tree` (grep the JSON). If a floor fails: do not lower it — report the per-label rate and the first 10 disagreeing inputs, then STOP for adjudication.
 
 - [ ] **Step 7: Commit**
 
@@ -408,7 +408,7 @@ for (const row of goldenRows) {
 
 - [ ] **Step 3: Run + receipts**
 
-`yarn vitest --run libpostal/parse-check.test.ts libpostal/index.test.ts` (paste rates), `yarn tsc -b libpostal`, then live smoke: `yarn compile && node libpostal/out/cli.js serve --port 8198 &` is FORBIDDEN as written — spawn via a foreground script or run the server in background through the harness, query `curl "http://127.0.0.1:8198/parse?query=30%20W%2026th%20St%2C%20New%20York%2C%20NY%2010010"`, verify labels are libpostal vocabulary, then kill ONLY the recorded child PID. Floor failure ⇒ report + STOP (no threshold edits).
+`yarn vitest --run libpostal/parse-check.test.ts libpostal/index.test.ts` (paste rates), `yarn tsc -b libpostal`, then live smoke: `yarn compile && node libpostal/out/cli.js serve --port 8198 &` is FORBIDDEN as written — spawn via a foreground script or run the server in background through the harness, query `curl "http://127.0.0.1:8198/parse?query=30%20W%2026th%20St%2C%20New%20York%2C%20NY%2010010"`, verify labels are libpostal vocabulary, then kill only the recorded child PID. Floor failure ⇒ report + STOP (no threshold edits).
 
 - [ ] **Step 4: Commit**
 
@@ -443,7 +443,7 @@ if (result.street) {
 }
 ```
 
-- [ ] **Step 2: Live golden comparison (lab host)** — `yarn compile`, then re-run the phase-0 capture against the new build into a SCRATCH path: temporarily copy `nominatim/dev-tools/capture-search-golden.run.ts` logic is NOT needed — instead run it as-is but redirect: `cp nominatim/dev-tools/capture-search-golden.run.ts /tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/capture-post-swap.ts`, edit the copy's `OUT_PATH` to the scratchpad, run it, then diff:
+- [ ] **Step 2: Live golden comparison (lab host)** — `yarn compile`, then re-run the phase-0 capture against the new build into a SCRATCH path: temporarily copy `nominatim/dev-tools/capture-search-golden.run.ts` logic is not needed — instead run it as-is but redirect: `cp nominatim/dev-tools/capture-search-golden.run.ts /tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/capture-post-swap.ts`, edit the copy's `OUT_PATH` to the scratchpad, run it, then diff:
 
 ```bash
 node /tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/capture-post-swap.ts
@@ -451,7 +451,7 @@ diff <(jq -c '{query, n: (.body|length)}' nominatim/test-fixtures/search-golden.
      <(jq -c '{query, n: (.body|length)}' /tmp/claude-1000/-home-lab-Projects-mailwoman/68bebf18-8fe3-4263-ae64-70c79a08f97c/scratchpad/search-golden.jsonl) | head -20
 ```
 
-Expected: hit/miss structure identical (same queries answered/empty). Then field-level: extract `{query, house_number, road}` from both files with jq and diff — every difference must be classed: (a) `road` richer by prefix/suffix assembly = expected improvement; (b) `house_number` changed/lost = REGRESSION, stop and report; (c) result-set changes = investigate (the geocode path itself didn't change — any hit/miss diff is unexplained and blocks). Paste the classified diff summary in the report. Do NOT overwrite the committed golden.
+Expected: hit/miss structure identical (same queries answered/empty). Then field-level: extract `{query, house_number, road}` from both files with jq and diff — every difference must be classed: (a) `road` richer by prefix/suffix assembly = expected improvement; (b) `house_number` changed/lost = REGRESSION, stop and report; (c) result-set changes = investigate (the geocode path itself didn't change — any hit/miss diff is unexplained and blocks). Paste the classified diff summary in the report. Do not overwrite the committed golden.
 
 - [ ] **Step 3: Receipts + commit**
 
@@ -478,4 +478,4 @@ git commit -m "feat(nominatim): derive streetParts from the geocode result — s
 - **Spec coverage:** §Projection layer (Task 1 + amendments), the three §Production swaps (Tasks 2-4), checks per §Evidence capture as amended (structured, pre-registered floors). Weights guard = plan 3; deletions (`--isolated`, `debug`, arbitration, eval legs, `createAddressParser` itself) = plan 4 — the symbol stays alive here (arbitration + eval harness importers, scout-verified).
 - **Floors are pre-registered here, before any check has run** — a failing floor stops the task for adjudication; it is never edited to pass.
 - **Type consistency:** `ParseMatch`/`treeToParseMatches` (Task 1) are what Task 3 wires; `ParseComponent`/`ParseOutcome` (Task 2) match the schema mirror; `fold()` is defined identically in both check tests (duplicated by design — the files must survive plan-4 deletions independently).
-- **Known open judgment for implementers:** if `AddressTree`/`AddressNode` aren't exported from the `@mailwoman/core` barrel, use the `@mailwoman/core/decoder` subpath — and if THAT subpath is missing from the exports map, add it to BOTH maps (dev + publishConfig) per AGENTS.md.
+- **Known open judgment for implementers:** if `AddressTree`/`AddressNode` aren't exported from the `@mailwoman/core` barrel, use the `@mailwoman/core/decoder` subpath — and if that subpath is missing from the exports map, add it to both maps (dev + publishConfig) per AGENTS.md.

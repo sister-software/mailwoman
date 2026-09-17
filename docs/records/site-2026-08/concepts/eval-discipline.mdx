@@ -13,7 +13,7 @@ Mailwoman's eval methodology learned its most important lessons the hard way —
 
 ## Why aggregate F1 is misleading
 
-Per-component F1 scores are the standard metric for sequence-labelling models. A table like this looks authoritative:
+Per-component F1 scores are the standard metric for sequence-labeling models. A table like this looks authoritative:
 
 | Component    | v0.4.0 | v0.3.0 | Δ         |
 | ------------ | ------ | ------ | --------- |
@@ -49,7 +49,7 @@ The model was never trained to handle these cases. The v0.4.0 weights didn't cha
 
 ### Pattern 2: Empty predictions
 
-When the model emits nothing for a component that the golden set expects, the failure is usually a training-distribution effect — the model learned a positional prior that doesn't apply to the eval set.
+When the model emits nothing for a component that the golden set expects, the failure is typically a training-distribution effect — the model learned a positional prior that doesn't apply to the eval set.
 
 In v0.4.0, 65% of postcode false-negatives were empty predictions on mid-position postcodes like `Paris 75008`. The NAD downweight (the most aggressive change in the source rebalance) removed "postcode-first" positional patterns from the training mix. The model learned to tag mid-position numeric tokens as `house_number` instead of `postcode`.
 
@@ -59,7 +59,7 @@ This is a real regression — the recipe change had an unintended side effect �
 
 The model picks the wrong label for a span. In v0.4.0, 11% of postcode false-negatives were house-number confusion: `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → the model predicted `22` as postcode instead of the leading `47110`.
 
-These are genuine model errors. They suggest the label vocabulary is ambiguous for numeric tokens in certain positions.
+These are actual model errors. They suggest the label vocabulary is ambiguous for numeric tokens in certain positions.
 
 ### Pattern 4: Span boundary slip
 
@@ -67,7 +67,7 @@ The model gets the label right but the span wrong. In v0.4.0, 6% of postcode fal
 
 This is a decoder problem, not a model problem — no retraining required. The fix (trimming spans past leading/trailing non-word characters) landed in the decoder without touching the model weights.
 
-**The discipline:** always ask whether the failure is a model problem or a decoder problem. Decoder fixes are cheap and don't require a retrain. Many "model regressions" turn out to be decoder bugs on closer inspection.
+**The discipline:** always ask whether the failure is a model problem or a decoder problem. Decoder fixes are cheap and don't require a retrain. several "model regressions" turn out to be decoder bugs on closer inspection.
 
 ## Golden-set hygiene
 
@@ -82,7 +82,7 @@ The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artif
 
 The discipline above grades parser spans against a golden. The resolver — the stage that turns a parsed address into a place on Earth — needs its own, and it fails differently. The trap here is grading resolution by **name-match**: did the resolved place carry the same name string as the gold? That question can only fail when the name is wrong, and the name is almost never wrong. There are ten US localities called "Sheldon"; "New York" is a city, a state, and a village 280km apart. A name-match metric scores every one of those a tie and gives the resolver full marks for picking any of them.
 
-The 2026-06-08 honest-eval run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
+The 2026-06-08 direct-eval run made the cost concrete: on the leakage-free Vermont rows the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right _name_ in the wrong _state_, and name-match could not see it. Two disciplines follow.
 
 ### Evaluate on geography the model never trained on
 
@@ -96,13 +96,13 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`packages/mailwoman/lib/dev-tools/honest-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the honest-eval report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
+`packages/mailwoman/lib/dev-tools/direct-eval.run.ts` + `packages/mailwoman/lib/dev-tools/pip-containment.run.ts` implement this; see [the direct-eval report](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/experiments/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 
 The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing _why_ the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue, not noise — the same lesson the parser side learned, on the resolver side.
 
-## Oracle substitution: where the error actually lives
+## Oracle substitution: where the error lives
 
 Per-component F1 and coordinate error tell you _how much_ is wrong. They don't tell you _which stage_ is at fault — and in a pipeline (model → resolver → gazetteer) a single bad coordinate can come from a mis-tag, a missing gazetteer entry, or a ranking slip, and the aggregate can't tell them apart. **Oracle substitution** can: hand one stage the ground-truth answer, run the rest of the pipeline for real, and read what error survives. Whatever is still wrong after a stage has been given the truth cannot be that stage's fault — you've attributed it to everything downstream.
 

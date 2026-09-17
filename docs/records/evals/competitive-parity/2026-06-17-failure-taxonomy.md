@@ -53,7 +53,7 @@ not another loss-mask or weight bump.
 | --------------------------------- | -------------------------------------------------------- | ------ | ------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | po_box (dotted leader)            | 60% fail → 87% (span bridge) → 89% (separator exclusion) | neural | fixed        | tokenizer dropped standalone punctuation; corrected at decode                                                        | 2026-06-11-v4.4.0-ship-check   |
 | intersection (real TIGER extract) | 100% (real-OOD) vs 82% templated                         | neural | fixed        | a real extract beats synthetic templates                                                                             | 2026-06-11-v4.4.0-ship-check   |
-| po_box / unit vs v0               | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the negative-space win                                                               | 2026-06-17-per-type-headtohead |
+| po_box / unit vs v0               | neural 100% / 100%; v0 **0% / 0%**                       | v0     | fixed-neural | v0 has no `po_box`/`unit` tag — the result                                                                           | 2026-06-17-per-type-headtohead |
 | cedex (FR real)                   | 96% (v4.4.0)                                             | neural | fixed        | deterministic regex path moved into the model                                                                        | 2026-06-11-v4.4.0-ship-check   |
 | paired-delimiter span proposer    | −3.9pp vs 77% baseline                                   | neural | rejected     | the Stage 2.7 proposer's annotation bias has the wrong sign (merges where it should strip) — did not warrant revival | 2026-06-14-punctuation-stress  |
 
@@ -85,7 +85,7 @@ sufficiency ("How close is close enough?") for what these tiers are _worth_ per 
 | perturb arena (noisy/glued) | 64% vs 71% (v4.2.0); floor restored to 72 in v4.4.0 | neural | partially-fixed | glue perturbation (`NY14201`) + post-directional wobble — the same boundary-instability family   | 2026-06-11-v4.4.0-ship-check |
 
 The connective tissue across §1, §5: **token-boundary instability** (street eats affix, region+postcode
-glue, directional wobble, dotted-abbreviation absorption) is one failure _family_ surfacing under many
+glue, directional wobble, dotted-abbreviation absorption) is one failure _family_ surfacing under several
 names. It's the most leveraged single area — a boundary-aware decode change would touch several rows.
 
 ## 6. The inverse — capability asymmetries (wins worth defending)
@@ -100,7 +100,7 @@ names. It's the most leveraged single area — a boundary-aware decode change wo
 
 The capability map is not "rules vs ML, ML wins." It's: neural owns structure, robustness, and the
 negative-space tags (po_box/unit); v0 still owns precise within-token punctuation. The last row is the
-honest open edge — the clearest place a rule-assist or a punctuation-aware decode could close a measured
+direct open edge — the clearest place a rule-assist or a punctuation-aware decode could close a measured
 gap.
 
 ## Unmeasured (so we don't fabricate a number)
@@ -113,7 +113,7 @@ gap.
 
 ## What the table says about the roadmap
 
-1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under many names; a boundary-aware decode would move several rows at once.
+1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under several names; a boundary-aware decode would move several rows at once.
 2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem, not a model one (§4).
 3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
 4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).

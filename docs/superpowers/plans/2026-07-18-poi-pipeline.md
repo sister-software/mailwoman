@@ -6,7 +6,7 @@
 
 **Architecture:** Spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`). Detection lives in `kind-classifier` behind an injected `POIPhraseLookup` (the package keeps its "no dictionaries" invariant — the lexicon arrives only via the factory). The intent stage lives in `core` as a new optional `stages.poiIntent`; `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline (mis-detection safety valve). Assembly happens in `mailwoman/`: the `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with a recursion-guarded anchor re-parse. Brand subjects: the `POIIntent` contract includes the brand variant now, but Plan 2 wires **category** detection only — the brand table (Wikidata QIDs) is Plan 3 data work.
 
-**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. No new dependencies except workspace edges: `kind-classifier` gains NOTHING; `mailwoman` gains `@mailwoman/poi-taxonomy`.
+**Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. No new dependencies except workspace edges: `kind-classifier` gains nothing; `mailwoman` gains `@mailwoman/poi-taxonomy`.
 
 ## Global Constraints
 
@@ -19,8 +19,8 @@
    */
   ```
 - `erasableSyntaxOnly`; tabs; relative imports with explicit `.ts` extensions; acronym casing (`categoryID`, `osmTag`, `emitOverpassQL`); DB/wire snake_case rule does not apply here (no DB).
-- **Byte-identity invariant:** with `poiQueryKind` unset/false, no code path may alter any existing result — the default `classifyKind` export must be untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be ABSENT (optional field never set), not `undefined`-valued.
-- `kind-classifier` must NOT import `@mailwoman/poi-taxonomy` (dependency direction: lexicon is injected). `core` must NOT import it either. Only `mailwoman/` may.
+- **Byte-identity invariant:** with `poiQueryKind` unset/false, no code path may alter any existing result — the default `classifyKind` export must be untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be absent (optional field never set), not `undefined`-valued.
+- `kind-classifier` must not import `@mailwoman/poi-taxonomy` (dependency direction: lexicon is injected). `core` must not import it either. Only `mailwoman/` may.
 - Both exports maps rule applies to any new subpath (none planned — new mailwoman files are internal modules re-exported from `mailwoman/index.ts` only if a task says so).
 - Work in `/home/lab/Projects/mailwoman-exotic-poi`, branch `feat/poi-pipeline` (based on post-#1180 main; installed + compiled).
 - Commits verified with `git log -1 --oneline` (never pipe commit output); every commit message ends with:
@@ -323,7 +323,7 @@ describe("lookup without a locale", () => {
 - [ ] **Step 2: Run to verify failure**
 
 Run: `yarn vitest run poi-taxonomy/lookup.test.ts`
-Expected: the osmTag test FAILS (`osmTag missing on hospital`); the no-locale test may already pass — that is fine, it is a pin, not a change.
+Expected: the osmTag test fails (`osmTag missing on hospital`); the no-locale test may already pass — that is fine, it is a pin, not a change.
 
 - [ ] **Step 3: Add the field to `poi-taxonomy/types.ts`** (in `CategoryRecord`, after `basicLabel`):
 
@@ -606,7 +606,7 @@ export function createScorePOIQuery(
 }
 ```
 
-- [ ] **Step 4: Add the factory to `kind-classifier/classify.ts`** (append after `classifyKind`; do NOT modify the existing exports):
+- [ ] **Step 4: Add the factory to `kind-classifier/classify.ts`** (append after `classifyKind`; do not modify the existing exports):
 
 ```ts
 /** Options for {@link createKindClassifier}. */
@@ -663,7 +663,7 @@ In `kind-classifier/index.ts`, re-export following the file's existing style: `c
 - [ ] **Step 6: Run tests**
 
 Run: `yarn vitest run kind-classifier/`
-Expected: new file PASS (9 tests) + all pre-existing kind-classifier tests still green.
+Expected: new file pass (9 tests) + all pre-existing kind-classifier tests still green.
 
 - [ ] **Step 7: Format and commit**
 
@@ -1124,7 +1124,7 @@ git log -1 --oneline
 
 - [ ] **Step 1: Debug surface**
 
-In `mailwoman/commands/parse.tsx`, locate where the debug JSON includes `kind` (≈line 648). Add `poiIntent` alongside, same conditional style the file uses for optional result fields — the field must appear ONLY when present on the result (never `"poiIntent": undefined`). Mirror the surrounding code exactly; this is a one-to-three-line change.
+In `mailwoman/commands/parse.tsx`, locate where the debug JSON includes `kind` (≈line 648). Add `poiIntent` alongside, same conditional style the file uses for optional result fields — the field must appear only when present on the result (never `"poiIntent": undefined`). Mirror the surrounding code exactly; this is a one-to-three-line change.
 
 - [ ] **Step 2: Flag-register row**
 
@@ -1157,7 +1157,7 @@ git log -1 --oneline
 - [ ] **Step 1:** `yarn compile` — zero errors.
 - [ ] **Step 2:** `yarn vitest run core/pipeline/ kind-classifier/ poi-taxonomy/ mailwoman/poi-intent.test.ts mailwoman/poi-overpass.test.ts` — all green (expect ≈ 5 + 9 existing-kind-classifier-suite + 9 taxonomy + 7 + 5 new, plus pre-existing core/pipeline suites).
 - [ ] **Step 3:** `yarn vitest run mailwoman/` — the full mailwoman suite stays green (byte-identity check for the flag-off surface; note `yarn compile` must have run first — CLI tests exec compiled out/).
-- [ ] **Step 4:** `yarn lint` — clean for branch files (pre-existing warnings in `mailwoman/commands/gazetteer/{importance,inspect/placetype-stats}.tsx` are NOT ours — leave them).
+- [ ] **Step 4:** `yarn lint` — clean for branch files (pre-existing warnings in `mailwoman/commands/gazetteer/{importance,inspect/placetype-stats}.tsx` are not ours — leave them).
 - [ ] **Step 5:** `git status --short` clean, `git push -u origin feat/poi-pipeline`.
 
 ---
@@ -1165,5 +1165,5 @@ git log -1 --oneline
 ## Execution notes
 
 - Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form — it reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
-- Deferred to Plan 3 (do NOT build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
-- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time, not merge time (flag ships OFF; register row records the promotion check).
+- Deferred to Plan 3 (do not build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
+- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time, not merge time (flag ships off; register row records the promotion check).

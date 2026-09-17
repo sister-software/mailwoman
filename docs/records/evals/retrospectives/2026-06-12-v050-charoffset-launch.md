@@ -3,7 +3,7 @@
 Continuation of the night-12 build session. The build finished and validated; this shift's job was
 to get the first model TRAINING on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
 that should have been caught earlier and routing around a Modal volume consistency failure. Training
-completed all 40k steps and the check ran: **the bridge-retirement test PASSES** (po_box 90 bridge-OFF
+completed all 40k steps and the check ran: **the bridge-retirement test passes** (po_box 90 bridge-OFF
 ≥ 89.1, intrinsic). 15/17 tags hold flat-or-better actual-vs-actual; the one real casualty is
 fr.house_number, **−8.1pp vs v4.4.0's actual 97.7** (the check floor of 91 understated it). Held
 experimental — hold promotion pending #560.
@@ -20,8 +20,8 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 - **16/17 floors pass**, several beaten: us.micro 85.4 (▲81.6), locality 74.1 (▲62.2), region 89.5
   (▲80.1), unit_real 97, fr.cedex_real 96.7, intersection_real 100, de.native_locality 91.
 - **One real miss — and bigger than the floor implies:** `fr.house_number` 89.6. The check FAILs the
-  floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 actually measured 97.7**, so the
-  true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so a genuine
+  floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 measured 97.7**, so the
+  true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so an actual
   char-offset-format regression isolated to FR house_number, not a bridge-off cost. Anchoring to the
   floor first understated it — the actual-vs-actual read is what matters. Model held experimental,
   NOT promoted; **hold promotion** until the FR house_number cause is understood (#560). The
@@ -94,7 +94,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
    numeric floors before the check is authoritative. Operator/DeepSeek to pin.
 3. ~~Will char-offset hold v4.4.0 parity?~~ **MOSTLY: 15/17 tags flat-or-better actual-vs-actual**,
    bridge retired at zero cost (po_box intrinsic 90 > v4.4.0 bridged 89.1). The one real casualty is
-   **fr.house_number −8.1pp** (97.7 → 89.6, #560) — a genuine char-offset regression, NOT noise and
+   **fr.house_number −8.1pp** (97.7 → 89.6, #560) — an actual char-offset regression, not noise and
    NOT the bridge. Lesson re-learned: grade actual-vs-actual, not vs the conservative floor (which
    said −1.4pp and nearly let an 8pp regression read as trivial).
 4. **Trackio Space** needs waking if a live dashboard is wanted for this and future runs.
@@ -102,7 +102,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 ## Concrete next steps
 
 - **When the run finishes (~4h):** run the full battery against the final checkpoint with the
-  `v0.5.0-bridge` check (bridge OFF). The decisive read: does `us.po_box_real` hold ≥89.1 bridge-off?
+  `v0.5.0-bridge` check (bridge off). The decisive read: does `us.po_box_real` hold ≥89.1 bridge-off?
   If yes → retire the decode-side span bridge. If no → keep it, flip `requires_bridge:true` for the
   ship check, treat as a MISS (don't re-baseline). Compare every tag against v4.4.0 — format-only
   change should be ~flat.
@@ -121,7 +121,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 | Models trained              | 1 (v1.4.0-charoffset, completed 40k steps)                                                                                                                 |
 | A100 spend before launch    | 0 (held on the volume issue)                                                                                                                               |
 | Training rate               | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total                                                                                                   |
-| Check verdict               | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
+| Check verdict               | fail (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement pass (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
 | Bridge                      | confirmed no-op (bridge-on == bridge-off on every tag) → retire                                                                                            |
 | Infra incidents             | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2)                                                                                     |
 | NaN incidents               | 0                                                                                                                                                          |

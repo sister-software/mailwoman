@@ -1,6 +1,6 @@
 # `poiQueryKind` promotion battery — golden 2pp + demo presets + POI board
 
-**Date:** 2026-07-20. **Flag:** `poiQueryKind` (`CreateRuntimePipelineOpts`, default OFF — see
+**Date:** 2026-07-20. **Flag:** `poiQueryKind` (`CreateRuntimePipelineOpts`, default off — see
 [runtime-flag register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/runtime-flags.mdx)). **Status: report only.** No
 default was flipped by this work; the numbers below are for the operator's promotion decision.
 
@@ -85,7 +85,7 @@ Script: `scratchpad/poi-battery/leg2-demo-presets.ts` (gitignored).
 
 ## Leg 3 — POI board
 
-Already fresh; not re-run (would just re-derive numbers already committed 2026-07-20). Cited
+Already fresh; not re-run (wouldre-derive numbers already committed 2026-07-20). Cited
 from [`2026-07-20-poi-query-board-v1.1-brand-lexicon.md`](./2026-07-20-poi-query-board-v1.1-brand-lexicon.md):
 
 ```

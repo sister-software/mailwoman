@@ -29,7 +29,7 @@ such lookups (situs by postcode, situs by locality fallback, interp), so the dat
 handful of round-trips ≈ low-hundreds of KB, RTT-bound (~350 ms/query same-region from the spike), not
 byte-bound.
 
-### One data-layer tuning note
+### One data layer tuning note
 
 The situs extracts are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
 chunks (16 pages). A situs point lookup touches ~6 _scattered_ B-tree pages, so it lands in a few
@@ -133,7 +133,7 @@ The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggest
 counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
 _locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
 → "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
-extracts, not the admin FST. Three honest options, in increasing cost:
+extracts, not the admin FST. Three direct options, in increasing cost:
 
 1. **Place-level typeahead only** (ship now): wire the existing FST autocomplete into the search box.
    Suggests cities/regions; the user types the full street themselves. Lowest cost, real value.

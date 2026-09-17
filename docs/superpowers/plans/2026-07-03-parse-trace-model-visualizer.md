@@ -1,4 +1,4 @@
-> **Point-in-time design record.** The embedded code listings are the plan as written, NOT the shipped code —
+> **Point-in-time design record.** The embedded code listings are the plan as written, not the shipped code —
 > several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap window). The
 > shipped files are canonical; read this for intent and sequencing only.
 
@@ -1554,7 +1554,7 @@ export function LiveModelVisualizer(): JSX.Element {
 
 Implementation notes:
 
-- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured, not a string) — adjust the loading line to whatever the context actually exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
+- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured, not a string) — adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
 - `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null` — the optional `traceParse` added in Task 3 makes the feature-detect type-check.
 
 - [ ] **Step 2: Implement the page**

@@ -17,7 +17,7 @@ wiring): `.superpowers/sdd/task-8-prep-report.md`.
 > - golden us micro within ±0.7pp of v385 (probe-2 missed by 0.1pp — must recover)
 > - golden fr micro within ±0.7pp of v385
 > - FR-fragment BARE-LOCALITY class ≥ 0.90 (v385 baseline 0.978; probe-2 collapsed to 0.603 — the
->   composite board number is NOT the bar; this class is)
+>   composite board number is not the bar; this class is)
 > - digit board bare-street-hn flat vs 0.902 (probe-1/2 level; v385 fresh baseline 0.755)
 > - 6 demo presets byte-identical to v385
 > - val macro_f1 within 1.0pp of v385's 0.7047
@@ -41,7 +41,7 @@ v385's own fresh-measured baseline, taken in the same session on the same board:
 | feed-8k (candidate)                  |                                         0.868 [0.831, 0.897] |
 | Δ                                    |                                                  **+11.3pp** |
 | old bar (0.902, probe-anchor)        | historical context only — CI excludes it, not the active bar |
-| **result**                           |                        **PASS** (bar restated against 0.755) |
+| **result**                           |                        **pass** (bar restated against 0.755) |
 
 The 0.902 probe-anchor number is retained in this record as historical context; it is not the bar
 this ship decision was graded against.
@@ -94,7 +94,7 @@ avoids it and beats v385's own 0.983.
 |                                         |              feed-2k |              feed-8k |
 | --------------------------------------- | -------------------: | -------------------: |
 | bare-street-hn                          | 0.890 [0.856, 0.917] | 0.868 [0.831, 0.897] |
-| flat vs the RETIRED 0.902 probe-anchor? | YES (CI brackets it) |  NO (CI excludes it) |
+| flat vs the RETIRED 0.902 probe-anchor? | yes (CI brackets it) |  NO (CI excludes it) |
 | vs the REVISED bar (v385 fresh 0.755)   |              +13.5pp |   **+11.3pp — PASS** |
 | OVERALL                                 |  0.915 [0.903,0.926] |  0.907 [0.895,0.918] |
 
@@ -141,7 +141,7 @@ re-buries the tag by step 8000 — `docs/articles/evals/2026-07-22-night-en-gb-p
 | feed-8k | 5.0 | 48/6500 | 0.738% |
 
 Both well under the retired δ=6.0 working number (122/6,500, 1.877%). Not the pre-registered FP=0
-bar — the residual is a single, honestly-characterized class (a venue that IS, verbatim, its own
+bar — the residual is a single, directly-characterized class (a venue that IS, verbatim, its own
 bare census child) — but substantially smaller than what was previously shipped as the working
 number.
 
@@ -170,11 +170,11 @@ number.
 |                                    7 |               98.9% |       2.062% |
 
 FP grows **monotonically** with δ for both checkpoints (roughly 6–10× from δ=3 to δ=7) — δ is a
-genuine recall/FP dial, not a free lunch; the smallest δ clearing the recall bar is required.
+actual recall/FP dial, not a free lunch; the smallest δ clearing the recall bar is required.
 
 ### 6 demo presets
 
-Both checkpoints, both weights worlds (en-us control path AND en-gb weights with the prior ON @
+Both checkpoints, both weights worlds (en-us control path and en-gb weights with the prior ON @
 δ\*), all 6 presets, vs the fresh v385-en-us baseline: **ALL byte-identical, every combination.**
 
 ### Full error-analysis vs v385, per tag (2pp rule)
@@ -193,7 +193,7 @@ Both checkpoints, both weights worlds (en-us control path AND en-gb weights with
 | **Exact-match**    | 1150/4561 (25.2%) | 1152/4561 (25.3%) |  +0.02pp | 1147/4561 (25.1%) |  −0.07pp |
 
 Worst mover: feed-2k venue −1.7pp; feed-8k street −1.5pp. **No tag regresses >2pp for either
-checkpoint** — both PASS this leg cleanly.
+checkpoint** — both pass this leg directly.
 
 ---
 
@@ -231,11 +231,11 @@ Not run by Task 6 or Task 7; this task closed that gap and found a real ship blo
 | Layer           | feed-8k verdict        | Detail                                                                                                                                                                                                                                        |
 | --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | regression      | PASS                   | 33/33 counted cases; 1 tracked known_fail now passes (should be promoted to `status=pass`)                                                                                                                                                    |
-| **metamorphic** | **FAIL**               | NEW violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 HOLDS this exact case (confirmed same session, same board) |
-| held-out        | PASS                   | z=0.00 (candidate not significantly worse), n=300 fresh FR/BAN draw                                                                                                                                                                           |
-| **combined**    | **FAIL — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                |
+| **metamorphic** | **FAIL**               | new violation: `INV[comma-drop]` — `"1600 Pennsylvania Ave NW, Washington DC 20500"` → comma-dropped form loses the rooftop resolution entirely (38.8977,-77.0365 → **0,0**). v385 HOLDS this exact case (confirmed same session, same board) |
+| held-out        | PASS                   | z=0.00 (candidate not by a measured margin worse), n=300 fresh FR/BAN draw                                                                                                                                                                    |
+| **combined**    | **fail — do not ship** | per the recipe's own pre-registered ship check                                                                                                                                                                                                |
 
-**This is not checkpoint-specific.** feed-2k independently FAILS the same layer with DIFFERENT
+**This is not checkpoint-specific.** feed-2k independently fails the same layer with different
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
 Avenue, New York, NY"` 283.5km away (a different state entirely). Two different checkpoints from
 the same training lineage, two different NY/DC-class admin-resolution robustness regressions — the
@@ -272,20 +272,20 @@ a tiebreaker between the two.
 
 | Bar                                                    | feed-2k                                                                                                      | feed-8k                                                                                           |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| Golden us micro ±0.7pp of v385                         | PASS (−0.6pp)                                                                                                | PASS (−0.5pp)                                                                                     |
+| Golden us micro ±0.7pp of v385                         | pass (−0.6pp)                                                                                                | pass (−0.5pp)                                                                                     |
 | Golden fr micro ±0.7pp of v385                         | outside magnitude, favorable (+0.9pp)                                                                        | outside magnitude, favorable (+1.2pp)                                                             |
-| FR-fragment `bare-locality` ≥ 0.90                     | **FAIL (0.665)**                                                                                             | **PASS (0.988)**                                                                                  |
-| Digit `bare-street-hn`, revised bar (v385 fresh 0.755) | PASS (+13.5pp)                                                                                               | PASS (+11.3pp)                                                                                    |
+| FR-fragment `bare-locality` ≥ 0.90                     | **fail (0.665)**                                                                                             | **pass (0.988)**                                                                                  |
+| Digit `bare-street-hn`, revised bar (v385 fresh 0.755) | pass (+13.5pp)                                                                                               | pass (+11.3pp)                                                                                    |
 | val macro_f1 ±1.0pp of 0.7047                          | unmeasurable (log truncated)                                                                                 | ambiguous magnitude, favorable direction (+1.29pp)                                                |
-| GB dep-loc, full pipeline, prior ON @ δ\*              | PASS (67/69, 97.1%) — tie                                                                                    | PASS (67/69, 97.1%) — tie                                                                         |
+| GB dep-loc, full pipeline, prior ON @ δ\*              | pass (67/69, 97.1%) — tie                                                                                    | pass (67/69, 97.1%) — tie                                                                         |
 | GB dep-loc, comma-stripped                             | inert (0/69, documented v1 trade) — tie                                                                      | inert (0/69, documented v1 trade) — tie                                                           |
 | NZ dep-loc (checkpoint only)                           | 0/246 — tie                                                                                                  | 0/246 — tie                                                                                       |
 | ES dep-loc (checkpoint only)                           | 9/65 (13.8%)                                                                                                 | 7/65 (10.8%) — feed-2k ahead                                                                      |
 | FR-lieudit dep-loc (checkpoint only)                   | 0/80                                                                                                         | 1/80 (1.25%) — feed-8k ahead                                                                      |
 | Venue-confound FP @ own δ\*                            | 0.569% (37/6500)                                                                                             | 0.738% (48/6500) — feed-2k lower                                                                  |
 | 6 demo presets byte-identical (both weights worlds)    | PASS                                                                                                         | PASS                                                                                              |
-| Error-analysis, no tag >2pp                            | PASS (worst venue −1.7pp)                                                                                    | PASS (worst street −1.5pp)                                                                        |
-| **Gauntlet (NEW, Task 8)**                             | **FAIL** (`BAND[num-ordinal]`/`INV[comma-drop]`/`INV[abbrev]`, "350 Fifth Avenue, New York, NY" 283.5km off) | **FAIL** (`INV[comma-drop]`, "1600 Pennsylvania Ave NW, Washington DC 20500" loses rooftop → 0,0) |
+| Error-analysis, no tag >2pp                            | pass (worst venue −1.7pp)                                                                                    | pass (worst street −1.5pp)                                                                        |
+| **Gauntlet (NEW, Task 8)**                             | **fail** (`BAND[num-ordinal]`/`INV[comma-drop]`/`INV[abbrev]`, "350 Fifth Avenue, New York, NY" 283.5km off) | **fail** (`INV[comma-drop]`, "1600 Pennsylvania Ave NW, Washington DC 20500" loses rooftop → 0,0) |
 
 **Ship checkpoint (operator-ratified 2026-07-23): feed-8k.** Reasoning carried from Task 7 — the
 FR-fragment miss is the more dangerous failure class (fires on any bare-locality input, any
@@ -312,14 +312,14 @@ applies to both candidates and was not part of the original six pre-registered g
 
 ## Postscript — consolidation verdict (2026-07-23, same day, after this scorecard)
 
-The Gauntlet finding above was not left open indefinitely: the operator authorized ONE
+The Gauntlet finding above was not left open indefinitely: the operator authorized one
 pre-registered repair attempt per the arc's treadmill guard, `v3.11.1-deploc-consolidate` — resume
 feed-8k +2k steps at a damped classifier learning rate, targeting the comma-drop regression
 mechanistically (the resurrection change that likely over-fit the comma-structured dep-loc extracts).
 
 **CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
 10k checkpoints — a stable learned behavior, not training-run churn that a couple more steps would
-wash out. Every OTHER guard still PASSES at 10k, including golden-us (at a 0.06pp margin), but the
+wash out. Every other guard still passes at 10k, including golden-us (at a 0.06pp margin), but the
 one regression this run existed to fix did not move at all.
 
 **STOP RULE EXECUTED.** Per the recipe's own pre-registration ("no knob iteration inside this
@@ -340,13 +340,13 @@ this arc's own documented GB comma-stripped-input inertness trade (segment-mode'
 prior, the PIX1 index, and the release-path packaging are all correct and composed correctly with
 the currently-shipped v385 base (the prior is inert-but-ready: `neural-weights-en-gb` ships no
 model of its own by design, so shipping the code introduces no behavior change until an operator
-explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a NEW,
+explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a new,
 separately pre-registered recipe: **v3.12**, sketched at
 `docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
 extended to the new locale extracts (the augmentation implementation already exists from v381), blocked on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
-lockstep — read it, not just this scorecard, for the authoritative current status.
+lockstep — read it, notthis scorecard, for the authoritative current status.
 
 ---
 
@@ -375,7 +375,7 @@ uniform-deficit shape replicates cross-country: NZ gap mean 7.8 logits vs GB 7.0
 plus the identical-adjacent-segment (x,x) rule for NZ's repeated-name convention ("Mangawhai,
 Mangawhai" — 21.6% of NZ register names carry identity pairs; GB has zero, verified). NZ board:
 246/246 emit + tag-correct as-written (100%), 244/246 comma-free. E2E verified off the public
-registry, both probe paths. Venue precision on REAL data (6,500 Overture NZ rows, synthetic
+registry, both probe paths. Venue precision on real data (6,500 Overture NZ rows, synthetic
 interim retired): segment 3.569%, anchored 1.354% in the shipped no-anchor-bin configuration
 (corrected same-night from a borrowed-cache 0.862% — measurement context matters and gets
 documented, not buried).

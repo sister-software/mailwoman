@@ -304,7 +304,7 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
 }
 
 /**
- * Merge authoring files into one document, and validate the result.
+ * Merge authoring files into one document, then validate the merged document.
  *
  * The files are sorted by path before anything is read, so any enumeration order produces the same tables in the same
  * order. Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file; returns nothing
@@ -390,7 +390,7 @@ async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
 }
 
 /**
- * Load a model directory: read every `*.json` file under it, merge them, and validate the result.
+ * Load a model directory: read every `*.json` file under it, merge them, and validate the merged document.
  *
  * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
  */

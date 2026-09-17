@@ -117,7 +117,7 @@ A lazy, awaitable, disposable wrapper. `Service<T>` implements
   `Function.prototype.toString().startsWith("class")` tiebreak — an
   inherited-disposable subclass is never invoked without `new` (the old
   `Object.hasOwn(prototype, …)` check crashed on exactly that case).
-- **Honest proxy types.** The method-resolver proxy survives, but non-function
+- **direct proxy types.** The method-resolver proxy survives, but non-function
   properties are typed as what the runtime returns — thunks:
 
 ```ts
@@ -262,7 +262,7 @@ Traceability from the 2026-07-18 `core/lifecycle` review:
 
 Vitest; every ledger row and every error code gets a test. Enumerated targets:
 
-- Double-dispose guard actually blocks (mark + isDisposed round-trip)
+- Double-dispose guard blocks (mark + isDisposed round-trip)
 - Inherited-disposable class resolves via `new` (no bare-call crash)
 - Concurrent `await service` constructs exactly one instance; failed resolve retries
 - All resolver forms run `[asyncInit]` with context

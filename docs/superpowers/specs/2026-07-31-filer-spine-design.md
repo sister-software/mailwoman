@@ -8,7 +8,7 @@ do they physically hold?_ Absorbs the 2c provider registry (see §7).
 ## 1. The problem
 
 US telecom identity is deliberately fragmented across a dozen public registries that do not join
-cleanly. A single operating company can appear as: an FRN in CORES, a 499 Filer ID with a separately
+directly. A single operating company can appear as: an FRN in CORES, a 499 Filer ID with a separately
 named holding company, a SPIN at USAC, a six-digit provider ID in BDC, an OCN in NECA/LERG, an ASN
 at ARIN, a CIK at the SEC, a state CPCN per state, and a dozen DBAs in marketing. Nothing publishes
 the crosswalk. The opacity is required for the incumbents: a census block showing "five
@@ -31,7 +31,7 @@ to, and what the public record physically supports.
 2. **Disclosure, never accusation.** The product says "these five filers report the same holding
    company" or "no license or registered structure corroborates this claim in this county." It never
    says a filer is deceptive, fraudulent, or lying. Intent is not in the record and not ours to
-   assert. This is both the honest posture and the legal one.
+   assert. This is both the direct posture and the legal one.
 3. **Absence is not impossibility.** Unlicensed operation is lawful and common — CBRS GAA, 5/6 GHz
    unlicensed backhaul, leased fiber, wholesale/resale, and roaming all produce real service with no
    license, no structure, and no facility in the operator's own name. "No corroborating nexus found"
@@ -41,19 +41,19 @@ to, and what the public record physically supports.
 
 ## 3. Identifier inventory
 
-| Identifier                  | Registry                           | Public?                     | Join value                                                                                 | Notes                                                                                                                      |
-| --------------------------- | ---------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **FRN**                     | FCC CORES                          | Yes, bulk                   | **The hub.** Nearly every other FCC identity hangs off it                                  | 10-digit; entity + address + contact                                                                                       |
-| **499 Filer ID**            | FCC/USAC Form 499 filer database   | Yes, published file         | **Highest-value single file**: carries FRN, legal name, _holding company_, contacts        | The trench-coat decoder for carriers                                                                                       |
-| **SPIN (498 ID)**           | USAC                               | Yes                         | USF disbursements ↔ entity                                                                 | Ties subsidy money to filer                                                                                                |
-| **BDC provider_id**         | FCC BDC                            | Yes                         | Already in `bdc.db.provider_id`; `bdc_provider` sidecar exists unpopulated (2a task 7)     | The landing table is already built                                                                                         |
-| **ASR number**              | FCC Antenna Structure Registration | Yes, bulk + **coordinates** | **The crown jewel for physical nexus**: structure lat/lon + owner FRN                      | Registered structures only (height/lighting thresholds)                                                                    |
-| **ULS license**             | FCC Universal Licensing System     | Yes, weekly bulk            | Spectrum authority by FRN + geography; Part 101 microwave paths are strong backhaul signal | Enormous; scope by service code                                                                                            |
-| **ASN / org**               | ARIN, PeeringDB                    | Yes, API                    | Routing reality; PeeringDB `fac` gives facility presence                                   | This is C6's substrate — same spine                                                                                        |
-| **CIK**                     | SEC EDGAR                          | Yes, API                    | Public-company identity; **Exhibit 21 = literal subsidiary list**                          | Only covers public parents                                                                                                 |
-| **OCN**                     | NECA                               | Partially                   | ILEC/CLEC identity, LERG                                                                   | Licensing on bulk LERG is restrictive — verify                                                                             |
-| **EIN**                     | IRS                                | **Mostly NOT public**       | —                                                                                          | Public only via SEC cover pages and **nonprofit 990s** (which do cover many rural co-op ISPs). Do not promise EIN coverage |
-| **State CPCN / SOS entity** | 50 state registries                | Heterogeneous               | Registered agent + officer names often reveal family                                       | Per-state scrapers; OpenCorporates licensing is restrictive — verify before use                                            |
+| Identifier                  | Registry                           | Public?                     | Join value                                                                                 | Notes                                                                                                                         |
+| --------------------------- | ---------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| **FRN**                     | FCC CORES                          | Yes, bulk                   | **The hub.** Nearly every other FCC identity hangs off it                                  | 10-digit; entity + address + contact                                                                                          |
+| **499 Filer ID**            | FCC/USAC Form 499 filer database   | Yes, published file         | **Highest-value single file**: carries FRN, legal name, _holding company_, contacts        | The trench-coat decoder for carriers                                                                                          |
+| **SPIN (498 ID)**           | USAC                               | Yes                         | USF disbursements ↔ entity                                                                 | Ties subsidy money to filer                                                                                                   |
+| **BDC provider_id**         | FCC BDC                            | Yes                         | Already in `bdc.db.provider_id`; `bdc_provider` sidecar exists unpopulated (2a task 7)     | The landing table is already built                                                                                            |
+| **ASR number**              | FCC Antenna Structure Registration | Yes, bulk + **coordinates** | **The crown jewel for physical nexus**: structure lat/lon + owner FRN                      | Registered structures only (height/lighting thresholds)                                                                       |
+| **ULS license**             | FCC Universal Licensing System     | Yes, weekly bulk            | Spectrum authority by FRN + geography; Part 101 microwave paths are strong backhaul signal | Enormous; scope by service code                                                                                               |
+| **ASN / org**               | ARIN, PeeringDB                    | Yes, API                    | Routing reality; PeeringDB `fac` gives facility presence                                   | This is C6's substrate — same spine                                                                                           |
+| **CIK**                     | SEC EDGAR                          | Yes, API                    | Public-company identity; **Exhibit 21 = literal subsidiary list**                          | Only covers public parents                                                                                                    |
+| **OCN**                     | NECA                               | Partially                   | ILEC/CLEC identity, LERG                                                                   | Licensing on bulk LERG is restrictive — verify                                                                                |
+| **EIN**                     | IRS                                | **Mostly not public**       | —                                                                                          | Public only via SEC cover pages and **nonprofit 990s** (which do cover several rural co-op ISPs). Do not promise EIN coverage |
+| **State CPCN / SOS entity** | 50 state registries                | Heterogeneous               | Registered agent + officer names frequently reveal family                                  | Per-state scrapers; OpenCorporates licensing is restrictive — verify before use                                               |
 
 ### 3.1 Form 499 — the column vocabulary (read from Nexus, 2026-07-31)
 
@@ -67,7 +67,7 @@ dcAgentEmailAddress · dcAgentAddress`
 
 Three findings that change the design:
 
-1. **There are TWO family fields, not one** — `holdingCompany` _and_ `managementCompany`. They differ
+1. **There are two family fields, not one** — `holdingCompany` _and_ `managementCompany`. They differ
    in kind (ownership vs operational control) and both deserve typed edges rather than being collapsed.
 2. **`principalCommType` is a free classification signal** — the Nexus code maps it to
    Incumbent LEC / CLEC / Interexchange / Toll Reseller. Port the mapping; it tells you what _kind_ of
@@ -124,7 +124,7 @@ tables. Row grain: one row per identifier node, one per edge, one per family mem
 
 ### 4.3 Physical nexus
 
-The query the operator actually wants — _point at a structure, get the picture_ — composes:
+The query the operator wants — _point at a structure, get the picture_ — composes:
 
 1. Structure → owner: ASR (authoritative, coordinates in the record) or 2b's OSM infra layer
    (build-local, no ownership) or PeeringDB `fac` (facility ↔ networks present).
@@ -139,7 +139,7 @@ The query the operator actually wants — _point at a structure, get the picture
 ### 4.4 The competition view
 
 `competition(area)` returns filer count **and** family count, side by side, with the collapse
-explained edge by edge ("filers A, B, C report holding company H per 499 vintage X"). The honest
+explained edge by edge ("filers A, B, C report holding company H per 499 vintage X"). The direct
 headline is a ratio, not a verdict: _this block shows five filers and two families._ Where a family
 edge is inferred rather than documented, it is reported separately and never folded into the primary
 count.
@@ -149,7 +149,7 @@ count.
 The 499 filer database contains, in one row, both the authoritative FRN↔holding-company link **and**
 the messy legal/DBA name strings. That makes a **gold set for free**: hold out the authoritative
 field, run the fuzzy matcher over names + addresses, and measure precision/recall against ground
-truth at real scale (thousands of filers, genuine corporate-name pathology — shells, numerals,
+truth at real scale (thousands of filers, actual corporate-name pathology — shells, numerals,
 "Inc" vs "Incorporated", d/b/a chains). This is a publishable record-linkage eval on public data,
 which is a positioning artifact in its own right (Track E) and stresses `match`/`record` harder than
 any synthetic corpus.
@@ -191,7 +191,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 - **D4 — Federal-only for v1; no state registries.** Controller call. Fifty heterogeneous scrapers
   provide the long tail of small privately-held operators — precisely where the corporate-family question
   is least interesting (a single-county WISP is not a national carrier in a trench coat). The federal
-  pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is actually about.
+  pair (499 holding company + EDGAR Exhibit 21) covers the entities the analysis is about.
   OpenCorporates is excluded by the same call, which moots its licensing question for v1.
 - **D5 — Publication posture: split the two artifacts.** Controller call. The **record-linkage eval**
   (§5) is publishable early and safely — it is a methods result about matching, naming no company's
@@ -201,7 +201,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 - **D6 — EIN dropped from the spine.** Controller call. Mostly non-public; CIK + FRN already carry
   the joining load. Retained opportunistically as an attribute where a source hands it over (SEC
   cover pages, 990s); no dedicated ingest. A 990 pass can be reconsidered if rural co-ops become a
-  focus, since that is where it would actually pay.
+  focus, since that is where it would pay.
 - **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
   public domain, so **Phase 3 is not blocked on counsel** — unlike the Fabric question hanging over 2a.
   PeeringDB (API terms) is a 3c/C6-time check; LERG/OCN and OpenCorporates are out of scope by D4.
@@ -216,7 +216,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 
 ## 10. Carried into 3b from 3a (2026-07-31)
 
-- **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. Genuine discovery — two filings that _are_ one company but share no identifier — needs evidence beyond the canonical name. 3b has it: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
+- **Inferred linkage is degenerate in 3a and must be rebuilt on real corroboration.** 3a's identifier veto (added after an adversarial review found it merging "American Broadband LLC" with "American Broadband, Inc." across disjoint FRNs) is correct but structurally reduces pass (b) to "same authoritative component": identifier sets are derived per component, so sharing an identifier implies sharing a component by construction. actual discovery — two filings that _are_ one company but share no identifier — needs evidence beyond the canonical name. 3b has it: CORES parent/subsidiary fields, EDGAR Exhibit 21, plus normalized HQ address and contact phone/email from the 499 columns already parsed. Design the corroboration rule there; do not restore name-only linkage.
 - **Same-vintage supersession** for inferred edges (3a fix round 2) is the pattern transfer-of-control edges must follow when they land.
 
 ## 11. CORES access — corrected diagnosis (2026-07-31)
@@ -278,10 +278,10 @@ from here:
 | `d_tower.zip` | ~56 MB  | FAA determination database                         |
 
 Daily deltas follow `r_tow_<day>.zip` / `a_tow_<day>.zip` / `d_tow_<day>.zip`. Archives observed dated
-2026-07-28. The `pub/uls/complete/` tree also carries the Part 101 licence data D2 scoped us to, so
+2026-07-28. The `pub/uls/complete/` tree also carries the Part 101 license data D2 scoped us to, so
 **both of 3c's data dependencies resolve to one reachable directory.**
 
-**The ArcGIS FeatureServer is NOT the right source for us — do not adopt it.** It was suggested as an
+**The ArcGIS FeatureServer is not the right source for us — do not adopt it.** It was suggested as an
 easier alternative to the fixed-width archives, and it is easier, but two verified facts disqualify it:
 
 1. **It is a state subset, not national.** `asr_asr_OR` returns **351 features**; the national register

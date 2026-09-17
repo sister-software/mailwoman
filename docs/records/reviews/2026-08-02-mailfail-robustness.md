@@ -37,7 +37,7 @@ Four paths, because they behave differently and carry different risk:
 | **pipeline** | `createRuntimePipeline({ classifier })`, no resolver.                                                                                                                                             | `mailwoman parse`                                           |
 | **resolve**  | `createRuntimePipeline({ classifier, resolver })` over `admin-global-priority.db` (5.2 GB, FTS backend).                                                                                          | `mailwoman parse --resolve`                                 |
 
-The raw classifier defaults `enforceWordConsistency` to OFF; every measurement here passes
+The raw classifier defaults `enforceWordConsistency` to off; every measurement here passes
 `WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer runs.
 
 **Measurement scepticism.** The first resolve run reported zero garbage-to-coordinates, which would

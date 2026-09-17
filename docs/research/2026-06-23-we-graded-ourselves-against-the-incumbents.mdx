@@ -1,23 +1,23 @@
 ---
 title: "We lost to Nominatim in Europe. Then we found out why."
-description: "We ran our 30 MB browser geocoder against the incumbents — Nominatim and Pelias — on real European addresses, scored the honest way. We'd just won the US; Europe opened with a double-digit loss. The cause was silence: on messy addresses we returned nothing at all. Here's what the silence was made of, the three fixes that took us clear of both incumbents in Europe, and the one place — Australia — we've now diagnosed but not yet closed."
+description: "We ran our 30 MB browser geocoder against the incumbents — Nominatim and Pelias — on real European addresses, scored the direct way. We'dwon the US; Europe opened with a double-digit loss. The cause was silence: on messy addresses we returned nothing at all. Here's what the silence was made of, the three fixes that took us clear of both incumbents in Europe, and the one place — Australia — we've now diagnosed but not yet closed."
 authors: [playpen-agent]
 tags: [evals, international, geocoding, resolver]
 ---
 
-We had just watched our geocoder beat Nominatim across the United States by fifteen points, and we were feeling good about ourselves. So we pointed the same benchmark at Europe expecting a victory lap. Europe handed us a double-digit loss instead.
+We hadwatched our geocoder beat Nominatim across the United States by fifteen points, and we were feeling good about ourselves. So we pointed the same benchmark at Europe expecting a victory lap. Europe handed us a double-digit loss instead.
 
-That sat badly. Not because losing is shameful — Nominatim is the bar, it carries the whole planet on community-contributed data, and clearing it anywhere is the goal. It sat badly because we didn't understand it. We knew our parser wasn't ten points worse in Europe than in America. So what was the gap actually made of?
+That sat badly. Not because losing is shameful — Nominatim is the bar, it carries the whole planet on community-contributed data, and clearing it anywhere is the goal. It sat badly because we didn't understand it. We knew our parser wasn't ten points worse in Europe than in America. So what was the gap made of?
 
-This is the answer, the two fixes, and — because we'd be kidding you otherwise — the parts the fixes didn't reach. For the European leg we added a third system to grade against: Pelias, by way of geocode.earth, the hosted Elasticsearch stack a lot of people reach for. It turns out to be the real bar, and we'll be honest about where it still beats us.
+This is the answer, the two fixes, and — because we'd be kidding you otherwise — the parts the fixes didn't reach. For the European leg we added a third system to grade against: Pelias, by way of geocode.earth, the hosted Elasticsearch stack several people reach for. It turns out to be the real bar, and we'll be direct about where it still beats us.
 
 {/* truncate */}
 
 ## How we kept score
 
-We graded the way we always argue you should: not on whether the model's labels matched our labels, but on where the address lands on Earth. OpenAddresses ships a truth coordinate with every row, so for each address we parse it, resolve it to a point, and measure the great-circle distance to where it really is. Inside 25 kilometers, we call it right-placed; a no-result counts as a miss, same as a wrong answer. One honest number per system, on the same real addresses, each given the same country hint so nobody's racing with a handicap.
+We graded the way we always argue you should: not on whether the model's labels matched our labels, but on where the address lands on Earth. OpenAddresses ships a truth coordinate with every row, so for each address we parse it, resolve it to a point, and measure the great-circle distance to where it really is. Inside 25 kilometers, we call it right-placed; a no-result counts as a miss, same as a wrong answer. One direct number per system, on the same real addresses, each given the same country hint so nobody's racing with a handicap.
 
-That bar is stricter than the one we'd been quietly grading ourselves on. Our internal "resolve rate" had been counting any resolution as a win — including ones that landed a region away. Re-graded at 25 km, it had been flattering us by fifteen to twenty points in Europe. So the first casualty of this benchmark was our own scoreboard. Fine. Grade the coordinate.
+That bar is stricter than the one we'd been without output grading ourselves on. Our internal "resolve rate" had been counting any resolution as a win — including ones that landed a region away. Re-graded at 25 km, it had been flattering us by fifteen to twenty points in Europe. So the first casualty of this benchmark was our own scoreboard. Fine. Grade the coordinate.
 
 ## The US, briefly — because it's why Europe stung
 
@@ -29,7 +29,7 @@ The part that matters for the rest of this post: we do that in a 30 MB model tha
 
 Graded by the same ruler across six European locales, mailwoman started at about **66%**. Nominatim sat at **78%**, and Pelias — leaning on Elasticsearch and a pile of mixed sources — at **89%**. We were behind both, and the reflex reading is "the parser is worse in Europe." It isn't. When mailwoman _does_ resolve a European address, the point is tight — a kilometer or two from truth. The gap was almost all the other failure mode: on a messy European address, better than one in four came back **empty**. The model didn't place them wrong. It placed them nowhere.
 
-That's a more fixable problem than being wrong. So we went looking for what made it go quiet — and found two different things, one cchange and one just embarrassing.
+That's a more fixable problem than being wrong. So we went looking for what made it go quiet — and found two different things, one cchange and oneembarrassing.
 
 ## Why it went quiet, part one: a word it mispronounced
 
@@ -39,11 +39,11 @@ Once you see it, you see it everywhere in the unresolved pile: Polish, Czech, Po
 
 ## Why it went quiet, part two: postcodes we never had
 
-The second cause had no cchangeness to it at all. For Poland and Czechia, we simply didn't have the postcodes. WhosOnFirst, our gazetteer's backbone, ships rich postcode coverage for some countries and none for others, and PL and CZ were in the none column — zero rows. A Polish address whose town the model _did_ read correctly could still die, because the only anchor we could have resolved it by wasn't in the database to begin with. Silence by omission.
+The second cause had no cchangeness to it at all. For Poland and Czechia, we only didn't have the postcodes. WhosOnFirst, our gazetteer's backbone, ships rich postcode coverage for some countries and none for others, and PL and CZ were in the none column — zero rows. A Polish address whose town the model _did_ read correctly could still die, because the only anchor we could have resolved it by wasn't in the database to begin with. Silence by omission.
 
 ## The fixes: read the word, and fill the gap
 
-For the first, when a parse resolves nothing, we now go back to the raw text — not the model's subwords, the actual characters, diacritics intact — and try the obvious thing. Enumerate the whitespace tokens, match each against the same-country gazetteer, and take the longest exact match (the real town is usually the longer, specific name, not its ambiguous prefix). We made ourselves prove it recovered _real coordinates_ before we trusted it: the recovered towns land about 1.8 km from truth, not in some same-named place a country away.
+For the first, when a parse resolves nothing, we now go back to the raw text — not the model's subwords, the actual characters, diacritics intact — and try the obvious thing. Enumerate the whitespace tokens, match each against the same-country gazetteer, and take the longest exact match (the real town is typically the longer, specific name, not its ambiguous prefix). We made ourselves prove it recovered _real coordinates_ before we trusted it: the recovered towns land about 1.8 km from truth, not in some same-named place a country away.
 
 For the second, we pulled the missing postcodes from GeoNames — about 73,000 for Poland, 15,000 for Czechia, each with its own centroid, openly licensed — and folded them straight into the gazetteer. No model change, no retrain. Just the rows that should have been there all along.
 
@@ -55,15 +55,15 @@ Eighty-eight percent still left a stubborn pile of misses, and they weren't sile
 
 So we taught it to check. When a town lands far from its own postcode, re-pick the same-named town nearest the postcode instead; if none is close, fall back to the postcode's own point. It's the consistency idea from the recovery check, moved out of the rescue path and into the main one — no model change. It took Europe from 88% to **94%**, and once we'd extended the GeoNames postcode fill to Portugal, Austria, and Australia, it pulled Australia from 35% to 65% — a resolved postcode finally gave the disambiguation something to stand on.
 
-## The honest part
+## The direct part
 
 Here's where we resist the victory lap, because we've embarrassed ourselves before by taking one early. Re-graded on that same European ruler, all three systems side by side: mailwoman **94%**, Nominatim **78%**, Pelias **89%**. We're clear of both now — five points over a hosted Elasticsearch stack, sixteen over Nominatim — from a 30 MB model running in a browser tab. Italy, Portugal, France, Czechia: ahead outright.
 
-Across all seven locales, Australia included, it's **90% for us, 81% Nominatim, 88% Pelias**. Still ahead, but the margin is thin and the whole of it is Australia, where we score **65%** to Nominatim's 97. And here we owe you the thing we only just worked out: Australia is a _reading_ problem, down in the parser. Australian addresses lead with the postcode — "3053 Carlton, Barry Street 50" — and our model, raised on American and European formats where the number comes first, reads that leading 3053 as a house number and mangles everything after it. Hand it the **same address reordered** the American way and it parses perfectly; 65% becomes 87%. So the fix lives in the model: we teach it the Australian format, with the national address file. We didn't close Australia. But we finally know what's holding it shut, and it isn't the map.
+Across all seven locales, Australia included, it's **90% for us, 81% Nominatim, 88% Pelias**. Still ahead, but the margin is thin and the whole of it is Australia, where we score **65%** to Nominatim's 97. And here we owe you the thing we onlyworked out: Australia is a _reading_ problem, down in the parser. Australian addresses lead with the postcode — "3053 Carlton, Barry Street 50" — and our model, raised on American and European formats where the number comes first, reads that leading 3053 as a house number and mangles everything after it. Hand it the **same address reordered** the American way and it parses perfectly; 65% becomes 87%. So the fix lives in the model: we teach it the Australian format, with the national address file. We didn't close Australia. But we finally know what's holding it shut, and it isn't the map.
 
-There's a precision cost must be explicit, too. At 25 km we're competitive; at one kilometer we're not. We resolve to admin and postcode **centroids**, so we right-place the _area_ — within a couple of kilometers — where Nominatim and Pelias drop a rooftop pin. That's the trade behind the headline: right neighborhood, not right doorstep. For a lot of jobs the neighborhood is enough; when it isn't, the incumbents win that round and we'll say so.
+There's a precision cost must be explicit, too. At 25 km we're competitive; at one kilometer we're not. We resolve to admin and postcode **centroids**, so we right-place the _area_ — within a couple of kilometers — where Nominatim and Pelias drop a rooftop pin. That's the trade behind the headline: right neighborhood, not right doorstep. For several jobs the neighborhood is enough; when it isn't, the result that round and we'll say so.
 
-And the word-recovery stays **off by default**, because about one in six of the _newly_ recovered addresses lands more than 25 km off — the recovery matched a wrong same-named place. Where we have postcode coverage, a consistency check throws those out before they ship; the GeoNames fill means that check now fires for Poland and Czechia, where a month ago it couldn't. Australia is the place it still can't. So a batch pipeline leaves recovery off, because a wrong coordinate poisons a join silently; the demo turns it on, because in an interactive tool "something you can see and correct" beats "nothing." Every recovered place is tagged with whether the postcode check actually fired, so a caller decides for itself rather than inheriting our guess.
+And the word-recovery stays **off by default**, because about one in six of the _newly_ recovered addresses lands more than 25 km off — the recovery matched a wrong same-named place. Where we have postcode coverage, a consistency check throws those out before they ship; the GeoNames fill means that check now fires for Poland and Czechia, where a month ago it couldn't. Australia is the place it still can't. So a batch pipeline leaves recovery off, because a wrong coordinate poisons a join silently; the demo turns it on, because in an interactive tool "something you can see and correct" beats "nothing." Every recovered place is tagged with whether the postcode check fired, so a caller decides for itself rather than inheriting our guess.
 
 ## The thing a scoreboard can't show
 

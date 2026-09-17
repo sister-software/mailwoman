@@ -12,7 +12,7 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 
 ## What went well
 
-- The proven recipe (codex synth + format-diverse + real-OOD check + int8 value_info-strip) carried two more changes cleanly through build+check.
+- The proven recipe (codex synth + format-diverse + real-OOD check + int8 value_info-strip) carried two more changes directly through build+check.
 - Caught the **fold failure mode** fast (the affix 0% was a measurement artifact, not a training failure) — built the right tool instead of chasing a phantom.
 - The multi-locale country extract **recovered the affix FR-postcode dilution** (95.6→99.5) — the secondary design goal worked.
 - Front-loaded the scorecard during the affix train window; no idle.
@@ -25,9 +25,9 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 
 ## Decisions made autonomously
 
-1. **Held the affix promote** (check not cleanly passed; FR postcode −3.9 > 2pp) against DeepSeek's promote-rec — deferred to the operator via #462 rather than overriding their pre-registered check while offline.
+1. **Held the affix promote** (check not directly passed; FR postcode −3.9 > 2pp) against DeepSeek's promote-rec — deferred to the operator via #462 rather than overriding their pre-registered check while offline.
 2. **Country change as cumulative consolidation** (bakes unit+affix+country) — efficient in intent but it surfaced dilution + over-firing. The DeepSeek pro consult on the fork timed out (180s); I proceeded on the diagnosis. **Resolution (autonomous): redirect country from retrain to a deterministic tagger.** The deterministic probe (P=R=100) settled it — country is closed-vocab and trailing, so a `matchCountry` `ProposalClassifier` (#464) is the right tool, not another extract. Kept #463 as the exploration record rather than force-merging an over-firing model.
-3. **Held the v3 FR-fix as a committed-but-superseded artifact** rather than launching a v3 retrain — once the deterministic result landed, spending more GPU on the model path was unjustified. v3's corpus correctness fix (FR number-street order) is still committed for whoever revisits.
+3. **Held the v3 FR-fix as a committed-but-superseded artifact** rather than launching a v3 retrain — once the result, spending more GPU on the model path was unjustified. v3's corpus correctness fix (FR number-street order) is still committed for whoever revisits.
 
 ## Open questions for the operator
 

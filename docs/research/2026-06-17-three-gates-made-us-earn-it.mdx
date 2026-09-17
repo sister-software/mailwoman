@@ -15,7 +15,7 @@ shipping a fix that looks great on the headline and rots underneath.
 
 {/* truncate */}
 
-## The weakness with many faces
+## The weakness with several faces
 
 Boundary instability is what you get when two address components meet and the model puts the
 boundary in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
@@ -23,8 +23,8 @@ it `North Sydney NSW 2060` with the commas stripped out and the city and the sta
 each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
 absorbed into the name.
 
-For a while we filed a lot of this under "within-token punctuation" and blamed the apostrophes
-and hyphens. Then we actually measured that class, and the punctuation turned out to be innocent
+For a while we filed several this under "within-token punctuation" and blamed the apostrophes
+and hyphens. Then we measured that class, and the punctuation turned out to be innocent
 almost every time. `O'Connell` parses fine. `Coeur d'Alene` parses fine. What breaks is the
 boundary sitting right next to the punctuation, the same wobble wearing a different hat each
 time. One weakness, a dozen faces.
@@ -62,9 +62,9 @@ we'd burned a single GPU-hour on it. Australia came back out, the extract is bas
 now, and the slash convention got filed as its own job, the kind that has to bring its own base
 coverage to the table.
 
-## Check three: the city that was usually a street
+## Check three: the city that was typically a street
 
-Even with the extract confined to the locales we actually train on, the lint wasn't done with us.
+Even with the extract confined to the locales we train on, the lint wasn't done with us.
 Paris. Springfield. Burlington. In our corpus those tokens are overwhelmingly streets, the Paris
 Avenues and Springfield Streets of the world, and only rarely cities. Our extract labels them as
 localities. Both readings are true depending on where the token lands, and the model is
@@ -76,7 +76,7 @@ already agrees are cities.
 
 ## Why we didn't retrain
 
-Here's where the night actually ended. The extract is built. The baseline is measured. The recipe
+Here's where the night ended. The extract is built. The baseline is measured. The recipe
 is written and signed off, the corpus is assembled, and the manifest is tested against the real
 base. By every box on the checklist it's ready, sitting on the shelf one command short of a
 training run. And we left it there on purpose.

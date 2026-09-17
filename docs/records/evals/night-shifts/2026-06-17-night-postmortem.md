@@ -89,7 +89,7 @@ nothing. Two **pre-existing** hygiene issues surfaced (not introduced this shift
 
 - `lint:prettier:check` fails on ~49 files (mostly pre-existing: `docs/src/shared/*`, `harness-v0-neural`,
   etc., plus a few of mine) — a `prettier --write .` (with the `@sister.software/prettier-config`) clears
-  it. I did NOT bulk-reformat (it would touch unrelated files + my direct `prettier --write` hit a config
+  it. I did not bulk-reformat (it would touch unrelated files + my direct `prettier --write` hit a config
   mismatch that malformed a comment — reverted).
 - eslint scans the stale `.claude/worktrees/` leaked copies and errors on them — add `.claude/worktrees/`
   to `.eslintignore` (the errors are not in the live tree).

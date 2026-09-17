@@ -11,7 +11,7 @@ From the 2026-07-15 operator conversation: **[operator]**
 
 - **Delete stays delete.** The v7 excision removes the rules parser outright. The hybrid
   rules-fallback check is off the table; no consumer may route through legacy rules. The
-  plausibility guard survives as a direction-agnostic signal (PR #1133).
+  the result as a direction-agnostic signal (PR #1133).
 - **The architecture bet is one level up from tokens.** The encoder does context-sensitive
   weighing over tokens well; what's missing is the same concept over _phrases_ — joint scoring of
   whole segmentations, with a segment-level transition grammar ("must not follow", one level up)
@@ -26,7 +26,7 @@ From the 2026-07-15 operator conversation: **[operator]**
 ## What night-3 changed (all zero-GPU)
 
 1. **Failure partition overturns the boundary narrative.** [measured] Of 122 parity street
-   failures: the dominant class (80/122) is **bare fragments with NO house number** (66% fail
+   failures: the dominant class (80/122) is **bare fragments with no house number** (66% fail
    rate) — a recall/polarity failure, not a boundary failure. Leading-number US-style inputs fail
    only 21.6%. Alphanumeric numbers (`16a`) are the worst form bucket (73.3%); multi-digit numbers
    are the BEST (17.3%) — which kills the digit-atomicity splice as a priority (the tokenizer
@@ -37,9 +37,9 @@ From the 2026-07-15 operator conversation: **[operator]**
 3. **Word-consistency heal shipped default-ON (PR #1132).** [measured] The 2026-06-19 shelving
    ("vote amplifies noise, confidence check is the path") was a mis-diagnosis: the regression was
    two bugs — the heal re-decoding already-consistent words against viterbi, and punctuation
-   pieces joining vote groups. Fixed, the heal is a clean win with NO confidence floor: golden fr
+   pieces joining vote groups. Fixed, the heal is a clean win with no confidence floor: golden fr
    macro 42.2→51.5, us street 82.0→82.2, parity house_number .767→.808, postcode →1.000, street
-   .543→.573, error-analysis 2pp check PASS, presets 6/6.
+   .543→.573, error-analysis 2pp check pass, presets 6/6.
 4. **Diacritics confirmed "visibility, not regression."** [measured] With the heal on,
    resolve-locality is 100% on every scored diacritic locale (CZ 3/3, PL 2/2, PT 2/2, RO 3/3,
    SK 1/1) while street-tag surface exactness sits at 0.63–1.00. The city never goes wrong. The
@@ -54,7 +54,7 @@ From the 2026-07-15 operator conversation: **[operator]**
    | house_number | 146 | 0.795               | 0.596        | 0.705    | 0.747     |
    | postcode     | 72  | 0.986               | 0.889        | 0.917    | 0.917     |
 
-   Both pre-registered branches resolved: (a) naive decode hardening does NOT clear the residual
+   Both pre-registered branches resolved: (a) naive decode hardening does not clear the residual
    (seg@1 < baseline) — a **trained** span scorer is necessary; (b) the correct street reading
    already exists in the top-10 segmentations 74.9% of the time (+16.5pt over shipped) — the
    k-best + resolver-rerank headroom is real and measured, not hypothesized.
@@ -64,19 +64,19 @@ From the 2026-07-15 operator conversation: **[operator]**
 
 1. **FSemi-CRF span head** — enumerate spans (word-aligned, length ≤ 6 words), score
    (start, end, type) jointly, segment-level transition table, filtered by the stage-1 boundary
-   head's probs (it stays as co-trained auxiliary AND the span pruner). [consult: prune to
+   head's probs (it stays as co-trained auxiliary and the span pruner). [consult: prune to
    100–200 spans → decode ~free]
-2. **The bare-fragment recall class is NOT fixed by the span head alone.** [consult] Chosen fix:
+2. **The bare-fragment recall class is not fixed by the span head alone.** [consult] Chosen fix:
    **option C** — kind-classifier posterior fed as a soft feature channel (established infra:
    postcode anchor, country lexicon) + recall-weighted loss on street spans. Explicitly rejected:
    hard "must emit street" decode mask (kind errors become hallucinations); constrained-hypothesis
    injection into the k-best list (scores from different normalizations are incomparable — the
    Pelias-blend antipattern in miniature). Fallback if C plateaus: score-preserving unary-logit
-   bias before decode, NOT a graph change.
+   bias before decode, not a graph change.
 3. **k-best decode** — k-way extension of the semi-Markov Viterbi recurrence over the pruned span
    graph. Scores within one input share the partition function → directly comparable for the
    reranker. [consult]
-4. **Calibration** — raw joint log-probs rank fine WITHIN an input, but the ambiguity check
+4. **Calibration** — raw joint log-probs rank fine within an input, but the ambiguity check
    ("margin < τ → let the resolver decide") needs the isotonic pass on top-1/margin, reusing the
    existing span-confidence infra. Skipping it makes τ unpredictable across inputs. [consult]
 5. **ONNX/browser** — encoder + boundary/span projections in the graph; span enumeration,
@@ -88,12 +88,12 @@ From the 2026-07-15 operator conversation: **[operator]**
    class plateaus, add a char-ngram feature over the span surface (tiny, JS-computable).
    [consult, hypothesis]
 
-## Eval additions (build BEFORE the head — instrument-blindness rule)
+## Eval additions (build before the head — instrument-blindness rule)
 
 The night-3 conversation named why this architecture sat unbuilt: every check scores top-1, so
 hypothesis-space improvements were invisible. Before the first training run:
 
-- **oracle-recall@k** (k = 1, 5, 10) on the parity floors — the probe's decoder IS the
+- **oracle-recall@k** (k = 1, 5, 10) on the parity floors — the probe's decoder is the
   scaffolding (`scratchpad/probe-semimarkov.mjs` → promote to `mailwoman/eval-harness/`).
   Baseline registered above.
 - **rank-2-beats-rank-1 rate** through the resolver (requires wiring k-best into a resolve loop —
@@ -110,7 +110,7 @@ hypothesis-space improvements were invisible. Before the first training run:
   verdict for ~200 versions; its conditions don't hold at segment granularity in fp32. When a
   ledger entry blocks a direction, re-check its conditions before citing it. (Tonight's
   word-consistency re-diagnosis is the same lesson: the 2026-06-19 "vote amplifies noise" verdict
-  was actually two fixable bugs.)
+  was two fixable bugs.)
 
 ## Sequencing
 
@@ -136,4 +136,4 @@ hypothesis-space improvements were invisible. Before the first training run:
 - The parity floors stay the acceptance criterion for the swap (option (a) of night-2's decision
   1); the coordinate-parity evidence now rides UNDER the floors as diagnosis, not as a
   replacement check. If the span arc stalls below 0.90 street with everything above shipped, the
-  floor-vs-coordinate-check question reopens WITH data.
+  floor-vs-coordinate-check question reopens with data.

@@ -8,11 +8,11 @@ tags:
 
 # Case study: the same doctor, two federal registries, two different addresses
 
-If you work with US provider data, you already know this problem — you just may not have named it yet.
+If you work with US provider data, you already know this problem — youmay not have named it yet.
 The same physician is in NPPES because they have an NPI, and in CMS Open Payments because a device
 manufacturer bought them lunch. Both records are self-reported. Both carry an address a human typed on
 a different day, into a different form, under different validation rules. Neither is wrong, exactly.
-They just don't match.
+Theydon't match.
 
 ```text
 NPPES:          JOHN Q SAMPLE · 4510 MEDICAL CENTER DR STE 200, MCALLEN, TX 78503
@@ -34,7 +34,7 @@ suite, "Dr" versus "Drive", ZIP versus ZIP+4 stop mattering before the compariso
 What's left is a scoring problem: same place, similar-enough name — one provider or two? For
 within-registry dedup we ship a learned scorer trained on NPI-grouped records. But cross-registry
 linking is the _opposite_ objective: the dedup scorer learned that "same address, names disagree"
-usually means two co-located providers, so it rejects exactly the drifted-text pair a cross-registry
+typically means two co-located providers, so it rejects exactly the drifted-text pair a cross-registry
 join wants to keep. Objectives, not thresholds — a lesson we measured the hard way before fixing it
 properly.
 

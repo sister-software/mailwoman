@@ -37,7 +37,7 @@ The classifier already has the exact composition point this design needs — `cl
 
 ### 3. Decode-order open question is already answered in code — downgrade it to a test class
 
-The plan asks whether "a biased B- token + unbiased I- continuation mis-heals." The mechanism: `enforceWordConsistency` votes **over post-prior emissions** (`classifier.ts:674–688` — "every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior emissions"; visible as the `wordConsistency` repair). So the census bias lands _before_ the vote, and a biased B- plus weakly-scored I- on the same word reconciles at the word level — the heal cannot split a word the bias united. The residual risk class is the inverse: the vote flipping a whole biased word _off_ dep-loc (fine — that's the encoder's veto working) or the span-bridge's crossing constraint interacting with a bias-induced span boundary. Both are test classes, not design tweaks. The plan's task list should say "register the test class" rather than "maybe a design tweak."
+The plan asks whether "a biased B- token + unbiased I- continuation mis-heals." The mechanism: `enforceWordConsistency` votes **over post-prior emissions** (`classifier.ts:674–688` — "every `▁`-delimited word's pieces are forced to one tag by a confidence-weighted vote over the post-prior emissions"; visible as the `wordConsistency` repair). So the census bias lands _before_ the vote, and a biased B- plus weakly-scored I- on the same word reconciles at the word level — the heal cannot split a word the bias united. The residual risk class is the inverse: the vote flipping a whole biased word _off_ dep-loc (fine — that's the encoder's veto working) or the span-bridge's crossing constraint interacting with a bias-induced span boundary. Both are test classes, not design tweaks. The plan's task list should say "register the test class" rather than "maybe a design tweak."
 
 ### 4. Segmentation: comma-only blocking will under-serve the demo; specify word-span windows now
 
@@ -68,14 +68,14 @@ The plan specifies "lowercase + trim" with a diacritic policy TBD. `fst-prior.ts
 - **Checkpoint choice:** the rung-3 table shows feed-8k at δ=6.0 is 95.5% NZ / 100% GB — within the −5pp tolerance of feed-2k's 100/100, with its guards already measured. The digit-FAIL-vs-guards trade the plan frames as feed-2k's risk reduces both ways; the battery deciding is correct, but the decision matrix should include "feed-8k at δ=6 with a slightly lower NZ ceiling" as a first-class option, not a fallback.
 - **Perf:** segmentation + hash probes are negligible next to ONNX inference, but state the budget (sub-millisecond per parse, census resident in memory) so it survives review.
 - **Multi-word/nested names:** with window probing (change 4), the "Little Whinging cum Hardwick" class becomes a window-size question, answerable from the PPD CITY length distribution — check it during the builder task and record the percentile that N covers.
-- **Eval attribution:** with the new `TracePriorKind` (change 2), add a ledger/eval row dimension that reports how many board flips had the census prior `applied: true` — the talk's "decoder reaches into the gazetteer" section will want that number.
+- **Eval attribution:** with the new `TracePriorKind` (change 2), add a ledger/eval row dimension that reports how several board flips had the census prior `applied: true` — the talk's "decoder reaches into the gazetteer" section will want that number.
 
 ## Suggested additions to pre-registered acceptance
 
 1. Pair-holdout sensitivity: census rebuilt minus 10% of pairs; boards re-run; degradation from the full-census number recorded and within a pre-registered floor (the −5pp tolerance re-anchored here, per change 1).
 2. Comma-stripped variants of the four dep-loc boards through the full pipeline (the comma-free gap made measurable).
 3. Word-consistency interaction test: a biased word whose pieces the vote would split absent the bias stays united; a word the encoder confidently disagrees with stays vetoed.
-4. Non-GB/NZ byte-identical presets with flag ON (already in the plan — keep; it's structural but the test is what makes it stay true).
+4. Non-GB/NZ byte-identical presets with flag on (already in the plan — keep; it's structural but the test is what makes it stay true).
 5. Cross-country confusables FP board **iff** the probe-all fallback in change 5 is enabled; otherwise an explicit test that no country context → zero bias applied.
 
 ## Answers to the plan's open questions (summary)

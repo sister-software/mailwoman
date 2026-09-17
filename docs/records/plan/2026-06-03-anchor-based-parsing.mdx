@@ -20,7 +20,7 @@ with it. The collapse is **emission-level**: raw per-token argmax already fragme
 span-merge or CRF-transition table can repair it (both sit downstream of emissions, and the error is
 _cross-tag_, a city's lead piece leaking into `postcode` rather than a same-tag split).
 
-The mechanism reframes the whole roadmap. Think about what a postcode actually encodes: a US ZIP runs
+The mechanism reframes the whole roadmap. Think about what a postcode encodes: a US ZIP runs
 northeast to west by its first digit, a UK postcode plus a house number nearly identifies a single
 building, and German PLZ and French codes are zone-hierarchical. It is the most information-dense token
 in an address, and we were asking a sequence labeler to find it _and_ to know where it stops, in one
@@ -32,7 +32,7 @@ mistake. It gains the strongest available locale signal for everything else at t
 This generalizes. The same "high-precision, high-geo-load token as an anchor" pattern covers distinctive
 streets (Champs-Élysées, Shibuya 109) and landmarks (Empire State Building), which the
 [exotic-POI understanding docs](../site-2026-08/understanding/exotic-poi/landmark-queries.mdx) already describe as a
-domain the BIO parser handles poorly. The postcode is just the most regular member of that family, the
+domain the BIO parser handles poorly. The postcode isthe most regular member of that family, the
 one a regex can catch.
 
 ## The anchor layer
@@ -51,7 +51,7 @@ authoritative.
   country call is wrong; the extractor returns a distribution (`75001` → `{FR: 0.98, US: 0.02}`) plus
   region and centroid, and lets the parser settle the rest from context. The gazetteer membership test
   is the primary disambiguator; shape (alphanumeric UK/NL/CA can never be a house number) and
-  neighbouring tokens come second.
+  neighboring tokens come second.
 - **Injected as a prepended `[POSTCODE-ANCHOR]` embedding** encoding (country-posterior, region,
   centroid, confidence). The raw tokens stay untouched, so the model can see, and recover from, a
   mistyped or out-of-gazetteer code.
@@ -61,9 +61,9 @@ authoritative.
 
 ### Where position fits in
 
-The extractor finds a postcode wherever a human put it (robust to positional error), and position still
+The extractor finds a postcode wherever a human put it (resilient to positional error), and position still
 counts: it feeds the candidate's confidence, because some house numbers do look like postcodes. The
-collision is narrow (only purely-numeric-postcode countries, and house numbers usually run 1-4 digits)
+collision is narrow (only purely-numeric-postcode countries, and house numbers typically run 1-4 digits)
 but real. `12345` is at once a valid US ZIP (Schenectady) and a plausible house number, so gazetteer
 membership alone does not always decide. So the extractor does not try to win that call. An ambiguous
 candidate carries low confidence, the anchor channel propagates the doubt, and the parser plus its
@@ -79,7 +79,7 @@ Three pipeline placements, decided by the **router** (see coarse placer), by que
 | -------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Bare landmark / POI              | `Empire State Building`, `Shibuya 109`, `Odori Park` | **Skip the parser** and resolve directly as a venue. Running BIO on it hallucinates spans. |
 | Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.           |
-| Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighbourhood anchor; conditions parser + resolver.                               |
+| Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighborhood anchor; conditions parser + resolver.                                |
 
 **Guardrails (these are critical):**
 
@@ -112,7 +112,7 @@ overflow** (see the cross-pollution metric). That is why both came up. They oper
 
 ### Self-conditioning over a hard locale token
 
-In production we usually receive a raw string with no reliable country hint, and detecting the country
+In production we typically receive a raw string with no reliable country hint, and detecting the country
 _before_ parsing is most of what the parser exists to do, so a hard external `[locale]` token comes close
 to assuming the answer. Instead the model reads the whole sequence, infers a soft locale posterior, and
 conditions its own per-token labeling on it (layernorm modulation, or posterior-as-feature). That
@@ -132,7 +132,7 @@ extract to download. That is the selective-geography product story: ship ~28 MB 
 coarsely, then fetch the region you care about for street-level detail (tiered loading, no permanent
 whole-world footprint).
 
-### Does conditioning really isolate, or just paper over?
+### Does conditioning really isolate, orpaper over?
 
 A conditioned shared model is modulated, not hard-isolated: its FFN and attention weights are shared. The
 DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 locales per extract at ≥300-dim

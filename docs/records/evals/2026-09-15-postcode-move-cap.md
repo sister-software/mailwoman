@@ -116,7 +116,7 @@ The two bounds that do carry a value are unchanged from #2301:
 
 300 km sits above the 99th percentile of agreeing (postcode, settlement) pairs, so it admits every
 relocation a CORRECT postcode could require, and refuses the class the option was opened for — a
-transposed, retired or metro-adjacent code carrying the answer hundreds of kilometres from the
+transposed, retired or metro-adjacent code carrying the answer hundreds of kilometers from the
 locality whose id the result keeps. It costs nothing measurable on the 5,300 rows above, which
 include two tier-1 locales at 3,000 and 2,000 rows, and it recovers 48 of the 54 available
 wrong-area points on the same-data panel.

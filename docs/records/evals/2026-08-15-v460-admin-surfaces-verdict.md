@@ -2,7 +2,7 @@
 
 **Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
 collapse of the bare-toponym class — 21 net new counted board failures, several placing the answer
-thousands of kilometres out. The cause is identified and the extract is worth rebuilding, but this
+thousands of kilometers out. The cause is identified and the extract is worth rebuilding, but this
 artifact should not ship in any posture.**
 
 **DECIDED 2026-08-15: NOT PROMOTED.** The operator accepted the recommendation. v4.4.0 remains the
@@ -19,7 +19,7 @@ Both, together. Either alone fails for the reason the other one causes.
 
 1. **#1677 — re-weight `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
    against 5× for the 53,078-row Spanish extract weighted six times higher. 0.030 puts it at parity.
-   The sampler allocates by weight normalised across sources and ignores row count, so weight is not
+   The sampler allocates by weight normalized across sources and ignores row count, so weight is not
    reps per row and nothing in the config or launch output displays the number anyone reasons in.
 2. **#1673 — rebuilt the ES extract on official-language names.** It teaches English exonyms:
    461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
@@ -61,7 +61,7 @@ Baseline arm throughout: v4.4.0 fp32, md5 `0f9273a37db14fdd86a6d2c8806f8494`, ma
 `release.config.json`. Both arms graded through the identical battery on caches differing only in
 `model.onnx`.
 
-## Check: FAIL — but only one floor is really the candidate's
+## Check: fail — but only one floor is really the candidate's
 
 Spec `v6.0.0-shipped-baseline`, 18 floors, int8-vs-fp32 cap 1.5 pp,
 `requires_gazetteer_lexicon: true`, `requires_conventions: "auto"`, `requires_bridge: true`.
@@ -118,7 +118,7 @@ with nothing after the name.
 **This section replaces an earlier reading of mine that was wrong, and wrong in the direction that
 would have mattered most.** I first reported "+15 rows, zero regressions" after reading only the
 tail of the board output, where the promote-flag block sits. The counted pass/fail header is printed
-ABOVE that block and I truncated it away. Both halves are true and only one of them is decisive.
+above that block and I truncated it away. Both halves are true and only one of them is decisive.
 
 |                                   | shipped v4.4.0 |      v4.6.0 |
 | --------------------------------- | -------------: | ----------: |
@@ -147,11 +147,11 @@ badly negative.
 | `intl-beirut-lebanon`       | —                      |   9,211 km |
 | `bare-region-georgia`       | —                      |  10,089 km |
 
-### The likely cause is the extract that produced the headline win
+### The likely cause is the extract that produced the result
 
 `synth-bare-country-v23` is 277 rows at weight 1.0, and the sampler allocates draw share **by weight
-normalised over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
-an epoch. The extract teaches exactly one lesson: _a bare capitalised name is a `country`._
+normalized over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
+an epoch. The extract teaches exactly one lesson: _a bare capitalized name is a `country`._
 
 US `country` +11.0 pp and the collapse of the bare-locality and bare-street classes are the same
 event seen from two sides. The model learned the lesson too well and generalised it over every bare
@@ -159,7 +159,7 @@ toponym. `bare-region-georgia` landing 10,089 km out is the tell — the row the
 supposed to help.
 
 This is the base-consistency lesson (#511) in a new costume: a small extract at high reps per row
-outvoting a much larger base, and the visible win arriving with an invisible bill.
+outvoting a much larger base, and the result arriving with an invisible bill.
 
 ## What the corpus additions bought
 
@@ -176,14 +176,14 @@ Per-locale regression check, matched fp32 batteries:
 Plus adversarial exact-match 61.2 → **67.3** (+6.1) and cross-locale macro spread 15.7 → **10.1 pp**,
 i.e. less inter-locale interference.
 
-**`synth-bare-country-v23` is the clear win**: +11.0 pp on US `country`, the largest single movement
+**`synth-bare-country-v23` is the result**: +11.0 pp on US `country`, the largest single movement
 in the run, exactly the class it was built for (#1651's parse half).
 
 FR macro-F1 reads −5.0 but that is an averaging artifact — `unit` appears in the FR column at 0.0%
 where it was previously absent, while FR micro moved −0.4 and the unit floor's own leg reads 97.0
 against a 95 bar.
 
-## Acceptance test: FAIL, on the pre-registered criterion
+## Acceptance test: fail, on the pre-registered criterion
 
 Only one of the two named rows was ever live. **`gb-op2-st-margarets-hope` already passed on the
 shipped model** when re-measured at 06:00 UTC — most likely fixed by #1662's dominance race — so it
@@ -191,7 +191,7 @@ is not creditable to this run.
 
 The live row, `es-op3-southeast-portopetro`, criterion registered before the candidate existed:
 _passes iff the parse emits `locality: "Portopetro"` AND `region: "Illes Balears"`; partial credit is
-a FAIL._
+a fail._
 
 ```
 Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro, Illes Balears, Spain
@@ -212,18 +212,18 @@ failed hypothesis about the trailing-region extract.
 ## Recommendation
 
 1. **Do not promote, in any posture.** This is not a D-rule blocking question. 21 counted board
-   failures with multi-thousand-kilometre coordinate errors on bare city names is not a regression
+   failures with multi-thousand-kilometer coordinate errors on bare city names is not a regression
    to check behind a flag; it is an artifact to rebuild.
 2. **Fix #1673 and rebuilt the ES extract on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
 3. **File the `arena.perturb` floor for its own check revision.** It fails the shipped model; leaving
    it stale means every future candidate carries a phantom failure.
 4. **Re-weight `synth-bare-country-v23` before the next run.** 277 rows at weight 1.0 repeat ~20× an
-   epoch under the per-source sampler, and they taught "bare capitalised name → country" strongly
+   epoch under the per-source sampler, and they taught "bare capitalized name → country" strongly
    enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
    +11.0 pp shows — but the weight is the change, and the next attempt should carry a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
-5. **The measurement lesson.** The board's counted pass/fail header prints ABOVE the promote-flag
+5. **The measurement lesson.** The board's counted pass/fail header prints above the promote-flag
    block. Reading the tail alone shows the flips and hides the breakage. Read `counted cases pass`
    first, every time.
 
@@ -231,7 +231,7 @@ failed hypothesis about the trailing-region extract.
 
 > **STRUCK 2026-08-19 — no longer true, and it was true only for one more day after this was written.**
 > `gazetteerPrior` became default-ON in the harness on **2026-08-16** (`harness.ts`'s `priorDepsFor`:
-> "only an explicit `false` withholds the prior"), so the board grades WITH the prior. The numbers in
+> "only an explicit `false` withholds the prior"), so the board grades with the prior. The numbers in
 > this document stand — they were measured under the caveat — but do not carry the caveat forward to a
 > later reading. It survived in the type's own docstring until ba515ebdc and was quoted as live in #1684.
 

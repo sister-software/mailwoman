@@ -103,7 +103,7 @@ use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
 | [`@mailwoman/libpostal`](./packages/libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
 
 Point geopy's `Nominatim(domain="localhost:8080")` at the first one and forward + reverse
-geocoding keep working. Every result carries an OpenCage-style `annotations` block —
+geocoding keep working. The API returns an OpenCage-style `annotations` block —
 IANA timezone, UN/LOCODE, EU NUTS codes, coordinate formats, sun times, currency —
 composed by [`@mailwoman/annotations`](./annotations).
 

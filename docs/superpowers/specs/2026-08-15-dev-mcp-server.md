@@ -80,7 +80,7 @@ run, which is the same thing as changing which panel it picks.
 1. **Full-corpus measurement must be the path of least resistance.** A hand-picked panel must cost
    more to express than the whole board, not less.
 2. **A result must carry its own denominator.** Every number the surface emits states what it was out
-   of, how many rows errored, and what the input set did not cover.
+   of, how several rows errored, and what the input set did not cover.
 
 ---
 
@@ -117,7 +117,7 @@ absent from `.release-it.json` — see §7.4 for the workspace accounting that i
 
 `packages/mailwoman/lib/geocode-session.ts:269` is the closest thing to the daemon today, and its header
 (`:6-27`) states the purpose in the same terms: "a caller that geocodes more than once … pays for the
-classifier, the gazetteer backend and the extract handles ONCE."
+classifier, the gazetteer backend and the extract handles once."
 
 It returns `GeocodeSession { initTiming, geocode(input): Promise<GeocodeRun>, close() }` (`:172-179`),
 where `GeocodeRun` carries `result`, the `AddressTree` it resolved from, a `PipelineTiming`, and an
@@ -126,7 +126,7 @@ optional `GeocodeTrace` (`:124-166`) holding `NeuralParseTrace`, `QueryShape`, t
 its construction order **is** the CLI's error contract (`:10-18`).
 
 **The dev daemon builds on this, not beside it.** Everything the trace surface needs is already
-assembled; `packages/mcp/lib/cli.ts` simply does not use it.
+assembled; `packages/mcp/lib/cli.ts` only does not use it.
 
 ### 2.3 The eval harness — the graders already exist
 
@@ -264,7 +264,7 @@ per-call options are `GauntletGeocodeOpts` — `defaultCountry`, `caseCountry`, 
 The practical consequence, and it should be documented at the tool surface: **comparing two flag
 settings is nearly free** (one resident engine, two calls per input), while **comparing two models or
 two gazetteers is expensive** (two resident engines, two multi-GB footprints). An agent should know
-which kind of comparison it just asked for before it waits.
+which kind of comparison itasked for before it waits.
 
 Residency policy: LRU with an explicit memory budget, a `pin` flag for an engine an in-flight
 comparison depends on, and refusal — not silent eviction — when a request would exceed the budget. The
@@ -302,7 +302,7 @@ than running stale code.
 `gauntlet_meta` stamp — `corpus_hash`, `case_count`, `built_at` (`schema.ts:152-171`) — and every
 runner refuses when the stamp disagrees with the corpus on disk _right now_
 (`corpus-stamp.ts:assertCorpusStampFresh`). There is a separate emptiness guard, because a hash
-comparison cannot catch a loader that resolved zero rows: "an empty loader on BOTH sides agrees with
+comparison cannot catch a loader that resolved zero rows: "an empty loader on both sides agrees with
 itself."
 
 _Answer:_ the daemon caches the corpus but re-runs `regressionCorpusHash` on every read. It never
@@ -313,11 +313,11 @@ caches a stamp verdict.
 `model.onnx` md5 disagrees with the model-card's `files_md5`, because a config/card drift once shipped
 a superseded model past a silent check. `assertDeclaredAnchorBins` (#1516, `:184`) refuses when a
 weights package is missing the anchor artifact **its own card declares**, because that failure has no
-signal of its own — the channel resolves OFF, the run scores three or four cases lower, and the
+signal of its own — the channel resolves off, the run scores three or four cases lower, and the
 operator reads a model regression.
 
 _Answer:_ every engine runs both guards at construction and records their output in the engine's
-provenance block. Every result carries `model_md5`, `card_version`, and the fed-channel list. A run
+provenance block. the result `model_md5`, `card_version`, and the fed-channel list. A run
 whose engine warned about an unfed channel says so in the result, not only in a log the agent never
 reads.
 
@@ -330,13 +330,13 @@ any resident engine has imported, plus the git `HEAD` and dirty-file set — and
 `EngineKey`. On every tool call it re-computes the fingerprint; a change makes the existing engine
 **unreachable rather than wrong**. Two behaviours, and the choice matters:
 
-- For a _single_ run, the daemon transparently respawns the worker and proceeds. The result carries
+- For a _single_ run, the daemon transparently respawns the worker and proceeds. the result
   the new fingerprint.
 - For a _comparison_, it **refuses**. Two arms that ran under different trees are not a comparison,
   and silently reloading between arms would produce exactly the sort of result this whole surface
   exists to prevent. The refusal names both fingerprints.
 
-Every result carries its `tree_fingerprint`, and `mwdev_compare` refuses arms that disagree on it
+the result its `tree_fingerprint`, and `mwdev_compare` refuses arms that disagree on it
 unless the fingerprint is itself the declared variable (§6).
 
 ### 3.5 Lifecycle
@@ -409,7 +409,7 @@ out: { pid, uptime_s, socket, tree_fingerprint, git_head, dirty_files: string[],
        warnings: string[] }
 ```
 
-`artifacts` is the honest inventory. Absent is reported as `null` with a reason, never as zero or an
+`artifacts` is the direct inventory. Absent is reported as `null` with a reason, never as zero or an
 empty object — the rule `packages/mailwoman/lib/eval-harness/gauntlet/ablation-report.ts:8-13` already
 enforces for the ablation map. `mailwoman doctor`'s existing check functions (`packages/mailwoman/lib/doctor/checks.ts`)
 supply most of this; reuse them rather than re-deriving.
@@ -489,7 +489,7 @@ scope. Resolving defaults before recording is what makes §6's confound check po
 
 ### 4.4 `mwdev_compare`
 
-The centre of the design. Specified in §6.
+The center of the design. Specified in §6.
 
 ### 4.5 `mwdev_trace`
 
@@ -527,7 +527,7 @@ Two properties it must surface rather than bury in the log:
 - `describeResolverChanges`'s line, which prints on every run, pinned or not, because "two check logs
   that differ only in a flag someone typed are not evidence about that flag unless each log says which
   configuration it graded" (`run.ts:220-222`).
-- The **firing count** — how many rows the pinned mechanism actually spoke on
+- The **firing count** — how several rows the pinned mechanism spoke on
   (`GauntletResult.postcode_country_scope`, `harness.ts:441-445`). §6 generalizes this.
 
 ### 4.7 `mwdev_promotion_eval`
@@ -544,7 +544,7 @@ even though the daemon itself runs source — that refusal is correct and should
 rather than worked around.
 
 `mwdev_promotion_eval` **never writes the eval ledger.** `mailwoman eval ledger-append` is state change (§7).
-The tool prints the pre-filled command the check already emits on PASS, and the operator runs it.
+The tool prints the pre-filled command the check already emits on pass, and the operator runs it.
 
 ### 4.8 `mwdev_lookup`
 
@@ -556,7 +556,7 @@ out: { provenance, rows: [{ query, hit: boolean, entries: […] | null, note?: s
 
 `hit: false` with `entries: null` is **absence**; a hit with a zero score is a **zero**. Keeping those
 apart is the whole point, and `probe-fst-bias.run.ts:19-21` already documents it for the FST case.
-Reuse that module's collapse rather than re-deriving what `applyBias` actually reads.
+Reuse that module's collapse rather than re-deriving what `applyBias` reads.
 
 ### 4.9 `mwdev_bench`
 
@@ -608,7 +608,7 @@ notifications where the client supports them, but polling must work regardless.
 
 ---
 
-## 5. Making measurement honest by construction
+## 5. Making measurement direct by construction
 
 This is the section the rest of the design serves. Each rule is mechanical, checkable, and tied to a
 discipline the repo already has rather than a new vocabulary.
@@ -654,7 +654,7 @@ metric's own support").
 `parity-corpus.ts` already encodes the same instinct with `MIN_BUCKET_EXAMPLES = 8` before a bucket's
 rate is considered stable. This generalizes it and makes it a refusal rather than a convention.
 
-### 5.3 Every result carries its denominator and its absences
+### 5.the result its denominator and its absences
 
 Mandatory on every measuring result: `n_requested`, `n_evaluated`, `n_errored` (with the errors),
 `n_skipped` (with reasons), and `not_covered` — the strata present in the corpus but absent from this
@@ -666,7 +666,7 @@ zero support, and real support that no ladder could grade (`:8-13`) — and the 
 `AblationCell | undefined` rather than a number precisely so a zero cannot be manufactured (`:22-31`).
 The same sentinel and the same discipline apply here.
 
-### 5.4 Report what the mechanism actually did, not only whether the verdict moved
+### 5.4 Report what the mechanism did, not only whether the verdict moved
 
 Every comparison reports `arms_differed_on: n / N` alongside improved/regressed/neutral. `run.ts:32`
 states the reason: _"an unchanged verdict from a mechanism that never ran proves nothing."_
@@ -710,7 +710,7 @@ Three refusals, all drawn from `docs/engineering/reference/resolver-backends.mdx
 
 - **Named tier.** Refuse "the deepest coordinated node" as a grading target. The candidate table
   carries 3.66 M postcodes the FTS admin extract has none of, so "deepest" silently means _postcode_ on
-  one arm and _locality_ on the other; grading that way once reported a 54-row sub-kilometre collapse
+  one arm and _locality_ on the other; grading that way once reported a 54-row sub-kilometer collapse
   that was a commune centroid compared against a postcode-area centroid (`:111-127`).
 - **Stratum.** Panel results are reported per `truth_type`, never blended — the benchmark plan's own
   words are "@1km lives or dies on `truth_type`."
@@ -794,14 +794,14 @@ This mechanizes an already-documented hazard rather than inventing a rule.
 backends must pin `--country-scope` to `locale` or `none` across both arms, or run the full 2×2."_
 Under the default `--country-scope auto`, switching backend **also** switches country scoping, and the
 document's own table shows `12 Rue de Rivoli, 75001 Paris` landing in Texas or France depending on
-which of the two variables you actually moved. Declaring `variable: ["backend"]` while
+which of the two variables you moved. Declaring `variable: ["backend"]` while
 `country_scope` also differs is precisely what the guard catches.
 
 `tree_fingerprint` participates in the same check (§3.4d), so an arm captured before an edit and an
 arm captured after cannot be silently compared.
 
 Declaring the confound explicitly — `variable: ["backend", "country_scope"]` — is the same run without
-the warning, because the caller has said the thing the warning would have told them. That is the honest
+the warning, because the caller has said the thing the warning would have told them. That is the direct
 description of one row of a 2×2.
 
 ### 6.4 External arms
@@ -935,7 +935,7 @@ pins the _published_ server's tool list.
   The check stays the release authority.
 - **Not a general code-execution tool.** A `run_typescript` tool would subsume every probe in §1.1 in
   one afternoon and would re-open the exact hole this surface exists to close: it would let an agent
-  choose its own panel, its own denominator and its own grading, invisibly. If an experiment genuinely
+  choose its own panel, its own denominator and its own grading, invisibly. If an experiment in fact
   needs code, it should become a `dev-tools/*.run.ts` module with a docstring, reachable through
   `mwdev_cli` — which is a higher bar on purpose.
 - **Not a training, orchestration or Modal surface.** No job launch, no checkpoint management, no
@@ -986,7 +986,7 @@ These need a decision from the operator; each is a real fork, not a detail.
    permission safe to hold. The opt-in lives in `$MAILWOMAN_DATA_ROOT/dev-mcp/oracle-config.json` and
    deliberately **not** on a tool argument — a tool argument is set by whoever is driving the agent, which
    for a spend decision is the wrong signature, so an agent cannot talk its way into spending money. The
-   cap is checked for the WHOLE run before the first query, so a set the caller cannot afford costs zero
+   cap is checked for the whole run before the first query, so a set the caller cannot afford costs zero
    calls rather than a partial arm that can still be graded as a whole one. And the meter counts queries
    rather than issued requests, so a warm cache over-counts — the direction whose failure is refusing an
    affordable run. See `oracle-arm.ts`.
@@ -995,7 +995,7 @@ These need a decision from the operator; each is a real fork, not a detail.
    conservative branch, on §7.1's boundary: this surface gathers evidence and changes no state anything
    else reads. The deciding argument is what the two options do to a reader. "The benchmark rig was down"
    is a fact about the box that must reach them; a daemon that starts the rig turns that fact into an arm
-   that lost, and one that scores rows against a service it just booted cannot say what vintage answered.
+   that lost, and one that scores rows against a service itbooted cannot say what vintage answered.
    An endpoint that is not already up is a refusal with the reason. See `external-arm.ts`, which also
    refuses the shared public instances outright.
 
@@ -1029,7 +1029,7 @@ Raised by the operator 2026-08-16: the rich per-stage debug output exists for JS
 `--debug` view, and this surface should carry it too. Reading the code changes the shape of that
 problem, and the change is favourable.
 
-### 10.1 What is actually there
+### 10.1 What is there
 
 `GeocodeTrace` (`packages/mailwoman/lib/geocode-session.ts:124-144`) is already a structured record, not a
 rendering:
@@ -1062,7 +1062,7 @@ as-is.
 
 So two of the three layers are already renderer-agnostic. This is not an Ink-shaped debug system.
 
-### 10.2 What is actually missing
+### 10.2 What is missing
 
 Reachability, in two places.
 
@@ -1156,8 +1156,8 @@ Pelias, retention, board-case writes, `run_id` tracing.
 **How the increment reports on itself.** After it exists, the check is not "is it faster" — that is already
 measured at 7.8× (§1.2) and was never in doubt. The check is whether the next investigation's panel is
 the board or a hand-picked ten. Count it: over the following working period, what fraction of measurement
-claims cite `n ≥ 100` versus a self-chosen sample, and how many new one-off scripts land in `scratchpad/`.
+claims cite `n ≥ 100` versus a self-chosen sample, and how several new one-off scripts land in `scratchpad/`.
 If probe scripts keep appearing, the daemon did not remove the reason they get written, and building the
 other eight tools would not have removed it either.
 
-That is the honest version of this spec's own §5 discipline turned on the spec.
+That is the direct version of this spec's own §5 discipline turned on the spec.

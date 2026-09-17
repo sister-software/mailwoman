@@ -23,7 +23,7 @@ and a benchmark harness that had been starving our own model for four releases.
 We consolidated every proven change of the parity campaign into one training run: the
 unit extract, the affix extract, the country gazetteer anchor, the multi-locale balance.
 The core tags soared. Locality up thirteen points, region up eleven, country from nothing
-to 87. And the street-affix split, which a solo run had just taught to 78, crashed
+to 87. And the street-affix split, which a solo run hadtaught to 78, crashed
 to 27.
 
 If you've trained multi-task models, you know this trade. Capacity is a blanket that's
@@ -47,7 +47,7 @@ wake up six weeks later wondering when street tagging got worse.
 
 ## Lies two and three: the consultant's confidence
 
-We consult an external model on consequential forks, and it warrants its keep often
+We consult an external model on consequential forks, and it warrants its keep frequently
 enough that we keep asking. This time it was sure, twice, with numbers. The affix
 crash was a scheduling problem, not a capacity problem. Five-times density would clear 72. And the 75 we'd seen in a quick diagnostic? Not a transient.
 
@@ -82,7 +82,7 @@ list wins go stale the moment anything moves.
 
 Hours after shipping, one number kept itching. Our capability arenas, the unbiased
 head-to-head against the rules parser, showed the new model slightly _down_ on
-whole-parse accuracy. Plausible, right? We'd just traded street precision away, and we
+whole-parse accuracy. Plausible, right? We'dtraded street precision away, and we
 very nearly filed it under the stated costs.
 
 Then we checked how the arena harness loads models. Well. It had no way to feed the
@@ -109,7 +109,7 @@ long enough to cost you something.
 The implementation that caught them is boring on purpose. Bars written down before looking.
 Cheap diagnostics before expensive commitments. Misses confronted in writing. And a
 suspicious habit worth stealing: whenever a result confirms what you already believe,
-or condemns what you just built, go read how the measurement was taken before you
+or condemns what youbuilt, go read how the measurement was taken before you
 react to it.
 
 The lookup table from yesterday's post scored 100 and was wrong. The arena scored our

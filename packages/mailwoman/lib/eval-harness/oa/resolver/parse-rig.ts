@@ -80,7 +80,7 @@ export async function buildParseRig(
 	const candidateDB = options.candidateDB || ""
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
-	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
+	// without to measure the difference. No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDB = options.postalCityAliasDB || ""
 
 	const { WOFSQLitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =

@@ -168,7 +168,7 @@ locality 934,243 at −5.970) with Ottawa IL sixth at 18,752. Plain `mailwoman p
 resolves correctly on **both** backends — the defect is confined to the POI anchor path. Worth its
 own issue; it is the only reproducible candidate loss in this whole investigation.
 
-## Instrument C — where the difference actually lives (41-case class probe)
+## Instrument C — where the difference lives (41-case class probe)
 
 Four query classes, gold coordinates taken from WOF itself, both backends at `dc=none`:
 
@@ -226,7 +226,7 @@ PL (99.3% → 90.7%), PT (94.0 → 90.7) and CZ (73.3 → 70.7). Pulling the 13 
 
 - **12 of the 13 still land within 25 km** of the true address point, most within 1–7 km. Candidate
   returned a coarser or differently-named admin unit (the gmina rather than the locality) whose
-  centroid is fine. Only `Zofiówka` is a genuine blow-out (0.5 km → 400.1 km).
+  centroid is fine. Only `Zofiówka` is an actual blow-out (0.5 km → 400.1 km).
 - One row FTS scored as a locality-**match** was **424.9 km** from the true point (`Łagów`);
   candidate scored it a miss at **6.2 km**.
 
@@ -278,7 +278,7 @@ Distinct places, `admin-global-priority.db` `spr` vs `candidate-global-1026.db` 
 | placetype      |       FTS |     candidate |              Δ |
 | -------------- | --------: | ------------: | -------------: |
 | locality       | 4,384,344 |     3,731,855 |       −652,489 |
-| neighbourhood  |   349,708 |       158,846 |       −190,862 |
+| neighborhood   |   349,708 |       158,846 |       −190,862 |
 | localadmin     |   139,529 |       111,982 |        −27,547 |
 | county         |    37,290 |        36,174 |         −1,116 |
 | region         |     4,303 |         4,299 |             −4 |
@@ -288,7 +288,7 @@ Distinct places, `admin-global-priority.db` `spr` vs `candidate-global-1026.db` 
 
 Candidate carries 3.66M postcodes the FTS extract has none of — which is why the candidate arm of the
 Paris reproduction also resolves `75001` to `wof:421307175` while FTS leaves it bare — and drops
-~873k admin places, mostly thin-tail localities and neighbourhoods. I did **not** determine whether
+~873k admin places, mostly thin-tail localities and neighborhoods. I did **not** determine whether
 those dropped rows are deprecated/superseded WOF records (a cleanup) or real coverage loss. Nothing
 in the measured sets tripped on it, but a thin-tail rural probe would be the way to close it.
 
@@ -309,7 +309,7 @@ policy:
 without a comma) and provides the exonym class plus a materially shorter error tail on both US and
 international data. There is no country, no placetype, and no query shape where it loses
 systematically — the one loss is a reproducible singleton with a clear owner, and the fine-precision
-p50 cost (1.5 → 2.4 km international) is real but small next to the p90 gain (180 → 47 km).
+p50 cost (1.5 → 2.4 km international) is real but small next to the coordinate improvement (180 → 47 km).
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
 the country filter, or the change is untestable against these numbers — they are separate changes
@@ -321,7 +321,7 @@ prerequisite for shipping either independently.
 ## What I did not measure
 
 - **Non-Latin scripts.** Zero JP/KR/CN/AR/TH coverage in any instrument. The exonym mechanism that
-  drives the candidate win is an alias-table property, so CJK behaviour does not follow from these
+  drives the coordinate is an alias-table property, so CJK behaviour does not follow from these
   numbers.
 - **GB, DE, ES, NL, the Nordics at scale.** The 1050-row international set is AT/CZ/FR/IT/LU/PL/PT.
   `oa-gb-coord-1k`, `oa-de/es/nl-*` and the `-1k` sets went unrun.

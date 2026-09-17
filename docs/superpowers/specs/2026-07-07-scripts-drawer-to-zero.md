@@ -1,11 +1,11 @@
 # UNFUCK_SCRIPTS.md — Triaging the scripts drawer to zero
 
 **Date:** 2026-07-07 · **Status:** APPROVED as amended (operator: "you've got the helm")
-**Standardization addendum (PR #1033):** the argv/env cleanup the migration left behind is DONE —
+**Standardization addendum (PR #1033):** the argv/env cleanup the migration left behind is done —
 57 local-helper/inline-scan files → `parseArgs` (codemod v2), the 4 gitignored diagnostic files with
 broken cli-args imports fixed (`rg` respects .gitignore — always recount with `--no-ignore`),
 promotion-eval converted STRICT with exit-2 parity, photon/libpostal/nominatim dispatch →
-positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately NOT converted:
+positionals, smoke-resolve's hardcoded playpen path → `dataRootPath`. Deliberately not converted:
 the lookup CLIs' documented negative-coordinate hand-parse and the resolver build CLIs' structured
 tested parsers — neither is the scan anti-pattern.
 
@@ -45,7 +45,7 @@ scripts/ — 294 files total (272 source files)
 
 ---
 
-## The endgame: scripts/ holds ONLY three things
+## The endgame: scripts/ holds only three things
 
 1. **Release-it hooks + CI tooling** — the publish/verify/smoke scripts that the release pipeline invokes
 2. **The eval harness** — `eval/` (promotion check, gauntlet, checks, probes) and `diagnostic/` (one-offs)
@@ -100,7 +100,7 @@ All 11 files are tightly coupled to the coarse-placer model. `@mailwoman/core` a
 
 ### ▸ Phase 3 — Record-matcher (wrong home entirely)
 
-22 files for training, evaluating, and visualizing the learned-scorer model for entity resolution. This belongs in the `registry/` workspace or the `match/` workspace — the two packages that actually do record matching.
+22 files for training, evaluating, and visualizing the learned-scorer model for entity resolution. This belongs in the `registry/` workspace or the `match/` workspace — the two packages that do record matching.
 
 | File                                               | Fate                                                                           | Rationale                                                                                                                                |
 | -------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -162,7 +162,7 @@ These are tooling scripts — not builders, not eval, not release. They belong i
 
 ### ▸ Phase 7 — Release tooling (legitimate permanent residents)
 
-These are invoked by `.release-it.json` hooks, CI, or the operator at release time. They stay in `scripts/` — this is the one category that genuinely belongs there.
+These are invoked by `.release-it.json` hooks, CI, or the operator at release time. They stay in `scripts/` — this is the one category that in fact belongs there.
 
 | File                                   | Fate                                | Rationale                                                                                                  |
 | -------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -193,7 +193,7 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 
 The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion check, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
 
-**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has many tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup, not migration.
+**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has several tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup, not migration.
 
 **One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
 
@@ -201,7 +201,7 @@ The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 di
 
 | File                                                                                       | Fate                           | Rationale                                                    |
 | ------------------------------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------ |
-| `scripts/diagnostic/check-nl-postcode.mjs`                                                 | **Convert to `.ts` or delete** | The ONLY surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
+| `scripts/diagnostic/check-nl-postcode.mjs`                                                 | **Convert to `.ts` or delete** | The only surviving `.mjs`. AGENTS.md explicitly bans `.mjs`. |
 | 11 `.mjs` references in docstrings/comments                                                | **Update comments**            | Stale references to scripts that no longer exist as `.mjs`.  |
 | `scripts/lib/zip-csv.ts:15` references `ingest-openaddresses.mjs`                          | **Fix during Phase 1**         | Stale reference.                                             |
 | `scripts/eval/audit-po-box-cedex-extract.ts:8` references `build-po-box-cedex-extract.mjs` | **Fix during Phase 0**         | Handled by gazetteer spec.                                   |
@@ -273,7 +273,7 @@ const verbose = values.verbose!
 
 200+ scripts use ad-hoc `process.env.X` or bare `process.env` access. 12 scripts already correctly use `$public` / `$private` from `@mailwoman/core/env`.
 
-Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), but any script that ships or checks a release MUST use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
+Not all 200 need conversion (several are one-off probes where ad-hoc env is fine), but any script that ships or checks a release must use the typed env accessors. At minimum, ensure the release-tooling and promotion-eval scripts use them.
 
 ---
 
@@ -293,7 +293,7 @@ Not all 200 need conversion (many are one-off probes where ad-hoc env is fine), 
 | **9**  | Eval/diagnostic audit (consolidation, gitignore correctness)     | Small         | None                          | Anytime                            |
 | **10** | `.mjs` extermination                                             | Tiny          | None                          | Anytime                            |
 
-Phases 1, 2, 4, 5, 10 can run in parallel — they touch disjoint file sets. Phase 3 can run independently. Phase 0 is the heavy lift (already spec'd). Phase 7 must come last (don't break release while moving other things).
+Phases 1, 2, 4, 5, 10 can run in parallel — they touch disjoint file sets. Phase 3 can run independently. Phase 0 is the result (already spec'd). Phase 7 must come last (don't break release while moving other things).
 
 ---
 
@@ -312,5 +312,5 @@ Phases 1, 2, 4, 5, 10 can run in parallel — they touch disjoint file sets. Pha
 - [x] `yarn typecheck:scripts` passes
 - [x] `scripts/AGENTS.md` updated to describe the slimmed-down reality
 - [x] `scripts/` contains ≤ 20 top-level files (down from 16 now, after removing the builder/modal stubs)
-- [x] `scripts/` top-level contains ONLY: release tooling, codegen/lint, config files, and the two eval/diagnostic subdirectories
+- [x] `scripts/` top-level contains only: release tooling, codegen/lint, config files, and the two eval/diagnostic subdirectories
 - [x] No file imports anything from `../lib/` or `./lib/`

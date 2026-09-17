@@ -13,7 +13,7 @@ tags:
 An address parser has to hold two facts at once that feel contradictory until you
 name them:
 
-1. The **same place** can be written many ways. "123 N Main St", "123 North Main
+1. The **same place** can be written several ways. "123 N Main St", "123 North Main
    Street", and "123 Main St N" are one location wearing three outfits.
 2. The **same surface** can mean different things. "Georgia" is a US state in
    `Atlanta, Georgia` and a country in `Tbilisi, Georgia`.
@@ -21,10 +21,10 @@ name them:
 These are the two oldest axes of lexical semantics, and once you separate them the
 contradiction dissolves — they are orthogonal, and each has its own operation.
 
-| Axis                         | Phenomenon               | Operation            | Lives in              |
-| ---------------------------- | ------------------------ | -------------------- | --------------------- |
-| many surfaces → one referent | **synonymy**             | **canonicalization** | parser + codex        |
-| one surface → many referents | **homonymy** (homograph) | **disambiguation**   | parser _and_ resolver |
+| Axis                            | Phenomenon               | Operation            | Lives in              |
+| ------------------------------- | ------------------------ | -------------------- | --------------------- |
+| several surfaces → one referent | **synonymy**             | **canonicalization** | parser + codex        |
+| one surface → several referents | **homonymy** (homograph) | **disambiguation**   | parser _and_ resolver |
 
 ## Synonymy → canonicalization
 
@@ -72,7 +72,7 @@ decidable from in-string context.
 
 ## Never drop a span
 
-Many geocoders' parsers are **lossy by design**: a span that does not fit the winning
+several geocoders' parsers are **lossy by design**: a span that does not fit the winning
 interpretation is demoted to "accessory" information and folded into the
 resolver. That is fine if your only goal is "resolve to a point", and fatal the
 moment you want to do anything _adjacent_ to geocoding — chiefly **record linkage**:

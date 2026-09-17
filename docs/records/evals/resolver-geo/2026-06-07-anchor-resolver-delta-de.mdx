@@ -1,6 +1,6 @@
 # Anchor → resolver score-delta harness — openaddresses-de-sample.jsonl
 
-Offline early-signal for the DEFERRED postcode-anchor resolver re-ranker (task #59, #240). For each row we query the locality lookup with no country (the honest multi-locale baseline), then soft re-rank the candidates by the postcode anchor's country posterior, and log what changes. The shipped resolver is untouched.
+Offline early-signal for the DEFERRED postcode-anchor resolver re-ranker (task #59, #240). For each row we query the locality lookup with no country (the direct multi-locale baseline), then soft re-rank the candidates by the postcode anchor's country posterior, and log what changes. The shipped resolver is untouched.
 
 - anchor weight: 2 · candidates/query: 10 · rows: 3000
 - eligible (locality + candidates + anchor): **1197** (skipped: 941 no-locality, 862 no-candidate, 0 no-anchor)

@@ -25,7 +25,7 @@ Mailwoman's SentencePiece tokenizer uses `byte_fallback=true` — when a charact
 
 ### "Addresses follow a fixed ordering."
 
-The United States uses most-specific-to-least-specific: `[number] [street] [city] [state] [zip]`. Japan uses least-specific-to-most-specific: `[zip] [prefecture] [city] [ward] [district] [block] [lot]`. Hungary uses three different orders depending on how many lines are available:
+The United States uses most-specific-to-least-specific: `[number] [street] [city] [state] [zip]`. Japan uses least-specific-to-most-specific: `[zip] [prefecture] [city] [ward] [district] [block] [lot]`. Hungary uses three different orders depending on how several lines are available:
 
 - One line: `{zip} {town}, {street} {buildingNr}`
 - Multiple lines: `{street} {buildingNr}. {zip} {town}, {country}`
@@ -33,7 +33,7 @@ The United States uses most-specific-to-least-specific: `[number] [street] [city
 
 The same address, three different written orders. A parser that assumes a single ordering will successfully parse one form and fail on the other two.
 
-European addresses often place the building number after the street name: `République 12` (France), `Hauptstraße 5` (Germany), `Kornetintie 6 A II krs` (Finland). The Anglophone pattern of number-before-street is the exception.
+European addresses frequently place the building number after the street name: `République 12` (France), `Hauptstraße 5` (Germany), `Kornetintie 6 A II krs` (Finland). The Anglophone pattern of number-before-street is the exception.
 
 ### "Addresses don't contain special characters."
 
@@ -45,7 +45,7 @@ The Hague's official Dutch name is `'s-Gravenhage` — starting with an apostrop
 
 ### "A single address uses a single character set."
 
-International mail often includes the destination country in both the source and destination character sets, so postal workers at both ends can read it. A parcel from Japan to France might have `France` written in both Latin and Japanese scripts. A parser that expects a single character set per address will see two country names at different positions in different scripts.
+International mail frequently includes the destination country in both the source and destination character sets, so postal workers at both ends can read it. A parcel from Japan to France might have `France` written in both Latin and Japanese scripts. A parser that expects a single character set per address will see two country names at different positions in different scripts.
 
 ### "Written addresses don't change."
 
@@ -63,7 +63,7 @@ The longest street name in Germany: `Bischöflich-Geistlicher-Rat-Josef-Zinnbaue
 
 ### "Real place names won't contain rude words."
 
-Middlesex, Scunthorpe, Penistone, and many others are real English place names. Address validators that filter for profanity reject real places. The Scunthorpe problem (named for the town whose name contains a substring interpreted as profanity) is a classic example of overzealous content filtering.
+Middlesex, Scunthorpe, Penistone, and several others are real English place names. Address validators that filter for profanity reject real places. The Scunthorpe problem (named for the town whose name contains a substring interpreted as profanity) is a classic example of overzealous content filtering.
 
 ## How traditional geocoders handled these
 

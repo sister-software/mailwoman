@@ -21,7 +21,7 @@ parse failure — the model read `Favona`, `Maylands WA` and `Mulda` correctly a
 chose a same-named place on another continent. Pelias fails differently: its misses cluster in the
 hundreds-to-few-thousand km range, because full-text ranking degrades into plausible-but-wrong.
 
-Obviously-wrong is the better failure mode for a user to catch. It is also a symptom of throwing
+an incorrect inference is the better failure mode for a user to catch. It is also a symptom of throwing
 information away: a system that knew "this street is not any street we hold in this locality" would
 not have crossed an ocean. The constraint that was already in hand went unused.
 
@@ -52,9 +52,9 @@ not have crossed an ocean. The constraint that was already in hand went unused.
 
 The hazard is stated directly: this inverts our failure mode. Today we fail at 10,000 km and the
 user notices. An inference engine fails at 2 km and the user does not — which is the Pelias failure
-mode we just called worse.
+mode wecalled worse.
 
-The resolution is to make the derivation part of the answer. A result carries not only a coordinate
+The resolution is to make the derivation part of the answer. the result not only a coordinate
 and an uncertainty, but **how the granularity was reached**:
 
 - `retrieved` — a gazetteer row matched; this is what every tier does today.
@@ -100,8 +100,8 @@ Evidence sources that observe the same latent factor are not independent. Popula
 density, broadband availability, POI density and built-up area are all partial observations of
 urbanisation; multiplying them as five independent likelihoods would manufacture confidence. A
 model must represent those correlations (directly or through latent factors), and calibration must
-use geographically held-out regions rather than random nearby rows. An 80% candidate region should
-contain the withheld truth approximately 80% of the time in genuinely novel geographies.
+use geographically held-out regions rather than random near rows. An 80% candidate region should
+contain the withheld truth approximately 80% of the time in in fact novel geographies.
 
 ## Central place theory, grounded
 
@@ -113,7 +113,7 @@ Christaller's central place theory gives _threshold_ (minimum population sustain
 _range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
-size say roughly how many exist and roughly where they concentrate (arterial roads, commercial
+size say roughly how several exist and roughly where they concentrate (arterial roads, commercial
 zoning), which is a bounded region with a stated basis.
 
 The theory is 1933 and its assumptions (isotropic plain, rational consumers) do not survive contact
@@ -126,7 +126,7 @@ than assumed**:
 - **TIGER** — roads, blocks, block groups: the skeleton facilities distribute along.
 - **BDC** (`bdc/`) — broadband availability as a development proxy, already ingested.
 - **Overture/POI** (`poi.db`, 13.68M rows) — the observed density that _calibrates_ the predicted
-  density. This is the honest move: fit the threshold/range parameters against places where we DO
+  density. This is the direct move: fit the threshold/range parameters against places where we DO
   hold POI coverage, then apply them where we do not, and report the residual.
 
 That last point is what separates this from numerology. CPT supplies the functional form; poi.db
@@ -152,7 +152,7 @@ of the box. A benchmark discrepancy must terminate in one of four receipts:
 1. a parser/model change;
 2. a resolver or ranking change;
 3. a coverage/artifact change; or
-4. a documented product boundary where abstention is the honest answer.
+4. a documented product boundary where abstention is the direct answer.
 
 Issue #1569 is the exemplar: the comparison exposed a terminal-suffix span failure, which became a
 specific training augmentation with a falsifiable recovery bar instead of an anecdotal bad result.
@@ -165,7 +165,7 @@ identical corpus. Version, scope, source lineage and snapshot date belong in eve
 Operator addition, same session. The FCC broadband work (`bdc/`, `filer/`) is not adjacent to this
 idea; it is the same idea already in production on a different claim type.
 
-Its central thesis: carriers submit availability claims they often cannot substantiate, and
+Its central thesis: carriers submit availability claims they frequently cannot substantiate, and
 **physical plant determines what is possible**. A fiber claim at a location implies a fiber hut
 within reach, poles or conduit along the route, and a serving terminal. Absent that plant, the
 claim is not merely unverified — it is physically implausible, and the implausibility is
@@ -205,15 +205,15 @@ claim even possible_ — which is address intelligence rather than address looku
 verification case is the proof that the second question has customers.
 
 The caution from the provenance section applies with more force here, not less: an infrastructure
-prior that quietly promotes a plausible-but-wrong coordinate is worse than no prior. Every
+prior that without output promotes a plausible-but-wrong coordinate is worse than no prior. Every
 constraint must be named in the derivation, and every fitted relationship must carry the residual
 it was fitted at.
 
 ## Source and distribution boundaries
 
-The evidence graph cannot erase the licence or legal posture of its inputs. Code, build recipes,
+The evidence graph cannot erase the license or legal posture of its inputs. Code, build recipes,
 source observations, fitted artifacts and runtime outputs are separate objects and may have
-different distribution rights. Every assertion retains its source and licence metadata through
+different distribution rights. Every assertion retains its source and license metadata through
 projection; a permissive output cannot be claimed merely because the combining code is open source.
 
 A source that is unavailable for a proposed use is not an observation the engine may consume. The
@@ -255,7 +255,7 @@ Source assertions remain plural. OSM, TIGER, BAN, Overture and future public add
 their own provenance and may disagree; ingestion does not overwrite them into one allegedly
 authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
 and verified deltas rather than running the acquisition pipeline, while the build recipe remains
-reproducible subject to the source licence and the existing ODbL counsel check on `@mailwoman/osm`.
+reproducible subject to the source license and the existing ODbL counsel check on `@mailwoman/osm`.
 
 The current rooftop builder already has four sound foundations: it quarantines ODbL extracts from the
 permissive gazetteer, keeps countries independent, measures rather than guesses the street-association
@@ -288,15 +288,15 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 
 - Naming-family mining. Does the presidents-block pattern generalize past anecdote? Measure the
   proportion of localities with a detectable naming scheme before assuming it is a change.
-- CPT parameter fitting. The residual on held-out POI regions IS the experiment; if it is wide, the
+- CPT parameter fitting. The residual on held-out POI regions is the experiment; if it is wide, the
   prior is too weak to act on.
-- Terrain exclusion. How much candidate area does slope/land-cover actually remove in the places
+- Terrain exclusion. How much candidate area does slope/land-cover remove in the places
   where we miss? Possibly a great deal in mountainous terrain and almost none on a coastal plain.
 
 ## Falsifiers to run before building anything
 
 1. **Does negative evidence change any answer?** Take the benchmark's missed rows, apply "not any
-   street we hold in this locality", and count how many candidate sets shrink usefully. If few, the
+   street we hold in this locality", and count how several candidate sets shrink usefully. If few, the
    coverage register is not complete enough for this to bite yet.
 2. **Do naming families exist at measurable rates?** Sample localities from the situs data and test
    for schemes (presidents, trees, states, numbered grids). A low hit rate kills source 3.
@@ -312,7 +312,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 - **Soft priors never exclude.** Registries and theory may nudge ranking; only a typed exclusion
   backed by a hard rule and an explicitly complete coverage scope may remove a candidate
   (`registry-backed-structured-prediction` doctrine).
-- **A bounded region with stated confidence, never a fabricated coordinate.** If the honest output
+- **A bounded region with stated confidence, never a fabricated coordinate.** If the direct output
   is a 40 km² polygon, that is the output.
 - **Fit before assert.** No CPT parameter ships without its residual measured against held-out POI
   coverage.

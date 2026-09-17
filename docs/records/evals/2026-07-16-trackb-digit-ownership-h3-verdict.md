@@ -7,7 +7,7 @@ prior problem.** H3 ("the corpus prior favours postcode over house_number") is r
 it can be posed at. So is the length-marginal theory that replaced it, and that theory was mine.
 
 The defect is real — parity precision reads `postcode 25/249 = 0.100` emitted where the gold has
-none — but it is a **tail**, not a centre, and nothing in the training distribution explains it.
+none — but it is a **tail**, not a center, and nothing in the training distribution explains it.
 
 ---
 
@@ -109,7 +109,7 @@ variable, because length is held fixed across the split.
 So the marginal story dies: a model that had learned the marginal would read 0.66 everywhere, not
 0.027 on 351 rows and 0.52 on 25.
 
-## 5. What is actually eliminated
+## 5. What is eliminated
 
 | hypothesis                                        | status                  | evidence                                                       |
 | ------------------------------------------------- | ----------------------- | -------------------------------------------------------------- |
@@ -143,7 +143,7 @@ different fix. That census read is unfinished and is the next measurement, not a
 
 ### The symmetry worth noticing
 
-The house-number **licence** — the defect v310 just fixed — was: _a digit licenses the street
+The house-number **license** — the defect v310fixed — was: _a digit licenses the street
 reading_, so a street with no number read as a locality. The Track B lead is its mirror: _a known
 street licenses the house_number reading_, so a number after an unknown street reads as a postcode.
 

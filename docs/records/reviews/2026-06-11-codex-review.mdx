@@ -24,7 +24,7 @@ were called out as hygiene risks are no longer merely recommendations:
 That is the good news. The remaining risks are narrower and more operational than architectural:
 the v4.4.0 plan is disciplined but dense, some docs now lag the code by one round-trip, and parts
 of #480/#481 are only partially closed while their issues still read as fully open. The biggest
-thing to guard tonight is not another broad refactor; it is keeping the v4.4.0 boundary run honest:
+thing to guard tonight is not another broad refactor; it is keeping the v4.4.0 boundary run direct:
 one artifact, one check contract, no quiet floor drift, and no shipping if the new floors expose
 po_box or perturb as still below the line.
 
@@ -101,7 +101,7 @@ But `docs/articles/status.mdx`, `docs/articles/api.mdx`, and
 `docs/articles/plan/reference/STAGES.mdx` still describe Stage 5 as opt-in / argmax default /
 `forceJointReconcile`-conditional. The docs are now behind the code.
 
-This is not just editorial. It changes how users interpret parser results and how reviewers reason
+This is noteditorial. It changes how users interpret parser results and how reviewers reason
 about regressions. The status page should say "default when the required stages are wired, falls
 back to argmax otherwise," and the API docs should prefer `jointReconcile` while marking
 `forceJointReconcile` deprecated.
@@ -177,7 +177,7 @@ postmortem and one single-variable corrective, not a widened release.
 
 ## Context for the next phase
 
-What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work basically proved that: the model was not too small to learn street-prefix/suffix boundaries; the corpus was teaching contradictory
+What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work in practice proved that: the model was not too small to learn street-prefix/suffix boundaries; the corpus was teaching contradictory
 labels. The blocker is now the long tail of component-specific boundary conventions and rare address shapes where v0’s hand-built rules still have very sharp local knowledge.
 
 The main remaining parser-parity gaps look like this:
@@ -201,7 +201,7 @@ The main remaining parser-parity gaps look like this:
    The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
    That is why #478 matters: parity may come from learned parsing plus disciplined arbitration, not from forcing the neural model to imitate every v0 trick.
 
-My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves cleanly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
+My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
 parity.
 
 The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Continuing to polish parser tail cases has diminishing returns unless

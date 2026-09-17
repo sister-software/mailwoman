@@ -16,7 +16,7 @@ side only.
 
 ## The four checks
 
-### 1. Honest-eval VT (resolver-coupled truth) — PASS
+### 1. direct-eval VT (resolver-coupled truth) — PASS
 
 Same harness, same canonical DBs, 1428 held-out rows:
 
@@ -28,7 +28,7 @@ Same harness, same canonical DBs, 1428 held-out rows:
 The locality +12.9 / region +10.7 parse gains cost nothing downstream; the street −2.3 does
 not propagate to coordinates. (Procedure note: this harness cannot feed the gazetteer
 lexicon — Run B graded with zero-filled clues, a _degraded_ configuration vs what ships, so
-this PASS is conservative.)
+this pass is conservative.)
 
 ### 2. Demo presets — PASS
 
@@ -58,10 +58,10 @@ Native-order locality 90.9% (bar ≥83.8); US/FR no-regression held (96.7 / 84.5
 | perturb (noisy)   | 398 | 39% |    60% | **58%** |          9% |
 | postal (edge)     |  38 | 26% |    11% |      8% |         21% |
 
-Run B dips 2–3pp whole-parse-strict vs v4.1.0. Two caveats, then the honest residue:
+Run B dips 2–3pp whole-parse-strict vs v4.1.0. Two caveats, then the direct residue:
 (a) `harness-v0-neural` cannot feed the gazetteer lexicon → Run B graded handicapped
 (country emissions drop without clues; intl rows in the clean arena are country-containing);
-(b) the harness folds affixes correctly, so the split is NOT the cause. Residue: a real
+(b) the harness folds affixes correctly, so the split is not the cause. Residue: a real
 small whole-parse cost consistent with the stated street/unit re-baselines. The noisy-arena
 lead (the lens that matters for real traffic) holds at **+19pp over v0**. The grown
 `v0-only` cells are exactly the arbitration layer's (#478) target — this is more headroom

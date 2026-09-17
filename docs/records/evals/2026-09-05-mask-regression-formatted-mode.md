@@ -4,11 +4,11 @@
 
 ## What changed
 
-The capability-manifest generator and the mask-regression check score the same certification rows through the shared `scoreConventionsMaskOffOn`, and until this change they differed in one parse option: the generator parsed with `inputMode: "formatted"` and the check parsed in the bare-library default (`fragmented`). The rows are formatted postal addresses; on those inputs the production pipeline derives `formatted` and runs the evidence-bundle channels OFF as a declared ablation. The check therefore graded a path production never takes on these rows. Operator decision (2026-09-05): both callers grade `formatted`; the manifest's published numbers are unchanged, the check's history breaks here.
+The capability-manifest generator and the mask-regression check score the same certification rows through the shared `scoreConventionsMaskOffOn`, and until this change they differed in one parse option: the generator parsed with `inputMode: "formatted"` and the check parsed in the bare-library default (`fragmented`). The rows are formatted postal addresses; on those inputs the production pipeline derives `formatted` and runs the evidence-bundle channels off as a declared ablation. The check therefore graded a path production never takes on these rows. Operator decision (2026-09-05): both callers grade `formatted`; the manifest's published numbers are unchanged, the check's history breaks here.
 
 **The model did not change.** Every difference in the table below is the parse mode. Numbers before this row grade `fragmented`; numbers from this row on grade `formatted`.
 
-## Per-tag F1, mask OFF, both modes
+## Per-tag F1, mask off, both modes
 
 | Locale | Tag                  | mask-OFF F1, fragmented | mask-OFF F1, formatted | Δ mask-OFF (fmt − frag) | mask-OFF − mask-ON, fragmented | mask-OFF − mask-ON, formatted |
 | ------ | -------------------- | ----------------------: | ---------------------: | ----------------------: | -----------------------------: | ----------------------------: |

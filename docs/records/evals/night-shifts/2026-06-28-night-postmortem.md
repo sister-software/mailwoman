@@ -12,7 +12,7 @@ _Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU
   countries had **zero** candidate rows. The 2026-06-26 frontier diagnostic that drove the plan ran
   admin-only and predates the fold, so it conflated "no candidate DB" with "no coverage."
 - **B re-scoped to coverage expansion** (`scripts/build-coverage-expansion.ts`) — ingest **real
-  per-country GeoNames dumps (village-level)** for the 147 zero-row countries via the SHIPPED pipeline
+  per-country GeoNames dumps (village-level)** for the 147 zero-row countries via the shipped pipeline
   (`foldGeonamesIntoAdmin` → `buildCandidate`), no package change, no model change. Staged DB:
   `candidate-global-coverage.db` (**10.14M rows, +988k places, +147 countries**; e.g. Albania
   395→16,647, Afghanistan 671→115,184). cities15000 is a download-failure fallback (0 used — all 147
@@ -20,18 +20,18 @@ _Drafted during the shift; finalized at hand-off. Window: 05:32–14:15 UTC. CPU
 
 ## Check (against the staged DB)
 
-- **do-no-harm: PASS.** Supported-set (US/ES/IT/NL/DE/FR) candidate row counts byte-identical
+- **do-no-harm: pass.** Supported-set (US/ES/IT/NL/DE/FR) candidate row counts byte-identical
   canonical vs staged; parity harness supported 10/10 @ 4.6 km median with **per-query coords identical**
   (zero regression, even with +988k places).
-- **did-it-help (existence): PASS.** `frontier-existence` on staged: country-absent **44.1% → 0.0%**,
+- **did-it-help (existence): pass.** `frontier-existence` on staged: country-absent **44.1% → 0.0%**,
   english-reachable **53.4% → 97.0%**, zero-coverage countries **91 → 0**.
-- **did-it-help (coordinate): PASS.** frontier-gap staged vs canonical (same candidate-DB config):
+- **did-it-help (coordinate): pass.** frontier-gap staged vs canonical (same candidate-DB config):
   bare resolve-rate **41.7% → 75.3%**, +hint **51.0% → 94.1%**, residual countries **92 → 7**,
   bare-supported countries **77 → 150**, US-namesake misroutes **11.5% → 6.1%**. (The frontier samples
   top-3 cities, so it is equivalent to a cities15000-only build; the village dumps' added win is the
   long tail — smaller towns — the frontier can't see.)
 
-**B check: PASS on all three halves.** Staged at `candidate-global-coverage.db`; the canonical symlink
+**B check: pass on all three halves.** Staged at `candidate-global-coverage.db`; the canonical symlink
 swap (`mailwoman gazetteer promote`) is the operator's morning call.
 
 ## Decisions made autonomously
@@ -51,7 +51,7 @@ swap (`mailwoman gazetteer promote`) is the operator's morning call.
 Oracle-locality injection (PT/PL/AU, real-OA goldens, candidate backend). **First-pass error, caught by
 verify-before-verdict:** `loadFromWeights` graded **v180** — the `neural-weights-en-us/model.onnx` dev
 symlink points to v180 (a test side-effect), not the shipped v4.15.0 (v193a3). On v180 the model looked
-disastrous (PT p50 47 / PL 116 / AU 798 km). **Re-run on the SHIPPED model**: PT **0.8 km**, PL **2.3 km**,
+disastrous (PT p50 47 / PL 116 / AU 798 km). **Re-run on the shipped model**: PT **0.8 km**, PL **2.3 km**,
 AU **1.2 km** median — already tight. No parse-accuracy disaster. The remaining gap is a **recall/p90
 tail** (a perfect parse recovers PT +5 / PL +9 / AU +4 pp of unresolved), and **AU is gazetteer-bound**
 (oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal change on the shipped model, not the
@@ -67,7 +67,7 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU change is #
 
 ## Open questions (operator)
 
-1. **Promote the staged B DB?** Check PASSES all three halves (do-no-harm zero regression, existence
+1. **Promote the staged B DB?** Check passes all three halves (do-no-harm zero regression, existence
    44.1→0.0% absent, coordinate residual 92→7). 147 previously-unreachable countries become reachable,
    with village-level (full town) coverage. `mailwoman gazetteer promote` does the symlink swap; the
    demo/R2 re-stage is a separate follow-up.
@@ -77,9 +77,9 @@ no calibration to fit. **Recommend re-scoping/closing #781**; the EU change is #
    in-set countries** — so no threshold/M2 change helps; the only change is adding classes (conditional). And
    B already reduce namesake misroutes 11.5% → 6.1% (the recoverable cities now resolve bare via
    population-first), so the placer retrain is lower-priority than it was.
-3. **#825 (multilocale parse retrain) — likely NOT worth a GPU shift.** Corrected Phase D: the shipped
+3. **#825 (multilocale parse retrain) — likely not worth a GPU shift.** Corrected Phase D: the shipped
    model already resolves PT/PL/AU at a tight median (0.8 / 2.3 / 1.2 km); only a recall/p90 tail remains
-   and AU is gazetteer-bound. AND the multilocale fix already exists as a trained, promote-ready artifact
+   and AU is gazetteer-bound. and the multilocale fix already exists as a trained, promote-ready artifact
    (v191, `out/v191/model.onnx`) — the shipped v4.15.0 (v193a3 anchor) is within ~1 km of it on PT. So the
    real #825 question is **promote v191 / combined anchor+multilocale retrain / leave** — an eyes-on
    decision, $0 new GPU tonight. See `nightshift/2026-06-28-RESULTS/gpu-finding-825-already-trained.md`.

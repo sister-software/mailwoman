@@ -38,7 +38,7 @@ operator merge (no self-merge).
   (AR/GE/PR — 0→2/2 with hint, the #244/#822 change) · 3 residual · 0 wrong-place.** The residual is a clean
   exonym-indexing change: Israel/Kuwait/Antigua fail because the English name (Tel Aviv, Kuwait City) matches no
   in-country record — index alt-name surface forms (Warsaw↔Warszawa is already proven). Down from the ~97
-  residual countries the coverage arc started with. #823 was closed on a 5-city spot-check; this is the honest
+  residual countries the coverage arc started with. #823 was closed on a 5-city spot-check; this is the direct
   full measure.
 - **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity check on the coord-first exact
   tier (`coordFirstExactProximityKm`, default-off/byte-stable), A/B'd on the JP end-to-end eval:
@@ -55,7 +55,7 @@ operator merge (no self-merge).
 
 - **PR #878 — unknown-span report (#493 acceptance item).** A tracked eval that runs the parser over golden
   and aggregates the all-O runs into a corpus-gap shopping list, **separating trivial delimiter gaps from
-  content gaps**. Honest read: **9.0% content-gap rate** (1.0% of chars; the raw 98% is delimiters). Top
+  content gaps**. direct read: **9.0% content-gap rate** (1.0% of chars; the raw 98% is delimiters). Top
   signal (verified): accented/foreign-influenced mis-segmentations (`Montréal, QC` → model drops the `C`;
   clean `Austin, TX` tags fine) → an accent-robustness change, plus fr `sainte`, plus non-Latin scripts.
 
@@ -70,7 +70,7 @@ operator merge (no self-merge).
   assuming `createWOFResolver(lookup)` didn't typecheck; verified it does (`PlaceCandidate` is structurally
   a `ResolvedPlace`; method param is bivariant). Removed all **18** cast sites + dead imports. Pure
   type-level, byte-identical runtime, 76 resolver tests green. A clean unconditional API-papercut removal — and
-  this time the assumption was verified (one cast removed + compiled) BEFORE the fix, not after.
+  this time the assumption was verified (one cast removed + compiled) before the fix, not after.
 - **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
   diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
   broader Polish under-tagging (`Daliowa`→`owa`), and it's #305-class repair risk. Declined; it's the
@@ -79,7 +79,7 @@ operator merge (no self-merge).
 - **PR #880 — exonym-vs-coverage kill-switch (#826).** A pure name_key existence probe (no model) that
   front-runs the candidate-rebuild-payload decision. Verified across two sample widths: **English names
   already resolve for ~96%** of non-US cities (the #266/#267 arc worked); the residual ~4% name-key gap
-  splits **42–49% exonym / 51–58% coverage** → decision **BOTH**, but **low-ROI** (small gap). Told #826:
+  splits **42–49% exonym / 51–58% coverage** → decision **both**, but **low-ROI** (small gap). Told #826:
   don't spend a night on the rebuild yet. Verified the split's stability at two thresholds before writing it.
 
 ## What went well
@@ -93,14 +93,14 @@ operator merge (no self-merge).
 ## What could've gone better
 
 - **Spent disproportionate effort on untracked scratch scripts early** (the `Fix'em up` task). 70→0 was
-  the ask, but it ate several tool-cycles on throwaway diagnostics with genuine API drift. Time-budget
+  the ask, but it ate several tool-cycles on throwaway diagnostics with actual API drift. Time-budget
   discipline: the rename collateral (my v5.0.0 doing) was the core; the pre-existing strict-null was gravy.
 - **Over-narrated the mechanism before verifying — TWICE (#877 name-key, #878 partial-token).** Both times
   I wrote the causal story ("name-key mismatch", "systematic region-abbrev truncation") into an issue/PR
-  before running the one probe that tests it; both times the probe flipped the story (keys DO match; clean
-  region abbrevs DO tag). Caught + corrected each on the next step, but the pattern is clear: **the numbers
+  before running the one probe that tests it; both times the probe flipped the story (keys do match; clean
+  region abbrevs do tag). Caught + corrected each on the next step, but the pattern is clear: **the numbers
   were solid, the mechanism interpretation kept outrunning the probe.** Rule for the rest of the shift and
-  next: dump the specific case BEFORE writing the "why", not after. The verify-before-verdict reflex fired
+  next: dump the specific case before writing the "why", not after. The verify-before-verdict reflex fired
   on the correction, not the claim — it needs to fire one step earlier.
 - **Branch-stacking from an aborted `git switch`.** `git switch main` silently aborts when the working tree
   has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have

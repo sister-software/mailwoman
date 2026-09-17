@@ -16,23 +16,23 @@ _Trust the full-population number. Smaller "first-N in file order" samples badly
 | ----------------- | -----: | ----: | --------------------------------------------- |
 | ≥ 0.7 (collision) |  12989 |  6.1% | ~identical names → **irreducible over-merge** |
 | 0.3–0.7           |  13428 |  6.3% | partial — separable with a good model         |
-| < 0.3             | 185662 | 87.5% | clearly different names → separable           |
+| < 0.3             | 185662 | 87.5% | different names → separable                   |
 
-Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (a shared institutional switchboard) does NOT separate them either; if anything it over-links. This is why the benchmark found phone an unreliable secondary identifier.
+Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (a shared institutional switchboard) does not separate them either; if anything it over-links. This is why the benchmark found phone an unreliable secondary identifier.
 
 ## Splitting the collisions: NPI over-segmentation vs distinct providers
 
-A collision (same address, ~same name, often same phone) with DIFFERENT NPIs is usually one organization holding multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, not a model error. NPPES's own fields separate the two cases:
+A collision (same address, ~same name, frequently same phone) with DIFFERENT NPIs is typically one organization holding multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, not a model error. NPPES's own fields separate the two cases:
 
-| collision pair is…                              | pairs | share of collisions | merging it is…                                               |
-| ----------------------------------------------- | ----: | ------------------: | ------------------------------------------------------------ |
-| same authorized official                        |  8665 |               66.7% | **correct** — one org, many NPIs (NPI over-segments)         |
-| different official AND different specialty      |  3382 |               26.0% | a **genuine** distinct co-located provider — true over-merge |
-| (remainder: different official, same specialty) |   942 |                7.3% | ambiguous — needs adjudication                               |
+| collision pair is…                              | pairs | share of collisions | merging it is…                                              |
+| ----------------------------------------------- | ----: | ------------------: | ----------------------------------------------------------- |
+| same authorized official                        |  8665 |               66.7% | **correct** — one org, several NPIs (NPI over-segments)     |
+| different official and different specialty      |  3382 |               26.0% | a **actual** distinct co-located provider — true over-merge |
+| (remainder: different official, same specialty) |   942 |                7.3% | ambiguous — needs adjudication                              |
 
 ## The ceiling
 
-The raw collision rate is **6.1%** of co-located distinct-NPI pairs — but only **1.6%** of co-located pairs are _genuinely_ distinct providers indistinguishable by name (different official + specialty). Most collisions are **NPI over-segmentation** (66.7% share an authorized official), where a merge is correct and NPI-truth penalizes it wrongly.
+The raw collision rate is **6.1%** of co-located distinct-NPI pairs — but only **1.6%** of co-located pairs are _in fact_ distinct providers indistinguishable by name (different official + specialty). Most collisions are **NPI over-segmentation** (66.7% share an authorized official), where a merge is correct and NPI-truth penalizes it wrongly.
 
 **This is the answer to "how good is good enough," and it has two parts:**
 
@@ -45,4 +45,4 @@ Recommendation: drop 0.85. Set the bar against a subpart-aware / adjudicated ent
 
 - **Geocode-free + exact address key.** "Co-located" here is an exact normalized-address match; geocoding would add near-but-not-exact neighbors (suite splits, slightly different formatting), which can only RAISE the collision count. So this is a LOWER bound on the irreducible over-merge.
 - **Recall side under-measured.** NPPES same-NPI records almost always share an address or the org name, so the recall floor looks ~1.0 here; real-world feeds with distant + name-drifted same-entity records would lower it. The F1 ceiling reported tracks the PRECISION constraint, which is the binding one for the over-merge problem.
-- **Token-Jaccard ≠ the model's name comparison.** A proxy for separability; the GBT uses the FS agreement levels. The collision SET (sim ≥ τ + shared phone) is robust to the exact similarity metric.
+- **Token-Jaccard ≠ the model's name comparison.** A proxy for separability; the GBT uses the FS agreement levels. The collision SET (sim ≥ τ + shared phone) is resilient to the exact similarity metric.

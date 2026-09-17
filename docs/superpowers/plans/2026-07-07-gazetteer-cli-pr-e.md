@@ -14,7 +14,7 @@
 
 ### Task 2: nl-pc6 + pilot-anchor → pipeline + commands
 
-- `build-postalcode-nl-pc6.ts` → `gazetteer-pipeline/postcode/nl-pc6.ts` (`buildNLPC6Extract`); command `gazetteer build postcode-extract` gains `--recipe pc6` OR a sibling `nl-pc6.tsx` command (pick whichever keeps `postcode-extract.tsx` untouched — sibling preferred).
+- `build-postalcode-nl-pc6.ts` → `gazetteer-pipeline/postcode/nl-pc6.ts` (`buildNLPC6Extract`); command `gazetteer build postcode-extract` gains `--recipe pc6` or a sibling `nl-pc6.tsx` command (pick whichever keeps `postcode-extract.tsx` untouched — sibling preferred).
 - `build-pilot-anchor-lookup.ts` → `gazetteer-pipeline/anchor-lookup.ts` (`buildAnchorLookup`, LIVE consumer: neural/scorer + evals); command `gazetteer build anchor-lookup`. JSON output isn't a DB — no seal, but write-once semantics noted.
 - Delete both scripts; commit.
 
@@ -27,7 +27,7 @@
 ### Task 4: `fst-query.ts` → `gazetteer inspect fst`; endgame
 
 - Move the probe into `commands/gazetteer/inspect/fst.tsx`; delete the script.
-- `scripts/AGENTS.md`: declare the endgame — the drawer holds ONLY release-it hooks, CI smoke, lint/codegen tooling, `eval/`, `diagnostic/`; new builders go in `gazetteer-pipeline`/commands, PERIOD.
+- `scripts/AGENTS.md`: declare the endgame — the drawer holds only release-it hooks, CI smoke, lint/codegen tooling, `eval/`, `diagnostic/`; new builders go in `gazetteer-pipeline`/commands, PERIOD.
 - Final sweep: `ls scripts/*.ts` must be exactly the allowed residents; full tsc + tests + compile + `--help` smokes; commit.
 
 ### Task 5: E2E + PR

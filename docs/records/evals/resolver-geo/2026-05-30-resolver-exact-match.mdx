@@ -52,7 +52,7 @@ weighted sum — including population — orders candidates _within_ a tier.
   population never gets to override it → Maine.
 
 So population/importance keeps doing exactly what it was tuned for (surfacing the
-famous Springfield/New York/Chicago among equally-good name matches); it simply
+famous Springfield/New York/Chicago among equally-good name matches); it only
 no longer leaks across match-quality tiers. Implemented in
 `resolver-wof-sqlite/lookup.ts` (`RankingWeights.exactMatchTiering`, default true,
 one cheap indexed lookup over `<schema>.names` for the over-fetched candidate ids).
@@ -96,7 +96,7 @@ Failure attribution confirms the mechanism: neural's resolver-side errors drop
 from 749 to 544 (−27%) with parser-side errors still at 0 — the fix moved
 wrong-state resolutions into correct ones, not coverage.
 
-The 211 km p90 that _remains_ is the genuine admin-centroid tail (large rural
+The 211 km p90 that _remains_ is the actual admin-centroid tail (large rural
 counties / sprawling metros whose centroid is far from the labeled point) plus a
 residual same-state ambiguity — the target for the learned re-ranker and the
 street-level tier, not for this PR.

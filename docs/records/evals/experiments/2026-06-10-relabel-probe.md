@@ -8,12 +8,12 @@ a fix design (#511, a loader-level relabel pass). This note records the probe th
 
 `v1.0.6-relabel-probe`: single-variable contrast against probe 0 (v1.0.4) — same clean
 consolidation step-040000 checkpoint, same extract weights (synth-affix 20.0), same +4k steps,
-choreography off, ONE change: `data.affix_relabel_lexicon_path` set. Probe 0 is the measured
+choreography off, one change: `data.affix_relabel_lexicon_path` set. Probe 0 is the measured
 control: prefix 81.0 at +2k decaying to 61.1 at +4k with relabel off.
 
 The relabel pass (`corpus-python/src/mailwoman_train/relabel.py`) applies the affix extract
 builder's exact split semantics to every street span at load time, after augmentation. Builder
-parity is the critical property — "W Park Ave" gets NO split because the builder rejects
+parity is the critical property — "W Park Ave" gets no split because the builder rejects
 affix-shaped names, and a looser pass would introduce a third labeling. Vocab is codex-derived
 (`scripts/build-affix-relabel-lexicon.mjs`, 16 directional + 549 suffix variants). Pre-train
 audit on 250K real base rows across five databases: every sampled split correct, per-extract split
@@ -39,10 +39,10 @@ Scored with `score-affix` (fp32, ship-config channels), real-affix eval (n=32):
 | street F1                          | 87.5             | 87.5             | —               |
 | guardrail (hn/loc/region/postcode) | 100 each         | 100 each         | —               |
 
-Honest reading of the strict criterion: we pre-registered "drop ≤ 2pts +2k→+4k"; prefix recall
-dropped 4.0 (F1 2.3). That is exactly ONE flipped instance (tp 22→21) on a 25-instance eval —
+direct reading of the strict criterion: we pre-registered "drop ≤ 2pts +2k→+4k"; prefix recall
+dropped 4.0 (F1 2.3). That is exactly one flipped instance (tp 22→21) on a 25-instance eval —
 the quantization noise the consult flagged — against the control's 20-point collapse, while
-suffix ROSE to 100. Verdict: HOLD, with the caveat recorded here rather than hidden.
+suffix ROSE to 100. Verdict: hold, with the caveat recorded here rather than hidden.
 
 Residual misses at +4k: four prefixes, all prefix+ordinal/numeric names ("Northwest 23rd
 Avenue", "E 63rd Street", "NE Loop 410"). The suffix splits fire correctly even on those rows
@@ -55,7 +55,7 @@ has not migrated; the full run owns it.
 on the consistent mix with both anti-contradiction compensations REVERTED as stated decisions —
 synth-affix 17.0 → 2.0 and affix tag class-weights 2.0/4.0 → 1.5/1.5 (suffix now appears on ~65%
 of base street rows; a 4× boost on a majority tag risks over-fire). Check: the v4.2.0 ship floors
-unchanged, affix measured at 20k AND 40k (stability is the claim under test), plus the consult
+unchanged, affix measured at 20k and 40k (stability is the claim under test), plus the consult
 watches (folded-street invariance, short-street recall, house_number→street_prefix transition).
 The expanded NAD-native affix eval re-baselines before the verdict; the 32-row result is recorded
 alongside, not substituted. All hold → v4.3.0 candidate.

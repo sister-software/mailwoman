@@ -1,6 +1,6 @@
 # v8 — Crossing the non-Latin (CJK) threshold: architecture plan
 
-Epic #1176. North star: parse JP (then KR, then CN/TW) into resolvable components without regressing the Latin 23.
+Epic #1176. guide: parse JP (then KR, then CN/TW) into resolvable components without regressing the Latin 23.
 
 _Planning artifact. Grounded in: `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.py` (CharCNNEncoder), `char_tokenizer.py`, `neural-weights-en-us/model-card.json`, the #825 bsplice postmortem, and the extract-recipe pipeline. No code touched._
 
@@ -31,7 +31,7 @@ There is also a structural fact that inverts the "A is the big rebuild" intuitio
 
 This provides the one property the operator demanded — "a new capability, not a trade" — **by construction**. The Latin model is not retrained, not spliced, not touched. Its regression is provably zero.
 
-The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-honest end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation blocked on a Latin bake-off (§3).
+The open question that A-internally leaves unresolved, and that the probe must answer, is whether the two models eventually **unify** into one char model serving all scripts. Unification is elegant (one transformer body, shared) and is the bitter-lesson-direct end state. But it re-introduces the dilution risk. **Decision: do not unify in v8.** Ship dual-path. Treat unification as a later consolidation blocked on a Latin bake-off (§3).
 
 ### The cheapest pre-registered probe
 
@@ -62,21 +62,21 @@ Leg 1 checks v8. Leg 2 checks the _shape of v9+_ and costs one extra retrain —
 
 Mapping the chōme-banchi system to the tags:
 
-| JP element                   | tag               | example        |
-| ---------------------------- | ----------------- | -------------- |
-| 都道府県 prefecture          | `prefecture`      | 東京都         |
-| 市区町村 city/ward           | `municipality`    | 千代田区       |
-| 大字/町 district-machi       | `district`        | 丸の内         |
-| 丁目 chōme (block)           | `block`           | 1丁目          |
-| 番地 banchi (sub-block)      | `sub_block`       | 1番地          |
-| 号 gō (building number)      | `building_number` | 1号            |
-| building name (often romaji) | `building_name`   | Tokyo Building |
+| JP element                        | tag               | example        |
+| --------------------------------- | ----------------- | -------------- |
+| 都道府県 prefecture               | `prefecture`      | 東京都         |
+| 市区町村 city/ward                | `municipality`    | 千代田区       |
+| 大字/町 district-machi            | `district`        | 丸の内         |
+| 丁目 chōme (block)                | `block`           | 1丁目          |
+| 番地 banchi (sub-block)           | `sub_block`       | 1番地          |
+| 号 gō (building number)           | `building_number` | 1号            |
+| building name (frequently romaji) | `building_name`   | Tokyo Building |
 
 Postcode (〒100-0005) maps to the existing universal `postcode`. Country to `country`. So JP reuses the universal head for the coarse fields and adds the seven street/block tags. **Do not reuse `street`/`house_number` for JP** — chōme-banchi is not a street+number grammar, and forcing it corrupts both label statistics (the same argument `SCHEMA.mdx` makes for keeping `cedex` out of `postcode`).
 
 ### Universal extension, not a JP fork
 
-Activate the tags in the shared union; let `componentsSupported` per-locale check emission. The classifier head expands from 33 → 47 labels (7 new tags × B/I). Rationale: KR and CN will need overlapping structure (KR has 시/도 province, 시/군/구 city, 동 dong, 번지 — several map onto `municipality`/`district`/`sub_block`), so a JP-private label set would just be re-forked at KR. One universal union, per-locale masks, is the established pattern (the FR `cedex` precedent).
+Activate the tags in the shared union; let `componentsSupported` per-locale check emission. The classifier head expands from 33 → 47 labels (7 new tags × B/I). Rationale: KR and CN will need overlapping structure (KR has 시/도 province, 시/군/구 city, 동 dong, 번지 — several map onto `municipality`/`district`/`sub_block`), so a JP-private label set wouldbe re-forked at KR. One universal union, per-locale masks, is the established pattern (the FR `cedex` precedent).
 
 **Head-expansion note (from #727 phase-1):** a freshly-added head/label group needs its **own param-group LR** — the existing warm layers and the cold new label rows must not share a learning rate. Bake this into the JP training config.
 
@@ -102,7 +102,7 @@ Unification into one char model is explicitly **out of v8 scope**, blocked on pr
 
 ## 4. Phased v8 plan
 
-Check discipline: each phase has a falsifiable read; a FAIL diagnoses before the next phase, it does not proceed on hope.
+Check discipline: each phase has a falsifiable read; a fail diagnoses before the next phase, it does not proceed on hope.
 
 | Phase                          | Work                                                                                                                                                                                                 | Check                                                                                                                                                     |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -130,7 +130,7 @@ The Latin pipeline aligns because Overture fields map to **whitespace tokens** (
 1. **No whitespace.** `東京都千代田区丸の内1丁目` is one unbroken string. The CharCNN scaffolding's "one char per token for CJK" degenerates each kanji to a single-char word — which _loses_ the morpheme grouping (丁目 as a unit, 番地 as a unit) that the block grammar needs. The word-composition-from-chars advantage evaporates if every token is one char.
 2. **Field values don't carry positions.** Overture gives `district=丸の内`, `block=1丁目` as _values_, not offsets. Aligning them back to the concatenated string is a **substring-match problem that is ambiguous** when a kanji recurs (a district char that also appears in the city name binds to the wrong span). The Latin pipeline never faces this because whitespace disambiguates.
 
-If alignment is silently wrong, you train on mislabeled spans and the coord board tells you _something_ is broken but not _what_ — the most expensive failure mode (compute already spent). This is the #825 lesson generalised: **grade the thing the model actually consumes, before you train.**
+If alignment is silently wrong, you train on mislabeled spans and the coord board tells you _something_ is broken but not _what_ — the most expensive failure mode (compute already spent). This is the #825 lesson generalised: **grade the thing the model consumes, before you train.**
 
 **Cheap de-risk (Phase 0, no compute):** take 500 Overture-JP rows, run field→character-span alignment, and **hand-check 50 by eye** — a human reads kanji spans in seconds. If field-concatenation alignment is clean, the risk is retired for pennies. If it is ambiguous, you have surfaced — _before training_ — that you need a JP morphological segmenter (MeCab/Sudachi) or the deterministic block-structure regex (postcode/丁目/番地/号 are regular delimiters) to produce gold character spans. Either way it is a Phase-0 data dependency, not a Phase-4 surprise. The whole point of the pocket-sized model is that the small model surfaces corpus bugs instead of absorbing them — Phase 0 is that principle applied before the first retrain.
 

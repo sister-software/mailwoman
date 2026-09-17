@@ -19,7 +19,7 @@ _own_ definitions rather than anyone's judgment:
 
 So the product never has to characterize any technology as good or bad. It reports: _of the N filings
 in this block, M meet the FCC's 100/20 benchmark with the low-latency flag set._ That is a citable,
-Commission-defined line, and it collapses the headline number honestly.
+Commission-defined line, and it collapses the headline number directly.
 
 **Stacked with the family collapse (Phase 3), one block yields three numbers:**
 
@@ -50,7 +50,7 @@ are block-grain public record, not a statement about that household):
 | Comcast Corporation       | 0003768165 | 130317      | Cable, 2000 Mbps | Markets 2000 Mbps at the address     |
 
 **Corrected 2026-07-31** — an earlier revision of this note had the two filed speeds transposed and
-drew a "filings diverge in both directions" conclusion from them. What the corrected example actually
+drew a "filings diverge in both directions" conclusion from them. What the corrected example
 shows is narrower and cleaner:
 
 - **Comcast: filed 2000, markets 2000 — exact agreement.** The self-check corroborates the filing.
@@ -123,7 +123,7 @@ Consumer-facing aggregators (allconnect and peers) blend filing data with Ookla 
 which is why their pages resolve to state/city generalities rather than address truth: the
 measurement layer has no address grain either.
 
-Performance data is a legitimate fourth axis (it observes what was actually delivered, not what was
+Performance data is a legitimate fourth axis (it observes what was delivered, not what was
 claimed), but the sources diverge sharply on licensing and that decides which is usable:
 
 - **Ookla Open Data** — believed **non-commercial** licensed (CC BY-NC-SA family). If so it is
@@ -132,7 +132,7 @@ claimed), but the sources diverge sharply on licensing and that decides which is
 - **FCC Measuring Broadband America** — federal, public domain, panel-based (small sample, high
   trust).
 
-Neither M-Lab nor MBA gives address grain; both give area-level distributions. The honest use is
+Neither M-Lab nor MBA gives address grain; both give area-level distributions. The direct use is
 therefore _corroboration at area grain_: "filed gigabit service in a block whose measured
 distribution has never exceeded X" is a coverage-qualified observation, not a verdict about any
 address.
@@ -144,7 +144,7 @@ address.
 - **3d competition surface:** the three-number progression of §1 becomes the headline output, and the
   benchmark filter is a first-class query parameter.
 - **C5:** the label scraper serves double duty — pricing _and_ availability corroboration.
-- **Evals:** the Plumbrook example is a genuine availability-divergence fixture (one filer agreeing
+- **Evals:** the Plumbrook example is an actual availability-divergence fixture (one filer agreeing
   exactly with its own channel, one filing service its own channel declines), plus a stale-identity
   fixture via the acquisition. Keep it as an internal eval
   case; it is exactly the shape that a one-way over-claim detector gets wrong.

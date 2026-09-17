@@ -68,7 +68,7 @@ A label sequence is valid under BIO grammar iff:
 So `[O, B-street, I-street, O, B-locality, B-region]` is valid.
 `[B-street, I-locality]` is invalid (mid-tag switch).
 
-If you just take per-token argmax, you get whatever each token's
+If youtake per-token argmax, you get whatever each token's
 highest-probability label is — regardless of validity. That can produce
 nonsense like `[B-street, I-locality, O]` if the encoder's emissions
 push the second token toward `I-locality` and the first toward
@@ -173,7 +173,7 @@ top of the hard structural mask. For example:
 
 - `B-house_number` is almost always followed by `B-street` or `O,
 B-street` — a learned matrix could encode that preference.
-- `B-postcode` rarely precedes anything (it's usually the last
+- `B-postcode` rarely precedes anything (it's typically the last
   component) — `B-postcode → O` could get a boost.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
 B-locality` is rare — a learned matrix could rank these apart.

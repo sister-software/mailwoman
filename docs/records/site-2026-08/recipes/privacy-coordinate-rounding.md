@@ -8,7 +8,7 @@ prerequisites: "@mailwoman/spatial"
 verified-with: mailwoman v6.1.0
 ---
 
-You geocoded a customer's address and got a rooftop coordinate back — accurate to a few metres. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house; you usually want the neighbourhood.
+You geocoded a customer's address and got a rooftop coordinate back — accurate to a few meters. That precision is the whole point when you're routing a driver to the door. It's a liability when you're about to store the point in an analytics table, share it with a partner, or plot a thousand customers on a public dashboard. A rooftop point _is_ the house; you typically want the neighborhood.
 
 So coarsen it on purpose. You have two ways to do it, and the only real decision is how much accuracy you're willing to give up.
 
@@ -16,13 +16,13 @@ So coarsen it on purpose. You have two ways to do it, and the only real decision
 
 The cheapest coarsening is to drop decimal places. Each one you keep is worth roughly 10× the precision:
 
-| Decimals | Cell size | What it pins      |
-| -------- | --------- | ----------------- |
-| 5        | ~1 m      | the doormat       |
-| 4        | ~11 m     | the building      |
-| 3        | ~110 m    | the block         |
-| 2        | ~1.1 km   | the neighbourhood |
-| 1        | ~11 km    | the city          |
+| Decimals | Cell size | What it pins     |
+| -------- | --------- | ---------------- |
+| 5        | ~1 m      | the doormat      |
+| 4        | ~11 m     | the building     |
+| 3        | ~110 m    | the block        |
+| 2        | ~1.1 km   | the neighborhood |
+| 1        | ~11 km    | the city         |
 
 ```ts
 const round = (n: number, decimals: number) => {

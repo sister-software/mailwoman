@@ -31,12 +31,12 @@ This is the only place the project writes a finish line as a sentence. Verbatim:
 > When this list is checked, mailwoman is: a parser that never does worse than v0 (arbitration, by
 > construction) and decisively better on real-world input; forward geocoding to street level (point
 > lookup + interpolation) in the countries we cover; reverse geocoding; autocomplete; batch + served
-> API with observability; an honest, leakage-free eval story in every shipped locale; reproducible
+> API with observability; an direct, leakage-free eval story in every shipped locale; reproducible
 > training; a pocket tier that still installs nothing — and documentation a stranger can onboard
 > from. That is the geocoder.
 
 Nine clauses. Seven are shipped. Two are not: _"decisively better on real-world input"_ is measured
-against libpostal and the retired v0 rule engine but not against the system that actually competes
+against libpostal and the retired v0 rule engine but not against the system that competes
 (§2.4), and _"an eval story in every shipped locale"_ is where the largest single gap sits (§2.3).
 
 The queue itself has drifted: three items remain unchecked (#473, #375, #294) whose issues were
@@ -83,7 +83,7 @@ measured answer, and it is not yet yes (§2.4).
 ### 2.1 Model and check — v9.0.0, model 9.0.0
 
 `mailwoman@9.0.0` is on npm (published 2026-08-06 05:57 UTC), all 48 publishable workspaces in
-lockstep. The promotion check `v9.0.0-base` **PASSES all 18 floors**. Ledger row
+lockstep. The promotion check `v9.0.0-base` **passes all 18 floors**. Ledger row
 `v420-base-anchor-v2-s42-20260806`.
 
 | Metric         | 7.0.0 | 9.0.0    | Floor | Read                           |
@@ -95,7 +95,7 @@ lockstep. The promotion check `v9.0.0-base` **PASSES all 18 floors**. Ledger row
 | us.micro       | 89.8  | **87.5** | 82.9  | instrument changed             |
 | us.unit_real   | 97.0  | **93.9** | 73.0  | **watch, −3.1 at n=34**        |
 | us.po_box_real | 90.9  | **97.0** | 94.3  | clear                          |
-| fr.region      | 44.1  | **81.2** | 36.7  | the largest single gain        |
+| fr.region      | 44.1  | **81.2** | 36.7  | measured output                |
 | fr.cedex_real  | 90.5  | **99.8** | 92.4  | clear                          |
 | arena.perturb  | 78    | **66**   | 59.9  | **−12, and unnarrated**        |
 
@@ -119,13 +119,13 @@ important thing this review found that nobody had written down.
 
 | Floor        | Baseline | Candidate | Bar      | Verdict        |
 | ------------ | -------- | --------- | -------- | -------------- |
-| house_number | 0.8288   | 0.9315    | **0.97** | FAIL both arms |
+| house_number | 0.8288   | 0.9315    | **0.97** | fail both arms |
 | postcode     | 0.9722   | 0.9722    | 0.97     | PASS           |
-| street       | 0.6554   | 0.7116    | **0.90** | FAIL both arms |
+| street       | 0.6554   | 0.7116    | **0.90** | fail both arms |
 
 The v9.0.0 release row quotes both of these as gains (".83→.93", ".66→.71") without stating that
 each remains below its bar. The check record it links to is titled _"measurement only. No promotion
-decision is taken or implied here"_ and its combined gauntlet verdict is **FAIL in both arms**. The
+decision is taken or implied here"_ and its combined gauntlet verdict is **fail in both arms**. The
 promotion decision was taken separately and deliberately (ROAD_TO_V9 §1, "promotes with conditions,"
 operator-ratified) — that is a legitimate call. The release note reads as though the record endorsed
 it, and the record says otherwise.
@@ -158,7 +158,7 @@ that fails at HEAD is a mis-status, not a check"_ — is correct). The aggregate
 **71% of the gauntlet corpus (218 of 306) does not check**, and the headline that circulates is the
 number after the failures were removed from the denominator.
 
-### 2.3 The country sweep — what coverage actually looks like
+### 2.3 The country sweep — what coverage looks like
 
 400 oracle-verified candidates. 400/400 resolved by the Google oracle with zero `ZERO_RESULTS`;
 7 `partial_match` rows parked; **393 through the pipeline; 279 pass (71.0%); 114 fail.**
@@ -180,7 +180,7 @@ absolute terms, as predicted. Class 3 (country-distinctive addressing structures
 — the highest per-row rate, and the draft ranked it _last_. Class 2 (exonym/renamed/script) 30 of
 137 = 22%, the safest.
 
-**27 rows resolve to nothing.** The batch note's own wording: _"the honest failure, and the one that
+**27 rows resolve to nothing.** The batch note's own wording: _"the direct failure, and the one that
 does not violate the meaning-of-zero rule."_
 
 **29 of the 114 share one root cause, and it is a data defect, not a model one.** `candidate.db` and
@@ -268,8 +268,8 @@ serves `/` and `/openapi.json`.
 
 | Surface              | Where we sit                                                                                                                                                      |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Check PASS on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                             |
-| Parse (FR)           | Check PASS. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                   |
+| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                             |
+| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                   |
 | Parse (GB)           | The v9 cure landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier** — it has capability without a tier claim |
 | Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                              |
 | Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                                |
@@ -417,10 +417,10 @@ Everything above, plus:
 | c8  | Starter kits — 22 unchecked boxes, zero checked, no artifacts exist                                                                                                     | single-lane                                        | bounded, plus two operator checks (org repo creation, npm first-publish) |
 | c9  | Secondary address support (#1100), locator[] (#295/#296), script-extract routing (#245)                                                                                 | arc-with-preregistration                           | schema changes ride retrains                                             |
 
-**The only genuine external blocker across the whole project is c7** — the ODbL question holding
+**The only actual external blocker across the whole project is c7** — the ODbL question holding
 `osm/`, and it has no counsel behind it. The dossier records the operator's position verbatim: _"do
 your best and I'll forward it over when the project actually pays for one."_ Two items in that
-dossier (L4 — the repo contradicts itself on the WOF licence, CC0 in the licensing pages against
+dossier (L4 — the repo contradicts itself on the WOF license, CC0 in the licensing pages against
 CC-BY 4.0 in `resolver-wof-sqlite/README.md` and the HF card; and L5) are fact-finding that needs no
 lawyer and can proceed today.
 
@@ -499,7 +499,7 @@ shape. The first four files a stranger opens in the repo are not.
 
 ### 5.7 The coverage register that ROAD_TO_V9 required
 
-§5-B, tier B: _"the release notes state coverage honestly (the 'what mailwoman does not cover'
+§5-B, tier B: _"the release notes state coverage directly (the 'what mailwoman does not cover'
 register)."_ No such register exists anywhere in the tree. The v9.0.0 release row names four
 territory rows and the truncation pair; it does not carry the 27 no-coordinate rows or the 114-row
 sweep failure taxonomy. **This is the one ROAD_TO_V9 B-tier item that did not land**, and it is the
@@ -514,7 +514,7 @@ described by its own module as _"an artifact no command can rebuild."_
 
 ---
 
-## 6. What is genuinely strong
+## 6. What is in fact strong
 
 Direct statement without extrapolation.
 
@@ -533,7 +533,7 @@ gain with a mechanism-level receipt, not a metric that moved.
 
 **FR.** `fr.region` 44.1 → 81.2, `fr.cedex_real` 90.5 → 99.8, held-out BAN beating production at
 z=2.85, the fragment board at 0.977 across 2,800 fixtures. FR is the locale where the architecture's
-claims are most clearly demonstrated.
+claims are supported by measured demonstrations.
 
 **The release train.** 48 workspaces in lockstep, Trusted Publishing over OIDC, pack-then-publish for
 the `workspace:*` translation, symlink dereferencing as a safety net, `publishConfig.exports` injected

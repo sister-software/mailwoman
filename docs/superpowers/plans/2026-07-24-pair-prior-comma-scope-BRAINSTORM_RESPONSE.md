@@ -8,7 +8,7 @@ was verified against the code, not the docstrings alone.
 ## The one structural finding that reshapes the answer set
 
 **The split comma-free recall needs is exactly the split v385 provably cannot make.** The target
-population's failure is "dep-loc not separated from post town" — that IS the dead-tag deficit. Any
+population's failure is "dep-loc not separated from post town" — that is the dead-tag deficit. Any
 segmentation derived from the model's own first pass (Q1's pseudo-segments) therefore cannot
 recover the target population: on `St Bedes Avenue Fishburn Stockton-on-Tees`, v385's best case is
 one fused `locality` span over `Fishburn Stockton-on-Tees`, and a fused pseudo-segment probes as
@@ -19,7 +19,7 @@ single design, below.
 
 Second, quieter finding from reading the FP anatomy: window mode's 79% FP at δ=10 is not a
 window-probing problem, it is a **pair-geometry problem**. The current matcher is "two-sided,
-order-free" — X and Y may be ANY disjoint windows anywhere in the string, distance unweighted
+order-free" — X and Y may be any disjoint windows anywhere in the string, distance unweighted
 (`placetype-pair-prior.ts` module docstring, explicit). The confound board's own fixture rows show
 why that floods: `childUsed` is embedded in the venue at string START and `parentUsed` is the
 locality at string END — any-to-any matching connects them across the whole address. Real
@@ -30,7 +30,7 @@ it.
 ## The proposal: anchored adjacent-pair mode (v1.1), as a strictly ordered probe chain
 
 Ship the operator-pending comma-scoped v1 (segment-only) unchanged. v1.1 adds a third probe mode
-that engages ONLY where segment mode is structurally inert:
+that engages only where segment mode is structurally inert:
 
 ```
 probeChain (per parse, en-gb-conditional as today):
@@ -52,7 +52,7 @@ dual-key forms, and `applyWindowBias` verbatim — the delta is candidate SELECT
    - the string-final 1..3-word window (post town is string-final when no postcode is present).
 2. **Child candidates:** the 1..3-word windows immediately left of the parent window —
    `child.endPos + 1 === parent.startPos`, longest-match first, with a left-maximality rule
-   (if extending the child one word left ALSO pairs with the same parent, the longer window wins;
+   (if extending the child one word left also pairs with the same parent, the longer window wins;
    kills partial-child probes like bare `cadbury` under `north cadbury`).
 3. **Probe** the index on the adjacent (child, parent) under the existing 4 key forms. First hit →
    δ on the child span only (parent stays the model's strong `locality` read — unchanged from
@@ -79,7 +79,7 @@ margin diagnosis (experiment 0) says the misses are margin-driven.
 ## Q1 — two-pass decode: principled or laundering?
 
 **Laundering, and worse: structurally inert on the target population** (the finding above). The
-refinement that WOULD be principled — derive pseudo-segments only from the model's CONFIDENT spans
+refinement that would be principled — derive pseudo-segments only from the model's CONFIDENT spans
 (street/postcode/locality are healthy on GB even though dep-loc/venue are starved), fuse
 low-confidence runs rightward, probe across those units — still fails recall, because the
 dep-loc/post-town split lives inside what the model reads as one confident `locality` run. The
@@ -92,7 +92,7 @@ and external evidence RESCORES, never resegments. Our additive-emission prior is
 family (rescore via bias, model keeps argmax ownership). What the literature does not support is
 feeding a weak model's boundaries back as hard structure for its own second pass — that compounds
 the first-pass error, which is precisely the handoff's "laundering" worry. Verdict: **do not build
-the two-pass segmenter.** A lighter two-pass variant survives as v1.2 fallback ONLY if textual
+the two-pass segmenter.** A lighter two-pass variant survives as v1.2 fallback only if textual
 anchors miss the bar: pass 1 unbiased → use its confident `locality` span as an ADDITIONAL parent
 anchor for the same adjacent-pair probe (veto-free, anchor-only). That uses the first pass for
 position, never for boundaries, and keeps fail-silent semantics (no confident locality → zero
@@ -103,10 +103,10 @@ matrix → today's behavior).
 Exploit it exactly as the anchored mode does: probe only pairs where the parent occupies the
 post-town position (pre-postcode or string-final) and the child immediately precedes it. The
 suffix-region restriction ("after the last street-suffix token") falls out for free — the parent
-anchor IS the suffix region.
+anchor is the suffix region.
 
 On "model owns ambiguity" for odd orderings: the anchor check is a condition on FIRING, never a
-penalty. A genuinely odd ordering (post town first, dep-loc last) simply gets no bias — identical
+penalty. A in fact odd ordering (post town first, dep-loc last) only gets no bias — identical
 to today's comma-free behavior, positive-evidence-only doctrine intact. If odd orderings later
 prove common in real traffic, add mirrored anchors (parent at string start) as a separately
 conditional, separately measured tier — do not loosen the default.
@@ -126,10 +126,10 @@ estimator:
   venue-heavy (0.4). Coarse buckets resist overfitting, each boundary is one pre-registerable
   knob, and the artifact header already carries `delta` — per-pair δ is a PIX1 schemaVersion-2
   record extension (u8 tier per pair, reader maps tier→multiplier), fully backward-compatible.
-- Sequencing: build the anchored mode FIRST. Add tiers only if measured residual FP exceeds bar —
+- Sequencing: build the anchored mode first. Add tiers only if measured residual FP exceeds bar —
   pre-register that decision rule, don't pre-build the implementation.
 
-PMI vs the count ratio: the ratio IS the plug-in PMI estimator up to the shared context-marginal
+PMI vs the count ratio: the ratio is the plug-in PMI estimator up to the shared context-marginal
 constant; with two contexts and add-one smoothing they're operationally identical at this
 vocabulary size. Start with the ratio.
 
@@ -137,7 +137,7 @@ vocabulary size. Start with the ratio.
 
 Distinct value from Q1's segmentation: it attacks the RESIDUAL class (street field verbatim-equal
 to a census child, adjacent to the anchor) — the one configuration the anchor check structurally
-cannot reject, because the geometry genuinely matches. The discriminator there is exactly "the
+cannot reject, because the geometry in fact matches. The discriminator there is exactly "the
 model reads this occurrence as `street`" (healthy head on GB, unlike venue).
 
 Contract: veto a child candidate only when the first-pass argmax over its span is
@@ -150,7 +150,7 @@ pre-registered decision rule as Q3 — only if anchored-alone FP > 5%.
 
 ## Q5 — determiner/shape check: mostly redundant; one narrow reuse survives
 
-As a standalone check it IS the marker list at larger scale, and dies the same way (task-6's
+As a standalone check it is the marker list at larger scale, and dies the same way (task-6's
 verdict: fixed successor tables were never a venue-boundary detector). The `The X Arms`
 determiner cue covers a minority of the board and invites lexicon-maintenance treadmill. **Skip
 the general shape check.** The narrow reuse that survives: the poi-taxonomy business-suffix
@@ -169,7 +169,7 @@ so the "hallucination off the trie" failure mode is absent by construction; ther
 subtract. (Also: non-autoregressive BIO+Viterbi has no prefix-commitment point where the charge
 would attach.)
 
-What DOES transplant cleanly:
+What does transplant directly:
 
 1. **Trie-driven candidate generation.** Walk the token stream through a prefix trie of the
    index's child/parent key sets; only maximal complete matches become candidates. Replaces the
@@ -188,7 +188,7 @@ pieces' offset contract that `computeGroupSegments`, the repair passes, and span
 depend on — so the normalization leg pays an offset-remapping tax through the entire decode path,
 plus a full metamorphic-invariance re-verification of a component that now EDITS user input.
 Worse, it solves the same segmentation problem with the same weak evidence: comma insertion IS
-Q1's pseudo-segmenter wearing a normalizer hat, one layer up with a bigger blast radius. The
+Q1's pseudo-segmenter wearing a normalizer hat, one layer up with a bigger scope. The
 prior-probe framing keeps input untouched (byte-stability by construction) and evidence additive
 (doctrine by construction).
 
@@ -203,8 +203,8 @@ pays for itself.
 ## Recommended experiment order (each zero-GPU, each pre-registered before it runs)
 
 0. **Miss anatomy (diagnosis, no code):** of window mode's 18 misses at δ=10 comma-stripped —
-   how many are marker-suppression artifacts (child followed by house-number shape), how many are
-   margin, how many are non-adjacent geometry? And of segment mode's 217 residual FP — how many
+   how several are marker-suppression artifacts (child followed by house-number shape), how several are
+   margin, how several are non-adjacent geometry? And of segment mode's 217 residual FP — how several
    are the street-verbatim-child class? These two numbers set the v1.1 pre-registered bars and
    decide whether δ stays 10 or goes 12 (anchored-only).
 1. **Anchored-adjacent mode** as specified above. Pre-registered bar (proposed, calibrated after
@@ -221,7 +221,7 @@ pays for itself.
 ## Pre-registered grading number, answered
 
 Predicted against the handoff's bar: comma-stripped emit **50–62/69** at δ=10–12 anchored
-(window's 51–62 restricted to adjacent geometry, minus non-adjacent genuine rows); tag-correct
+(window's 51–62 restricted to adjacent geometry, minus non-adjacent actual rows); tag-correct
 **≥95%** (window's 96% at δ=10 improves when cross-string geometry errors are removed); venue-FP
 **3–5%** (residual street-verbatim class ≈ segment's measured 3.338% floor); golden **0/51**
 (board carries no index pairs by construction — 0 at every configuration ever measured);

@@ -42,7 +42,7 @@ visible text more than one way. The letter `é` can be one code unit (NFC, preco
 (NFD, a bare `e` followed by a combining acute accent). A span of `[10, 15)` lands in a
 different place depending on which spelling you're holding. Feed the model offsets computed over
 one form and raw text stored in another, and every label is invisibly off by however
-many combining marks came before it. There is no error message for that. There's just a model
+several combining marks came before it. There is no error message for that. There'sa model
 that slowly learns garbage.
 
 So the assertion guards something real: char-offset labels are only meaningful under a single
@@ -80,7 +80,7 @@ couldn't exist. The span-invariant check caught it and threw, which is how we fo
 And this is the lesson buried in the wreck: we had validated the build on nine of the
 eleven sources, every Latin-script shape we could think of, and they were spotless. The two we'd
 skipped the full dress rehearsal on were the WOF adapters — which is precisely where every
-non-Latin name variant on Earth lives. The long tail wasn't hiding. We just hadn't walked all
+non-Latin name variant on Earth lives. The long tail wasn't hiding. Wehadn't walked all
 the way down it.
 
 ## Stop trusting the row
@@ -119,15 +119,15 @@ hours of I/O, done, sitting right there. The crash was in the _next_ phase — a
 reads those canonical files back and turns them into labeled rows.
 
 The build, as written, had no memory. Re-running it meant re-emitting all 36 gigabytes from
-scratch: another two and a half hours just to limp back to the line where it had fallen over.
-The penalty for trying again is what actually ruins a night. The original bug barely registers
+scratch: another two and a half hoursto limp back to the line where it had fallen over.
+The penalty for trying again is what ruins a night. The original bug barely registers
 next to it.
 
 So the recovery shipped one more thing: resume. Each adapter writes its canonical file and then,
 only once that file is completely flushed, a manifest beside it. So the manifest's existence is a
 promise that the file behind it is whole. Resume checks for that pair; if both are there, it
 reuses them and skips the emit entirely. It's opt-in — the default still re-emits, because for a
-clean run you want the source of truth, not yesterday's cache — but with the flag flipped, the
+clean run you want the authoritative record, not yesterday's cache — but with the flag flipped, the
 re-run reused every gigabyte we'd already paid for and went straight back to alignment. Freed of
 the emit, the align phase turned out to be fast. The thing we'd budgeted twenty-two hours for is
 mostly going to come in under ten, because the original estimate was paying for an emit phase the

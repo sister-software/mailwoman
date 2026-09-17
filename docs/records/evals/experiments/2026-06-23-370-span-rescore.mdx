@@ -19,9 +19,9 @@ Run the shipped v4.13.0 model over a 7-locale coordinate-golden panel (IT/PT/PL/
 
 | bucket                 | meaning                                                                               | count |
 | ---------------------- | ------------------------------------------------------------------------------------- | ----: |
-| **swap**               | gold locality IS in the gazetteer, but the model emitted a different/fragmented token |   116 |
+| **swap**               | gold locality is in the gazetteer, but the model emitted a different/fragmented token |   116 |
 | **needsK**             | gold in gazetteer, model emitted no locality at all                                   |    34 |
-| **coverage-gap**       | gold NOT in the gazetteer — nothing to recover                                        |   104 |
+| **coverage-gap**       | gold not in the gazetteer — nothing to recover                                        |   104 |
 | emitted-but-unresolved | model emitted the gold locality, resolver still missed                                |     5 |
 
 The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, which is in the gazetteer — but the model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation), so neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it; a whitespace tokenizer wouldn't.
@@ -63,7 +63,7 @@ PL — the biggest swap locale — goes to **56 of 56 recovered, all gold, p50 1
 
 ## Grade the coordinate, not the string
 
-71% "right" by gold-string undersells it, because the string metric counts `Santa Eulália` against a gold of `Santa Eulália Viz` as a miss — when it's a 1 km miss. The honest read is the coordinate, at the benchmark's right-place bar:
+71% "right" by gold-string undersells it, because the string metric counts `Santa Eulália` against a gold of `Santa Eulália Viz` as a miss — when it's a 1 km miss. The direct read is the coordinate, at the benchmark's right-place bar:
 
 ```
 coordinate quality of the 175 recoveries:
@@ -73,13 +73,13 @@ coordinate quality of the 175 recoveries:
   >100 km   33  (19%)
 ```
 
-**The rescore lifts 136 of 259 unresolved EU rows — 53% of the entire no-result tail — to a right-place coordinate (@25 km).** That's a direct dent in the one number the benchmark said we lose on. The cost is 33 mis-fires past 100 km, and they aren't spread evenly: they're the coverage-gap locales (IT, AU) where the gold locality isn't in the gazetteer at all, so the rescore latches onto some other token that happens to name a far-off town. AU adds its own wrinkle — same-name towns across states (Springfield QLD/NSW/VIC) that need state agreement, not just country.
+**The rescore lifts 136 of 259 unresolved EU rows — 53% of the entire no-result tail — to a right-place coordinate (@25 km).** That's a direct dent in the one number the benchmark said we lose on. The cost is 33 mis-fires past 100 km, and they aren't spread evenly: they're the coverage-gap locales (IT, AU) where the gold locality isn't in the gazetteer at all, so the rescore latches onto some other token that happens to name a far-off town. AU adds its own wrinkle — same-name towns across states (Springfield QLD/NSW/VIC) that need state agreement, notcountry.
 
 ## The consistency check
 
 The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator carries a postcode-region check — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns nothing for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The check is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
 
-With the check on, the IT story flips cleanly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
+With the check on, the IT story flips directly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
 
 | metric (175→172 recovered) | check off | check on (50 km) |
 | -------------------------- | --------: | ---------------: |
@@ -102,14 +102,14 @@ EU coord panel (n=972, @25km right-place), spanRescore off → on:
   ~17% of new resolutions land >25km — the mis-fire rate, trimmed by the check where postcodes resolve.
 ```
 
-The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the honest version. Against #775's Nominatim on the same panels:
+The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the direct version. Against #775's Nominatim on the same panels:
 
 |                    |  IT |  PT |  FR |  PL |  AT |  CZ |  AU |
 | ------------------ | --: | --: | --: | --: | --: | --: | --: |
 | mailwoman + change |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
 | Nominatim (#775)   |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
 
-So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country check can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The honest claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
+So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country check can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The direct claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
 
 One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
 

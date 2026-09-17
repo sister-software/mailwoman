@@ -60,13 +60,13 @@ legitimate decisions on other tokens.
 
 The model's confidence on its synth-street-induced dep_loc predictions is high. Per
 the v0.6.1 calibration probe design: when the hallucinations
-are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
+are high-confidence, **retraining is required, nota decoder-time threshold or bias**.
 
 ### Default morphology bias is over-aggressive and causes collateral street_suffix damage
 
 At default magnitudes (`maxAffixBias=3.0`), the morphology FST inflates `street_suffix`
 hallucinations from 204 → 332 — a +63% increase. Investigation: the libpostal
-`street_types.txt` dictionaries contain many 1-2 character abbreviations (`a`, `b`, `av`, `bd`,
+`street_types.txt` dictionaries contain several 1-2 character abbreviations (`a`, `b`, `av`, `bd`,
 `br`, ...) that collide with US state abbreviations (`OR`, `CA`, `ND`, `NY`) and short tokens.
 A minimum-length-3 surface-form filter mitigates this (`av` no longer matches, but `avenue`,
 `rue`, `blvd` still do — see
@@ -74,7 +74,7 @@ A minimum-length-3 surface-form filter mitigates this (`av` no longer matches, b
 
 Even with the filter, default bias magnitudes still produce 238 hallucinations vs the 204
 baseline — a smaller but real regression. Lowering `maxAffixBias` to 1.0 brings collateral
-damage back to 213, basically baseline-equivalent.
+damage back to 213, in practice baseline-equivalent.
 
 ### Layer 1 is a real deliverable on top of a v0.6.2 retrain
 

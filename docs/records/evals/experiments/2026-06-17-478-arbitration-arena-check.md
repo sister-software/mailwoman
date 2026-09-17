@@ -7,7 +7,7 @@ coord p50 3.3→1069 km, street+house_number precondition 100→48%; (2) diagnos
 containment**; (3) the **containment-preserving fix-v1** (edits on the nested neural tree, no flatten)
 **eliminated the regression** — the coordinate arm now matches neural — **but the arena collapsed to a
 net wash (+21/−21, v0-only unchanged at 56.9%)**. The +122 "win" was entirely label-conformance to v0's
-decomposition, the very thing that wrecked the geocode; removing the harm removed the apparent gain.
+decomposition, the very thing that wrecked the geocode; removing the harm removed the result.
 **Verdict: arbitration is not promoted — fix-v1 makes it SAFE but provides no net benefit, while adding
 the full v0-parser cost to every parse.** It stays default-OFF. The #566 lesson, twice over: grade the
 assembled COORDINATE output, and a label-match "win" toward the other parser is not a quality win._
@@ -78,7 +78,7 @@ close.
 ## Check status — NOT PROMOTED
 
 - **Leg 1 (arena label-match): clears.** `v0-only vs ASSEMBLED` 56.4 → 27.1%, +122/−10 vs raw neural.
-- **Leg 2 (precondition + coordinate): FAILS decisively.** locality −26pp, coord p50 3.3 → 1069 km,
+- **Leg 2 (precondition + coordinate): fails decisively.** locality −26pp, coord p50 3.3 → 1069 km,
   precondition 100% → 48%.
 
 **Both legs must clear to promote; leg 2 fails, so arbitration stays default-OFF.** The implementation and

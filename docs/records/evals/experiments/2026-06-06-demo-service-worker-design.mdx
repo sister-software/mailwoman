@@ -5,7 +5,7 @@ ship a service worker this shift: the investigation below turned up enough cross
 blind end-of-shift implementation would have been the wrong call. This is the map so the next session starts
 with the gotchas already paid for, not a from-scratch spike._
 
-## What you actually want
+## What you want
 
 The demo's heavy assets — `model.onnx`, `tokenizer.model`, `wof-hot.db`, `fst-en-US.bin` (~60 MB cold) — are
 HTTP-cache-only today. The header comment in `src/pages/demo/index.tsx` states: _"After first load the
@@ -64,7 +64,7 @@ answer forks the design:
 
 - **If the final GET is CORS-clean** (most likely, since the demo works): cache normal (non-opaque) responses.
   You get `response.ok`, a real `content-length`, and integrity you can check against the model card's expected
-  sizes (the plugin already treats those sizes as source of truth).
+  sizes (the plugin already treats those sizes as authoritative record).
 - **If it's opaque** (`mode: "no-cors"` fallback): you can still `cache.put` it, but the response is opaque —
   no status, no readable size, and it counts a **padded** size against quota. That makes version eviction and
   the ~60 MB quota math much harder. Don't design for this case unless the browser check forces it.

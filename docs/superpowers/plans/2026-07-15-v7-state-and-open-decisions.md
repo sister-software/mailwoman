@@ -35,7 +35,7 @@ Ship v7.0.0 = **delete** the legacy rules parser. "Delete" qualifies as all of:
 3. Shared contracts rehomed to survive the deletion — `Classification.ts` → `core/types`; the
    `tokenization/context → core/solver` edge split (`Span`/normalizer/`split` stay).
 4. The rules parser's hand-written gold (the parity corpus) rescued to neural eval fixtures.
-5. NOT deleted: the libpostal dictionary data + the generic tokenization utilities.
+5. not deleted: the libpostal dictionary data + the generic tokenization utilities.
 
 The swaps for (1) are already built on `origin/hold/v1-parse-neural-check-blocked`. Deletion is conditional
 on **the three swapped surfaces producing acceptable output**, not on the model reaching a specific
@@ -69,7 +69,7 @@ number landing on the wrong side of the street, splitting, or dropping. Sampled 
 
 The troubled inputs share a house number that is not a US-style leading integer (trailing/European
 order, multi-digit that the tokenizer shatters, alphanumeric like `16a`, route-embedded like `9600
-Interstate 35`, or unit-compound `U12/345`), often on a street token that resists clean segmentation
+Interstate 35`, or unit-compound `U12/345`), frequently on a street token that resists clean segmentation
 (diacritic-heavy, or led by a lowercase generic like `aleja`/`Rue`), amplified by thin context.
 [concluded]
 
@@ -102,7 +102,7 @@ rules tree and the v264 tree): [measured]
 
 - When the neural street parse is correct → **98.6% within 1 km** of the rules geocode, median 0 km.
   Benign parse-tag differences (`Königsallee Düsseldorf` as one span) resolve to the same place.
-- When the neural parse fails → a hard tail: **40% of the street-failing subset move >25 km**, often
+- When the neural parse fails → a hard tail: **40% of the street-failing subset move >25 km**, frequently
   to a country centroid or wrong state (`California` → Maryland; bare `6000, NSW, Australia` → the AU
   country centroid). Concentrated on bare-fragment / US-highway / bare-state-name classes.
 
@@ -113,7 +113,7 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 ## What I built, and where it conflicts with the spec
 
 - **Resolution-plausibility guard** — `resolver/plausibility.ts`, `isImplausibleResolution(tree)`,
-  6 tests passing, committed on branch `feat/v7-hybrid-swap-check` (NOT merged). Trips when a tree
+  6 tests passing, committed on branch `feat/v7-hybrid-swap-check` (not merged). Trips when a tree
   resolves no finer than a country centroid. Reusable for any check direction. [done]
 - I then drafted a **hybrid swap check** (route `structured_address`→neural, everything else→rules
   fallback, + the guard) and measured it bounds the garbage tail to ~3/321 (0.9%) with zero
@@ -122,7 +122,7 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
   point)." So the hybrid **contradicts the option-A delete spec**. This is a spec-level decision that
   is yours, not mine, and I stopped before wiring it.
 
-## Changes considered and NOT committed to
+## Changes considered and not committed to
 
 - **digit-atomicity tokenizer splice.** Probe confirmed the _cause_: the tokenizer splits multi-digit
   numbers per-digit (`810`→`▁8 1 0`), so the boundary can fall inside a number. [measured] But I have

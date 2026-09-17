@@ -37,7 +37,7 @@ into the diagnostics tier, pre-registered: MBR@1 vs seg@1 on parity and Paris, s
 
 ## 2. The check question (thesis §8 Q3) — settled for now
 
-Reviewer B's earlier suggestion (coordinate-acceptability as the honest check) meets reviewer A's
+Reviewer B's earlier suggestion (coordinate-acceptability as the direct check) meets reviewer A's
 counter: on bare fragments the coordinate check degenerates into the parse check — no locality means
 centroid geocode means wrong by construction. Both are right about different classes. Resolution:
 **keep 0.90 parse-tag as the excision check, add coordinate-acceptability as a diagnostic.** If the

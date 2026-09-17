@@ -20,8 +20,8 @@
 - Relative imports carry `.ts`; sibling modules inside a package go through the `#` imports map (`#license/key`), never `../`.
 - No `enum`; `const X = {…} as const`.
 - Comments state invariants, not history. No dates, PR numbers, or "added for" in a comment.
-- The launcher `packages/mailwoman/lib/cli.ts` keeps ONE static import. Everything new there arrives by dynamic import after dispatch.
-- The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. NONE of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
+- The launcher `packages/mailwoman/lib/cli.ts` keeps one static import. Everything new there arrives by dynamic import after dispatch.
+- The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. none of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
 - Run `yarn compile` before any test that spawns the compiled CLI (`out/cli.js`). The pre-commit hook runs the compiled CLI too.
 - Every prose file (spec, CHANGELOG, docs page) passes `node_modules/@vvago/vale/bin/vale --config docs/.vale-vocab.ini <file>`.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
@@ -55,7 +55,7 @@
 
 Three decisions recorded here that refine the spec:
 
-1. `mailwoman parse --format json` gets NO body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
+1. `mailwoman parse --format json` gets no body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
 2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`), not by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
 3. The stamp is offline. The spec says a `retired` key reads as the open-source branch; a retired reading needs the well-known register, which the stamp never consults. A retired key whose signature still verifies stamps `LicenseRef-Commercial` until the release that removes its public key; the doctor's `--online` check is where retirement is reported. This is the asymmetry `packages/core/lib/license/trusted-keys.ts` already documents.
 
@@ -584,7 +584,7 @@ it("prints the notice for a key this build does not trust", async () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/mailwoman/test/unit/cli-launcher.test.ts`
-Expected: the two new tests FAIL (stderr is empty); the three existing tests PASS.
+Expected: the two new tests fail (stderr is empty); the three existing tests pass.
 
 - [ ] **Step 3: Print the notice after dispatch**
 
@@ -1037,7 +1037,7 @@ test("no engine option: no `engine` field and no headers", async () => {
 - [ ] **Step 2: Run the tests to verify they fail**
 
 Run: `yarn vitest run packages/api/test/unit/index.test.ts`
-Expected: the three new tests FAIL; the rest PASS.
+Expected: the three new tests fail; the rest pass.
 
 - [ ] **Step 3: Thread the option through app and routes**
 
@@ -1095,7 +1095,7 @@ export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.extend({ engine: En
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `yarn vitest run packages/api/test/unit/index.test.ts packages/mailwoman/test/unit/api-schema-drift.test.ts` (adjust the drift test's path with `git ls-files | grep api-schema-drift`).
-Expected: PASS.
+Expected: pass.
 
 If a route's `responses` schema in `routes.ts` is declared with the wire schema and the typed `c.json` now rejects the widened body, widen the route's `200` content schema to the same schema you extended in Step 4.
 
@@ -1175,7 +1175,7 @@ Replace `fixtureEngine` with the name the file already uses for its engine fixtu
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/nominatim/test/unit/index.test.ts`
-Expected: the two new tests FAIL.
+Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
 
@@ -1268,7 +1268,7 @@ test("no engine option: the collection has no `engine` member", async () => {
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/photon/test/unit/index.test.ts`
-Expected: the two new tests FAIL.
+Expected: the two new tests fail.
 
 - [ ] **Step 3: Thread the option**
 
@@ -1342,7 +1342,7 @@ test("engine option: headers only — the /parse body is byte-identical with and
 - [ ] **Step 2: Run the test to verify it fails**
 
 Run: `yarn vitest run packages/libpostal/test/unit/index.test.ts`
-Expected: the new test FAILS on the `server` header.
+Expected: the new test fails on the `server` header.
 
 - [ ] **Step 3: Add the option**
 
@@ -1391,7 +1391,7 @@ const engineStamp = await resolveEngineStamp()
 const app = createXApp(engine, { cors: values.cors, engine: engineStamp.stamp })
 ```
 
-and as the LAST statement of the `onListen` callback:
+and as the last statement of the `onListen` callback:
 
 ```ts
 printLicenseNotice(engineStamp)

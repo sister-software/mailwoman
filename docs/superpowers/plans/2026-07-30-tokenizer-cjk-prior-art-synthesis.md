@@ -13,13 +13,13 @@ required finding. Verdicts first, receipts after.
    ~72.5% of model parameters) — **CORRECTION 2026-07-31: the 24% ceiling was falsified at the
    full-feed measurement (86.27% fired over all 684M rows); the pruning change is DEAD, see
    `2026-07-31-sp-vocab-pruning-verdict.md`** — and a **WASM rebuild on SentencePiece 0.2.2**
-   (native offsets; SHIPPED 2026-07-31, `@mailwoman/sentencepiece-wasm`, PR #1379).
+   (native offsets; shipped 2026-07-31, `@mailwoman/sentencepiece-wasm`, PR #1379).
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
    (our sealed vocab ~24KB vs 40–380MB for every dictionary-based segmenter; TinySegmenter at
    20.6KB is the lone peer and is also a dictionary-free char model).
 3. **The evidence channels are required for char-level NER, not supplementary.** Two
    literatures converge independently: CANINE loses NER by −13.8 F1 vs mBERT (its own authors:
-   "NER rewards memorization"), repaired to −1.1 by n-gram/lexicon features; Zhang & Yang (ACL 2018) show char beats word for Chinese NER only WITH lexicon channels. Mailwoman externalized
+   "NER rewards memorization"), repaired to −1.1 by n-gram/lexicon features; Zhang & Yang (ACL 2018) show char beats word for Chinese NER only with lexicon channels. Mailwoman externalized
    memorization into gazetteer/FST/lexicon channels years ago — that architecture is precisely
    why our char path works. Pin this as a PRECONDITION in every future char-model
    pre-registration (the Leg-2 bare-vs-bare ~0.5pp gap was measured in the char model's hardest
@@ -31,7 +31,7 @@ required finding. Verdicts first, receipts after.
    fetches or multi-GB local databases.
 5. **⚠ KR is legally conditional; TW is the clean second CJK locale.** The juso bulk DB carries a
    signed pledge: 국외 반출 금지 (no export from Korea) + no-commercial/no-redistribution ToS —
-   the acquired 6.17M juso rows need counsel BEFORE any training touches them (G1 agenda item).
+   the acquired 6.17M juso rows need counsel before any training touches them (G1 agenda item).
    OpenAddresses KR is dead (frozen 2017); Overture does not cover KR at all. Taiwan, by
    contrast: OGDL-Taiwan-1.0 (CC BY 4.0-compatible), current OpenAddresses, 9.7M rows already on
    disk. **Recommendation: re-weight Phase 6 from KR-next to TW-next unless counsel clears juso.**
@@ -43,7 +43,7 @@ required finding. Verdicts first, receipts after.
 
 - **Normalization tables** (Geolonia + ABR are canonical): the two-register numeral convention
   (町丁目 digits → kanji numerals; 番地/号 → Arabic with 番地/番/号 → `-`, so `1番3号` ≡ `1-3`);
-  variant folding NFKC does NOT do (ヶ/ケ/が/ガ, 之/ノ/の, 新字体↔旧字体); prefecture/county
+  variant folding NFKC does not do (ヶ/ケ/が/ガ, 之/ノ/の, 新字体↔旧字体); prefecture/county
   completion; the non-丁目 tail (Sapporo 条, Iwate 地割, 甲乙丙/いろは, 無番地); half-width
   katakana folding with its length-changing dakuten composition.
 - **Kyoto 通り名: keep it in a dedicated field** (ABR's `kyoto_st`), never delete it (Geolonia's
@@ -106,7 +106,7 @@ coin-flips in real data) is resolver-side normalization, sourceable from GREEN d
 | Region | Verdict             | Note                                                                                                                                                                                                                                           |
 | ------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | JP     | GREEN               | ABR PDL-1.0 (CC BY 4.0-compatible; modification notice required), MLIT PDL-1.0, Geolonia CC BY 4.0, KEN_ALL copyright expressly disclaimed. Parcel-level (地番) is AMBER (a second MoJ grant rides it).                                        |
-| KR     | RED pending counsel | juso ToS + the export pledge; portal metadata saying "no restriction" does NOT override the statute. VWorld unverifiable from here.                                                                                                            |
+| KR     | RED pending counsel | juso ToS + the export pledge; portal metadata saying "no restriction" does not override the statute. VWorld unverifiable from here.                                                                                                            |
 | TW     | GREEN               | OGDL-Taiwan-1.0 with a per-agency attribution manifest (~21 entries) shipped in the package; attribution failure voids ab initio; pin/archive against §5.2 withdrawal. Chunghwa Post 3+3 postcodes are RED (no distribution/adaptation grant). |
 | CN     | RED                 | Law, not licensing.                                                                                                                                                                                                                            |
 | HK     | AMBER               | ALS bulk exists; terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                         |
@@ -117,7 +117,7 @@ The RED verdict above binds the **juso bulk address register** — not Korea. Tw
 hold change the Phase-6 picture:
 
 1. **WOF-KR is already in our shipped admin DB** (`admin-global-priority.db`): 18 regions, 308
-   counties, 1,482 localadmins, 50,465 localities, 693 neighbourhoods — with centroids and 68,658
+   counties, 1,482 localadmins, 50,465 localities, 693 neighborhoods — with centroids and 68,658
    Korean-language name records (Hangul 충청북도, aliases 충북, AND hanja 忠淸北道). License-clean
    (the WOF CC0/CC-BY family). It is the admin/resolve leg; WOF carries no streets or house
    numbers anywhere (the standing hierarchy-gap).

@@ -20,9 +20,9 @@ import {
 } from "#engine"
 
 /**
- * The resolved-place info a forward `/api` result carries: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names,
- * the coordinate, the resolved country, and the postcode. {@link photonForwardProperties} projects it onto Photon's
- * schema. #1014 — decorate from the resolved place, not the parsed input span.
+ * The resolved-place info in a forward `/api` result: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names, the
+ * coordinate, the resolved country, and the postcode. {@link photonForwardProperties} projects it onto Photon's schema.
+ * #1014 — decorate from the resolved place, not the parsed input span.
  */
 export interface PhotonForwardInput {
 	lat: number

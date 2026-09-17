@@ -1,12 +1,12 @@
 # Parity Scorecard — 2026-06-11 (baseline: v4.3.0, the relabel + conventions release)
 
 Supersedes [2026-06-10](./parity-scorecard-2026-06-10.md). Same two lenses, same rules:
-arena head-to-head is whole-parse-strict (honest, understates per-tag wins); per-tag F1 is
+arena head-to-head is whole-parse-strict (direct, understates per-tag wins); per-tag F1 is
 what the campaign moves; real-OOD columns are the truth for campaign tags. Self-emitted
 from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not hand-edit.
 
 **What changed since 06-10:** the #492 ladder closed (cause = a 1,039:1 label contradiction,
-NOT capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS check
+not capacity), the #511 relabel run shipped as **v4.3.0** after a FAIL→corrective→PASS check
 (`2026-06-11-v4.3.0-ship-check.md`), and the conventions layer shipped its first increment (#478:
 locale head exported + fr mask). Ship config now includes `addressSystemConventions: "auto"`.
 
@@ -31,8 +31,8 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 | ------------------ | ---------------------------- | -----: | -----: | ---------: |
 | street_prefix      | real-affix (32-row)          |      0 |   64.9 |   **93.6** |
 | street_suffix      | real-affix (32-row)          |      0 |   48.8 |   **96.6** |
-| street_prefix      | NAD-native v2 (193-row, NEW) |      — |   18.2 |   **92.2** |
-| street_suffix      | NAD-native v2 (193-row, NEW) |      — |    8.9 |   **90.3** |
+| street_prefix      | NAD-native v2 (193-row, new) |      — |   18.2 |   **92.2** |
+| street_suffix      | NAD-native v2 (193-row, new) |      — |    8.9 |   **90.3** |
 | unit               | real-designators             |   92.3 |   90.6 |   **92.1** |
 | country            | homograph-real               |     27 |  89.8¹ |   **85.1** |
 | us.street (folded) | golden dev                   |   78.5 |   76.2 |       75.5 |
@@ -48,7 +48,7 @@ locale head exported + fr mask). Ship config now includes `addressSystemConventi
 ¹ v4.2.0's country figure was measured under the historically gaz-starved country leg
 (fixed this check) — not directly comparable to v4.3.0's 85.1; both clear the 83.3 floor.
 
-The authoritative check record, including the honest-eval VT leg (region 99.6, coord p50/p90
+The authoritative check record, including the direct-eval VT leg (region 99.6, coord p50/p90
 3.4/7.4 km) and the FAIL→corrective→PASS story: [v4.3.0 ship check](../model-versions/2026-06-11-v4.3.0-ship-check.md).
 
 Open per-tag gaps after this release: po_box/cedex (deferred coverage change — both Montréal

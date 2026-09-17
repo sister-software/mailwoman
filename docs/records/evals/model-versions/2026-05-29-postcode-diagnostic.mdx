@@ -15,9 +15,9 @@ tags:
 **Sources:** `mailwoman/test/*.test.ts` + `data/eval/falsehoods/*.jsonl` + `data/eval/golden/v0.1.2/*.jsonl`
 **Sample size:** 3,096 postcode-containing entries, 14 country buckets
 
-Built in response to DeepSeek's turn-12 question: "Are we actually bad at
+Built in response to DeepSeek's turn-12 question: "Are we bad at
 postcodes per country?" Postcode patterns (CEDEX = FR, A1A 1A1 = CA, SW1A
-1AA = GB, 12345-6789 = US) are regex-detectable shapes; the model SHOULD
+1AA = GB, 12345-6789 = US) are regex-detectable shapes; the model should
 crush this. Earlier v0.6.x evals showed postcode recall in the 70-80%
 range — well below the 95%+ that pattern-matching would imply. This
 diagnostic isolates postcode-only accuracy from the rest of the parsing
@@ -64,9 +64,9 @@ Piccadilly, London, W1J 9PN  → expected "W1J 9PN", actual (missing)
 
 GB postcodes (and similar shapes) are completely skipped. The model
 either emits no postcode label at all or labels these tokens as
-something else (often locality or O).
+something else (frequently locality or O).
 
-### 2. Truncation (postcode label attaches to ONE token of a multi-token postcode)
+### 2. Truncation (postcode label attaches to one token of a multi-token postcode)
 
 ```
 Toronto, ON M5V 2T6, Canada           → "M5V 2T6" → actual "2T6"
@@ -97,7 +97,7 @@ suggests the postcode boundary smeared right into the locality.
 ## The mechanism: tokenizer fragmentation
 
 SentencePiece with a 48K vocab tokenizes US-dominant postcode patterns
-fairly cleanly (`62701` → `[62, ##701]` or `[6, ##27, ##01]`), but
+moderately directly (`62701` → `[62, ##701]` or `[6, ##27, ##01]`), but
 alphanumeric patterns get split aggressively:
 
 ```

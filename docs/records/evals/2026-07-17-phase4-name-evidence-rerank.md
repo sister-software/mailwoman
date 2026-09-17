@@ -2,13 +2,13 @@
 
 Night-4 of the #727 stage-2 arc (plan #1134), the phase the plan called "the whole ballgame": how
 much of the measured k-best headroom (oracle@5 0.723 vs seg@1 0.577 on parity) can evidence-based
-reranking actually collect? Two measurements, one redesign, one decisive result — all zero-GPU.
+reranking collect? Two measurements, one redesign, one decisive result — all zero-GPU.
 
 ## 1. The phase-4a zero: full-geocode tier evidence is the wrong instrument
 
 The repaired phase-4a harness (`scratchpad/rerank-valid.mjs`, the full situs+BAN+OSM cascade after
 the earlier admin-only dark-resolver bug) ran the 267 live parity fixtures through k=5 segmentations
-on the v301 span-head artifact, geocoding EVERY hypothesis and preferring the finest resolution tier:
+on the v301 span-head artifact, geocoding every hypothesis and preferring the finest resolution tier:
 
 ```
 seg@1: 0.5768      rerank@1: 0.5768  (delta +0)     oracle@5: 0.7228
@@ -16,7 +16,7 @@ fired on 1/267: fixed 0, broke 0
 evidence rate: 9/267 (3.4%) — tier census: 1308 admin / 25 address_point / 2 street
 ```
 
-**The rerank collected NOTHING — because it is evidence-starved, not wrong.** The failing class is
+**The rerank collected nothing — because it is evidence-starved, not wrong.** The failing class is
 context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to extract
 on), so every hypothesis ties at admin tier and the arbiter has nothing to prefer. Full-geocode tier
 is structurally blind exactly where the headroom lives.
@@ -51,7 +51,7 @@ collects it without a single training step.
 ## Caveats, stated
 
 - Measured on the **v301 span-head artifact** (the archived `feat/727-span-head` branch's k-best
-  surface) — the only model with exported span scores. The JS decoder is NOT on main; this result is
+  surface) — the only model with exported span scores. The JS decoder is not on main; this result is
   the consumer that justifies merging it.
 - **FR only** — the one locale with a complete street-name index on hand. Generalizing needs
   per-country name sources (US TIGER/situs, NO Kartverket, PT/RO BAN-equivalents) behind one
@@ -65,7 +65,7 @@ collects it without a single training step.
 ## Addendum — falsifier v2: the break audit + two guards (same night, 06:20)
 
 The 14 breaks decompose into exactly two classes: **truncation wins** (10/14 — the picked street is
-a sub-span of gold that is itself in the index, usually the bare type word `rue`/`chemin`) and
+a sub-span of gold that is itself in the index, typically the bare type word `rue`/`chemin`) and
 **moved off a correct rank-1** (4/14 — gold at rank 1 but missing from the index on a
 hyphen/apostrophe fold, with the in-index pick 2–5 score units down). Two guards, pre-registered
 (breaks ≤6, fixes ≥135): G1 = no evidence credit for pure street-type vocabulary; G2 = evidence may
@@ -76,7 +76,7 @@ not promote a hypothesis more than 2.5 score units below rank 1. Result:
 | v1 (bare existence) | 140     | 14     | 0.706     | 0.860       |
 | **v2 (+G1 +G2)**    | **148** | **3**  | **0.711** | **0.875**   |
 
-Both bars cleared; G1 also lets evidence land on gold more often (fixes UP). One residual: G2 dips
+Both bars cleared; G1 also lets evidence land on gold more frequently (fixes UP). One residual: G2 dips
 street-housenumber 0.922 → 0.912 (blocks a few legitimate deep picks). The implementation spec with
 the interface + productionization plan is
 `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`.

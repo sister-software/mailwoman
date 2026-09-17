@@ -16,14 +16,14 @@ tree, so the figure could not be audited — only re-derived. Re-derived through
 | **live only** (`is_current != 0 AND is_deprecated = 0`) | **86,754**  |
 | live + parent-alias expansion (shipped)                 | **175,744** |
 
-**53.4% of India's borough/neighbourhood nodes carry `edtf:deprecated`** — 100,860 of 189,002 —
+**53.4% of India's borough/neighborhood nodes carry `edtf:deprecated`** — 100,860 of 189,002 —
 against 0.0% (DE), 0.1% (GB, FR) and 2.5% (US). India is a dramatic outlier, and a raw-repo count
 therefore overstates its usable yield by roughly 2×. The operator's instinct that our WOF implementation
 already handled deprecation is what surfaced this; the implementation existed and the pair extraction
-simply was not using it (fixed separately, #1411).
+only was not using it (fixed separately, #1411).
 
 So India is **not** 6× GB. Live and alias-expanded it is 175,744 against GB's 30,825 — still the
-campaign's largest instance, and still worth the rebuild, but the honest multiple is ~5.7× on a
+campaign's largest instance, and still worth the rebuild, but the direct multiple is ~5.7× on a
 number that includes aliases and ~2.8× without them.
 
 ## Parent-alias expansion, and why India alone

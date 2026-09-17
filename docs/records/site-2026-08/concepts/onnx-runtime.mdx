@@ -25,7 +25,7 @@ The same `model.onnx` file works in all three.
 
 ## How the model file is structured
 
-An ONNX model is a graph of operations: matrix multiplies, attention computations, activations, layer normalisation, etc. Each operation has typed inputs and outputs. The graph is serialized as a Protocol Buffer.
+An ONNX model is a graph of operations: matrix multiplies, attention computations, activations, layer normalization, etc. Each operation has typed inputs and outputs. The graph is serialized as a Protocol Buffer.
 
 For Mailwoman's encoder, the export traces this kind of structure:
 
@@ -71,7 +71,7 @@ const logits = results.logits // float32[1, seq_len, 21]
 const labels = argmax(logits) // pick best label per token
 ```
 
-The whole inference path — tokenize, run model, decode labels — takes ~5 ms on a modest CPU for a typical address. The session-creation step (loading the file, JIT-compiling the graph) takes ~30 ms and is amortized across many calls.
+The whole inference path — tokenize, run model, decode labels — takes ~5 ms on a modest CPU for a typical address. The session-creation step (loading the file, JIT-compiling the graph) takes ~30 ms and is amortized across several calls.
 
 ## Inference in the browser
 

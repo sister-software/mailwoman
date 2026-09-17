@@ -56,7 +56,7 @@ coverage. Filed #823 for the exonym/coverage change. **Caveat (caught after post
 default drop-in config (admin gazetteer, no `MAILWOMAN_CANDIDATE_DB`), so the precise percentages and
 the exonym-vs-coverage split are config-dependent — with a candidate DB, "coverage" cities like London
 and Beijing resolve. The placer-namesake gap survives the candidate DB (population-first can't break the
-US-namesake tie without a country prior), so #822 is robust; the percentages are withdrawn pending a
+US-namesake tie without a country prior), so #822 is resilient; the percentages are withdrawn pending a
 re-run on the operator's canonical candidate config. Report carries the full caveat.
 
 **Robustness hardening (all 3 drop-ins).** An edge-case probe of the shipped servers found 500 crashes
@@ -67,7 +67,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 
 ## What went well
 
-- **The harness earned its keep immediately.** It existed to prove the geopy contract; it surfaced the
+- **The harness earned its keep immediately.** It existed to the result; it surfaced the
   defaultCountry bug on the first run (4/10) and then validated the fix (9/10). Building the measurement
   before declaring victory is what caught it.
 - **Probe before fix.** Every behavior change (drop defaultCountry, wire countrycodes) was preceded by a
@@ -103,7 +103,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 - **Dropped `defaultCountry` from both drop-in geocodes** rather than make it conditional — the placer
   handles bare US queries (probe: even ambiguous "Springfield, IL"). Drop-in-local, doesn't touch the
   demo's GeocodeRouter. Alternative (per-request country detection) was more code for no measured gain.
-- **Did NOT widen `HARD_PLACE_COUNTRY_SAFELIST`** — measured it changes nothing (the placer abstains,
+- **Did not widen `HARD_PLACE_COUNTRY_SAFELIST`** — measured it changes nothing (the placer abstains,
   so the safelist never checks). The real change is GPU model work (#822). Avoided a useless shared-path
   change.
 - **Left photon lean** — no street parse / country backfill on the per-keystroke autocomplete path. The

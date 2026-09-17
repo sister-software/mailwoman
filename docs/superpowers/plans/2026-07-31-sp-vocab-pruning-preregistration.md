@@ -7,17 +7,17 @@ behavior change** on every input whose segmentation never used a pruned piece.
 
 ## Mechanism (decided before measuring)
 
-1. **Fired-set measurement over the FULL v0.15.0-venue feed** (684,103,970 rows, all 704 train
+1. **Fired-set measurement over the full v0.15.0-venue feed** (684,103,970 rows, all 704 train
    extracts — no sampling: a sampled fired-set risks pruning a rare-but-practiced piece, the exact
    tail this probe exists to keep) plus every eval surface (eval-harness fixtures, golden sets,
    gauntlet cases, P0 boards). Counted at the unit the model reads: `encode()` output ids.
 2. **Keep set** `K` = specials (pad/unk/bos/eos) ∪ all 256 byte-fallback pieces ∪ every
    single-codepoint piece (6,818 — the reachability floor: any char the vocab knows directly
-   keeps its direct token, capping worst-case segmentation drift at byte-fallback for truly
+   keeps its direct token, capping worst-case segmentation drift at byte-fallback for in fact
    unknown chars only) ∪ fired(train) ∪ fired(evals). Prune set `P` = vocab ∖ K.
 3. **Tokenizer surgery**: strip `P` from the SentencePiece model proto, order-preserving
    (the #825 `tokenizer_splice.py` idiom, inverted). Unigram property: removing pieces that never
-   won a Viterbi path leaves every other path's score unchanged — segmentation is IDENTICAL for
+   won a Viterbi path leaves every other path's score unchanged — segmentation is identical for
    any input whose best path avoided `P`, by construction.
 4. **ONNX surgery on the INT8 artifact directly**: row-gather `weight_quantized` by the old→new
    id map. Never prune-then-requantize — requantization changes the scale globally and forfeits

@@ -48,11 +48,11 @@ Both results are explained by the confound, not by the thesis:
   wrong parse (`Rue Montmartre` → locality). It fired 44 times and broke 18 by _rewarding the failure
   mode the arc exists to fix_.
 
-The extracts exist locally and I simply did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
+The extracts exist locally and I only did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
 (`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`), not the bare WOF admin resolver.
 
-## What IS supported
+## What is supported
 
 - `resolver/rerank.ts` — `rerankByResolution`, deliberately minimal: **veto implausible resolutions,
   otherwise keep the model's ranking**. No score blend, no per-class weights. The reason for that
@@ -72,7 +72,7 @@ The extracts exist locally and I simply did not wire them: `/mnt/playpen/mailwom
    whether _this_ signal collects it is untested.
 2. Expect the answer to be **locale-split**: the US has situs/TIGER street coverage, so the resolver
    can adjudicate there; CZ/FR/PT bare fragments resolve to a locality centroid regardless, so the
-   evidence may genuinely not exist for them. A rerank that helps US and is inert intl would be a
+   evidence may in fact not exist for them. A rerank that helps US and is inert intl would be a
    perfectly good result — but it has to be measured, per-locale, not assumed.
 3. Only then: the isotonic ambiguity check (4b) and option C (4c).
 

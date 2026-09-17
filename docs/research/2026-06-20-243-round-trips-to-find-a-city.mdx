@@ -42,6 +42,6 @@ The fix wasn't more postcodes. It was order. Resolve the locality first — "Ber
 
 ## What it bought
 
-A name now resolves in about 12 range requests and under a megabyte, down from 243 and 16.5 MB. The whole table is 490 MB with _global_ coverage — every place we know, not three countries — in a single file the browser reads a dozen pages of. US locality resolution holds at 96.8%; the European cities we'd just added through Overture come back at parity. And the slim build — the per-model-version, three-country database we'd been maintaining — is gone, along with the chore of deciding which countries were worth shipping.
+A name now resolves in about 12 range requests and under a megabyte, down from 243 and 16.5 MB. The whole table is 490 MB with _global_ coverage — every place we know, not three countries — in a single file the browser reads a dozen pages of. US locality resolution holds at 96.8%; the European cities we'dadded through Overture come back at parity. And the slim build — the per-model-version, three-country database we'd been maintaining — is gone, along with the chore of deciding which countries were worth shipping.
 
-The lesson sticks because the constraint was never going away. When the only way to touch your data is one short read at a time, searching is the expensive verb. So we stopped searching. We built the answer ahead of time and gave it an address, and now the browser just goes and reads it.
+The lesson sticks because the constraint was never going away. When the only way to touch your data is one short read at a time, searching is the expensive verb. So we stopped searching. We built the answer ahead of time and gave it an address, and now the browsergoes and reads it.

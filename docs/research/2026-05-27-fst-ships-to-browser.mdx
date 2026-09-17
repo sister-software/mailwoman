@@ -21,7 +21,7 @@ While wiring the FST, we discovered the live demo was serving the **wrong tokeni
 
 The root cause: `docs/static/mailwoman/` was manually managed. Model and tokenizer were copied independently, and the tokenizer copy was missed during the v0.5.3 update.
 
-The fix is a Docusaurus plugin (`docs/plugins/demo-assets/`) that stages all binary assets from the `neural-weights-en-us` package at build time. Model card version is the source of truth. The tokenizer/model mismatch can't recur because both come from the same source.
+The fix is a Docusaurus plugin (`docs/plugins/demo-assets/`) that stages all binary assets from the `neural-weights-en-us` package at build time. Model card version is the authoritative record. The tokenizer/model mismatch can't recur because both come from the same source.
 
 ## What we fixed along the way
 

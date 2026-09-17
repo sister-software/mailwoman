@@ -3,7 +3,7 @@
 Scoped from the **three-arena capability eval** (libpostal + corpus-perturbation
 
 - postal-standards). Those arenas — unlike our own Pelias-derived 376-assertion
-  suite — surface where the neural parser actually fails. This doc turns those
+  suite — surface where the neural parser fails. This doc turns those
   failures into a prioritized backlog, categorized by **fix mechanism**, because
   the mechanism (not the symptom) determines cost and risk.
 
@@ -72,7 +72,7 @@ both are real work and belong after the cheap repairs land.
   `Space`/`Stop` (common words); single-letter ident only fires on a standalone
   token.
 
-**v0.7.2 measured result.** The arena re-run showed the unit-drop has TWO
+**v0.7.2 measured result.** The arena re-run showed the unit-drop has two
 failure modes, not one:
 
 1. **Mislabel-as-locality** — bare designator-led units (`Flat 2  14 Smith St`,
@@ -89,7 +89,7 @@ failure modes, not one:
    intersections. The fix is a unit-containing synth extract (a B-list item), not a
    post-decode pass.
 
-Net: the repair patches the locality-mislabel half cleanly and safely; the
+Net: the repair patches the locality-mislabel half directly and safely; the
 street-absorption half needs coverage. Address-level pass on those cases doesn't
 flip (they also fail on house_number/street), so unit-repair's value is measured
 on **unit-tag recall**, not address-level pass. Stays opt-in; promote to

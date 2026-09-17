@@ -105,7 +105,7 @@ Reading the 96 locality-band rows is what this spec turns on. They are **not one
 
 | Class                                                                                                                                                                                                   | Rows       | Would an exclusion be correct?                                        |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
-| Street fragment mis-tagged `locality` — `locality=Avenida` ← `Avenida Corrientes`; `locality=de Catalunya` ← `Rambla de Catalunya`; `locality=Turner St` ← `…Garrod Building, Turner St, London E1 2AD` | many       | **Yes.** Same shape as the FR date-name class that earned the +6.0 pp |
+| Street fragment mis-tagged `locality` — `locality=Avenida` ← `Avenida Corrientes`; `locality=de Catalunya` ← `Rambla de Catalunya`; `locality=Turner St` ← `…Garrod Building, Turner St, London E1 2AD` | several    | **Yes.** Same shape as the FR date-name class that earned the +6.0 pp |
 | POI mis-tagged `locality` — `locality=Statue of Liberty`; `locality=Great Mosque of Niamey`                                                                                                             | some       | Yes; poi.db may also hold them                                        |
 | Junk span — `locality=New` ← `New Territories, Hong Kong`; `locality=near NAFTI`                                                                                                                        | few        | Yes                                                                   |
 | **Fold / surface-form miss** — `locality=Tel Aviv-Yafo`; `locality=São Paulo - SP`; `locality=Co. Westmeath`; `locality=ХУД - 15 хороо`                                                                 | unmeasured | **No. This is the trap.**                                             |
@@ -259,12 +259,12 @@ tiger-oc.db   tabblock20  26,734   pl_block  26,734
 So this arm is: three columns on `PLBlockTable`, one additional segment read, a re-run.
 `completeness = min(1, address_points_in_block ÷ H1_001N)`, written with `basis: surveyed`.
 
-Public domain. No licence check.
+Public domain. No license check.
 
 ### 4.3 `plausibilityCheck` re-expressed — no behaviour change
 
 `filing` → `Observation`; `physical_plant` → `Observation`; `abstain` → the absence of evidence plus
-a `coverage_confidence` that already degrades honestly. `coverage_confidence` and `block_resolution`
+a `coverage_confidence` that already degrades directly. `coverage_confidence` and `block_resolution`
 stay the stable public surface of that module.
 
 **Acceptance is that its existing test suite passes unchanged.** This arm ships no new capability;
@@ -336,7 +336,7 @@ Run before building the arms, not after.
 - **A bounded region with stated confidence, never a fabricated coordinate.**
 - **Honesty is not a premium feature.** Provenance, epistemic status, uncertainty and abstention are
   in the AGPL surface. No tier hides them.
-- **Every assertion keeps its source and licence through projection.** A permissive output is not
+- **Every assertion keeps its source and license through projection.** A permissive output is not
   earned by permissive combining code.
 
 ---

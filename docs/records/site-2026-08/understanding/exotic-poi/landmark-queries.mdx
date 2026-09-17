@@ -9,7 +9,7 @@ tags:
 
 # Landmark queries
 
-A landmark query names a specific, usually unique, place. The user doesn't want the nearest instance of a category — they want **the** Eiffel Tower, **the** Golden Check Bridge, **the** Empire State Building. The geocoder's job is to recognize the landmark name and resolve it to a single coordinate or small candidate set.
+A landmark query names a specific, typically unique, place. The user doesn't want the nearest instance of a category — they want **the** Eiffel Tower, **the** Golden Check Bridge, **the** Empire State Building. The geocoder's job is to recognize the landmark name and resolve it to a single coordinate or small candidate set.
 
 ## What landmark queries look like
 
@@ -73,7 +73,7 @@ Mailwoman's resolver indexes WOF administrative places plus a limited set of WOF
 
 The parser handles landmark queries as venue queries: a query with no address-format tokens (no numbers, no street suffixes, no state abbreviations) and a known venue name is classified as `kind=venue` and routed to the venue resolver. The F1 ≈ 0.39 figure once cited here was measured in v0.4.0, three model generations back, and no longer reflects the current classifier — a venue-fragment retrain is spec'd but not yet run. Treat the venue classifier's quality as unmeasured until that retrain lands rather than trusting either the old number or an assumed improvement.
 
-**Landmark queries are partially in scope**, and partially overlap with the newer category-query path: a landmark that also matches a POI-taxonomy category (a hospital, a named park) can resolve through `poi.db` the way [amenity queries](./amenity-queries.mdx) do. Bare landmark names that aren't categories ("Eiffel Tower") still depend on the venue classifier and WOF venue records, where the limits are data coverage (WOF's venue catalogue is not comprehensive) and the unretrained classifier described above.
+**Landmark queries are partially in scope**, and partially overlap with the newer category-query path: a landmark that also matches a POI-taxonomy category (a hospital, a named park) can resolve through `poi.db` the way [amenity queries](./amenity-queries.mdx) do. Bare landmark names that aren't categories ("Eiffel Tower") still depend on the venue classifier and WOF venue records, where the limits are data coverage (WOF's venue catalogue is not complete) and the unretrained classifier described above.
 
 ## See also
 

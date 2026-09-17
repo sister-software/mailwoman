@@ -1,7 +1,7 @@
 # Night 14 postmortem — the geocoder gets built, calibrated, and made callable
 
 _2026-06-14. The night the street-level geocoder went from "proven on two regions" to nationwide
-coverage, honest confidence, and a callable batch service — and the night an audit caught a
+coverage, direct confidence, and a callable batch service — and the night an audit caught a
 catastrophic regression that every eval had been blind to. Six PRs, two national data builds, zero
 training runs. Operator handoff to Heather mid-shift; RemoteResolver is the in-flight next piece._
 
@@ -41,7 +41,7 @@ All six merged to `main`:
   streaming probe + the parallel-driver probe defused the "national build is hours" fear (4.2 min).
 - **The cascade extraction was clean.** Refactoring the validated CLI onto the shared core re-validated
   byte-for-byte (TX/CA 1m, NH 5m, HI 128m) — no regression, and now one implementation behind CLI + service.
-- **Honest numbers throughout.** Named the situs-in-distribution caveat, the TX-only calibration caveat,
+- **direct numbers throughout.** Named the situs-in-distribution caveat, the TX-only calibration caveat,
   the interp-only-vs-combined DoD split. Confidence radii are now truthful, not decorative.
 
 ## What could've gone better
@@ -85,7 +85,7 @@ All six merged to `main`:
 ## Concrete next steps
 
 1. **RemoteResolver adapter (#485 pt 3)** — IN FLIGHT. The `Resolver` interface over HTTP (stateless
-   parser nodes + a resolver service; canary-vs-Pelias). The biggest architectural lift of the four.
+   parser nodes + a resolver service; canary-vs-Pelias). The four-part comparison is complete.
 2. **Versioned data switchover (#485 pt 4)** — atomic DB pointer-swap for zero-downtime updates.
 3. **#565** — fix the phrase grouper's house-number bundling (unblocks re-enabling reconcile for FR/EU).
 4. The deferred confidence items above.

@@ -9,13 +9,13 @@ scheduling is the v0.5.0 rebuild's. Rulings:
 2. **Migration: from-source rebuild.** v0.5.0 rebuilds from sources emitting native char spans —
    `alignRow` already finds char offsets and QUANTIZES to tokens; the new format deletes the
    quantization rather than adding a converter. No conversion step exists, so the converter's
-   Unicode-mismatch class (blast-radius item 7) dissolves into a build-time NFC assertion; the
+   Unicode-mismatch class (scope item 7) dissolves into a build-time NFC assertion; the
    per-piece channel invariance checks (item 8) remain as encode-time checks. Old corpora stay
    frozen as history.
 3. **Span bridge: RETIRE FULLY on check-pass** (operator override of the keep-reduced option,
    consistent with the "old bundles are historical" ruling): once a new-format model passes the
-   pre-registered check (dotted po_box ≥ 89.1 with the bridge OFF, FR postcode ≥ 99.5 held, affix
-   floors unchanged, over-merge precision floor), the bridge leaves ship config AND the decoder.
+   pre-registered check (dotted po_box ≥ 89.1 with the bridge off, FR postcode ≥ 99.5 held, affix
+   floors unchanged, over-merge precision floor), the bridge leaves ship config and the decoder.
 4. **v0.5.0 scope FROZEN at four passengers**: char-offset format, DE holdout, ZCTA centroid
    fill (#525), FTS alias-bag boundary separator (#523). Everything else is v0.5.1.
 
@@ -47,7 +47,7 @@ What this cost, concretely:
 ## The proposal
 
 Labels become **char ranges over `raw`**: `spans: [{start, end, tag}]` (sorted,
-non-overlapping), replacing `tokens[]`+`labels[]` as the corpus's source of truth. The encode
+non-overlapping), replacing `tokens[]`+`labels[]` as the corpus's authoritative record. The encode
 step projects char spans onto SentencePiece pieces directly (the per-char label array that
 `realign_labels_to_pieces` already builds internally — the change PROMOTES the existing internal
 representation to the storage format and deletes the token-level indirection).
@@ -80,12 +80,12 @@ Properties:
    stream for rows with no intra-span punctuation (the overwhelming majority) — that is the
    regression check for the migration itself.
 7. **Unicode discipline** (consult keeper): char offsets over raw carrying é/ß/accented text are
-   only meaningful under ONE normalization. The converter must assert the raw's normalization
+   only meaningful under one normalization. The converter must assert the raw's normalization
    form matches what alignment saw (NFC throughout, verified per row) — a code-point-counting
    mismatch corrupts offsets silently, and "silently" is the operative word.
 8. **The per-piece channels** (consult keeper): `realign_anchor_to_pieces` and the gazetteer
    clue painting both key off `whitespace_spans` — the migration touches their foundation, so
-   each needs its OWN invariance assertion (identical channel tensors on converted rows), not
+   each needs its own invariance assertion (identical channel tensors on converted rows), not
    just the label-stream check.
 
 ## Open questions (→ consult, then operator)
@@ -97,8 +97,8 @@ Properties:
 3. Does the span bridge RETIRE post-migration, or stay as a safety net at reduced scope? The
    model needs retraining on punctuation-labeled data first; the interim (new corpus, old
    model, bridge on) is eval-confounded — the consult's point stands: the first new-format
-   retrain pre-registers BOTH bridge-on and bridge-off reads, with the win condition being
-   dotted po_box ≥ the bridge-on baseline (89.1) with the bridge OFF, FR postcode ≥ 99.5 held,
+   retrain pre-registers both bridge-on and bridge-off reads, with the result condition being
+   dotted po_box ≥ the bridge-on baseline (89.1) with the bridge off, FR postcode ≥ 99.5 held,
    affix floors unchanged, and an over-merge precision floor (the failure punctuation-
    labelability could newly enable). The #518 punctuation-stress eval doubles as this retrain's
    apostrophe/slash/hyphen lens.

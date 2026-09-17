@@ -63,7 +63,7 @@ The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE
 Resolution path:
 
 1. **CE-only smoke (in progress).** 2,000-step constant-LR run with `crf_loss_weight=0.0`. Check: no loss climb past step 2,000 AND val_macro_f1 ≥ 0.35.
-2. **If CE-only stable → full 50K C-train.** Quality ceiling TBD — the win is stability, not quality. Quality gains come from recipe knobs (class weights, source weights, longer training) that were unsafe under dual-loss.
+2. **If CE-only stable → full 50K C-train.** Quality ceiling TBD — the result is stability, not quality. Quality gains come from recipe knobs (class weights, source weights, longer training) that were unsafe under dual-loss.
 3. **If CE-only diverges → bisect tokenizer/corpus.** A1 tokenizer + corpus-v0.4.0 vs v0.1 tokenizer + corpus-v0.4.0. Isolate the destabilizer.
 4. **Parallel: reconcile integration.** Wire joint decode as the default Stage 5 path behind a feature flag. Evaluate against kryptonite catalogue + golden v0.1.2. Check: +15pp exact-match on kryptonite, ≤1pt macro_F1 regression on golden.
 
@@ -92,7 +92,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 ### What stays the same
 
 - **Rule classifiers are not replaced.** They stay deterministic, fast, and reliable. The neural classifier warrants each component one at a time.
-- **The model stays small.** The transformer is staying at roughly 9 million parameters. The win comes from better architecture (phrase grouper, joint decode) and better training, not from scaling up.
+- **The model stays small.** The transformer is staying at roughly 9 million parameters. the result comes from better architecture (phrase grouper, joint decode) and better training, not from scaling up.
 - **Browser support is a hard constraint.** The pipeline must stay under ~60MB cold load. The demo is the canary.
 - **Locale parity is tracked but not urgent.** The en-us model has had the most attention. fr-fr will catch up, ja-jp is the validation stress test.
 

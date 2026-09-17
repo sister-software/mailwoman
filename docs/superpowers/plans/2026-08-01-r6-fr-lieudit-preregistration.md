@@ -7,19 +7,19 @@ deficit. France is the next instance because it already has both prerequisites �
 
 ## The FR-specific scoping call, made before any build
 
-WOF's French neighbourhood records are Paris **quartiers** — "Des Halles", "Palais Royal",
+WOF's French neighborhood records are Paris **quartiers** — "Des Halles", "Palais Royal",
 "Saint-Germain l'Auxerrois" (5,473 pairs nationally). Shipping those as the FR pair source would be
 a mistake, and it is worth stating why, because the US instance took exactly the opposite decision:
 
 - A quartier **never appears in a French postal address.** French addresses are number, street,
   postcode, commune; the arrondissement is encoded in the postcode itself (75001 = 1er), and the
   quartier is a cartographic subdivision, not an address line.
-- The line that DOES appear is the **lieu-dit** — a named hamlet or place within a commune, written
+- The line that does appear is the **lieu-dit** — a named hamlet or place within a commune, written
   on its own line between the street and the commune. `261 Impasse des Pinsons / Pinsonnac / 12210
 Montpeyroux` is the shape.
 
 So the FR source is BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0), not WOF. Same mechanism,
-different source — chosen by what the postal format actually carries. Getting this wrong would
+different source — chosen by what the postal format carries. Getting this wrong would
 produce a technically-valid index that biases toward spans real French addresses never contain.
 
 ## The instrument already exists and already reads badly
@@ -42,7 +42,7 @@ under test is that a lieu-dit pair index moves it the way GB's moved 0/69 → 69
   graded for dependent-locality emission and tag-correctness. Bar: **≥70% tag-correct**, matching
   the order the GB δ-sweep cleared. Baseline to beat is the recorded 2/80 emit.
 - **D-R6.4 (disclosure).** Report what fraction of the golden board's (lieu-dit, commune) pairs the
-  built index actually contains. A high positive score driven by a board whose pairs are all in the
+  built index contains. A high positive score driven by a board whose pairs are all in the
   index measures mechanism efficacy, not generalization — the same caveat R5's B-R5.3 carried, and
   it must be stated rather than implied.
 
@@ -70,7 +70,7 @@ so a country that never writes that form is byte-identical.
 
 **2. A newline was not a segment boundary.** `computeGroupSegments` scanned for `,` only. Every row
 on the FR golden board is newline-delimited — the shape the formatter itself emits, La Poste's line
-5 — so the whole address collapsed to ONE segment, the segment path went structurally inert, and the
+5 — so the whole address collapsed to one segment, the segment path went structurally inert, and the
 prior fell through to the anchored path. A line break is a stronger boundary than a comma, never a
 weaker one; it now counts alongside it.
 
@@ -97,6 +97,6 @@ multi-line address, in every locale, was silently missing the segment path.
 
 ## Verdict
 
-The FR instance ships. R5 predicted this locale was artifact-conditional; it was artifact-conditional AND
+The FR instance ships. R5 predicted this locale was artifact-conditional; it was artifact-conditional and
 probe-conditional, and the probe half was locale-general breakage nobody had measured because no shipped
 locale wrote its postcode first or its addresses multi-line through this path.

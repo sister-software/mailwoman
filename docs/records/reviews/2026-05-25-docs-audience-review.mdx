@@ -7,11 +7,11 @@
 
 ## Executive summary
 
-The Mailwoman documentation is **strong in depth** but **confused about who it's for and what state it's in**. The domain-education articles (Tier 0, the falsehoods, the alternatives) are thoughtful and well-structured. The blog posts are unusually honest and readable. The architecture documentation (the Knowledge Ladder, the staged pipeline, the Ship of Theseus migration) is the project's best intellectual contribution.
+The Mailwoman documentation is **strong in depth** but **confused about who it's for and what state it's in**. The domain-education articles (Tier 0, the falsehoods, the alternatives) are thoughtful and well-structured. The blog posts are unusually direct and readable. The architecture documentation (the Knowledge Ladder, the staged pipeline, the Ship of Theseus migration) is the project's best intellectual contribution.
 
 But the docs oscillate between beginning-friendly explainers and dense operator-internal logs, with no clear boundary between the two. Status information is scattered across a dozen files with contradictory markers. The naming conventions — Tier vs Stage vs Phase vs Thread — require a decoder ring to follow. And the blog posts, while individually strong, form a narrative that only makes sense if read in sequence by someone already immersed in the project.
 
-The fix is not to rewrite everything. It's to add **curatorial structure**: a status page, clearer audience segmentation, terminology reconciliation, and three specific new pages that bridge the gap between "I just found this project" and "I understand the deep-dive articles."
+The fix is not to rewrite everything. It's to add **curatorial structure**: a status page, clearer audience segmentation, terminology reconciliation, and three specific new pages that bridge the gap between "Ifound this project" and "I understand the deep-dive articles."
 
 ---
 
@@ -19,13 +19,13 @@ The fix is not to rewrite everything. It's to add **curatorial structure**: a st
 
 ### 1. The domain-education material (Tier 0 / Tier 0.5)
 
-The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery actually works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them, which gives the project intellectual credibility.
+The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them, which gives the project intellectual credibility.
 
 The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersection, dual-address) add domain grounding that most geocoding documentation skips. These are concrete, well-exemplified, and educational.
 
 ### 2. The Knowledge Ladder / staged pipeline
 
-The six-stage decomposition — normalize → locale check → kind classifier → phrase grouper → token classify → sequence correct → reconcile → resolve — is the best design artifact in the project. It maps cleanly to the "learn distributions, look up the world, compose constraints" principle. The Knowledge Ladder article (`the-knowledge-ladder.md`) explains not just what each stage does but _why it belongs there and not somewhere else_. This is valuable for both implementers and architecture reviewers.
+The six-stage decomposition — normalize → locale check → kind classifier → phrase grouper → token classify → sequence correct → reconcile → resolve — is the best design artifact in the project. It maps directly to the "learn distributions, look up the world, compose constraints" principle. The Knowledge Ladder article (`the-knowledge-ladder.md`) explains notwhat each stage does but _why it belongs there and not somewhere else_. This is valuable for both implementers and architecture reviewers.
 
 ### 3. Ship of Theseus coexistence
 
@@ -33,9 +33,9 @@ The policy registry — per-component, per-locale authority with explicit fallba
 
 ### 4. The blog posts
 
-The five blog posts are an unusually honest public engineering log. The v0.4.0 retrospective doesn't hide the regressions behind aggregate metrics — it buckets false negatives, identifies the cosine-LR meta-bug, and separates real regressions from adversarial eval artifacts. The "two voices arguing" post is the best piece of beginner-friendly ML communication in the repository — it explains gradient dominance, dual-loss conflict, and bisect-by-elimination debugging in terms a curious software engineer can follow.
+The five blog posts are an unusually direct public engineering log. The v0.4.0 retrospective doesn't hide the regressions behind aggregate metrics — it buckets false negatives, identifies the cosine-LR meta-bug, and separates real regressions from adversarial eval artifacts. The "two voices arguing" post is the best piece of beginner-friendly ML communication in the repository — it explains gradient dominance, dual-loss conflict, and bisect-by-elimination debugging in terms a curious software engineer can follow.
 
-The "taming WOF" post fills a genuine gap: there is no other developer-facing guide to the practical gotchas of using Who's On First as a geocoder component. It's the kind of content that attracts inbound traffic from search.
+The "taming WOF" post fills an actual gap: there is no other developer-facing guide to the practical gotchas of using Who's On First as a geocoder component. It's the kind of content that attracts inbound traffic from search.
 
 ### 5. Browser-first constraint as a forcing function
 
@@ -43,7 +43,7 @@ The ~60MB cold-load budget is used as an architectural guardrail throughout the 
 
 ### 6. The schema-as-contract discipline
 
-`SCHEMA.md` as the single source of truth for `ComponentTag`, with the "written rationale in commit" rule, is excellent infrastructure hygiene. The forward-compatibility listing of JP tags forces the type system to handle future expansion without a rewrite. The BIO labeling explanation is clear and complete.
+`SCHEMA.md` as the single authoritative record for `ComponentTag`, with the "written rationale in commit" rule, is excellent infrastructure hygiene. The forward-compatibility listing of JP tags forces the type system to handle future expansion without a rewrite. The BIO labeling explanation is clear and complete.
 
 ---
 
@@ -51,7 +51,7 @@ The ~60MB cold-load budget is used as an architectural guardrail throughout the 
 
 ### 1. There is no canonical status page
 
-A reader arriving at the docs has no way to answer "what actually works right now?" The information exists but is scattered across:
+A reader arriving at the docs has no way to answer "what works right now?" The information exists but is scattered across:
 
 - `plan/README.md` — says "Phases 0-3 shipped" but the status list is a bullet-point blob
 - `v0-5-0-shipped.md` — detailed but buried in the plan directory
@@ -160,7 +160,7 @@ There are several pages a new reader would expect that don't exist:
 
 - **Getting started / Installation.** There's no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
 - **API reference.** The staged pipeline contract and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
-- **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't clearly stated anywhere.
+- **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't the result shows stated anywhere.
 - **Demo explanation.** The demo page (`/demo`) runs in the browser with no explanation of what it's doing, what model it's using, or what the confidence numbers mean. A short "About this demo" section would bridge the gap.
 
 **Fix:** Add these four pages. They're the top four things a potential user wants.
@@ -177,7 +177,7 @@ There are several pages a new reader would expect that don't exist:
 
 ### `understanding/glossary.md`
 
-- **Good:** Comprehensive, well-cross-referenced, defines terms on first non-obvious use.
+- **Good:** complete, well-cross-referenced, defines terms on first non-obvious use.
 - **Issue:** Doesn't list "Tier," "Phase," or "Thread" — the three terms most likely to confuse a reader.
 - **Issue:** The Tier/Stage rename is noted under "**Tier 1 / Tier 2 / Tier 3**" but the heading is still "T" — a reader browsing alphabetically won't find it.
 
@@ -212,14 +212,14 @@ There are several pages a new reader would expect that don't exist:
 
 ### Blog posts — collective notes
 
-- **Good:** The writing quality is high. The voice is honest (the v0.4.0 retrospective explicitly says we shipped with regressions and here's why). The technical explanations don't condescend.
+- **Good:** The writing quality is high. The voice is direct (the v0.4.0 retrospective explicitly says we shipped with regressions and here's why). The technical explanations don't condescend.
 - **Issue:** Posts use internal shorthand (`§1`, `§3`, `Thread C-s`, `kryptonite catalogue`) without defining these references in each post. The "bisect-by-elimination" post references "yesterday's post" — the narrative chain is serial.
 - **Issue:** The blog feed page shows all five in reverse chronological order with no grouping or "start here" marker. A "Featured" or "Start here" post would help.
-- **Issue:** The tags system (`tags.yml`) is elaborate (29 tags for 5 posts) but underused — many tags apply to only one post and don't enable useful filtering.
+- **Issue:** The tags system (`tags.yml`) is elaborate (29 tags for 5 posts) but underused — several tags apply to only one post and don't enable useful filtering.
 
 ### Review documents — collective notes
 
-- **Good:** The Codex and DeepSeek reviews are unusually thorough. Publishing them is honest and useful for anyone evaluating the project's self-awareness.
+- **Good:** The Codex and DeepSeek reviews are unusually thorough. Publishing them is direct and useful for anyone evaluating the project's self-awareness.
 - **Issue:** The three 2026-05-24 reviews (Codex, DeepSeek, follow-up) cover overlapping territory. The follow-up is the most current but references both predecessors — a reader needs to read all three to follow the thread.
 - **Issue:** The reviews reference specific blog posts, concept articles, plan docs, and code files by relative path — fragile if the docs are reorganized.
 
@@ -235,7 +235,7 @@ There are several pages a new reader would expect that don't exist:
    - Browser demo capability
    - Feature flag status (opt-in, default, scaffold-only, not started)
    - Active experimentation
-   - Known regressions with honest severity ratings
+   - Known regressions with direct severity ratings
 
 2. **Reconcile terminology** in the top-level docs:
    - Rename eval filenames from `stage2-*` to `tier2-*`
@@ -254,7 +254,7 @@ There are several pages a new reader would expect that don't exist:
 
 ### Short-term (next 2 weeks)
 
-5. **Create `/docs/getting-started`** — installation, 5-line code example, pointer to demo, pointer to API reference, honest accuracy notes
+5. **Create `/docs/getting-started`** — installation, 5-line code example, pointer to demo, pointer to API reference, direct accuracy notes
 
 6. **Create `/docs/api`** — `parse()` signature, return type, `AddressNode` shape, configuration options, locale selection
 
@@ -278,7 +278,7 @@ There are several pages a new reader would expect that don't exist:
 
 ## One meta-observation
 
-The most honest sentence in the entire documentation is in `CONTEXT.md`:
+The most direct sentence in the entire documentation is in `CONTEXT.md`:
 
 > "The gap: there is no widely adopted neural address parser shipped as a library. Everyone either uses 2018-era CRF (libpostal) or rolls their own."
 
@@ -286,4 +286,4 @@ That gap is the project's reason to exist. The docs should make this sentence lo
 
 The second question is "can I use it today?" The docs should answer that too: "yes, with these caveats, and here's what's coming." The status page is the vehicle for that answer.
 
-The third question is "should I bet on this?" The Knowledge Ladder architecture, the Ship of Theseus migration, the honest retrospectives, and the browser-first constraint all make a strong case. The docs just need to present that case more directly to someone who isn't already inside the project's reasoning.
+The third question is "should I bet on this?" The Knowledge Ladder architecture, the Ship of Theseus migration, the direct retrospectives, and the browser-first constraint all make a strong case. The docsneed to present that case more directly to someone who isn't already inside the project's reasoning.

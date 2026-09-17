@@ -34,7 +34,7 @@ The implementation is unglamorous (`generate_deepseek_corpus.py::align_or_reject
 
 LLMs hallucinate around component boundaries. The B and B2 reject logs catalogue the common failure modes:
 
-- **Component embedded in another component**. `house_number=350, street=350 5th Avenue` — the street contains the house number. A naïve trainer would see `350` as both a house number and as the first token of a street, and learn an incoherent BIO labelling.
+- **Component embedded in another component**. `house_number=350, street=350 5th Avenue` — the street contains the house number. A naïve trainer would see `350` as both a house number and as the first token of a street, and learn an incoherent BIO labeling.
 - **Hallucinated transliteration fragments**. For B2's Cyrillic / Japanese / Hangul output, the LLM sometimes added a transliterated suffix or prefix that does not appear in the source surface. The annotated component would substring-match against itself but not against the surface — silently misaligned data.
 - **Component missing from surface**. The LLM produced a `venue` field for a string that had no venue in it (model imagined one). No substring match → reject.
 - **Off-by-one in the annotation**. `house_number=35` for a surface starting `350 5th Avenue` — close but wrong. Substring match fails because `35` does appear, but the validator can be made stricter to demand the full token (and was).

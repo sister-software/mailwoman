@@ -85,7 +85,7 @@ find docs/articles/licensing -type f \( -name '*.md' -o -name '*.mdx' \) | wc -l
 needs compiled workspace CLIs (`mailwoman/out`, `libpostal/out`, `photon/out`, `nominatim/out`);
 those were already present and current, but I ran the repo-root compile anyway per the runbook's
 "if the build fails on missing compiled workspace output, run `yarn compile` first" guidance and to
-match what CI's `ci:docs` (`run-s compile docs:build`) actually does.
+match what CI's `ci:docs` (`run-s compile docs:build`) does.
 
 **Commands run:**
 
@@ -192,10 +192,10 @@ find docs/build/docs -maxdepth 1 -iname "*contributing*" -o -maxdepth 1 -iname "
 ## 4. Duplicate / near-duplicate titles
 
 **Scope:** frontmatter `title:` field, swept across all of `docs/articles/` **excluding only**
-`reviews/` (truly unpublished, not part of the site under any circumstance). Per the task, this
+`reviews/` (in fact unpublished, not part of the site under any circumstance). Per the task, this
 sweep **includes** `evals/` and `retrospectives/`, including the 39 postmortem/session-report files
 that are excluded from the live build — flagged below wherever a match involves one of those, since
-a title collision there can't actually manifest as a live search collision, only as a repo-hygiene
+a title collision there can't manifest as a live search collision, only as a repo-hygiene
 one.
 
 **Result:** of 370 `.md`/`.mdx` files scanned, only **179 have a `title:` frontmatter field**;
@@ -211,7 +211,7 @@ explicit frontmatter titles.
 | ---------------- | -------------------------------------------------------------------------------------------- |
 | `Retrospectives` | `docs/articles/evals/retrospectives/index.mdx` and `docs/articles/retrospectives/README.mdx` |
 
-Both are live (neither matches an exclude glob) — this is a genuine site-wide title collision: two
+Both are live (neither matches an exclude glob) — this is an actual site-wide title collision: two
 different sidebar sections (`Eval reports` and `Retrospectives`) each have a landing page titled
 exactly "Retrospectives".
 
@@ -225,7 +225,7 @@ exactly "Retrospectives".
 
 ### Near-duplicates
 
-1. **Likely true content duplication, not just naming** — `Record-matcher data catalog`
+1. **Likely true content duplication, notnaming** — `Record-matcher data catalog`
    (`docs/articles/concepts/record-matcher-data-catalog.md`) vs `Record-matcher source-data catalog`
    (`docs/articles/plan/reference/record-matcher-sources.md`). Read both: same subject (the public
    datasets the record-matcher joins), same data root path
@@ -242,7 +242,7 @@ exactly "Retrospectives".
    vs **`Postcode-only geocoding`** (`understanding/alternatives/simple-postcode-only.mdx`) — share
    a prefix but are different documents in different sections (an eval report vs. a "simple
    alternatives" critique page); low actual confusion risk.
-4. **Themed clusters** — same construction repeated across many titles, low individual confusion
+4. **Themed clusters** — same construction repeated across several titles, low individual confusion
    risk but visually noisy in any flat list/search-results view:
    - "Falsehoods about …" × 8 (addresses, format, shapes/dimensions, admin hierarchy, geocoded
      precision, numbers, postcodes, street names) — all `understanding/why-its-hard/falsehoods-*.mdx`,
@@ -274,7 +274,7 @@ nav — DocsSubHeader switcher confirmed to be server-rendered (present in the s
 client-only widget), so link targets below are exact, read directly out of
 `docs/build/docs/status/index.html` and `docs/build/docs/plan/SCOPE/index.html`.
 
-**Correction to the run-docs SKILL.md runbook:** its Gotchas section says _"The nav link labelled
+**Correction to the run-docs SKILL.md runbook:** its Gotchas section says _"The nav link labeled
 'Docs' points there [`/docs/understanding/`]."_ That's stale. The built navbar currently emits
 `<a href=/docs/status>Docs</a>` — the `startHere` sidebar's first doc, not `understanding`. This
 looks like the SKILL doc predates the current `startHere` array (`["status", "releases",
@@ -317,8 +317,8 @@ site entry points (homepage, navbar).**
 ### (d) What is the authoritative contract or operational procedure?
 
 This is the roughest path of the four. `plan/reference/SCHEMA.mdx` (the `ComponentTag` union
-source of truth, per `AGENTS.md`) and `plan/reference/OPERATIONS.mdx` (the ops playbook) live
-inside the **`Implementation plan 🧪`** switcher section — labelled with a test-tube emoji that
+authoritative record, per `AGENTS.md`) and `plan/reference/OPERATIONS.mdx` (the ops playbook) live
+inside the **`Implementation plan 🧪`** switcher section — labeled with a test-tube emoji that
 reads as "experimental / in-progress," which undersells content `AGENTS.md` calls authoritative.
 Concretely, from navbar "Docs": `/docs/status` → switch to "Implementation plan 🧪" (lands on
 `/docs/plan/SCOPE`, itself a good orientation doc, sidebar_position 1) → scroll the sidebar to find

@@ -1,8 +1,8 @@
 # Migrate `node:readline` → `spliterator`
 
 **Status:** EXECUTED 2026-07-08 — all sites migrated; see "Execution notes" at the end for the
-deltas between this plan and what the v3.1.0 API audit + migration actually found.  
-**Scope:** 25 files / 27 call sites  
+deltas between this plan and what the v3.1.0 API audit + migration found.
+**Scope:** 25 files / 27 call sites
 **Goal:** Replace `node:readline` `createInterface` line-by-line streaming with
 `spliterator`'s `TextSpliterator`, `JSONSpliterator`, or `CSVSpliterator` — the same
 library already used in `core/resources/`, `registry/ingest.ts`, and
@@ -130,7 +130,7 @@ for await (const row of CSVSpliterator.fromAsync(path, { mode: "object" })) {
 > **RESOLVED in v3.1.0:** the column tokenizer now unconditionally preserves empty fields
 > (`skipEmpty: false` internally; probed: `"a,,c,"` keeps all 4 columns including trailing
 > empties). The `registry/ingest.ts:54` workaround comment is stale on this point.
-> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does NOT protect
+> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does not protect
 > embedded delimiters inside quoted fields — the option is applied to row splitting only and
 > never reaches the column tokenizer (probed: `"a,x",b` mis-parses into two rows). Any CSV with
 > quoted fields must keep manual quote handling over `TextSpliterator`. Upstream fix needed.
@@ -237,7 +237,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | **1** | `scripts/jsonl-to-parquet.ts`, `corpus/src/build.ts` (JSONL → `JSONSpliterator`)                                                                                                         | Lowest risk — JSON has no delimiter ambiguity. These are the most exercised paths (every corpus build hits them). |
 | **2** | All adapter JSONL call sites: `openaddresses/adapter.ts`, `overture/adapter.ts`, `synth-po-box/adapter.ts`, `usgov-nad/adapter.ts`, `gnaf/adapter.ts`, `scaffold.ts`, `align-extract.ts` | All JSONL. Same shape as Phase 1.                                                                                 |
-| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low blast radius for regressions.                                                     |
+| **3** | `scripts/eval/` call sites: `audit-po-box-cedex-extract.ts`, `reverse-geocode-eval.ts`, `holdout.ts`, `train-cross-gbt.ts`, `train-org-cross-gbt.ts`                                     | JSONL + CSV. Eval scripts — low scope for regressions.                                                            |
 | **4** | CSV sites: `fr-admin-split.ts`, `locale.ts`, `ingest-csv.ts`                                                                                                                             | ⚠️ `skipEmpty` caveat — verify column counts match before landing.                                                |
 | **5** | Pipe/TSV sites: `importance.tsx`, `postcode-intl.tsx`, `redistricting.ts`, `build-kryptonite-extract.ts`, `build-transliteration-extract.ts`                                             | Straightforward delimiter substitution.                                                                           |
 | **6** | Child-process stdout sites: `tiger/sdk/fetch.ts`, `osm/sdk/extract.ts`, `osm/sdk/street-recovery.ts`, `locale.ts:218`                                                                    | ⚠️ Highest risk — external process pipelines. Test with real data.                                                |

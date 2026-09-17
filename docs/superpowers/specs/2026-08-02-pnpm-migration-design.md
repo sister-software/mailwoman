@@ -22,7 +22,7 @@ pnpm the package manager, which is a different mechanism: its own resolver, lock
 machine-wide content-addressed store with hardlinks rather than a per-project `.store`.
 
 So this migration is not justified on speed, and should not be sold as such. Any speed it delivers
-is a bonus, and (e1) in the sibling spec is the change that actually removes install from the
+is a bonus, and (e1) in the sibling spec is the change that removes install from the
 critical path either way.
 
 ## What was measured before designing
@@ -47,7 +47,7 @@ holding the line.
 
 Fix is mechanical: add the three to the workspaces that use them, or one `public-hoist-pattern` for
 `vitest`. Preference is declaring them — it is what the strictness is for, and it keeps
-`smoke-clean-install.ts` honest.
+`smoke-clean-install.ts` direct.
 
 ### Finding 2 — the publish pipeline is the risk
 
@@ -162,7 +162,7 @@ specified against whichever layout this migration lands, and is not built until 
   worktree isolation is a known-sensitive area here.
 - **No speed win.** A plausible outcome: `2026-08-02-test-suite-performance-design.md` § Finding 3
   shows Fetch is already 0.6s on a warm CI cache, and the local control measured 0.4s. Accepted going
-  in; the driver is direction, not speed. Step 8 records the result either way rather than quietly
+  in; the driver is direction, not speed. Step 8 records the result either way rather than without output
   dropping it if it regresses.
 
 ## Non-goals

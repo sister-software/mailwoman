@@ -20,12 +20,12 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
 
 | check (pre-registered before each measurement) | result                                                                      |
 | ---------------------------------------------- | --------------------------------------------------------------------------- |
-| US-2k ni, int8 feed parity                     | PASS — candidate row dump **byte-identical** to shipped v193a3 int8         |
-| CZ-1k improve                                  | PASS — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
-| PL-1k improve                                  | PASS — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
+| US-2k ni, int8 feed parity                     | pass — candidate row dump **byte-identical** to shipped v193a3 int8         |
+| CZ-1k improve                                  | pass — wrong-city 22.4→14.8% (CI [−10.3,−5.1]pp), resolved-p50 3.29→2.73 km |
+| PL-1k improve                                  | pass — wrong-city 27.9→7.9% (CI [−22.7,−17.4]pp), resolved-p50 2.07→1.33 km |
 | int8 size                                      | 33.8 MB, **+3.8 MB over the ~30 MB browser SLO** (operator fallback call)   |
 | WASM latency (Node, 1-thread bound)            | flat ~41–44 ms p50/p95 both models; load 66→85 ms                           |
-| #885 re-score                                  | 17/17 floors PASS; fp32↔int8 max delta 0.8pp                                |
+| #885 re-score                                  | 17/17 floors pass; fp32↔int8 max delta 0.8pp                                |
 
 ## What went well
 
@@ -33,7 +33,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   newly-wrong rows) turned an aggregate win into a mechanism: candidate parses are structurally
   better; the flips are a pre-existing locality-truncation→namesake residual the baseline won by
   fluke. That nuance is now in the promote record instead of surfacing post-ship.
-- **The int8 U.S. result is the strongest possible form** — byte-identical row dumps, not just
+- **The int8 U.S. result is the strongest possible form** — byte-identical row dumps, only
   CI-bounded non-inferiority. The embedding-growth quantization-scale worry was pre-registered
   and measured dead.
 - **Salvage-first held**: every grading tool existed; the only new code is two small flags and

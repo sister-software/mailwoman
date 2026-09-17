@@ -3,7 +3,7 @@
 The delegation vision under test: a query-shape front stage that handles easy shapes deterministically
 (no encoder pass) and escalates the rest to the full model — the cascade form of the mixture idea, made
 principled by calibrated confidence. This probe measures it on the four standing arenas: what fraction a
-confidence-conditional front tier would absorb, how often its deterministic parse matches gold, and how often
+confidence-conditional front tier would absorb, how frequently its deterministic parse matches gold, and how frequently
 the full model matches gold **on those same rows**. Runner: `scratchpad/cascade-probe.run.ts` (kinds via
 `classifyKindSync` at confidence ≥0.7; handlers: `postcode_only` → the format-hit span, `locality_only` →
 bare locality or the doubleton split at a trailing region abbreviation).
@@ -22,7 +22,7 @@ The front tier is **5× worse than the model on the very rows the shape detector
 0.588 exact). Latency upside, even if it were free: 7.6% of encoder passes ≈ 0.5 ms saved per average
 query. Falsified on both axes at once.
 
-## The mechanism — shape simplicity IS semantic ambiguity
+## The mechanism — shape simplicity is semantic ambiguity
 
 The failure samples say why, and it is not a tunable defect:
 
@@ -41,7 +41,7 @@ which is precisely what a shape detector, by construction, does not have. On thi
 and ease-of-parse are anti-correlated: long inputs are self-disambiguating (a house number licenses the
 street, a postcode anchors the locality); short inputs are pure ambiguity. **The model warrants its keep
 most on the smallest queries** — the opposite of the cascade's premise. Note the model itself scores only
-0.588 on the absorbed rows: they are hard for everyone; the front tier just makes hard rows 5× worse.
+0.588 on the absorbed rows: they are hard for everyone; the front tiermakes hard rows 5× worse.
 
 This is the third instrument to convict shape-conditioned routing this week: the queryShape locality bias
 (M1: −7.8 locality, venue absorption), the deletion counter-case (`New York, NY` needing the bias), and
@@ -53,9 +53,9 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
 - **`postcode_only` fronting** is fine but nearly empty here (2 rows; more in autocomplete traffic) and
   the postcode binary already serves it downstream — no architecture change needed.
 - **Atlas-verified fronting** — absorb a bare name only after a candidate-table hit confirms it is a
-  known locality — is the one honest form left. But that front tier is a gazetteer lookup, i.e. the
+  known locality — is the one direct form left. But that front tier is a gazetteer lookup, i.e. the
   resolver; the model + atlas channel already perform that arbitration with learned weighting (M1 priced
-  the channel at +10.4). Building it as a bypass provides ~0.5 ms and a second code path to keep honest.
+  the channel at +10.4). Building it as a bypass provides ~0.5 ms and a second code path to keep direct.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
   shape knowledge helps: small, priced, scoped — inside the model's decode, not in front of it.
 

@@ -418,7 +418,7 @@ export const ErrorSchema = z
 - [ ] **Step 4: Run the existing tests**
 
 Run: `yarn vitest run --dir ./libpostal`
-Expected: all 7 existing tests PASS unchanged (they import via `./index.ts`, which still re-exports everything).
+Expected: all 7 existing tests pass unchanged (they import via `./index.ts`, which still re-exports everything).
 
 - [ ] **Step 5: Commit**
 
@@ -909,7 +909,7 @@ export * from "./schema.ts"
 - [ ] **Step 7: Run tests to verify they pass**
 
 Run: `yarn vitest run --dir ./libpostal`
-Expected: all tests PASS (3 engine + 12 app).
+Expected: all tests pass (3 engine + 12 app).
 
 - [ ] **Step 8: Compile + commit**
 
@@ -1014,7 +1014,7 @@ Adjudication rules — each difference is exactly one of:
 1. **Bug in the new routes** (a path/param/status the express server really served is missing) → fix `routes.ts`, re-run.
 2. **Bug that was always in the yaml** (documented something the server never did) → record it in the Step 4 commit message; no code change. Known instance going in: `additionalProperties: false` on request schemas — express tolerated extra keys; the emitted document (strip-mode Zod) is the accurate contract.
 
-Expected end state: all 3 parity tests PASS.
+Expected end state: all 3 parity tests pass.
 
 - [ ] **Step 3: Retire the yaml.** Delete `libpostal/openapi.yaml` (`git rm libpostal/openapi.yaml`), remove `"openapi.yaml"` from `libpostal/package.json`'s `files` array, and delete `libpostal/openapi-parity.test.ts` (`git rm`) — the check is one-time; the emitted document is now the only spec, continuously exercised by the `/openapi.json` test from Task 4.
 

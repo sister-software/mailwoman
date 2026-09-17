@@ -1,6 +1,6 @@
 ---
 sidebar_position: 36
-title: "2026-05-28 v0-vs-Neural harness — honest assessment"
+title: "2026-05-28 v0-vs-Neural harness — direct assessment"
 ---
 
 # v0-vs-Neural harness — 2026-05-28
@@ -125,7 +125,7 @@ intersections relative to v0's hand-tuned coverage.
 
 ## What this means for v0.6.2
 
-This is the "honest assessment" the postmortem called for. The implications:
+This is the "direct assessment" the postmortem called for. The implications:
 
 1. **Locale coverage is the dominant gap.** US, FR, and a portion of AUS are in distribution;
    everything else is structurally untaught. v0.6.2's corpus augmentation has to expand
@@ -173,7 +173,7 @@ parser succeeds and the rule-based pipeline fails:
    HouseNumberClassifier grabs the leading `8` then mis-tags the rest; neural reads it as a
    single street span correctly.
 2. `R 5, 6-13, D-68161 Mannheim` — grid address with no street. v0's classifiers force a
-   street-shaped reading that doesn't fit; neural correctly produces just locality + postcode.
+   street-shaped reading that doesn't fit; neural correctly produceslocality + postcode.
 
 The pattern: **neural is sometimes BETTER on formats it has never seen**, because v0's
 hand-tuned rules actively misclassify them. The "ambiguous-but-common" cases (rue de Rivoli,

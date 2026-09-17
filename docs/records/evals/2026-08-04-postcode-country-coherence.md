@@ -1,7 +1,7 @@
 # Postcode-country coherence: overriding `defaultCountry` on geometric evidence
 
 **Date:** 2026-08-04 · **Branch:** `feat/42-postcode-coherence` · **Issue:** #42 · **Status:** implemented
-opt-in, default OFF. Default-on is a D-rule call the operator makes; §5 says what evidence is still
+opt-in, default off. Default-on is a D-rule call the operator makes; §5 says what evidence is still
 missing.
 
 > **Added 2026-08-05 — the flag flipped.** The evidence §5 asked for was gathered in
@@ -18,7 +18,7 @@ record lands the mechanism and measures it.
 
 ## 1. What shipped
 
-`resolver/postcode-country-coherence.ts` — `ResolveOpts.postcodeCountryCoherence`, default OFF,
+`resolver/postcode-country-coherence.ts` — `ResolveOpts.postcodeCountryCoherence`, default off,
 surfaced as `--postcode-country-coherence` on `parse` and `geocode` and as an opt-in pin on
 `eval oa-resolver`.
 
@@ -38,10 +38,10 @@ replaces `state.defaultCountry` for the whole walk.
    exits here. It is never "US loses to FR"; it is "US had no answer".
 2. Otherwise, try each other country `candidateSystemsForPostcode` allows (a model-free shape test
    over each codex module's own postcode pattern — no safelist, no prior).
-3. Adopt a country only if EXACTLY one makes the pair consistent. Zero (no evidence) and two-or-more
-   (a genuine geographic tie) both abstain.
+3. Adopt a country only if exactly one makes the pair consistent. Zero (no evidence) and two-or-more
+   (an actual geographic tie) both abstain.
 
-Consistency = the postcode resolves in that country AND an EXACT-matching same-named locality sits
+Consistency = the postcode resolves in that country and an EXACT-matching same-named locality sits
 within `thresholdKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
 ("Paris" → "Parish") is evidence about the index, not about the country.
 
@@ -55,7 +55,7 @@ postcode and a locality.
 
 ### The geocode-path wrinkle
 
-Rooftop and street-centroid extracts are selected BEFORE the resolve — they are resolver inputs — off
+Rooftop and street-centroid extracts are selected before the resolve — they are resolver inputs — off
 `defaultCountry ?? placedCountry`. A US-scoped call therefore picks no BAN/OSM extract, and a corrected
 FR address would sit at its commune centroid with the national register never consulted. So when the
 resolver reports an override (the `postcode_country_scope` stamp it writes onto the postcode and
@@ -82,7 +82,7 @@ and the four-way `75001` collision the diagnosis predicted is present verbatim:
 | DE      | 48.843796, 9.367177   | 421285019                   |
 | PL      | 54.1903, 16.1879      | 8000048250 (+ a second row) |
 
-**The postal extracts are NOT attached everywhere, and the difference is required** — see §4 and §5.
+**The postal extracts are not attached everywhere, and the difference is required** — see §4 and §5.
 
 ## 3. The Rivoli case, end to end
 
@@ -98,7 +98,7 @@ $ node mailwoman/out/cli.js geocode "12 Rue de Rivoli, 75001 Paris" --postcode-c
   "resolution_tier": "address_point", "uncertainty_m": 1
 ```
 
-The second is the BAN rooftop for 12 Rue de Rivoli, to the metre — byte-identical to the
+The second is the BAN rooftop for 12 Rue de Rivoli, to the meter — byte-identical to the
 `--default-country none` receipt the diagnosis recorded, which is the point: the override recovers
 exactly what removing the default bought, without removing the default.
 
@@ -114,7 +114,7 @@ $ … --postcode-country-coherence
   <locality … src="resolver:localadmin:1159322569" lat="48.856599" lon="2.342841">Paris
 ```
 
-Note what the before-picture shows: BOTH nodes sitting on 32.960001,-96.838499. That is the
+Note what the before-picture shows: both nodes sitting on 32.960001,-96.838499. That is the
 worse-than-wrong case — `applyPostcodeConsistency` finding no Paris within 50 km of ZIP 75001 (the
 nearest is 143.8 km) and falling the locality back onto the ZIP point.
 
@@ -173,7 +173,7 @@ fires) is untouched and still wants its own ticket.
 ### Leg A′ — the lowercase register
 
 The same 22 inputs lower-cased. **Every row is identical to Leg A, OFF and ON.** Expected — the pass
-keys on gazetteer name matching, not case — but the register is where user queries actually live, so
+keys on gazetteer name matching, not case — but the register is where user queries live, so
 it gets measured rather than assumed.
 
 ### Leg B — candidate gazetteer, `--default-country US` pinned
@@ -219,11 +219,11 @@ Both fail toward abstention, which is the designed direction.
 
 ### What is missing
 
-**A tier-1 aggregate on a panel that actually exercises the mechanism.** The first attempt at getting
+**A tier-1 aggregate on a panel that exercises the mechanism.** The first attempt at getting
 one produced a trap worth recording, because it looked exactly like a pass.
 
 `mailwoman eval oa-resolver --limit 10000` (10,000 OpenAddresses US rows) returned a per-row dump that
-is **byte-identical** between flag OFF and ON — md5 `4a98e68f17daf90605354b15c707f485` on both 1.94 MB
+is **byte-identical** between flag off and ON — md5 `4a98e68f17daf90605354b15c707f485` on both 1.94 MB
 files, and the aggregate table matches to the digit (locality-match 98.2%, region 100.0%, coord p50
 3.3 / p90 9.8 / p99 87.9 km).
 
@@ -236,7 +236,7 @@ absence; this one had to be asked directly.
 
 Re-running the same panel with `--candidate-db candidate.db` puts it in the regime that matters — US
 postcodes resolve, and (measured on the panel's first rows) DE and FR rows exist for several of those
-same 5-digit codes, so the alternative-country legs genuinely run and are refuted by the locality
+same 5-digit codes, so the alternative-country legs in fact run and are refuted by the locality
 test. That leg's result is in §6.
 
 §6 re-runs it in the regime that matters, and adds an FR and a GB panel. Those close the aggregate
@@ -264,14 +264,14 @@ measured** — those are the two real gaps, and both are small pieces of work ra
 
 The evidence for default-on is otherwise strong and unusually clean. 28,000 pair evaluations across
 US/FR/GB and both mis-scope directions produce **zero false positives**, and — the part that matters
-more than the zero — 1,240 domestic rows genuinely fell past the cheap exit and had every alternative
+more than the zero — 1,240 domestic rows in fact fell past the cheap exit and had every alternative
 country tried, so the zero is not an artifact of the mechanism never running. The rescue rate lands at
 88–99% and equals the resolvable-pair count exactly, so the failure mode is abstention, not error. The
 whole confound board is untouched, including the four rows designed to break it (Addison TX, Paris TX,
 Berlin NH, Athens GA).
 
-One caution against over-reading the win rate: the rescue leg simulates a _uniformly_ mis-scoped
-default, which is the demo/CLI reality (locale `en-US` → `US` on every query) but overstates how often
+One caution against over-reading the result rate: the rescue leg simulates a _uniformly_ mis-scoped
+default, which is the demo/CLI reality (locale `en-US` → `US` on every query) but overstates how frequently
 this fires in production traffic that already carries a correct country. The right way to read §6 is
 "when the default is wrong, this fixes ~9 in 10 of them and breaks none", not "this improves 9 in 10
 addresses".
@@ -287,14 +287,14 @@ decision as this one. This lands the geometric half; the placer half is untouche
 Re-run of the panel on `--candidate-db candidate.db`, plus two more countries. All against the live
 2026-08-04 gazetteer, over the public `findPostcodeCountryScope` surface.
 
-**First, the end-to-end eval.** `eval oa-resolver --candidate-db … --limit 10000`, flag OFF vs ON:
+**First, the end-to-end eval.** `eval oa-resolver --candidate-db … --limit 10000`, flag off vs ON:
 per-row dump byte-identical, md5 `2209017211bbbf14c5e3e36f8c38cc1a` on both 1.94 MB files. Aggregate
 identical to the digit: locality-match 98.3%, region 100.0%, resolved 100.0%, coord p50 2.4 / p90 10.6
 / p99 24.5 km, and every per-state cell matches.
 
 **And the regime it ran in**, because that is what makes the number mean something. Each row classified
 by whether the US default was itself coherent (step 1 exits, no other country asked) or fell through
-(every candidate country actually tried — the false-positive path):
+(every candidate country tried — the false-positive path):
 
 ### Domestic leg — the address's own country as the default. Any override is a regression.
 
@@ -304,13 +304,13 @@ by whether the US default was itself coherent (step 1 exits, no other country as
 | OpenAddresses FR, `defaultCountry: FR` |  3,000 |            2,963 |       **37** |     **0** |           **0** |
 | OSM GB, `defaultCountry: GB`           |  1,000 |              879 |      **121** |     **0** |           **0** |
 
-The fell-through column is the point. 1,082 US rows, 37 FR rows and 121 GB rows did NOT take the cheap
+The fell-through column is the point. 1,082 US rows, 37 FR rows and 121 GB rows did not take the cheap
 exit — for each of them the pass asked every other country the postcode shape allows, and every one
-came back refuted by the locality test. **Zero border crossings on 1,240 genuinely at-risk domestic
+came back refuted by the locality test. **Zero border crossings on 1,240 in fact at-risk domestic
 rows.** Without that column the byte-identical dump would prove nothing; a magnitude never carries its
 own absence.
 
-### Rescue leg — a deliberately mis-scoped default. An override to the panel's country is the win.
+### Rescue leg — a deliberately mis-scoped default. An override to the panel's country is the result.
 
 | panel                       |      n | fell through | rescued correctly | false positives |
 | --------------------------- | -----: | -----------: | ----------------: | --------------: |
@@ -329,9 +329,9 @@ false-positive count is 0.**
 ### Caveat on the regime classifier
 
 The "coherent-default" split is derived by re-running the pass with an impossible default (`ZZ`), which
-forces step 1 to fail and reports what the alternatives alone would decide. A pair coherent in TWO
+forces step 1 to fail and reports what the alternatives alone would decide. A pair coherent in two
 countries reads as "fell through" under that probe even though the real leg would also have abstained,
-so the fell-through column is if anything an over-count. It errs toward claiming MORE at-risk rows than
+so the fell-through column is if anything an over-count. It errs toward claiming more at-risk rows than
 there were, which is the safe direction for this argument.
 
 ## 7. Test summary
@@ -339,7 +339,7 @@ there were, which is the safe direction for this argument.
 `resolver/postcode-country-coherence.test.ts` — 24 tests, all passing; full resolver suite 167/167.
 Fixtures are the real four-way `75001` collision with the gazetteer's own coordinates, and the fake
 backend models the two behaviours that cause the bug (a hard `country` filter and population-first
-within-tier ranking), so the "before" assertion genuinely lands on Paris, Texas and on the
+within-tier ranking), so the "before" assertion in fact lands on Paris, Texas and on the
 `postcode_city_mismatch` fallback to Addison.
 
 The safety properties have direct tests: coherent-default-wins, abstain-on-zero, abstain-on-tie,

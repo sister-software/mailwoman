@@ -8,7 +8,7 @@ markdown report).
 
 ## The question
 
-We take Who's on First with the presumption that it is granular enough. Nobody has measured whether
+We take Who's On First with the presumption that it is granular enough. Nobody has measured whether
 that is true, and there is no instrument that would say so. Two consequences follow:
 
 1. We cannot answer "is WOF granular enough?" for any country, let alone worldwide — and full world
@@ -29,17 +29,17 @@ live under `scripts/diagnostic/` (gitignored by convention — one-off investiga
 
 Global census of `admin-global-priority.db` (`spr`, current + non-deprecated):
 
-| placetype     |      rows | countries |
-| ------------- | --------: | --------: |
-| locality      | 3,731,863 |       244 |
-| neighbourhood |   159,398 |    **11** |
-| localadmin    |   112,023 |        24 |
-| county        |    36,672 |        87 |
-| region        |     4,299 |       227 |
-| macrocounty   |       467 |         4 |
-| country       |       237 |       237 |
-| borough       |       210 |         6 |
-| macroregion   |        65 |         5 |
+| placetype    |      rows | countries |
+| ------------ | --------: | --------: |
+| locality     | 3,731,863 |       244 |
+| neighborhood |   159,398 |    **11** |
+| localadmin   |   112,023 |        24 |
+| county       |    36,672 |        87 |
+| region       |     4,299 |       227 |
+| macrocounty  |       467 |         4 |
+| country      |       237 |       237 |
+| borough      |       210 |         6 |
+| macroregion  |        65 |         5 |
 
 Zero rows for the other 25 placetypes in the WOF vocabulary, including the entire venue/sub-venue
 deep end (`venue`, `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`,
@@ -89,7 +89,7 @@ that their absence is coverage rather than fact. That is true and understated: f
 out placetypes it is not a coverage gap at all, it is a one-line recipe decision nobody has revisited.
 
 How much of the deficit this explains is **unmeasured** — it depends on what the cloned
-`whosonfirst-data*` repos actually contain per placetype per country, which the scorecard measures.
+`whosonfirst-data*` repos contain per placetype per country, which the scorecard measures.
 
 ### Finding 3 — WOF's sub-locality depth vs Overture, 10-country probe
 
@@ -115,15 +115,15 @@ Two notes that make this usable:
 - **Not circular.** `fold-overture.ts`'s `OVERTURE_DIVISION_SUBTYPES` is
   `["country","locality","region","county","localadmin"]` — no hood-family subtype has ever entered
   the DB, so Overture's sub-locality tier is an independent second opinion here. The locality rung
-  and above ARE partly Overture for the 86-country backfill set, and those cells are self-comparison.
-- **IE's deferred blocker may have moved.** `placetype-evidence.mdx` parks Ireland on a licence
+  and above are partly Overture for the 86-country backfill set, and those cells are self-comparison.
+- **IE's deferred blocker may have moved.** `placetype-evidence.mdx` parks Ireland on a license
   survey (Tailte Éireann, logainm). Overture ships 51,778 IE sub-locality nodes under ODbL today and
   WOF has zero. This is the Northern Ireland lesson again: "worth re-reading any deferred blocker
   after a premise moves."
 
 ### Finding 4 — the demand-side instrument is blind below the locality line
 
-The intuitive design ("use Overture `address_levels` to learn what depth addresses actually write,
+The intuitive design ("use Overture `address_levels` to learn what depth addresses write,
 compare to WOF") does not reach the tier we care about. Measured depth distributions, release
 `2026-06-17.0`:
 
@@ -172,7 +172,7 @@ them (skip superseded, exclude `*-alt-*.geojson`), against Overture `divisions` 
 | NZ      |             **1,894** |                   992 |  **WOF ~1.9×** |
 | BR      |                   848 |                64,537 |  Overture ~76× |
 
-Control (a repo we DO clone, to validate the method): GB tallies **13,225** sub-locality nodes in the
+Control (a repo we do clone, to validate the method): GB tallies **13,225** sub-locality nodes in the
 repo against **13,177** in the shipped DB — the delta is the superseded/current filter, so the probe
 reads the repos the way the build does.
 
@@ -181,9 +181,9 @@ reads the repos the way the build does.
 also carries `macrohood` (24) and `borough` (78) rows — the `macrohood` ones drop at ingest even for
 a cloned country, since `ADMIN_PLACETYPES` omits that placetype.
 
-**No global rule survives this.** Ireland's WOF repo is genuinely thin — 152 neighbourhoods against
+**No global rule survives this.** Ireland's WOF repo is in fact thin — 152 neighborhoods against
 Overture's 51,778 — which vindicates the original "Overture is the fix for IE" framing, not the
-recipe-gap correction. New Zealand inverts it: WOF holds 1,894 neighbourhoods, nearly double
+recipe-gap correction. New Zealand inverts it: WOF holds 1,894 neighborhoods, nearly double
 Overture's 992, and mailwoman ships **zero** because the repo was never cloned. Brazil looks like
 Ireland at a different scale.
 
@@ -231,7 +231,7 @@ in `DEFAULT_WOF_PRIORITY_COUNTRIES`. Samples read correctly: `Mulund East / Mumb
 **This is the answer to the "what maximizes parsability" half of the originating question**, and it
 was never a modelling problem or a sourcing problem. It was a recipe constant.
 
-Three honest caveats before anyone treats 186,469 as shippable:
+Three direct caveats before anyone treats 186,469 as shippable:
 
 - **A pair count is not a parse improvement.** Every GB rung cleared a venue-confound board at 0 false
   positives before shipping; IN has had no board built. The doctrine that governed GB governs this.
@@ -284,7 +284,7 @@ existing layer contract rather than new plumbing.
 
 ### The derived headline column
 
-**"bottoms out at"** — the deepest rung a country actually reaches. Density is measured with the
+**"bottoms out at"** — the deepest rung a country reaches. Density is measured with the
 statistic the placetype census already validated rather than a fresh invention: **parent-coverage
 share**, the fraction of a country's locality-class nodes carrying at least one child projecting onto
 that rung.
@@ -314,7 +314,7 @@ A count alone routes nowhere. Every thin or empty cell is attributed by walking 
    plus a rebuild. Covers 25 of 34 placetypes, and applies even to the eleven cloned countries.
 3. **Source gap** — the country is cloned and the placetype allowlisted, but the repo holds no such
    rows. Fix: another provider (Overture divisions, `poi.db`, a national register). **This is the
-   only class that is a genuine statement about WOF**, and today it can only be evaluated for eleven
+   only class that is an actual statement about WOF**, and today it can only be evaluated for eleven
    countries.
 4. **Build gap** — ingested but missing downstream (freeze, priority filter, dedup). Fix: a bug.
 
@@ -334,15 +334,15 @@ directory listing, not a fact.
 The leg that stops the scorecard from lying. Each Overture sub-locality surface is classified against
 WOF, folded through `foldName` (`resolver/fold-name.ts`), scoped to country:
 
-- **ABSENT** — no WOF row of any placetype carries the surface. Genuine coverage gap; fix is ingestion.
+- **absent** — no WOF row of any placetype carries the surface. actual coverage gap; fix is ingestion.
 - **MISTYPED** — WOF has the surface at a placetype projecting onto a different `ComponentTag`
   (Shoreditch as `locality`, not `neighbourhood`). Fix is re-projection or re-parenting, and costs
   nothing to acquire.
-- **PRESENT** — WOF has it at a rung that projects the same way.
+- **present** — WOF has it at a rung that projects the same way.
 
 Without this leg the raw ratios are uninterpretable. DE reads 2.5× richer, but if its 67k
 `neighbourhood` rows do not correspond to the surfaces Overture names, that number means nothing.
-ABSENT and MISTYPED route to two entirely different pieces of work.
+absent and MISTYPED route to two entirely different pieces of work.
 
 ### Pair yield
 
@@ -393,7 +393,7 @@ scorecard's whole purpose is to justify deepening the gazetteer past the current
 
 ## Limits the report declares about itself
 
-Printed in the report, not just recorded here:
+Printed in the report, notrecorded here:
 
 - **Counts are not quality.** Overture divisions rows are OSM-derived and unaudited for duplicates,
   noise, and address-relevance. A count comparison establishes where to look, never that the rows are

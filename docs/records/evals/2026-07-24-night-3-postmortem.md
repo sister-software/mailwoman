@@ -45,7 +45,7 @@ close-out.
 - **#1288** street-pair probe (failure-anatomy-first; index-scale reality check).
 - Talk-ending draft (five beats + slide asks) at the session tmp for review — nothing submitted.
 - Namesake generalization: falsified earlier the same day (189/189 region tagging — the parse was
-  never the problem); the transition-level result is the honest answer to "have we used all the
+  never the problem); the transition-level result is the direct answer to "have we used all the
   gazetteer's clues": there was exactly one more, and it's measured.
 
 ## What went well

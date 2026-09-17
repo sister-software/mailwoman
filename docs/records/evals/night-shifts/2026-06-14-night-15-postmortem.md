@@ -37,7 +37,7 @@ of OA rows where argmax never does. **Keep retired** — parked decision resolve
 `CoarsePlacer.fromArtifactDir` loader (9 tests). The Latin-off-map experiment: real off-map addresses
 make trained countries **23% → 100%** handled at zero in-map cost, but it **doesn't generalize** to
 unseen countries — a data-breadth ceiling, not a method failure (Overture's ALPHA addresses theme is
-sparse). Honest finding, not promoted.
+sparse). direct finding, not promoted.
 
 **C — multi-region interp recalibration (#584):** The conformal interp-radius factor (1.70, #569) is a
 **Texas artifact**. Measured across 12 states (situs OA/NAD as non-circular ground truth for TIGER
@@ -89,7 +89,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   span-proposer at three bias settings. **Verdict: the Stage 2.7 paired-delimiter span proposer doesn't
   warrant its revival** — no-op at default, −0.7pp gentle, **−3.9pp** strong (a strong annotation bias
   _merges_ the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
-  v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail _differently_ —
+  v0 here (77.3 vs 75.7) and is far more resilient (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
   _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation change is reducing neural
   span over-extension (kin to #555 / Saint-Albans), not a span proposer.
@@ -98,7 +98,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   2026-06-11 codex review had flagged exactly this; night-11 fixed it to the then-current default-on
   state, and #566 left it stale again. Corrected all three to match the code (`runtime-pipeline.ts:258`:
   `jointReconcile ?? false`).
-- **docs-build is red on `main` — and it needs #585, not just #579.** Confirmed it's a two-failure stack:
+- **docs-build is red on `main` — and it needs #585, only #579.** Confirmed it's a two-failure stack:
   the #579 lockfile issue fast-fails install, _under which_ sits a `map-helpers` SSG break
   (`src/pages/demo/map-helpers.ts` is on `main` without the pages-exclude fix). The fix lives in #585's
   `docusaurus.config.ts`, so **docs-build (the marquee deploy) greens only after #579 AND #585** — merging
@@ -116,22 +116,22 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
   proposer?" with a measured _no_ before anyone reopened that code — and reframed the change (neural span
   over-extension, not a proposer) in the bargain.
-- **The marquee actually works.** The biggest risk item shipped browser-verified, not as a "foundation +
+- **The marquee works.** The biggest risk item shipped browser-verified, not as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
 
 ## What could've gone better
 
 - **Misjudged the clock for ~3 hours.** File mtimes are lab-local time; I read them as UTC and thought
   the shift was 4× further along than it was. Corrected on the first `date -u`. Lesson: `date -u` early
-  and often.
+  and frequently.
 - **The full 50-state sweep broke on a branch switch.** `build-situs-holdout.mjs` lived on the C branch;
   switching to the E branch mid-sweep removed it, so 43 states came back blank. Re-ran branch-independent
   from `/tmp`, then hit the >85 °C heat ceiling and abandoned at 12 states (enough to confirm the
   finding). Lesson: background sweeps must not depend on the working-tree branch.
 - **A self-inflicted empty-DB stumble** (read-only `node:sqlite` can't create the no-op situs file) cost
   a couple iterations on the interp-only conformal runs.
-- **Filed #582 with a guessed root cause.** I labelled the last CI red "weight-dependent integration
-  tests" from the test name alone, without reading the failure. It was actually the compiled-data bridge
+- **Filed #582 with a guessed root cause.** I labeled the last CI red "weight-dependent integration
+  tests" from the test name alone, without reading the failure. It was the compiled-data bridge
   (`core/out/data`) — provable in two minutes by pulling the symlink locally. The guess wasn't _wrong_
   enough to be harmless: it framed the fix as a costly CI-data-provisioning decision (the 3 options in
   the issue) when the real fix was a one-line symlink. Lesson: a one-line repro beats a plausible label —

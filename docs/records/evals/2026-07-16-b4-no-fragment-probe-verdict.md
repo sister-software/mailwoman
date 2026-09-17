@@ -1,10 +1,10 @@
-# B4 — the NO fragment probe did NOT clear its pre-registered bar
+# B4 — the no fragment probe did not clear its pre-registered bar
 
-2026-07-16. The 2k falsifier for the Norwegian house-number-licence change.
+2026-07-16. The 2k falsifier for the Norwegian house-number-license change.
 
 **Verdict: the probe did not clear the pre-registered MOVE criterion, and the do-no-harm guard on
 the French board drifted the wrong way. Per the config header's own pre-registration, the full 8k
-run is NOT auto-warranted. The decision to run it anyway is the operator's — with the honest caveat
+run is not auto-warranted. The decision to run it anyway is the operator's — with the direct caveat
 below on the threshold.**
 
 The 2k probe cost ~$1–2 of A100 and saved a full 8k run from being launched on a hunch. That is
@@ -15,7 +15,7 @@ exactly what the probe-before-fix discipline is for.
 ## The read
 
 Pre-registered in `v3.3.0-no-fragment-probe.yaml`, written before the numbers existed; graded on
-board 3 (the NO digit board) against the SHIPPED-v310 baselines registered before the run.
+board 3 (the no digit board) against the SHIPPED-v310 baselines registered before the run.
 
 **Board 3 — the target:**
 
@@ -28,11 +28,11 @@ board 3 (the NO digit board) against the SHIPPED-v310 baselines registered befor
 | pc-first-hn        | guard (ceiling)  |                0.940 |                    0.945 |     +0.5 ✓ |
 | slash-hn           | monitored        |                0.650 |                    0.655 |       +0.5 |
 
-The pre-registered bar: _"bare-street-hn rises materially... clear motion, not the full gain. If it
-does NOT move at 2k, the licence-transfer hypothesis is wrong and a full run is not warranted."_
+The pre-registered bar: _"bare-street-hn rises materially... clear motion, not the complete improvement. If it
+does not move at 2k, the license-transfer hypothesis is wrong and a full run is not warranted."_
 
 **+1.7pp with the two intervals almost entirely overlapping is not clear motion.** The bar is not
-met. Every guard held — `bare-pc` stayed pinned at 1.000, the three ceiling classes did not regress —
+met. The `bare-pc` score stayed pinned at 1.000, and the three ceiling classes did not regress —
 so there is no trade, but there is also no target win.
 
 **Board 2 — the FR do-no-harm guard drifted:**

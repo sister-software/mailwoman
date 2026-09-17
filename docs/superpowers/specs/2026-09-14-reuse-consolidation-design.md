@@ -230,7 +230,7 @@ most are not duplicates on inspection. `NominatimResult` and `NominatimResultSch
 are deliberately different: the interface types `annotations` as `OpenCageAnnotations` where the wire schema has
 `z.looseObject({})`, so `z.infer` would widen it. The wire contract and the engine contract are two things.
 
-### What the tree actually holds
+### What the tree holds
 
 | Source                                  |      Lines | State                                        |
 | --------------------------------------- | ---------: | -------------------------------------------- |
@@ -277,7 +277,7 @@ line count.
 
 Of A2's two naming findings, one was a drift and one was not. `out` (56 commands) beside `output` (22) was the same
 option spelled two ways, and is now `out` everywhere, with `deprecatedName` on the option spec keeping the retired
-flag working behind a notice (#2280, `ebd389ba7`). `country` (13) beside `countries` (14) is NOT a drift: all 27
+flag working behind a notice (#2280, `ebd389ba7`). `country` (13) beside `countries` (14) is not a drift: all 27
 sites were read, every `country` carries one ISO code and every `countries` a comma-separated list, and two files
 declare both because they name different sources at different arities (`corpus/fetch.tsx`: the OpenAddresses
 country against the GeoNames postal countries; `gazetteer/build/poi/index.tsx`: the OSM country against the

@@ -38,7 +38,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 1 — Normalize (deterministic)
 
-**What it does.** Takes the raw input string and applies a fixed sequence of normalisation rules: Unicode NFC, case folding (locale-aware where applicable), abbreviation expansion, whitespace collapse, punctuation normalisation.
+**What it does.** Takes the raw input string and applies a fixed sequence of normalization rules: Unicode NFC, case folding (locale-aware where applicable), abbreviation expansion, whitespace collapse, punctuation normalization.
 
 **Failures it owns.**
 
@@ -51,7 +51,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 2 — Locale check (small ML)
 
-**What it does.** Looks at the normalized input and decides which downstream weights to load and which normalisation rules to keep applying. The decision could be a tiny character-level classifier ("Latin / Cyrillic / CJK / Arabic / mixed?") followed by a per-script locale guess.
+**What it does.** Looks at the normalized input and decides which downstream weights to load and which normalization rules to keep applying. The decision could be a tiny character-level classifier ("Latin / Cyrillic / CJK / Arabic / mixed?") followed by a per-script locale guess.
 
 **Failures it owns.**
 
@@ -79,13 +79,13 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 **What it does.** Two sub-pieces:
 
 - **CRF** ([CRF decoder](../../concepts/crf-decoder.mdx)) — enforces BIO structural validity at decode time. Today.
-- **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighbouring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
+- **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighboring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
 
 **Failures it owns.**
 
 - Ambiguous locality names ([#1](../why-its-hard/addresses-that-break-geocoders.mdx#1-ambiguous-locality-names)) — the re-reader gives the model a second look at `"Paris"` with structural priors that the next token is a region/country.
 - Repeated admin names ([#2](../why-its-hard/addresses-that-break-geocoders.mdx#2-repeated-admin-names)) — BIO structure + re-reader together handle `"New York, New York"` as two adjacent localities.
-- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labelled.
+- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labeled.
 
 **Today.** Viterbi decoder shipped to JavaScript runtime 2026-05-23 — `neural/viterbi.ts` with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible at JS runtime, even on the v3.0.0 weights (the structural mask is built from the labels list, no retraining required). Composes additively with learned CRF transitions when a future weights release ships them. The span re-reader is not built; v0.6.0 candidate.
 
@@ -112,7 +112,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 - Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list, not pretend one is correct.
 
-**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
+**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) and surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 
 **Future.** Add language-prior + user-location-prior factors to the candidate scoring (today's scoring is match × population only). `regionalPriorFromLanguage` + `regionalPriorFromUserLocation` slots reserved in the scoreBreakdown.
 

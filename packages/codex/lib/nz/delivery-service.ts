@@ -200,7 +200,7 @@ export interface NZDeliveryServiceMatch {
  * Bag", "Counter Delivery", "Private Box 102"), return the canonical type and identifier. Null otherwise — including
  * for "PB 39990" (an error of form per ADV358).
  *
- * When `type` is "Private Box", the result carries `colloquial: true` — indicating the colloquial alias (not an ADV358
+ * When `type` is "Private Box", the result has `colloquial: true` — indicating the colloquial alias (not an ADV358
  * Delivery Service Type; see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11). Callers that want only
  * formally-valid ADV358 types should check `!result.colloquial`.
  */

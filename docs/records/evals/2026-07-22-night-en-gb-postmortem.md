@@ -16,8 +16,8 @@ The arc's science, in four runs (full record: config headers + `.superpowers/sdd
 | Run              | Recipe                                        | Decode dep-loc (NZ / GB)                | Raw-BIO (GB)                           | Verdict                                                                                                                         |
 | ---------------- | --------------------------------------------- | --------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | probe-1 (2k)     | changes + synth-gb 6.0 (~1.3% dep-loc stream) | 0/246 · 0/69                            | 2/69, gap 4.61                         | starved, not dead                                                                                                               |
-| probe-2 (2k)     | ONE var: synth-gb 36.0 (~6.6%)                | **3/246 · 1/69 — first emissions ever** | 12/69, min gap 0.000                   | mechanism CONFIRMED; skew costs (us −0.8pp, bare-locality 0.60)                                                                 |
-| feed (8k)        | ONE var: 4-locale split at same density       | 0/246 · 0/69                            | 0/69, gaps worsened                    | skew costs recovered (bare-locality 0.988) but tag re-buried                                                                    |
+| probe-2 (2k)     | one var: synth-gb 36.0 (~6.6%)                | **3/246 · 1/69 — first emissions ever** | 12/69, min gap 0.000                   | mechanism confirmed; skew costs (us −0.8pp, bare-locality 0.60)                                                                 |
+| feed (8k)        | one var: 4-locale split at same density       | 0/246 · 0/69                            | 0/69, gaps worsened                    | skew costs recovered (bare-locality 0.988) but tag re-buried                                                                    |
 | checkpoint sweep | (no GPU)                                      | flat zero all checkpoints               | **peak 5/69 @ 2k → monotonic decline** | **RE-BURIAL: hot classifier LR is a ~2k resurrection window, after which the 93% negative mass re-buries the tag at hot speed** |
 
 The null condition is **not** met — the tag is learnable; the _schedule_ is wrong. Diversification did exactly what it promised for the guards and nothing for retention.
@@ -28,7 +28,7 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 2. **(B) Concentrate-then-resume** — probe-2 recipe 2k, then `resume` (optimizer state intact — the resume-not-init_from rule) into multi-locale at normal LR.
 3. **(C) Upstream** — conventions loss-mask / collapse_to_active.
 4. **(D) Ship en-GB v1 locality-mapped now** — fully de-risks October; resurrection becomes its own arc.
-5. **Before ANY next real release dispatch:** re-stage HF with `--postcodes …,postcode-gb.bin` (publish.yml preflight now requires it — PR body has the command).
+5. **Before any next real release dispatch:** re-stage HF with `--postcodes …,postcode-gb.bin` (publish.yml preflight now requires it — PR body has the command).
 6. EPC×UPRN wave-2: probe says GO (99.99% join, WGS84 in-file, smoke 5/5) — needs GB address-line parsing + a `gb` StreetLocale + a workspace decision (`epc-uprn/`, shipped tier).
 7. BR arc: CNPJ bairro data is on disk — fold bairro→dependent_locality into v3.8.6 or keep BR one-variable?
 
@@ -41,7 +41,7 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 ## What could've gone better
 
 - **The run-A misadjudication** (~5 min A100 wasted on a byte-identical rerun): I called "instrument failure" from a maxΔ row comparison — the wrong instrument at 384 dims (element scale ~0.07). Cosine similarity settled it in one command. Lesson memorized: _cosine, not maxΔ, for re-init verification_.
-- **Layer-blind grading nearly killed the arc:** probe-1's 0-emission was measured at production decode, which hides sub-margin signal ("JSON hides gaps" — again). The operator's raw-BIO instinct was the arc's pivotal correction.
+- **Layer-blind grading nearly killed the arc:** probe-1's 0-emission was measured at production decode, which hides sub-margin signal ("JSON hides gaps" — again). The operator's raw-BIO instinct was the arc's important correction.
 - Three agents parked on background-job monitors instead of polling (known SDD lesson; re-briefing cost ~4 round-trips — the blocking-poll pattern should go into the dispatch template).
 
 ## Decisions made autonomously

@@ -15,7 +15,7 @@ module; cascade probe closed shape-routing with receipts.
 - (running log)
 - 04:45 — stale-out/ hazard post-deletion FOUND + FIXED: tsc leaves orphaned emit; out/commands/debug.js
   still imported the deleted createAddressParser and crashed the pre-commit hook (a commit silently
-  failed). Wiped all out/ trees + recompiled. EVERY pre-deletion checkout will hit this — flag in handoff.
+  failed). Wiped all out/ trees + recompiled. every pre-deletion checkout will hit this — flag in handoff.
 - 04:47 — Dependabot critical #114 + medium #115 (websocket-driver 0.7.4, sockjs/webpack-dev-server
   chain, dev-only exposure) cleared via resolutions pin ^0.7.5 (7f56f603).
 - 04:43–04:52 — B1 step 3: PT/RO splice v0.12.0-ptro-splice built from 35k WOF PT+RO native surfaces
@@ -23,7 +23,7 @@ module; cascade probe closed shape-routing with receipts.
   v381 done; 2k probe launched (v3.9.0, ap-wyS4XeIeCE0mtzo8zDWdaT). SALVAGE CATCH: night-3 falsified
   the OA-sourced splice (uppercase PT / stripped RO) and mechanism-confirmed the WOF re-source as
   v267 with a multi-leg pre-registration demand (fr/it/pl overlap + the broken BR row) — the probe's
-  read is AMENDED accordingly: grade parity subsets pt/ro/fr/it/pl/br, not just the target.
+  read is AMENDED accordingly: grade parity subsets pt/ro/fr/it/pl/br, notthe target.
 - 04:55 — P1 CLOSED via the pre-registered measured-negative exit (PR #1152, docs-only, operator
   merge): decode-time atlas prior structurally cannot separate `…Chevaleret Paris` from `Rue de
 Paris` (identical terminal token + membership; emission-gap distributions overlap; a bias that
@@ -34,24 +34,24 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   RUNNING now. This is the arc's central question (how much of oracle@10 0.749 vs seg@1 does
   evidence-based rerank collect) and P1's design routes to exactly this component.
 - 04:58 — PT/RO 2k probe PASSED the amended multi-leg read (ro street 0.800->1.000 — the
-  byte-fallback target; fr guard +0.022; pl flat; the night-3 broken BR row HELD; goldens us 47.8 /
+  byte-fallback target; fr guard +0.022; pl flat; the night-3 broken BR row held; goldens us 47.8 /
   fr 42.5 = noise). 8k (v391) launched ~05:00, healthy at step 4400 by 05:03.
 - 05:02 — P3 staged (b3d741bd): augment_upper_case_prob mirroring lowercase_row (#829), 4 tests,
   default-off; enabling rides the span-arc retrain with a pre-registered ALL-CAPS read.
-- 05:12–05:35 — v391 (PT/RO 8k) graded: RO 1.000 + fr guard HELD, goldens noise, digit board clean
-  (bare-street-hn 0.743), gauntlet PASS — but the BR GUARD ROW BROKE (street->venue label flip on
+- 05:12–05:35 — v391 (PT/RO 8k) graded: RO 1.000; goldens were noise, and the digit board was clean
+  (bare-street-hn 0.743), gauntlet pass — but the BR GUARD ROW BROKE (street->venue label flip on
   "Rua Raul Leite Magalhães", n=1; segmentation still perfect) and FR fragment reads 0.747 vs v381's
-  0.758 (-1.1pp, CI-overlapping). Pre-registration named br a guard -> v391 does NOT auto-promote;
+  0.758 (-1.1pp, CI-overlapping). Pre-registration named br a guard -> v391 does not auto-promote;
   ship/hold is an operator handoff item. The 2k (v390) was strictly additive; the 8k traded.
 - 05:21 — phase-4a rerank v1 found CRASHED AT IMPORT 45min earlier (neural/semi-markov-decode.ts is
-  on the archived feat/727-span-head branch, NOT main — my "phases 1-3 on main" was half-right: python
+  on the archived feat/727-span-head branch, not main — my "phases 1-3 on main" was half-right: python
   scorer merged, JS decoder didn't). Liveness checks were fooled by the watcher's self-matching pgrep.
   Re-ran from a branch worktree.
 - ~05:20 (receipt 7f46415a @ 05:27) — PHASE-4A RESULT (the arc's central question): **rerank@1 = seg@1 = 0.5768, delta +0.
-  Full-geocode tier evidence collects NONE of the oracle@5 0.723 headroom** — because it is STARVED:
+  Full-geocode tier evidence collects none of the oracle@5 0.723 headroom** — because it is STARVED:
   evidence rate 3.4% (9/267 fixtures produced street-tier evidence on any hypothesis; tier census
   1308 admin / 25 address_point / 2 street). The failing class is context-free fragments, which
-  cannot reach rooftop layers, so all hypotheses tie at admin. NOT a treadmill case — first
+  cannot reach rooftop layers, so all hypotheses tie at admin. not a treadmill case — first
   measurement; the redesign is measurement-driven: the arbiter needs STREET-NAME existence evidence
   (P1's StreetLocalityEvidence — two independent negatives converged on the same design today).
 - ~05:25 (same receipt) — name-evidence falsifier v0 (FR BAN street-centroids 2.2M + NO tuples, n=7 recoverable):
@@ -60,7 +60,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   the FR fragment board (n=400, complete BAN coverage) next.
 - 05:29 (dd2e8aae) — **PHASE-4B RESULT at board scale (n=1600, the FR fragment board's four street classes):
   name-evidence rerank street@1 0.619 → 0.706 (+8.7pp); bare-street 0.675 → 0.860 (+18.5pp) — the
-  66% recall class every corpus change plateaued on, collected with ZERO training.** Of 202
+  66% recall class every corpus change plateaued on, collected with zero training.** Of 202
   recoverable rows: 140 fixed / 14 broken / 48 neutral (10:1). Resolver-as-arbiter validated with
   the corrected instrument; option C no longer the primary change for bare fragments. Eval doc:
   `2026-07-17-phase4-name-evidence-rerank.md` (dd2e8aae). Caveats stated there: v301 span artifact
@@ -84,7 +84,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   cleared. Phase-4c spec committed with the interface + per-country index plan:
   `docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md` (aeaa15f7).
 - 05:57 — **v3.10.0-span-ship-probe LAUNCHED** (ap-4fFe1R2Zf0pH4MaIKKMpTr, 2k): the #727 step-4
-  recipe assembly — span scorer on the SHIPPED v381 recipe (own param group 1e-3, the phase-1
+  recipe assembly — span scorer on the shipped v381 recipe (own param group 1e-3, the phase-1
   lesson) + P3 augment_upper_case_prob 0.15 (b3d741bd). Pre-registered reads in the config header;
   same corpus+tokenizer as v381 so F1 comparisons are VALID. sync_src_v3100 verify 6/6. Loss
   18.6 -> 1.89 by step 450 (v3.0.0 without the LR group sat at ~17 at 2k — the group works).
@@ -99,17 +99,17 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   ADDITIONAL output, the BIO token path is byte-stable-ish. **LEG-1 span mechanism PASS** — loss
   18.6->1.49 converged (v3.0.0 stuck at ~17), the LR param group works. **LEG-2 P3 all-caps FAIL** —
   raw-case exact 48.0 vs v381 48.3 (-0.3pp) against the +5pp bar; augment_upper_case_prob 0.15 is
-  INERT at 2k. Per no-relax-bars: P3 does NOT ride the 8k, the #690 shim stays (+12.4pp raw-case
-  today). The span head DOES escalate — but seg@1 (leg-1 formal check) runs first before the ~2h 8k spend.
+  INERT at 2k. Per no-relax-bars: P3 does not ride the 8k, the #690 shim stays (+12.4pp raw-case
+  today). The span head does escalate — but seg@1 (leg-1 formal check) runs first before the ~2h 8k spend.
 - 07:08 — **seg@1 CHECK PASS on v3.10.0 step-002000** (local CPU, eval_seg_at_1.py, parity 267):
   token@1 0.5581 / seg@1 0.6030 (+4.5pp) → the trained span scorer beats the token decode ON THE
   SHIP-RECIPE CORPUS (v0.11.0-no-fragment). This is the NOVEL confirmation: v301 proved the head on
-  v257; v3.10.0 proves it survives the corpus swap. All THREE 2k legs green (guard byte-stable,
+  v257; v3.10.0 proves it survives the corpus swap. All three 2k legs green (guard byte-stable,
   loss converged, seg@1 crosses). The ~2h 8k spend's falsifier PASSED → escalating.
 - 08:26 — **v3.10.1 8k RESUME COMPLETE** (resumed step 2000→8000 clean, no NaN): train_loss
   18.6→1.31, val macro_f1 0.6937 (2k was 0.6936 — token path unchanged, span head is additional).
   **seg@1 CHECK PASS at 8k**: token@1 0.5581 / seg@1 0.5918 (+3.4pp). NOTE the span head PLATEAUS by
-  2k: 8k seg@1 0.5918 is marginally BELOW the 2k's 0.6030 (-1.1pp, noise) — same 2k≈8k plateau as
+  2k: 8k seg@1 0.5918 is marginally below the 2k's 0.6030 (-1.1pp, noise) — same 2k≈8k plateau as
   the B4b digit arc. The extra 6k refined train_loss (1.49→1.31) but not the decode check. Grade
   (guard + P3 re-grade + oracle@5) running; export emitted the semi-crf-transitions sidecar (the
   new export_onnx path, c8c05fc7).
@@ -117,7 +117,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   GUARD PASS (golden us 86.9/66.3 vs 86.9/66.2, fr 90.0/75.4 vs 90.1/75.4 — token path byte-stable,
   the span head is a purely ADDITIONAL output). seg@1 0.588 > token@1 0.558 (PASS). **oracle@5
   0.7865** (vs v301's 0.7228, +6.4pp) — 0.1985 street@1 headroom in ranks 2-5, exactly what the
-  phase-4c rerank collects (phase-4b measured +18.5pp bare-street). P3 all-caps FAIL at 8k too
+  phase-4c rerank collects (phase-4b measured +18.5pp bare-street). P3 all-caps fail at 8k too
   (48.0 vs 48.3) → CLOSED inert, #690 shim permanent. Export emitted the sidecar (my export_onnx
   fix). SHIPS NOWHERE — the span head is dormant until phase-4c wires the decode; the token path is
   byte-stable so there's no promote decision. This is the phase-4c decode SUBSTRATE (v3101-cache +
@@ -126,18 +126,18 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   none promoted.
 - 10:15 — **PHASE-4C StreetLocalityEvidence BUILT (PR #1156, default-off, ready-for-review).**
   resolver/street-evidence.ts (interface + foldStreetSurface contract + G1 isPureTypeVocabulary +
-  pickByStreetEvidence v2 policy, PURE, 14 tests) + resolver-wof-sqlite/street-name-lookup.ts (FR
-  BAN backend implementing it, 9 fixture-DB tests). 23/23 pass, tsc + oxlint clean. NOT wired — the
+  pickByStreetEvidence v2 policy, pure, 14 tests) + resolver-wof-sqlite/street-name-lookup.ts (FR
+  BAN backend implementing it, 9 fixture-DB tests). 23/23 pass, tsc + oxlint clean. not wired — the
   arbiter primitive; wiring into the k-best rerank needs #1154 on main. PRODUCTION FOLLOW-UP:
   street-centroids-fr.db must be rebuilt with foldStreetSurface (contract fold) + a street_norm
   index (BAN sdk).
 - STASH FLAG (operator): two STALE WIP stashes predate tonight — stash@{0} = a banned-prose sweep
-  (50 'honest'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
+  (50 'direct'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
   since it was reduce); stash@{1} = 'WIP on fix/965-check-hard-country'. Neither is tonight's work; I
   left both intact (did not drop). stash@{0} needs manual reconciliation or a drop — operator's call.
 - failure mode: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
-- TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
+- TIMEKEEPING CORRECTION (self-caught twice: at the 05:03 checkpoint, and again at 05:48 when four
   fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
   timestamps (the lab clock is UTC+2 — never stamp from the wall clock).
 
@@ -148,7 +148,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   0.786 → name-evidence rerank +6.0pp), and the phase-4c arbiter primitive built as a reviewable PR.
   Measurement → substrate → arbiter, none promoted, all as clean PRs for the morning.
 - **Pre-registration + resume-not-init_from paid off exactly as written.** The 2k probe's three
-  pre-registered reads decided the 8k spend cleanly (seg@1 the falsifier before the ~2h GPU); the
+  pre-registered reads decided the 8k spend directly (seg@1 the falsifier before the ~2h GPU); the
   8k RESUME kept the converged span head + Adam moments (`resume-drift: none` confirmed the config
   matched). No wasted training.
 - **Verify-on-the-real-substrate caught a proxy artifact.** The phase-4b headline (+18.5pp
@@ -157,7 +157,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   phase-4c pitch.
 - **Two latent main-branch hazards surfaced and got handled**: the excision's deleted arena harness
   (broke every check battery — fixed, PR #1153) and the export sidecar gap (would have blocked the
-  8k oracle read — fixed inline). Both found by actually running the pipeline, not by inspection.
+  8k oracle read — fixed inline). Both found by running the pipeline, not by inspection.
 
 ## What could've gone better
 
@@ -171,7 +171,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   tonight and now conflicts with main. Not my defect, but it means uncommitted rule-compliance work
   has been stranded on the working tree for days — the operator should reconcile or drop it.
 - **The span-head plateau (2k ≈ 8k on the decode check) means the 6k extra steps bought little.** Not
-  a mistake — the plateau was only knowable after running it — but the NEXT span retrain can stop at
+  a mistake — the plateau was only knowable after running it — but the next span retrain can stop at
   ~2-3k on the decode metrics and save the compute (train_loss keeps falling, but seg@1/oracle don't).
 
 ## Decisions made autonomously
@@ -189,7 +189,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 - Operator rulings still pending: M4 (NZ tier), M2 (postcode-precision floor value), CJK scope,
   deepparse-data counsel bundling.
-- **#32 / #1142 importance (scoped tonight, NOT started — needs an operator decision):** three
+- **#32 / #1142 importance (scoped tonight, not started — needs an operator decision):** three
   defects, different ship paths. (1) The stale FST (`fst-global-priority.bin` 2026-05-28 vs DB
   2026-07-07: rome 0.378→0.860, madrid 0.138→0.909) is a pure artifact rebuild from the current DB
   — BUT it changes a shipped INFERENCE artifact (feeds `neural/fst-prior.ts`), so it's measure-
@@ -205,11 +205,11 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## Concrete next steps
 
-- **MERGE ORDER (all mergeable/green):** #1153 (arena-harness fix — un-reds the check battery, FIRST)
+- **MERGE ORDER (all mergeable/green):** #1153 (arena-harness fix — un-reds the check battery, first)
   → #1154 (span-decode surface) → #1156 (phase-4c arbiter) → #1152 (P1 doc). #1154 must land before
   phase-4c can be wired.
 - **Phase-4c wiring (the next arc, needs #1154 on main):** compose `pickByStreetEvidence` with the
-  k-best decode loop behind a flag; run the full promote battery WITH the rerank active on the
+  k-best decode loop behind a flag; run the full promote battery with the rerank active on the
   v3.10.1 8k substrate; target the board result 0.851 (96 fixes / 3 breaks). Then the US TIGER
   street-name backend (spec build-order #2) + the `street-centroids-fr.db` rebuild (contract fold +
   `street_norm` index).
@@ -221,14 +221,14 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 - (historical) **v3.10.0 2k probe grade**: `scratchpad/grade-v3100.sh` runs
   export→int8→v381-sibling cache→guard(golden us/fr vs v381 baseline 86.9/90.1 micro)→LEG-2
   all-caps (raw-case, bar ≥53.3 exact vs v381 48.3). Cache template `scratchpad/v381-punct-full-cache`
-  (SAME tokenizer → F1 valid). seg@1 formal check deferred to 8k (leg-1 mechanism already confirmed:
+  (same tokenizer → F1 valid). seg@1 formal check deferred to 8k (leg-1 mechanism already confirmed:
   loss 18.6→1.55, vs v3.0.0's stuck 17 — the LR param group works).
 - **export_onnx sidecar gap (8k handoff)**: the Modal `export_onnx` fn writes `model.onnx` but NOT
   `semi-crf-transitions.json` (that's `package_weights.export_semi_crf_transitions`, a separate
   path). The phase-4c/PR-#1154 k-best decode needs the sidecar, so the 8k package build must route
   through package_weights or export_onnx must be extended to emit it. Harmless for the 2k BIO-path grade.
 - **PRs awaiting operator merge** (both green, not self-merged — new runtime surface + eval tooling):
-  #1153 (arena-harness neural-only, unblocks the check battery — merge FIRST, main's battery is broken
+  #1153 (arena-harness neural-only, unblocks the check battery — merge first, main's battery is broken
   without it), #1154 (span-decode surface to main — the phase-4c consumer). Then #1152 (P1 design doc).
 - **Phase-4c** (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`): build
   `StreetLocalityEvidence` after #1154 lands + a span-head model ships. Measured v2 policy: 148 fixes / 3 breaks.

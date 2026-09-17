@@ -20,7 +20,7 @@
 
 ### Task 1: Export the normalization fold (single-source prerequisite)
 
-**Files:** Modify `neural/fst-prior.ts` (line 234 `normalizeFSTToken` gains `export`; fix the stale JSDoc at 189–191 that already claims it's exported). Test: extend `neural/fst-prior.test.ts` (or create) with fold cases: NFKC, lowercase, `\p{P}\p{S}` strip; "Stockton-on-Tees" → "stocktonontees"; "Álava" vs "Alava" (document the observed diacritic behavior — NFKC does NOT strip diacritics; both sides of the index use the same fold so it's consistent; state this in the JSDoc).
+**Files:** Modify `neural/fst-prior.ts` (line 234 `normalizeFSTToken` gains `export`; fix the stale JSDoc at 189–191 that already claims it's exported). Test: extend `neural/fst-prior.test.ts` (or create) with fold cases: NFKC, lowercase, `\p{P}\p{S}` strip; "Stockton-on-Tees" → "stocktonontees"; "Álava" vs "Alava" (document the observed diacritic behavior — NFKC does not strip diacritics; both sides of the index use the same fold so it's consistent; state this in the JSDoc).
 Steps: failing test → export + doc fix → green → `yarn vitest run neural/` → commit `fix(neural): export normalizeFSTToken — the shared gazetteer fold (stale JSDoc already claimed it)`.
 
 ### Task 2: PIX1 pair-index format (writer + reader, one file)
@@ -66,7 +66,7 @@ Behavior: stream the tuples CSV (CSVSpliterator idiom from `extract-recipes/loca
 
 ### Task 4: The prior module (sixth emission prior)
 
-**Files:** Create `neural/placetype-pair-prior.ts` + test. Modify `neural/trace.ts` (append `"placetypePair"` to `TRACE_PRIOR_KINDS` — ORDER = application order, after `spanProposer`, before `conventionsMask`? No: composition order in `#decode` decides; add it after `spanProposer` and before `conventionsMask` in BOTH the constant and the push-site placement so the mask still applies last). Modify `neural/classifier.ts`: `ParseOpts` field `placetypePair?: { index: PairIndexLike; biasScale?: number }` (heavy JSDoc: default behavior, evidence line, no-country semantics), compose block after spanProposer (`buildPlacetypePairPriors(opts.placetypePair, pieces, this.labels, ...)` + `matrixHasBias` push), empty-input mirror stays derived from `TRACE_PRIOR_KINDS` (verify test `test/trace-parse.test.ts` fails RED on the constant change until the push site lands — that's the designed trip-wire, use it as the TDD RED).
+**Files:** Create `neural/placetype-pair-prior.ts` + test. Modify `neural/trace.ts` (append `"placetypePair"` to `TRACE_PRIOR_KINDS` — ORDER = application order, after `spanProposer`, before `conventionsMask`? No: composition order in `#decode` decides; add it after `spanProposer` and before `conventionsMask` in both the constant and the push-site placement so the mask still applies last). Modify `neural/classifier.ts`: `ParseOpts` field `placetypePair?: { index: PairIndexLike; biasScale?: number }` (heavy JSDoc: default behavior, evidence line, no-country semantics), compose block after spanProposer (`buildPlacetypePairPriors(opts.placetypePair, pieces, this.labels, ...)` + `matrixHasBias` push), empty-input mirror stays derived from `TRACE_PRIOR_KINDS` (verify test `test/trace-parse.test.ts` fails RED on the constant change until the push site lands — that's the designed trip-wire, use it as the TDD RED).
 
 **Prior semantics (the validated rung-3 rule, generalized to windows):**
 
@@ -80,12 +80,12 @@ Tests: matrix-cell exactness (query-shape-prior.test.ts style + the street-morph
 
 ### Task 5: Weights sibling + country blocking
 
-**Files:** Modify `neural/weights.ts` (add `resolvePairIndexSibling` mirroring `resolveAnchorLookupSibling:283–297`; `ResolvedWeights.pairIndexPath?: string`; spread in both the package-dir and overlay paths — the en-gb overlay resolves it locally like postcode-gb.bin). Modify `neural/classifier.ts` load path (`classifier.ts:296–304` region): construct `PairIndexResolver` when `pairIndexPath` present AND the resolved locale's country matches the index header's country (the hard country check — mismatch = skip + one warn). Extend `neural/test/weights.test.ts` en-gb case: `pairIndexPath` resolves; parse smoke with a GB dep-loc address emits the tag (this is the arc's end-to-end proof).
-Note: the runtime country context = the locale the weights resolved for (en-gb → gb). The plan's "no-country → no bias" case is structurally covered (base en-us package ships no pair index), but ALSO test: en-us weights + GB-looking input → prior inert.
+**Files:** Modify `neural/weights.ts` (add `resolvePairIndexSibling` mirroring `resolveAnchorLookupSibling:283–297`; `ResolvedWeights.pairIndexPath?: string`; spread in both the package-dir and overlay paths — the en-gb overlay resolves it locally like postcode-gb.bin). Modify `neural/classifier.ts` load path (`classifier.ts:296–304` region): construct `PairIndexResolver` when `pairIndexPath` present and the resolved locale's country matches the index header's country (the hard country check — mismatch = skip + one warn). Extend `neural/test/weights.test.ts` en-gb case: `pairIndexPath` resolves; parse smoke with a GB dep-loc address emits the tag (this is the arc's end-to-end proof).
+Note: the runtime country context = the locale the weights resolved for (en-gb → gb). The plan's "no-country → no bias" case is structurally covered (base en-us package ships no pair index), but also test: en-us weights + GB-looking input → prior inert.
 
 ### Task 6: Falsifier boards + holdout evals (data + scripts, minimal commits)
 
-1. **Venue-confound board** (≥5k): FSA (600k GB venues) ∩ index child names, parent in-string; through the FULL pipeline with the prior ON; bar FP = 0 for window mode. Committed board sample (~200 rows) + the full-run report; generator script in scratchpad, numbers in the SDD report.
+1. **Venue-confound board** (≥5k): FSA (600k GB venues) ∩ index child names, parent in-string; through the full pipeline with the prior ON; bar FP = 0 for window mode. Committed board sample (~200 rows) + the full-run report; generator script in scratchpad, numbers in the SDD report.
 2. **Comma-stripped variants** of gb-golden + nz-suburb-golden re-run (window mode): recall vs comma-mode −5pp bar.
 3. **Pair-holdout**: rebuild index minus random 10% of pairs (builder `--holdout-seed/--holdout-fraction` dev flags or a scratch build), boards re-run, degradation curve recorded — **acceptance bars re-anchor to these numbers**.
 4. **Out-of-register coverage**: EPC-derived GB addresses (from the 2026-07-22 acquisition) — % whose (dep-loc, town) pair is in the index. Pure measurement, reported.
@@ -114,7 +114,7 @@ As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout number
 
 **Checks:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed, not documented.
 
-**Sequencing:** final task — runs after Task 8, before the arc's whole-branch review, so it audits the SHIPPED configuration.
+**Sequencing:** final task — runs after Task 8, before the arc's whole-branch review, so it audits the shipped configuration.
 
 ## Post-plan amendments (2026-07-23)
 

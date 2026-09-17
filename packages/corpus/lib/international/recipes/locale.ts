@@ -63,9 +63,9 @@ export interface LocalePart {
 	 * `nombre_via`, `poblacion`, `municipio`, `comunidad_autonoma`, `cod_postal`), not the standard OA
 	 * NUMBER/STREET/CITY/DISTRICT/REGION/POSTCODE header every other part uses. Verified 2026-07-22 by exact- coordinate
 	 * cross-check: the OA-conformed `extracted/es/countrywide.csv` collapses CITY to `municipio` and drops `poblacion`
-	 * (Spain's below-municipio núcleo/pedanía name) entirely, so the pedanía signal survives only in this raw export.
-	 * `street` is reconstructed as `tipo_vial + " " + nombre_via` (verified byte-identical to the conformed STREET column
-	 * for the same row). CITY-analog = `poblacion`, DISTRICT-analog = `municipio`.
+	 * (Spain's below-municipio núcleo/pedanía name) entirely, so this raw export is the only source for the pedanía
+	 * signal. `street` is reconstructed as `tipo_vial + " " + nombre_via` (verified byte-identical to the conformed
+	 * STREET column for the same row). CITY-analog = `poblacion`, DISTRICT-analog = `municipio`.
 	 */
 	cnigRaw?: boolean
 }

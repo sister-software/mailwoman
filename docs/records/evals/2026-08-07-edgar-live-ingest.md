@@ -49,7 +49,7 @@ has no Exhibit 21 in its most recent 10-K. That is the filer's choice, not a cod
 | Telephone and Data Systems     | —          | —          |     0 | —    |
 
 Three SICs are blank because the registrant was pinned rather than corroborated:
-Comcast and AT&T (genuine CIK ties broken by operator pins) and Bandwidth/Ooma
+Comcast and AT&T (actual CIK ties broken by operator pins) and Bandwidth/Ooma
 (real carriers SEC files under software classifications). Pins are documented
 decisions; blank SICs here are the artifact of the pin bypass, not a gap in
 the data.
@@ -69,7 +69,7 @@ both registrants resolved correctly.
 | "Altice USA, Inc."   | 0001702780   | 4841 | SIC corroborated — the true registrant |
 | "WideOpenWest, Inc." | 0001701051   | 4841 | SIC corroborated — the true registrant |
 
-The two registrants genuinely tied at the top score (Comcast and AT&T) were
+The two registrants in fact tied at the top score (Comcast and AT&T) were
 resolved by operator pins — the tie is real collision between two registrants
 with identical canonical names, and a pin is the decision about which one is
 in scope.

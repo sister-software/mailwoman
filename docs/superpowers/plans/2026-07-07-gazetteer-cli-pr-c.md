@@ -16,7 +16,7 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 
 ## Diagnosis (locked)
 
-- The pre-936 DB's 102 GeoNames-era country nodes (+ GE's 12 regions) were created by `ingestGeonamesAliases`'s `opts.adminForCountries` (#267: PCLI country + ADM1 regions + locality `parent_id`/ancestry linking) — passed ONLY by `scripts/build-coverage-expansion.ts:129`, never by the canonical build. The recipe therefore never produced them (E2E-confirmed on #1026).
+- The pre-936 DB's 102 GeoNames-era country nodes (+ GE's 12 regions) were created by `ingestGeonamesAliases`'s `opts.adminForCountries` (#267: PCLI country + ADM1 regions + locality `parent_id`/ancestry linking) — passed only by `scripts/build-coverage-expansion.ts:129`, never by the canonical build. The recipe therefore never produced them (E2E-confirmed on #1026).
 - The correct fold set is the **zero-coverage gap**: `DEFAULT_GEONAMES_COUNTRIES − DEFAULT_OVERTURE_COUNTRIES − DEFAULT_WOF_PRIORITY_COUNTRIES` (147 countries; per the #267 docstring, a country with WOF/Overture admin would double up — the gap set excludes them by construction). Every #1026-flattened country is in the gap set; the extra ~45 are dependencies/territories that gain nodes too (strictly additive).
 
 ---
@@ -40,7 +40,7 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 
 **Files:** Delete `scripts/augment-admin-overture.ts`, `scripts/augment-admin-official-names.ts`, `scripts/build-admin-geonames-fold.ts`, `scripts/build-coverage-expansion.ts`.
 
-Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild (`build admin`); #936 official-names bridge → the #940 ingest bit is native (its own docstring says "until the next full rebuild"); the standalone geonames fold → `foldGeonames`; coverage expansion → the recipe IS the coverage (edit defaults, rebuild, verify checks it).
+Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild (`build admin`); #936 official-names bridge → the #940 ingest bit is native (its own docstring says "until the next full rebuild"); the standalone geonames fold → `foldGeonames`; coverage expansion → the recipe is the coverage (edit defaults, rebuild, verify checks it).
 
 **Steps:**
 
@@ -55,13 +55,13 @@ Each is subsumed: incremental Overture augment → edit `defaults.ts` + rebuild 
 
 **Steps:**
 
-- [ ] Check `.gitignore` treatment of `scripts/diagnostic/` + `scripts/eval/` (AGENTS says diagnostics are ignored by default — if these dirs are tracked, keep the moves tracked; do NOT let a gitignore rule silently delete history).
+- [ ] Check `.gitignore` treatment of `scripts/diagnostic/` + `scripts/eval/` (AGENTS says diagnostics are ignored by default — if these dirs are tracked, keep the moves tracked; do not let a gitignore rule silently delete history).
 - [ ] `rg` for imports of each moved file (none expected — they're leaf diagnostics); move; `typecheck:scripts` green; commit.
 
 ### Task 4: E2E — the recipe now reproduces the artifact (the #1026 candidate)
 
 - [ ] `yarn compile && node mailwoman/out/cli.js gazetteer build admin --out /mnt/playpen/mailwoman-data/wof/admin-global-priority.PRC.db` (~12 min).
-- [ ] Expected: **verify PASS 21/21** (node-census restored — the check that failed on the E2E in PR B), sealed, build-log appended.
+- [ ] Expected: **verify pass 21/21** (node-census restored — the check that failed on the E2E in PR B), sealed, build-log appended.
 - [ ] Per-country/per-placetype census diff vs the live DB + vs the pre-936 backup (GE must have country+regions again). Post findings to #1026.
-- [ ] **Do NOT swap** — present the artifact + census to the operator (runbook swap is a deliberate step: bak → mv → seal check → service restarts → demo propagation).
+- [ ] **Do not swap** — present the artifact + census to the operator (runbook swap is a deliberate step: bak → mv → seal check → service restarts → demo propagation).
 - [ ] Push branch, open PR C referencing the spec + #1026.

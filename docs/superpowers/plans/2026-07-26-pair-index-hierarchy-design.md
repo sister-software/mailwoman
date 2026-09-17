@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-26 · **Status:** design + built probe artifact (survey candidate #3,
 `2026-07-26-static-index-opportunities.md`) · **Branch:** `feat/night-pair-hierarchy` ·
-**Scope:** design + probe, NOT a ship — no decode wiring, no default changes, no weights-package
+**Scope:** design + probe, not a ship — no decode wiring, no default changes, no weights-package
 changes.
 
 **Dual mandate (why this artifact, per ROAD_TO §8):** the same (child, parent) pair set serves
@@ -44,8 +44,8 @@ cover.
    a register-built (dependent_locality, locality) hit — region names are a tiny closed set that
    co-occurs with almost any locality.
 2. **Independent shipping cadence.** (locality, region) can calibrate and ship while
-   (neighbourhood, locality) is still on the bench. A multi-edge artifact couples their release.
-3. **Edge identity is NOT recoverable from the entry tag.** Entries carry only the child's
+   (neighborhood, locality) is still on the bench. A multi-edge artifact couples their release.
+3. **Edge identity is not recoverable from the entry tag.** Entries carry only the child's
    `ComponentTag` — (locality, region) and a future (locality, country) both emit `locality`.
    Per-edge files make the edge unambiguous without a format change; a multi-edge file would need a
    per-entry edge field (a real PIX2).
@@ -88,7 +88,7 @@ so **`schemaVersion` stays 1**:
   FR's `region` ComponentTag covers BOTH WOF `region` (départements — "Ille-et-Vilaine") and WOF
   `macroregion` (régions — "Bretagne"); either surface is a region-tagged parent in a French
   address. The per-country WOF mapping is builder-owned and header-recorded.
-- `source.kind` matters because the SAME tag-space edge can exist from two sources: the shipped GB
+- `source.kind` matters because the same tag-space edge can exist from two sources: the shipped GB
   artifact is (dependent_locality, locality) **register-built**; a WOF `neighbourhood`-ancestry
   build of the same edge would be a geographic sibling with different evidential weight. Per-country
   calibration decides which ships; the header says which one you're holding.
@@ -145,13 +145,13 @@ Built (post-fold, actual artifacts):
 
 Projections (distinct lower() pairs, spr-name-only policy — same DB, same filters):
 
-| Edge                      | Country | pairs (projection) |
-| ------------------------- | ------- | ------------------ |
-| (locality, region)        | GB      | 16,366             |
-| (locality, region)        | NZ      | 2,266              |
-| (neighbourhood, locality) | US      | 39,274             |
-| (neighbourhood, locality) | GB      | 12,888             |
-| (neighbourhood, locality) | FR      | 1,472              |
+| Edge                     | Country | pairs (projection) |
+| ------------------------ | ------- | ------------------ |
+| (locality, region)       | GB      | 16,366             |
+| (locality, region)       | NZ      | 2,266              |
+| (neighborhood, locality) | US      | 39,274             |
+| (neighborhood, locality) | GB      | 12,888             |
+| (neighborhood, locality) | FR      | 1,472              |
 
 Reference points: the shipped register-built GB (dependent_locality, locality) artifact is 19,209
 pairs (~few hundred KB); the PIX1 reader was sized for "~20k entries". The (locality, region)
@@ -180,7 +180,7 @@ boards, δ swept, value shipped in the header.
 **Measurement plan for the decode probe (named held-out populations, pre-registered):**
 
 1. **Target population:** comma-free US "street city state [zip]" rows — the US analogue of the GB
-   comma-free dep-loc misses. Source: held-out national-situs/OA rows NOT in any training extract;
+   comma-free dep-loc misses. Source: held-out national-situs/OA rows not in any training extract;
    the existing `applyPairIndexHoldout` (10%, seed 42) additionally withholds pairs from the index
    itself so in-index lift and coverage are measured separately (the Kimi-#1 leaked-ceiling
    correction, kept).
@@ -210,12 +210,12 @@ Mirrors the street-type channel plumbing (`data.street_type_lexicon_path` →
   index. A hit paints the CHILD window's pieces with that edge's feature bit
   (`known_locality_under_present_region: 1`), and optionally the parent window's pieces with the
   reciprocal bit. Per-span, presence-only, positive evidence — absence paints nothing.
-- **Bundle + check (the P-A verdict, non-negotiable):** the locality channel enters ONLY alongside
+- **Bundle + check (the P-A verdict, non-negotiable):** the locality channel enters only alongside
   the street-type channel, with feature-dropout curriculum, and the evidence-ablation invariance
   check (features-zeroed vs present ⇒ no regression on unaffected spans) in the standing battery.
   The P-A probe already demonstrated a naked channel drifts into over-trust (house-number classes
   −0.070/−0.045 by 3k).
-- **Train/inference symmetry:** at inference the SAME artifact feeds the same feature — the loader
+- **Train/inference symmetry:** at inference the same artifact feeds the same feature — the loader
   and the runtime probe share the fold and the file. This is the retirement path for the decode
   flag-pile: once the channel is in the encoder, the pair PRIOR (δ) becomes redundant and can be
   retired per the §8 payoff; the ARTIFACT stays.
@@ -275,8 +275,8 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
    (server-side only), or invest in a binary-search/offset-table read mode before any decode use?
    The Option-A training consumer doesn't care (Python side reads the file once per run).
 2. **Name policy:** add `eng`-preferred surfaces (D3)? Bumps `namePolicy` to v2.
-3. **Edge priority after (locality, region):** (neighbourhood, locality) US/GB next per the survey,
-   or (locality, country) for the coarse-placer boundary? The neighbourhood edge is the Option-A
+3. **Edge priority after (locality, region):** (neighborhood, locality) US/GB next per the survey,
+   or (locality, country) for the coarse-placer boundary? The neighborhood edge is the Option-A
    channel's likelier second slot (open-vocab child, open-vocab parent — the hard case the region
    edge doesn't exercise).
 4. **FR localadmin:** WOF FR has 35,282 `localadmin` rows (communes proper) alongside 57,187
@@ -292,21 +292,21 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
    input-side, and the productionization plan's Phase 4 is about RETIRING decode priors, not adding
    one. No speculative implementation: if a decode use materializes, the offset table is one
    absence-tolerant header key away (the slot the design already reserves).
-2. **namePolicy v2 (eng-preferred): NO for the pair artifacts.** +30k mostly-duplicate rows, and
+2. **namePolicy v2 (eng-preferred): no for the pair artifacts.** +30k mostly-duplicate rows, and
    English exonyms would paint training evidence the feed never exhibits (BAN is French) —
    train/inference skew for no training benefit. The anglophone-writer concern is a RESOLVER
    concern already owned by the #936 official-names discipline. Revisit only with a measured
    anglophone-written-FR eval population.
-3. **Next edge: (neighbourhood, locality)** — the doc's lean, now with the bundle arc's sharper
+3. **Next edge: (neighborhood, locality)** — the doc's lean, now with the bundle arc's sharper
    reason: the confirmed weakness class is open-vocab×open-vocab discrimination, which this edge
    exercises and the region edge doesn't. (locality, country) stays unbuilt: the #1104 country
    channel + coarse-placer own that boundary (no double-coverage per D3). Sequenced into the
    productionization plan's Phase 1 builder consolidation (one WOF-ancestry pass, both edges).
-4. **FR localadmin: YES, measure in the v2 build** — one flag, probe-safe. Expectation: genuine
+4. **FR localadmin: yes, measure in the v2 build** — one flag, probe-safe. Expectation: actual
    adds (communes are FR's canonical admin unit and BAN cites them); the build report states
    distinct-pairs added vs folded duplicates, and locality-only stays if it's duplicates.
 5. **The `pair_index_paths` sketch: ADOPTED into the (now Claude-owned) productionization plan,
    with one amendment** — pair-derived evidence enters as a bundle channel under the SAME
    three-law selectivity + absence-curriculum regime the bundle arc proved necessary (the sketch
-   predates those findings), and it slots AFTER the binary bundle ships (one artifact churn at a
+   predates those findings), and it slots after the binary bundle ships (one artifact churn at a
    time, per the plan's open-items ordering).

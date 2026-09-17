@@ -17,8 +17,8 @@
 # together. The source teaches the street without its partners — the fr-fragment fix, in Norwegian.
 #
 # MOVE  : bare-street-hn rises materially (fr-fragment moved its analogue +50pp; a 2k probe should
-#         show clear motion, not the full gain). This is the falsifier: if bare-street-hn does not
-#         move at 2k, the licence-transfer hypothesis is wrong and a full run is not warranted.
+#         show clear motion, not the complete improvement). This is the falsifier: if bare-street-hn does not
+#         move at 2k, the licence-transfer hypothesis is wrong and a full run is not needed.
 # GUARD : bare-pc (the negative class) stays at 1.000 — the model must not stop emitting postcode to
 #         win the digit. If it falls while bare-street-hn rises, the source traded one default for
 #         another and --counter-prob is the knob.

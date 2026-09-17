@@ -19,13 +19,13 @@ against.
 | category + anchor      |  22 | ≥4 per country: US 6, CA 5, MX 5, FR 6 — well-known city-center golds, 25 km tolerance                                  |
 | locale-hintd synonym   |   5 | 3 exact-locale-hintd (`er`/en-US, `petrol station`/en-GB, `mailbox`/en-CA), 2 unconditional                             |
 | abstain                |   7 | 3 build-local infra (anchored — see note below), 3 bare no-anchor shipped categories, 1 conditional-synonym→build-local |
-| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — must NOT take the poi path                                       |
-| near-miss / robustness |   6 | comma anchors, multiword synonyms, multi-segment anchors, 2 genuine coverage-gap probes                                 |
+| address-guard          |   6 | 4 full addresses + 2 venue-led (`category, address`) — must not take the poi path                                       |
+| near-miss / robustness |   6 | comma anchors, multiword synonyms, multi-segment anchors, 2 actual coverage-gap probes                                  |
 
 **A deliberate deviation from the task's literal phrasing:** the composition brief lists
 "bare build-local categories (fire hydrant, drinking fountain, datacenter) → `requires_build_local_layer`."
 Traced against `poi-executor.ts`'s actual precedence, that reason is only reachable when a
-`poi.db` lookup IS configured **and the anchor resolves to a center** — a bare (anchor-less)
+`poi.db` lookup is configured **and the anchor resolves to a center** — a bare (anchor-less)
 category query hits the `anchor_required` early-return first whenever a lookup is wired,
 regardless of whether the category is build-local. Since this board always grades against a
 real `poi.db`, the three build-local abstain fixtures carry an anchor (`"fire hydrant near
@@ -57,7 +57,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
 - **address 6/6 (100%)** — no address-guard false-positive; the venue-led shape
   (`"hospital, 350 5th Ave, New York, NY 10118"`) correctly stays on the address path in both
   the US and FR forms tested.
-- **results 29/32 (90.6%)** — 3 failures, all genuine product behavior (below).
+- **results 29/32 (90.6%)** — 3 failures, all actual product behavior (below).
 - **gersID non-null 100%, ancestry present 100%** — every one of the 496 returned result rows
   carries a GERS id and a read-time WOF ancestry chain (the poiQueryKind register row's
   second debt payment, landed 2026-07-19). Both report-only per the schema's meaning-of-zero
@@ -70,7 +70,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
 
 | id     | query                                  | why                                                                                                                                                                                                                                                     |
 | ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago AND near Austin (spot-checked separately) — a real poi.db coverage gap for that category, not an anchor-resolution miss                                                                              |
+| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago and near Austin (spot-checked separately) — a real poi.db coverage gap for that category, not an anchor-resolution miss                                                                              |
 | nm-06  | `supermarket near Guadalajara, Mexico` | same `supermarket` coverage gap, MX side                                                                                                                                                                                                                |
 | nm-04  | `hiking trail near Marseille`          | `trail` category (Overture `route=hiking`) returns 0 rows near Marseille, Toulouse, and Denver (spot-checked) — Overture Places carries few if any point-shaped trail rows; a structural fit issue for a line-geometry feature, not a query-parsing bug |
 
@@ -85,9 +85,9 @@ near Montreal QC"` resolves the FTS backend to a same-named town in Wisconsin, n
 Québec — dropping the `QC`/state-style suffix in favor of `"cafe near Montreal, Canada"`
 resolves correctly. `"pharmacy near Calgary AB"` abstains `anchor_required` outright (the
 parse doesn't attach a resolvable center to the region-suffixed form), while bare `"bank near
-Calgary"` resolves cleanly. The 22 category+anchor fixtures were phrased around this — not to
+Calgary"` resolves directly. The 22 category+anchor fixtures were phrased around this — not to
 inflate the pass rate, but because a fixture that fails on an already-known resolver quirk
-adds no new signal over what's noted here. The quirk itself is real and worth a resolver-side
+adds no new signal over what's noted here. The quirk itself matters a resolver-side
 look (FTS bm25 tiering picking a same-name homonym over a `QC`/`AB` suffix hint), just not
 this board's job to fix.
 
@@ -101,7 +101,7 @@ this board's job to fix.
   (missing fixtures file, pipeline construction failure). Confirmed live: the 3-failure run
   above exits 0.
 - `--json` prints the full machine-readable report (all 45 per-case grades + the aggregate
-  metrics) instead of the human table; verified it round-trips through `JSON.parse` cleanly at
+  metrics) instead of the human table; verified it round-trips through `JSON.parse` directly at
   411 lines — the CLI's own `poi --json` mode has a known Ink line-wrapping trap on long
   string values piped through `<Text>`, which this command avoids by building the report
   in-process rather than shelling out to the compiled CLI and parsing its text output.
@@ -140,7 +140,7 @@ category set each register as a breach.
 - Set floors off these numbers once the operator reviews them (spec §3.6's own sequencing).
 - The `supermarket` and `trail` category coverage gaps are candidates for a poi.db builder
   investigation — worth checking whether Overture's `taxonomy.primary` values for those two
-  categories actually match what `osmTag`/category-id mapping in `poi-taxonomy/data/taxonomy.json`
+  categories match what `osmTag`/category-id mapping in `poi-taxonomy/data/taxonomy.json`
   expects.
 - The Montreal/Calgary anchor-resolution quirks are FTS-backend homonym-ranking behavior,
   independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering, not
@@ -157,7 +157,7 @@ results**, **abstain 8/8 (100%)**, and **address-guard 6/6 (100%)**.
 
 `nm-04` (`hiking trail near Marseille`) is the sole holdout. It is a ring-budget case, not a
 coverage gap: the nearest `hiking_trail` row sits ~3.9 km from the Marseille anchor while the
-executor's k-ring reach lands at ~4 km, so the row falls just outside the searched cells. The
+executor's k-ring reach lands at ~4 km, so the row fallsoutside the searched cells. The
 `supermarket` gaps (`syn-05`, `nm-06`) and the `trail` gap on the other anchors that failed in
 v1.1 now return rows — the leaf fan-out and the fuller taxonomy reach the categories the seed
 mapping missed. Both hard floors hold, and overall clears the 90% soft floor with margin.

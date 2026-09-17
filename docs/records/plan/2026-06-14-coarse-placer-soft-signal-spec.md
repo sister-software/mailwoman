@@ -74,8 +74,8 @@ Per the reconcile-retirement lesson (grade the pipeline against truth, never a c
 
 - **Primary metric:** on a country-disambiguation eval (ambiguous namesakes — Berlin DE/US, Plauen, bare
   region abbreviations "VT"/"ME" — plus off-map addresses), measure the geocoder's **right-country rate**
-  WITH vs WITHOUT the coarse-placer posterior. Must improve the ambiguous/off-map cases at **no in-map
-  regression** (reuse the honest-eval harness + the #369 namesake set).
+  with vs without the coarse-placer posterior. Must improve the ambiguous/off-map cases at **no in-map
+  regression** (reuse the direct-eval harness + the #369 namesake set).
 - **Byte-stability check:** with the stage off, output is byte-identical (CI-assertable).
 - Check promotion-to-default on a measured net-positive here, exactly as #584/#590 were conditional.
 

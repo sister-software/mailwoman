@@ -4,7 +4,7 @@
 
 **Goal:** poi.db (layer #1: Overture Places US/CA/MX/FR, res-9 H3-clustered, layer-contract-conforming), its builder command, the reader, the executor that turns a `POIIntent` into ranked results (with the abstain paths), the `@mailwoman/mcp` agent surface, the `mailwoman poi` CLI, and the docs inline tester.
 
-**Architecture:** Spec §2–§3.5 + the Plan-2 final-review rides (this plan MUST land: abstain via `requiresBuildLocalLayer`, an `emitOverpassQL` surface, a CLI path that reaches `poiIntent`). Schema/reader live in `resolver-wof-sqlite` (the probe-pattern home); the builder is a Pastel command (`gazetteer build poi` — auto-registers, no registry); the executor lives in `mailwoman/` and extends the `poiQueryKind` flag; `@mailwoman/mcp` is a greenfield workspace on `@modelcontextprotocol/sdk` (stdio transport). Ancestry deviation from the spec, pre-declared: WOF ancestry is decorated at READ time (reverse-geocode the ≤k returned results), not at build time — same observable, avoids ~20M build-time PIPs; the manifest's spine key is `h3` (res 9).
+**Architecture:** Spec §2–§3.5 + the Plan-2 final-review rides (this plan must land: abstain via `requiresBuildLocalLayer`, an `emitOverpassQL` surface, a CLI path that reaches `poiIntent`). Schema/reader live in `resolver-wof-sqlite` (the probe-pattern home); the builder is a Pastel command (`gazetteer build poi` — auto-registers, no registry); the executor lives in `mailwoman/` and extends the `poiQueryKind` flag; `@mailwoman/mcp` is a greenfield workspace on `@modelcontextprotocol/sdk` (stdio transport). Ancestry deviation from the spec, pre-declared: WOF ancestry is decorated at READ time (reverse-geocode the ≤k returned results), not at build time — same observable, avoids ~20M build-time PIPs; the manifest's spine key is `h3` (res 9).
 
 **Tech Stack:** TypeScript erasable-only; Kysely/node:sqlite (DDL) + raw positional INSERTs (bulk load); `@duckdb/node-api` (lazy import, optional peer) for the Overture ingest; `h3-js` `latLngToCell` + `@mailwoman/spatial` `shortenH3Cell`; `@modelcontextprotocol/sdk`; vitest; oxfmt/oxlint.
 
@@ -15,9 +15,9 @@
 - Kysely-only DDL (FTS5 virtual tables stay raw SQL per AGENTS.md); hot bulk INSERTs stay raw positional prepared statements; readers open `new DatabaseSync(path, { readOnly: true })`.
 - Sealed-artifact discipline: builders end with `sealDatabase(out)` (`@mailwoman/core/utils`); never mutate a built DB; build-on-copy; promotion = symlink swap.
 - DuckDB is ALWAYS `await import("@duckdb/node-api")` (lazy — optional native peer; eager import breaks `ci:smoke`). No eager top-level side effects in command modules.
-- New workspace checklist (BOTH times it applies — `mcp`): root `package.json` workspaces, root `tsconfig.json` references, root `vitest.config.ts` alias, `.release-it.json` workspaces, **`scripts/smoke-clean-install.ts` WORKSPACES map**, AGENTS.md table + counts, dual exports maps, version `7.1.0`.
-- New subpath (`poi-taxonomy/./table`): BOTH exports maps.
-- Every guard step runs `yarn compile` (tsc), not just vitest.
+- New workspace checklist (both times it applies — `mcp`): root `package.json` workspaces, root `tsconfig.json` references, root `vitest.config.ts` alias, `.release-it.json` workspaces, **`scripts/smoke-clean-install.ts` WORKSPACES map**, AGENTS.md table + counts, dual exports maps, version `7.1.0`.
+- New subpath (`poi-taxonomy/./table`): both exports maps.
+- Every guard step runs `yarn compile` (tsc), notvitest.
 - Work in `/home/lab/Projects/mailwoman-exotic-poi`, branch `feat/poi-data-mcp` (based on post-#1181 main; installed + compiled; weight artifacts already linked in this worktree).
 - Commits verified `git log -1 --oneline` (never piped); trailer:
   ```
@@ -117,7 +117,7 @@ describe("poi schema", () => {
 })
 ```
 
-- [ ] **Step 2: verify FAIL** — `yarn vitest run resolver-wof-sqlite/poi-schema.test.ts`.
+- [ ] **Step 2: verify fail** — `yarn vitest run resolver-wof-sqlite/poi-schema.test.ts`.
 - [ ] **Step 3: Implement** `resolver-wof-sqlite/poi-schema.ts`:
 
 ```ts
@@ -249,7 +249,7 @@ export function createPOISearchFTS(db: DatabaseSync): void {
 }
 ```
 
-- [ ] **Step 4: verify PASS**, then `yarn compile` exit 0.
+- [ ] **Step 4: verify pass**, then `yarn compile` exit 0.
 - [ ] **Step 5:** oxfmt both files; commit `feat(resolver-wof-sqlite): poi.db schema — res-9 clustered layer #1`; verify `git log -1 --oneline`.
 
 ---
@@ -263,7 +263,7 @@ export function createPOISearchFTS(db: DatabaseSync): void {
 
 **Interfaces:**
 
-- Consumes: Task 1's schema; `h3-js` (`latLngToCell`, `gridDisk`) — h3-js is NOT currently a resolver-wof-sqlite dep: add `"h3-js": "^4.5.0"` to its package.json dependencies (match spatial's range) + `yarn install` (lockfile committed with this task); `shortenH3Cell`/`expandH3Cell` semantics — REIMPLEMENT locally is FORBIDDEN; import from `@mailwoman/spatial` if it's a dep, else add `"@mailwoman/spatial": "workspace:*"`.
+- Consumes: Task 1's schema; `h3-js` (`latLngToCell`, `gridDisk`) — h3-js is not currently a resolver-wof-sqlite dep: add `"h3-js": "^4.5.0"` to its package.json dependencies (match spatial's range) + `yarn install` (lockfile committed with this task); `shortenH3Cell`/`expandH3Cell` semantics — REIMPLEMENT locally is FORBIDDEN; import from `@mailwoman/spatial` if it's a dep, else add `"@mailwoman/spatial": "workspace:*"`.
 - Produces (Task 4 relies on): `POILookup` class (`implements Disposable`), `POISearchQuery`, `POISearchHit`:
 
 ```ts
@@ -296,7 +296,7 @@ export interface POISearchHit {
 Mechanics: constructor opens read-only, loads `poi_category_codes` into two Maps (candidate-lookup pattern), prepares the cell probe `SELECT … FROM poi WHERE h3_cell = ? AND category_id = ? ORDER BY neg_rank ASC LIMIT ?`. `search(query)`: category/brand path = `latLngToCell(center, 9)` → `gridDisk` ring expansion (ring 0, then growing) probing each cell (brand path probes with `category_id` unconstrained: prepare a second cell probe filtered `brand_wikidata = ?`), accumulate until `limit` hits or `maxRings` exhausted, sort by haversine distance (import `haversineKm` from `@mailwoman/spatial`), set `distanceM`. Name path = FTS5 `MATCH` (sanitize: strip `"`, `*`, `:` — read `resolver-wof-sqlite/fts.ts`'s `sanitizeFTSQuery` and REUSE it if exported) then hydrate rows by `name_key` probe. Throws if category/brand query lacks `center`.
 
 - [ ] **Step 1: Failing test** — build a small fixture db IN the test via Task 1's schema module + raw inserts (12 rows: 3 cafes near Springfield IL coords at increasing distance, 1 McDonald's `Q38076`, rows in a far-away cell, one uncategorized named row "Pier 39"). Assert: category search returns cafes nearest-first with `distanceM` ascending; brand search finds the QID row; name FTS finds "Pier 39"; category search without center throws /center/; limit respected; searching a category with no rows within `maxRings` returns [].
-- [ ] **Step 2: verify FAIL.** Step 3: implement. Step 4: verify PASS + `yarn compile`. Step 5: oxfmt, commit `feat(resolver-wof-sqlite): POILookup — k-ring probe + brand/name search`, verify.
+- [ ] **Step 2: verify fail.** Step 3: implement. Step 4: verify PASS + `yarn compile`. Step 5: oxfmt, commit `feat(resolver-wof-sqlite): POILookup — k-ring probe + brand/name search`, verify.
 
 ---
 
@@ -306,18 +306,18 @@ Mechanics: constructor opens read-only, loads `poi_category_codes` into two Maps
 
 - Create: `mailwoman/commands/gazetteer/build/poi.tsx` (auto-registers as `mailwoman gazetteer build poi` — no registry)
 - Create: `mailwoman/gazetteer-pipeline/poi/build-poi.ts` (the logic — command stays thin)
-- Test: `mailwoman/gazetteer-pipeline/poi/build-poi.test.ts` (parquet→db phase only, tiny fixture parquet NOT required — feed the loader rows via an injected iterator)
+- Test: `mailwoman/gazetteer-pipeline/poi/build-poi.test.ts` (parquet→db phase only, tiny fixture parquet not required — feed the loader rows via an injected iterator)
 
 **Pattern anchors (from recon — read these files first):** `mailwoman/commands/gazetteer/overture-ingest.tsx` (lazy DuckDB, S3 glob, `SET s3_region='us-west-2'`, `threads=4`, `memory_limit='8GB'`, per-country `COPY (SELECT …) TO parquet`), `mailwoman/gazetteer-pipeline/index.ts` (`sealDatabase` after build; build-on-copy), `resolver-wof-sqlite/build-candidate.ts` (staging bulk-load → materialize → dictionaries).
 
 Two phases in `build-poi.ts`:
 
-1. **Ingest** (`ingestPlaces(opts)`): DuckDB (lazy import) over `s3://overturemaps-us-west-2/release/${release}/theme=places/type=place/*.parquet`; per country `COPY (SELECT id, names.primary AS name, categories, brand, confidence, ST_X(geometry) AS lon, ST_Y(geometry) AS lat, country FROM read_parquet(…, hive_partitioning = 1) WHERE country = '${cc}' AND confidence >= 0.85) TO '<data-root>/overture/<release>/places-<cc>.parquet'`. CAUTION: the Places schema's category/brand columns are STRUCTs and the NEW `taxonomy` property may or may not exist in the pinned release — the implementer MUST first probe the schema (`DESCRIBE SELECT * FROM read_parquet(…) LIMIT 1`) and select whichever of `taxonomy.primary` / `categories.primary` exists (prefer `taxonomy.primary`), extracting `brand.wikidata` and `brand.names.primary` when present. Record which property was used in the build report. Default release: pin the repo's `DEFAULT_RELEASE` from overture-ingest.tsx unless `--release` given.
-2. **Build** (`buildPOIDatabase(opts)`): read the country parquets via DuckDB → stream rows into `poi_stage` with raw positional prepared INSERTs inside `BEGIN`/`COMMIT` batches (10k); map category string → small int via `poi_category_codes` (insert-on-first-sight); unknown/missing category → 0; `h3_cell` = `shortenH3Cell(latLngToCell(lat, lon, 9))` — h3 cell packing MUST go through `@mailwoman/spatial` (`H3Cell` cast per its types); `name_key` = reuse the same normalizer the candidate builder uses (find it in `build-candidate.ts` — likely `normalizeLocalityForKey` from a shared module; import, don't copy); `neg_rank = -Math.log10(confidence + 1e-6)` NEGATED so ASC = best first — verify sign against the candidate builder's `neg_rank` convention and match it; materialize `INSERT INTO poi SELECT ${POI_COLUMNS.join(", ")} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key`; drop stage; build FTS (`createPOISearchFTS` + `INSERT INTO poi_search SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL`); write layer manifest (`writeLayerManifest`: name `poi`, tier `shipped`, license `CDLA-Permissive-2.0`, attribution `Overture Maps Foundation`, source `overture-places`, sourceVintage = release, buildCmd `mailwoman gazetteer build poi`, buildSHA = `git rev-parse --short HEAD` passed in by the command, freshnessPolicy `sealed`, spineKeys `{ h3: { column: "h3_cell", resolution: 9 } }`, createdAt passed in); write coverage (aggregate per res-6 cell: `observed_rows` count, `completeness` = 1.0 for Overture-covered countries — document that this is source-level coverage, not survey completeness); `ANALYZE`; `VACUUM`; close; `sealDatabase(out)`.
+1. **Ingest** (`ingestPlaces(opts)`): DuckDB (lazy import) over `s3://overturemaps-us-west-2/release/${release}/theme=places/type=place/*.parquet`; per country `COPY (SELECT id, names.primary AS name, categories, brand, confidence, ST_X(geometry) AS lon, ST_Y(geometry) AS lat, country FROM read_parquet(…, hive_partitioning = 1) WHERE country = '${cc}' AND confidence >= 0.85) TO '<data-root>/overture/<release>/places-<cc>.parquet'`. CAUTION: the Places schema's category/brand columns are STRUCTs and the NEW `taxonomy` property may or may not exist in the pinned release — the implementer must first probe the schema (`DESCRIBE SELECT * FROM read_parquet(…) LIMIT 1`) and select whichever of `taxonomy.primary` / `categories.primary` exists (prefer `taxonomy.primary`), extracting `brand.wikidata` and `brand.names.primary` when present. Record which property was used in the build report. Default release: pin the repo's `DEFAULT_RELEASE` from overture-ingest.tsx unless `--release` given.
+2. **Build** (`buildPOIDatabase(opts)`): read the country parquets via DuckDB → stream rows into `poi_stage` with raw positional prepared INSERTs inside `BEGIN`/`COMMIT` batches (10k); map category string → small int via `poi_category_codes` (insert-on-first-sight); unknown/missing category → 0; `h3_cell` = `shortenH3Cell(latLngToCell(lat, lon, 9))` — h3 cell packing must go through `@mailwoman/spatial` (`H3Cell` cast per its types); `name_key` = reuse the same normalizer the candidate builder uses (find it in `build-candidate.ts` — likely `normalizeLocalityForKey` from a shared module; import, don't copy); `neg_rank = -Math.log10(confidence + 1e-6)` NEGATED so ASC = best first — verify sign against the candidate builder's `neg_rank` convention and match it; materialize `INSERT INTO poi SELECT ${POI_COLUMNS.join(", ")} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key`; drop stage; build FTS (`createPOISearchFTS` + `INSERT INTO poi_search SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL`); write layer manifest (`writeLayerManifest`: name `poi`, tier `shipped`, license `CDLA-Permissive-2.0`, attribution `Overture Maps Foundation`, source `overture-places`, sourceVintage = release, buildCmd `mailwoman gazetteer build poi`, buildSHA = `git rev-parse --short HEAD` passed in by the command, freshnessPolicy `sealed`, spineKeys `{ h3: { column: "h3_cell", resolution: 9 } }`, createdAt passed in); write coverage (aggregate per res-6 cell: `observed_rows` count, `completeness` = 1.0 for Overture-covered countries — document that this is source-level coverage, not survey completeness); `ANALYZE`; `VACUUM`; close; `sealDatabase(out)`.
 
 Command (`poi.tsx`): zod options `release?, countries? (default "US,CA,MX,FR"), out?, limit?, skipIngest (boolean, default false)`; `useCommandTask` runner; result lines: per-country row counts + db size + manifest echo. Mirror `overture-ingest.tsx`'s component tail exactly.
 
-Test (injected-iterator): `buildPOIDatabase` accepts `rows: AsyncIterable<POISourceRow> | Iterable<POISourceRow>` as an alternative to parquet paths (design the signature so the DuckDB read is just the default row source). Feed 30 synthetic rows across 2 countries/3 categories; assert: clustered order on disk (probe returns best-confidence first), dictionary round-trip, manifest reads back valid (`readLayerManifest`), coverage rows exist at res 6, file sealed (mode 0444 — check with `fs.statSync(out).mode & 0o222 === 0`), `POILookup` (Task 2) finds a seeded row end-to-end.
+Test (injected-iterator): `buildPOIDatabase` accepts `rows: AsyncIterable<POISourceRow> | Iterable<POISourceRow>` as an alternative to parquet paths (design the signature so the DuckDB read isthe default row source). Feed 30 synthetic rows across 2 countries/3 categories; assert: clustered order on disk (probe returns best-confidence first), dictionary round-trip, manifest reads back valid (`readLayerManifest`), coverage rows exist at res 6, file sealed (mode 0444 — check with `fs.statSync(out).mode & 0o222 === 0`), `POILookup` (Task 2) finds a seeded row end-to-end.
 
 - [ ] Steps: failing test → FAIL → implement build-poi.ts → PASS → wire poi.tsx → `yarn compile` → CLI help sanity: `node mailwoman/out/cli.js gazetteer build poi --help` shows the options → oxfmt → commit `feat(gazetteer): build poi — Overture Places ingest + sealed res-9 layer db` → verify.
 
@@ -358,7 +358,7 @@ and the intent variant of `POIIntentOutcome` gains `results?: POIResult[]` (addi
 - anchor: center = anchor tree's deepest resolved node with lat/lon (walk roots for a node with numeric lat/lon — the resolver decorates when wired), else `anchor.biasPoint`, else for category/brand subjects → `{ type: "abstain", reason: "anchor_required" }`; name subjects search the FTS path with no center.
 - otherwise run `lookup.search(...)` mapping subject kind → query; return `{ type: "intent", intent, results }`.
 
-**Stage change (`poi-intent.ts`):** `createPOIIntentStage` gains optional `execute?: (intent: POIIntent) => POIIntentOutcome`; when present, the stage returns `execute(intent)` instead of the bare intent (null-match fall-through unchanged). **Wiring (`runtime-pipeline.ts`):** `poiQueryKind: true` keeps intent-only; `poiQueryKind: { poiDatabasePath }` additionally constructs `POILookup` lazily on first call (the placeCountry lazy pattern — the sync factory stays sync) and passes the executor. Abstain wiring for build-local categories applies in BOTH modes (it needs no db).
+**Stage change (`poi-intent.ts`):** `createPOIIntentStage` gains optional `execute?: (intent: POIIntent) => POIIntentOutcome`; when present, the stage returns `execute(intent)` instead of the bare intent (null-match fall-through unchanged). **Wiring (`runtime-pipeline.ts`):** `poiQueryKind: true` keeps intent-only; `poiQueryKind: { poiDatabasePath }` additionally constructs `POILookup` lazily on first call (the placeCountry lazy pattern — the sync factory stays sync) and passes the executor. Abstain wiring for build-local categories applies in both modes (it needs no db).
 
 Tests: executor pure-unit with a stub lookup (category happy path w/ center from a fixture anchor tree; anchor_required; requires_build_local_layer for `fire_hydrant` when the stub returns no rows; intent-only passthrough when lookup undefined; name search without center OK). Plus one wiring test: `createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })` on "fire hydrant" now yields `poiIntent.type === "abstain"` with reason `requires_build_local_layer` (bare infra subject, no local layer, no db) — note this CHANGES a Plan-2 test expectation in `mailwoman/poi-intent.test.ts` ("fire hydrant" returned a bare intent); update that test accordingly and say so in the commit body.
 
@@ -389,7 +389,7 @@ Tests: executor pure-unit with a stub lookup (category happy path w/ center from
 **Files:**
 
 - Create: `mcp/package.json`, `mcp/tsconfig.json`, `mcp/index.ts`, `mcp/server.ts`, `mcp/tools.ts`, `mcp/cli.ts` (bin entry), `mcp/tools.test.ts`
-- Modify (registration, ALL of): root `package.json` workspaces, root `tsconfig.json` references, root `vitest.config.ts` alias, `.release-it.json`, `scripts/smoke-clean-install.ts` WORKSPACES map, `AGENTS.md` (row in the Drop-in APIs group + counts 38→39 scoped / 36→37 publish / 39→40 total), `yarn.lock` via install.
+- Modify (registration, all of): root `package.json` workspaces, root `tsconfig.json` references, root `vitest.config.ts` alias, `.release-it.json`, `scripts/smoke-clean-install.ts` WORKSPACES map, `AGENTS.md` (row in the Drop-in APIs group + counts 38→39 scoped / 36→37 publish / 39→40 total), `yarn.lock` via install.
 
 package.json: name `@mailwoman/mcp`, version `7.1.0`, dual exports maps (`.` and `./package.json`), `bin: { "mailwoman-mcp": "./out/cli.js" }`, deps: `@modelcontextprotocol/sdk` (latest ^1 — check npm), `mailwoman: "workspace:*"`, `@mailwoman/core: "workspace:*"`, `@mailwoman/poi-taxonomy: "workspace:*"`, `zod`. Description: "MCP server — mailwoman's spatial toolset for agents (parse, geocode, poi_search, overpass_export, layer_manifest)."
 
@@ -416,9 +416,9 @@ Five tools: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mai
 
 `server.ts`: `createMCPServer(deps)` — `new McpServer({ name: "mailwoman", version })` from `@modelcontextprotocol/sdk/server/mcp.js`, register each tool, return server. `cli.ts`: connect `StdioServerTransport` (`@modelcontextprotocol/sdk/server/stdio.js`), deps built from the real library (pipeline factory with weights auto-resolve; poi flag on; lazy — construct the pipeline on first tool call). CAUTION: the SDK's registration API surface moves between minors — after install, READ `node_modules/@modelcontextprotocol/sdk`'s `.d.ts` for the current `registerTool`/`tool()` signature and adapt mechanically; the tool TABLE (tools.ts) is the stable contract, the SDK glue is thin.
 
-Tests (`tools.test.ts`): buildToolTable with stub deps — five tools present, names/schemas valid (each `inputSchema.safeParse` accepts a canonical example + rejects a bad one), handlers route to the right dep, overpass tool returns the stub string. NO transport/server test (SDK glue is exercised by the smoke run below).
+Tests (`tools.test.ts`): buildToolTable with stub deps — five tools present, names/schemas valid (each `inputSchema.safeParse` accepts a canonical example + rejects a bad one), handlers route to the right dep, overpass tool returns the stub string. no transport/server test (SDK glue is exercised by the smoke run below).
 
-- [ ] Steps: scaffold + registrations + `yarn install` → failing tests → FAIL → implement → PASS → `yarn compile` → stdio smoke: `printf '' | node mcp/out/cli.js` exits without crash (or use the SDK's inspector if trivially available — do not install extra packages) → `yarn ci:smoke` MUST pass (new workspace in the packing closure — expect 29) → oxfmt → commit `feat(mcp): @mailwoman/mcp — agent toolset over stdio` → verify.
+- [ ] Steps: scaffold + registrations + `yarn install` → failing tests → FAIL → implement → PASS → `yarn compile` → stdio smoke: `printf '' | node mcp/out/cli.js` exits without crash (or use the SDK's inspector if trivially available — do not install extra packages) → `yarn ci:smoke` must pass (new workspace in the packing closure — expect 29) → oxfmt → commit `feat(mcp): @mailwoman/mcp — agent toolset over stdio` → verify.
 
 ---
 
@@ -427,10 +427,10 @@ Tests (`tools.test.ts`): buildToolTable with stub deps — five tools present, n
 **Files:**
 
 - Create: `poi-taxonomy/table.ts` (new subpath `./table`)
-- Modify: `poi-taxonomy/package.json` (BOTH exports maps gain `./table`), `poi-taxonomy/lookup.ts` (extract the pure index/matching core so it's shared)
+- Modify: `poi-taxonomy/package.json` (both exports maps gain `./table`), `poi-taxonomy/lookup.ts` (extract the pure index/matching core so it's shared)
 - Test: `poi-taxonomy/table.test.ts`
 
-Refactor WITHOUT behavior change: pull the index construction + match logic out of `lookup.ts` into an internal `createLookupCore(table: POITaxonomyTable)` (not exported from the node entry barrel); `lookup.ts` keeps its `node:fs` loader + module-level singletons + identical public API (all existing tests must pass untouched). `table.ts` exports `createPOITaxonomyLookup(table: POITaxonomyTable)` returning `{ lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer }` bound to the INJECTED table — zero node imports, bundler-safe (the docs tester imports the JSON via webpack and injects it). Test: inject a two-category table, same semantics as the node entry (one locale-hintd case, one infra flag case); plus a node-entry regression run.
+Refactor without behavior change: pull the index construction + match logic out of `lookup.ts` into an internal `createLookupCore(table: POITaxonomyTable)` (not exported from the node entry barrel); `lookup.ts` keeps its `node:fs` loader + module-level singletons + identical public API (all existing tests must pass untouched). `table.ts` exports `createPOITaxonomyLookup(table: POITaxonomyTable)` returning `{ lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer }` bound to the INJECTED table — zero node imports, bundler-safe (the docs tester imports the JSON via webpack and injects it). Test: inject a two-category table, same semantics as the node entry (one locale-hintd case, one infra flag case); plus a node-entry regression run.
 
 - [ ] Steps: failing test → FAIL → refactor + table.ts + both maps → PASS (`yarn vitest run poi-taxonomy/` — ALL green incl. Plan-1/2 tests) → `yarn compile` → oxfmt → commit `feat(poi-taxonomy): browser-safe ./table entry (injected table, no node:fs)` → verify.
 
@@ -443,9 +443,9 @@ Refactor WITHOUT behavior change: pull the index construction + match logic out 
 - Create: `docs/src/components/POIExplorer/POIExplorer.tsx`
 - Create: `docs/articles/understanding/exotic-poi/try-it.mdx` (or extend the exotic-poi index page — read `docs/articles/understanding/exotic-poi/` first and place it where the series index links naturally)
 
-**Pattern anchor:** `docs/src/components/PipelineExplorer/PipelineExplorer.tsx` + its MDX usage (BrowserOnly wrapper). This tester is CLIENT-ONLY and needs NO weights and NO network: it imports `matchPOISubject` + `createKindClassifier` from `@mailwoman/kind-classifier` (pure TS), the taxonomy JSON via `import taxonomyTable from "@mailwoman/poi-taxonomy/data/taxonomy.json"` + `createPOITaxonomyLookup` from `@mailwoman/poi-taxonomy/table` (Task 7), and `emitOverpassQL` from... `mailwoman/poi-overpass.ts` is NOT exported — DO NOT import the mailwoman umbrella in docs; instead copy is forbidden too. Resolution: export `emitOverpassQL` from the mailwoman barrel? The umbrella drags node deps into webpack. CORRECT MOVE: relocate `poi-overpass.ts` → `poi-taxonomy/overpass.ts` in THIS task (it depends only on `POIIntent` from core — replace that type import with a local structural type so poi-taxonomy needn't dep core), re-export from both poi-taxonomy maps as `./overpass`, and make `mailwoman/poi-overpass.ts` a thin re-export (`export * from "@mailwoman/poi-taxonomy/overpass"`) so Plan-2 consumers/tests are untouched. Run the Plan-2 emitter tests to prove it.
+**Pattern anchor:** `docs/src/components/PipelineExplorer/PipelineExplorer.tsx` + its MDX usage (BrowserOnly wrapper). This tester is CLIENT-ONLY and needs no weights and no network: it imports `matchPOISubject` + `createKindClassifier` from `@mailwoman/kind-classifier` (pure TS), the taxonomy JSON via `import taxonomyTable from "@mailwoman/poi-taxonomy/data/taxonomy.json"` + `createPOITaxonomyLookup` from `@mailwoman/poi-taxonomy/table` (Task 7), and `emitOverpassQL` from... `mailwoman/poi-overpass.ts` is NOT exported — DO NOT import the mailwoman umbrella in docs; instead copy is forbidden too. Resolution: export `emitOverpassQL` from the mailwoman barrel? The umbrella drags node deps into webpack. CORRECT MOVE: relocate `poi-overpass.ts` → `poi-taxonomy/overpass.ts` in THIS task (it depends only on `POIIntent` from core — replace that type import with a local structural type so poi-taxonomy needn't dep core), re-export from both poi-taxonomy maps as `./overpass`, and make `mailwoman/poi-overpass.ts` a thin re-export (`export * from "@mailwoman/poi-taxonomy/overpass"`) so Plan-2 consumers/tests are untouched. Run the Plan-2 emitter tests to prove it.
 
-Component behavior: input box → live (debounced) intent extraction: shows detected subject (category chip + build-local badge via `requiresBuildLocalLayer`), anchor remainder text, confidence, and the OverpassQL block with a copy button; a "no POI intent — parses as an address" state for non-matches. Presets row: `drinking fountain near Springfield`, `fire hydrant`, `McDonald's, Portland OR`, `hospital, 350 5th Ave, New York` (shows the address-wins guard). SSR-safe via BrowserOnly. Live poi.db results are NOT in this task (needs the R2-published layer — Task 10 note).
+Component behavior: input box → live (debounced) intent extraction: shows detected subject (category chip + build-local badge via `requiresBuildLocalLayer`), anchor remainder text, confidence, and the OverpassQL block with a copy button; a "no POI intent — parses as an address" state for non-matches. Presets row: `drinking fountain near Springfield`, `fire hydrant`, `McDonald's, Portland OR`, `hospital, 350 5th Ave, New York` (shows the address-wins guard). SSR-safe via BrowserOnly. Live poi.db results are not in this task (needs the R2-published layer — Task 10 note).
 
 - [ ] Steps: Task-7-dependent; implement → `yarn workspace @mailwoman/docs typecheck` green → `yarn compile` (poi-taxonomy move) → ALL Plan-2 emitter tests green from their new home → docs build spot-check if cheap (`yarn compile` first per worktree-prereq memory) → oxfmt → commit `feat(docs): POI intent inline tester + emitter relocation to poi-taxonomy/overpass` → verify.
 
@@ -457,14 +457,14 @@ Component behavior: input box → live (debounced) intent extraction: shows dete
 - [ ] `yarn vitest run resolver-wof-sqlite/ poi-taxonomy/ core/pipeline/ kind-classifier/ mailwoman/poi-intent.test.ts mailwoman/poi-executor.test.ts mailwoman/poi-overpass.test.ts mcp/` — all green, counts reported.
 - [ ] `yarn vitest run mailwoman/` full suite (weights are linked in this worktree; the parse check must pass).
 - [ ] `yarn lint` clean for branch files; `yarn workspace @mailwoman/docs typecheck`.
-- [ ] `yarn ci:smoke` PASS (29 workspaces packing).
+- [ ] `yarn ci:smoke` pass (29 workspaces packing).
 - [ ] `git status --short` clean → `git push -u origin feat/poi-data-mcp`.
 
 ---
 
 ### Task 10 (operator-visible, post-review): data builds
 
-NOT a subagent task — the controller runs these after the final review, as background jobs:
+not a subagent task — the controller runs these after the final review, as background jobs:
 
 1. Smoke-scale: `gazetteer build poi --countries US --limit 50000` → verify `mailwoman poi "coffee near Springfield IL" --db <out>` returns ranked cafes.
 2. Full 4-country build (bandwidth-bound; run detached, log to scratchpad).
@@ -472,7 +472,7 @@ NOT a subagent task — the controller runs these after the final review, as bac
 
 ## Execution notes
 
-- Tasks 1→2→3→4→5 are sequential (each consumes the prior's exports). Task 6 (MCP) depends on 4–5; Task 7 is independent after Plan 2; Task 8 depends on 7. Do NOT parallelize implementers (shared tree).
-- Deviations pre-declared: read-time WOF ancestry (vs spec's build-time PIP); `poi-overpass.ts` relocation (Task 8) — both recorded here so reviewers judge against THIS plan.
-- `forceFullPipeline` semantics (Plan-2 ride): DECIDED — it continues to NOT bypass the poi branch (it disables fast-paths; the poi branch is a routing branch, not a fast-path). Task 4 adds one doc line to `PipelineOpts.forceFullPipeline` saying so.
+- Tasks 1→2→3→4→5 are sequential (each consumes the prior's exports). Task 6 (MCP) depends on 4–5; Task 7 is independent after Plan 2; Task 8 depends on 7. Do not parallelize implementers (shared tree).
+- Deviations pre-declared: read-time WOF ancestry (vs spec's build-time PIP); `poi-overpass.ts` relocation (Task 8) — both recorded here so reviewers judge against this plan.
+- `forceFullPipeline` semantics (Plan-2 ride): DECIDED — it continues to not bypass the poi branch (it disables fast-paths; the poi branch is a routing branch, not a fast-path). Task 4 adds one doc line to `PipelineOpts.forceFullPipeline` saying so.
 - Loader ENOENT-vs-parse distinction (joint variant-aliases fix) stays a post-arc follow-up — do not fold in here.

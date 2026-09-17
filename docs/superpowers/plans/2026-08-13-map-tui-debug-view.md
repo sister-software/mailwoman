@@ -927,7 +927,7 @@ export interface GeocodeSession {
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession>
 ```
 
-`GeocodeSessionOptions` is a structural interface declared in `geocode-session.ts` (NOT derived from the command's zod schema — that would invert the import direction). It lists exactly the fields the session reads, with types copied from the schema: `locale`, `bias`, `defaultCountry`, `countryScope`, `resolveDB`, `candidateDB`, `dataRoot`, `addressPointsDB`, `interpolationDB`, `interpCalibration`, `localeCountryPrior`, `placeCountry`, `postcodeCountryCoherence`, `forkEntity`, `postcodeShapeCoherence`, `postcodeContainmentCoherence`, `placeCountryThreshold`. The command passes its whole parsed options object; structural typing accepts the superset.
+`GeocodeSessionOptions` is a structural interface declared in `geocode-session.ts` (not derived from the command's zod schema — that would invert the import direction). It lists exactly the fields the session reads, with types copied from the schema: `locale`, `bias`, `defaultCountry`, `countryScope`, `resolveDB`, `candidateDB`, `dataRoot`, `addressPointsDB`, `interpolationDB`, `interpCalibration`, `localeCountryPrior`, `placeCountry`, `postcodeCountryCoherence`, `forkEntity`, `postcodeShapeCoherence`, `postcodeContainmentCoherence`, `placeCountryThreshold`. The command passes its whole parsed options object; structural typing accepts the superset.
 
 - [ ] **Step 1: Move the assembly.** `createGeocodeSession` performs, in this order (preserving today's error precedence — gazetteer path first, weights second): `resolveCandidateDBPath` → `resolveWOFPath` → classifier load → `resolver-wof-sqlite` import → lookup/RegionDatabaseProvider/explicit-extract wiring → BAN/OSM optional providers → CoarsePlacer → `createWOFResolver` → parse the `--bias` string once. All of this is a reduce-and-paste from `runGeocode` with `input`-dependent code left behind.
 
@@ -1388,7 +1388,7 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 | `map-tui/` | `@mailwoman/map-tui` | Terminal vector-tile map renderer — braille `MapFrame` values from PMTiles (asciify-based); powers the `mw geocode --debug` map pane. Frame-first: consumers own presentation |
 ```
 
-- [ ] **Step 3: First-publish note.** Add one line to the PR description (not to committed docs): `@mailwoman/map-tui` is a NEW package — the first publish cannot use Trusted Publishing OIDC (the v8.4.0 first-publish gap); run the manual bless path once before the release that ships this.
+- [ ] **Step 3: First-publish note.** Add one line to the PR description (not to committed docs): `@mailwoman/map-tui` is a new package — the first publish cannot use Trusted Publishing OIDC (the v8.4.0 first-publish gap); run the manual bless path once before the release that ships this.
 
 - [ ] **Step 4: Full verification sweep.** `yarn lint && yarn compile && yarn vitest run map-tui/ mailwoman/debug-view/ mailwoman/commands/geocode.test.ts` — all green. `git status` clean of strays.
 

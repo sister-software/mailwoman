@@ -16,10 +16,10 @@ the `mailwoman geocode --place-country` flag uses it.
 ## Phase 1 — post-hoc score comparison (component probe)
 
 On the **frozen** model (no retrain), over the leave-one-family-out probe (in-map test 55 k vs off-map
-HELDOUT 66 k — baltic/oceania/middle-east never trained), honest dev→test (threshold picked on a dev half,
+HELDOUT 66 k — baltic/oceania/middle-east never trained), direct dev→test (threshold picked on a dev half,
 frozen on a disjoint test half), metric = `min(in-map routing accuracy, heldout-caught)`:
 
-| score                                         |      honest dev→test min |
+| score                                         |      direct dev→test min |
 | --------------------------------------------- | -----------------------: |
 | **`p_inmap` = 1 − P(OTHER)**                  | **91.3** ✅ clears 90/90 |
 | `maxprob` (top in-map softmax — the old rule) | 89.1 (the known ceiling) |
@@ -31,7 +31,7 @@ Full report: `docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md`.
 
 **Why `p_inmap` wins (and isn't gaming `maxprob`):** `maxprob` rejects an address whose probability mass is
 **spread** across several in-map countries (e.g. 0.4 FR / 0.4 GB / 0.2 OTHER → top 0.4, rejected) even though
-it is clearly _not_ off-map. `p_inmap` sums the in-map mass (0.8 → kept) and lets the argmax route it. So the
+it is the result shows _not_ off-map. `p_inmap` sums the in-map mass (0.8 → kept) and lets the argmax route it. So the
 two jobs — reject vs route — stop fighting over one softmax. **Mahalanobis underperforms** because a linear
 model's in-map-logit space isn't a clean Gaussian manifold; the discriminative `OTHER` head _is_ the
 detector. ⇒ **Phase 2 (a retrained binary reject-head) is unnecessary.** (Independently sanity-checked with
@@ -56,7 +56,7 @@ The two **new** wins are exactly the cases the rule targets — **Birmingham, AL
 
 DeepSeek's sharpest point: **90/90 is the wrong objective for a _soft_ prior.** The prior never filters — it
 only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M2 checks both show off-map
-0→0, 0 regressions), while a false _reject_ of an in-map address forfeits the disambiguation win. The cost is
+0→0, 0 regressions), while a false _reject_ of an in-map address forfeits the result. The cost is
 **asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline**, not the
 component min.
 
@@ -76,10 +76,10 @@ only when confident). The rule — not the threshold — is the M2 change (+5.9p
   (200/country × 10; TW excluded — 0 WOF rows) with the country token **stripped** so the country must be
   inferred — the case where the prior can bite. Result: **0 misroutes, 0 regressions**, 58 wins, right-country
   50.7 → 53.6%. The tier-safe soft re-rank never pushed an in-map address to a wrong in-map country, even on
-  OOD-parsed inputs. (Caveat — honest read: absolute rates are depressed by the en-US model being OOD on
-  non-US addresses + thin WOF coverage for NL/DE/KR, so the eval is _conservative_; it cleanly answers the
+  OOD-parsed inputs. (Caveat — direct read: absolute rates are depressed by the en-US model being OOD on
+  non-US addresses + thin WOF coverage for NL/DE/KR, so the eval is _conservative_; it directly answers the
   misroute question but can't fully validate resolution quality on thin-coverage locales. Production flows
-  usually also pin locale/`defaultCountry`.) ⇒ **default-on is defensible**; the flip is the operator's call
+  typically also pin locale/`defaultCountry`.) ⇒ **default-on is defensible**; the flip is the operator's call
   (a user-facing default change).
 - **Residual upgrade — SHIPPED (#244):** the soft prior now feeds the full in-map posterior _distribution_
   as the `anchorPosterior` (vs the one-hot argmax) — the placer hands the resolver every plausible country

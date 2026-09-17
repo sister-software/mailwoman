@@ -249,7 +249,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const attributionPath = join(outDir, "ATTRIBUTION.json")
 
 		// parallelMap yields results AS THEY COMPLETE (out of order), capped at `concurrency` in
-		// flight. Each result carries its own state, so out-of-order is fine for the state-keyed
+		// flight. Each result includes its own state, so out-of-order is fine for the state-keyed
 		// manifest.
 		for await (const r of parallelMap(states, buildOneState, { concurrency })) {
 			if (r.skipped) {

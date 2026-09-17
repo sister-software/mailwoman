@@ -6,7 +6,7 @@
 
 ## Decisions (operator-confirmed 2026-07-09)
 
-1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, AND the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path adds nothing).
+1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, and the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path adds nothing).
 2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/` (Pastel file-routing requires they live there).
 3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDB` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
 4. **Lookup bins (timezone/nuts/un-locode):** stay lean `parseArgs` — the sanctioned exception (consumer-facing micro-packages; ink+react+zod+commander dep weight is hostile there). Documented below as policy.
@@ -159,7 +159,7 @@ Phase 5 last because the checks guard releases — nothing else may wobble while
 
 ## 6. Risks + contracts
 
-- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
+- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on pass). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
@@ -168,8 +168,8 @@ Phase 5 last because the checks guard releases — nothing else may wobble while
 ## 7. Success metrics
 
 - [ ] `corpus/scripts/` deleted; corpus logic lives in `corpus/tools/` behind `mailwoman corpus …`
-- [ ] `scripts/` top level = release tooling + configs ONLY (codegen/lint gone to `mailwoman dev`)
-- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move cleanly; probes in `diagnostic/`
+- [ ] `scripts/` top level = release tooling + configs only (codegen/lint gone to `mailwoman dev`)
+- [ ] `scripts/eval/` reduced to Python calibration scripts + `checks` data consumed by eval-harness — or empty if those move directly; probes in `diagnostic/`
 - [ ] `registry/tools/`, `tiger/tools/`, `core/coarse-placer/tools/` all reachable via commands
 - [ ] resolver-wof-sqlite has zero `bin` entries; demo smoke green
 - [ ] `mailwoman/sdk/` gone (shims at old subpaths); `sdk` = data acquisition everywhere

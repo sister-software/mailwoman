@@ -2,24 +2,24 @@
 
 **Question (pre-registered, 2026-07-16 review Tier 1a):** the span decode nets ~0 overall but +23.8pp on
 Paris, so it is losing somewhere. Name the class before shipping. Pre-registered kill condition: _"if
-the regression class is 'street hallucinated where none exists', that's a NEW failure mode and the flag
+the regression class is 'street hallucinated where none exists', that's a new failure mode and the flag
 stays off-by-default."_
 
-**Verdict: the kill condition is met. The flag stays OFF by default.**
+**Verdict: the kill condition is met. The flag stays off by default.**
 
 The span decode invents streets on inputs that have none — a failure class the shipped decode does not
 have to this degree, and one that **every street metric in the arc is structurally incapable of
 measuring**.
 
 :::caution[Corrected 2026-07-16, after publication — read §4.1 before quoting a rate]
-This doc first said the span decode hallucinates **"58% more often"** (12/54 → 19/54). That framing
+This doc first said the span decode hallucinates **"58% more frequently"** (12/54 → 19/54). That framing
 overstates what n=54 can support: the two intervals overlap, and McNemar on the paired discordants
-(11 vs 4) gives **p = 0.12**. The **rate difference is not established**. What IS established is that
+(11 vs 4) gives **p = 0.12**. The **rate difference is not established**. What is established is that
 the 11 new hallucinations are real, individually inspectable failures — `New York, NY` → street=`new
 york` is not a statistical claim — and the pre-registered condition turns on the failure CLASS
-existing, not on its rate being significantly worse. The verdict stands on those grounds. The rate
+existing, not on its rate being by a measured margin worse. The verdict stands on those grounds. The rate
 question is settled by the T1c fragment board, whose `bare-locality` class carries n=400 (±4.0pp).
-Caught by the same discipline that produced the finding; left visible rather than quietly edited.
+Caught by the same discipline that produced the finding; left visible rather than without output edited.
 :::
 
 |         |                                                                               |
@@ -43,7 +43,7 @@ fixtures** to get there. An aggregate tie was hiding a full third of the street 
 
 The within-model cross-tab (v301 token × v301 seg) is the same shape: +1 net, 18 fixed / 17 broke.
 
-## 2. The win class is exactly the thesis
+## 2. The observed class matches the thesis
 
 All 17 are the target class — the token decode is **too timid** and the span decode recovers the phrase:
 
@@ -132,7 +132,7 @@ Three things survive that arithmetic, and they are what the verdict rests on:
 1. **The 11 failures are real, not inferred.** `New York, NY` → street=`new york` is a defect you can
    read, reproduce, and fix. Its existence is not a statistical claim and no p-value bears on it.
 2. **The pre-registered condition turns on the class, not the rate.** It reads: _"if the regression
-   class is 'street hallucinated where none exists', that's a NEW failure mode and the flag stays
+   class is 'street hallucinated where none exists', that's a new failure mode and the flag stays
    off-by-default."_ The class exists. The condition fires as written.
 3. **Precaution is asymmetric here.** The flag is opt-in either way; the cost of holding it is a
    consumer types a flag, and the cost of shipping it wrong is silent street hallucination in a
@@ -144,7 +144,7 @@ detection.
 
 ## 5. One property, three consequences
 
-The win class, the digit-eating, and the hallucination are not three findings. They are one:
+the observed class, the digit-eating, and the hallucination are not three findings. They are one:
 
 > **The span decode is over-eager to emit and extend a street segment.**
 
@@ -157,7 +157,7 @@ flag is **net negative** — and the arc has never once measured it that way.
 
 ## 6. Consequences
 
-**For the ship decision (#42): the flag stays OFF by default.** The pre-registered kill condition fired
+**For the ship decision (#42): the flag stays off by default.** The pre-registered kill condition fired
 on its exact terms. The decode's value on the target class is real and large — five fixtures where the
 shipped model says nothing — but it is bought with a hallucination rate the street metric cannot price.
 A consumer that wants the k-best list can opt in; nothing gets it by default until §5's over-eagerness

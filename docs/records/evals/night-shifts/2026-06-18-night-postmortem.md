@@ -8,11 +8,11 @@ draft: true
 # Night shift 2026-06-18 — v1.7.0 balanced boundary-extract retrain
 
 _Shift: 03:58–15:00 UTC. Goal: take the balanced boundary extract (the diagnosis-driven fix after v1.6.0
-conditional NO-PROMOTE) through build → #511 lint → recipe → retrain → check. NO promote (operator wall)._
+conditional NO-PROMOTE) through build → #511 lint → recipe → retrain → check. no promote (operator wall)._
 
 _(Living document — sketched as the shift runs; final numbers + verdict at the end.)_
 
-> **CORRECTION (post-shift re-eval, 2026-06-18):** the PROMOTE recommendation in §6 is **retracted.** The shift benchmarked v1.7.0 against v1.5.1, which was never the production default — v1.5.0 is (md5-confirmed). Re-graded against v1.5.0 on the assembled coordinate, v1.7.0 is **flat** (US locality-match 83.8 vs 83.9, p50 3.3 vs 3.3 km) and **regresses country-homograph by 2.4** (the 83.3 floor is v1.5.0's real score, not stale). Verdict: **HOLD v1.5.0, do not promote.** Full re-eval: [v1.5.0 vs v1.7.0 head-to-head](../model-versions/2026-06-18-v150-vs-v170-head-to-head.md); see the Addendum at the end.
+> **CORRECTION (post-shift re-eval, 2026-06-18):** the PROMOTE recommendation in §6 is **retracted.** The shift benchmarked v1.7.0 against v1.5.1, which was never the production default — v1.5.0 is (md5-confirmed). Re-graded against v1.5.0 on the assembled coordinate, v1.7.0 is **flat** (US locality-match 83.8 vs 83.9, p50 3.3 vs 3.3 km) and **regresses country-homograph by 2.4** (the 83.3 floor is v1.5.0's real score, not stale). Verdict: **hold v1.5.0, do not promote.** Full re-eval: [v1.5.0 vs v1.7.0 head-to-head](../model-versions/2026-06-18-v150-vs-v170-head-to-head.md); see the Addendum at the end.
 
 ## 1. What shipped
 
@@ -27,41 +27,41 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   extract); one stated hygiene co-change (lr constant→cosine — zero code surface, it was the config default).
 - **Phase 4 — check spec + blind-spot probe** (`d3e580fa`): `checks/v1.7.0-boundary-stress.json` +
   `street-recall-full-probe.ts` (DeepSeek's catch). Baselined: v1.5.1 33.7% / v1.6.0 37.9% full-address
-  street-exact (v1.6.0 did NOT erode street — reassuring).
+  street-exact (v1.6.0 did not erode street — reassuring).
 - **Phase 5 — sync + launch** (`7307eafb`): `sync_v061`, R2 push (501s rode the retries), launched
   `ap-dC3SU5VQdTQLVTwNdFp2Zq`. **Early-loss abort check PASSED** (5.05→1.91 over 250 steps, decreasing).
 - **Phase 7 — check**: run finished (step-040000, after the resume). Exported → quantized → fetched
   (`./out/v170/model.onnx`). **4-target check: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
   (✓), street_suffix 55.3 (tag at target, street-span short), comma-less 57.0 (✗), hn-after 53.7 (✗). The
-  balanced extract rebalanced (held the guardrail) but did NOT lift the boundary targets — they're flat, so the
+  balanced extract rebalanced (held the guardrail) but did not lift the boundary targets — they're flat, so the
   boundary change needs more than rebalancing (weight, or capacity). Floors check + locality-regression +
   street-recall probes + the record-matcher 3rd point running — the decisive question is whether the v1.6.0
-  locality regression got FIXED.
+  locality regression got fixed.
   **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
-  - ✅ **The v1.6.0 ship-blocker is FIXED**: floors `us.locality` **80.0** (floor 72.9) — recovered from
+  - ✅ **The v1.6.0 ship-blocker is fixed**: floors `us.locality` **80.0** (floor 72.9) — recovered from
     v1.6.0's failing 66.2, now _above_ v1.5.1. The bare-locality shape + cosine LR did exactly what the
     probes predicted. Guardrail held end-to-end (no drift).
   - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
   - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
   - ❌ **4-target boundary check 1/4** — targets ~flat vs v1.6.0 (extract rebalanced, didn't advance them).
   - ❌ ONE red floor: `us.country_homograph_f1` 80.9 vs 83.3 — but the **v1.5.1 baseline (run after) reframed
-    this: it is NOT a v1.7.0 regression.** v1.5.1 scores the _identical_ 80.9; the 83.3 floor is stale (from
+    this: it is not a v1.7.0 regression.** v1.5.1 scores the _identical_ 80.9; the 83.3 floor is stale (from
     the older v4.x 85-89 models). v1.7.0 didn't touch country.
-  - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary change ≠ dedup change).
+  - Record-matcher 3-point curve flat: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary change ≠ dedup change).
 
   **THE v1.5.1 → v1.7.0 FLOOR DELTA (the definitive comparison — most important number of the shift):**
   locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (`84.7→94.9` — v1.5.1 was _failing_ its own 87 floor),
   fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
   a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
-  over v1.5.1**, not just a regression-fix. The check FAILs only on (a) a stale country floor v1.5.1 also
+  over v1.5.1**, nota regression-fix. The check FAILs only on (a) a stale country floor v1.5.1 also
   fails, and (b) the capacity-bound 4-target boundary check. Candidate shipped beside the canonical
-  (`./out/v170/model.onnx`); NOT auto-promoted (the wall). The diagnostic arc is validated AND v1.7.0 beats
+  (`./out/v170/model.onnx`); not auto-promoted (the wall). The diagnostic arc is validated and v1.7.0 beats
   the current ship — a stronger outcome than "the fix worked."
 
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
   (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, baseline 61.0 vs 60.9. The read: **the boundary-parse
-  change does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
+  change does not move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
   the model," and dedup is bottlenecked on org-name over-merge (#625/#603), not parse boundaries. So the
   synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
   joins as the 3rd point when it lands (expected ~flat).
@@ -72,7 +72,7 @@ macro_f1 0.656 vs 0.631 ; locality 0.691 vs 0.684 ; street 0.842 vs 0.819 ; hn 0
 extract isn't hurting the guardrail early; cosine LR should hold it at the end (the v1.6.0 drift fix).
 
 At step ~4000 the guardrail dipped slightly (locality 0.659, street 0.812 — below step-2000) while macro rose to
-0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed _past_ step-2000:
+0.666 — the normal mid-training re-balance. By step ~16000 it had recovered and climbed _past_ step-2000:
 locality 0.740, street 0.834, macro 0.690. And it's tracking MUCH healthier than v1.6.0 at the same point —
 v1.6.0's locality had collapsed to ~0.61 by step ~14k; v1.7.0 is at 0.74. The balanced extract is holding the
 guardrail where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The check decides.
@@ -94,12 +94,12 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 
 ## 3. What could've gone better
 
-- I'd been calling the model "9M params" (echoing the consult framing); it's actually **29.6M** (the #492
+- I'd been calling the model "9M params" (echoing the consult framing); it's **29.6M** (the #492
   ceiling size). Didn't change any conclusion, but I should verify the number, not echo it.
 - **Generalizing the #511 lint is harder than it looked — and the experiment proved it.** The v1 uniform
   sample false-flagged FR cities as "street"; I tried PROPORTIONAL sampling to fix it and it got WORSE (more
   false-flags). Root cause: a token's correct tag is SOURCE/COUNTRY-specific (Paris = locality in FR data,
-  street in US "Paris Ave"), so ANY cross-source aggregate mis-judges it — sampling can't fix it. The only
+  street in US "Paris Ave"), so any cross-source aggregate mis-judges it — sampling can't fix it. The only
   fix is COUNTRY-scoped (check each extract token against same-COUNTRY base rows; the base has a `country`
   column). Reverted to the v1 caveated coarse-screen — its caveat ("re-check minority-source flags
   source-scoped") was right. The country-scoped lint is a real follow-up, and it will likely also surface
@@ -108,18 +108,18 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
   country tokens were linted source-scoped and are clean.) **A third attempt — a US-scoped spot-check of the
   flagged localities — was ITSELF sample-biased** (a small tiger/nad-heavy sample read Indianapolis 54%
   street, but the v1.6.0 verification has it 219700:29 LOCALITY — the small sample lied). FIRM lesson after
-  three tries: judge a token's tag-dominance by FULL per-token counts, not a small scan; a small sample is
+  three tries: judge a token's tag-dominance by full per-token counts, not a small scan; a small sample is
   street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. I then built
   the COUNTRY-SCOPED lint (v2, `lint-extract-vocab.py`) — the DESIGN is right, but **the SAMPLING is not, and
   the larger run proved it: the result is SAMPLE-DEPENDENT.** The 0.1 smoke CLEARED Paris (locality); the 0.5
-  run FLAGS Paris 89% street and Lyon 100% street — and BOTH contradict the v1.6.0 full-block count (Paris
+  run FLAGS Paris 89% street and Lyon 100% street — and both contradict the v1.6.0 full-block count (Paris
   515605:24789 = 95% LOCALITY). Sampling the first-N parts of ORDERED source blocks is biased. So the
   "prune-list" is BOGUS — it flags the very big cities v1.6.0 verified clean. **I got over-eager on the smoke
   and committed a wrong "found a real issue" claim; this corrects it.** The v0.6.1 vocab STANDS (v1.6.0
-  full-count + v1.7.0's +5.1 locality gain). FIRM lesson (the sampling bit FIVE times): only a FULL per-token
-  count is reliable for tag-dominance, AND validate any new lint against a KNOWN case (Paris) before trusting
+  full-count + v1.7.0's +5.1 locality gain). FIRM lesson (the sampling bit five times): only a full per-token
+  count is reliable for tag-dominance, and validate any new lint against a KNOWN case (Paris) before trusting
   its flags. The lint needs a true full-count mode (all parts/rows, no sampling) — the real follow-up; the
-  sampled modes are all biased. STOPPED here — over-invested, and the honest output is "the tool isn't trustworthy yet."
+  sampled modes are all biased. STOPPED here — over-invested, and the direct output is "the tool isn't trustworthy yet."
 - _(more as the shift runs)_
 
 ## 4. Decisions made autonomously
@@ -129,7 +129,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 - **7:3 composition** over my own 1:1 — DeepSeek's reasoning (FR's own dominant order, shared cross-locale
   capacity) was sound.
 - **The two new guards (bare_locality, street_recall_full) ride as check-time standalone probes**, NOT
-  floors-map keys — wiring unscored keys into promotion-check-verdict.ts would FAIL loudly; the probes give
+  floors-map keys — wiring unscored keys into promotion-check-verdict.ts would fail loudly; the probes give
   the v1.5.1→candidate comparison directly. Lower surface for an unattended night.
 - **Corpus version v0.6.1-boundary-stress** (incremental on v0.6.0, same v0.5.0 base) — signals "same base,
   improved extract."
@@ -139,11 +139,11 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
   logs replay-window, so the checkpoint is the only reliable step). Stopped the hung app and **resumed from
   step-020000** (`--resume auto`, app ap-wvqFyeCdRGtf3X2d0pmeGB) rather than check a half-trained checkpoint —
   resume came up clean ("[resume-drift] none", cosine LR correct at lr 0.000077). Added a STALL-WATCH to the
-  monitor: a 2nd stall does NOT trigger a 2nd resume — it checks the highest checkpoint instead (bounded risk).
+  monitor: a 2nd stall does not trigger a 2nd resume — it checks the highest checkpoint instead (bounded risk).
 
 ## 5. Open questions (for the operator)
 
-- **Promote v1.7.0?** — blocked on the Phase 7 verdict; NOT promoted autonomously regardless (the wall).
+- **Promote v1.7.0?** — blocked on the Phase 7 verdict; not promoted autonomously regardless (the wall).
 - **us.street floor** — kept at the committed 74.0; the recipe's 80.4 is the pre-#492 shipped value. Worth
   re-anchoring to v1.5.1's measured us.street when convenient.
 - **The NEW `us.country_homograph_f1` regression (80.9 vs 83.3).** The one red floor on an otherwise-fixed
@@ -157,7 +157,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 
 ## 6. Concrete next steps
 
-- **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
+- **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do not bump the weight.** The v1.5.1
   baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house*number +10.2 (v1.5.1 was
   \_failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
   weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the guardrail — the change that cratered an
@@ -166,12 +166,12 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
 - **Two stated check decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
   (1) **re-baseline the stale `us.country_homograph` floor** 83.3 → ~80 (v1.5.1 fails it identically at 80.9 —
   it's not a v1.7.0 regression); (2) **re-frame the 4 capacity-bound boundary targets as WATCH-items**, not
-  blockers. With both, v1.7.0 promotes with NO retrain.
+  blockers. With both, v1.7.0 promotes with no retrain.
 - **Weigh the us.street −4.3 tradeoff.** Locality up / street down is the bare-locality emphasis (11%) shifting
   the guardrail. It's above floor and the gains outweigh it, but if street matters more, a future iteration could
   trim bare-locality to ~8-9% (less street erosion, keep most of the locality recovery). Tuning note, not a blocker.
 - **Country PATCH staged (optional, not a must-fix)** — a country-containing bare-locality variant (~12%
-  "…, United States"/"…, France"; #511-linted, "USA" DROPPED as locality-dominant). Pushes country UP if the
+  "…, United States"/"…, France"; #511-linted, "USA" DROPPED as locality-dominant). Pushes country up if the
   operator wants it: rebuild extract v0.6.2 + a short fine-tune from v1.7.0. Not needed to promote (the floor's stale).
 - If the boundary shapes ever bottleneck production: revisit with a bigger model / a specialized second-pass
   (per DeepSeek), not more of the same extract.
@@ -205,10 +205,10 @@ that worse model.
 Re-anchored to v1.5.0 ([head-to-head](../model-versions/2026-06-18-v150-vs-v170-head-to-head.md)):
 
 - **US assembled coordinates: FLAT** — locality-match 83.8% vs 83.9%, coord p50 3.3 vs 3.3 km, p90
-  10.7 vs 10.7. The locality F1 gain (real at the label level) does not reach the coordinate.
+  10.7 vs 10.7. the result (real at the label level) does not reach the coordinate.
 - **country-homograph: −2.4** (80.9 vs v1.5.0's 83.3). The floor is **not stale** — 83.3 is exactly
   v1.5.0's score. A real regression.
-- **fr.house_number: FLAT** — anchor-on, both v1.5.0 and v1.7.0 score 99.3. The night's "+10" was an
+- **fr.house_number: flat** — anchor-on, both v1.5.0 and v1.7.0 score 99.3. The night's "+10" was an
   anchor-off measurement artifact (`per-locale-f1.ts` fed the model anchor-off; fixed in `d7b51748`).
 - **FR coordinates: also flat** — 76.3% locality-match, p50 1.5 km, both models. The earlier "FR
   unmeasurable" reading was an eval-flag error (`--default-country` defaulted to US); with
@@ -220,12 +220,12 @@ Re-anchored to v1.5.0 ([head-to-head](../model-versions/2026-06-18-v150-vs-v170-
 
 **The change moved.** The US coordinate misses are rural-gazetteer coverage (SD 62%, VT 31%
 locality-match — identical across model versions), not model tagging. The model has caught up to its
-database; the next US gain is in the gazetteer/resolver, not a retrain. v1.7.1 (street recovery)
+database; the result is in the gazetteer/resolver, not a retrain. v1.7.1 (street recovery)
 won't change the coordinate picture and isn't worth the GPU.
 
 **Process lesson:** confirm the production default by md5 against the shipped artifact before using it
 as a baseline — don't assume the latest training run is the default. And grade the assembled
-coordinate, not just the assembled per-locale F1. The shift fell into a one-level-deeper version of
+coordinate, notthe assembled per-locale F1. The shift fell into a one-level-deeper version of
 the same trap the blog post warns about.
 
 ## Day session (2026-06-18 → 06-19) — the measurement-integrity campaign
@@ -243,7 +243,7 @@ all along and the eval couldn't see it.
   `scoreTree` discarding `localadmin` New England towns; the resolver was landing the right place all
   along. Corrected → US locality-match 83.9 → 97.8% (`9f986ec3`).
 - **the coordinate cascade** (the big one) — `oa-resolver-eval` resolved to the admin centroid (p50
-  3.3 km) and never wired the situs cascade the geocoder actually ships. Graded against what ships,
+  3.3 km) and never wired the situs cascade the geocoder ships. Graded against what ships,
   the same 10k rows are **p50 0.0 km, 85.9% within 100 m** — three orders of magnitude tighter
   ([situs-cascade-eval](../resolver-geo/2026-06-18-situs-cascade-eval.md), `dd3628da`).
 
@@ -273,9 +273,9 @@ coordinate is meter-grade.
 
 ### Decisions
 
-- **HOLD v1.5.0 confirmed.** The country −2.4 the night flagged is a single record (`Avenida Arequipa,
+- **hold v1.5.0 confirmed.** The country −2.4 the night flagged is a single record (`Avenida Arequipa,
 Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
-- **Overture ingest is NOT the coordinate change.** The situs extracts are already built from Overture;
+- **Overture ingest is not the coordinate change.** The situs extracts are already built from Overture;
   the SD/IL holes are a NAD-vs-OpenAddresses theme-selection bug, not missing data (#723).
 - **Banked the situs theme-reselect (#723).** The coordinate is in great shape; the extract rebuild
   (~+3.7 pts) is deferred, not launched.
@@ -284,4 +284,4 @@ Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
 
 Pull the records before a number changes a decision. This week the aggregate lied in both directions —
 it inflated a regression (Peru), invented a coverage gap (localadmin/rural), and hid a
-three-orders-of-magnitude win (the coordinate). Grade the thing the user actually receives.
+three-orders-of-magnitude win (the coordinate). Grade the thing the user receives.

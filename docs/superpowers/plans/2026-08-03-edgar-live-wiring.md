@@ -4,19 +4,19 @@
 
 **Goal:** Make `@mailwoman/filer`'s EDGAR chain work against real SEC filings — the parser currently recovers 45 subsidiaries from 13 real Exhibit 21 documents that state 142, and 18 of those 45 are fabricated.
 
-**Architecture:** Phase 3b built the EDGAR chain as separately-testable pieces (`sec-client.ts` → `edgar-filings.ts` → `exhibit21.ts` → `buildFilerDatabase({edgarRows})`) and verified each against hand-written fixtures. Running the assembled chain against 24 real telecom registrants on 2026-08-03 showed the fixtures were not representative: 10 of 21 reachable filings yielded ZERO subsidiaries, and the ones that yielded something included header rows, SGML wrapper tokens and bullet characters as subsidiary names. This plan vendors the real documents as fixtures, fixes `parseExhibit21` against them, and adds the one missing link in the chain — discovering WHICH document in a filing is the Exhibit 21.
+**Architecture:** Phase 3b built the EDGAR chain as separately-testable pieces (`sec-client.ts` → `edgar-filings.ts` → `exhibit21.ts` → `buildFilerDatabase({edgarRows})`) and verified each against hand-written fixtures. Running the assembled chain against 24 real telecom registrants on 2026-08-03 showed the fixtures were not representative: 10 of 21 reachable filings yielded zero subsidiaries, and the ones that yielded something included header rows, SGML wrapper tokens and bullet characters as subsidiary names. This plan vendors the real documents as fixtures, fixes `parseExhibit21` against them, and adds the one missing link in the chain — discovering which document in a filing is the Exhibit 21.
 
 **Tech Stack:** TypeScript (`erasableSyntaxOnly`, no `enum`), vitest, no HTML-parser dependency (`@mailwoman/filer`'s runtime deps stay `@mailwoman/*` + kysely + type-fest).
 
 ## Global Constraints
 
-- **Decision 6 binds everywhere: abstain, never guess.** A row/line that cannot be confidently reduced to a subsidiary name is COUNTED in `unparseable` and DROPPED. Every new rule below is an abstention rule or an alignment rule; none of them invents a value.
-- **The substring invariant holds.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but NOT sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
-- **`filer/test-fixtures/edgar/expected.json` is the contract, and it was NOT derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
+- **Decision 6 binds everywhere: abstain, never guess.** A row/line that cannot be confidently reduced to a subsidiary name is COUNTED in `unparseable` and dropped. Every new rule below is an abstention rule or an alignment rule; none of them invents a value.
+- **The substring invariant holds.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but not sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
+- **`filer/test-fixtures/edgar/expected.json` is the contract, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
 - No `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
 - Tabs for indentation, double quotes, no semicolons — match the surrounding file exactly.
 - `yarn typecheck:tests` must pass alongside `yarn vitest run filer/` — `satisfies` pins in test files are invisible to both vitest and `tsc -b`.
-- Run `yarn vitest run filer/` (350 tests green at branch point) before reporting DONE. No test may be deleted or weakened to pass.
+- Run `yarn vitest run filer/` (350 tests green at branch point) before reporting done. No test may be deleted or weakened to pass.
 
 ---
 
@@ -35,7 +35,7 @@
 
 ### Task 1: Real-corpus fixtures and the failing regression suite
 
-**Status: COMPLETE — committed at branch point.** Fixtures, `manifest.json`, `expected.json` and `exhibit21-real.test.ts` are on the branch and the suite FAILS. It is the red bar Tasks 2 and 3 turn green. Read `filer/sdk/exhibit21-real.test.ts` before starting Task 2 — it is the spec in executable form.
+**Status: COMPLETE — committed at branch point.** Fixtures, `manifest.json`, `expected.json` and `exhibit21-real.test.ts` are on the branch and the suite fails. It is the red bar Tasks 2 and 3 turn green. Read `filer/sdk/exhibit21-real.test.ts` before starting Task 2 — it is the spec in executable form.
 
 ---
 
@@ -94,11 +94,11 @@ export function documentWindow(html: string): string {
 
 - [ ] **Step 3: Strip list markers before splitting a candidate line**
 
-A leading bullet or list marker is markup, not part of a name. Strip `/^[•●▪◦∙·*–—-]+\s*/` from a candidate line BEFORE the name/jurisdiction split runs, so `"•  Bandwidth.com CLEC, LLC (Delaware, United States)"` becomes `"Bandwidth.com CLEC, LLC (Delaware, United States)"` and the existing trailing-parenthetical rule yields `{name: "Bandwidth.com CLEC, LLC", jurisdiction: "Delaware, United States"}` rather than `{name: "•", jurisdiction: …}`. A line consisting only of markers is blank after stripping and is skipped, not counted.
+A leading bullet or list marker is markup, not part of a name. Strip `/^[•●▪◦∙·*–—-]+\s*/` from a candidate line before the name/jurisdiction split runs, so `"•  Bandwidth.com CLEC, LLC (Delaware, United States)"` becomes `"Bandwidth.com CLEC, LLC (Delaware, United States)"` and the existing trailing-parenthetical rule yields `{name: "Bandwidth.com CLEC, LLC", jurisdiction: "Delaware, United States"}` rather than `{name: "•", jurisdiction: …}`. A line consisting only of markers is blank after stripping and is skipped, not counted.
 
 - [ ] **Step 4: Recognize document titles and section headings as non-entities**
 
-Extend the line strategy's header recognition (a candidate matching any of these EXACTLY, case-insensitively, is counted in `unparseable` and dropped). These are whole-string patterns, deliberately not keyword sniffing:
+Extend the line strategy's header recognition (a candidate matching any of these exactly, case-insensitively, is counted in `unparseable` and dropped). These are whole-string patterns, deliberately not keyword sniffing:
 
 ```ts
 const TITLE_LINE_PATTERNS = [
@@ -119,9 +119,9 @@ const TITLE_LINE_PATTERNS = [
 const MAX_ENTITY_NAME_WORDS = 12
 ```
 
-A candidate whose whitespace-separated token count exceeds this is counted in `unparseable` and dropped. Two real cases: Shenandoah's preamble sentence ("The following are all significant subsidiaries of Shenandoah Telecommunications Company, and are organized in the Commonwealth of Virginia.", 20 tokens) and `alti-global-2025.htm`, whose markup separates entries with nothing but a double space — its five text runs are 20-to-90-token concatenations of many entity names, and no split rule can recover the boundaries without inventing them. The longest legitimate name in the corpus is `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"` at 8 tokens.
+A candidate whose whitespace-separated token count exceeds this is counted in `unparseable` and dropped. Two real cases: Shenandoah's preamble sentence ("The following are all measured subsidiaries of Shenandoah Telecommunications Company, and are organized in the Commonwealth of Virginia.", 20 tokens) and `alti-global-2025.htm`, whose markup separates entries with nothing but a double space — its five text runs are 20-to-90-token concatenations of several entity names, and no split rule can recover the boundaries without inventing them. The longest legitimate name in the corpus is `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"` at 8 tokens.
 
-`alti-global-2025.htm` is therefore expected to yield ZERO subsidiaries and a non-zero `unparseable`. That is the correct answer for that document, not a gap.
+`alti-global-2025.htm` is therefore expected to yield zero subsidiaries and a non-zero `unparseable`. That is the correct answer for that document, not a gap.
 
 - [ ] **Step 6: Run the suites**
 
@@ -153,7 +153,7 @@ git commit -m "fix(filer): parse the exhibit, not EDGAR's SGML envelope around i
 
 | Defect                                                                         | Evidence                                                                                                                                                                                                                                                         |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Only the FIRST top-level table is read                                         | Lumen's list spans 5 sibling tables (207 rows); 42 were read. Comcast's spans 33 (1530 rows); 47 were read. In the vendored corpus: `att-2025.htm` (2), `widepoint-2025.htm` (2), `atn-international-2025.htm` (7), `echostar-2025.htm` (5), `idt-2025.htm` (4). |
+| Only the first top-level table is read                                         | Lumen's list spans 5 sibling tables (207 rows); 42 were read. Comcast's spans 33 (1530 rows); 47 were read. In the vendored corpus: `att-2025.htm` (2), `widepoint-2025.htm` (2), `atn-international-2025.htm` (7), `echostar-2025.htm` (5), `idt-2025.htm` (4). |
 | An all-blank spacer column makes every data row look 3-wide                    | `cable-one-2025.htm`, `ooma-2025.htm`, `verizon-2025.htm`, `att-2025.htm`, `anterix-2025.htm` — 0 subsidiaries each, everything counted `unparseable`.                                                                                                           |
 | Header rows whose labels are not on the known list get emitted as subsidiaries | `liberty-broadband-2025.htm` emits `{name: "Entity Name", jurisdiction: "Domicile"}`; `widepoint-2025.htm` emits `{name: "Full Legal Name", jurisdiction: "State or Country of Incorporation"}`.                                                                 |
 | A real third column makes the row abstain                                      | `att-2025.htm` (adds "Conducts Business Under"), `atn-international-2025.htm` (adds "Other name(s) under which entity does business"), `echostar-2025.htm` (adds "% of Ownership" and "Name Doing Business As").                                                 |
@@ -161,7 +161,7 @@ git commit -m "fix(filer): parse the exhibit, not EDGAR's SGML envelope around i
 
 - [ ] **Step 1: Read all top-level tables, not the outermost one**
 
-Replace `extractOutermostTableHTML` with a function returning EVERY depth-0 `<table>…</table>` block in document order. Nesting handling is unchanged: a table nested inside a cell belongs to its parent and is not returned separately, and an unclosed final table still yields everything after its opening tag. Rows are then classified per table, and the results concatenated.
+Replace `extractOutermostTableHTML` with a function returning every depth-0 `<table>…</table>` block in document order. Nesting handling is unchanged: a table nested inside a cell belongs to its parent and is not returned separately, and an unclosed final table still yields everything after its opening tag. Rows are then classified per table, and the results concatenated.
 
 - [ ] **Step 2: Drop columns that are blank in every row of a table**
 
@@ -171,7 +171,7 @@ Do this per table and column-wise, never per row. Filtering blanks row-by-row lo
 
 - [ ] **Step 3: Extend the header/decoration label list**
 
-Add every label the real corpus uses. Same rule as today: EXACT whole-cell case-insensitive match, never substring sniffing.
+Add every label the real corpus uses. Same rule as today: exact whole-cell case-insensitive match, never substring sniffing.
 
 ```
 "entity name", "legal name", "legal entity", "full legal name", "name of entity",
@@ -187,11 +187,11 @@ Add every label the real corpus uses. Same rule as today: EXACT whole-cell case-
 
 - [ ] **Step 4: Header-driven column mapping, carried across sibling tables**
 
-When a table's header row labels EXACTLY ONE column with a jurisdiction label, record a mapping: the jurisdiction column is that one; the name column is the first other column that is not labelled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, `name doing business as`, `other name(s) under which entity does business`, `ein`). Data rows in that table then read name and jurisdiction from those column indices and ignore the rest.
+When a table's header row labels EXACTLY ONE column with a jurisdiction label, record a mapping: the jurisdiction column is that one; the name column is the first other column that is not labeled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, `name doing business as`, `other name(s) under which entity does business`, `ein`). Data rows in that table then read name and jurisdiction from those column indices and ignore the rest.
 
 This is not guessing which of N columns means what — the document labels them.
 
-The mapping CARRIES FORWARD to subsequent sibling top-level tables until another header row replaces it. EDGAR splits one logical table across page-break tables constantly, and only the first carries the header: `att-2025.htm`'s second table holds AT&T Mobility, Cricket Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own. Footnote rows are still caught by the footnote rule (Step 5) before the mapping is consulted, so a footnote table following a labelled list does not inherit it.
+The mapping CARRIES FORWARD to subsequent sibling top-level tables until another header row replaces it. EDGAR splits one logical table across page-break tables constantly, and only the first carries the header: `att-2025.htm`'s second table holds AT&T Mobility, Cricket Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own. Footnote rows are still caught by the footnote rule (Step 5) before the mapping is consulted, so a footnote table following a labeled list does not inherit it.
 
 Two rules govern what happens when the mapped name column is blank on a row:
 
@@ -204,14 +204,14 @@ Add a hand-written indented-tree case to `exhibit21.test.ts` covering rule 1 —
 
 Each counts `unparseable` and drops the row. Order matters; apply in this order, after the existing blank-row and header/decoration checks.
 
-**There is deliberately NO per-row "this jurisdiction looks like a company name" rule.** It was in an earlier draft of this plan and it is wrong: Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`, so such a rule abstains on 135 of Charter's 139 subsidiaries. Rule 4 below replaces it at table level, where the evidence to tell the two cases apart actually exists.
+**There is deliberately no per-row "this jurisdiction looks like a company name" rule.** It was in an earlier draft of this plan and it is wrong: Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`, so such a rule abstains on 135 of Charter's 139 subsidiaries. Rule 4 below replaces it at table level, where the evidence to tell the two cases apart exists.
 
 1. **Footnote marker.** The row's first non-blank value matches `/^[([]?\d{1,3}[)\]]?$/` or `/^\*{1,3}$/`. Covers the footnote tables in `widepoint-2025.htm`, `atn-international-2025.htm` and `echostar-2025.htm`.
-2. **Section heading.** The row has exactly one non-blank value AND the table is not a plain single-column name list (a table qualifies as one only when every row has at most one non-blank value and at least two rows have one). Covers `idt-2025.htm`'s `"Domestic Subsidiaries"` / `"Foreign Subsidiaries"` rows and its single-row trailing footnote tables.
+2. **Section heading.** The row has exactly one non-blank value and the table is not a plain single-column name list (a table qualifies as one only when every row has at most one non-blank value and at least two rows have one). Covers `idt-2025.htm`'s `"Domestic Subsidiaries"` / `"Foreign Subsidiaries"` rows and its single-row trailing footnote tables.
 3. **Multi-value cell.** The row's name cell contains a block boundary (`</p>`, `</div>`, `<br>`, `</li>`) with non-blank text on both sides of it — the source kept several values apart and cleaning ran them together. `ooma-2025.htm`'s last row is one `<td>` holding five `<p>` blocks; without this rule it emits `{name: "Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream Technologies, LLC Phone.Com, Inc.", jurisdiction: "Delaware Delaware Delaware Colorado Delaware"}`. This check needs the cell's RAW HTML, so keep it alongside the cleaned text on `TableCell`.
 4. **Name/name table.** With no header mapping in force, a table qualifies as a two-across list of entity names — no jurisdiction column at all — and abstains as a whole when ALL THREE hold over its two-value data rows:
    - there are at least 4 of them,
-   - more than half of their SECOND values carry a legal designation, and
+   - more than half of their second values carry a legal designation, and
    - the number of DISTINCT second values exceeds 70% of the row count.
 
    `idt-2025.htm`'s "Domestic Subsidiaries" table is `["IDT America, Corp. (NJ)", "IDT Payment Services, Inc*. (DE)"]` and four more like it: 5 rows, 5/5 carrying a designation, 5 distinct. Without this rule each emits a company as another company's jurisdiction.
@@ -224,7 +224,7 @@ Each counts `unparseable` and drops the row. Order matters; apply in this order,
 
 `parseExhibit21` used to commit to the table strategy the moment a `<table>` existed, so `shentel-2025.htm` — two entirely-blank decorative tables, with the real list as block text outside them — returned nothing. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
 
-**An earlier draft of this plan specified the broader rule "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`, whose blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped — which the line strategy accepts as a name-only subsidiary, fabricating `{name: "Delaware"}` and breaking the currently-green "deliberately mangled fixture yields ZERO subsidiaries" test.
+**An earlier draft of this plan specified the broader rule "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`, whose blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped — which the line strategy accepts as a name-only subsidiary, fabricating `{name: "Delaware"}` and breaking the currently-green "deliberately mangled fixture yields zero subsidiaries" test.
 
 So: keep `isEntirelyBlankTable` as the condition. Read it before you write anything here — it may already be correct for every fixture, in which case this step is "confirm and leave alone", and say so in your report. Widen it only if a vendored fixture forces you to, and only in a way that still leaves `exhibit21-mangled.html` at zero subsidiaries.
 
@@ -394,7 +394,7 @@ git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document ma
 - Consumes: `CIKCandidate`, `resolveCIKCandidates` from the same file.
 - Produces: no new exports; `resolveCIKCandidates`'s return value gains an invariant (CIKs are distinct).
 
-**Why:** `company_tickers.json` carries one row PER TICKER, so a registrant with several share classes appears several times under one CIK. Resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four times, each scoring 1.0 — and the tie rule, which exists to stop a caller narrowing a genuine collision between two DIFFERENT companies, then reported a four-way tie. The same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data Systems. The rule must fire on a collision between distinct CIKs and stay silent on one registrant's share classes.
+**Why:** `company_tickers.json` carries one row PER TICKER, so a registrant with several share classes appears several times under one CIK. Resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four times, each scoring 1.0 — and the tie rule, which exists to stop a caller narrowing an actual collision between two different companies, then reported a four-way tie. The same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data Systems. The rule must fire on a collision between distinct CIKs and stay silent on one registrant's share classes.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -440,7 +440,7 @@ The second test is the one that matters: it is the 3a false-identity-link lesson
 - [ ] **Step 2: Run them to verify the first and third fail**
 
 Run: `yarn vitest run filer/sdk/edgar-filings.test.ts`
-Expected: the share-class tests FAIL (3 candidates, not 1); the genuine-tie test PASSES already.
+Expected: the share-class tests fail (3 candidates, not 1); the actual-tie test passes already.
 
 - [ ] **Step 3: Implement**
 
@@ -462,6 +462,6 @@ git commit -m "fix(filer): one candidate per registrant — share classes are no
 
 ## Out of scope, and why
 
-**Automatic name→CIK selection.** The 2026-08-03 run took the top candidate for 24 telecom company names and got two confidently wrong registrants: `"Altice USA, Inc."` resolved to AlTi Global, Inc. (SIC 6282, investment advice) at 0.829, and `"WideOpenWest, Inc."` to WidePoint Corp at 0.886. Both are vendored as fixtures under their true registrant names. Any ingest path must corroborate a candidate against something other than its name — the registrant's SIC code, which the submissions payload already carries, is the cheapest available check. That belongs in a follow-up together with the orchestrator that walks corroborated CIKs into `EdgarSubsidiaryRow`s, and it is the piece that decides what actually lands in `filer_family`.
+**Automatic name→CIK selection.** The 2026-08-03 run took the top candidate for 24 telecom company names and got two confidently wrong registrants: `"Altice USA, Inc."` resolved to AlTi Global, Inc. (SIC 6282, investment advice) at 0.829, and `"WideOpenWest, Inc."` to WidePoint Corp at 0.886. Both are vendored as fixtures under their true registrant names. Any ingest path must corroborate a candidate against something other than its name — the registrant's SIC code, which the submissions payload already carries, is the cheapest available check. That belongs in a follow-up together with the orchestrator that walks corroborated CIKs into `EdgarSubsidiaryRow`s, and it is the piece that decides what lands in `filer_family`.
 
 **Comcast, Lumen, Uniti, TDS, Charter, T-Mobile and Cogent** were measured (Comcast's Exhibit 21 alone lists ~1,500 subsidiaries across 33 tables) but are not vendored — at 960 KB for Comcast alone they do not belong in the repository. The 13 vendored documents cover every defect class those seven exhibit.

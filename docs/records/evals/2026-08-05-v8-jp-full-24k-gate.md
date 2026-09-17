@@ -64,7 +64,7 @@ step 2,000, which was never compatible with a 0.18 span match on the same board.
 reading above: the head learns municipality by step 2,000, not "at 24k"; the cosine-anneal explanation
 was not needed. The v8-cjk 2k probe (#2034) uses the corrected figure as its comparison arm.
 
-## 5. What this does NOT decide
+## 5. What this does not decide
 
 - Shipping. This is a training-check record, not a release: the JP model has no serving path yet
   (char-path inference, weights packaging, and the `ja-jp` overlay are the next arc). The ledger

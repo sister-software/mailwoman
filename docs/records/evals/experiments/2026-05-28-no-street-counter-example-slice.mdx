@@ -11,7 +11,7 @@ The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
 morphology FST as a decoder-only fix is insufficient because the model is too
 overconfident on its synth-street-induced dep_loc predictions. The recipe per
 DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
-addresses where the model should NOT emit street labels at all.
+addresses where the model should not emit street labels at all.
 
 This eval doc captures the new synthesizer + pipeline glue that produces that
 counter-distribution extract.
@@ -53,7 +53,7 @@ template distribution:
 ```
 
 Critical check — **0 street-side BIO labels across all 20 synthesized rows**. The
-contract holds.
+the result.
 
 Sample of the critical adversarial output:
 
@@ -72,7 +72,7 @@ raw: South Park Children's Center, München, Bayern 80331
 ```
 
 The tokens `Street`, `Drive`, `Park` carry explicit `B-venue` / `I-venue` labels
-— the model sees direct evidence that these tokens are NOT street components in
+— the model sees direct evidence that these tokens are not street components in
 this surrounding context.
 
 ## v0.6.2 recipe (proposed)

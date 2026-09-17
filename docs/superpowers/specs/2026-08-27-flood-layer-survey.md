@@ -72,8 +72,8 @@ A reader that previously treated Zone 2 as containing Zone 3 is wrong against th
 undefined"). A WFS `resultType=hits` request returns `numberMatched="813627"`.
 
 **License — OGL v3.0, verified.** The ISO metadata's `gmd:useLimitation` is "Open Government
-Licence" and its `gmd:otherConstraints` is "There are no public access constraints to this data. Use
-of this data is subject to the licence identified." The data.gov.uk record names
+license" and its `gmd:otherConstraints` is "There are no public access constraints to this data. Use
+of this data is subject to the license identified." The data.gov.uk record names
 [the OGL v3.0 text](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). The
 required attribution string is given in the metadata:
 
@@ -83,7 +83,7 @@ OGL v3.0 requires that a re-user
 
 > "acknowledge the source of the Information in your product or application by including or linking
 > to any attribution statement specified by the Information Provider(s) and, where possible, provide
-> a link to this licence"
+> a link to this license"
 
 The WFS `GetCapabilities` reports `<ows:Fees>NONE`. This is a license that permits redistribution
 with a named acknowledgement — the posture that makes a `shipped` layer possible.
@@ -195,7 +195,7 @@ because fema.gov's copy refuses non-browser clients) says the opposite:
 > provided that all other geospatial data shown on the printed product meets or exceeds any accuracy
 > standard promulgated by FEMA."
 
-The conditional attaches to the base map a product is combined with, not to the NFHL. The one genuine
+The conditional attaches to the base map a product is combined with, not to the NFHL. The one actual
 use restriction is on **preliminary and pending** data, which "cannot be used to rate flood insurance
 policies or enforce the Federal mandatory purchase requirement" (NFHL GIS Services guide), and on
 printed exports covering unmapped areas.
@@ -281,13 +281,13 @@ What member states report centrally is **links**. The `GML_FHRM_LinkToMS.xsd` sc
 the Netherlands' entire Article 6 spatial delivery is a 21 KB XML of links. Reportnet 3's public
 spatial exports write `<<GEOMETRIES ARE NOT EXPORTED>>` into every geometry cell. The
 [EU Flood Risk Areas Viewer](https://discomap.eea.europa.eu/floodsviewer/) serves four layers — units
-of management plus areas of potential significant flood risk as point, line and polygon — and no
+of management plus areas of potential measured flood risk as point, line and polygon — and no
 hazard extents; the Commission describes it as "a single gateway to all Member States' preliminary
 flood risk assessments, flood hazard and risk maps, and flood risk management plans in the national
 language/s", which is a gateway of links. And the
 **INSPIRE Geoportal, the route the guidance points at, is retired** — data.europa.eu states "the
 INSPIRE Geoportal will be retired on 1 July 2026", and its successor is a metadata catalogue of
-national service endpoints in many schemas, projections, languages and licenses, not a merged layer.
+national service endpoints in several schemas, projections, languages and licenses, not a merged layer.
 
 **What is centrally downloadable is one dataset, and it is not hazard extents.** "Floods Reference
 Spatial Datasets reported under Floods Directive — version 3.0, Mar. 2025"
@@ -310,7 +310,7 @@ on-demand mapping is activation-driven — a response to an actual event, not a 
 _models_, not any authority's designation of a location, so they fall outside what §3.1 says this
 layer is allowed to report and inside what the issue puts out of scope. Two published statements make
 the point without needing the resolution argument. The viewer's own about-panel: "Member States define
-what constitutes a potentially significant flood risk depending on their particular circumstances and
+what constitutes a potentially measured flood risk depending on their particular circumstances and
 flood risk management approaches… **Direct comparisons between Member States are therefore not
 advisable.**" And the reference dataset's declared equivalent scale is 1:100,000, with the GIS
 guidance recommending "positional accuracy acceptable for cartographic representation at the
@@ -430,7 +430,7 @@ Wales, Scotland or Northern Ireland, and each has a different authority with a d
    Zone dataset (November 2023) have been retained whilst we make improvements to the data." This is a
    currency limit, not a coverage gap — those areas are mapped, to an older model. The attribute set
    (`Origin`, `Flood_zone`, `Flood_source`) carries no per-feature date, so **the layer cannot state a
-   per-feature vintage**, and the manifest's single `source_vintage` is the only honest granularity
+   per-feature vintage**, and the manifest's single `source_vintage` is the only direct granularity
    available. Recording that limit is the requirement; inferring a per-feature date is not available.
 2. **What the product excludes by construction.** "They do not take account of the presence and effect
    of flood defences, unless they increase the area potentially at risk of flooding", and "Locations
@@ -477,7 +477,7 @@ to `layer_coverage` of any source in this survey.
 
 **The trap that follows, and it is the reason §3.1 is worded as it is.** A cell can be `designated`
 complete and still hold a Zone D or `ANI` polygon — a determination that no determination was made.
-If a reader took `supportsExclusion(cell) === true` as licence to answer "no flood hazard here", it
+If a reader took `supportsExclusion(cell) === true` as license to answer "no flood hazard here", it
 would fire identically on a Zone X location (determined to be outside the SFHA) and on a Zone D
 location (nobody looked). **The coverage row licenses only that the authority made a determination;
 the hazard reading is the zone value, and Zone D's value is "undetermined".** A builder that folds
@@ -508,7 +508,7 @@ EA's own restatement differs slightly and is recorded here as such):
 Three consequences a builder must carry rather than smooth over. **3a and 3b are not in the data** —
 the published layer's `Flood_zone` holds "Flood Zone 2" or "Flood Zone 3", and the EA states "The
 Environment Agency are not required to map the outer boundary of the extent of Flood Zone 3b, and it
-is usually included within our mapped extent of Flood Zone 3". **The EA's own Zone 2 restatement adds
+is typically included within our mapped extent of Flood Zone 3". **The EA's own Zone 2 restatement adds
 a clause the PPG probability definition does not carry** — "or accepted recorded flood outlines" — so
 the two definitions are not interchangeable and the layer should record which one it is repeating.
 And PPG Table 1 carries its own note: "The Flood Zones shown on the Environment Agency's Flood Map for
@@ -609,7 +609,7 @@ probes that index by key.
 The conversion cannot be total, and saying where it stops is the design. A cell lying **wholly** inside
 one zone polygon is answered by the index alone, with no geometry at runtime. A cell the boundary
 **crosses** carries every zone reaching into it, and a point in such a cell has no answer from the
-index by itself. Two readings are then available and both are honest: report the mixture ("the
+index by itself. Two readings are then available and both are direct: report the mixture ("the
 authority's map assigns more than one zone within this cell"), or ray-cast the point against the rings
 of the few candidate polygons the index already named. The second is the spatial math invariant 6
 permits at an irreducibly geometric runtime edge, in the same class as reverse geocoding, and it is
@@ -630,10 +630,10 @@ reports the number at each resolution it tries and picks from the measurement.
 ### 4.5 A polygon row is not addressable by one spine key
 
 The contract requires every domain row to be addressable by at least one spine key, and a polygon is
-not: it spans many cells. `SpineKeys` has already grown once for precisely this reason — the situs
+not: it spans several cells. `SpineKeys` has already grown once for precisely this reason — the situs
 extracts carry no cell, no WOF id and no address-id, so `street` was added rather than naming a column
 that does not exist. A cell-indexed geometry layer is the same kind of event, and this record does not
-establishes the result.
+the result.
 
 The two candidate answers for the builder: declare `h3` naming `flood_zone_cell.h3_cell`, which is
 true (the layer _is_ addressable by cell) but points a consumer at the index rather than at the domain
@@ -780,7 +780,7 @@ the reason as data), **both** root `tsconfig.json` reference entries, and the
 brand-new npm name is in the root `AGENTS.md`. Re-run the release-list arithmetic afterwards — it
 currently reads 59 workspaces, 53 in the list, six absent with a stated reason each.
 
-**Acquisition.** The rule binds where the rule actually draws its line: metadata reads and per-feature
+**Acquisition.** The rule binds where the rule draws its line: metadata reads and per-feature
 WFS queries are API requests and go through `APIClient`; a 367 MB archive streamed to disk is a file
 transfer and keeps raw `fetch`, saying so in place, as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts`
 do. Note in the client that `HEAD` returns 405 and `Range` is ignored, so freshness cannot be probed
@@ -844,7 +844,7 @@ Recorded as gaps rather than filled in.
   is the digital/paper split the issue asked for, and it is the one part of it that remains a hole:
   the digital side is measurable (2,670 databases, ">90% of population"), the paper-only side is not.
 - **NFIP participating-community counts disagree across three FEMA systems** — 22,772 (Community
-  Status Book PDF), 22,782 (OpenFEMA API), 23,452 (`nation.csv` rows marked YES), all read the same
+  Status Book PDF), 22,782 (OpenFEMA API), 23,452 (`nation.csv` rows marked yes), all read the same
   day. Unreconciled; presented as three figures rather than averaged.
 - **A single national "NFHL_National" artifact** appears only in a search-engine summary, is absent
   from FEMA's own inventory, and no FEMA page stating it was found. Do not build against it.
@@ -876,7 +876,7 @@ Recorded as gaps rather than filled in.
   derived from OS AddressBase and `TOPO_TOID` from OS MasterMap while its licensing section names OGL
   with no OS carve-out. Open question before redistributing that specific product; it is not part of
   the pilot.
-- **Licence and zone definitions for Wales (NRW), Scotland (SEPA) and Northern Ireland (DfI)** — each
+- **license and zone definitions for Wales (NRW), Scotland (SEPA) and Northern Ireland (DfI)** — each
   was located and none was verified. Wales in particular uses a four-zone TAN15 scheme that is not
   interchangeable with England's, so a "UK flood zone" layer built by pooling them would pool
   incompatible vocabularies.

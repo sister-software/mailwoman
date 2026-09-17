@@ -49,7 +49,7 @@ task bodies are left as written.
 
 ## Global Constraints
 
-- The worker imports four core subpaths and NOTHING else from core: `@mailwoman/core/license/key`, `@mailwoman/core/license/register`, `@mailwoman/core/crypto/base64url`, `@mailwoman/core/crypto/digest`. No barrel, no `#env`, no `fs`. The worker bundle test in core holds those two subpaths `node:`-free; the worker's own `wrangler deploy --dry-run` in Task 9 is the check that the worker's whole graph is.
+- The worker imports four core subpaths and nothing else from core: `@mailwoman/core/license/key`, `@mailwoman/core/license/register`, `@mailwoman/core/crypto/base64url`, `@mailwoman/core/crypto/digest`. No barrel, no `#env`, no `fs`. The worker bundle test in core holds those two subpaths `node:`-free; the worker's own `wrangler deploy --dry-run` in Task 9 is the check that the worker's whole graph is.
 - No `nodejs_compat` flag. Every dependency must run on the Workers runtime as shipped: Stripe's SDK does through its fetch client and SubtleCrypto provider; `kysely` and `kysely-d1` are pure JS; Hono is web-standard.
 - Secrets arrive through Wrangler secret bindings only: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `LICENSE_SIGNING_KEY_PEM`, `EMAIL_API_KEY`. None appears in `wrangler.toml`, in a test fixture that ships, in a log line, or in a response. `.dev.vars` is gitignored (confirm: `git check-ignore -q packages/license-worker/.dev.vars`; add the pattern to `.gitignore` if it is not).
 - Production and sandbox are two Wrangler environments with separate D1 databases, secrets, key ids, Price IDs, and site origins. A sandbox signing key never enters the register in core.
@@ -147,7 +147,7 @@ Remove `sha256Bytes` from `ed25519.ts` and import it from `#crypto/digest` where
 
 - [x] **Step 3: Run, lint, commit**
 
-Run: `yarn compile`, then `yarn vitest run packages/core/test/unit/crypto packages/core/test/unit/license packages/core/test/integration/worker-bundle.test.ts`. Expected: PASS. Commit as `refactor(core): the WebCrypto digest has one home, crypto/digest, for the key id and the worker alike`.
+Run: `yarn compile`, then `yarn vitest run packages/core/test/unit/crypto packages/core/test/unit/license packages/core/test/integration/worker-bundle.test.ts`. Expected: pass. Commit as `refactor(core): the WebCrypto digest has one home, crypto/digest, for the key id and the worker alike`.
 
 ---
 
@@ -1252,7 +1252,7 @@ export async function signingSelfTest(
 
 - [x] **Step 4: Run the tests**
 
-Run: the four files. Expected: PASS, 10 tests.
+Run: the four files. Expected: pass, 10 tests.
 
 - [x] **Step 5: Commit**
 
@@ -1490,7 +1490,7 @@ export function mockStripe(routes: Record<string, unknown>): void {
 
 - [x] **Step 4: Run and commit**
 
-Run: `yarn workspace @mailwoman/license-worker test test/webhook.test.ts`. Expected: PASS, 4 tests.
+Run: `yarn workspace @mailwoman/license-worker test test/webhook.test.ts`. Expected: pass, 4 tests.
 
 ```bash
 git add packages/license-worker/lib/stripe packages/license-worker/test
@@ -2143,7 +2143,7 @@ Where the handler reads the ledger directly (`selectFrom("license_tokens")`), mo
 
 - [x] **Step 4: Run and commit**
 
-Run: `yarn workspace @mailwoman/license-worker test test/fulfil.test.ts`. Expected: PASS, 5 tests. If the Stripe SDK's typed field names differ from the fixtures (`current_period_end` placement, `status_transitions`), correct the fixtures to the SDK's types rather than casting.
+Run: `yarn workspace @mailwoman/license-worker test test/fulfil.test.ts`. Expected: pass, 5 tests. If the Stripe SDK's typed field names differ from the fixtures (`current_period_end` placement, `status_transitions`), correct the fixtures to the SDK's types rather than casting.
 
 ```bash
 git add packages/license-worker/lib packages/license-worker/test
@@ -2403,7 +2403,7 @@ Expected: routes 404.
 
 Each route file exports `register<Name>Route(app, env, deps)` in the drop-in style. Behaviours:
 
-- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete nothing, answer 500 (the event row stays so the retry reads `duplicate`? NO: a failed handler must let the retry run, so record the event AFTER the handler succeeds, in the same D1 batch as its last write. Simplest correct order: run the handler first, then `recordEventOnce`; the handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already there). Answer `{ received: true, handled }`.
+- **webhook** (`lib/routes/webhook.ts`): `await c.req.text()` once; `verifyStripeEvent`; on `ok: false` answer `c.json({ error: reason }, 400)`; `recordEventOnce`, and on `"duplicate"` answer 200 `{ received: true, duplicate: true }`; `handleStripeEvent` inside a try; on throw, delete nothing, answer 500 (the event row stays so the retry reads `duplicate`? NO: a failed handler must let the retry run, so record the event after the handler succeeds, in the same D1 batch as its last write. Simplest correct order: run the handler first, then `recordEventOnce`; the handler's own writes are idempotent by primary key (`insertToken` on `invoice_id`, `createLicense` on `subscription_id`), so a retry after a crash between handler and record re-runs the handler, which finds everything already there). Answer `{ received: true, handled }`.
 - **claim** (`lib/routes/claim.ts`): `CLAIM_LIMITER.limit({ key: clientIP })` → 429 when exceeded; `findTokenByCheckoutSession`; none → `{ status: "pending" }` when a `licenses` row exists for the session, 404 when none; `license_state` `revoked` → `{ status: "revoked" }`; else `{ status: "issued", token, lid, licensee, issued, expires, refresh_secret? }`. The refresh secret is stored hashed, so it can be shown only once: the `ensureLicenseFromCheckoutSession` return carries the plaintext on creation, and the claim route needs it too. Implement with a `refresh_secret_pending` column holding the plaintext until the first successful claim reads and clears it (one `UPDATE … SET refresh_secret_pending = NULL … RETURNING`), added to the migration in Task 2 (edit `0001_ledger.sql`; the D1 database is recreated from migrations in tests, and no production database exists yet). Exact-origin CORS via `hono/cors` with `origin: env.SITE_ORIGIN` on this route only.
 - **refresh** (`lib/routes/refresh.ts`): `REFRESH_LIMITER` keyed by lid; body `{ lid, secret }` validated by zod; `findLicense`; compare `await secretDigest(secret)` to the stored hash with a constant-time compare (`timingSafeEqual` is Node; compare byte arrays in a loop that runs to the end); wrong or unknown → the same `404 { error: "not found" }`; `license_state` `revoked` or `lapsed` → `{ status }` 200 without a token; else `{ status: "active", token, issued, expires }` from `currentToken`.
 - **status** (`lib/routes/status.ts`): `STATUS_LIMITER` keyed by lid; `{ lid }` → `{ status: license_state }` mapped to `active | lapsed | revoked` (`review` reads `active`: the customer paid) or `unknown`.
@@ -2582,7 +2582,7 @@ export async function reconcile(
 
 - [x] **Step 3: Run and commit**
 
-Run: `yarn workspace @mailwoman/license-worker test`. Expected: PASS.
+Run: `yarn workspace @mailwoman/license-worker test`. Expected: pass.
 
 ```bash
 git add packages/license-worker

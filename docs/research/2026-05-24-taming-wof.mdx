@@ -19,7 +19,7 @@ If you've ever tried to answer "what city is this address in?" programmatically,
 
 ## What Who's On First is
 
-WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighbourhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
+WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
 It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totalling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
@@ -70,16 +70,16 @@ There are a few things to notice:
 
 1. **Namespaced keys everywhere.** `wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:` — each prefix is a different source or concern. The schema is flat (one object, no nesting) with meaning encoded in the key name.
 2. **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name. `name:fra_x_preferred` would be French. `name:zho_x_preferred` would be Chinese. The `_x_` separator splits language code from name kind (`preferred`, `variant`, `colloquial`, `abbr`, `short`).
-3. **Some places have dozens of name keys.** A major city like Paris has `name:` entries in 50+ languages. A rural US neighbourhood might have only one.
+3. **Some places have dozens of name keys.** A major city like Paris has `name:` entries in 50+ languages. A rural US neighborhood might have only one.
 4. **The hierarchy is pre-computed.** Instead of walking `parent_id` up the tree at query time, WOF bakes the full ancestry chain into each record. Convenient for display; redundant for storage; occasionally stale when a parent is reclassified.
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They're just unique numbers. This is fine for lookup but means you can't reason about "nearby" places by ID proximity.
+WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity.
 
 ### Supersession chains
 
-Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015.
+Places get deprecated: a neighborhood is absorbed by a neighboring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015.
 
 ### Parent ID = -1
 
@@ -94,13 +94,13 @@ Mailwoman needs WOF for two things:
 
 Each use case has a different access pattern, so we built two layers:
 
-### Layer 1: normalised placename index (`WOFPlacenameCache`)
+### Layer 1: normalized placename index (`WOFPlacenameCache`)
 
-For the rule classifiers, all we need is a fast "is this string a placename in any language?" lookup. We don't need coordinates, hierarchy, or geometry — just the normalised string and which languages it's valid in.
+For the rule classifiers, all we need is a fast "is this string a placename in any language?" lookup. We don't need coordinates, hierarchy, or geometry — just the normalized string and which languages it's valid in.
 
-`WOFPlacenameCache` builds this index by streaming GeoJSON files via `TextSpliterator` (our line-delimited streaming library), extracting `name:*` properties, normalising them (case folding, accent stripping), and inserting into an in-memory Map keyed by the normalised form. The value is a Set of language codes the name appears in.
+`WOFPlacenameCache` builds this index by streaming GeoJSON files via `TextSpliterator` (our line-delimited streaming library), extracting `name:*` properties, normalizing them (case folding, accent stripping), and inserting into an in-memory Map keyed by the normalized form. The value is a Set of language codes the name appears in.
 
-The normalisation matters because WOF stores "São Paulo" with the accent, but user input might arrive as "Sao Paulo" or "SAO PAULO". The index needs to match all three.
+The normalization matters because WOF stores "São Paulo" with the accent, but user input might arrive as "Sao Paulo" or "SAO PAULO". The index needs to match all three.
 
 ### Layer 2: per-placetype SQLite DB (`PlacetypeDataSource`)
 
@@ -143,7 +143,7 @@ When the data arrives as a single bulk NDJSON dump rather than 120K files, the a
 
 The analogy: you have a book with a million pages. Instead of having one person read cover-to-cover, you measure the book's thickness, divide it into N roughly-equal stacks, and hand each stack to a different reader. Each reader finds the nearest chapter boundary at their stack's start and end (the delimiter-snap), then processes independently.
 
-We built it, marked it `@internal`, and haven't exercised it at scale because the per-file path was sufficient for the repos we actually use. But when someone wants to process the full Geocode Earth SQLite distribution (3+ GB of admin data across all countries), this is the right primitive.
+We built it, marked it `@internal`, and haven't exercised it at scale because the per-file path was sufficient for the repos we use. But when someone wants to process the full Geocode Earth SQLite distribution (3+ GB of admin data across all countries), this is the right primitive.
 
 ## What's next
 
@@ -155,7 +155,7 @@ Three things, in priority order:
 
 ## So why put up with WOF?
 
-Every geocoder needs a gazetteer. The choice is: pay for one (Google, HERE, Mapbox), use an open one (WOF, GeoNames, OSM Nominatim), or build your own from government sources (BAN, NAD, TIGER).
+Every geocoder needs a gazetteer. The choice is: pay for one (Google, here, Mapbox), use an open one (WOF, GeoNames, OSM Nominatim), or build your own from government sources (BAN, NAD, TIGER).
 
 WOF is the best open option for hierarchy and multilingual names. But it's hard to use raw. The per-file layout, the flat namespace, the supersession chains, the `parent_id: -1` holes — each one is a trap for a naive consumer.
 

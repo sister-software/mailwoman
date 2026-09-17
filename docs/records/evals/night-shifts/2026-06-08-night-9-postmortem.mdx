@@ -4,7 +4,7 @@
 
 ## Headline
 
-The honest-eval foundation (#371 leakage-free split + #373 PIP-containment) was built and
+The direct-eval foundation (#371 leakage-free split + #373 PIP-containment) was built and
 **immediately earned its keep**: on the leakage-free US/Vermont set it exposed a real,
 root-caused, resolver-only defect that the legacy name-match metric (93.7%) completely hides —
 and the fix, once chased to the bottom, collapses the full-US wrong-state error tail
@@ -52,7 +52,7 @@ disagreement found Cause B.
 - **#439** `feat(eval): honest-eval harness` — the yardstick (#371/#373) + coverage-adjusted PIP +
   a resolver eval-integrity section in `concepts/eval-discipline.md`.
 - **#441** the region-resolution fix: `add-region-abbrevs` (manifest) + `backfill-ancestors-from-hierarchy.ts`.
-  Validated on the honest harness; cross-locale no-regression (DE/FR identical); neural beats v0 on
+  Validated on the direct harness; cross-locale no-regression (DE/FR identical); neural beats v0 on
   the held-out set (p99 277 vs 2120km); slim/demo propagation analyzed; **+ a regression suite**
   (`region-abbrev.test.ts`, 8 tests) hardening the abbrev→region + constraint path.
   **DB not promoted** (canonical swap is operator-conditional/blocked — see below).
@@ -92,7 +92,7 @@ disagreement found Cause B.
 - Stacked night PRs on the #437 fix branch (main is red until #437 merges; both CI workflows run
   `yarn compile`).
 - Consulted DeepSeek (2 turns, via the curl fallback — the `pi` wrapper timed out twice).
-- Did NOT promote the abbrev fix on functional-preset evidence; root-caused the regression to a WOF
+- Did not promote the abbrev fix on functional-preset evidence; root-caused the regression to a WOF
   ancestry gap and built the backfill rather than shipping a half-fix.
 - Kept the abbrev+backfill gazetteer as a **validation copy** (`admin-abbrev-test.db`); did not
   swap the canonical (the swap was classifier-blocked, and matches the operator-conditional posture).
@@ -120,9 +120,9 @@ disagreement found Cause B.
 2. **Promotion of the region fix.** When you merge #441 and want it live: run the two build steps
    (`add-region-abbrevs.ts` + `backfill-ancestors-from-hierarchy.ts`) on the canonical
    `admin-global-priority.db`, rebuild FTS, rebuild the slim `wof-hot.db`, and re-publish to R2.
-   Or just promote the validated copy at `$MAILWOMAN_DATA_ROOT/wof/admin-abbrev-test.db`
+   Orpromote the validated copy at `$MAILWOMAN_DATA_ROOT/wof/admin-abbrev-test.db`
    (region+ancestry already applied) after a glance. Backup: `admin-global-priority.db.pre-abbrev-bak`
-   was NOT created (swap blocked) — the canonical is untouched.
+   was not created (swap blocked) — the canonical is untouched.
 3. The model-card.json lineage/md5 divergence (does the npm en-us bundle ship v0.9.3 like R2?).
 4. **Demo/slim verification.** The region-abbrev half propagates to the slim `wof-hot.db` (VT
    resolves); the ancestry half doesn't (slim omits `ancestors`) but likely doesn't need to (no
@@ -163,16 +163,16 @@ disagreement found Cause B.
 
 ## Shift close — post-merge addendum
 
-The body above was written mid-shift, before the merge wall lifted. What actually happened by close:
+The body above was written mid-shift, before the merge wall lifted. What happened by close:
 
 - **All 7 PRs merged** (#437 → #439 → #441 → #438/#443/#445/#446), after a direct operator
   instruction lifted the auto-classifier merge block. Resolved a #441 add/add conflict on the
-  honest-eval doc (kept the superset). Main green afterward (Test + Docs).
+  direct-eval doc (kept the superset). Main green afterward (Test + Docs).
 - **Canonical gazetteer SWAPPED.** Promoted the validated abbrev+ancestry DB to
   `admin-global-priority.db` (backup `admin-global-priority.db.bak-pre-abbrev-2026-06-08`; verified
   VT→Vermont, ancestors 6.32M, coincident_roles 128). This is what activates the region fix for the
   CLI/server resolver + the eval harness.
-- **R2 demo push HELD — it's a no-op.** Investigating before pushing showed the static demo already
+- **R2 demo push held — it's a no-op.** Investigating before pushing showed the static demo already
   resolves wrong-state cases: #365's client-side `expandUsRegion` expands `IL→Illinois` _before_ the
   lookup (+ a bbox-fallback), so the demo never queries the slim DB's abbrev tokens. Proven
   byte-identical live-vs-rebuilt (region step + Chicago-in-IL-bbox). Building the slim DB confirmed it
@@ -181,7 +181,7 @@ The body above was written mid-shift, before the merge wall lifted. What actuall
   A probe of the _real_ resolver exposed that exact-abbrev tiering existed but the exact-abbrev holder
   was dropped from the `limit*4` over-fetch window before tiering ran (`NY`→Highland GB). Widening the
   window for ≤3-char queries lifted bare region-abbrev resolution **7→10/15** US states; with a
-  `country` hint it's already 15/15 (why the honest-eval never saw it). Merged; main green.
+  `country` hint it's already 15/15 (why the direct-eval never saw it). Merged; main green.
 - **Residual + roadmap captured:** 5 cross-country abbrev collisions (`VT`=Vermont/Viterbo) need a
   country/postcode signal → documented on **#369** (extend the postcode-anchor country posterior to
   region lookups) and **#189** (carry abbrevs into the slim DB for data-driven tiering, retire the

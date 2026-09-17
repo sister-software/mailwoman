@@ -57,7 +57,7 @@ formed or overridden:
 
 | Field             | Source in `#decode`              | Notes                                                                                                                                |
 | ----------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`            | `modelText` after case-normalize | the string the model actually saw                                                                                                    |
+| `text`            | `modelText` after case-normalize | the string the model saw                                                                                                             |
 | `caseNormalized`  | `normalizeInputCase` applied?    | boolean                                                                                                                              |
 | `pieces`          | tokenizer `encode`               | `{ piece, start, end }[]`                                                                                                            |
 | `ids`             | tokenizer `encode`               | `number[]`                                                                                                                           |
@@ -66,8 +66,8 @@ formed or overridden:
 | `logits`          | runner output                    | raw, pre-prior — the model's emissions                                                                                               |
 | `localeLogits?`   | runner output                    | 9-wide, `LOCALE_COUNTRIES` order                                                                                                     |
 | `detectedSystem?` | `detectAddressSystem`            | `SystemCode \| null` + whether pinned vs auto                                                                                        |
-| `priors`          | prior-builder calls              | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which actually fired          |
-| `emissions`       | post-prior matrix                | what viterbi actually decoded over                                                                                                   |
+| `priors`          | prior-builder calls              | list of `{ kind, applied }` for queryShape / fst / streetMorphology / spanProposer / conventionsMask — which fired                   |
+| `emissions`       | post-prior matrix                | what viterbi decoded over                                                                                                            |
 | `labels`          | `this.labels`                    | the 33-label vocabulary, for axis labeling                                                                                           |
 | `path`            | viterbi / argmax                 | label indices + per-token confidence                                                                                                 |
 | `repairs`         | repair passes                    | ordered `{ pass, before, after }` token diffs for wordConsistency / postcodeRepair / unitRepair / spanBridge — empty entries omitted |

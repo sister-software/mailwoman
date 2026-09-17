@@ -20,7 +20,7 @@ This is `docs/records/evals/2026-08-05-en-gb-anchor-off.md`'s instrument, re-imp
 `mailwoman/dev-tools/score-anchor-v2-boards.run.ts`.
 
 **Instrument validated by replication.** Run against the shipped `neural-weights-en-gb` overlay (v4.0.1
-model, anchor OFF), it reproduces that record's anchor-OFF column exactly: postcode **318/318**,
+model, anchor off), it reproduces that record's anchor-OFF column exactly: postcode **318/318**,
 `dependent_locality` **207/207**, comma-stripped `dependent_locality` **198/207**, per register
 106/106/106 and 69/69/69. Numbers below are therefore comparable to it line for line.
 
@@ -30,7 +30,7 @@ The candidate is graded as a package-shaped weights dir (`weightsCacheRoot`), ne
 `--model`/`--tokenizer`, so every sibling channel is fed (the #718 zero-fill trap).
 
 **The GB anchor bin had to be built, and the shipped command cannot build it.**
-`mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db` writes a valid, EMPTY
+`mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db` writes a valid, empty
 binary and reports success:
 
 ```
@@ -39,7 +39,7 @@ GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
 
 Its GB branch (`aggregateGbOutward` → `gbOutward`) derives the outward district by splitting `name` on a
 SPACE, because it was written against `postalcode-gb.db`, whose `name` carries the spaced display form.
-The licence-clean Code-Point Open extract stores `name` already space-stripped (`AB101AB`), so the split
+The license-clean Code-Point Open extract stores `name` already space-stripped (`AB101AB`), so the split
 returns null on all 1,746,976 rows. It also aggregates to outward codes only, which is the wrong
 granularity for a model trained against `pilot-anchor-lookup-v2` (unit keys with unit centroids).
 
@@ -54,7 +54,7 @@ GB: 1,749,839 keys (1,746,976 units + 2,863 outward districts, 0 rows skipped) �
 Those three counts are the recipe header's GB line to the digit.
 
 **The channel fires.** `scripts/probe-gb-anchor-fire.ts` replays `buildAnchorFeatures`'s SHAPED
-recognizer over the case-normalized text (what the anchor actually sees, `normalizeInputCase` being
+recognizer over the case-normalized text (what the anchor sees, `normalizeInputCase` being
 default-ON):
 
 ```
@@ -84,15 +84,15 @@ arm produced its one loud warning as designed.
 | 2   | gb-golden exact `postcode`, 3 registers, anchor FED        | ≥ 318/318                        | **318/318** (106·106·106)                                                                | **PASS**                                  |
 | 2b  | gb-golden exact `dependent_locality`, 3 registers          | hold 207/207                     | **207/207** (69·69·69)                                                                   | **PASS**                                  |
 | 2c  | same, comma-STRIPPED                                       | (baseline 198/207)               | **207/207** — recovers all 9                                                             | **PASS, +9**                              |
-| 3   | US parity, 100 rows × 3                                    | no regression                    | 567/777 → **608/777**                                                                    | **PASS** (one tag down, see below)        |
-| 3b  | FR parity, 46 rows × 3                                     | no regression                    | 151/267 → **158/267**                                                                    | **PASS** (no tag down)                    |
+| 3   | US parity, 100 rows × 3                                    | no regression                    | 567/777 → **608/777**                                                                    | **pass** (one tag down, see below)        |
+| 3b  | FR parity, 46 rows × 3                                     | no regression                    | 151/267 → **158/267**                                                                    | **pass** (no tag down)                    |
 | 4   | Anchor-ablation delta on gb-golden                         | ≠ 0                              | **0/318, 0/207, 0/207 on score** — but 6/567 parses differ                               | **INCONCLUSIVE ON THE BOARD** (see below) |
 | 5   | Fisher sanity                                              | loads, finite, nonzero head mass | 106 entries, 39,261,743 scalars = sidecar `param_count`, 0 non-finite, all heads nonzero | **PASS**                                  |
 | —   | int8 ↔ fp32 delta                                          | 0                                | **byte-identical** span serialization, sha256 `92fdb3fc…`, 567 parses                    | **PASS**                                  |
 | G1  | fragment bars, P0 grid with `--lexicon`/`--street-lexicon` | —                                | **HARNESS ABSENT** (see below)                                                           | **NOT SCORED**                            |
-| G2  | ablation vs SHIPPED 6.7.0 same-grader reference            | —                                | **REFERENCE ABSENT** (see below)                                                         | **NOT SCORED**                            |
+| G2  | ablation vs shipped 6.7.0 same-grader reference            | —                                | **REFERENCE ABSENT** (see below)                                                         | **NOT SCORED**                            |
 | G3  | invariance, zero new classes                               | 0 new                            | **4 new violations** (2 DEGRADED, 2 LOST)                                                | **FAIL**                                  |
-| G4  | gauntlet × 3 layers                                        | —                                | regression 88/90 → **84/90**; metamorphic PASS; held-out **PASS, z=2.85**                | **MIXED**                                 |
+| G4  | gauntlet × 3 layers                                        | —                                | regression 88/90 → **84/90**; metamorphic pass; held-out **pass, z=2.85**                | **MIXED**                                 |
 | G5  | golden ABLATED, match-or-beat 6.7.0, zero waivers          | —                                | **FIXTURES ABSENT ON THIS HOST**                                                         | **NOT SCORED**                            |
 | G6  | canary zero-flip, formatted mode                           | —                                | **HARNESS NOT FOUND**                                                                    | **NOT SCORED**                            |
 | G7  | full pre-ship gauntlet on the dev-linked flip              | —                                | = G4 (same instrument, run on the linked worktree)                                       | **MIXED**                                 |
@@ -106,7 +106,7 @@ here, and two independent measurements say so.
 
 **The parses are not identical.** Full span serialization over all 567 parses: anchor ON `92fdb3fc…`,
 anchor OFF `494f29e4…`. Six parses differ — two rows × three registers, both on the comma-free leg, and
-the ON arm is the better read on both:
+the on arm is the better read on both:
 
 ```
 Piran Heights, Upton, Bude, EX23 0LY
@@ -138,15 +138,15 @@ slot  feature   fisher-col-sum   share
 ```
 
 GB carries 11.28% of the projection's Fisher mass, third among the locale slots and above DE/ES/IT/NL.
-The two untouched slots are EXACTLY zero, which is what proves the instrument discriminates. **Slot 4
+The two untouched slots are exactly zero, which is what proves the instrument discriminates. **Slot 4
 took gradient. The run did what it exists to do.**
 
-Column L2 norms are NOT a usable instrument here and were checked first: every column of
+Column L2 norms are not a usable instrument here and were checked first: every column of
 `anchor_projection.weight` sits at 1.33–1.44 against a Xavier-uniform init expectation of 1.395,
 including the two zero-Fisher controls. The projection barely moves in magnitude; only the Fisher
 separates the slots.
 
-What the sheet actually wanted — evidence the channel is not inert — is present. What it cannot get from
+What the sheet wanted — evidence the channel is not inert — is present. What it cannot get from
 this board is a SCORE delta, because the postcode board saturated at 106/106 per register in both arms.
 A board that can measure the anchor's contribution on this model does not exist yet.
 
@@ -188,7 +188,7 @@ Per-country full-agreement: US 50/99 → 52/99, FR 23/43 → 24/43, GB 1/3 → 3
 ## FR fragment board (`mailwoman eval fragment-board`, 2,800 BAN fixtures)
 
 Not G1 — this is the standing FR board, run because G1's harness does not exist. Reported as the nearest
-existing instrument, clearly not a substitute for the pre-registered bars.
+existing instrument, the measured output is not a substitute for the pre-registered bars.
 
 | class                | baseline  | candidate |
 | -------------------- | --------- | --------- |
@@ -225,10 +225,10 @@ failures, and they are one family — Caribbean / US-territory:**
 Against that, the tracked (non-blocking) population drops 98 → 91: all five `si-sentinel` postcode rows
 clear, and a long tail of `gb-venue-*` / `gb-op2-*` rows now pass outright.
 
-Metamorphic: **PASS** with 3 tracked xfails, and three previously-known xfails now pass outright
+Metamorphic: **pass** with 3 tracked xfails, and three previously-known xfails now pass outright
 (`comma-drop|181 Rue du Chevaleret, Paris`, and both Amsterdam `Damrak 1, 1012 LG` transforms).
 
-Held-out fresh draw (FR/BAN, n=300), candidate vs production: **PASS**, and by a margin —
+Held-out fresh draw (FR/BAN, n=300), candidate vs production: **pass**, and by a margin —
 
 ```
   tolerance     production   candidate
@@ -239,7 +239,7 @@ Held-out fresh draw (FR/BAN, n=300), candidate vs production: **PASS**, and by a
   z (candidate − production) @ ≤5km: 2.85
 ```
 
-Combined verdict FAIL in BOTH arms, driven by the regression layer in both.
+Combined verdict fail in both arms, driven by the regression layer in both.
 
 ## Invariance (G3) — FAIL
 
@@ -250,7 +250,7 @@ Combined verdict FAIL in BOTH arms, driven by the regression layer in both.
 INVARIANT 142   DEGRADED 8 (2 new)   LOST 6 (2 new)
 ```
 
-Four NEW violations against a `maxDegraded` of 0:
+Four new violations against a `maxDegraded` of 0:
 
 ```
 ✗ LOST     [comma-drop] fr-montmartre   "123 Rue Montmartre, Paris"  street: "Montmartre" → "Montmartre Paris"   [was INVARIANT]
@@ -280,7 +280,7 @@ structure). Every head carries nonzero mass.
 
 ## Assembly gaps found
 
-1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the licence-clean extract, and fails
+1. **`mailwoman gazetteer postcode-binary` cannot build a GB bin from the license-clean extract, and fails
    silently.** Space-split outward derivation vs a space-stripped `name` column → 0 codes, exit 0, a valid
    empty PCB1 written. Also outward-only, which is the wrong granularity for an anchor-v2-trained model.
 2. **`resolveWeights` hard-codes `locality-surface-lexicon-v6.json`.** Both v4.0.1 and v4.2.0 train against
@@ -291,7 +291,7 @@ structure). Every head carries nonzero mass.
 3. **`neural-weights-en-gb` links no evidence-bundle lexicons.** Its `link-dev-weights.ts` stages
    `pair-index-gb.bin` and the FSTs but not `street-type-lexicon-v3.json` / the locality-surface lexicon,
    and its card omits `requires.street_type` / `requires.locality_surface` even though its `$comment` says
-   the block is a verbatim copy of the base card's. GB parses therefore run those two channels OFF on a
+   the block is a verbatim copy of the base card's. GB parses therefore run those two channels off on a
    model trained with them. The baseline board above inherits that posture (which is why it is the correct
    comparison instrument), but it is a real divergence from the base card.
 4. **G1's harness does not exist.** The sheet names a P0 grid taking `--lexicon` / `--street-lexicon`.

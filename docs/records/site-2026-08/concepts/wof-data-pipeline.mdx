@@ -5,7 +5,7 @@ title: WOF data pipeline — sync, prepare, resolve
 
 # WOF data pipeline — sync, prepare, resolve
 
-Who's On First (WOF) is the gazetteer underneath Mailwoman's Stage 6 resolver. It provides place IDs, parent-child chains, placetypes, and multilingual name variants for every admin boundary on Earth. This article documents how the Mailwoman codebase ingests, normalises, and serves that data — layer by layer, from raw GeoJSON to the queryable SQLite artifacts.
+Who's On First (WOF) is the gazetteer underneath Mailwoman's Stage 6 resolver. It provides place IDs, parent-child chains, placetypes, and multilingual name variants for every admin boundary on Earth. This article documents how the Mailwoman codebase ingests, normalizes, and serves that data — layer by layer, from raw GeoJSON to the queryable SQLite artifacts.
 
 If you've read [Resolver and Who's On First](./resolver-and-wof.mdx) for the runtime story, this is the build-time companion: how the data gets from raw GeoJSON on GitHub to a queryable per-placetype SQLite DB.
 
@@ -72,7 +72,7 @@ node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
 node mailwoman/out/cli.js wof tree <localRepoDir> locality --compact --output locality-tree.json
 ```
 
-The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts` — a recursive `findChildren(roles)` walk. **Heads-up**: WOF placetypes are a DAG with heavy descendant sharing (e.g. `installation` is a leaf reachable from many parents), and a tree projection duplicates every shared subtree under every parent path. For shallow / sparse roots like `country` or `locality` the tree is tiny; for `planet` it explodes to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for those instead.
+The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts` — a recursive `findChildren(roles)` walk. **Heads-up**: WOF placetypes are a DAG with heavy descendant sharing (e.g. `installation` is a leaf reachable from several parents), and a tree projection duplicates every shared subtree under every parent path. For shallow / sparse roots like `country` or `locality` the tree is tiny; for `planet` it explodes to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for those instead.
 
 ### `commands/wof/graph.tsx` — emit a node-link JSON graph
 
@@ -121,7 +121,7 @@ The worker writes to `PlacetypeDataSource` (per-placetype SQLite mini-DBs). An e
 The original intent was more efficient than the current per-file dispatch:
 
 1. Main thread globs a batch of N filenames (N = `availableParallelism()`).
-2. Sends the entire batch to ONE worker (not one filename per Piscina task dispatch).
+2. Sends the entire batch to one worker (not one filename per Piscina task dispatch).
 3. Worker processes the batch sequentially (file reads are fast once in cache), builds up an in-memory table of results.
 4. Worker returns the batch results to the main thread (or writes directly to an in-memory SQLite, then flushes).
 
@@ -169,13 +169,13 @@ CREATE TABLE records (
 
 In-memory hierarchy built from the `whosonfirst-placetypes` codex (a JSON spec defining the parent/child/sibling graph of all WOF placetypes). `Placetype.prepare()` reads the JSON files from the cloned repo and populates static maps (`#byID`, `#byName`, `#childrenOfParentName`).
 
-This is the **placetype-level** hierarchy (country → region → county → locality → neighbourhood), not the per-record parent_id chain. The per-record `parent_id` chain lives in `PlacetypeDataSource`.
+This is the **placetype-level** hierarchy (country → region → county → locality → neighborhood), not the per-record parent_id chain. The per-record `parent_id` chain lives in `PlacetypeDataSource`.
 
 To eyeball this hierarchy, use [`wof mermaid`](#commandswofmermaidtsx--render-the-placetype-hierarchy) for a flowchart view, [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for a flat node-link JSON, or [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) for a nested form (small subtrees only). All three pull from the same in-memory cache.
 
 ### `WOFPlacenameCache` + `loader.ts` — the GeoJSON-direct index
 
-A separate path that builds a normalised placename→languages index directly from the GeoJSON source files via `fast-glob` + `TextSpliterator`. Used by the rule-based classifiers (locality/region dictionaries) to answer "is this string a known placename in any language?" without going through SQLite.
+A separate path that builds a normalized placename→languages index directly from the GeoJSON source files via `fast-glob` + `TextSpliterator`. Used by the rule-based classifiers (locality/region dictionaries) to answer "is this string a known placename in any language?" without going through SQLite.
 
 This is the path that works today. It reads raw GeoJSON and builds Map-based indexes in memory. It doesn't use `PlacetypeDataSource`. The two paths (`WOFPlacenameCache` for rule classifiers, `PlacetypeDataSource` for the resolver/reconciler) were always intended to coexist — different query patterns, different storage trade-offs.
 
@@ -184,7 +184,7 @@ This is the path that works today. It reads raw GeoJSON and builds Map-based ind
 The `spliterator` package (published separately at `@sister-software/spliterator`) was born from this pipeline's needs:
 
 - **`TextSpliterator`** — line-delimited iteration over file streams without loading entire files into memory. Used by `loader.ts` for reading the large WOF GeoJSON bundles.
-- **`AsyncSpliterator.asMany(source, delimiter, concurrency)`** — splits a single large file into N concurrent byte-range iterators for parallel processing. Designed for the case where WOF data arrives as a single NDJSON dump (e.g. from data.geocode.earth) rather than 100K individual files. Marked `@internal`; never exercised at scale because the individual-file path was sufficient for the repos we actually use.
+- **`AsyncSpliterator.asMany(source, delimiter, concurrency)`** — splits a single large file into N concurrent byte-range iterators for parallel processing. Designed for the case where WOF data arrives as a single NDJSON dump (e.g. from data.geocode.earth) rather than 100K individual files. Marked `@internal`; never exercised at scale because the individual-file path was sufficient for the repos we use.
 - **`asyncParallelIterator` / `takeAsync`** — the batching primitives that `commands/wof/prepare` uses to dispatch work to Piscina workers.
 
 The relationship: Spliterator handles the **read** parallelism (splitting a file into chunks); Piscina handles the **compute** parallelism (processing parsed records across CPU cores); `PlacetypeDataSource` handles the **write** (structured storage). The pipeline needs all three layers; today only the first two are wired.
@@ -205,7 +205,7 @@ Item 3 is what this pipeline produces. Specifically:
 
 The WOF spot-check (2026-05-24) confirmed the raw `spr` table's parent_id chains are trustworthy (18/20 correct) but surfaced two findings the prepare pipeline needs to address:
 
-1. **Name aliasing**: "Saint Petersburg" not found via bare `name` lookup — [a known WOF failure mode](./whosonfirst-gotchas.mdx) — WOF stores it as "St. Petersburg". The `variant`/`short` columns in `PlacetypeDataSource` are designed for exactly this; they just need to be populated.
+1. **Name aliasing**: "Saint Petersburg" not found via bare `name` lookup — [a known WOF failure mode](./whosonfirst-gotchas.mdx) — WOF stores it as "St. Petersburg". The `variant`/`short` columns in `PlacetypeDataSource` are designed for exactly this; theyneed to be populated.
 2. **Disambiguation**: bare-name lookup without `parent_id` filtering picks the wrong record (a Nebraska village named "New York" outranks NYC by alphabetical ID ordering). The `find` query needs a `parent_id` filter or population-weighted ranking.
 
 Both findings are closed by completing the prepare pipeline (populates the variant columns) and using `PlacetypeDataSource.find` with appropriate criteria (filters by parent_id or placetype).

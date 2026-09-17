@@ -28,7 +28,7 @@
 #   DECISION: affixes clear + street holds + unit retained + no regression check → promote candidate.
 #     If street/house_number slips or affixes over-fire: lower synth-affix 2.0 -> 1.5 + rerun
 #     (the unit-v3 remedy). If affixes move but `street` drops: negative space refuted here — keep
-#     the affix lift, note it.
+#     the affix result, note it.
 # Measure: per-locale-f1.ts (US/FR golden) + the street-affix-real + unit-real-designators evals
 #   (fp32) + de-order-eval.ts (DE 2x2 regression check).
 #

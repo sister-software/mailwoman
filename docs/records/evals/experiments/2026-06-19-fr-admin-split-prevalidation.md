@@ -18,7 +18,7 @@ For each sampled FR commune (truth = its own WOF centroid), resolve three parse 
 
 Two strata: **collision** communes (a name shared by >1 département — where the région is the only
 disambiguator) and **unique** communes (control). Unresolved is penalized to the country centroid
-(the coordinate the geocoder actually falls back to on a miss), so the three states are comparable on
+(the coordinate the geocoder falls back to on a miss), so the three states are comparable on
 one metric instead of averaging over different resolved subsets. n=200 per stratum (`scripts/eval/fr-admin-split-selfvalidation.ts`).
 
 ## Result
@@ -31,7 +31,7 @@ one metric instead of averaging over different resolved subsets. n=200 per strat
 | merged (loc = commune+dept) |    247.2 |   248.5 | 394.8 |       **0%** |
 | **split (corrected)**       | **66.7** | **0.0** | 281.4 |          97% |
 
-**SPLIT vs DROPPED: −61.3% mean error**, split beats dropped by >2 km on 100/200.
+**SPLIT vs dropped: −61.3% mean error**, split beats dropped by >2 km on 100/200.
 
 ### Unique communes (n=200) — control
 
@@ -41,7 +41,7 @@ one metric instead of averaging over different resolved subsets. n=200 per strat
 | merged (loc = commune+dept) |    318.0 | 315.5 | 453.6 |       **0%** |
 | **split (corrected)**       | **50.4** |   0.0 | 219.1 |          87% |
 
-**SPLIT vs DROPPED: −55.3%**.
+**SPLIT vs dropped: −55.3%**.
 
 ## Read
 
@@ -59,7 +59,7 @@ Three findings, all the same direction:
 **Verdict: the change is real — the resolver demonstrably uses the région tag, so a model that emits
 the split will move the anchor-ON coordinate.** The GPU is justified.
 
-**Honest caveat:** this measures the _ceiling_ with perfect, hand-constructed splits. The retrain
+**direct caveat:** this measures the _ceiling_ with perfect, hand-constructed splits. The retrain
 must still learn to (a) emit the right département and (b) keep the commune right. So the live check
 on the trained candidate (`check rubric` in the night plan — FR centroid-shift, anchor-ON, vs v1.5.0)
 is what counts; this only proves the ceiling is worth climbing toward. It is: a 55–61% reduction and

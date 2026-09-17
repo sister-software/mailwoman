@@ -8,8 +8,8 @@ completion as this is filed.
 ## What shipped
 
 - **Wave A — 6 Sonnet sub-agents, all completed and landed:**
-  - #548 — banded-check encoding for interpolation eval (#483 ruling). VT/Cook bands PASS; tiger ≤100m p90 MISS preserved honestly.
-  - #549 — GeoNames US backfill _infrastructure_ (#525). `US.txt` absent on disk → 0 rows filled; ready for operator to source it. DB actually holds 8,351 placeholders (not the 4,322 from the anchor JSON).
+  - #548 — banded-check encoding for interpolation eval (#483 ruling). VT/Cook bands pass; tiger ≤100m p90 MISS preserved directly.
+  - #549 — GeoNames US backfill _infrastructure_ (#525). `US.txt` absent on disk → 0 rows filled; ready for operator to source it. DB holds 8,351 placeholders (not the 4,322 from the anchor JSON).
   - #550 — eval-row expansion: punctuation-stress 120→200, demo-cascade 21→39 (39/39, every WOF id findPlace-verified). Composition shift moved the punctuation baseline 80.9→75.3 (stated, harder mix — not drift).
   - #551 — vitest worktree-exclude + STAGES docs-lag (most docs-lag already fixed by 497e8ba).
   - #553 — codex level/floor/military tables (#517), **clean cherry-pick** (see friction).
@@ -31,12 +31,12 @@ variant (`"দক্ষিণ কোরিয়া"`, the `name:ben` variant of
 
 **The decision (DeepSeek-validated on the NFC question; operator-endorsed via the monitor; PR #554,
 merged `7ba151a`):** relax the #519 _mechanism_ without abandoning its _principle_. The principle —
-char-offset spans are only meaningful under ONE normalization form — is fully preserved; only the
+char-offset spans are only meaningful under one normalization form — is fully preserved; only the
 failure mode changes:
 
 - **Normalize, don't throw.** `alignRow` now normalizes `raw` AND every component value to NFC,
   computes spans over the NFC raw, and stores the NFC raw. Equivalent to enforcing NFC at the
-  adapter boundary, but robust to any adapter that slips. NFC is semantics-preserving, so the
+  adapter boundary, but resilient to any adapter that slips. NFC is semantics-preserving, so the
   (valuable, multi-locale) row is kept, not lost.
 - **Quarantine out-of-bounds spans** (`span-out-of-bounds:<tag>`) instead of crashing — a
   `locateSpan` over-run on awkward Unicode is bad data, not a fatal.
@@ -54,10 +54,10 @@ those rows rather than quarantine them. This is the next corpus-quality change (
 **Lesson:** I skipped the two WOF smokes (validated wof _emit_ in-build instead, since the smoke's
 ancestry-index cost ≈ the build's own). But smokes run the _full_ pipeline including align, so a
 WOF smoke _might_ have surfaced this align-phase fragility earlier — though a 20k-row sample could
-just as easily have missed the specific bad rows. Honest read: align had latent non-Latin
+just as easily have missed the specific bad rows. direct read: align had latent non-Latin
 fragility that only a full WOF align reliably surfaces; the build found it, the fix makes align
-robust, and resume turned a lost-2.5h crash into a ~1h recovery. The in-build validation worked —
-it just cost more than a clean smoke would have.
+resilient, and resume turned a lost-2.5h crash into a ~1h recovery. The in-build validation worked —
+itcost more than a clean smoke would have.
 
 ## Key decisions made autonomously
 
@@ -66,13 +66,13 @@ it just cost more than a clean smoke would have.
 3. **ban concatenation.** The adapter is single-file but the source is 103 per-department CSVs; concatenated to `staging/ban-france.csv` (9.5G→4.8G compressed), header-deduped.
 4. **Skipped the two WOF smokes, validating in-build.** wof-admin's smoke needs a full ancestry-index build (~17min, no `limit` speedup) ≈ the build's own cost. Launched the build (wof-admin = adapter 1, wof-postalcode = 2) and validate their quarantine live instead of paying the index cost twice. 9/11 adapters smoked clean across CSV/SQLite/NDJSON/concatenated shapes.
 5. **imls-pls 21% quarantine ruled benign.** 95% are `component-not-found:subregion` — the adapter emits a county subregion that never appears in the US-address raw, so the char-offset format correctly drops it (v0.3.0 kept them mis-aligned). imls is 0.003% of the corpus, venue signal redundant with nppes/hrsa. Build proceeds as-is; #552 filed to fix the adapter for v0.5.1.
-6. **Task 2: codex tables shipped (#553); lexicon wiring parked — with an A/B CORRECTION.** Initially stripped the wiring believing it caused an 80.9→77.1 punctuation-stress regression. The clean A/B (operator-requested) **disproved that**: within one environment (same model/tokenizer/set, only the lexicon toggled + recompiled), wiring ON == OFF **byte-for-byte** (77.1, every class, every error row) — the wiring does NOT regress. The eval exercises the span proposer (`NeuralAddressClassifier` + `buildCodexSpanLexicon`); the AU levels just don't fire (~1 AU-level row in 120). The 80.9 (Task 4) vs 77.1 (Task 2 + A/B) gap is **the `--fold-gold` grading flag**, NOT a wiring effect and NOT a harness bug: Task 4 measured the folded/lenient view (affixes fold into street, cedex out-of-vocab — apples-to-apples vs v0); the A/B + Task 2 used strict full-gold. Both numbers are correct for their mode. I initially suspected per-worktree weights/tokenizer symlinks (DeepSeek concurred) — **verified false**: the eval hardcodes an absolute tokenizer path and the `neural-weights-en-us` symlinks are byte-identical across worktrees. **No reverts; no harness fix.** Methodology note: always control for `--fold-gold` when comparing punctuation-stress numbers. Caveat: 120 rows barely touch AU levels, so "neutral here" ≠ "validated"; the wiring + the single-letter "L" risk remain untested. **Decision: codex tables ship (#553); wiring parked.** Ship-path when wanted (DeepSeek): ~12 synthetic single-AU-level rows + a span-EXTRACTION unit test (not full accuracy), and exclude the literal "L" (not in AS 4590.1; spells "Level"/"Lv"). The strip's original _rationale_ (regression) was wrong; shipping tables-only was still the right outcome. The agent had also scope-crept into span-proposer/classifier/docs — excluded via cherry-pick. **Lesson reinforced: verify-before-assert — both my regression read and the symlink hypothesis were plausible and wrong; the A/B + symlink check caught both.**
+6. **Task 2: codex tables shipped (#553); lexicon wiring parked — with an A/B CORRECTION.** Initially stripped the wiring believing it caused an 80.9→77.1 punctuation-stress regression. The clean A/B (operator-requested) **disproved that**: within one environment (same model/tokenizer/set, only the lexicon toggled + recompiled), wiring ON == OFF **byte-for-byte** (77.1, every class, every error row) — the wiring does not regress. The eval exercises the span proposer (`NeuralAddressClassifier` + `buildCodexSpanLexicon`); the AU levelsdon't fire (~1 AU-level row in 120). The 80.9 (Task 4) vs 77.1 (Task 2 + A/B) gap is **the `--fold-gold` grading flag**, not a wiring effect and not a harness bug: Task 4 measured the folded/lenient view (affixes fold into street, cedex out-of-vocab — apples-to-apples vs v0); the A/B + Task 2 used strict full-gold. Both numbers are correct for their mode. I initially suspected per-worktree weights/tokenizer symlinks (DeepSeek concurred) — **verified false**: the eval hardcodes an absolute tokenizer path and the `neural-weights-en-us` symlinks are byte-identical across worktrees. **No reverts; no harness fix.** Methodology note: always control for `--fold-gold` when comparing punctuation-stress numbers. Caveat: 120 rows barely touch AU levels, so "neutral here" ≠ "validated"; the wiring + the single-letter "L" risk remain untested. **Decision: codex tables ship (#553); wiring parked.** Ship-path when wanted (DeepSeek): ~12 synthetic single-AU-level rows + a span-EXTRACTION unit test (not full accuracy), and exclude the literal "L" (not in AS 4590.1; spells "Level"/"Lv"). The strip's original _rationale_ (regression) was wrong; shipping tables-only was still the right outcome. The agent had also scope-crept into span-proposer/classifier/docs — excluded via cherry-pick. **Lesson reinforced: verify-before-assert — both my regression read and the symlink hypothesis were plausible and wrong; the A/B + symlink check caught both.**
 7. **Thermal governor.** Build hit a sustained 90°C on 2/16 cores (equilibrium, not a spike). Deployed a detached SIGSTOP/SIGCONT governor (pause at 85°C, resume at 81°C). Cooling turned out fast (85→55°C in 5s), so duty cycle is ~80% — modest slowdown, safe peaks.
 8. **Task 7b (prettier) deferred** — low value (the operator's Format commit already covered touched files) and unnecessary heat load.
 
 ## What went well
 
-- The contract+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with honest self-reports; the checks (#517 punctuation, #483 bands) did their job.
+- The contract+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with direct self-reports; the checks (#517 punctuation, #483 bands) did their job.
 - The per-adapter smoke check paid off again — caught the imls subregion class before the 22h commit (its actual purpose).
 - btrfs compression analysis avoided a needless 398G deletion of the operator's scratch.
 
@@ -85,9 +85,9 @@ it just cost more than a clean smoke would have.
 ## Open questions for the operator
 
 - **Task 2 wiring:** re-evaluate the AU-level span-proposer lexicon (the "L" false-positive risk) with a clean A/B before wiring it; codex tables already shipped.
-- **GeoNames `US.txt`** sourcing to actually run the #525 backfill (#549 infra is ready).
+- **GeoNames `US.txt`** sourcing to run the #525 backfill (#549 infra is ready).
 - **2 ambiguous-gold rows** on #550 (126 FR date-street slash — ruled keep; 177 unbalanced-vs-quoted-venue class — noted).
-- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-extract phase, likely completing ~shift-end or just after. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE honest-eval) + first new-format train are next-session (conditional). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
+- The build **crashed once and was recovered** (#554 — the #519 NFC decision written up above) and is in its final parquet-extract phase, likely completing ~shift-end orafter. It's detached; on completion the watcher writes `build-logs/v0.5.0-validation-report.md` (manifest + quarantine breakdown + holdout verification). The model-based validation (DE direct-eval) + first new-format train are next-session (conditional). To resume a build crash without re-emitting: `MAILWOMAN_RESUME=1`.
 
 ## Concrete next steps (big-model / next session)
 

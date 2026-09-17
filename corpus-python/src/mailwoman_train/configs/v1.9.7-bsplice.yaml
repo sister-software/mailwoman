@@ -39,7 +39,7 @@
 #
 # CHECK (the $20 cap sits behind this 2k-step probe): 4 held-out eval sets (scripts/eval/anchor-absorption-
 # probe.sh) graded vs v1.9.2: H (US leading-5-digit house# recall recovers toward the no-override
-# ceiling), P (DE/Nordic leading postcode coord holds at its v1.9.2 baseline, the German lift),
+# ceiling), P (DE/Nordic leading postcode coord holds at its v1.9.2 baseline, a German improvement),
 # ROBUST-DROP (anchor forced unknown -> still right from tokens), ROBUST-MISLEAD (anchor forced wrong
 # -> follows TEXT).
 # Checks set RELATIVE to the measured v1.9.2 baseline on each eval set (not DeepSeek's absolute %; trust

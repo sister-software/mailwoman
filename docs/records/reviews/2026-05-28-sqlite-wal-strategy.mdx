@@ -11,7 +11,7 @@ Upgrade Mailwoman's existing WOF SQLite build path. This is **not a greenfield s
 Repo entry points:
 
 - `scripts/build-unified-wof.ts` - current GeoJSON -> SQLite builder.
-- `resolver-wof-sqlite/unified-schema.ts` - current schema/index helper. Use or extend this as the source of truth.
+- `resolver-wof-sqlite/unified-schema.ts` - current schema/index helper. Use or extend this as the authoritative record.
 - `resolver-wof-sqlite/schema.ts` - downstream Kysely contract for WOF-style tables.
 - `resolver-wof-sqlite/fts.ts` and `resolver-wof-sqlite/build-fts-cli.ts` - downstream FTS5/R\*Tree/population index lifecycle.
 
@@ -39,7 +39,7 @@ The output is a static asset. Treat it like a search index: expensive to build, 
 ### Why Piscina?
 
 - Built-in `worker_threads` works, but Piscina handles pool lifecycle, queueing, and `destroy()` semantics.
-- Workers are useful for reading and parsing many tiny GeoJSON files.
+- Workers are useful for reading and parsing several tiny GeoJSON files.
 - SQLite still allows one writer at a time, even in WAL mode. Do not assume Piscina creates parallel writes. Keep write transactions short.
 
 ### Why WAL during ingest but not at rest?
@@ -365,7 +365,7 @@ Do not put the ingest DB on NFS, SMB, or another network mount. WAL's shared-mem
 
 ### macOS fsync caveat
 
-If durability across power loss matters on macOS, consider `PRAGMA fullfsync = ON`. For this pipeline, re-ingest is usually cheaper.
+If durability across power loss matters on macOS, consider `PRAGMA fullfsync = ON`. For this pipeline, re-ingest is typically cheaper.
 
 ---
 

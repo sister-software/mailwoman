@@ -4,7 +4,7 @@
 
 **Read it with two lenses — they disagree on purpose:**
 
-1. **Arena head-to-head (whole-address-strict):** the 3 unbiased capability arenas (`scripts/eval/external-arenas.sh`, `--symmetric-match --postcode-repair`). A row counts only if the WHOLE parse matches. This is the honest "does the system produce a usable parse" lens — but it **understates per-tag wins** (a unit-perfect parse scores 0 if any other tag slips). Example below: postal-arena `secondary-unit` reads 0% here while per-tag `unit` is 92%.
+1. **Arena head-to-head (whole-address-strict):** the 3 unbiased capability arenas (`scripts/eval/external-arenas.sh`, `--symmetric-match --postcode-repair`). A row counts only if the whole parse matches. This is the direct "does the system produce a usable parse" lens — but it **understates per-tag wins** (a unit-perfect parse scores 0 if any other tag slips). Example below: postal-arena `secondary-unit` reads 0% here while per-tag `unit` is 92%.
 2. **Per-tag F1:** `per-locale-f1.ts` on golden dev (US/FR) + the curated real-OOD evals. The granular tag-health lens — this is what the parity campaign moves.
 
 Self-emitted (`scripts/eval/external-arenas.sh` + `per-locale-f1.ts`); do not hand-edit numbers.
@@ -21,7 +21,7 @@ Self-emitted (`scripts/eval/external-arenas.sh` + `per-locale-f1.ts`); do not ha
 
 **Routing truth (unchanged since #15):** rules win on clean/canonical, neural wins decisively on noisy/degraded (+21pp), both are weak on edge formats (PO-box/military/rural-route). The resolver should route by input shape.
 
-Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4), `military-apofpo` (3), `rural-route` (1), `directional` (2). `secondary-unit` reads 0% whole-match here despite 92% per-tag (lens caveat).
+Postal-arena edge classes where both are 0% (the parity frontier): `po-box` (4), `military-apofpo` (3), `rural-route` (1), `directional` (2). `secondary-unit` reads 0% whole-match here despite 92% per-tag (lens caveat).
 
 ---
 
@@ -68,7 +68,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 
 ## Parity verdict (v4.1.0)
 
-Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now FIXED (the first campaign win), `street_prefix`/`street_suffix` are in flight (v0.9.8), `country` and `po_box` have a measured deterministic path (P=R=F1=100, #464 — not a retrain), and `intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each change is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp), and the change-shape taxonomy below now routes each remaining tag to the right tool (retrain vs deterministic matcher).
+Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now fixed (the result), `street_prefix`/`street_suffix` are in flight (v0.9.8), `country` and `po_box` have a measured deterministic path (P=R=F1=100, #464 — not a retrain), and `intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each change is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp), and the change-shape taxonomy below now routes each remaining tag to the right tool (retrain vs deterministic matcher).
 
 ## Campaign status
 

@@ -12,7 +12,7 @@ Two defects made every prior-on number taken before this date wrong, both found 
 fixed in separate PRs.
 
 1. **The session never fed the prior to the parse that happened** (#1699). `createGeocodeSession`
-   built the FST and passed it to `geocodeAddress`, but that path parses ONCE up front and hands the
+   built the FST and passed it to `geocodeAddress`, but that path parses once up front and hands the
    tree over as `parsedTree`, so `geocodeAddress` never re-parsed and its copy was dead. Bare `Moscow`
    read as `street` with the flag on and off alike.
 2. **The gauntlet fed every overlay the BASE classifier's FST** (#1703). A GB row ran en-GB weights
@@ -26,7 +26,7 @@ fixed in separate PRs.
 | layer       | prior OFF               | prior ON                |
 | ----------- | ----------------------- | ----------------------- |
 | regression  | 352/354 conditional     | **353/354** conditional |
-| metamorphic | PASS (3 tracked xfails) | PASS (3 tracked xfails) |
+| metamorphic | pass (3 tracked xfails) | pass (3 tracked xfails) |
 
 Row-level diff over all failing rows (conditional + tracked), 209 OFF and 208 ON:
 
@@ -52,7 +52,7 @@ The three spurious streets it stops emitting are `Perth`, `Dallas` and `Californ
 **Every floor tally is byte-identical in all four runs.** The prior's entire effect lands in the
 PRECISION half that `parity-corpus.ts` documents the floors structurally cannot see — _"a tag emitted
 where the gold has NONE costs nothing, forever."_ A floors-only reading reports "no change" and misses
-both the gain and the loss, which is why this promotion rests on the full-agreement and spurious
+both the result and the loss, which is why this promotion rests on the full-agreement and spurious
 columns.
 
 ## The D-rule (iron rule 6)

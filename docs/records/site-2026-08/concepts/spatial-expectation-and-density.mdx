@@ -21,7 +21,7 @@ At the value level, the question is: "how surprised am I that these two records 
 
 ## Scale one: value-level distinctiveness
 
-The Fellegi-Sunter model underlying the matcher assigns each field agreement a weight: `log₂(m / u)`, where `m` is how often a true match agrees on that field and `u` is how often a non-match agrees by coincidence. The `u` term is the one to fix your eye on. For any given field, `u` is roughly how common that value is.
+The Fellegi-Sunter model underlying the matcher assigns each field agreement a weight: `log₂(m / u)`, where `m` is how frequently a true match agrees on that field and `u` is how frequently a non-match agrees by coincidence. The `u` term is the one to fix your eye on. For any given field, `u` is roughly how common that value is.
 
 Two records that agree on the value `"Smith"` are barely evidence of anything. Agreement on `"Smith"` happens all the time among non-matches, because `"Smith"` is everywhere. Two records that agree on `"Vijayan"` are strong evidence — that agreement is unlikely to be coincidental. The math is the same in both cases; what differs is the value's frequency.
 
@@ -41,7 +41,7 @@ The pattern is inverse-frequency weighting — the same math as TF-IDF. A clinic
 
 ## Scale two: regional expected density
 
-Zoom out from a pair of records to a region, and the question changes from "should these agree?" to "how many facilities of this type should be here, given the population?"
+Zoom out from a pair of records to a region, and the question changes from "should these agree?" to "how several facilities of this type should be here, given the population?"
 
 This question has a long quantitative history.
 
@@ -51,7 +51,7 @@ This question has a long quantitative history.
 
 **Two-step floating catchment area (2SFCA)** turns that gravity intuition into a measurable accessibility index (Radke & Mu, 2000; widely cited):
 
-1. For each facility location, calculate the **supply-demand ratio** within a threshold travel distance: how many providers per thousand residents in the catchment?
+1. For each facility location, calculate the **supply-demand ratio** within a threshold travel distance: how several providers per thousand residents in the catchment?
 2. For each residential area, sum the supply-demand ratios of all facilities within _its_ threshold travel distance.
 
 The result is an accessibility score per location — a local estimate of "provider supply per unit of population demand." The enhanced version (E2SFCA) adds a distance-decay function so closer facilities count more than distant ones. Both variants quantify the gap between what the population generates as demand and what the supply side delivers.
@@ -82,11 +82,11 @@ The geocoder's resolver already implements a "where is something likely to be gi
 const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
 ```
 
-The coarse-placer (#244) extends this to the country level: a tiny linear classifier infers the probable country from the address text and injects that as a soft `anchorPosterior` into the resolver's re-ranking (`core/coarse-placer/coarse-placer.ts`, `core/pipeline/runtime-pipeline.ts`). Population data lives in `place_population` (built from WOF `wof:population` / `gn:population` during `scripts/build-unified-wof.ts`). The resolver's `populationBoost: 4.0` is a calibrated prior that says: the more people live there, the more likely an address is actually there.
+The coarse-placer (#244) extends this to the country level: a tiny linear classifier infers the probable country from the address text and injects that as a soft `anchorPosterior` into the resolver's re-ranking (`core/coarse-placer/coarse-placer.ts`, `core/pipeline/runtime-pipeline.ts`). Population data lives in `place_population` (built from WOF `wof:population` / `gn:population` during `scripts/build-unified-wof.ts`). The resolver's `populationBoost: 4.0` is a calibrated prior that says: the more people live there, the more likely an address is there.
 
 That is already a spatial expectation model. It is already live.
 
-What changes at the matcher scale is that "spatial expectation" operates not on individual place candidates but on facility counts across a region. Instead of "which Berlin is the right one?" you're asking "how many primary care practices should serve a county with 40,000 residents and a median income below the federal poverty level?" The data is coarser; the question is about a distribution, not a point.
+What changes at the matcher scale is that "spatial expectation" operates not on individual place candidates but on facility counts across a region. Instead of "which Berlin is the right one?" you're asking "how several primary care practices should serve a county with 40,000 residents and a median income below the federal poverty level?" The data is coarser; the question is about a distribution, not a point.
 
 The connection between the two scales is that both are the same Bayesian move applied at different granularities:
 
@@ -99,9 +99,9 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## Where this lands in the open work
 
-**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible, not enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: not just "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations are exactly this precomputed — a column in the data (the FCC forms explicitly reference HPSA status). Using them means we don't have to recompute the expected density ourselves; we inherit it from the federal designation system.
+**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible, not enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations are exactly this precomputed — a column in the data (the FCC forms explicitly reference HPSA status). Using them means we don't have to recompute the expected density ourselves; we inherit it from the federal designation system.
 
-**`#618` — multi-source cross-dataset correlation** is where inverse-address-frequency weighting does its heaviest work. The NPPES registry alone has 4.8 GB of provider records, many at shared institutional addresses (hospitals, clinics, care systems). A shared address among many records is a high-frequency value and should contribute near-zero evidence to a match decision. The `withTermFrequency` mechanism in `match/tf.ts` and `match/fellegi-sunter.ts` handles this automatically — the term-frequency table is built from the dataset at match time, so a shared-building address automatically gets its weight suppressed without any hand-tuning.
+**`#618` — multi-source cross-dataset correlation** is where inverse-address-frequency weighting does its heaviest work. The NPPES registry alone has 4.8 GB of provider records, several at shared institutional addresses (hospitals, clinics, care systems). A shared address among several records is a high-frequency value and should contribute near-zero evidence to a match decision. The `withTermFrequency` mechanism in `match/tf.ts` and `match/fellegi-sunter.ts` handles this automatically — the term-frequency table is built from the dataset at match time, so a shared-building address automatically gets its weight suppressed without any hand-tuning.
 
 **`#602` / `#603` — config auto-tuning and selective models** are where a regionally-aware density weight might eventually live. A population-weighted distance threshold — the "50 m same-building" bucket that's right downtown but too tight in a rural county — is one concrete change. The geocoder already knows the density context (WOF hierarchy + population data); the matcher can condition its distance comparisons on that context. This is a tunable config surface, not a new model: it's the kind of adjustment that AutoER's sampling-based tuner (AutoER, IEEE Access 2025, ~100 trials to recover >95% of exhaustive search) can find automatically once the surface is exposed.
 
@@ -113,7 +113,7 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 The density model is not on the critical path. The critical path is: get the classical Fellegi-Sunter core working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
 
-Two specific pieces are worth building early because they're essential to the anti-join's interpretability, not just analytical color:
+Two specific pieces are worth building early because they're essential to the anti-join's interpretability, notanalytical color:
 
 1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join, not a model.
 

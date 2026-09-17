@@ -36,7 +36,7 @@ The −6.6pp golden country recall fired the 2pp pre-publish check. A falsifier 
 | v261           | 3/4                        | 0.7%                               |
 
 **Identical across the whole fragment lineage.** The −6.6pp is entirely on the non-postal WOF-admin
-distribution; on real addresses country recall AND precision are unchanged. The check over-weighted a
+distribution; on real addresses country recall and precision are unchanged. The check over-weighted a
 subset that is 98% synthetic hierarchy rows. Promoting v261 does not regress country on production
 input.
 

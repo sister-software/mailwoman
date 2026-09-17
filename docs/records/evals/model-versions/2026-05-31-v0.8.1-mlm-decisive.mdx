@@ -1,7 +1,7 @@
 ---
 title: "v0.8.1 — MLM pre-training decisive round (pretrained-init vs from-scratch)"
 date: 2026-05-31
-status: "COMPLETE — verdict: DROP pretraining (no ceiling benefit). v0.7.2 stays default; MLM track closed."
+status: "COMPLETE — verdict: drop pretraining (no ceiling benefit). v0.7.2 stays default; MLM track closed."
 ---
 
 # v0.8.1 — The MLM decisive round
@@ -10,10 +10,10 @@ status: "COMPLETE — verdict: DROP pretraining (no ceiling benefit). v0.7.2 sta
 
 Does masked-language-model **pre-training** of the encoder improve the supervised parser
 **at the task ceiling**? The 40k round (lr 5e-5 cosine) showed pretraining's secondary
-gains (calibration +2.0pp, harness +4.8pp) but BOTH arms under-trained the product metric
+gains (calibration +2.0pp, harness +4.8pp) but both arms under-trained the product metric
 (resolver 48–50% vs shipped 96.1%) — a broken recipe, not an init verdict. This round
 re-runs the A/B at the **v0.7.2-proven recipe** so the comparison happens where the model
-can actually reach ~96% resolver.
+can reach ~96% resolver.
 
 ## What changed (single variable)
 
@@ -77,7 +77,7 @@ Both arms use the post-#222 gazetteer-alias matching, and both clear shipped v0.
 and v0/Pelias (95.8%) on real points.
 
 **Calibration note:** the metric here is the 90th-percentile confidence of WRONG predictions
-(lower = better calibrated), identical for both arms (0.949). It is NOT the "fraction of
+(lower = better calibrated), identical for both arms (0.949). It is not the "fraction of
 wrong preds at ≥0.9" the auto-runner's column label implied — that label conflated a
 percentile and has been corrected. Either way the init-attributable calibration delta is zero.
 
@@ -92,10 +92,10 @@ At the **task ceiling**, MLM pre-training of the encoder adds nothing:
 
 The decisive point is the **disappearance of the 40k round's gains.** That under-trained
 round (lr 5e-5, 40k) had shown pre-training +4.8pp harness and a calibration edge — which is
-what kept the track alive. Re-run at the v0.7.2-proven recipe where the model actually reaches
+what kept the track alive. Re-run at the v0.7.2-proven recipe where the model reaches
 the ceiling (Arm A's step-28k eval was already v0.7.2-class: locality 0.84 / region 0.75 /
 street 0.94 / house_number 0.99 / postcode 0.999), those gains **vanished**. They were an
-under-training artifact: a from-scratch encoder simply hadn't caught up yet at 40k, so the
+under-training artifact: a from-scratch encoder only hadn't caught up yet at 40k, so the
 pre-trained init looked better. Given enough steps, scratch catches up and the gap closes.
 
 ## Decision
@@ -103,12 +103,12 @@ pre-trained init looked better. Given enough steps, scratch catches up and the g
 **DROP pre-training. v0.7.2 stays the default; the MLM track is closed as a clean negative
 result.** This is exactly DeepSeek's pre-registered kill-point (turn-4): the SHIP branch
 required pre-training to _retain_ the calibration/harness gains, and at ceiling it does not.
-The product metric being a tie (not a loss) means the honest conclusion is "no benefit," not
+The product metric being a tie (not a loss) means the direct conclusion is "no benefit," not
 "actively worse" — but a +1 training stage (20k MLM pre-train) and the attendant pipeline
 complexity are not worth a statistical tie plus a slightly-worse harness.
 
 What we keep from the track: the MLM pre-training code (`pretrain.py`, `masking.py`,
-`forward_mlm`) lands cleanly and is reusable if a future, larger model or a different objective
+`forward_mlm`) lands directly and is reusable if a future, larger model or a different objective
 (e.g. ELECTRA-style, or pre-training on a much larger unlabeled corpus) revisits it — the
 negative result is specific to _this_ 29M-param encoder, 20k-step pre-train, en-us corpus.
 The forward prize remains **resolver depth** (see the resolver failure analysis + backlog),

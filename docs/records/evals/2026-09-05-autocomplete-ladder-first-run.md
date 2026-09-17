@@ -13,7 +13,7 @@
 | US      | 35 / 40 / 37                                | `parse_resolve` |              26 of 35 |                                      91% |          2 |                              48 of 69 |         26 of 35 |
 | US      | 35 / 40 / 37                                | `fst`           |               4 of 35 |                                      18% |          4 |                              65 of 69 |          0 of 35 |
 
-Reading the two arms: the FST tier is a PLACE autocomplete. It holds localities and neighbourhoods, so a rooftop row with a 100 m tolerance cannot be hit by any suggestion, and its hits are the bare-toponym rows (`Whitby` at 6 characters, `Londonderry` at 2, `Newport, Wales` at 2). It answers on almost every one- and two-character rung, which is what a suggestion menu does and what the parse → resolve path mostly does not. Parse → resolve reaches the truth on most rows only near the end of the string — median 80–91% of the characters typed — because a partial address parses as something else until the locality arrives.
+Reading the two arms: the FST tier is a PLACE autocomplete. It holds localities and neighborhoods, so a rooftop row with a 100 m tolerance cannot be hit by any suggestion, and its hits are the bare-toponym rows (`Whitby` at 6 characters, `Londonderry` at 2, `Newport, Wales` at 2). It answers on almost every one- and two-character rung, which is what a suggestion menu does and what the parse → resolve path mostly does not. Parse → resolve reaches the truth on most rows only near the end of the string — median 80–91% of the characters typed — because a partial address parses as something else until the locality arrives.
 
 ## Latency per rung length, ms (p50 / p95)
 

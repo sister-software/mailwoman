@@ -16,7 +16,7 @@ Root cause: the spec is written downstream of the code, and clients are vendored
 
 ### The isp-nexus lesson
 
-`@isp.nexus/schema` tried code-first schema derivation and drowned — not because code-first was wrong, but because it required **owning a compiler**: a 1,633-line bespoke TS→JSON-schema generator whose feature coverage had to grow with every TypeScript construct used, emitting `generated/*.json` as a second source of truth. The failure mode to avoid is _generator ownership_ and _artifact round-tripping_, not code-first itself. Zod 4's native `z.toJSONSchema()` and route-level OpenAPI emitters make the generator a library call.
+`@isp.nexus/schema` tried code-first schema derivation and drowned — not because code-first was wrong, but because it required **owning a compiler**: a 1,633-line bespoke TS→JSON-schema generator whose feature coverage had to grow with every TypeScript construct used, emitting `generated/*.json` as a second authoritative record. The failure mode to avoid is _generator ownership_ and _artifact round-tripping_, not code-first itself. Zod 4's native `z.toJSONSchema()` and route-level OpenAPI emitters make the generator a library call.
 
 ## Decisions (settled 2026-07-12)
 

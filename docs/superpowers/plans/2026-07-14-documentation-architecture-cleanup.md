@@ -102,7 +102,7 @@ Use the proposed “Encoder-Based Address Parsing: From Tokens to Postal Grammar
 
 Required outline:
 
-1. Address parsing as sequence labelling, using Mailwoman's component names and one real input/output example.
+1. Address parsing as sequence labeling, using Mailwoman's component names and one real input/output example.
 2. SentencePiece/subword tokenization and the token-to-source-span distinction.
 3. The contextual transformer encoder and per-token emissions.
 4. BIO spans and the canonical `ComponentTag` schema (link; do not duplicate the union).

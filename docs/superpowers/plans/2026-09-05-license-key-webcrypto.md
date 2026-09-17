@@ -19,7 +19,7 @@
 - Comments state invariants; no dates, PR numbers, or "now"/"added".
 - Acronym casing: `PEM`, `DER`, `URL`, `ID` as whole components: `publicKeyDER`, `licenseKeyID`, `toBase64URL`.
 - Wire keys snake_case; the payload fields `lid` and `agreement` are lower-case words.
-- Every existing hand-issued token stays valid: the signature covers `mwl1.<payload>` bytes and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture BEFORE the swap.
+- Every existing hand-issued token stays valid: the signature covers `mwl1.<payload>` bytes and the WebCrypto verifier must accept a token the `node:crypto` signer produced. Task 0 captures that fixture before the swap.
 - Run `yarn compile` before any test that spawns the compiled CLI. Pre-commit runs the compiled CLI too.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `docs/license-shop-design` in the worktree `.claude/worktrees/license-posture`; rename it to `feat/license-key-webcrypto` at Task 0. Never `cd` to the main checkout.
@@ -1131,7 +1131,7 @@ Check that `makeTemporaryDirectory` is the name `@mailwoman/core/fs/temporary` e
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `yarn compile && yarn vitest run packages/mailwoman/test/integration/license-cli.test.ts`
-Expected: the `register` test FAILS (unknown action); the other two may fail on the compile of `license.ts` against the async API. Fix compile first: it is the next step.
+Expected: the `register` test fails (unknown action); the other two may fail on the compile of `license.ts` against the async API. Fix compile first: it is the next step.
 
 - [ ] **Step 3: Update the command**
 
@@ -1355,7 +1355,7 @@ test("@mailwoman/core/license/key and /register bundle for a Worker with no node
 
 Run: `yarn workspace @mailwoman/core add -D esbuild@0.28.2 && yarn vitest run packages/core/test/integration/worker-bundle.test.ts`
 
-Expected: PASS if Tasks 1 to 3 left the graph clean, FAIL naming the module otherwise. If it names `packages/core/lib/objects.ts` reaching `spliterator` and that in turn reaching `node:`, the fix is a `#json/strict.ts` module holding `parseJSONStrict` alone (the function has no Node dependency; the shelf it sits on does) and `key.ts` importing that. If it names `#errors/schema`, the same move. Record the module the test named in the commit message.
+Expected: pass if Tasks 1 to 3 left the graph clean, fail naming the module otherwise. If it names `packages/core/lib/objects.ts` reaching `spliterator` and that in turn reaching `node:`, the fix is a `#json/strict.ts` module holding `parseJSONStrict` alone (the function has no Node dependency; the shelf it sits on does) and `key.ts` importing that. If it names `#errors/schema`, the same move. Record the module the test named in the commit message.
 
 - [ ] **Step 3: Commit**
 

@@ -4,7 +4,7 @@
 analysis exposed, and one thesis about where this architecture generalizes. The first is actionable
 now; the second is explicitly **a thesis, not a roadmap commitment** — see §4 on scope discipline.
 
-## 1. What the WOW analysis actually demonstrated
+## 1. What the WOW analysis demonstrated
 
 A conversational analysis of one filer's ownership (2026-07-31) produced, in a few minutes: the
 transaction chain (WOW → DigitalBridge + Crestview, Dec 2025, $1.5B EV / $5.20 per share → SoftBank
@@ -39,8 +39,8 @@ Two consequences:
    authoritative, public assertion that control moved — exactly the "authoritative edge" shape §4.1
    already defines. Add `transfer_of_control` as an edge source type in 3b.
 2. **A capital-structure attribute becomes available for the entities that file with the SEC.**
-   Leverage and capex trend explain a great deal of filing-versus-reality drift without any inference
-   about intent: an operator with declining EBITDA under new leverage stops building to the edge of
+   use and capex trend explain a great deal of filing-versus-reality drift without any inference
+   about intent: an operator with declining EBITDA under new use stops building to the edge of
    its claimed footprint. Report the attribute and its source; never the motive.
 
 ## 3. The portability thesis: regulated monopolies share this shape
@@ -50,7 +50,7 @@ identity (a regulator-assigned ID), physical plant (geocoded, because siting req
 claims (service territory or availability), and transactions (because transfers need approval). The
 layers join badly on purpose, and geocoded entity resolution is what makes them join.
 
-Honest ranking of second verticals by data quality, not by market attractiveness:
+direct ranking of second verticals by data quality, not by market attractiveness:
 
 - **Electric and gas utilities — the strongest fit by a wide margin.** EIA Form 860 is plant-level and
   geocoded with owner identity (a direct ASR analog); EIA Form 861 carries utility service territories
@@ -64,7 +64,7 @@ Honest ranking of second verticals by data quality, not by market attractiveness
 
 The abstraction, stated directly: **mailwoman is a geocoded entity-resolution substrate for
 regulated-monopoly public record.** The address parser is the joining primitive because these
-datasets key on addresses and coordinates and nothing joins cleanly without one. That framing
+datasets key on addresses and coordinates and nothing joins directly without one. That framing
 explains why the geocoder is the foundation rather than the product — and it is a framing, not a
 pivot.
 

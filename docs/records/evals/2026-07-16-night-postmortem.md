@@ -22,7 +22,7 @@ only.
   (4.19% of the corpus). Two-part fix — quote the key in 44 configs, plus a `__post_init__` guard
   that rejects any non-string country key, because a config-only fix rots the moment someone adds a
   country. 124 tests.
-- **`ed220724` — board 3: the NO digit-ownership board.** 2,400 Kartverket-derived fixtures, 6
+- **`ed220724` — board 3: the no digit-ownership board.** 2,400 Kartverket-derived fixtures, 6
   classes, Wilson CIs, baselines registered against shipped v310 — a **true zero-knowledge arm**,
   since v310 has never seen a Norwegian address. **Its first act was to veto the obvious next
   move.** `synth-no-street-led` emits three forms, all with postcode+city, and v310 already reads all
@@ -33,7 +33,7 @@ only.
 - **`d9e76e75` + `11881e69` — the v3.3.0-no-fragment 2k probe (B4).** init_from v310, ONE variable
   (synth-no-fragment @ 12.0), synth-no-street-led zeroed (contaminated part). Overlay verified through
   the real loader: Norway rows now survive the filter. Trained clean — `init_from missing=0`, no NaN.
-  **RESULT: did NOT clear the pre-registered bar.** bare-street-hn 0.693 → 0.710 (+1.7pp, CIs overlap —
+  **RESULT: did not clear the pre-registered bar.** bare-street-hn 0.693 → 0.710 (+1.7pp, CIs overlap —
   not clear motion); bare-pc held 1.000; ceiling classes flat; and the FR guard drifted (board 2
   −1.7pp overall). Per my own pre-registration the 8k is not auto-warranted, and I did not relax the
   bar to launch it. Verdict: `docs/articles/evals/2026-07-16-b4-no-fragment-probe-verdict.md`. The
@@ -41,11 +41,11 @@ only.
 - **`863a64ae` — the `no-fragment` recipe.** The extract itself (see §6/§7).
 - **`80d86130` — `no-street-led` now requires `--exclude-surfaces`.** The B4 blocker. Board 3
   reserves 1,952 surfaces; this recipe trained on all 10,697 with no split, so a Norway retrain would
-  grade memorization. Ports fr-fragment's discipline — with its OWN diacritic-keeping normalizer,
+  grade memorization. Ports fr-fragment's discipline — with its own diacritic-keeping normalizer,
   because fr-fragment strips diacritics and would silently fold `Tømmerlien` → `tommerlien` and leak
   the surface. 5 tests, both directions of the hazard. Changes no shipped artifact.
 - **`5ab73894` — the B0 verdict** (answers the operator's vindicate-or-villainize question). See §6.
-- Nothing to production. **v6.4.0 is on main (`f31a519f`) but NOT published** — the npm/HF publish is
+- Nothing to production. **v6.4.0 is on main (`f31a519f`) but not published** — the npm/HF publish is
   a CI dispatch and an operator act. Untouched by this shift, by standing instruction.
 
 ## 2. What went well
@@ -74,7 +74,7 @@ only.
   scope), KR (SCOPE: "no adopted open path"), HU/IE/GB (queued, #733 OSM share-alike check). **NZ is
   the one exception** — 8,967 corpus rows + tier-A LINZ data, in no tier and no queue. The audit
   found no second Norway; that is the finding.
-- **Track B was traced to its root, not just its symptom.** The chain: parse failures → the Norway
+- **Track B was traced to its root, notits symptom.** The chain: parse failures → the Norway
   coverage bug (#1145) → the one non-coverage case (PL) → the piece-level incoherence mechanism (B0,
   cross-lingual) → its root (the tokenizer has 2 multi-digit pieces, so digit fertility ≡ digit
   count, so the model's only length signal is the continuation count where the postcode mass lives).
@@ -98,7 +98,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
   track.** It carries no postcode, so nothing competes for the digit. It still fails 31%, and
   `Hallingrudveien 32` → locality+postcode while `Hallingrudveien 32, 3370 Vikersund` parses
   perfectly. Same street, same digit. That single pair moved Track B from "digit ownership" to "the
-  licence, in Norwegian" — a class we have already fixed once, in French, for +50pp.
+  license, in Norwegian" — a class we have already fixed once, in French, for +50pp.
 
 ## 3. What could've gone better
 
@@ -113,7 +113,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 
 | decision                                                                | alternatives                                     | why                                                                                                                                                                                                                                 |
 | ----------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Fix all 44 configs, not just the live one                               | fix `v3.1.0` only; or fix none and file an issue | The dead configs are the historical record of what each run trained on. Leaving them lying is how the next salvage-a-config reintroduces it. The sweep is mechanical and parser-verified.                                           |
+| Fix all 44 configs, notthe live one                                     | fix `v3.1.0` only; or fix none and file an issue | The dead configs are the historical record of what each run trained on. Leaving them lying is how the next salvage-a-config reintroduces it. The sweep is mechanical and parser-verified.                                           |
 | Guard **raises** rather than coerces `False` → `"NO"`                   | silently repair the key                          | A config saying `false` does not _mean_ Norway — it means YAML changed the author's meaning. Coercing hides the identical bug in the next field that grows a bare-token key.                                                        |
 | Did **not** add NZ (8,967 rows, absent from `country_weights` entirely) | add it while I'm in there                        | Not a type bug — a scope decision about which countries the product serves. That is the operator's call, and bundling it would smuggle a scope change into a bug fix.                                                               |
 | Did **not** retrain on the now-Norway-inclusive corpus                  | launch a run overnight                           | The night-shift rule: >30min GPU with no falsifiable probe is a guess. The retrain is warranted but the _read_ has to be pre-registered against a board that does not exist yet (B3). Order: B3 → register baselines → then launch. |
@@ -147,7 +147,7 @@ B0 (day shift, `5ab73894`) answered the architecture question and **reframed the
 **One defect, three components.** The model will not read a component without its co-occurring
 partner — it learned the joint distribution and not the marginals:
 
-| #   | licence                                                | consequence                   | status                          |
+| #   | license                                                | consequence                   | status                          |
 | --- | ------------------------------------------------------ | ----------------------------- | ------------------------------- |
 | 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** — v310 extract, +50pp |
 | 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (B2)                       |
@@ -192,9 +192,9 @@ pre-registered probes for a future shift.
 ## 8. Where things stand (a status, not a wind-down)
 
 Track B is a complete, self-consistent arc: the defect was mis-scoped as "digit ownership," B0
-reframed it as one licence defect in three components, B1 found that most of the Norwegian evidence
+reframed it as one license defect in three components, B1 found that most of the Norwegian evidence
 was a YAML bug hiding 25k rows, B3 built the instrument, B4 built + probed the fix and the probe
-honestly said "not with this ratio." Nothing is half-built; #1145 is green and mergeable. The next move is the operator's (merge `#1145`, decide the v6.4.0 publish, approve B4b's ratio
+directly said "not with this ratio." Nothing is half-built; #1145 is green and mergeable. The next move is the operator's (merge `#1145`, decide the v6.4.0 publish, approve B4b's ratio
 bump or the G-NAF path).
 
 ## Numbers

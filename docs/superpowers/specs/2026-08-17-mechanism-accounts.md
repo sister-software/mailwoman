@@ -57,9 +57,9 @@ winner:     Weimar TX  (admin tier)
 smallest counterfactual: apply the region constraint → order inverts
 ```
 
-The interiority boundary, stated honestly: inside the weights there are no reasons to recover.
+The interiority boundary, stated directly: inside the weights there are no reasons to recover.
 Accounts live at the boundaries — what was fed, retrieved, conditional, ranked — and when one bottoms out at
-"the model chose X with margin m and every channel silent," that IS the class (the model flew
+"the model chose X with margin m and every channel silent," that is the class (the model flew
 blind), and the fix is evidence, not archaeology in the logits.
 
 ## 4. Shapes and confidence
@@ -89,7 +89,7 @@ test that asserts outcomes:
 
 | check                                                 | asserts                                                   | catches                                                                                 | status                                                                           |
 | ----------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must NOT activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
+| **mailfail** (`eval-harness/fixtures/mailfail.jsonl`) | must not activate (no-component / no-resolve / no-throw)  | garbage handled as garbage                                                              | shipped 2026-08-02                                                               |
 | **activation census** (#1719, `mwdev_census`)         | must activate SOMEWHERE (L0 ran / L1 signaled / L2 moved) | inert mechanisms — the house's most-repeated failure class (#1699, #1703, #1349, R5)    | L0/L1 shipped; first run found 2 inert, both verified deliberate and allowlisted |
 | **fragile-pass ledger** (#1720)                       | activated for the RIGHT reason                            | compensated defects (XOR signature: fixing one of a canceling pair turns the board red) | designed; needs accounts                                                         |
 
@@ -118,7 +118,7 @@ accept/review/reject band already exists as Fellegi–Sunter's clerical band in 
   the BIO masking infrastructure — only for coherence the hierarchy cannot express, and only if it
   beats the rung-1 baseline in an eval. ("Autodecoder" investigated and rejected — right intuition,
   wrong rung; coherence report §1.)
-- **Echo-chamber guard, structural**: any checker trains on gazetteer + labeled corpus ONLY;
+- **Echo-chamber guard, structural**: any checker trains on gazetteer + labeled corpus only;
   resolver outputs are scored, never supervision. Standing audits: round-trip fixpoint through
   `@mailwoman/formatter`, and adversarial validation (real-vs-assembled classifier; AUC ≫ 0.5 is
   itself a defect meter).

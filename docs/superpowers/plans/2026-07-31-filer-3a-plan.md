@@ -19,9 +19,9 @@
 1. **3a's crosswalk core is Form 499 + the BDC provider list; CORES arrives as a bounded enrichment pass (Task 9), not via the Nexus scraper.** _Revised 2026-07-31 after operator pushback — the first draft deferred CORES entirely, which over-generalized from "the salvage has no bulk loader" to "no good source exists." That does not follow, and it was wrong._ What research established: the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call) returning company name **plus parent and subsidiary names**, and a Postman-documented Relationship-FRN endpoint. That is a supported interface, not an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b** — materially more valuable than the "enrichment" framing of the first draft.
    Still true: no CORES **bulk** extract was found (the FCC's bulk downloads cover ULS and ASR, not CORES). But per-FRN calls are acceptable here precisely because 499 + the provider list first give us a **finite, enumerated FRN universe** — this is a bounded enrichment job over a known key set, not an unbounded crawl for discovery. Cache per FRN, rate-limit, identify the client.
    **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs, and terms are UNVERIFIED. (`broadbandmap.fcc.gov` works fine with credentials, so this is host-specific, not a blanket block.) Task 9 opens with a verification step and stops if the interface is not what the documentation describes.
-2. **`filer.db` is NOT a layer-contract artifact in 3a.** It has no coordinates (ASR is 3c) and `layer_coverage` is h3-keyed with no null path, so conforming would mean writing coverage rows that assert nothing — the exact dishonesty the meaning-of-zero rule exists to prevent. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at — mirroring `LayerManifestTable`'s fields minus the spatial ones). Layer-contract conformance is deferred to 3c, when ASR structures give coordinates and coverage means something. **Do not geocode filer HQ addresses in 3a** to manufacture a spine.
+2. **`filer.db` is not a layer-contract artifact in 3a.** It has no coordinates (ASR is 3c) and `layer_coverage` is h3-keyed with no null path, so conforming would mean writing coverage rows that assert nothing — the exact dishonesty the meaning-of-zero rule exists to prevent. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at — mirroring `LayerManifestTable`'s fields minus the spatial ones). Layer-contract conformance is deferred to 3c, when ASR structures give coordinates and coverage means something. **Do not geocode filer HQ addresses in 3a** to manufacture a spine.
 3. **FRN is a zero-padded 10-character branded string.** Nexus types it `Tagged<number>`; `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros (same defect class as 2a's `location_id`). Provide `isFRN(value): value is FRN` with a real 10-digit check, unlike the Nexus guard.
-4. **Clustering runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup** whose threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the honest FS path the spec describes. Revisit only with a corporate-trained model.
+4. **Clustering runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup** whose threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit only with a corporate-trained model.
 5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and are queryable, but a rollup that includes them must say so. This is §4.1 and it is a check.
 6. **Cardinality lives in the graph; `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can carry multiple FRNs and conflicting holding companies (Nexus warns-and-overwrites, last-wins — do not copy that). `filer.db` retains every edge. When `bdc_provider` is populated (task 8), the primary FRN is the one from the most recent 499 filing date, and that rule is documented in the schema docstring. `brand_name` stays NULL — no source in the provider list.
 7. **Temporal validity: `valid_from` is mandatory, `valid_to` nullable.** In 3a the only date source is the 499 `lastFiledAt`, so `valid_from` = filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
@@ -225,7 +225,7 @@ export async function filerLookup(
 ): Promise<FilerLookupResult>
 ```
 
-Exactly one identifier required (throw otherwise, matching `filingLandscape`'s XOR discipline). `as_of` defaults to today and is ALWAYS present in the result. Manifest read first — throw rather than answer unstamped.
+Exactly one identifier required (throw otherwise, matching `filingLandscape`'s XOR discipline). `as_of` defaults to today and is always present in the result. Manifest read first — throw rather than answer unstamped.
 
 MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod with `.describe()` on every field, `MCPToolDeps` method, parse → deps → verbatim), plus `openFilerDatabaseIfPresent`/`assertFilerDatabaseExists` in `mcp/layer-guards.ts` following the 2b precedent.
 
@@ -250,7 +250,7 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 
 Per the check's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
 
-**What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven — it simply could not be verified from here.
+**What remains true:** the FRN Conversions API is documented publicly and reportedly returns parent and subsidiary names, which would make it a family-edge source rather than mere enrichment. Nothing about that claim was disproven — it only could not be verified from here.
 
 **Carried to 3b** with two prerequisites: (1) run Step 0 from a network path that can reach `data.fcc.gov` (the operator's own machine is the obvious candidate) and record the real response shape, auth requirements, and terms; (2) only then implement, keeping the bounded-enumeration posture — the FRN universe comes from the already-built crosswalk, so this is enrichment over a known key set, never a crawl.
 
@@ -280,7 +280,7 @@ Edges emitted (authoritative, since CORES states them): `frn ↔ parentName`, `f
 
 ### Task 10: Wrap-up
 
-- [x] Full ladder incl. `yarn typecheck:tests`; tick plan checkboxes; controller handles final review + PR (do NOT open a PR in-task).
+- [x] Full ladder incl. `yarn typecheck:tests`; tick plan checkboxes; controller handles final review + PR (do not open a PR in-task).
 
 ## Out of scope for 3a (do not build)
 
@@ -288,4 +288,4 @@ Layer-contract conformance for filer.db (decision 2); geocoding filer HQ address
 
 ## Self-review notes
 
-Spec §3.1 columns → T2 (both family fields retained; DC-agent-as-family-edge explicitly NOT emitted, per the spec's anti-pattern warning). §4.1 graph → T4/T5. §4.1 clustering → T6. §6-3a `bdc_provider` → T8. Transaction-layer §2 `valid_from` → T4/T5 with 3b extensibility. Types: `FRN` (T2) flows through T3/T4/T5/T7; `Form499Row`/`ProviderListRow` (T2/T3) feed `BuildFilerOptions` (T5); `FilerDatabase` (T4) feeds T5/T6/T7/T8.
+Spec §3.1 columns → T2 (both family fields retained; DC-agent-as-family-edge explicitly not emitted, per the spec's anti-pattern warning). §4.1 graph → T4/T5. §4.1 clustering → T6. §6-3a `bdc_provider` → T8. Transaction-layer §2 `valid_from` → T4/T5 with 3b extensibility. Types: `FRN` (T2) flows through T3/T4/T5/T7; `Form499Row`/`ProviderListRow` (T2/T3) feed `BuildFilerOptions` (T5); `FilerDatabase` (T4) feeds T5/T6/T7/T8.

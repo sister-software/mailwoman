@@ -27,7 +27,7 @@ the homograph probe until that was caught.)
 | Check                                       | v263 (6.2.0)  | v264          | verdict                              |
 | ------------------------------------------- | ------------- | ------------- | ------------------------------------ |
 | **country-homograph F1** (real, n=54)       | 82.6          | **85.1**      | ✓ +2.5pp — recovers a homograph miss |
-| **golden WOF-admin country recall**         | 200/224=89.3% | 204/224=91.1% | ✓ +1.8pp — the win holds AND grows   |
+| **golden WOF-admin country recall**         | 200/224=89.3% | 204/224=91.1% | ✓ +1.8pp — recall improves           |
 | **real-postal country recall** (falsifier)  | 3/4           | 3/4           | ✓ held                               |
 | **hallucination** (300 real no-country)     | 1%            | 1%            | ✓ held                               |
 | **held-out US coordinate** (300 FDIC, ≤5km) | 279           | 269 (z −0.14) | ✓ PASS                               |

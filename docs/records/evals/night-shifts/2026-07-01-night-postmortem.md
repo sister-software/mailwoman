@@ -25,7 +25,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 **Phase 2 — triage (an agent scanned ~45 issues; every CLOSE spot-verified):**
 
-- Closed **#387** (city-state, superseded by dual-role epic #402), **#330** (FR venue/region premise falsified — n=1), **#426** (Route A conditional — verdict was STAY), **#531** (typo-tolerant FTS shipped 43d0b67c), **#552** (imls subregion fix), **#377** (demo UX components built), **#26** (licensing/share-alike shipped corpus/src/license.ts), **#781** (span-rescore v2 change measured +0.0pp).
+- Closed **#387** (city-state, superseded by dual-role epic #402), **#330** (FR venue/region premise falsified — n=1), **#426** (Route A conditional — verdict was stay), **#531** (typo-tolerant FTS shipped 43d0b67c), **#552** (imls subregion fix), **#377** (demo UX components built), **#26** (licensing/share-alike shipped corpus/src/license.ts), **#781** (span-rescore v2 change measured +0.0pp).
 - Relabeled **#444/#435/#456/#564/#727** (`neural`), **#733** (`neural,phase-1`), **#229** (`neural,phase-2`).
 
 **Phase 3 — actionable PRs:**
@@ -36,14 +36,14 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 ## What went well
 
-- **The live geocode probe earned its keep.** Before closing #822/#823 I ran the addresses through the actual harness — and caught a real bug: `Vienna, Austria` still resolves to **Vienna, WV**. That would have been a false close. #823 (off-map coverage) genuinely resolved; #822 (named-foreign-country routing) did not. Verify-before-verdict, one probe, two correct calls.
+- **The live geocode probe earned its keep.** Before closing #822/#823 I ran the addresses through the actual harness — and caught a real bug: `Vienna, Austria` still resolves to **Vienna, WV**. That would have been a false close. #823 (off-map coverage) in fact resolved; #822 (named-foreign-country routing) did not. Verify-before-verdict, one probe, two correct calls.
 - **Three issues were already done.** #735, #481, and #823's coverage half were closed by investigation, not by re-doing the work — a stale issue is cheaper to verify than to re-implement.
 - **Delegate-then-verify on the bulk triage.** An agent read ~45 issue bodies and cross-referenced the code; I spot-checked every CLOSE recommendation's evidence (the merged PR / commit / file) before acting. Eight confident closes, zero guesses.
 
 ## What could've gone better
 
 - **A stale diagnostic nearly misled me.** `coverage-266-validate.ts` pointed at a removed `staging-266/` DB and reported everything UNRESOLVED — including New York, which the gauntlet proves resolves. Caught it because the failure was too broad to be real; re-ran against the live harness instead.
-- **The dependabot "safe bumps" were thinner than the issue implied.** The issue cited 44 alerts (1 critical); it's now 24 (no critical). The genuinely-safe bump was a single dev-dep patch (undici); the high-value fixes (serialize-javascript RCE, tar path-traversal) are major bumps on the older lockfile line — risk the operator should test, not an autonomous bump.
+- **The dependabot "safe bumps" were thinner than the issue implied.** The issue cited 44 alerts (1 critical); it's now 24 (no critical). The in fact-safe bump was a single dev-dep patch (undici); the high-value fixes (serialize-javascript RCE, tar path-traversal) are major bumps on the older lockfile line — risk the operator should test, not an autonomous bump.
 
 ## Decisions made autonomously
 
@@ -84,7 +84,7 @@ The full plan shipped (10 PRs) and the backlog is exhaustively triaged. Five thr
 you can make — each with my recommendation:
 
 1. **Change E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
-   read of this was wrong twice over.)_ The multilocale corpus IS staged AND **the big multilocale win already
+   read of this was wrong twice over.)_ The multilocale corpus is staged and **the corpus already
    shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
    that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-conditional, not a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
@@ -129,7 +129,7 @@ same-named in-country place via `matchCountry` → `findPlace({ country })`. No 
 code is a normalization of the model's own `country` emission.
 
 **Result:** Vienna/Sydney/Toronto/Zurich all land in-country; Tbilisi/GE, Portland/Augusta ME→Maine,
-Springfield IL, NYC, Paris all held. Gauntlet PASS (regression 15/15 with 5 new anti-rot guards). PR #852,
+Springfield IL, NYC, Paris all held. Gauntlet pass (regression 15/15 with 5 new anti-rot guards). PR #852,
 default-on, awaiting CI.
 
 **verify-before-verdict fired (again):** the first gauntlet run failed Sydney "7532km off." Instead of
@@ -155,7 +155,7 @@ next cycle), not three implementations:
   (`codex/us/unit-designator.ts` + `build-unit-extract`); the open fork is `unit`-subsplit vs `locator[]`
   (#295). Assess-only, deferred to the unit-recognition retrain.
 
-## Change F — quantify the coverage win (the #822 before/after)
+## Change F — quantify the result (the #822 before/after)
 
 Ran `frontier-gap.ts` (the #822 placer-frontier diagnostic itself) before and after the fix, default drop-in
 config, 506 cities / 187 countries:
@@ -190,7 +190,7 @@ recipe was left for the operator's voice pass (competitive positioning, gracious
 ## Change B — #379 deps (PR #855): the "high CVE" framing was stale
 
 Verify-before-verdict on the dependabot alerts: serialize-javascript is no longer flagged (on 6.0.2, patched);
-js-yaml is all 4.2.0 (above the vuln range); the one cleanly-safe fix was **http-proxy-middleware 2.0.9 →
+js-yaml is all 4.2.0 (above the vuln range); the one directly-safe fix was **http-proxy-middleware 2.0.9 →
 2.0.10** (in-major patch, dev-server-only) — shipped. The remaining `tar` alert needs the **7.x major** (no
 6.x backport), pulled only by cacache/node-gyp install tooling — left for the operator, not an autonomous force.
 
@@ -235,7 +235,7 @@ the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-
 `2026-06-22-nppes-dedup-setting-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
 `loadFromWeights`'s default-on soft-feed). Re-doing any of these would have been wasted motion.
 
-What's genuinely left is **operator-conditional or focused-session**, not contained CPU riders:
+What's in fact left is **operator-conditional or focused-session**, not contained CPU riders:
 
 - **#493** (lossless decomposition) — scoped with a round-trip diagnostic (baseline 97.8% content coverage /
   90.4% fully covered; the dominant lost-content class is **multibyte/accented-character fragmentation**,
@@ -244,7 +244,7 @@ What's genuinely left is **operator-conditional or focused-session**, not contai
   `@mailwoman/core/decoder` — the all-O gaps become typed `unknown` spans, round-trip holds 800/800 real
   parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
   consumer contracts → the focused session the issue calls for.
-- **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the big multilocale win
+- **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the result
   **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-conditional (more data
   / a representation change — weight is falsified). Budget preserved for that campaign call, not a probe.
 - **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
@@ -253,7 +253,7 @@ What's genuinely left is **operator-conditional or focused-session**, not contai
 
 ## Found while verifying #822 reaches users → filed #861 (server↔demo resolver parity)
 
-Checked whether the marquee #822 fix actually shows up in the public demo. It does **not run through** `resolveTree`
+Checked whether the marquee #822 fix shows up in the public demo. It does **not run through** `resolveTree`
 — the demo has a custom `runCascade` (postcode→locality→raw + region-bbox + population-first over the httpvfs
 `candidate.db`), so **none** of the joint-consistency passes (#822/#263/#267/#832) execute in the browser.
 Verify-before-verdict kept this from being an overclaim: the demo's `candidate.db` ranks `Vienna AT` (1.69M) #1
@@ -270,12 +270,12 @@ DeepSeek pushed back: _make full use of the night — the trust was to produce._
 paid off twice:
 
 - **Corrected a factual error on change E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
-  read was wrong both ways: the corpus IS staged, AND the multilocale retrain's big win already shipped (v4.13.0,
+  read was wrong both ways: the corpus is staged, and the multilocale retrain's big win already shipped (v4.13.0,
   PT 52→82). So E's value is largely banked; the residual is campaign-conditional, not a probe. Corrected on #825 +
   the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
 - **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the _whole_ serializer wiring as
   "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
-  pattern (default-off, byte-stable), only the demo rendering genuinely wants "operator eyes." So `decodeAsJson`/
+  pattern (default-off, byte-stable), only the demo rendering in fact wants "operator eyes." So `decodeAsJson`/
   `decodeAsTuples` (overloaded — existing callers untouched) / `decodeAsXml` gained an opt-in `includeUnknown`;
   7 tests, decoder suite 105/105. Not self-merged — the native-vs-opt-in + JSON-shape contract calls are flagged
   for review; the demo rendering is left for the focused pass.
@@ -289,16 +289,16 @@ was too cautious.
 _Drafted during the shift; finalized at hand-off. Active window ~05:00–13:39 UTC (~8.5h hands-on of the
 ~14h conn)._
 
-|                                         |                                                                                                                                                                               |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Changes shipped                         | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857)                       |
-| Changes triaged/measured                | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the multilocale win), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
-| PRs merged                              | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers)                                                                                                      |
-| #822 bare resolve-rate                  | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed                                                                                       |
-| Modal $                                 | ~0 (E deferred, budget preserved)                                                                                                                                             |
-| GPU                                     | none                                                                                                                                                                          |
-| NaN / CI failures on main / regressions | 0 / 0 / 0                                                                                                                                                                     |
-| Issues advanced                         | #822 **closed**, #861 **filed**; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated                                                                                         |
+|                                         |                                                                                                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Changes shipped                         | A (#822/#852) + C (#818/#854) + B (#379/#855) + I (#480#4/#856) + #493 primitive (#859) + #493 serializers (#864, flagged) + F+H artifacts (#853, #857)              |
+| Changes triaged/measured                | D (#305/#435/#456 re-scoped), E (deferred — corrected: v4.13.0 already shipped the result), F (frontier A/B), H (SLO + cold-path budget), #493 (round-trip baseline) |
+| PRs merged                              | 12 (#852–860, #862, #863, #865) · 1 open flagged (#864 #493 serializers)                                                                                             |
+| #822 bare resolve-rate                  | **54.2% → 77.9%** (+23.7pp, CPU, no retrain); 45/57 placer-recoverable countries closed                                                                              |
+| Modal $                                 | ~0 (E deferred, budget preserved)                                                                                                                                    |
+| GPU                                     | none                                                                                                                                                                 |
+| NaN / CI failures on main / regressions | 0 / 0 / 0                                                                                                                                                            |
+| Issues advanced                         | #822 **closed**, #861 **filed**; #305/#379/#435/#456/#480/#493/#818/#825/#826 updated                                                                                |
 
 ## Open / next (the morning decisions)
 
@@ -306,7 +306,7 @@ The decision brief at the top of Part 2 is the authoritative list; the forks for
 
 - **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
   #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
-- **Change E / $20** — held. The multilocale lift is banked (v4.13.0); the further push is a campaign-strategy
+- **Change E / $20** — held. the result is banked (v4.13.0); the further push is a campaign-strategy
   - data call (#477 recipe), not an overnight probe. Budget untouched.
 - **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
   (principled). My rec: converge.

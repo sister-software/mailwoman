@@ -22,12 +22,12 @@ Three real consumers of the same resolved address want three different things:
 | consumer                         | the question                               | tolerance that's "close enough"                                                     |
 | -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
 | jurisdiction / coverage          | which city / county / HPSA is this in?     | the **admin centroid** — a few km is fine; the centroid is inside the right polygon |
-| record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of metres; a city centroid fuses every facility in town      |
+| record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of meters; a city centroid fuses every facility in town      |
 | routing / dispatch               | where is the door?                         | **rooftop**, and you care about the tail, not the median                            |
 
 A single accuracy number ("p50 3 km") answers none of these on its own. It's only meaningful against a stated tolerance. The jurisdiction consumer is delighted by 3 km; the matcher is sunk by it.
 
-## The three tiers, and what each is actually worth
+## The three tiers, and what each is worth
 
 Mailwoman [resolves to the finest tier](./how-mailwoman-resolves-a-place.mdx) it has data for, and labels which one it used (measured on 1172 real TX facility addresses, [`2026-06-17-geocoder-vs-provided-coords`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/resolver-geo/2026-06-17-geocoder-vs-provided-coords.md)):
 
@@ -39,7 +39,7 @@ Mailwoman [resolves to the finest tier](./how-mailwoman-resolves-a-place.mdx) it
 
 When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city," nothing finer.
 
-So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't actually located, even though the centroid happens to sit a mere 3 km away.
+So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't located, even though the centroid happens to sit a mere 3 km away.
 
 ## Trust the radius, not the point
 
@@ -59,7 +59,7 @@ Where the finer tiers fire, accuracy is solved (0.1–0.7 km, calibrated). The o
 
 We don't decide it — we **report enough that the consumer can**. Every resolved address carries:
 
-1. a **tier** (the grain we actually reached), and
+1. a **tier** (the grain we reached), and
 2. a **calibrated radius** (the calibrated 90% bound), so that
 3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same calibrated-radius downgrade the resolver already makes when its candidates scatter.
 

@@ -18,7 +18,7 @@ incumbents.
   Right-_place_ is the fair test.
 - **SECONDARY — conditional median error + the @1/@5 km tiers**, to keep the centroid-vs-rooftop trade
   visible rather than hidden.
-- `n = 60` rows/locale, clean OA input (NOT the messy-degradation case). Change-off (`mailwoman`) and
+- `n = 60` rows/locale, clean OA input (not the messy-degradation case). Change-off (`mailwoman`) and
   `#370` span-rescore setting-on (`mailwoman+rescore`) are both graded from the same parse.
 
 ## Resolve-rate @ 25 km
@@ -33,7 +33,7 @@ incumbents.
 | FR                |       93% |               93% |       65% |     98% |
 | AU                |       32% |               35% |       97% |     78% |
 | **EU (no AU)**    |   **84%** |           **88%** |   **78%** | **89%** |
-| **ALL (incl AU)** |   **77%** |           **80%** |   **81%** | **88%** |
+| **all (incl AU)** |   **77%** |           **80%** |   **81%** | **88%** |
 
 ## Two-axis aggregate (incl AU)
 
@@ -44,7 +44,7 @@ incumbents.
 | nominatim         | 420 |  77% |  80% |   81% |            0.0 |       17% |
 | pelias            | 420 |  71% |  83% |   88% |            0.0 |        2% |
 
-## Reading it honestly
+## Reading it directly
 
 1. **Pelias is the strongest system here** — 88% @25km all-panel, 2% no-result. A hosted Elasticsearch
    stack over mixed sources resolves nearly everything and places most of it at rooftop. It is the real
@@ -73,7 +73,7 @@ candidate gazetteer noted.
 - **Change A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
   only, no data/GPU): when a same-named locality resolves far from a resolved sibling postcode, re-pick
   the instance nearest the postcode (or fall back to the postcode point). Fixed the 16 "postcode-
-  available-but-ignored" misses with ZERO regressions.
+  available-but-ignored" misses with zero regressions.
 - **Change B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
   uncovered postcodes into anchors, which Change A then disambiguates. AU 35→65 (+30pp), PT 78→88.
 
@@ -87,9 +87,9 @@ candidate gazetteer noted.
 | FR          |              93 |       100 |         100 |        65 |     98 |
 | AU          |              32 |        35 |          65 |        97 |     78 |
 | **EU (6)**  |          **66** |  **92.5** |    **94.2** |    **78** | **89** |
-| **ALL (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
+| **all (7)** |          **61** |    **84** |    **90.0** |    **81** | **88** |
 
-With both changes, mailwoman leads BOTH incumbents on the @25km right-area metric — EU 94.2 and all-panel
+With both changes, mailwoman leads both incumbents on the @25km right-area metric — EU 94.2 and all-panel
 90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
 stands; this is right-AREA, not rooftop.
 

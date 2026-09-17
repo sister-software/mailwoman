@@ -22,21 +22,21 @@ Walking the shipped FST over the 63 fixtures returns **43 distinct surfaces, 37 
 emission bias** (`PLACETYPE_TO_BIO` covers country/region/locality/postalcode; `impBias = importance *
 biasScale * maxBias`).
 
-| surface                  | placetype : importance                | note                        |
-| ------------------------ | ------------------------------------- | --------------------------- |
-| `rue`                    | localadmin 0.145, neighbourhood 0.149 | the designator is a place   |
-| `boulevard`              | neighbourhood 0.167                   | so is this one              |
-| `place`                  | neighbourhood 0.169                   | and this one                |
-| `la`                     | locality **0.850**                    | a particle, inside a street |
-| `du`                     | region **0.650**                      | likewise                    |
-| `de`                     | county 0.192                          | likewise                    |
-| `londres`                | region 0.937, locality 0.936          | exonym, near-max importance |
-| `paris`                  | region 0.789                          |                             |
-| `temple`                 | locality 0.468                        |                             |
-| `saintgermain`           | locality 0.386                        |                             |
-| `rome`                   | locality 0.378                        | the `Rue de Rome` archetype |
-| `hugo`                   | locality 0.295                        | `Avenue Victor Hugo`        |
-| `12`, `2`, `14`, `21`, … | localadmin 0.05–0.15                  | bare house numbers          |
+| surface                  | placetype : importance               | note                        |
+| ------------------------ | ------------------------------------ | --------------------------- |
+| `rue`                    | localadmin 0.145, neighborhood 0.149 | the designator is a place   |
+| `boulevard`              | neighborhood 0.167                   | so is this one              |
+| `place`                  | neighborhood 0.169                   | and this one                |
+| `la`                     | locality **0.850**                   | a particle, inside a street |
+| `du`                     | region **0.650**                     | likewise                    |
+| `de`                     | county 0.192                         | likewise                    |
+| `londres`                | region 0.937, locality 0.936         | exonym, near-max importance |
+| `paris`                  | region 0.789                         |                             |
+| `temple`                 | locality 0.468                       |                             |
+| `saintgermain`           | locality 0.386                       |                             |
+| `rome`                   | locality 0.378                       | the `Rue de Rome` archetype |
+| `hugo`                   | locality 0.295                       | `Avenue Victor Hugo`        |
+| `12`, `2`, `14`, `21`, … | localadmin 0.05–0.15                 | bare house numbers          |
 
 Three findings worth naming:
 
@@ -75,14 +75,14 @@ FIXED [contextful/multi-class] "12 Rue du Chat-qui-Pêche, Paris"
     off="Rue du Chat-qui-Pêche, Paris"  on="Rue du Chat-qui-Pêche"
 ```
 
-The one break is on-thesis (the `boulevard` neighbourhood entry eats the prefix); the one fix is the
+The one break is on-thesis (the `boulevard` neighborhood entry eats the prefix); the one fix is the
 prior doing its actual job (`Paris` is a locality, so stop calling it street). Net zero on n=63 is
 consistent with noise in both directions, not with a systematic drag.
 
 ## 3. What this closes and what it opens
 
 **Closes:** the feedback loop is not the cause of the bare-fragment failures. Every Paris and parity
-number in the arc was measured with this prior OFF (see below), and turning it ON does not rescue the
+number in the arc was measured with this prior off (see below), and turning it on does not rescue the
 class. `Rue Montmartre → locality` is the model's own prior, learned from a corpus where bare street
 fragments are rare and bare localities are not.
 

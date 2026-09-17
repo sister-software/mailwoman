@@ -6,7 +6,7 @@ tags: [geocoding, resolver, corpus]
 date: 2026-06-21
 ---
 
-Open the [demo](/demo), type an address in Kabul, and watch nothing happen. Not a wrong pin a few streets off. Not a city-center fallback. Nothing — the gazetteer has never heard of the place. Try Hong Kong. Try Tirana, or Chişinău, or anywhere in the Democratic Republic of the Congo. Same silence. We had been calling this gazetteer "world coverage" for weeks, and it covered **97 of the world's ~195 countries**. The other ninety-odd were simply not in the file.
+Open the [demo](/demo), type an address in Kabul, and watch nothing happen. Not a wrong pin a few streets off. Not a city-center fallback. Nothing — the gazetteer has never heard of the place. Try Hong Kong. Try Tirana, or Chişinău, or anywhere in the Democratic Republic of the Congo. Same silence. We had been calling this gazetteer "world coverage" for weeks, and it covered **97 of the world's ~195 countries**. The other ninety-odd were only not in the file.
 
 {/* truncate */}
 
@@ -16,9 +16,9 @@ I want to be clear about how that happens, because it didn't happen through some
 
 What makes coverage gaps so good at hiding: a missing place doesn't error. When your parser mislabels a token you get a wrong field you can see in a diff. When your resolver picks the wrong Springfield you get a pin in the wrong state and an angry test. But when a place isn't in the gazetteer at all, the system does exactly what it does for a typo or a fictional street — it shrugs and returns nothing, politely, every single time. Afghanistan returning nothing looks identical to "Hgsdfgh Street" returning nothing.
 
-So you can run your eval suite, watch it pass, ship the thing, and announce world coverage, and every number you're looking at is true. Your US accuracy is real. Your German coord error is real. They're just measured against the places that _are_ in the file, and the file quietly decides what gets measured. We were grading ourselves on the 97 countries we had, and the missing half of the planet never showed up to the exam to lower the average.
+So you can run your eval suite, watch it pass, ship the thing, and announce world coverage, and every number you're looking at is true. Your US accuracy is real. Your German coord error is real. They'remeasured against the places that _are_ in the file, and the file without output decides what gets measured. We were grading ourselves on the 97 countries we had, and the missing half of the planet never showed up to the exam to lower the average.
 
-This is the part I'd flag for anyone building on top of open geodata: **your coverage is whatever your sources' coverage is, and you inherit it silently.** We build the gazetteer from Who's On First plus Overture's administrative divisions — both excellent, both things we'd choose again. But "excellent" and "complete" aren't the same word, and the admin DB those two produce carries localities for 97 countries. We never decided to drop Libya. We just never had it, and nothing in the pipeline was shaped to notice the absence.
+This is the part I'd flag for anyone building on top of open geodata: **your coverage is whatever your sources' coverage is, and you inherit it silently.** We build the gazetteer from Who's On First plus Overture's administrative divisions — both excellent, both things we'd choose again. But "excellent" and "complete" aren't the same word, and the admin DB those two produce carries localities for 97 countries. We never decided to drop Libya. Wenever had it, and nothing in the pipeline was shaped to notice the absence.
 
 ## The trick: audit against a yardstick you didn't build
 
@@ -38,13 +38,13 @@ AL       0     25
 
 Hong Kong: a hundred and forty-one cities in the reference, zero in ours. That's not a tuning problem, that's a hole you could drive a continent through. We checked whether it was the candidate build filtering them out — maybe the data was there and we were dropping it — and no, the source admin DB itself stops at 97 countries. The gap was real and it was upstream.
 
-I'll editorialize for a second: this audit-against-an-external-yardstick move is the single most productive hour of the whole effort, and it's almost embarrassingly simple. We didn't need a model or a cchange metric. We needed to stop trusting our own file and compare it to someone else's count. If you take one thing from this post, take that. Go diff your coverage against a reference you didn't build, per whatever dimension matters to you, _today_. The gap you can't see is the one that's been quietly setting your ceiling.
+I'll editorialize for a second: this audit-against-an-external-yardstick move is the single most productive hour of the whole effort, and it's almost embarrassingly simple. We didn't need a model or a cchange metric. We needed to stop trusting our own file and compare it to someone else's count. If you take one thing from this post, take that. Go diff your coverage against a reference you didn't build, per whatever dimension matters to you, _today_. The gap you can't see is the one that's been without output setting your ceiling.
 
 ## Fixing it without retraining anything
 
 The good news about a pure data gap is that the fix is pure data. No GPU, no model, no retrain — GeoNames already has the places, with coordinates and per-language names, for every country we were missing. We taught our gap-fill builder one new trick (register a country code it had never seen) and pointed it at the full `allCountries` dump, keeping only current populated places and dropping the historical and abandoned ones.
 
-Out the other side: **4.6 million town-level localities across 248 countries**, up from 97. And because "it resolves" and "it resolves _correctly_" are different claims, we checked the second one too, and pulled a handful of major cities in formerly-empty countries to confirm the coordinates land where they should. Kabul resolves to Kabul, within a few hundred metres. Hong Kong, Tirana, Tripoli, Sarajevo, Yerevan — all home. Nine out of nine within thirty kilometres, most of them dead on. A spot-check of the long tail of small towns put them inside the right country's bounding box two hundred times out of two hundred.
+Out the other side: **4.6 million town-level localities across 248 countries**, up from 97. And because "it resolves" and "it resolves _correctly_" are different claims, we checked the second one too, and pulled a handful of major cities in formerly-empty countries to confirm the coordinates land where they should. Kabul resolves to Kabul, within a few hundred meters. Hong Kong, Tirana, Tripoli, Sarajevo, Yerevan — all home. Nine out of nine within thirty kilometers, most of them dead on. A spot-check of the long tail of small towns put them inside the right country's bounding box two hundred times out of two hundred.
 
 ## The cost, named
 

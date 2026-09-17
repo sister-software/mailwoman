@@ -12,7 +12,7 @@ every battery, every verdict).
 | PR        | What                                                                                                                                                                                                                                                                                                                                                                                                                | Shape                             |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | **#1315** | Street-context check (`neural/fst-prior.ts`) — scales the _positive_ FST locality/region bias ×0.25 when a matched place span is syntactically street-headed: street-type adjacency via the **morphology FST** (prefix+suffix locales — never the US-only codex list) or house-number-left (`/^\d{1,6}[a-z]?$/`). Syntactic only, never importance magnitude; byte-identical absent street context (unit-asserted). | Inert-by-default code             |
-| **#1317** | Trailing-locality prior (`neural/trailing-locality-prior.ts`) — the comma-free "street + trailing city" mechanism. Geometry-conditional (R1/R1b longest-admin-match, R2 particle transparency, R3 locality-present-silent, R4 comma-separated-silent).                                                                                                                                                              | **Per-call opt-in ONLY** — see §3 |
+| **#1317** | Trailing-locality prior (`neural/trailing-locality-prior.ts`) — the comma-free "street + trailing city" mechanism. Geometry-conditional (R1/R1b longest-admin-match, R2 particle transparency, R3 locality-present-silent, R4 comma-separated-silent).                                                                                                                                                              | **Per-call opt-in only** — see §3 |
 | **#1318** | FST distribution — per-locale `fst-<locale>.bin` ships in the en-us/fr-fr/en-gb weights packages; `resolveWeights` exposes `fstPath`; the runtime pipeline lazy-auto-loads + wires the check (morph emission prior **always zeroed** at pipeline call sites). `fst: false` escapes; explicit FST wins; en-nz byte-stable.                                                                                           | **Default-on** (ratified)         |
 
 Also: the 768k importance FST was **rebuilt and measured** (provenance byte-equivalent to the 07-18
@@ -42,7 +42,7 @@ it (the roadmap's 0.215 was stale; §3-F corrected). Residual anatomy (89 misses
 (training-only), 37 token-grabs (the check's class — now live via #1318), 1 dropped. **Suffix prior
 not built** — training already ate its target class.
 
-**FST default-on battery (#1318, all on shipped v385).** Golden **US +56 / FR +20** (≤0.27% genuine
+**FST default-on battery (#1318, all on shipped v385).** Golden **US +56 / FR +20** (≤0.27% actual
 regressions, 0 on FR) vs **−6.8pp FR admin-street-homonym**. The operator **ratified a dated bar
 revision** to ship default-on: the same config is homonym-+13 on the v3101 candidate, so the next
 model promotion is expected to retire the revision. **The battery re-runs at that promotion** —
@@ -75,7 +75,7 @@ that's a standing obligation.
    bar revision that shipped was dated, operator-ratified, and carries its own retirement condition.
 6. **Presence vs importance is a measured question, not a principle.** Fork B used gazetteer
    _presence_ to reach importance-zero places — but the marquee case (Sainte-Livrade-sur-Lot) never
-   actually recovered (FST coverage/tokenization), while presence is exactly what let surname
+   recovered (FST coverage/tokenization), while presence is exactly what let surname
    collisions fire. Presence bought ~nothing measured; R1b's importance-aware check is what made the
    mechanism safe.
 
@@ -101,6 +101,6 @@ that's a standing obligation.
 
 - Operator WIP preserved throughout (`corpus-python/modal/train_remote.py` `sync_latam_br` verified
   present after every stash/pop cycle; never committed).
-- Gauntlet PASS at every ship point. Parity floors red but **numerically identical to main**
+- Gauntlet pass at every ship point. Parity floors red but **numerically identical to main**
   (pre-existing campaign-target drift, proven by stash-recompile-compare — not from this work).
 - All measurement harnesses + logs in `scratchpad/measure-*.mjs` (gitignored, reproducible).

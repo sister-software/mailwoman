@@ -11,7 +11,7 @@ service, or a data-use agreement. Every place where an instrument would eventual
 written carries a **PENDING COUNSEL** marker, and each such marker gets a numbered entry in the
 counsel dossier before anything ships.
 
-## 1. What is actually being sold
+## 1. What is being sold
 
 Mailwoman's engine is AGPL and stays AGPL. The commercial license sells release from the
 copyleft condition, not access to the code. Neither of those is a recurring cost to us, which is
@@ -21,7 +21,7 @@ The recurring cost is the **data**. Rebuilding the admin gazetteer is a ten-minu
 of a multi-hour ingest, a verify check, a swap, and a publish; poi.db is a four-country DuckDB
 pass over a 13.68M-row Overture release; the situs extracts are a 50-state ingest. Somebody has to
 run those, grade them, and eat the R2 bill. That work is periodic, so a subscription is the
-honest shape for it.
+direct shape for it.
 
 This is the MaxMind GeoLite motion, and it is worth naming the parts precisely rather than
 gesturing at the brand:
@@ -49,7 +49,7 @@ support conversation becomes an argument about whether a given miss is the degra
 A delayed artifact has neither problem. Its quality is exactly the quality we already graded and
 published, and "how far behind is it" is a subtraction anyone can do.
 
-It also matches what the data actually is. An address register is a moving record of the world.
+It also matches what the data is. An address register is a moving record of the world.
 The value in paying is having this quarter's buildings, not a secret better version of last
 quarter's.
 
@@ -102,8 +102,8 @@ on everything already published is irrevocable and the pricing page publishes th
 - **A name.** An email address and a company, attached to a download. Today an embedder is
   invisible until they file an issue. This is the entire GeoLite mechanic: MaxMind's free tier
   is a lead list that also happens to be a useful product.
-- **Volume and shape.** Which artifacts, which versions, how often, roughly how many
-  distinct downloaders. Enough to answer "is anyone actually using the FR extract" without
+- **Volume and shape.** Which artifacts, which versions, how frequently, roughly how several
+  distinct downloaders. Enough to answer "is anyone using the FR extract" without
   instrumenting anyone's runtime.
 - **A notification channel.** When an artifact is rebuilt because the previous one had a bug
   (the #1015 class), we currently have no way to tell anyone.
@@ -161,14 +161,14 @@ This is the GeoLite trade in its clearest form, and it is the part most likely t
 misunderstood internally, so state the two layers separately:
 
 **Layer 1 — the upstream data's own attribution.** Non-negotiable, channel-independent, and not
-ours to sell. WOF, Overture (CDLA-Permissive-2.0), GeoNames (CC-BY 4.0), and BAN (Licence
+ours to sell. WOF, Overture (CDLA-Permissive-2.0), GeoNames (CC-BY 4.0), and BAN (license
 Ouverte 2.0) each require attribution from anyone who redistributes their data, and paying us
 does not release anyone from that. The catalog page lists these per artifact. Any marketing that
 implies the subscriber tier removes attribution entirely is false and must be corrected.
 
 **Layer 2 — our own attribution condition on the Lite channel.** A visible credit wherever the
 artifact's output is user-facing, in the "geocoding by Mailwoman" shape. The subscriber tier
-waives this one, because this one is genuinely ours to waive.
+waives this one, because this one is in fact ours to waive.
 
 > **PENDING COUNSEL — L3.** Whether we can attach an attribution condition to a compiled
 > artifact whose upstream inputs are public domain or CC0, and if so on what basis (database
@@ -213,7 +213,7 @@ Two caveats that are not optional:
   applies no license filter. A measurement is the right basis for a decision and the wrong basis
   for a standing product. Before the US situs extracts enter the line, that audit becomes a
   build-time filter over the per-row `source` column, with a test, so a future Overture release
-  that quietly adds an ODbL contributor fails the build rather than the check.
+  that without output adds an ODbL contributor fails the build rather than the check.
 - **The corpus filter is the precedent to copy.** `SHARE_ALIKE_PATTERN` /
   `--exclude-share-alike` already does exactly this job on the training side, and it is why the
   weights are clean. The artifact side needs the same discipline, wired to the per-row `source`
@@ -302,8 +302,8 @@ for doing 1–4 first regardless of when counsel appears.
    a manifest that already records tier and license, a version already on a dated path, and no
    OpenAddresses caveat. The gazetteer is the most valuable but carries L4.
 4. **Does the free channel need a coverage floor?** If Lite is 90 days behind, an artifact
-   rebuilt less often than every 90 days makes Lite and subscriber identical, and the tier
-   collapses for that artifact. That is fine and honest, but it should be stated rather than
+   rebuilt less frequently than every 90 days makes Lite and subscriber identical, and the tier
+   collapses for that artifact. That is fine and direct, but it should be stated rather than
    discovered.
 
 ## See also

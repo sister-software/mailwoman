@@ -1,6 +1,6 @@
 # 2026-07-13 — Parity campaign night 1: three cheap changes closed, the data change confirmed
 
-Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's probe sequence
+Conn granted ~01:30 UTC (operator near). Goal: execute the campaign runbook's probe sequence
 (`docs/superpowers/plans/2026-07-13-parity-campaign-runbook.md`). Check: `mailwoman eval parity`
 (floors house_number ≥ 0.97, postcode ≥ 0.97, street ≥ 0.90; splice-candidate baseline
 0.7273 / 0.9861 / 0.4033).
@@ -8,7 +8,7 @@ Conn granted ~01:30 UTC (operator nearby). Goal: execute the campaign runbook's 
 ## What shipped
 
 - **Router probe** (`mailwoman/dev-tools/router-kind-probe.run.ts`, committed): the `QueryKind`
-  union has NO fragment kind; measured over parity-derived classes, bare streets scatter
+  union has no fragment kind; measured over parity-derived classes, bare streets scatter
   (locality_only 37/76, intersection 23, landmark 11) and are structurally inseparable from bare
   localities. **Routing path closed.**
 - **Probe 0 — street-morphology bias** (`eval parity --street-morphology`, committed): floors move
@@ -26,12 +26,12 @@ are unmodified).
 ## What went well
 
 - **Characterize-before-fix paid three times.** Each closed change cost minutes and produced a
-  mechanism, not just a number: the router can't name fragments; morphology bias trades AU units
+  mechanism, nota number: the router can't name fragments; morphology bias trades AU units
   for marginal street recall; a base-corpus sequence prior actively entrenches full-address order
   against the fragment distribution — which is positive evidence FOR the fragment-extract training
   thesis (the distribution mismatch is real and sequence-level).
 - The `--weights-cache` grading path (PR #1099) made candidate A/B cycles trivial and
-  channel-honest all night.
+  channel-direct all night.
 - A stale memory got corrected by reading source: the street-morphology prior was built
   (`neural/street-morphology-prior.ts`), not "designed, not built".
 
@@ -46,7 +46,7 @@ are unmodified).
 
 ## Decisions made autonomously
 
-- **Did NOT launch the GPU fragment-extract assay (probe 1).** The runbook allowed it; I held it.
+- **Did not launch the GPU fragment-extract assay (probe 1).** The runbook allowed it; I held it.
   Reasons: extract synthesis + the #511 base-consistency scan deserve unhurried care (the scars are
   all about hasty extracts), and every zero-training result tonight strengthened the case that the
   assay's job is confirmation of the span-head ceiling, not a hail-mary — it loses nothing by
@@ -76,14 +76,14 @@ are unmodified).
 ## Probe 1 — the fragment-extract assay (UPDATE, ~06:00 UTC)
 
 Launched after the operator's course-correction ("the shift runs to 15:00 — complete the task"):
-`v2.5.0-fragment-assay` on Modal (init_from the SHIPPED v241 step-012000, one change = the
+`v2.5.0-fragment-assay` on Modal (init_from the shipped v241 step-012000, one change = the
 123,272-row balanced-polarity fragment extract at weight 6.0, lr 1e-5 constant, 6k steps, ~2h A100).
 
-**Verdict: the data change is REAL on the current architecture — DeepSeek prediction 2 FALSIFIED.**
+**Verdict: the data change is real on the current architecture — DeepSeek prediction 2 FALSIFIED.**
 All separators moved together (no span-exact lag): fragment-dev span-exact 0.142→0.481,
 tag-accuracy 0.241→0.537, trailing-number→postcode 0.218→**0.084**. Parity: street
 0.4033→**0.5333** (+13pp), house_number 0.7273→0.7532, postcode held 0.9861; FR full-agree
-20→39%, NO 0→44%, DE 29→41%, **US held 41%**. Saturated at step 2000; NO late overfit through
+20→39%, NO 0→44%, DE 29→41%, **US held 41%**. Saturated at step 2000; no late overfit through
 6000 (the v196 scar did not reproduce at 1e-5/6k). Regression: AU 55→40% (the compact lot/unit
 class the extract deliberately excluded — extract-v2 material).
 
@@ -107,9 +107,9 @@ the consult predicted architecture work.
 | run                        | one variable                           | parity (hn / pc / street)         | verdict                                                        |
 | -------------------------- | -------------------------------------- | --------------------------------- | -------------------------------------------------------------- |
 | shipped v241               | —                                      | .7013 / .9861 / .3967             | baseline                                                       |
-| v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data change CONFIRMED; pred-2 falsified                        |
+| v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data change confirmed; pred-2 falsified                        |
 | v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)    | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
-| v2.5.2 (8k)                | extract-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet FAIL: global-dublin-bare                 |
+| v2.5.2 (8k)                | extract-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet fail: global-dublin-bare                 |
 | v2.5.3 (8k)                | extract-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
 
 Iteration discipline held: each run changed one named change answering the previous read-out's

@@ -1,14 +1,14 @@
 # Direction C — Phase 1 end-to-end resolver eval (2026-05-30)
 
 The first **"address string → correct WOF place"** benchmark, and the kill/continue
-check for the per-input routing thesis. Headline: the win was **fixing the resolver**,
+check for the per-input routing thesis. Headline: the change was **fixing the resolver**,
 not routing parsers.
 
 ## Setup
 
 - **Ground truth:** `scripts/eval/gen-wof-bootstrap.py` samples real US WOF localities
   (2,406 rows, 401 localities × 51 regions × canonical/lowercase/nocomma), rendered to
-  address strings, labelled with the source WOF id + centroid (hierarchy-tolerant:
+  address strings, labeled with the source WOF id + centroid (hierarchy-tolerant:
   locality or its region accepted). Sampled from the **custom** gazetteer (never the
   off-the-shelf dumps — different ids).
 - **Runner:** `scripts/eval/resolver-eval.ts` parses each input two ways — neural
@@ -58,7 +58,7 @@ Fixes (both production keepers):
   (77% vs v0's 70%) — the opposite of the _parse-level_ capability map (libpostal). The
   routing gains correctly land on noisy + overall, where the robustness story lives.
 - Oracle shows ~6pp of headroom above the arbiter — a better router (lexical quality
-  signal, not just resolver score) could capture more.
+  signal, notresolver score) could capture more.
 
 ## Conclusions
 

@@ -884,7 +884,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 		},
 		thresholds,
-		// A significance test and an equivalence claim are both VERDICTS, so a diff-only result carries neither. Emitting
+		// A significance test and an equivalence claim are both VERDICTS, so a diff-only result includes neither. Emitting
 		// them over an empty graded set would print a test at n = 0, which reads as a test that was run.
 		significance: mode === "truth" ? test : null,
 		equivalence: mode === "truth" ? equivalence : null,

@@ -4,7 +4,7 @@
 
 **Goal:** Land the shared foundations the migration phases consume: `readJSONL`/`writeJSONL`/`iterateJSONL`, stats + `formatPercent`, `sha256File` in `@mailwoman/core/utils`; and `mailwoman/cli-kit` (command types + `useCommandTask` + `CheckList`) / `mailwoman/test-kit` extracted from `mailwoman/sdk` with deprecated shims.
 
-**Architecture:** New pure modules in `core/utils/` re-exported from the existing `@mailwoman/core/utils` subpath (no exports-map change). `mailwoman/sdk/cli.ts` and `mailwoman/sdk/test/` move to `mailwoman/cli-kit/` and `mailwoman/test-kit/`; the old files become one-line deprecated re-export shims so the published `./sdk/*` subpaths keep resolving; new `./cli-kit` + `./test-kit` subpaths are added to BOTH exports maps. `cli-kit` stays a plain `.ts` (components via `createElement`, no JSX) so the dev `node →` source condition keeps working under type stripping.
+**Architecture:** New pure modules in `core/utils/` re-exported from the existing `@mailwoman/core/utils` subpath (no exports-map change). `mailwoman/sdk/cli.ts` and `mailwoman/sdk/test/` move to `mailwoman/cli-kit/` and `mailwoman/test-kit/`; the old files become one-line deprecated re-export shims so the published `./sdk/*` subpaths keep resolving; new `./cli-kit` + `./test-kit` subpaths are added to both exports maps. `cli-kit` stays a plain `.ts` (components via `createElement`, no JSX) so the dev `node →` source condition keeps working under type stripping.
 
 **Tech Stack:** node:crypto, spliterator (already a core dep), react hooks + ink (already mailwoman deps), vitest.
 

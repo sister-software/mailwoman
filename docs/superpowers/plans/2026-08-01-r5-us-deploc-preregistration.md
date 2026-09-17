@@ -27,7 +27,7 @@ cases that parse correctly today:
 | "Park Slope" | en-US  | 0.65% (rank 14)          | locality 17.1% |
 | "Manhattan"  | en-US  | 0.18% (rank 11)          | locality 91.9% |
 
-US surfaces carry MORE raw dependent-locality mass than the GB ones that work. The shipped GB
+US surfaces carry more raw dependent-locality mass than the GB ones that work. The shipped GB
 behaviour is not the model preferring the tag — it is the pair index at δ=10 clearing a deficit the
 en-GB model card already measured as "large but UNIFORM (~7.0 logits mean)". The origin is a
 training-side class weight of 0.3 on `B/I-dependent_locality` carried from v0.5.1 through v0.8.0
@@ -35,9 +35,9 @@ training-side class weight of 0.3 on `B/I-dependent_locality` carried from v0.5.
 lineage.
 
 **Therefore the US instance was never blocked on aliveness or on conventions. It was blocked on the
-artifact.** Confirmed end-to-end: a US pair index built from WOF (49,033 pairs; boroughs AND
-neighbourhoods, with `borough` admitted as a parent placetype because WOF parents US
-neighbourhoods to the locality) dropped beside the en-US weights flips all three probes:
+artifact.** Confirmed end-to-end: a US pair index built from WOF (49,033 pairs; boroughs and
+neighborhoods, with `borough` admitted as a parent placetype because WOF parents US
+neighborhoods to the locality) dropped beside the en-US weights flips all three probes:
 
 | input                                                     | before                                                 | after                                                   |
 | --------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------- |
@@ -48,20 +48,20 @@ neighbourhoods to the locality) dropped beside the en-US weights flips all three
 Note the silent information loss in the "before" column: the second admin level was not mislabeled,
 it was **discarded**. That is a live US recall defect today, independent of any tag question.
 
-## What is NOT yet established — the pre-registered bars
+## What is not yet established — the pre-registered bars
 
 The three positives above are hand-picked. A 49,033-entry US index is a far larger ambiguity
-surface than GB's curated set, and US neighbourhood surfaces are heavily homonymous with street and
+surface than GB's curated set, and US neighborhood surfaces are heavily homonymous with street and
 venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). Nothing ships until:
 
 - **B-R5.1 (no gauntlet regression).** Full gauntlet, graded through per-country overlays
   (`caseCountry` — a base-only harness reproduces the 2026-08-01 instrument artifact), with the US
   index present vs absent. Bar: **zero newly-failing counted cases.**
-- **B-R5.2 (venue-confound floor).** A held-out US confound board — neighbourhood surfaces opening
+- **B-R5.2 (venue-confound floor).** A held-out US confound board — neighborhood surfaces opening
   venue names, the law-1 class R4b boarded for London. Bar: **≤2% dependent-locality false
   positives**, the shipped GB floor.
-- **B-R5.3 (positive side).** A held-out US board of real borough/neighbourhood addresses, graded
-  for dependent-locality emission AND correct locality assignment. Bar: **≥70% tag-correct**, the
+- **B-R5.3 (positive side).** A held-out US board of real borough/neighborhood addresses, graded
+  for dependent-locality emission and correct locality assignment. Bar: **≥70% tag-correct**, the
   order the GB δ-sweep cleared.
 - **D-R5.4 (disclosure).** The browser path's `detectPairIndexCountry` falls back to `us` for any
   bare Latin query with no postcode — so shipping a US index means unlabeled queries take US pair
@@ -79,7 +79,7 @@ against the same artifacts removed.
   index present, and the xfail set is **identical** to the baseline run without it (same 5 tracked
   xfails, same `comma-drop|181 Rue du Chevaleret` xfail-now-passes note). Zero newly-failing conditional
   cases.
-- **B-R5.2 PASS.** US law-1 confound board — 60 held-out rows where a US neighbourhood surface
+- **B-R5.2 PASS.** US law-1 confound board — 60 held-out rows where a US neighborhood surface
   OPENS a venue name (35 directional-class drawn from 4,819 available, 25 short common-word), each
   in a real street address under its true parent: **0/60 dependent-locality false positives
   (0.0%)** against a ≤2% bar. The segment-mode blocking that holds for London holds here.
@@ -94,7 +94,7 @@ against the same artifacts removed.
   Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester — the US index **misses all
   five** while the GB index hits all five. The fallback does not manufacture GB bias.
 
-## Verdict, and what is NOT being done unilaterally
+## Verdict, and what is not being done unilaterally
 
 The mechanism is proven and every pre-registered bar passed. Three things land from this rung:
 the diagnosis above, the `us` entry in the pair-index command's `PROBE_PAIRS_BY_COUNTRY` (its guard
@@ -104,7 +104,7 @@ correctly refused to build a US index without one), and both boards as reusable 
 **Shipping `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
 decision, not taken here.** The bars were the technical check and they passed; what they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
-neighbourhood or borough line starts emitting `dependent_locality` where it previously emitted
+neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
 nothing and silently dropped the second admin level. That is an improvement and a behaviour change
 at once, it wants a model-card note and a version, and the GB/NZ precedent (a locale overlay
 package nobody installs by accident) does not cover it.
@@ -120,7 +120,7 @@ the US does not emit because no artifact exists. Every other locale in the campa
 is therefore an ARTIFACT question, not a training question — which moves them out of R5's
 training-conditional column and into the same decode-time lane R2–R4b already ran.
 
-## R5 follow-on — the OTHER projections, and a three-way split
+## R5 follow-on — the other projections, and a three-way split
 
 Prompted by the operator's note that the projection table covers far more than boroughs and that
 probe set 2 was built to exercise it. Measuring the rest of the table splits the campaign's targets
@@ -130,7 +130,7 @@ into three classes that want three different mechanisms — the useful generaliz
 `dependent_locality`).** Closed, finite, already in WOF. **Artifact-conditional**, and R5 is the proof:
 build the index and the tag emits. Everything R2–R5 did lives here.
 
-**Class 2 — open-class venue names (`venue` → `venue`).** NOT artifact-conditional, and the measurement
+**Class 2 — open-class venue names (`venue` → `venue`).** not artifact-conditional, and the measurement
 states: of the 40 probe-set-2 improvement targets carrying an expected venue string, only
 **8 (20%) exist in poi.db at all** — and most of those 8 are wrong-country homonyms ("East West"
 [US] for a London row, "Ginza" [FR] for a Dhaka row), so true coverage rounds to near zero. The
@@ -183,7 +183,7 @@ measured at, inherited from GB rather than re-swept because the classifier defic
 
 **The non-regression guarantee, verified rather than assumed.** The concern with a default change
 to the flagship package was ordinary US addresses. They are untouched, and the reason is structural:
-the prior fires only when child AND parent are BOTH present in the query. `Astoria, NY 11103` — a
+the prior fires only when child and parent are both present in the query. `Astoria, NY 11103` — a
 USPS-valid city/state/ZIP with no parent in the string — keeps `locality=Astoria`. That is why the
 19 candidate rows in the US golden boards needed **no edit**; both halves are now conditional gauntlet
 cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
@@ -192,7 +192,7 @@ cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
 
 1. `scripts/copy-weights.ts` typed its pair-index config as `{source, delta}` and passed only
    `--delta`. The release path would therefore have rebuilt `pair-index-gb.bin` **without** β=5 and
-   **without** the R2/R3/R4b borough and London pair sources — a quietly degraded artifact whose
+   **without** the R2/R3/R4b borough and London pair sources — a without output degraded artifact whose
    bytes no longer matched the md5 in the model card. It never shipped because CI sets
    `MAILWOMAN_SKIP_WEIGHTS_COPY` and the operator publishes the dev-linked binary, but one local
    `yarn release` would have produced it.

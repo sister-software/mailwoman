@@ -7,7 +7,7 @@ title: "v0.6.3 step 100K — HOLD, dilution mechanism confirmed"
 
 The v0.6.3 retrain (per the
 [street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx))
-reached step 100K and was evaluated. Verdict: **HOLD**, three check violations,
+reached step 100K and was evaluated. Verdict: **hold**, three check violations,
 and the predicted dilution failure mode materialized.
 
 ## Setup
@@ -71,14 +71,14 @@ patterns in the diluted distribution.
 
 ### `locality` recall dropped 5.3pp
 
-40.0% → 34.7%. Side effect of the dep_loc explosion — many tokens that
+40.0% → 34.7%. Side effect of the dep_loc explosion — several tokens that
 should be classified as locality are instead getting classified as
 dep_locality. The model is confusing the two tags more than v0.6.2 did.
 
 ### Harness pass rate dropped below v0.6.0
 
 12.5% vs v0.6.0's 14.4%. v0.6.3 is **a sidegrade — worse than v0.6.0 on the
-breadth eval**. Per the decision tree, this alone is grounds for HOLD even
+breadth eval**. Per the decision tree, this alone is grounds for hold even
 if the check passed.
 
 ## Check verdict: HOLD
@@ -89,13 +89,13 @@ Per the decision tree:
 | ---------- | ------------ | -------------------- |
 | Pass       | ≥ 25%        | Promote to default   |
 | Pass       | 15-24%       | Ship as experimental |
-| Pass       | ≤ 14.4%      | HOLD (sidegrade)     |
+| Pass       | ≤ 14.4%      | hold (sidegrade)     |
 | **Fail**   | **any**      | **HOLD**             |
 
 v0.6.3 falls in row 4: **HOLD**. Two paths from here:
 
 1. **Launch the pre-staged v0.6.4** (synth-no-street weight 0.5 → 0.75).
-   DeepSeek's mechanism-3 hypothesis just got empirically confirmed by
+   DeepSeek's mechanism-3 hypothesisgot empirically confirmed by
    v0.6.3 going wrong in the predicted way. v0.6.4 directly counters the
    dilution.
 2. **Step back and rethink v0.6.x as a whole.** Three iterations in, the

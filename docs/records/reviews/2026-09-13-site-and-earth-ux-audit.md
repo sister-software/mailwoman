@@ -35,7 +35,7 @@ including `place-render.node.test.ts` — the camera logic this pass deliberatel
 are `packages/earth`'s unit tests (14, including `routes.test.ts`, the `?q=` parser `initialQuery`
 rides on).
 
-Still NOT verified: anything needing a real browser. `@mailwoman/react`'s component suite is Vitest
+Still not verified: anything needing a real browser. `@mailwoman/react`'s component suite is Vitest
 browser mode over playwright/chromium, and the Earth browser specs likewise; the chromium download is
 refused by this workspace's egress allowlist. So the select-on-focus, the result sheet's close, the
 focus ring and the span-tag spacing are compiled and reasoned about, but nobody has watched them work.
@@ -49,12 +49,12 @@ one is this VM rather than the toolchain.
 that URL — so eleven specs now exercise the permalink path for free (`200-demo-resolve` ×6,
 `000-demo-production-smoke` ×3, `270-demo-debug-drawer`, `300-demo-theme`, plus `shell.spec.ts`).
 
-All of them stay green. Each one submits the SAME query it navigated with, so whether the fixture's
+All of them stay green. Each one submits the same query it navigated with, so whether the fixture's
 Enter is swallowed by the `busy` guard mid-auto-run or re-runs after it, `readResult()` reads a result
 for the query the spec asked about. Specs that call `demo.goto()` with no query are untouched — no
 auto-run fires.
 
-One new flake vector worth knowing about if one ever appears: when the auto-run finishes BEFORE the
+One new flake vector worth knowing about if one ever appears: when the auto-run finishes before the
 fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
 while the second is still in flight. Both runs carry the same query and render the same DOM, so there
 is nothing observable to differ — but that is why a re-run is happening at all.
@@ -101,11 +101,11 @@ in the search box, unrun, and the visitor had to press Enter themselves — so "
 link that did not reproduce the result it was copied from. Reproduced on
 `?q=350+5th+Ave+New+York+NY+10118`: field populated, no result sheet, no marker, 48 s after load.
 
-FIXED — `Geocoder` takes an `initialQuery` prop, distinct from `defaultAddress`, and runs it once as
+fixed — `Geocoder` takes an `initialQuery` prop, distinct from `defaultAddress`, and runs it once as
 soon as `runtime.ready` flips. Only the URL's query goes through it, so a cold visit still pre-fills
 the demo address without spending the visitor's first seconds on a parse they did not ask for.
 
-### 1b. The map is black for ~20 s after a result lands — NOT a camera bug
+### 1b. The map is black for ~20 s the result — NOT a camera bug
 
 An earlier draft of this record called this a fly-to that overshot the basemap's maxzoom. That was
 wrong, and it is recorded here because it is the kind of wrong that gets a camera "fixed" into a
@@ -117,18 +117,18 @@ Protomaps source's `maxzoom: 15`, and the marker lands on the right building. Th
 nevertheless black for tens of seconds and then fills in on its own with no interaction. Why it does
 that is the open question below — an earlier answer to it has also been withdrawn.
 
-The cause is NOT established. The 2026-09-14 entry that claimed it was has been withdrawn — this is the
+The cause is not established. The 2026-09-14 entry that claimed it was has been withdrawn — this is the
 second confident wrong answer about this one symptom, and the pattern is worth naming in place.
 
 **Fact, from source.** Inference runs on the page's main thread.
 `packages/neural/lib/web/onnx-runner.ts:140` creates the session with
-`executionProviders: ["webgpu", "wasm"]` in the page, not a worker. The gazetteer IS in a worker
+`executionProviders: ["webgpu", "wasm"]` in the page, not a worker. The gazetteer is in a worker
 (sql.js-httpvfs).
 
 **Fact, from the tests.** The camera is right — `place-render.node.test.ts` (10 tests) covers the
 arithmetic, and an interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
 
-**Fact, observed.** After a result lands the viewport is black for roughly twenty seconds, then paints
+**Fact, observed.** The viewport is black for roughly twenty seconds, then paints
 with no interaction. Scrolling appeared to fix it because any interaction forces a repaint of tiles
 that had by then arrived.
 
@@ -157,7 +157,7 @@ a longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
 Chrome zeroes `requestAnimationFrame` for a hidden tab, and MapLibre both renders and decides which
 tiles to request inside that loop. No rAF, no render, no tile requests, black canvas — every symptom,
 with no bug required. And `totalResources` was 66, well under the 250-entry cap, so `tileReqs: 0` was a
-true count this time rather than a buffer artifact: the tab genuinely never asked for a tile because it
+true count this time rather than a buffer artifact: the tab in fact never asked for a tile because it
 never rendered a frame.
 
 Every observation of this symptom in this record came from a tab driven by browser automation, which
@@ -228,7 +228,7 @@ The two halves of the money path never reference each other:
   `IssuedLicense.tsx:176` and the terms page — both of which you reach _after_ buying.
 - `docs/src/components/PricingTiers/` — the tier cards with price + CTA — is dead code. Its own docblock
   says so: `index.tsx:11` "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
-- `/pricing` (no `/docs`) **404s**, despite the navbar item being labelled "Pricing".
+- `/pricing` (no `/docs`) **404s**, despite the navbar item being labeled "Pricing".
 
 Fix, smallest first: add `/pricing → /docs/pricing` and `/licensing → /license` to the existing
 `plugin-client-redirects` block (`docusaurus.config.ts:118`); put the price on the two plan cards; end
@@ -329,7 +329,7 @@ not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a
   percentage that no sighted user can see.
 - Visually it is a **3px hairline at the top of the viewport** (`packages/react/styles.css:2100`), with no
   numerals, plus a truncated caption in a 1.9rem footer strip. No "12 MB of 38 MB", no ETA, nothing in the
-  centre of the screen where a first-time visitor is looking.
+  center of the screen where a first-time visitor is looking.
 - `packages/react/lib/map/GeocoderControls.tsx:167` — the `* 1` is a leftover no-op, and the whole 38 MB
   transfer is compressed into the first `1/steps` (≈ the first third) of the bar.
 
@@ -475,7 +475,7 @@ fixed here was two implementations of one thing, and four of them had already di
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Glass material, hand-rolled on `.mw-map-panel` | Vendor pair reversed (no blur on Firefox), hardcoded `blur(20px)` with no saturation, and absent from both fallbacks — reduced-transparency still got glass. |
 | Detent toggle, written three times             | The third copy was the literal `0.7`, which is `(medium + large) / 2` by hand. `aria-expanded` would desync the moment a detent moved.                       |
-| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel AND dismissed the result behind it. One keystroke, two dismissals.                                   |
+| Two document-level `Escape` listeners          | Escape over an open About/Layers panel closed the panel and dismissed the result behind it. One keystroke, two dismissals.                                   |
 | Sheet close button, markup re-typed            | Against `MapSheet`'s own docblock: "One component carries it so the four sheets cannot disagree."                                                            |
 | `"(max-width: 600px)"` in three places         | The JS gestures arm on it and the CSS moves the panel on it; a drift arms a drag on a layout with nowhere to drag to.                                        |
 
@@ -491,7 +491,7 @@ browser assertions were stale the same way and had not been run since.
 Left alone deliberately:
 
 - `.mw-map-panel__header` and `.mw-map-sheet__header` are the same sticky-header pattern in different
-  tokens. Neither is canonical yet; merging them means settling what a sheet header IS across two
+  tokens. Neither is canonical yet; merging them means settling what a sheet header is across two
   components, which is more than a sweep.
 - `MapControlStackProps.side` has no consumer and `.mw-map-control-stack--left` is therefore unreachable;
   `MapSearchBarProps.trailing` is used only by a story. Both are library surface, not dead product code.
@@ -525,7 +525,7 @@ run — which is how the first attempt at this pass was written, and would have 
 regenerated.
 
 `stylesheet-contract` grew a detector for a raw pixel `border-radius`, so the scale is enforced rather than
-merely documented. The spacing scale is NOT enforced: it would need a lint over four properties and a way to
+merely documented. The spacing scale is not enforced: it would need a lint over four properties and a way to
 exempt the values that are deliberate, and the check's house rule is that every rule in it is a defect that
 reached production.
 

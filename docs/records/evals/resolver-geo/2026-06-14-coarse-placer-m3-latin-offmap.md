@@ -3,14 +3,14 @@
 _2026-06-14. The #244 coarse-placer's M2 OTHER class was trained on non-Latin scripts (Cyrillic,
 Arabic, …), so it abstains well on those but still confidently mis-places off-map COUNTRIES written in
 Latin script — Poland, Brazil, Mexico — onto a trained Latin country. This milestone tested the
-obvious fix: feed it REAL off-map addresses (not synthetic name variants — see #564) as OTHER. The
-mechanism works cleanly and at zero in-map cost, but it does not generalize past the countries you
+obvious fix: feed it real off-map addresses (not synthetic name variants — see #564) as other. The
+mechanism works directly and at zero in-map cost, but it does not generalize past the countries you
 train on, and Overture's addresses theme doesn't currently have the breadth to train on enough of
-them. So this is a directional win with an honest ceiling, recorded — not a promotion._
+them. So this is a directional win with an direct ceiling, recorded — not a promotion._
 
 ## The residual, measured
 
-A Latin off-map address is **handled** when the placer routes it to OTHER or abstains; anything else is
+A Latin off-map address is **handled** when the placer routes it to other or abstains; anything else is
 a confident mis-placement onto a wrong trained country. On a fresh held-out set of real Overture
 addresses from off-map Latin countries (n=17815), the shipped (M2) model handles only **23.3%** — i.e.
 it confidently mis-places three out of four. Polish addresses go to JP/NL/US at 0.58–0.96 confidence.
@@ -21,7 +21,7 @@ Assemble real address strings from the Overture per-country address parquet and 
 `country: "OTHER"`. Split the countries deliberately:
 
 - **Train** (their rows feed train/val OTHER): PL, BR, MX, PT — the off-map Latin countries Overture
-  actually has rows for.
+  has rows for.
 - **Held out** (test only — the generalization probe): CZ (a distinct Slavic country the model never
   sees), plus CA and LI (the hard near-twins — Canadian addresses read like US, Liechtenstein like DE).
 
@@ -43,16 +43,16 @@ Pareto improvement.
 
 ## What this says
 
-The mechanism is real: train a country on OTHER and it goes to **100%** handled, at **zero** in-map
+The mechanism is real: train a country on other and it goes to **100%** handled, at **zero** in-map
 cost. But the model learns _those countries' n-grams → OTHER_, not a general "off my map" concept —
 the held-out countries barely move (+1.7pp overall), and the near-twins (CA looks like US, and for a
 _coarse_ placer that's arguably not even wrong) stay where they are. General Latin off-map handling
-needs **broad country coverage** — dozens of off-map countries in the OTHER class, not four.
+needs **broad country coverage** — dozens of off-map countries in the other class, not four.
 
 That breadth is the wall. Of the 12 off-map countries requested from Overture's addresses theme
 (2026-05-20.0, ALPHA), only 5 returned rows (PL/BR/MX/PT/CZ); RO/TR/ID/SE/VN/HU/PH/AR were empty. So
 this is a **data-availability ceiling, not a method failure** — the same shape as #564's fr.house_number
-plateau (real-data realism is the change; we just don't have enough of it yet).
+plateau (real-data realism is the change; wedon't have enough of it yet).
 
 ## Decision
 

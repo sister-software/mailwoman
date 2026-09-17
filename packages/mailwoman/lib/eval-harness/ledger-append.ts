@@ -14,7 +14,7 @@
  *   populated rows use free-text pointers — this tool warns on that drift, it does not fail.
  *
  *   Refuses to append a duplicate (same model_version + run_id) unless `replace`, and always
- *   validates the result is parseable JSON before writing (write-to-temp, then rename).
+ *   checks that the result is parseable JSON before writing (write-to-temp, then rename).
  *
  *   Usage:
  *     mailwoman eval ledger-append \

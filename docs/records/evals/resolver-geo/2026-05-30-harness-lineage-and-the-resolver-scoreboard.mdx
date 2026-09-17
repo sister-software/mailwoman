@@ -5,7 +5,7 @@
 lineage the `v0` rule parser was built from. v0 scores 93.7% on it almost
 tautologically; the neural model scores 19.8%. Chasing a 25% neural score on a
 suite where neural is structurally disadvantaged is the wrong hill. The
-**resolver end-to-end metric** (address to correct WOF place) is the honest
+**resolver end-to-end metric** (address to correct WOF place) is the direct
 scoreboard, and there the same v0.7.2 model already **wins**: neural 68.9% vs
 v0-via-adapter 63.7% Place-Match Acc@1. This doc records the evidence (all numbers
 re-verified from clean runs) and proposes the metric reframe.
@@ -47,13 +47,13 @@ Pelias-derived. So:
 
 - The expected labels encode Pelias/addressit's _segmentation conventions_.
 - v0 reproduces them by construction, hence 93.7%.
-- The neural model learned a _different_ (often defensible) segmentation and is
+- The neural model learned a _different_ (frequently defensible) segmentation and is
   graded as wrong whenever it disagrees with the Pelias convention.
 
 The matcher is already lenient — `expectedMatchesActual` passes on substring
 containment in **either** direction (`harness-v0-neural.ts`) — so pure over- or
 under-span boundary errors do **not** cause failures. The failures that remain are
-genuine _disagreements_: a tag the model did not emit, or a value that is neither
+actual _disagreements_: a tag the model did not emit, or a value that is neither
 equal to nor a substring of the Pelias-expected value.
 
 ### The dominant failure shape: under-segmentation on non-canonical input
@@ -72,7 +72,7 @@ The pattern is consistent: when the surface form drifts from the canonical
 comma-delimited US template, the segmentation degrades — the model leans on
 delimiter/format cues it saw in training rather than on token semantics.
 
-## The honest scoreboard: resolver end-to-end
+## The direct scoreboard: resolver end-to-end
 
 The product goal is _address to correct place plus coordinates_, not _match
 Pelias's component spans_. The Direction-C resolver eval
@@ -98,7 +98,7 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
 ## Reframe (the proposal)
 
 1. **Resolver end-to-end Acc@1 is the headline metric.** It matches the product,
-   is lineage-neutral, and is where the model's value actually shows.
+   is lineage-neutral, and is where the model's value shows.
 2. **The `harness-v0-neural` suite is a regression check, not a promotion bar.**
    Keep running it — a _drop_ signals a real regression — but stop treating "25%
    neural on a v0-lineage suite" as the goal. It asks the neural model to imitate
@@ -106,7 +106,7 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
 3. **Coverage, measured on lineage-neutral sets, is the change.** The
    under-segmentation on non-canonical formats (above) is the real gap, and it
    shows up on the _perturbed_ resolver subset and the external arenas — both
-   lineage-neutral — not just the Pelias harness.
+   lineage-neutral — notthe Pelias harness.
 
 This reframe unblocks two stalled cycles (v0.6.x held after three recipe
 iterations; v0.7.x calibration null on the harness): both were optimizing a

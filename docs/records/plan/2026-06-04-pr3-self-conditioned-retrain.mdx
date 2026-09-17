@@ -14,7 +14,7 @@ It also lines up with the failure that started the anchor work. The v0.8.0 Germa
 
 The architecture is grounded in `corpus-python/src/mailwoman_train/model.py` (`MailwomanCoarseEncoder`): a 6-layer, 384-hidden, 6-head pre-norm transformer encoder feeding a single linear BIO head over 33 labels (`labels.py`, 16 component tags). No locale representation exists anywhere in it today. Self-conditioning adds three small pieces and reuses one that is already there.
 
-**1. An auxiliary locale head (the model's own country posterior).** Mean-pool the encoder output over non-pad tokens into a single vector, run it through `Linear(384 → num_locales)`, and train it with cross-entropy against the row's `country` field. The corpus already carries `country` on every row (`corpus/src/types.ts` `CanonicalRow`, the `country` parquet column `data_loader.py` reads), so the target is free. This head is what forces the pooled representation to actually encode "which country", and it closes the loop with the consult: it **is the authoritative `LocalePosterior`** the resolver wanted. Export it alongside the BIO output, and the resolver's swappable `localePriorProvider` finally has a strong producer to point at.
+**1. An auxiliary locale head (the model's own country posterior).** Mean-pool the encoder output over non-pad tokens into a single vector, run it through `Linear(384 → num_locales)`, and train it with cross-entropy against the row's `country` field. The corpus already carries `country` on every row (`corpus/src/types.ts` `CanonicalRow`, the `country` parquet column `data_loader.py` reads), so the target is free. This head is what forces the pooled representation to encode "which country", and it closes the loop with the consult: it **is the authoritative `LocalePosterior`** the resolver wanted. Export it alongside the BIO output, and the resolver's swappable `localePriorProvider` finally has a strong producer to point at.
 
 **2. Feedback from that posterior into the per-token labeling (the "self" in self-conditioning).** The design rule is that locale gets resolved globally, before per-token labels. So project the pooled locale representation into a FiLM modulation (a learned scale and shift) and apply it to the token representations feeding the BIO head: `h' = γ(p) ⊙ h + β(p)`. The model infers the country once from the whole string, then lets that inference reshape how it labels each token. If head-level FiLM proves too weak to move the cross-pollution metric, the escalation is to split the encoder and FiLM the back half (infer locale after layer 3, condition layers 4–6). That is more faithful to "before per-token labels" and more code, so it is the fallback, not the opening move.
 
@@ -36,7 +36,7 @@ US and FR are already in the corpus (`country_weights {US: 1.0, FR: 1.0}` in the
 
 ## The new metric we have to build
 
-The pre-registered regression check is "per-locale, the rate of city-start tokens mis-tagged as `postcode` falls below 1% by 20k steps." That cross-pollution metric does not exist yet: the current evals (`scripts/eval/per-locale-f1.ts`, `corpus-python` `eval.py`) measure component F1 and calibration, not this specific confusion. It needs writing: over a held-out per-locale set, count how often a token whose gold label starts a `locality`/`region` span gets predicted `postcode`. This is the direct readout of the Saint-Albans collapse, and it is the check that tells us self-conditioning is doing its job before we spend a full run.
+The pre-registered regression check is "per-locale, the rate of city-start tokens mis-tagged as `postcode` falls below 1% by 20k steps." That cross-pollution metric does not exist yet: the current evals (`scripts/eval/per-locale-f1.ts`, `corpus-python` `eval.py`) measure component F1 and calibration, not this specific confusion. It needs writing: over a held-out per-locale set, count how frequently a token whose gold label starts a `locality`/`region` span gets predicted `postcode`. This is the direct readout of the Saint-Albans collapse, and it is the check that tells us self-conditioning is doing its job before we spend a full run.
 
 ## The checks (pre-registered, resolver is the judge)
 
@@ -44,9 +44,9 @@ No promotion on parser-F1 alone. These come straight from the anchor-based-parsi
 
 - **20k cross-pollution check:** city-start-as-postcode under 1% per locale by 20k steps. If it will not clear, that recipe has hit its interference ceiling; stop the run.
 - **No regression on the incumbents:** US and FR resolver utility within 1pp of v0.7.2. Adding DE must not drop an existing locale's resolver city-match by more than 2pp (the 77→43 German collapse is the thing we are guarding against).
-- **DE has to actually move:** German locality F1 ≥ 70% and rising at the check, or the run is not earning the German data.
+- **DE has to move:** German locality F1 ≥ 70% and rising at the check, or the run is not earning the German data.
 - **Dropout robustness:** with the anchor channel zeroed and the locale signal dropped, degradation ≤ 5pp — proof the model learned to parse, not to lean on a crutch.
-- **Promotion is the resolver's call.** Run the full `oa-resolver-eval` (US + DE, real OA points) and the per-tag error analysis; promote to default only if the resolver improves and no tag regresses more than 2pp. Otherwise the artifact ships labelled experimental in `releases.json`, not promoted, the same discipline as every prior cycle.
+- **Promotion is the resolver's call.** Run the full `oa-resolver-eval` (US + DE, real OA points) and the per-tag error analysis; promote to default only if the resolver improves and no tag regresses more than 2pp. Otherwise the artifact ships labeled experimental in `releases.json`, not promoted, the same discipline as every prior cycle.
 
 ## Export and the resolver loop
 

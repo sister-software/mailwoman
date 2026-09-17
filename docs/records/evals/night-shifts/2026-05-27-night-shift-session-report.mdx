@@ -83,9 +83,9 @@ The live demo was serving the old 24K-vocab tokenizer (474 KB) with the 48K-voca
 
 ## What went well
 
-1. **Demo-assets plugin is the right abstraction.** Model/tokenizer/FST/WOF-slim all staged from a single source of truth. The tokenizer mismatch that shipped bad output to production can't recur.
+1. **Demo-assets plugin is the right abstraction.** Model/tokenizer/FST/WOF-slim all staged from a single authoritative record. The tokenizer mismatch that shipped bad output to production can't recur.
 2. **Grouper-audit fix was non-obvious.** The containment nesting meant top-level roots had different spans than nested children. The overlap check needed to flatten the whole tree — a 10-line fix that prevented wrong provisional nodes on every address.
-3. **Per-tag F1 was the fastest fix with the highest leverage.** The macro F1 comparison that caused hours of wrong analysis in the v0.5.3 session is now impossible — per-tag breakdown is logged at every eval step.
+3. **Per-tag F1 was the fastest fix with the highest use.** The macro F1 comparison that caused hours of wrong analysis in the v0.5.3 session is now impossible — per-tag breakdown is logged at every eval step.
 4. **CRF transition export was pure plumbing.** The TS side already accepted transitions, the Python side already trained them. Just needed 84 lines to connect the dots.
 
 ## What went wrong

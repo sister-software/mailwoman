@@ -29,7 +29,7 @@ The character-offset preservation matters. When the parser says "10010 is a `pos
 
 The word tokenizer also pre-processes:
 
-- **Lowercase normalization** — usually applied selectively. "NY" stays "NY", but "AVENUE" becomes "Avenue".
+- **Lowercase normalization** — typically applied selectively. "NY" stays "NY", but "AVENUE" becomes "Avenue".
 - **Punctuation splitting** — `"Apt.4B"` becomes `[Apt, ., 4B]` so each piece can be classified independently.
 - **Abbreviation expansion** — optional. `"St."` can be expanded to `"Street"` for classification, then collapsed back for the output.
 
@@ -59,7 +59,7 @@ flowchart LR
     B --> C["['▁350', '▁5', 'th', '▁Ave', ',', '▁New', '▁York', ',', '▁NY', '▁101', '18']"]
 ```
 
-Each subword piece is mapped to an integer ID — that is what the model actually consumes. The mapping is fixed; the tokenizer is part of the model package (`tokenizer.model`).
+Each subword piece is mapped to an integer ID — that is what the model consumes. The mapping is fixed; the tokenizer is part of the model package (`tokenizer.model`).
 
 ## The span-realignment problem
 
@@ -116,6 +116,6 @@ Expand the **Subword tokens & pipeline stages** section to see per-stage word to
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labelled
+- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labeled
 - [BIO labels](./bio-labels.mdx) — how subword-level labels become character-level spans
 - [How the model reasons](./how-the-model-reasons.mdx) — what the model does with tokens

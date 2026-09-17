@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-title: How mail delivery actually works
+title: How mail delivery  works
 tags:
   - domain
   - motivation
@@ -8,7 +8,7 @@ tags:
   - international
 ---
 
-# How mail delivery actually works
+# How mail delivery works
 
 Before you can judge a parser, you need to know what it is parsing _for_. Address parsing exists to route physical objects to physical places, through a system designed in the 19th century and patched ever since.
 
@@ -48,11 +48,11 @@ This is the deepest layer of the postal system's fuzziness: the human at the end
 
 If the address is malformed enough that even the REC operators cannot resolve it, the letter goes to **dead letter** processing. The Mail Recovery Center in Atlanta tries to identify the sender or recipient from the contents. If it cannot, the letter is destroyed or auctioned.
 
-But usually, wrong addresses get handled earlier:
+But typically, wrong addresses get handled earlier:
 
 - **Return to sender.** If the address exists but the recipient has moved, the letter gets a yellow sticker and goes back.
 - **Forwarding.** If the recipient filed a change-of-address, the letter gets a new barcode and continues to the new destination. Forwarding orders last 12 months for first-class mail; after that, mail is returned.
-- **Carrier correction.** The carrier knows the delivery point. If the address is close but not quite right ("142 Elm" when the mailbox says "140"), the carrier corrects it without returning it. This is friction, but it works often enough that the system tolerates it.
+- **Carrier correction.** The carrier knows the delivery point. If the address is close but not quite right ("142 Elm" when the mailbox says "140"), the carrier corrects it without returning it. This is friction, but it works frequently enough that the system tolerates it.
 
 ## What this means for a parser
 

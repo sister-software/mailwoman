@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-title: Why not just use Google's API?
+title: Why notuse Google's API?
 tags:
   - domain
   - hubris
@@ -9,9 +9,9 @@ tags:
   - international
 ---
 
-# Why not just use Google's API?
+# Why notuse Google's API?
 
-Google's Geocoding API is the default choice for geocoding. It is fast, globally comprehensive, and returns results in milliseconds. For many applications, calling Google is the right move. For applications that need to own their address data, audit their results, or operate at scale, it is the expensive kind of cheap.
+Google's Geocoding API is the default choice for geocoding. It is fast, globally complete, and returns results in milliseconds. For several applications, calling Google is the right move. For applications that need to own their address data, audit their results, or operate at scale, it is the expensive kind of cheap.
 
 ## What you get
 
@@ -30,13 +30,13 @@ At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is
 
 Google claims coverage in 250+ countries and territories. Quality varies dramatically by region:
 
-| Region type                          | Quality                                                              |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| US, Western Europe, Japan, Australia | Excellent — precise to rooftop or building entrance                  |
-| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level, not building-level        |
-| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, significant gaps in rural areas |
+| Region type                          | Quality                                                           |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| US, Western Europe, Japan, Australia | Excellent — precise to rooftop or building entrance               |
+| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level, not building-level     |
+| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, measured gaps in rural areas |
 
-The uneven coverage is not Google's fault — it reflects the quality of the underlying data sources in each country. But it means the API's "global" label masks significant regional variation.
+The uneven coverage is not Google's fault — it reflects the quality of the underlying data sources in each country. But it means the API's "global" label masks measured regional variation.
 
 ## What you give up
 
@@ -68,7 +68,7 @@ Google's privacy policy does not guarantee that your geocoding queries are not u
 
 ### You are locked into Google's ontology
 
-Google's address component types (route, sublocality, administrative_area_level_1, etc.) are Google's taxonomy. They do not always map cleanly to other address schemas:
+Google's address component types (route, sublocality, administrative_area_level_1, etc.) are Google's taxonomy. They do not always map directly to other address schemas:
 
 | Google component              | Mailwoman equivalent | Notes                         |
 | ----------------------------- | -------------------- | ----------------------------- |
@@ -97,7 +97,7 @@ Owning your parser is the right choice when:
 
 - **You geocode the same addresses repeatedly.** A one-time geocoding cost, cached locally, amortizes the infrastructure investment over time.
 - **You need auditable results.** When correctness matters (delivery routing, emergency services, government compliance), being able to trace a geocode back to its source data is non-negotiable.
-- **You operate in regions where Google is weak.** If a significant fraction of your addresses are in countries where Google's coverage is at the locality level, a regional gazetteer may outperform Google.
+- **You operate in regions where Google is weak.** If a measured fraction of your addresses are in countries where Google's coverage is at the locality level, a regional gazetteer may outperform Google.
 - **You need a specific address model.** If your downstream systems use ISO 19160 address components or a custom schema, translating Google's components is a recurring development cost.
 - **You handle protected addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
 

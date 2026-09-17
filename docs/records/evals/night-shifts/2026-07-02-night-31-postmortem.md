@@ -35,8 +35,8 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 ## The model campaign: two runs, two falsifications, one fork
 
 - **Run 1 (v1.9.8** — fr-bare-street alone on the shipped spliced base, case-aug excluded on the
-  v1.9.6 shelving record): probe PASS (FR bare 90→93%, US 12-row spot byte-identical). Full 12k +
-  sweet-spot scan: FR plateaus 93% through 10k; **full check at 10k: US/CZ/PL/SK ni PASS, SI ni
+  v1.9.6 shelving record): probe pass (FR bare 90→93%, US 12-row spot byte-identical). Full 12k +
+  sweet-spot scan: FR plateaus 93% through 10k; **full check at 10k: US/CZ/PL/SK ni pass, SI ni
   FAIL** (−3.4pp resolve; 37 rows, all the Slovenian no-street "Village N, Postcode Village" form —
   "Apače 108" → street "Apače 10" + house "8"); intrinsic by 6k. The 12k corpus-val jump (macro
   .725→.739) was disregarded as a check input — label-F1 on the training distribution.
@@ -97,7 +97,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
   rule of thumb: a probe check should include every locale the full check will grade, at reduced n.
 - A `pkill -f <script>` matched its own background shell's argv and killed it (exit 144, ~20 min
   lost). Pattern-pkill against argv you also occupy.
-- My first export fetch graded the SHIPPED baseline as the probe (silent volume-get failure +
+- My first export fetch graded the shipped baseline as the probe (silent volume-get failure +
   fail-open linker path). The md5/guard discipline caught it, but the linker's missing-source path
   should probably hard-fail rather than warn when `MAILWOMAN_DEV_*` is set.
 - Docs typecheck was 7-errors-red on main and nobody knew (the #917 bug lived there). Candidate:
@@ -112,8 +112,8 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
   own regressions regardless.
 - init_from (not resume) for the campaign — the surgery export carries no optimizer state;
   v1.9.7 idiom.
-- Run-2's bounded 6k extension after a probe FAIL (bars unchanged, kill explicit) — spent $0.5 to
-  distinguish under-convergence from non-convergence; the kill then fired honestly.
+- Run-2's bounded 6k extension after a probe fail (bars unchanged, kill explicit) — spent $0.5 to
+  distinguish under-convergence from non-convergence; the kill then fired directly.
 - #917 split-and-merged as production REPAIR under tonight's merge mode (distinct from the
   demo-default wall; live breakage verified before and after).
 - #920 scoped as a filed follow-up rather than a rushed night build (canonical-adjacent data
@@ -135,9 +135,9 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 - #920: GeoNames-postal extract extension → re-run the FI/CZ pre-registration → default-flip eval.
 - #901 fork decision → run 3 design (if option 3: one recipe over FR/SI/CZ with balanced polarity,
-  probe check includes ALL graded locales at reduced n).
+  probe check includes all graded locales at reduced n).
 - #294 is unblocked by #918's TW table (after review/merge).
-- v198/v199 volume outputs kept for the fork review; propose cleanup WITH the v05x dirs after.
+- v198/v199 volume outputs kept for the fork review; propose cleanup with the v05x dirs after.
 
 ## Numbers
 
@@ -154,4 +154,4 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 | Issue records posted        | #901 fork, #897 diagnostic, #375 taxonomy, #829 correction, #473 check |
 | Panels added                | 9 locales (ES NL CH NO HR DK FI + BE SE) — Tier-3 sweep closed         |
 | Production incidents        | 1 found (live since Jul 1), fixed, deployed, re-verified               |
-| Verification (end of shift) | gauntlet PASS · metamorphic PASS (6 tracked) · 1,441 tests green       |
+| Verification (end of shift) | gauntlet PASS · metamorphic pass (6 tracked) · 1,441 tests green       |

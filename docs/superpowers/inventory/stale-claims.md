@@ -33,11 +33,11 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 ## Finding 1 — CRF "learns" transitions; dual-loss training presented as current
 
-**Claim:** "A CRF fixes this by: 1. Learning a transition score for every pair of adjacent labels... 2. At decode time, finding the highest-scoring whole sequence" and, further down, "What the CRF learns... These soft priors get baked into the transition matrix during training," followed by "How training works with a CRF": "Backpropagation through the forward algorithm trains both the encoder weights AND the CRF transition scores."
+**Claim:** "A CRF fixes this by: 1. Learning a transition score for every pair of adjacent labels... 2. At decode time, finding the highest-scoring whole sequence" and, further down, "What the CRF learns... These soft priors get baked into the transition matrix during training," followed by "How training works with a CRF": "Backpropagation through the forward algorithm trains both the encoder weights and the CRF transition scores."
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:21-26`, `:75-85`, `:87-100`
 
-**Ground truth:** Training has been CE-only (`crf_loss_weight: 0.0`) in every config since v0.5.0. `model.py:708` — `if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:` — this branch, which computes the CRF NLL and backpropagates into the transition matrix, never fires under the shipped recipe. `model.py:748` — `else: loss = ce_loss` is what actually runs. The shipped model card states this outright: `neural-weights-en-us/model-card.json:33` — `"crf_at_training": false`.
+**Ground truth:** Training has been CE-only (`crf_loss_weight: 0.0`) in every config since v0.5.0. `model.py:708` — `if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:` — this branch, which computes the CRF NLL and backpropagates into the transition matrix, never fires under the shipped recipe. `model.py:748` — `else: loss = ce_loss` is what runs. The shipped model card states this outright: `neural-weights-en-us/model-card.json:33` — `"crf_at_training": false`.
 
 **Evidence:** `corpus-python/src/mailwoman_train/model.py:708-748`; `corpus-python/src/mailwoman_train/configs/v0_5_0-classifier-ce-only-full.yaml:58` through `v2.9.0-country-counterweight.yaml:89` (every intervening config); `neural-weights-en-us/model-card.json:33`.
 
@@ -49,7 +49,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/crf-decoder.mdx:102-112`
 
-**Ground truth:** CRF training was reactivated post-v0.4.0 and diverged three more times before being permanently disabled. `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76` — comment: "`crf_loss_weight: 0.0` after THREE divergence attempts: attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950 / attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700 ... v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that." A subsequent fp32 diagnostic (`v0_6_2-crf-fp32-diagnostic.yaml`) tested whether bf16 precision was the cause; the next config in the lineage, `v0_6_3-house-venue.yaml:122`, is back to `crf_loss_weight: 0.0`, and every config after it stays at 0.0 through the current `v2.9.0`.
+**Ground truth:** CRF training was reactivated post-v0.4.0 and diverged three more times before being permanently disabled. `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76` — comment: "`crf_loss_weight: 0.0` after three divergence attempts: attempt 1 (lr=1.5e-4, crf=0.5): NaN at step 950 / attempt 2 (lr=1.0e-4, crf=0.1): NaN at step 1700 ... v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that." A subsequent fp32 diagnostic (`v0_6_2-crf-fp32-diagnostic.yaml`) tested whether bf16 precision was the cause; the next config in the lineage, `v0_6_3-house-venue.yaml:122`, is back to `crf_loss_weight: 0.0`, and every config after it stays at 0.0 through the current `v2.9.0`.
 
 **Evidence:** `corpus-python/src/mailwoman_train/configs/v0_6_0-stage3.yaml:66-76`; `v0_6_2-crf-fp32-diagnostic.yaml:1-20`; `v0_6_3-house-venue.yaml:122`.
 
@@ -97,7 +97,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/neural-classification.mdx:32-39, 43-55`
 
-**Ground truth:** `neural-weights-en-us/model-card.json:25,27-28,31-32` — `hidden_size: 384`, `num_attention_heads: 6`, `intermediate_size: 1536`, `num_labels: 33`, `params: "33.9M"`. Every one of the five geometry numbers in the doc's table is wrong (not just the label count from Findings 4-5) — the model has grown considerably (nsplice vocab embedding growth, more heads/width) since this table was last updated.
+**Ground truth:** `neural-weights-en-us/model-card.json:25,27-28,31-32` — `hidden_size: 384`, `num_attention_heads: 6`, `intermediate_size: 1536`, `num_labels: 33`, `params: "33.9M"`. Every one of the five geometry numbers in the doc's table is wrong (notthe label count from Findings 4-5) — the model has grown considerably (nsplice vocab embedding growth, more heads/width) since this table was last updated.
 
 **Evidence:** `neural-weights-en-us/model-card.json:25-32`.
 
@@ -109,7 +109,7 @@ Verified against the code at `/home/lab/Projects/mailwoman` on 2026-07-14. Scope
 
 **Where:** `docs/articles/concepts/tokenization.mdx:44,49,53-54,108`
 
-**Ground truth:** The currently shipped weights bundle's tokenizer is two generations past both versions named in the doc. `neural-weights-en-us/model-card.json:10,30` — `"tokenizer_version": "0.8.0-fr-nsplice"`, `"vocab_size": 66319` — 4x the "shipping" figure and 38% larger than the "validated, pending" A1 figure the doc describes as not-yet-shipped. `neural-weights-en-us/model-card.json:110` independently describes the tokenizer as "SentencePiece unigram, byte_fallback=true, vocab_size=66319 (v0.8.0-fr-nsplice = v0.7.1-nsplice + 2406 FR diacritic pieces; ships WITH the model)."
+**Ground truth:** The currently shipped weights bundle's tokenizer is two generations past both versions named in the doc. `neural-weights-en-us/model-card.json:10,30` — `"tokenizer_version": "0.8.0-fr-nsplice"`, `"vocab_size": 66319` — 4x the "shipping" figure and 38% larger than the "validated, pending" A1 figure the doc describes as not-yet-shipped. `neural-weights-en-us/model-card.json:110` independently describes the tokenizer as "SentencePiece unigram, byte_fallback=true, vocab_size=66319 (v0.8.0-fr-nsplice = v0.7.1-nsplice + 2406 FR diacritic pieces; ships with the model)."
 
 **Evidence:** `neural-weights-en-us/model-card.json:10,30,110`.
 

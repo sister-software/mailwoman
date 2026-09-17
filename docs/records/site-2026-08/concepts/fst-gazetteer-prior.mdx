@@ -15,15 +15,15 @@ tags:
 
 # FST gazetteer prior
 
-The FST (finite-state transducer) gazetteer prior is the structure that lets the neural classifier benefit from everything Who's On First already knows. The neural model knows grammar; the gazetteer knows places. The FST is the bridge — pre-computed at build time so the classifier can consult it at inference time without paying gazetteer-lookup costs per token.
+The FST (finite-state transducer) gazetteer prior is the structure that lets the neural classifier benefit from everything Who's On First already knows. The neural the system grammar; the gazetteer knows places. The FST is the bridge — pre-computed at build time so the classifier can consult it at inference time without paying gazetteer-lookup costs per token.
 
-This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline. It's also the reference for what's actually wired into production: `mailwoman parse` builds this admin FST from a WOF SQLite database and threads it through `createRuntimePipeline`. The mechanism generalizes past admin data — the same shallow-fusion pattern speech recognition uses to blend a learned model with world knowledge at decode time; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) for that framing and for the street-morphology FST, which exists but isn't wired into the runtime pipeline yet.
+This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline. It's also the reference for what's wired into production: `mailwoman parse` builds this admin FST from a WOF SQLite database and threads it through `createRuntimePipeline`. The mechanism generalizes past admin data — the same shallow-fusion pattern speech recognition uses to blend a learned model with world knowledge at decode time; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) for that framing and for the street-morphology FST, which exists but isn't wired into the runtime pipeline yet.
 
 ## "If you knew this, you'd know that..."
 
 Most of what's hard about address parsing is that any given span is ambiguous in isolation. `Paris` is a city in France, a town in Texas, and a town in Ontario. `Washington` is a state, a federal district, and twenty-something cities. The model can't decide what `Paris` _is_ until it knows what's around it.
 
-But the gazetteer has a structural shortcut: places live in a hierarchy. If you know a token sequence matches a known city, you also know the country, the region, and (often) the county that contains it. That's a chain of implications you can compute once, write down, and look up later.
+But the gazetteer has a structural shortcut: places live in a hierarchy. If you know a token sequence matches a known city, you also know the country, the region, and (frequently) the county that contains it. That's a chain of implications you can compute once, write down, and look up later.
 
 ```mermaid
 flowchart LR
@@ -71,7 +71,7 @@ flowchart TB
     B6 -.loaded once at process start.-> Q2
 ```
 
-The asymmetry is deliberate. Build time pays the cost of "enumerate every valid place-name path through the hierarchy." Query time is just trie walking — O(tokens × branching), not O(gazetteer size). The FST encodes the cross-product so the runtime doesn't have to compute it.
+The asymmetry is deliberate. Build time pays the cost of "enumerate every valid place-name path through the hierarchy." Query time istrie walking — O(tokens × branching), not O(gazetteer size). The FST encodes the cross-product so the runtime doesn't have to compute it.
 
 Shipped numbers for the US admin FST:
 
@@ -105,7 +105,7 @@ The `parent_chain` is the critical piece of structure. It's how a match on `"Bro
 
 ## How the prior composes with the rest of the pipeline
 
-The FST does not replace the neural classifier. It composes with it as an additive bias on the emission logits, alongside the QueryShape structural prior. The decoder is still Viterbi; the FST just changes the numbers it sees.
+The FST does not replace the neural classifier. It composes with it as an additive bias on the emission logits, alongside the QueryShape structural prior. The decoder is still Viterbi; the FSTchanges the numbers it sees.
 
 ```mermaid
 sequenceDiagram
@@ -134,11 +134,11 @@ finalEmissions[t][label] = rawLogits[t][label]
 Two design choices matter here:
 
 1. **Additive, not multiplicative.** A confident model prediction (large positive logit) drowns out a weak prior. A weak model prediction (near-zero logit) is where the prior gets to vote. This is the same shallow-fusion idea modern speech recognizers use to blend an acoustic model with a language model.
-2. **Capped at 3.0 logits.** Even with a 1.0 Wikipedia importance score, the bias can't move the decoder more than ~3 logits. The model can always overrule the gazetteer when the input clearly contradicts it ("Paris, TX" overrides the France prior on `Paris` because the context makes it obvious).
+2. **Capped at 3.0 logits.** Even with a 1.0 Wikipedia importance score, the bias can't move the decoder more than ~3 logits. The model can always overrule the gazetteer when the input the result shows contradicts it ("Paris, TX" overrides the France prior on `Paris` because the context makes it obvious).
 
 ### Worked example: "Washington, DC"
 
-This is the case the prior was originally designed to fix. Per-token argmax used to mislabel `Washington` as `B-region` because the model had seen `Washington (state)` more often than `Washington (DC)` in training.
+This is the case the prior was originally designed to fix. Per-token argmax used to mislabel `Washington` as `B-region` because the model had seen `Washington (state)` more frequently than `Washington (DC)` in training.
 
 | Signal                                                                                | Bias on B-locality for `Washington` |
 | ------------------------------------------------------------------------------------- | ----------------------------------- |
@@ -147,7 +147,7 @@ This is the case the prior was originally designed to fix. Per-token argmax used
 | FST: `Washington` matches locality WOF:85633793, importance 0.815                     | +0.815 × 3.0 = +2.45                |
 | **Sum**                                                                               | **+4.45 over B-region**             |
 
-The Viterbi decoder now has overwhelming evidence to pick the locality reading. None of the model's parameters changed — the prior just supplied the world knowledge the model was missing.
+The Viterbi decoder now has overwhelming evidence to pick the locality reading. None of the model's parameters changed — the priorsupplied the world knowledge the model was missing.
 
 ## Negative evidence is the second payoff
 
@@ -230,7 +230,7 @@ flowchart TB
     T -.weights.-> NN
 ```
 
-The FST is one node in a longer pipeline of cached work. The unified SQLite is a cache of the GeoJSON repos. The FST is a cache of the SQLite. The Wikipedia importance file is a cache of dump statistics. Each cache turns a slow operation done many times into a fast operation done once. The reason the runtime is small enough to ship to a browser is that none of those upfront costs are paid in the hot path.
+The FST is one node in a longer pipeline of cached work. The unified SQLite is a cache of the GeoJSON repos. The FST is a cache of the SQLite. The Wikipedia importance file is a cache of dump statistics. Each cache turns a slow operation done several times into a fast operation done once. The reason the runtime is small enough to ship to a browser is that none of those upfront costs are paid in the hot path.
 
 ## What the FST does not do
 

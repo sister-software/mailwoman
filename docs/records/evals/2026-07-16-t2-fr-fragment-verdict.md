@@ -1,17 +1,17 @@
-# T2 — the BAN fragment extract: the licence hypothesis holds
+# T2 — the BAN fragment extract: the license hypothesis holds
 
 **Pre-registered check (config header + `baselines.json` profile `fragment-fr-v264`, registered against
 the shipped model before the run):** targets move, guards hold.
 
-**Verdict: PASS on both boards. Every target moved, every guard held, and the two contextful guards
-improved.** The house-number-licence diagnosis (T1c) is confirmed by the fix working.
+**Verdict: PASS on both boards. Every target moved, and the two contextful guards
+improved.** The house-number-license diagnosis (T1c) is confirmed by the fix working.
 
 This is **not** a promote check — see §5.
 
 |           |                                                                      |
 | --------- | -------------------------------------------------------------------- |
 | Run       | `ap-onoBImKJriMFy7Pz3i5t0D`, config `v3.1.0-fr-fragment`             |
-| Change    | ONE variable vs shipped v264: the `synth-fr-fragment` extract @ 12.0 |
+| Change    | one variable vs shipped v264: the `synth-fr-fragment` extract @ 12.0 |
 | Extract   | 144,865 rows, BAN (Licence Ouverte), 0 eval surfaces                 |
 | Training  | 8000/8000 steps, 0 errors, no NaN, `cross_pollution 0.00%`           |
 | Precision | int8 candidate vs int8 baselines (asserted, see §4)                  |
@@ -47,7 +47,7 @@ accidentally right. Teaching bare streets gave it every incentive to flip that d
 broken prior for another.
 
 **It held exactly: 0.980 → 0.980.** Same interval. The model learned the **distinction** rather than a
-new default, and the discriminating evidence is the designator, which is the only thing that actually
+new default, and the discriminating evidence is the designator, which is the only thing that
 separates the two classes.
 
 That is what the counter-distribution was for. 20% of the extract is bare communes carrying no street
@@ -79,7 +79,7 @@ target, not a regression check.
 | val_loss | 1.1819 | 1.1992 | 1.1990 | 1.1995 |    1.2009 |
 
 **The val split contains no bare streets.** It is base-distribution, so it could only ever price the
-cost — never the win. Read alone it says "regression"; the fragment board says +50pp. Both numbers are
+cost — never the metric. Read alone it says "regression"; the fragment board says +50pp. Both numbers are
 correct about different questions.
 
 Two things survive from it:
@@ -115,7 +115,7 @@ ship config, int8 both sides):
 | country      | 89.0% | **90.2%** | **+1.2pp** |
 | exact match  | 25.5% | **25.7%** |     +0.2pp |
 
-**Every tag is inside the 2pp bar. Two improve. The pre-publish check PASSES.**
+**Every tag is inside the 2pp bar. Two improve. The pre-publish check passes.**
 
 So the val split's −1.0pp region was a **false positive**, not a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
 real; this one reported a problem that was not. Same root — a metric on a distribution nobody asked
@@ -125,7 +125,7 @@ That does not make `region` uninteresting. It is the tag the fragment mass pulls
 and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch,
 not a thing to ignore, and it is cheap to watch: this table is one command.
 
-### 4.2 The pre-registered "ALSO" — which did NOT come out as predicted
+### 4.2 The pre-registered "ALSO" — which did not come out as predicted
 
 The check carried a third clause: _"`hallucination_rate@v301-span` 0.352 should FALL if T1c's diagnosis
 holds."_ Measured on the 54 street-free parity rows — the MESSY population (venues, all-caps junk,
@@ -148,7 +148,7 @@ against the prediction, and two of the six have a mechanism worth naming:
 `ZAC` / `ZA` are French **zone** designators (_zone d'aménagement concerté_), and `sous la` is exactly
 the particle pattern the extract teaches. This is **on-thesis over-generalization**: the grammar the
 extract installs — "French designator + particle + name = street" — is slightly too wide, and French
-zone names sit just inside its edge. The other four (`BOOM` → `Boom`, `new south wales aus`,
+zone names sitinside its edge. The other four (`BOOM` → `Boom`, `new south wales aus`,
 `philadelphia museum of art`) are pre-existing non-French confusions that shifted.
 
 The two populations do not contradict each other; they partition:

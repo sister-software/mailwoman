@@ -39,7 +39,7 @@ what made it worth probing.
 
 **WOF extracts** (`source: "wof"`), unscoped: two exact-name rows, plus a long tail of names merely
 _containing_ the token — `City of Port of Spain`, `Isle of Grain`, `Municipality of the County of Kings`,
-17 US postcodes matching on `alt_names`, and `The place of impact of the spear` (IR), which is a genuine
+17 US postcodes matching on `alt_names`, and `The place of impact of the spear` (IR), which is an actual
 WOF row.
 
 **Mechanism (observation):** the FTS5 index runs token-AND over `name + alt_names`, and **`of` is not a
@@ -121,7 +121,7 @@ cross-_country_ name collisions, since `name_key` groups globally. The two probl
 ### The FTS route: the stopword problem, larger
 
 `to` returns **976 row-hits** across the extracts. Same mechanism as `Of`, more of it. The rows that come back
-first are genuine — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly; the 976
+first are actual — `Tô` (BF), `Tó` (PT), `To` (NO ×3) — so bm25 ranks exact-ish matches sensibly; the 976
 is the tail.
 
 ### The candidate route: a different and more interesting failure
@@ -134,7 +134,7 @@ is the tail.
 | Row                                     | Why it is under key `to`                                        | Verdict     |
 | --------------------------------------- | --------------------------------------------------------------- | ----------- |
 | **Toledo**, ES — region, pop 707,109    | `names` row `TO`, `privateuse=abbr` — the Spanish province code | **correct** |
-| `Tô` BF, `Tó` PT, `To` NO ×3            | places actually named that                                      | **correct** |
+| `Tô` BF, `Tó` PT, `To` NO ×3            | places named that                                               | **correct** |
 | **Lake** County, Minnesota — pop 10,855 | `Tó`, language `hun` — **Hungarian for "lake"**                 | **wrong**   |
 
 ### The mechanism
@@ -170,7 +170,7 @@ Bird             US  neighbourhood  221 keys   pop          63
 Lake             US  county         134 keys   pop      10,855
 ```
 
-A country with 428 exonyms is correct. **A neighbourhood of 63 people with 221 name keys is not.**
+A country with 428 exonyms is correct. **A neighborhood of 63 people with 221 name keys is not.**
 
 Splitting the 4,000 on that basis:
 
@@ -181,34 +181,34 @@ Splitting the 4,000 on that basis:
 | total ≥50 keys                                   | 4,000     |
 
 **Inference, not observation:** the 3,233 are _predominantly_ this defect class. I sampled the head, not the
-whole set, and some will be genuine (a small but historically significant town can carry many exonyms).
+whole set, and some will be actual (a small but historically measured town can carry several exonyms).
 
 ### A discriminator I proposed and falsified
 
-My first idea was that a translated common noun attaches to _many unrelated places_ while a real exonym is
+My first idea was that a translated common noun attaches to _several unrelated places_ while a real exonym is
 near-unique. **Wrong, and measurably so:**
 
 | Name                      | Distinct places carrying it |
 | ------------------------- | --------------------------- |
 | `Tó` (hun, "lake")        | **1**                       |
 | `Meer` (afr, "lake")      | 18                          |
-| `Wien` (a genuine exonym) | **14**                      |
+| `Wien` (an actual exonym) | **14**                      |
 
-The genuine exonym is shared across _more_ places than the offending noun. Sharing does not separate them.
+The actual exonym is shared across _more_ places than the offending noun. Sharing does not separate them.
 
 **What does look separable** — and this is a hypothesis, not a finding — is the mismatch between key count
-and prominence. 221 keys on a 63-person neighbourhood is anomalous in a way 428 keys on the United States
+and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States
 is not. That is a change with a board, not a change to make from one example.
 
 ### Why this survived
 
 Three reasons worth stating, because they generalise:
 
-1. **The fan-out is invisible per query.** Nothing asks how many keys one place has, so 19 rows for `to`
+1. **The fan-out is invisible per query.** Nothing asks how several keys one place has, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
    `privateuse=preferred`. Toledo proves the mechanism is required — abbreviation aliases are how
-   `TO` → Toledo works — so `is_primary=0` cannot simply be dropped.
+   `TO` → Toledo works — so `is_primary=0` cannot only be dropped.
 3. **It is not the stopword problem**, which is what I expected going in. That belongs to the FTS route
    (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking alias
    data — a harder failure to see precisely because the count is small.

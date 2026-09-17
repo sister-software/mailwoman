@@ -12,13 +12,13 @@ step (e1), so **(e1) is deferred with it**. In-scope here: (a), (b), (c), (d), (
 ## The question
 
 `test.yml` takes 6m29s on a green run and the operator's prediction is that it gets worse as the
-gazetteer expands. Both halves needed measuring before designing: where the time actually goes, and
+gazetteer expands. Both halves needed measuring before designing: where the time goes, and
 which of it scales with the data.
 
 ## What was measured before designing
 
 All numbers below are from probes run 2026-08-02 — CI run `30757682542` (main, all legs green) via
-the Actions API, and local runs on the lab host (16 cores, 29 GB, load ~4). Estimates are labelled
+the Actions API, and local runs on the lab host (16 cores, 29 GB, load ~4). Estimates are labeled
 as such; everything else is measured.
 
 ### Finding 1 — the CI budget

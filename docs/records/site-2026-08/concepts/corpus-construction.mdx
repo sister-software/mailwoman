@@ -9,7 +9,7 @@ tags:
 
 # Corpus construction
 
-The training corpus is the largest single source of leverage in the project. The model can only learn patterns that appear in the data. This article walks through how Mailwoman builds its corpus — what sources are in it, how rows are aligned to BIO labels, and how the synthesis step multiplies the effective size.
+The training corpus is the largest single source of use in the project. The model can only learn patterns that appear in the data. This article walks through how Mailwoman builds its corpus — what sources are in it, how rows are aligned to BIO labels, and how the synthesis step multiplies the effective size.
 
 A general overview of the training pipeline is in [Training pipeline](./training-pipeline.mdx). This article zooms into the corpus side (Stages 1–4 of that pipeline).
 
@@ -31,7 +31,7 @@ The corpus is built once per ship. Re-running the build is idempotent; running i
 
 ## The data sources
 
-The corpus draws from many open data sources. Each one contributes a different kind of signal:
+The corpus draws from several open data sources. Each one contributes a different kind of signal:
 
 | adapter                          | rows in v0.3.0            | what it contributes                                                          |
 | -------------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
@@ -40,7 +40,7 @@ The corpus draws from many open data sources. Each one contributes a different k
 | **BAN** (Base Adresse Nationale) | 27.1M                     | every French address, house-number level                                     |
 | **TIGER** (US Census)            | 23.3M                     | US street segments + place names                                             |
 | **NPPES**                        | 9.2M                      | US healthcare provider names + business addresses (venue + street level)     |
-| **HRSA-FQHC**                    | 19K                       | US federally-qualified health centres                                        |
+| **HRSA-FQHC**                    | 19K                       | US federally-qualified health centers                                        |
 | **IMLS-PLS**                     | 18K                       | US public libraries (venue + address)                                        |
 | **NAD** (US DOT)                 | **57.9M** (new in v0.3.0) | structured 911-grade address points, full venue/street/house_number coverage |
 | **state-ny-notaries**            | 32K                       | NY notary names + business addresses                                         |
@@ -49,11 +49,11 @@ The corpus draws from many open data sources. Each one contributes a different k
 
 Skipped in v0.3.0:
 
-- **openaddresses** — waiting on per-row licence filter (PR #56).
+- **openaddresses** — waiting on per-row license filter (PR #56).
 - **fcc-bdc** — license incompatibility (CostQuest gray-copyright).
 - **usgov-samhsa-treatment-locator** — source bulk export went offline (PR #113 deferred the adapter).
 
-The diversity of sources matters more than the absolute count. NPPES contributes 9.2M rows but it is the single largest source of `venue + address` co-occurrence. Without it, the model would not have learned that a venue precedes a street more often than it follows one.
+The diversity of sources matters more than the absolute count. NPPES contributes 9.2M rows but it is the single largest source of `venue + address` co-occurrence. Without it, the model would not have learned that a venue precedes a street more frequently than it follows one.
 
 ## Stage 1 — Per-adapter row emission
 
@@ -84,7 +84,7 @@ The aligner uses [`fastest-levenshtein`](https://www.npmjs.com/package/fastest-l
 
 ## Stage 3 — Synthesis (the multiplier)
 
-Real-world addresses appear in many surface forms — abbreviated, capitalised, punctuated, separated. To make the model robust to these variations, Mailwoman runs a **synthesis** pass over the aligned rows.
+Real-world addresses appear in several surface forms — abbreviated, capitalized, punctuated, separated. To make the model resilient to these variations, Mailwoman runs a **synthesis** pass over the aligned rows.
 
 For each aligned row, synthesis generates several surface-form variants by applying combinations of:
 
@@ -92,7 +92,7 @@ For each aligned row, synthesis generates several surface-form variants by apply
 - **Comma drop** (`New York, NY 10118` → `New York NY 10118`)
 - **Casing changes** (upper, lower, mixed)
 - **Accent stripping** (`Île` → `Ile`)
-- **Whitespace normalisation** (collapse multiple spaces, add tab separators)
+- **Whitespace normalization** (collapse multiple spaces, add tab separators)
 - **Street suffix abbreviation** (`Avenue` ↔ `Ave`)
 
 The BIO labels are recomputed for each variant (because tokenisation may differ — `"NY"` is one token, `"New York"` is two). Variants whose alignment fails get quarantined.

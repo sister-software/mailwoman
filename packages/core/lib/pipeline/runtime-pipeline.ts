@@ -380,7 +380,7 @@ export async function runPipeline(
 	// ROAD_TO_V9 §4. The classifier OWNS marker derivation (it is the stage that knows which intent rule fired); the
 	// coordinator only lifts the optional field into an always-present array, so an empty array is this coordinator
 	// stating that the vocabulary looked. A classifier with no intent vocabulary — including `defaultClassifyKind`
-	// above — leaves the field unset and every result carries `[]`, which is the byte-stable pre-§4 behaviour.
+	// above — leaves the field unset and every result has `[]`, which is the byte-stable pre-§4 behaviour.
 	//
 	// `declared_ambiguity` is deliberately absent from this list: its trigger is the resolved candidate list's
 	// dominance margin, and the measured 0.5-log10 threshold behind it lives in `mailwoman`'s eval harness, which core

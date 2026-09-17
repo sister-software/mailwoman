@@ -94,7 +94,7 @@ Before deferring §1 and §3 we audited `model.py` and `crf.py` for implementati
 
 - `crf.py:155-164` — the `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`. Mathematically what the docstring claims. No NaN-prone path; the `.clamp(min=1)` guards the empty-batch edge case.
 - `model.py:270-300` — class_weights enter via `nn.functional.cross_entropy(..., weight=class_weights)`. The PyTorch-standard path. No silent broadcast mismatch (`class_weights.shape == (num_labels,)` is asserted in the model constructor).
-- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. Equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction was the §1 hypothesis. The hypothesis was that per-token normalization brings CRF NLL to CE magnitude. Empirically, when §1 is active, training destabilizes — so either per-token CRF NLL is NOT actually comparable to per-token CE on this corpus, or the magnitude comparison is right but some other dynamic dominates.
+- Dual-loss fusion: `loss = ce_loss + self.crf_loss_weight * crf_loss`. Equal-weight summing at `crf_loss_weight=1.0` with `per_token` reduction was the §1 hypothesis. The hypothesis was that per-token normalization brings CRF NLL to CE magnitude. Empirically, when §1 is active, training destabilizes — so either per-token CRF NLL is not comparable to per-token CE on this corpus, or the magnitude comparison is right but some other dynamic dominates.
 
 No implementation bug found. The destabilization is a real recipe interaction.
 
@@ -112,7 +112,7 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 | bio_slip     |    73 |    6% | `LE TRÉPORT, 76470` → `", 7647"`           |
 | other        |     6 |  0.5% | —                                          |
 
-**Empty-pred dominates**. §4's NAD downweight (2.0 → 1.0) removed the dominant source of "postcode comes first" patterns (NAD's 57M structured 911-grade rows + many FR mid-position patterns from auxiliary sources). The model now treats mid-position numeric tokens as house_number by default.
+**Empty-pred dominates**. §4's NAD downweight (2.0 → 1.0) removed the dominant source of "postcode comes first" patterns (NAD's 57M structured 911-grade rows + several FR mid-position patterns from auxiliary sources). The model now treats mid-position numeric tokens as house_number by default.
 
 ### Country FN (194 total)
 
@@ -186,7 +186,7 @@ Final eval, shipped checkpoint vs v0.3.0, golden v0.1.2:
 
 Macro F1 raw: 0.357 vs 0.293. Token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107.
 
-Issue #116's "≥2 of 4 axes improved" metric: only fine F1 cleanly improved (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration flat. Training stability negative (the central finding of the campaign).
+Issue #116's "≥2 of 4 axes improved" metric: only fine F1 directly improved (street +0.03, house_number +0.01). Coarse F1 is mixed once adversarial denominators are excluded. Calibration flat. Training stability negative (the central finding of the campaign).
 
 ## See also
 

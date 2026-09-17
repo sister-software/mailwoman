@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **Working directory:** `/home/lab/Projects/lifecycle-ts` — a NEW standalone git repo (NOT inside mailwoman). All paths below are relative to it.
+- **Working directory:** `/home/lab/Projects/lifecycle-ts` — a new standalone git repo (not inside mailwoman). All paths below are relative to it.
 - **Node `>=24`** (native `AsyncDisposableStack`, `await using`).
 - **Zero runtime dependencies.** devDependencies only.
 - **License MIT**, copyright Sister Software.
@@ -920,7 +920,7 @@ git commit -m "feat: Service<T> — promise-memoized lazy handle, all resolver f
 
 ---
 
-### Task 5: `lib/proxy.ts` — `ServiceProxy<T>` with honest types
+### Task 5: `lib/proxy.ts` — `ServiceProxy<T>` with direct types
 
 **Files:**
 
@@ -1603,7 +1603,7 @@ Expected: FAIL — injectable constructors resolve as plain zero-arg constructor
 
 - [ ] **Step 3: Extend `lib/registry.ts`**
 
-Add these exports ABOVE the `ServiceRegistry` class:
+Add these exports above the `ServiceRegistry` class:
 
 ```ts
 /**
@@ -1639,7 +1639,7 @@ Inside `ServiceRegistry`, add a dependency-graph field next to `#services`:
 	#dependencies = new Map<ServiceToken<unknown>, readonly ServiceToken<unknown>[]>()
 ```
 
-Replace the single `register` signature with overloads (injectable overload FIRST — it is the more specific match) and route injectables through a wrapping factory:
+Replace the single `register` signature with overloads (injectable overload first — it is the more specific match) and route injectables through a wrapping factory:
 
 ```ts
 	public register<T extends object, const D extends readonly ServiceToken<unknown>[]>(
@@ -2082,7 +2082,7 @@ expectTypeOf(service.resolve()).resolves.toEqualTypeOf<Logger>()
 - [ ] **Step 2: Run the typecheck suite**
 
 Run: `yarn test:types`
-Expected: PASS. Also confirm the `@ts-expect-error` is required: temporarily fix `Mismatched`'s constructor to `constructor(_logger: Logger)`, re-run, and the suite must FAIL with "unused @ts-expect-error"; revert.
+Expected: PASS. Also confirm the `@ts-expect-error` is required: temporarily fix `Mismatched`'s constructor to `constructor(_logger: Logger)`, re-run, and the suite must fail with "unused @ts-expect-error"; revert.
 
 - [ ] **Step 3: Commit**
 

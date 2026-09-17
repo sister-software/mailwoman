@@ -13,7 +13,7 @@ wall at 87%, and did the obvious thing and turned the training signal up, fully 
 the last few points to fall out. They didn't. The model got _worse_, and the way it got
 worse is the whole story. The questions on the table: can a pile of reordered examples
 teach a model where a house number lives? When that pile gets you 80% of the way, can you
-just add more? And what does the failure tell you about the thing you were actually
+just add more? And what does the failure tell you about the thing you were
 training?
 
 {/* truncate */}
@@ -38,7 +38,7 @@ The fix looked obvious. German addresses have the same any-order problem, and we
 already beaten it with a synthetic extract that teaches both word orders. So we built the
 French version: real street and city data, half the rows flipped into the postcode-first
 shapes the model keeps tripping on, every house number labeled correctly wherever it
-landed. Then we retrained and re-measured against a French eval we'd just widened from
+landed. Then we retrained and re-measured against a French eval we'dwidened from
 one town to fifty-six.
 
 It worked, mostly. On that harder eval the shipped model scores 54.5%. It's blind to
@@ -47,7 +47,7 @@ single extract is the kind of number that makes you want to ship before coffee.
 
 Except the bar was 91, and 87.4 is not 91. Every miss was the same shape, too: `47110
 Sainte-Livrade-sur-Lot, 69 …` with `47110` labeled as the house number. The model had
-learned the back-half number existed. It just hadn't learned to stop grabbing the
+learned the back-half number existed. Ithadn't learned to stop grabbing the
 postcode out front. The signal was there and slightly too quiet.
 
 ## So we turned it up
@@ -57,7 +57,7 @@ That was the bet, and it's the same weight the German extract runs at, so we had
 precedent. We doubled it and retrained.
 
 It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't just
-making the old mistake more often. It had invented a new one. On `47110
+making the old mistake more frequently. It had invented a new one. On `47110
 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel`, instead of grabbing the whole postcode, it
 now split `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the
 postcode and the real house number into a single number, `47110 85`. We'd made the model
@@ -77,7 +77,7 @@ Two days ago we wrote that you can't fix a representation gap with more data. La
 lesson is its cousin: you can't fix a data-realism gap by turning up the weight. The
 synthetic extract taught the model a caricature of reordered French: useful enough for a
 thirty-two point jump, too coarse to close the last stretch, and actively harmful past a
-point, because more exposure just deepened the caricature. The plateau isn't a quantity
+point, because more exposuredeepened the caricature. The plateau isn't a quantity
 problem we can outspend. The model needs reordered examples that look like the real thing,
 or a signal that protects the postcode from being raided, and neither of those is a
 bigger number in a config file.

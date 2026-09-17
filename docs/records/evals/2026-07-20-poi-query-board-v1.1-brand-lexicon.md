@@ -7,7 +7,7 @@ release 2026-05-20.0; regenerated `poi-taxonomy/data/brands.json` against this s
 below). **Resolver:** default FTS admin extract (`admin-global-priority.db`).
 
 **Status: still report-only.** No floors this round either — the brand-lexicon wiring is new
-enough (this PR) that a floor would just be laundering today's numbers. Floors remain a
+enough (this PR) that a floor wouldbe laundering today's numbers. Floors remain a
 follow-up once the operator reviews both v1 and v1.1.
 
 ## What changed since v1
@@ -18,7 +18,7 @@ browser table factory, but nothing consumed them — every query still only ever
 
 1. **Dominance floor in the brand-table generator.** `build-brands.ts`'s `aggregateBrands` now
    drops a QID entirely when its modal name covers less than `--dominance` (default 0.5) of the
-   QID's total rows — not just demotes the minority spellings out of the alias list the way the
+   QID's total rows — notdemotes the minority spellings out of the alias list the way the
    pre-existing noise floor does. Motivating case: `Q4835981` aggregated ~20 unrelated US
    chains (CVS 23.8%, Walgreens 11.8%, 7-Eleven 6.2%, …) under one Wikidata QID — a systematic
    mistagging upstream in Overture's data, not a chain with noisy alt-spellings. **Regenerated
@@ -29,7 +29,7 @@ browser table factory, but nothing consumed them — every query still only ever
    0.1.0 → 0.2.0 (the generation semantics changed, even though the shape didn't).
 2. **`kind-classifier`'s `POIPhraseMatch` gained `kind: "category" | "brand"` and an optional
    `wikidata`.** `matchPOISubject`/`createScorePOIQuery` are unchanged — neither ever read
-   `categoryID` for its OWN meaning; both treat a match opaquely beyond `.confidence`. For
+   `categoryID` for its own meaning; both treat a match opaquely beyond `.confidence`. For
    `kind: "brand"`, `categoryID` carries the brand's canonical display name (not a taxonomy id)
    — the field is reused rather than adding a parallel `name` field, since nothing in
    `kind-classifier` interprets it; the caller (`mailwoman`'s `poi-intent.ts`) is the one that
@@ -78,7 +78,7 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=33): min 0.
 **5 of 6 new brand cases pass.** The 4 brand+anchor cases (`brand-us-01` Chevron/Houston,
 `brand-fr-01` Crédit Agricole/Lyon, `brand-ca-01` Tim Hortons/Toronto — all pass; `brand-us-02`
 Applebee's/Dallas — fails, below) + the locale-hintd slang case (`brand-slang-01`, "mcdo" →
-McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" is NOT one of
+McDonald's under `fr-FR`, chained through `variant-aliases`, since "mcdo" is not one of
 McDonald's own `brands.json` aliases — verified empty) + the bare-brand abstain (`brand-bare-01`,
 "chevron" alone → `anchor_required`) all pass.
 
@@ -94,8 +94,8 @@ brief's own fallback ("else skip, note").
     expected ≥1 result (brandWikidata=Q621532), got 0
 ```
 
-Traced live — this is NOT a subject-match or anchor-resolution miss (both work correctly):
-`matchPOISubject` resolves "Applebee's" → `Q621532` cleanly, and the anchor resolves to
+Traced live — this is not a subject-match or anchor-resolution miss (both work correctly):
+`matchPOISubject` resolves "Applebee's" → `Q621532` directly, and the anchor resolves to
 `(32.79398, -96.765692)` — within ~4 km of the fixture's `anchorGold` (32.7767, -96.7970), a
 good lock on Dallas. The miss is in the READER's k-ring search radius. `poi-lookup.ts`'s
 `#searchKRing` defaults to `DEFAULT_MAX_RINGS = 12` res-9 rings, documented as "≈ ~4 km" — but
@@ -104,7 +104,7 @@ direct `poi.db` query: rows at 13.2, 20.4, 21.8, 24.2, 28.2 km). That's comforta
 board's 25 km grading tolerance (which is deliberately city-scale — "roughly the right place",
 per the v1 report) but well outside the reader's actual 4 km search radius.
 
-This is a genuine execution-layer finding, the same class as v1's `supermarket`/`trail`
+This is an actual execution-layer finding, the same class as v1's `supermarket`/`trail`
 category misses: **brand rows are sparser per unit area than category rows** (one Applebee's
 per few km² of a metro vs a "restaurant"/"cafe" hit almost anywhere), so a k-ring radius tuned
 for category density under-reaches for a specific brand even in a market where the brand has

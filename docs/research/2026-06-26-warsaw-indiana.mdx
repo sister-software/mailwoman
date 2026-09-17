@@ -44,7 +44,7 @@ We shipped that. It's the right fix and it's live.
 
 Nine of ten. The tenth was Vienna, and once we looked past the headline, Vienna had company. Delete the override, ask again with nothing on the scale, and four cities still walk to the wrong country on their own: Vienna to Virginia, Sydney to Nova Scotia, Warsaw to Indiana, Toronto to Ohio.
 
-The override is gone now, so this is the collision winning on its own. The resolver ranks candidates by population, and for most cities that's enough: there is no Tokyo big enough to beat Tokyo. But Vienna, Austria has to outrank a Vienna the resolver reaches faster, and without a thumb on the scale for _country_, "the biggest Vienna" isn't a question the ranker is answering. The model knows it's Austria. The resolver, on this query, never gets told in a way it can't ignore.
+The override is gone now, so this is the collision winning on its own. The resolver ranks candidates by population, and for most cities that's enough: there is no Tokyo big enough to beat Tokyo. But Vienna, Austria has to outrank a Vienna the resolver reaches faster, and without a thumb on the scale for _country_, "the biggest Vienna" isn't a question the ranker is answering. The the system it's Austria. The resolver, on this query, never gets told in a way it can't ignore.
 
 There's a manual escape today, and it's the one Nominatim gives you too. Pass `countrycodes=au` and Sydney lands in Australia; the restriction is honored. It clears the easy collisions. It does not fix the deeper ones — `Warsaw` plus a Poland filter returns _nothing_, because the record in the gazetteer is filed under `Warszawa` and the English exonym matches neither it nor any other Polish place. That's a different problem with a different fix, and we filed it as one.
 
@@ -56,7 +56,7 @@ And the measurement lied to us, the way they do when you forget to check what th
 
 The first sign was a contradiction we'd written down ourselves. The breakdown classified Poland as _coverage-absence_ — no record at all, the gazetteer doesn't have it. But two hours earlier, chasing the exonym, we'd proven the opposite by hand: `Warszawa, Poland` resolves to 52.2, 21.0, dead on. The record exists. We had a report saying "no Warsaw" sitting next to a transcript saying "here is Warsaw."
 
-Both can't be true, so one of them was measuring the wrong thing. The report was. The whole sweep had run with the candidate ranking database switched off — the same `resolveCandidateDBPath() ? … : "US"` branch from the top of this post, except this time the missing database didn't just change a fallback, it changed which resolver answered every non-US query. We'd measured the world on an engine that was never meant to answer for it, and then written the numbers down as if they were the verdict.
+Both can't be true, so one of them was measuring the wrong thing. The report was. The whole sweep had run with the candidate ranking database switched off — the same `resolveCandidateDBPath() ? … : "US"` branch from the top of this post, except this time the missing database didn'tchange a fallback, it changed which resolver answered every non-US query. We'd measured the world on an engine that was never meant to answer for it, and then written the numbers down as if they were the verdict.
 
 Switch the database on and the picture moves under your feet. London, which the sweep had called a coverage gap, resolves two kilometers from the truth. So does Beijing. They were never missing; they were waiting for the index we hadn't loaded.
 

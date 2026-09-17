@@ -28,7 +28,7 @@
  *
  *   Honest caveats are printed: in-domain (TX), a modest sample, PAIRWISE (not the clustering
  *   metric). The definitive test is a GBM A/B on the dedup clustering metric with a
- *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking gain
+ *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking improvement
  *   cheaply first.
  *
  *   Run: `mailwoman registry scorer-eval pairwise [--npis 1500] [--seeds 8] [--wof <admin.db>]

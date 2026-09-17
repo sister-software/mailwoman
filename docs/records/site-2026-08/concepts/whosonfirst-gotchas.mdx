@@ -10,11 +10,11 @@ tags:
 
 Who's On First (WOF) is the best open gazetteer available. It's also one of the strangest datasets you'll encounter as a developer. This article documents the gotchas — the structural quirks that trip up new consumers — and the tooling Mailwoman built to work around them.
 
-If you just want to understand how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.mdx). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx). This article is about the data model itself.
+If youwant to understand how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.mdx). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx). This article is about the data model itself.
 
 ## What WOF is
 
-WOF is a gazetteer — a structured database of **places**. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighbourhoods, venues. Each record gets:
+WOF is a gazetteer — a structured database of **places**. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each record gets:
 
 - A stable numeric ID
 - A parent-child hierarchy
@@ -70,16 +70,16 @@ Key observations:
 
 - **Namespaced keys everywhere.** `wof:`, `name:`, `src:`, `edtf:`, `geom:`, `mz:` — each prefix is a different source or concern. The schema is flat (one object, no nesting) with meaning encoded in the key name.
 - **Name variants are language-coded.** `name:eng_x_preferred` is the preferred English name. `name:fra_x_preferred` is French. `name:zho_x_preferred` is Chinese. The `_x_` separator splits the language code from the name kind.
-- **Name kinds vary.** `preferred`, `variant`, `colloquial`, `abbr`, `short`. A single place can have entries for several of these per language. A major city like Paris has `name:` entries in 50+ languages; a rural US neighbourhood might have only one.
+- **Name kinds vary.** `preferred`, `variant`, `colloquial`, `abbr`, `short`. A single place can have entries for several of these per language. A major city like Paris has `name:` entries in 50+ languages; a rural US neighborhood might have only one.
 - **The hierarchy is pre-computed.** Instead of walking `parent_id` up the tree at query time, WOF bakes the full ancestry chain into each record. Convenient for display; redundant for storage; occasionally stale when a parent is reclassified.
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called [Brooklyn Integers](https://brooklynintegers.com/) — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They're just unique numbers. This is fine for lookup but means you can't reason about "nearby" places by ID proximity or infer anything from the numeric value.
+WOF IDs are issued by a service called [Brooklyn Integers](https://brooklynintegers.com/) — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity or infer anything from the numeric value.
 
 ### Supersession chains
 
-Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015. Every consumer needs to follow the supersession chain to the current record.
+Places get deprecated: a neighborhood is absorbed by a neighboring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015. Every consumer needs to follow the supersession chain to the current record.
 
 ### Parent ID holes
 
@@ -89,9 +89,9 @@ Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a coun
 
 A query that assumes every record has a valid parent chain will fail silently on these cases.
 
-### Name normalisation is critical
+### Name normalization is critical
 
-WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional — they are required for matching. The resolver's placename index normalises all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
+WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional — they are required for matching. The resolver's placename index normalizes all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
 
 ## How Mailwoman uses WOF
 
@@ -99,9 +99,9 @@ Mailwoman needs WOF for two distinct access patterns:
 
 ### 1. Rule classifiers — "is this token a known place name?"
 
-The `whos_on_first` rule classifier answers "is this string a locality/region/country name in any language?" It doesn't need coordinates, hierarchy, or geometry — just the normalised string and which languages it's valid in.
+The `whos_on_first` rule classifier answers "is this string a locality/region/country name in any language?" It doesn't need coordinates, hierarchy, or geometry — just the normalized string and which languages it's valid in.
 
-**`WOFPlacenameCache`** builds this index by streaming GeoJSON files, extracting `name:*` properties, normalising them, and inserting into an in-memory `Map<string, Set<language>>` keyed by the normalised form.
+**`WOFPlacenameCache`** builds this index by streaming GeoJSON files, extracting `name:*` properties, normalizing them, and inserting into an in-memory `Map<string, Set<language>>` keyed by the normalized form.
 
 ### 2. Reconcile concordance — "do these components form a valid parent chain?"
 
@@ -138,7 +138,7 @@ For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipe
 
 Every geocoder needs a gazetteer. The options are:
 
-- **Pay for one** — Google, HERE, Mapbox
+- **Pay for one** — Google, here, Mapbox
 - **Use an open one** — WOF, GeoNames, OSM Nominatim
 - **Build your own** — BAN (France), NAD (US), TIGER (US)
 

@@ -19,11 +19,11 @@ There are ten places called "Sheldon" in the United States. "New York" is a city
 
 So we built a harness that asks the second question, and pointed it at the one subset of data where it would tell the truth.
 
-## Leakage-free, or it's just a memory test
+## Leakage-free, or it'sa memory test
 
 The subset you measure on matters as much as the metric you measure with. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has never met.
 
-In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate actually falls inside the resolved place's polygon). None of those can be fooled by a matching string.
+In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate falls inside the resolved place's polygon). None of those can be fooled by a matching string.
 
 Here is what the held-out set said, next to the number we'd been quoting:
 
@@ -37,7 +37,7 @@ Region-match: zero. Not low. Zero. The resolver was getting the state right esse
 
 ## Following the 326 kilometers down
 
-The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and it cleanly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
+The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and it directly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
 
 It throws it away because it can't read it. Who's On First stores Vermont as "Vermont"; our search index carried no abbreviations, so `findPlace("VT")` matched nothing. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country — and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. The 326 kilometers was the distance between the right name and the famous one.
 
@@ -56,9 +56,9 @@ This is where it would be tidy to stop. It wasn't tidy.
 
 Before promoting anything we ran the demo presets, the eight addresses we look at by hand, and one of them had gotten worse. `350 5th Ave, New York, NY` used to resolve to New York City. Now it resolved to "New York Mills", a village 283 kilometers upstate. The aggregate said the fix was a triumph; the functional check said we'd broken the most famous address in the set. When those two disagree, the functional check is the one telling the truth, and that disagreement is where you go looking.
 
-The clue led somewhere worth knowing. Now that the region resolved, the resolver was boosting places that descend from it, and it works out descent from a precomputed ancestry table. New York City spans five boroughs, so Who's On First gives it the "no single parent" sentinel for a parent id, and our table-builder, which only ever followed parent ids, had recorded NYC's ancestry as _just itself_. No link to New York state. So the region boost lifted the correctly-filed village over the city, and a village of three thousand beat a city of eight million on a technicality of bookkeeping.
+The clue led somewhere worth knowing. Now that the region resolved, the resolver was boosting places that descend from it, and it works out descent from a precomputed ancestry table. New York City spans five boroughs, so Who's On First gives it the "no single parent" sentinel for a parent id, and our table-builder, which only ever followed parent ids, had recorded NYC's ancestry as _itself_. No link to New York state. So the region boost lifted the correctly-filed village over the city, and a village of three thousand beat a city of eight million on a technicality of bookkeeping.
 
-The ancestry was never actually missing. NYC's source record carries the full hierarchy, with New York state in all five of its borough branches, sitting in a field our builder didn't read. So we read it: a repair pass that rebuilds ancestry from the authoritative hierarchy fixed 47,129 places. New York City resolves to New York City again, Vermont stayed at 3.4 kilometers, and the metro regression was gone.
+The ancestry was never missing. NYC's source record carries the full hierarchy, with New York state in all five of its borough branches, sitting in a field our builder didn't read. So we read it: a repair pass that rebuilds ancestry from the authoritative hierarchy fixed 47,129 places. New York City resolves to New York City again, Vermont stayed at 3.4 kilometers, and the metro regression was gone.
 
 ## What we're keeping
 

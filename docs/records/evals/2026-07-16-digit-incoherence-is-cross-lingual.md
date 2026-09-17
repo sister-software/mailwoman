@@ -58,7 +58,7 @@ Three measurements, one mechanism:
 | B0   | the model reproduces it: B-hn first, I-pc continuations         | model, per piece (Norwegian) |
 | this | same on correctly-parsed, in-corpus Polish — not coverage       | model, per piece (Polish)    |
 
-## Why B4 barely moved — this is the reason, not just the ratio
+## Why B4 barely moved — this is the reason, notthe ratio
 
 B4's verdict named `--bare-street-prob 0.30` as the likely reason its target moved only +1.7pp. This
 probe adds the deeper reason: **a fragment extract is fighting a real, strong, length-conditioned
@@ -104,16 +104,16 @@ length-driven continuation prior. Postcodes becoming single pieces too is a feat
 5-digit piece and a 3-digit piece are _different_ pieces, so the model is no longer forced to use
 continuation-count as its only length discriminator.
 
-**Cost, stated honestly:** a splice grows the vocab and the embedding table; the new rows need
+**Cost, stated directly:** a splice grows the vocab and the embedding table; the new rows need
 gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
 a extract — a tokenizer + model bump, not a corpus edit — so whether Track B justifies it is squarely
 the operator's call. But it attacks the root the extract only dents.
 
-## What this does NOT change
+## What this does not change
 
-- **The fix is still a extract OR the vocab — not a validator.** The house rule holds: this is
+- **The fix is still a extract or the vocab — not a validator.** The house rule holds: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
-  `B-house_number` is usually _right_; the fix is to stop the continuations from overriding it, not
+  `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it, not
   to forbid postcodes.
 - **B4b is still the operator's call.** This sharpens the hypothesis (oversample long numbers; or go
   to vocab) but does not license a solo 3am run.

@@ -10,12 +10,12 @@ Second autonomous overnight shift. Started 04:12 UTC, autonomous work ended 11:2
 ## What shipped
 
 - **v0.6.0** (default): Stage 3 schema active (16 tags / 33 BIO labels). PO box recall 0% → 51.9%. Demo presets 11/11 pass. CE-only (CRF training deferred after two NaN attempts). HF model repo + bucket + releases.json updated. Git-tagged.
-- **v0.6.1** (experimental, NOT default): adds synth-street source (100K labeled rows of US street decomposition). Mixed eval: postcode +6.4pp, locality -8.6pp, street_prefix/suffix vocabulary emergent but over-applied (31 + 198 hallucinations across the eval set). Uploaded to HF for inspection but releases.json default stayed at v0.6.0.
+- **v0.6.1** (experimental, not default): adds synth-street source (100K labeled rows of US street decomposition). Mixed eval: postcode +6.4pp, locality -8.6pp, street_prefix/suffix vocabulary emergent but over-applied (31 + 198 hallucinations across the eval set). Uploaded to HF for inspection but releases.json default stayed at v0.6.0.
 - Documentation: blog post on Stage 3 + PO box, session report, importance-vs-population concept doc, GitHub issues #189 (alt_names FTS5 split) and #192 (v0.6.x training plan) opened with empirical context.
 
 ## What went well
 
-**Pipeline reuse.** The PO box synthesis pattern (synthesizer → adapter → JSONL → align → parquet → MANIFEST) was built fresh for v0.6.0 but transferred cleanly to v0.6.1's street synth. Net new code for the second iteration was minimal because the first was structurally clean. This is the right shape — make the first instance generalizable.
+**Pipeline reuse.** The PO box synthesis pattern (synthesizer → adapter → JSONL → align → parquet → MANIFEST) was built fresh for v0.6.0 but transferred directly to v0.6.1's street synth. Net new code for the second iteration was minimal because the first was structurally clean. This is the right shape — make the first instance generalizable.
 
 **Monitor tool.** The `Monitor` background watcher with NaN/completion regex caught both v0.6.0 divergences within 60 seconds. Without it, I'd have noticed only on the next manual check. The recipe — `until ... loss=nan|Traceback|FAILED ...` — is reusable for any long-running compute.
 
@@ -81,15 +81,15 @@ When asked what a `/night-shift` skill should encode, DeepSeek's answer (verbati
 
 > 1. **Pre-publish eval check** — run `eval-model` against the current release baseline; abort if any tag regresses >2pp. Would've caught the v0.6.1 locality drop before it went out.
 > 2. **Comparative diff report** — every model change ships with a `before/after` per-tag accuracy table in the commit body. The -8.6pp locality number is good; the fact that it shipped _as_ a release rather than a labeled experiment is the gap.
-> 3. **Shift artifact** — wrap with a structured handoff note (what shipped, what regressed, open questions, next steps) committed to a known path. You got the data; the skill just codifies _where_ it lands so the next shift doesn't start cold.
+> 3. **Shift artifact** — wrap with a structured handoff note (what shipped, what regressed, open questions, next steps) committed to a known path. You got the data; the skillcodifies _where_ it lands so the next shift doesn't start cold.
 
 Adding three of my own based on tonight's friction:
 
 4. **Heat-aware compute placement.** Heavy work (training, export, quantization, full eval) → Modal. Light work (file edits, git, small scripts) → local. The default should be "Modal first" with an explicit override comment when going local.
 
-5. **Idle-time policy.** Between training launches, work the backlog. Schedule reminders for _monitoring_ tasks (training progress, CI status); do NOT schedule reminders that are just "check back later" with no specific signal.
+5. **Idle-time policy.** Between training launches, work the backlog. Schedule reminders for _monitoring_ tasks (training progress, CI status); do not schedule reminders that are just "check back later" with no specific signal.
 
-6. **NaN protocol.** Stop → diagnose ONE knob → retry. Never adjust two variables at once. Document the change and the hypothesis in the config comment so the next iteration knows what was tried.
+6. **NaN protocol.** Stop → diagnose one knob → retry. Never adjust two variables at once. Document the change and the hypothesis in the config comment so the next iteration knows what was tried.
 
 ## Concrete recommendations for tomorrow
 

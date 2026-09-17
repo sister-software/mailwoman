@@ -819,7 +819,7 @@ async function buildPostcodeBinary(
 
 /**
  * Materialize one locale's dev overlay from its manifest. The steps run in the order {@link DevOverlayManifest}
- * documents, each independent on disk, and the result carries what a locale-specific step needs afterwards.
+ * documents, each independent on disk, and the result includes what a locale-specific step needs afterwards.
  */
 export async function materializeDevOverlay(manifest: DevOverlayManifest): Promise<DevOverlay> {
 	const destDir = String(weightsOverlayPath(manifest.locale))

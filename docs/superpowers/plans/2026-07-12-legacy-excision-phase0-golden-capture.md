@@ -33,7 +33,7 @@
 
 **Interfaces:**
 
-- Produces: a committed probe transcript. The seal step (plan 5) cites it; if the probe FAILS, STOP the plan and report — the fix is a 6.x patch release, decided by the operator.
+- Produces: a committed probe transcript. The seal step (plan 5) cites it; if the probe fails, STOP the plan and report — the fix is a 6.x patch release, decided by the operator.
 
 - [ ] **Step 1: Run the cold-install probe**
 
@@ -739,7 +739,7 @@ try {
 - [ ] **Step 3: Run it**
 
 Run: `node nominatim/dev-tools/capture-search-golden.run.ts`
-Expected: server boot chatter on stderr, then `captured <N> /search responses (…)` with 100 ≤ N ≤ 200. If the parity corpus yields fewer than 100 house-number cases, do NOT pad with invented queries — capture what exists and note the count in the commit message.
+Expected: server boot chatter on stderr, then `captured <N> /search responses (…)` with 100 ≤ N ≤ 200. If the parity corpus yields fewer than 100 house-number cases, do not pad with invented queries — capture what exists and note the count in the commit message.
 
 - [ ] **Step 4: Verify the child is gone**
 

@@ -394,7 +394,7 @@ export class NeuralAddressClassifier {
 		//
 		// The evidence-bundle channels are REGISTER-CONDITIONAL (Decision A, see ParseOpts.inputMode):
 		// formatted mode withholds both lexicons so the model runs its curriculum-trained absence
-		// identity — the fed channels lift fragments but damage full-address parses.
+		// identity — the fed channels improve fragment parses but damage full-address parses.
 		const evidenceOn = (opts?.inputMode ?? "fragmented") === "fragmented"
 
 		// The char path is channel-free by contract (D5): no anchor, gazetteer, country or evidence features are built

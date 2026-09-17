@@ -55,7 +55,7 @@ v194`. Net: #831 was a false finding (fixed on the demo); #832/#833 are model-in
   correctly, so fixing the deterministic layer that broke it is principled (not a model override). The
   ≤2-letter length heuristic over a state/directional list (structural, no list to maintain).
 - **#250 via nearest-named-highway** (orphaned points aren't `addr:place`; 301k highways available) —
-  validating accuracy on ground-truth BEFORE the full build (the falsifier).
+  validating accuracy on ground-truth before the full build (the falsifier).
 
 ## D9 — #250 association recovery (DEPLOYED as the FR default; `--recover`, code `763e51d8`)
 
@@ -63,10 +63,10 @@ Nearest-named-highway recovery: validated **88% precision / 95% coverage** on FR
 association gap **58% → 1.3%** (648k points, extract 477k → 1.13M). **Deployed as the FR default OSM extract.**
 
 **The verdict flipped on a measurement fix — a verify-before-verdict catch worth remembering.** The first
-held-out A/B drew from ALL of France, but the OSM extract only covers Île-de-France, so most sampled
+held-out A/B drew from all of France, but the OSM extract only covers Île-de-France, so most sampled
 addresses had no OSM coverage either way → the recovery's win diluted to noise (rooftop +2, looked
 marginal → I'd committed it default-off). Re-running the A/B drawn **IdF-only** (the region the extract
-actually covers):
+covers):
 
 | ≤tol            | current | recovery        |
 | --------------- | ------- | --------------- |
@@ -75,7 +75,7 @@ actually covers):
 | 5km (locality)  | 160     | 154 (−6, noise) |
 | resolved        | 213     | 213             |
 
-A coverage-limited tier MUST be blocked on a draw from the COVERED region — the all-France draw nearly
+A coverage-limited tier must be blocked on a draw from the COVERED region — the all-France draw nearly
 killed a doubling of rooftop coverage. **This is a Gauntlet held-out improvement (C6): make the draw
 region-aware.** The `--recover` flag stays explicit (validate per-locale before enabling); hosted
 deployment of the extract is blocked on B3 (browser tier) + #249 (ODbL legal). The local FR extract is ready.
@@ -99,14 +99,14 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo extract.
 ## C — Gauntlet Phase-2 hardening
 
 - **C7: metamorphic xfail + DE/NL coverage** (`a3a7172f`). The metamorphic check now tracks known,
-  deterministic INV failures as non-blocking xfails (it fails only on NEW regressions), with an anti-rot
+  deterministic INV failures as non-blocking xfails (it fails only on new regressions), with an anti-rot
   check that flags any xfail that starts passing — the Pelias-pass-list trap inverted. Added DE (Unter den
   Linden) + NL (Damrak) rooftop bases + a comma-tight perturbation. Surfaced 6 tracked xfails: #829
   (lowercase sensitivity — US→admin, NL→null) + the NEW **#831** (FR no-postcode rooftop/admin boundary;
   any surface perturbation flips the tier — likely a shared case-sensitive-parse root with #829). DE held
-  clean. Check: PASS with 6 xfails, DIR 3/3.
+  clean. Check: pass with 6 xfails, DIR 3/3.
 - **C6: US verified-coord held-out source** (`898baecf`). FDIC BankFind (77,442 bank branches, address +
-  geocoded lat/lon, public domain, NOT in training) is now a held-out source beside FR/BAN; holdout.ts is
+  geocoded lat/lon, public domain, not in training) is now a held-out source beside FR/BAN; holdout.ts is
   multi-source (`--source us|fr`), and the pool doubles as the fast draw (77k CSV vs streaming the 5 GB BAN).
   Smoke (n=200, v194 vs prod): **rooftop 61.5%, street 74%, locality 92.5%, 100% resolved, z=0.19 PASS** —
   an independent validation of the national situs tier on a source it never trained on. The region-aware
@@ -114,7 +114,7 @@ browser httpvfs as-is — a sub-region (Amsterdam) would be the demo extract.
 - **C8b: regression runner + the unified check** (`17c32518`). The regression layer had cases + a DB builder
   but no runner — built it (status-aware: checks `status=pass`, tracks `known_fail`/`improvement_target`
   non-blocking, flags any tracked case that starts passing). `run.ts` runs all three layers in isolated
-  processes and emits ONE combined verdict — the check a ship runs (documented in RELEASING.md). Its FIRST
+  processes and emits one combined verdict — the check a ship runs (documented in RELEASING.md). Its FIRST
   run caught real issues, exactly the point: the bare-Chevaleret mis-parse (#831, now a tracked known*fail),
   the US hierarchy stopping at region (dropped the over-reaching `country` assertion), and **#832** — "350
   5th Ave, New York, NY" resolves to \_upstate* NY, not NYC (a real disambiguation bug the per-tag F1 misses).
@@ -149,7 +149,7 @@ geocodeAddress-no-normalize path), so the metamorphic `ws|Damrak` violation was 
 
 **Fix (PR #834, flagged for review):** `geocodeAddress` now runs Stage-1 normalize (default-on, opt-out).
 Diagnostic-before-fix: fixes `ws|Damrak` → rooftop; a with/without A/B on 300 clean FDIC addresses is
-**exactly identical** (177/205/272 — idempotent, do-no-harm); unified check PASS. Two durable wins from the
+**exactly identical** (177/205/272 — idempotent, do-no-harm); unified check pass. Two durable wins from the
 fidelity theme: the harness now **md5-stamps the model** every run, and `geocodeAddress` is now a complete
 self-contained entry. Side-note: `default-country.test.ts`'s resolution tests are red locally (the #832 NYC
 regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB) — worth wiring into the check.
@@ -159,7 +159,7 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
 - **Next model iteration — surface-augmentation retrain (#261, DeepSeek-backed, session 019f1223).** The
   #829 lowercase failures + the #831-class case-sensitivity are one cluster: the model's parse is
   case/surface-fragile. DeepSeek's structural read (trust it): **surface augmentation is the primary** —
-  #831 being fixed by a retrain _without_ preprocessing changes proves the model CAN learn case-robustness,
+  #831 being fixed by a retrain _without_ preprocessing changes proves the model can learn case-robustness,
   so #829 is a coverage gap, not a flaw. Rejected: structural-lowercasing (destroys the directional /
   proper-noun case signal), deterministic rules (against model-first). Reserved escalation: case as an
   auxiliary per-token feature. **Concrete recipe:** add a case augmentation to `corpus-python/augment.py`
@@ -170,12 +170,12 @@ regression + a stale Paris opt-out) but **skipped in CI** (they need the WOF DB)
   case half, model-first. **The infra is now BUILT (`681d10e3`):** `augment_case_prob` is wired through
   `corpus-python` (config + data_loader + `augment_row`), guarded so 0 keeps the rng stream bit-identical;
   `lowercase_row` lowercases raw + tokens with labels/spans intact (length-preserving), skipping rare
-  non-length-preserving Unicode; 4 tests added, 32 pass. So the operator just sets `augment_case_prob` in a
+  non-length-preserving Unicode; 4 tests added, 32 pass. So the operatorsets `augment_case_prob` in a
   config (copy v1.9.4, resume v194) + launches the Modal probe — no infra work left.
   - **PROBE DONE + VALIDATED (`b0d4e02e`, Modal ~$1.5).** Ran the 2k-step diagnostic (resume v194 step-092000
     - `case_prob: 0.3`, fresh v195 output dir so the shipped v194 is untouched). Loss healthy throughout
       (0.6884→0.6619). On the probe model, `"1600 pennsylvania ave nw, washington dc"` (lowercase) now resolves
-      to **ROOFTOP**, identical to the mixed-case form — **the #829 US lowercase case is fixed in just 2k
+      to **ROOFTOP**, identical to the mixed-case form — **the #829 US lowercase case is fixed in2k
       steps.** NL lowercase improved null→admin (needs the full run's more steps / locale weight). So the
       DIRECTION is confirmed — the operator launches the full retrain knowing it works, not on faith. DeepSeek
       scoreboard (session 019f1223): structural 1/1 (surface-augmentation predicted-and-held).

@@ -2,9 +2,9 @@
 
 **Purpose:** the project has no counsel on retainer; this dossier is the operator's best-effort
 collection of every standing legal question (operator, 2026-07-30: "do your best and I'll forward
-it over when the project actually pays for one"). Each item carries the question, the facts we
+it over when the project pays for one"). Each item carries the question, the facts we
 verified ourselves, and what we're doing in the meantime. Items are ordered by how much shipped
-product they check. This file is the single source — new legal questions land HERE, not in
+product they check. This file is the single source — new legal questions land here, not in
 scattered plan docs.
 
 ## 1. ODbL — the osm/ workspace publish-block + OSM-derived corpus quarantine
@@ -76,14 +76,14 @@ the Interior`. The source definition (`sources/kr/11/provincewide.json`) points 
   clear license". The file inside is the building-entrance point file (`entrc_<region>.txt`).
 - What that product is at the source: the ministry's 도로명주소 위치정보 요약DB (entrance coordinates) and
   도로명주소 전자지도. On data.go.kr both carry 공공누리 제1유형 (attribution; commercial use and
-  derivatives permitted) AND the note that they are provided only after a separate application and a
+  derivatives permitted) and the note that they are provided only after a separate application and a
   purpose-of-use review by the local government or the ministry (시행령 제46조, 시행규칙 제53조,
   별지 제32호서식). Nobody in the chain above applied. The application form's wording is unread.
 - The export rule: 도로명주소법 제25조 제10항 forbids taking a 주소정보기본도 or 주소정보안내도 that contains
   disclosure-restricted spatial information out of Korea without the minister's permission (up to two
   years or 20,000,000 won). Whether entrance coordinates count as restricted is unread.
 - The unrestricted products: the 도로명주소 한글 주소DB (시도, 시군구, 읍면동, 도로명, 건물본번·부번, 우편번호,
-  the 지번 file beside it; no coordinates) and the 영문 주소DB are direct downloads labelled
+  the 지번 file beside it; no coordinates) and the 영문 주소DB are direct downloads labeled
   "이용허락범위 제한 없음" on data.go.kr, no application. Every field the weights learned from, and every
   name in the register, is in those products.
 - KOGL's AI type (2026-01-28, 문화체육관광부 + 과학기술정보통신부): permits training and commercial use of

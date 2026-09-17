@@ -5,7 +5,7 @@ architecture?
 
 **Verdict: MIXED, and the mix is informative. The capability is real and provably beyond a word-unit
 tagger's ceiling. We exercise it only when a partner word licenses it — which is the same defect,
-for the third time, in a third component. The architecture is not the problem. The licence is.**
+for the third time, in a third component. The architecture is not the problem. The license is.**
 
 ---
 
@@ -59,11 +59,11 @@ correctly. Add one word and `Tindvegen nedre 44B` breaks. So the cost arm is not
 breaks the digit."
 
 And the bottom two failures are **not digit ownership at all**: the model called the _street_ a
-locality. That is Track A's bare-street polarity defect — the one v310 just fixed for French —
+locality. That is Track A's bare-street polarity defect — the one v310fixed for French —
 leaking in. With no street recognized, the digit has no street to attach to, so it cannot be a house
-number. Only **3 of 5** cost rows are genuine digit ownership.
+number. Only **3 of 5** cost rows are actual digit ownership.
 
-## The third instance of the licence
+## The third instance of the license
 
 The benefit arm exposed something the cost arm hid. We split intra-word — but only when told to:
 
@@ -81,7 +81,7 @@ Deepparse, for the record, splits neither — it cannot.
 
 That is the same shape as the two defects already on the board:
 
-| #   | licence                                                | consequence                   | status                              |
+| #   | license                                                | consequence                   | status                              |
 | --- | ------------------------------------------------------ | ----------------------------- | ----------------------------------- |
 | 1   | a **digit** licenses the _street_ reading              | `Rue Montmartre` → locality   | **fixed** by v310's extract (+50pp) |
 | 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (Track B)                      |
@@ -113,11 +113,11 @@ counter-distribution, without touching the architecture at all.
 - The `enforceWordConsistency` heal cannot reach this class, and the arithmetic says why: the vote
   sums softmax mass, and the continuations have more of it (postcode 1.53 vs house_number 0.65 on
   `▁3|9|A`). It works exactly as designed and still lands on postcode. Do not tune it for this.
-- We collect the benefit only under licence. An unexercised capability is not a capability.
+- We collect the benefit only under license. An unexercised capability is not a capability.
 
 **Not settled here:** the arc's own research says a lower-fertility vocab is _upstream_ of any span
 head, and the span head was built and closed first — a conditional verdict flagged on its parked PR.
-Nothing on this page re-opens it. But note the direction: if the licence defect is a data property
+Nothing on this page re-opens it. But note the direction: if the license defect is a data property
 and the extract fixes it, the vocab work is an optimization, not a prerequisite.
 
 ## Caveats

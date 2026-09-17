@@ -5,15 +5,15 @@ then because "the pair parent needs post towns — an outcode→post-town table 
 
 ## The blocker dissolved, and it is worth saying why
 
-The post-town framing came from the GB source: PPD's parent column IS the post town, so an NI
+The post-town framing came from the GB source: PPD's parent column is the post town, so an NI
 extension seemed to require the same field for NI, which Royal Mail licenses rather than publishes.
 But R5 established that the parent side does not have to come from a postal register at all — the US
 instance takes WOF localities as parents and passes every bar. Applying that here: WOF's NI
-neighbourhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that ARE the
+neighborhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that are the
 post towns for those addresses. No licensed table needed; the deferral was reasoning from GB's
-source shape rather than from what the pair actually requires.
+source shape rather than from what the pair requires.
 
-Survey: **84 (child, parent) pairs**, every one a neighbourhood, under 4 parents (Belfast 75,
+Survey: **84 (child, parent) pairs**, every one a neighborhood, under 4 parents (Belfast 75,
 Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against the shipped GB index:
 **0/84 already resolve — all 84 are fresh.**
 
@@ -25,7 +25,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
    pair per alternative. This is the dual-naming convention the city carries politically, and the
    index has to accept whichever form the writer used.
 2. **`"Lower Shenkill"` is a misspelling of Shankill** (the correctly-spelled "Upper Shankill" sits
-   beside it in the same source). Harmless by construction — a wrong surface simply never matches
+   beside it in the same source). Harmless by construction — a wrong surface only never matches
    real input — so it is recorded, not patched. Never edit a reference source in place; the fix
    belongs upstream.
 
@@ -40,7 +40,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 - **B-R7.3 (positive side).** The fresh pairs extract as `dependent_locality` in a real NI address
   shape (`<house> <street>, <neighbourhood>, Belfast, BT<n> <n><aa>`). Bar: **≥70% tag-correct** on
   a sampled positive board.
-- **D-R7.4 (disclosure).** Report how many of the 84 survive the fold as distinct entries, and name
+- **D-R7.4 (disclosure).** Report how several of the 84 survive the fold as distinct entries, and name
   any that collapse — an artifact whose count silently differs from its source's is how a fold bug
   hides.
 
@@ -48,7 +48,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 
 The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it — the pair index
 is hard-blocked on the resolved locale's country, so an IE artifact inside en-GB would never fire.
-That is a packaging decision plus the still-open licence survey (Tailte Éireann / logainm), not a
+That is a packaging decision plus the still-open license survey (Tailte Éireann / logainm), not a
 rung that can be executed off the shelf like this one.
 
 ## The readings
@@ -80,4 +80,4 @@ release path, or the next check reads the wrong model.
 The NI increment ships. `data/gazetteer/ni-pairs-v1.jsonl` (87 pairs) joins the build as its own
 source — `--pairs-jsonl` now takes a comma-separated LIST rather than a single file, so each source
 keeps a distinct provenance md5 and the guard can tell which one moved. Ireland stays open on the
-`en-IE` carrier package plus the licence survey.
+`en-IE` carrier package plus the license survey.

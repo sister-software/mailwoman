@@ -6,7 +6,7 @@ against a gazetteer they don't come from — and, because `v0` is a TypeScript p
 of the Pelias parser, the **neural-vs-Pelias-parser head-to-head** at the same
 time (the parser axis of "beat Pelias", with no Docker Pelias stack needed).
 
-## Why this is the honest scoreboard
+## Why this is the direct scoreboard
 
 The WOF-bootstrap eval (the +8.5pp exact-match-tiering result) renders WOF places
 back into address strings and resolves WOF→WOF. It's a legitimate ranking test,
@@ -22,7 +22,7 @@ the WOF gazetteer — a different source. So:
   gazetteer name vs OA's ground truth) measures resolver correctness independent
   of WOF id conventions.
 - **Coordinate error** (great-circle from the resolved admin centroid to OA's real
-  point) is a genuine map-accuracy signal — un-gameable, since OA's point was
+  point) is an actual map-accuracy signal — un-gameable, since OA's point was
   never in the gazetteer.
 
 The set: `data/eval/external/openaddresses-us-sample.jsonl` (10,000 rows, 8
@@ -102,7 +102,7 @@ make that class of error impossible.)
 `core/resolver/resolve.ts` now stamps `metadata.resolver_name` (the resolved
 place's canonical gazetteer name) alongside `resolver_score`. Without it the eval
 could only compare against the parser's own text span, not the place the resolver
-actually chose — so it couldn't tell a right-name/wrong-place resolution from a
+chose — so it couldn't tell a right-name/wrong-place resolution from a
 correct one. The name is also generally useful to consumers (display the canonical
 name, not the raw input span).
 

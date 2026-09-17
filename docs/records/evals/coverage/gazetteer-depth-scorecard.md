@@ -14,7 +14,7 @@ child projecting onto that rung).
 
 ## Read the `source` column first
 
-**This report measures the shipped artifact, not Who's on First.** WOF publishes 260 per-country
+**This report measures the shipped artifact, not Who's On First.** WOF publishes 260 per-country
 admin repos; `DEFAULT_WOF_PRIORITY_COUNTRIES` names 12 of
 them. Every other country's rows come from Overture divisions — whose `OVERTURE_DIVISION_SUBTYPES`
 is `country`/`locality`/`region`/`county`/`localadmin`, with no hood-level subtype — or from

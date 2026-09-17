@@ -1,12 +1,12 @@
 ---
 sidebar_position: 16
-title: Input robustness — absorbing the mess users actually type
+title: Input robustness — absorbing the mess users  type
 tags:
   - concepts
   - evals
 ---
 
-# Input robustness — absorbing the mess users actually type
+# Input robustness — absorbing the mess users type
 
 The addresses in a test fixture are clean. The addresses a geocoder receives are
 not. They arrive in all caps from a compliance export, comma-crushed from a
@@ -107,7 +107,7 @@ answer:
 - **INV (invariance, ≤1m).** A label-preserving perturbation of a base address
   (lowercase it, uppercase it, double the spaces, append a stray dot, tighten the
   space after a comma, swap an expanded suffix for its abbreviation) must not move the
-  coordinate more than a metre (`INV_EPSILON_KM = 0.001`) or change the resolution
+  coordinate more than a meter (`INV_EPSILON_KM = 0.001`) or change the resolution
   tier. Same address, same answer. The `abbrev` case inverts the `normalize/`
   abbreviation table (`Avenue`→`Ave`), and it holds because the model trains on both
   forms, so the coordinate has no excuse to budge.
@@ -163,7 +163,7 @@ watch them, and the full picture falls out, thin spots included.
 | -------------------------------------------- | ------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------- |
 | Casing                                       | yes (case-normalize #690/#829, model-side) | yes                  | INV[lower/upper] green                                                                                    |
 | Spacing                                      | yes (whitespace.ts)                        | incidental           | INV[ws], INV[comma-tight] green                                                                           |
-| Abbreviation swap (Road↔Rd)                  | capable but OFF at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green; FR `Bd` tracked-xfail (resolver name-match gap)                           |
+| Abbreviation swap (Road↔Rd)                  | capable but off at runtime (deliberate)    | yes                  | INV[abbrev]: EN suffixes green; FR `Bd` tracked-xfail (resolver name-match gap)                           |
 | Number spelling (5th↔Fifth, 100↔One Hundred) | no                                         | no                   | BAND[num-ordinal] green; BAND[num-house] tracked-xfail (untrained)                                        |
 | Typos (single-char edit)                     | no                                         | no                   | BAND[typo-sub]: most bases green; tracked-xfail where a typo'd locality/street loses the pin (anchor-off) |
 | Transpositions                               | no                                         | no                   | BAND[transpose]: same anchor-off gaps as typo-sub                                                         |
@@ -171,7 +171,7 @@ watch them, and the full picture falls out, thin spots included.
 The top two rows are the settled ones: casing and spacing are absorbed at runtime,
 reinforced in the corpus, and held green by a standing invariant. The bottom four used
 to be blind spots. They run through the metamorphic check now, and the surprise was that
-several of them already hold. The EN suffix abbreviations pass the strict metre
+several of them already hold. The EN suffix abbreviations pass the strict meter
 invariant. Ordinal street spelling (`5th`↔`Fifth`) stays inside the tolerance band even
 though nothing trains it. The gaps came out smaller than feared, and they're
 named in the xfail maps rather than hiding: a French street-type abbreviation the

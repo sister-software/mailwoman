@@ -46,7 +46,7 @@ A manifest describes what _was_ built. Configuration describes what _should_ be 
 the first. This distinction is not stylistic — it is the lesson of #1015, where
 `scripts/wof-build-manifest.json` lagged the live database by 71 Overture and 161 GeoNames countries and the
 real recipe had to be reconstructed from the artifact's synthetic-id ranges. `RELEASING.md` records the fix:
-the recipe moved INTO code, reviewed like code, and the manifest was demoted to a LOG.
+the recipe moved into code, reviewed like code, and the manifest was demoted to a LOG.
 
 So the test for every artifact this strategy adds is: **can it be re-derived from the thing it describes?**
 A file that can is a log and cannot lag — a stale entry fails its own check. A file that cannot is a
@@ -139,7 +139,7 @@ Read-only walk of the data root. Per artifact: size, kind, its manifest if it ha
 
 This is deliberately the cheapest phase and deliberately second. It turns an anxiety into `8 / 60`, gives
 every later phase a scoreboard, and tells us where the real gaps are instead of us guessing. It also has to
-report the two facts above honestly: that `pelias-rig` is a third of the disk and not ours, and that
+report the two facts above directly: that `pelias-rig` is a third of the disk and not ours, and that
 `candidate.db` is a symlink whose target is a real choice.
 
 **Acceptance:** the command names every artifact, classifies each as provenanced / unprovenanced /
@@ -162,7 +162,7 @@ Everything phase 2 produces emits a manifest, so the phase 1 number improves by 
 ### The check this phase owes
 
 "One country, one source" is currently held by comments in `defaults.ts`; `verifyAdmin` tests floors, so
-duplication moves every check number in the passing direction and the build ships. The command that MOVES a
+duplication moves every check number in the passing direction and the build ships. The command that moves a
 country between sources is exactly the thing that can violate the invariant, so the check lands with the
 command, not after it.
 
@@ -179,7 +179,7 @@ Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` 
 
 | Builder                       | Artifact                   | Notes                                                                  |
 | ----------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| `gazetteer build admin`       | `admin-global-priority.db` | licence is a CONJUNCTION of the folds that actually contributed        |
+| `gazetteer build admin`       | `admin-global-priority.db` | license is a CONJUNCTION of the folds that contributed                 |
 | `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
 | `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                   |
 | `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
@@ -197,7 +197,7 @@ rather than the schema module. `street` is additive; existing layers are unaffec
 shipped databases stay unprovenanced and `data inventory` will keep reporting them as such. That is the
 discipline working, not a gap.
 
-### What phase 3 did NOT cover, and why
+### What phase 3 did not cover, and why
 
 The `wof/` family is 79 databases and four of its sub-families are still unstamped: the 24 `postcode-*`
 extracts, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
@@ -220,7 +220,7 @@ Carried from the repo's own documents, restated because every phase can violate 
 5. **Measure the claim.** Every number in this document came from a command. Where a phase rests on a claim
    about data or scale, it spends the one command that determines the result.
 
-## Open, and honestly open
+## Open, and directly open
 
 - **The seat-preference term's reach is unverified end-to-end.** It moves 3,896 top slots at the ranker.
   Three inverted probes — the term itself, `compareReferential`, and the candidate `ORDER BY` — changed

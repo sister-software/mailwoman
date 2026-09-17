@@ -4,7 +4,7 @@
 
 **Goal:** Eliminate every migratable `cliArguments()` call site in favor of native `node:util` `parseArgs`, leaving exactly one documented edge case (verbatim child-process passthrough), and fix the code smells surfaced during triage.
 
-**Architecture:** Each script's hand-rolled argv loop is replaced by a strict `parseArgs` declaration reading `process.argv.slice(2)` by default (no `args:` passed except where a test injects argv). Three CLIs with negative-coordinate positionals switch to the standard `--` separator. The `runScript` exit-code bug (errors exit 0, clobbering `process.exitCode`) is fixed in the same pass since several migrated scripts depend on honest exit codes.
+**Architecture:** Each script's hand-rolled argv loop is replaced by a strict `parseArgs` declaration reading `process.argv.slice(2)` by default (no `args:` passed except where a test injects argv). Three CLIs with negative-coordinate positionals switch to the standard `--` separator. The `runScript` exit-code bug (errors exit 0, clobbering `process.exitCode`) is fixed in the same pass since several migrated scripts depend on direct exit codes.
 
 **Tech Stack:** node:util parseArgs, @mailwoman/core/scripting `runIfScript`, vitest, oxlint/oxfmt.
 
@@ -129,7 +129,7 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 }
 ```
 
-Note the signal-handler registration still passes the signal name as the first arg and `undefined` as exitCode — Ctrl-C now exits with `process.exitCode ?? 0` instead of hard 0; acceptable and more honest.
+Note the signal-handler registration still passes the signal name as the first arg and `undefined` as exitCode — Ctrl-C now exits with `process.exitCode ?? 0` instead of hard 0; acceptable and more direct.
 
 - [ ] **Step 3: Update the cliArguments docstring** (same file, lines 72-77) — the negative-coordinate example dies in Task 9:
 
@@ -154,7 +154,7 @@ Also verify the clean path still exits 0:
 - [ ] **Step 5: Run core tests + commit**
 
 Run: `yarn workspace @mailwoman/core test 2>&1 | tail -20` (or the repo's equivalent scoped test command; fall back to `yarn vitest run core/scripting` from root if workspaces don't define `test`).
-Expected: PASS (no existing test asserts exit-0-on-error).
+Expected: pass (no existing test asserts exit-0-on-error).
 
 ```bash
 git add core/scripting/utils/index.ts
@@ -424,7 +424,7 @@ Line 1 shebang → `#!/usr/bin/env node`. Docstring usage: `npx tsx packages/cor
 
 - [ ] **Step 2: Verify + commit**
 
-Typecheck only — do NOT run it (it downloads ~GBs from adresse.data.gouv.fr). `yarn lint corpus/scripts/fetch-sources/fetch-ban-full.ts` (or full `yarn lint`) → clean.
+Typecheck only — do not run it (it downloads ~GBs from adresse.data.gouv.fr). `yarn lint corpus/scripts/fetch-sources/fetch-ban-full.ts` (or full `yarn lint`) → clean.
 
 ```bash
 git add corpus/scripts/fetch-sources/fetch-ban-full.ts
@@ -443,7 +443,7 @@ Grammar change: argparse-style greedy `--extracts a b c` → variadic positional
 
 - [ ] **Step 1: Edit**
 
-Docstring: fix stale path + grammar + delete the DELIBERATE line:
+Docstring: fix stale path + grammar + delete the deliberate line:
 
 ```
  *   Usage: node scripts/eval/extract-tuples.ts\
@@ -562,7 +562,7 @@ expect(written).toMatch(/Unknown option/)
 - [ ] **Step 3: Run the CLI test file**
 
 Run: `yarn vitest run resolver-wof-sqlite/build-fts-cli.test.ts` (scoped however the workspace runs vitest).
-Expected: all 9 tests PASS.
+Expected: all 9 tests pass.
 
 - [ ] **Step 4: build-coincident-roles-cli.ts** — same shape; tri-state `--drop`/`--no-drop`, default rebuild:
 
@@ -972,7 +972,7 @@ git commit -m "docs(corpus-python): mark train_with_resume's cliArguments passth
 - [ ] **Step 1: Residue check**
 
 Run: `grep -rn 'cliArguments' --include='*.ts' --exclude-dir=node_modules --exclude-dir=out .`
-Expected survivors ONLY: `core/scripting/utils/index.ts` (definition), `corpus-python/scripts/train_with_resume.ts` (deliberate), `scripts/AGENTS.md` mention (docs).
+Expected survivors only: `core/scripting/utils/index.ts` (definition), `corpus-python/scripts/train_with_resume.ts` (deliberate), `scripts/AGENTS.md` mention (docs).
 
 - [ ] **Step 2: Lint + format + typecheck**
 

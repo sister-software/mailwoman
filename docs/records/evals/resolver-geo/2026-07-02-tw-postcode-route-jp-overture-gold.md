@@ -3,7 +3,7 @@
 #473 asked for two CJK unblocks from Overture: the TW postcode→admin table #294 was parked on, and an
 independent Overture-based eval gold for the shipped JP resolver. Both shipped — but not the way the
 issue specced them, because the spec's data premise is false: **Overture release 2026-06-17.0 carries
-ZERO postcodes for both TW (0/9,732,009) and JP (0/19,587,926)** (re-verified on the pinned release
+zero postcodes for both TW (0/9,732,009) and JP (0/19,587,926)** (re-verified on the pinned release
 after the 2026-05-20.0 probe in the issue comments; `fill-rates.md` now carries both rows). What
 Overture does carry — 29.3M points with coordinates, admin attribution, and (divisions theme) real
 district polygons — supplied the geometry both halves needed.
@@ -32,9 +32,9 @@ release-pinned by `scripts/eval/fetch-tw-division-polygons.ts`) → WOF row, tie
 The name-only JP/KR recipe topped out at 63% here: WOF's `county`-tier TW districts carry **no
 Chinese names at all**, and the Kaohsiung/Taichung urban cores are `neighbourhood` or missing
 entirely. The polygon bridge + Overture's en names ("Wanhua District" ↔ WOF "Wanhua") closed most of
-the gap; the 22 districts WOF simply has no row for (三民區, 鹽埕區, the Taichung/Tainan directional
+the gap; the 22 districts WOF only has no row for (三民區, 鹽埕區, the Taichung/Tainan directional
 districts, offshore islands) map to their containing city — true containment, coarser granularity,
-honestly recorded in the meta.
+directly recorded in the meta.
 
 Two ladder-ordering findings, both measured (n=3,000, seed 42): name-confirmed district-tier must
 outrank bare containment (Zhongshan's WOF point sits inside 中正區 — bare containment alone picks
@@ -57,7 +57,7 @@ is a Point, so WOF polygons cannot grade this).
 
 **PASS** (86.4% ≥ ~85%, stable across seeds). Failures concentrate exactly where WOF lacks district
 rows (東區/北區/三民區/南區 …) — a WOF coverage gap, not a routing defect; the city-level containment
-line is the honest ledger for those. Split note: the builder consumes no Overture address points
+line is the direct ledger for those. Split note: the builder consumes no Overture address points
 (inputs: postal table, WOF, division polygons), so every sampled point is held-out by construction;
 the polygon layer is shared between the builder's bridge and the eval's truth.
 
@@ -96,7 +96,7 @@ resolver's current operating point is ~98%, and `postcode-locality-jp.db`'s meta
 be re-stamped at its next rebuild. Coord p50/p90 vs the Overture point: 4.69 / 13.21 km
 (municipality-centroid scale, as expected).
 
-**Refresh-source note (for the convention-table provenance):** Overture is NOT viable as a JP
+**Refresh-source note (for the convention-table provenance):** Overture is not viable as a JP
 postcode refresh source (0% fill). KEN_ALL (rescued copy at `$MAILWOMAN_DATA_ROOT/KEN_ALL_ROME`)
 remains the only keying source; Overture serves as the independent admin + coordinate gold.
 

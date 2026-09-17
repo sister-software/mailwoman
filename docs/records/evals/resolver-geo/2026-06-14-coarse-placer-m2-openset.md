@@ -2,7 +2,7 @@
 
 _Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countries); off-map HELDOUT 66000 rows (never-trained families: baltic/oceania/middle-east). Mahalanobis fit on ≤2000/class in-map train logits. The 11-way routing is fixed; each score only changes the reject decision._
 
-## Honest dev→test point (threshold picked on dev, frozen on test)
+## direct dev→test point (threshold picked on dev, frozen on test)
 
 | score      | TEST in-map | TEST held-caught |      min | full-probe balanced |
 | ---------- | ----------: | ---------------: | -------: | ------------------: |
@@ -24,6 +24,6 @@ _Frozen shipped model (`model`), NO retrain. In-map test 55000 rows (11 countrie
 
 ## Verdict
 
-Best score (honest dev→test): **`p_inmap`** at min(in-map, heldout) = **91.3** on the frozen test half. **Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).
+Best score (direct dev→test): **`p_inmap`** at min(in-map, heldout) = **91.3** on the frozen test half. **Clears 90/90 post-hoc** — wire it into CoarsePlacer as the open-set reject rule; no retrain needed (Phase 2 reject-head unnecessary).
 
-Ranking (honest dev→test min): `p_inmap` 91.3 · `maxprob` 89.1 · `maxlogit` 83.6 · `energy` 83.4 · `maha` 76.2
+Ranking (direct dev→test min): `p_inmap` 91.3 · `maxprob` 89.1 · `maxlogit` 83.6 · `energy` 83.4 · `maha` 76.2

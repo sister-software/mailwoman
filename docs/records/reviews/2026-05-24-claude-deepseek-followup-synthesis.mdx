@@ -48,7 +48,7 @@ Why this is better than the alternatives:
 
 - **vs porting beam decoder to TS**: half the work (~100 lines vs 200-300), and sequence-level n-best decoding was the wrong abstraction for the reconciler anyway. The reconciler takes per-span confidence, not BIO-sequence-level confidence.
 - **vs synthesised top-k**: real model confidences (no artificial perturbations of argmax), so the measurement reflects the actual classifier signal.
-- **vs waiting for PR #128's top-k inference**: code path matches the eventual production runtime — when the top-k classifier eventually trains, the TS runtime just swaps "per-token softmax aggregation" for "classifier's top-k API," same downstream contract.
+- **vs waiting for PR #128's top-k inference**: code path matches the eventual production runtime — when the top-k classifier eventually trains, the TS runtimeswaps "per-token softmax aggregation" for "classifier's top-k API," same downstream contract.
 
 ## Go/no-go decision matrix for joint-reconcile vs argmax
 
@@ -65,7 +65,7 @@ Two checks, applied after running joint-reconcile against the kryptonite catalog
 
 **Why golden ≤1pt as a guard rail:** concordance scoring should be a no-op on already-correct parses. A >1pt regression on golden means the scoring function is making correct → wrong flips, which indicates a scoring bug, not an architectural failure.
 
-**Explicitly not the top-line:** resolver top-1 accuracy. If the parse is wrong, the resolver will be wrong regardless. Exact-match measures what the reconciler actually changes; resolver accuracy checks a later "is our WOF data good?" question that joint decode can't answer.
+**Explicitly not the top-line:** resolver top-1 accuracy. If the parse is wrong, the resolver will be wrong regardless. Exact-match measures what the reconciler changes; resolver accuracy checks a later "is our WOF data good?" question that joint decode can't answer.
 
 ## Three blind spots both reviews missed
 
@@ -73,7 +73,7 @@ Real risks that would have bitten the validation sprint if executed without miti
 
 ### 1. WOF parent_id chain correctness
 
-The concordance bonus in `reconcileSpans` scores parses against the gazetteer's parent-id chain. WOF SQLite is a copy of a copy of a copy. If `parent_id` chains are incorrect for even a small percentage of records, the concordance bonus will both punish correct parses AND reward wrong ones — and the failure mode is "&lt; +15pp on kryptonite, you blame the algorithm, the real cause is bad data."
+The concordance bonus in `reconcileSpans` scores parses against the gazetteer's parent-id chain. WOF SQLite is a copy of a copy of a copy. If `parent_id` chains are incorrect for even a small percentage of records, the concordance bonus will both punish correct parses and reward wrong ones — and the failure mode is "&lt; +15pp on kryptonite, you blame the algorithm, the real cause is bad data."
 
 **Mitigation:** before evaluating reconciler output, spot-check 20 resolvable `(locality, region)` pairs against WOF's REST API as ground truth. If &gt;1 mismatch, the concordance scoring is evaluating against bad data.
 
@@ -87,7 +87,7 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden check.
 
-**Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or clearly wrong in golden, expand the check tolerance. If they are genuine (concordance damage), the matrix stands.
+**Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or the result shows wrong in golden, expand the check tolerance. If they are actual (concordance damage), the matrix stands.
 
 ## Updated validation sprint plan
 
@@ -109,7 +109,7 @@ Execution order — all but the final step run against v0.4.0 weights or existin
 
 7. **Decision via the matrix** (see above).
 8. **CE-only training run** if Track A step 1 confirms dual-loss decoupling. crf_loss_weight=0, otherwise v0.4.0-stable recipe. ~6h local GPU.
-9. **Corpus/tokenizer bisect** only if Track A is clean AND joint-reconcile produces +15pp.
+9. **Corpus/tokenizer bisect** only if Track A is clean and joint-reconcile produces +15pp.
 10. **Fine-tuning DistilBERT control** only if CE-only also diverges (nuclear option).
 11. **Rented GPU C-train** only after the preflight checklist passes — the architecture has been measured end-to-end and the corpus/tokenizer destabiliser has been identified.
 
@@ -118,13 +118,13 @@ Execution order — all but the final step run against v0.4.0 weights or existin
 A few principles worth carrying forward beyond this specific sprint:
 
 - **A go/no-go decision rule must exist before the experiment runs.** A 10-metric report with no decision criterion is not an experiment; it's a data-collection exercise. The Codex review's eval-matrix list is correct but operationally incomplete without DeepSeek's threshold matrix.
-- **Agreement across reviewers ≠ correctness.** Both Codex and DeepSeek converged on similar conclusions, but converging reviewers can share blind spots — the three named above are evidence that pushing past consensus is sometimes the only way to find what's actually missing.
+- **Agreement across reviewers ≠ correctness.** Both Codex and DeepSeek converged on similar conclusions, but converging reviewers can share blind spots — the three named above are evidence that pushing past consensus is sometimes the only way to find what's missing.
 - **Cheap diagnostics first.** A 5-minute gradient-norm probe answers more about the v0.5.0 divergence than a 25-hour retrain. Always exhaust the zero-GPU diagnostic ladder before any retrain.
 - **The integration test is the architectural test.** v0.5.0's thesis is that joint decoding beats argmax on kryptonite. That thesis can be measured today, against v0.4.0 weights, with zero GPU time. There is no good reason to defer it behind any training experiment.
 
 ## Postscript — what the probe revealed (and how the plan changed)
 
-The gradient-norm ratio probe ran a few hours after this synthesis was written. The result falsified the dual-loss decoupling hypothesis at its centre — and falsified it in an unexpected direction.
+The gradient-norm ratio probe ran a few hours after this synthesis was written. The result falsified the dual-loss decoupling hypothesis at its center — and falsified it in an unexpected direction.
 
 ### The probe numbers
 
@@ -143,7 +143,7 @@ DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has col
 
 A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling" but **"CRF as aggressor"**. The story that fits all the data:
 
-- **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends cleanly.
+- **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends directly.
 - **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
 
 The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the key observation, not the threshold.
@@ -151,7 +151,7 @@ The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflic
 ### Why standard repairs don't fix this
 
 - **Lowering `crf_loss_weight`** scales loss values, not gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimiser mix is still roughly 1:0.8 CE:CRF.
-- **Per-token CRF normalisation (§1)** made the _loss_ magnitudes comparable. The probe shows _gradient_ magnitudes are still wildly asymmetric.
+- **Per-token CRF normalization (§1)** made the _loss_ magnitudes comparable. The probe shows _gradient_ magnitudes are still wildly asymmetric.
 - **Global gradient clipping** preserves the relative dominance — CRF's 16× share survives clipping.
 
 Knobs that scale loss values cannot fix asymmetric curvature.
@@ -170,7 +170,7 @@ This is the same destination DeepSeek's earlier review pointed at, with a sharpe
 - val_macro_F1 ≥ 0.35 at step 2000.
 - Per-tag F1 trajectory does not show single-tag collapse.
 
-If all three pass, promote to a full 50K-step CE-only training run. **Stability is the win**; any quality improvements come from recipe knobs (class weights, source rebalance, longer schedules) that were unsafe under dual-loss but become safe once the aggressive loss term is gone.
+If all three pass, promote to a full 50K-step CE-only training run. **Stability is the result**; any quality improvements come from recipe knobs (class weights, source rebalance, longer schedules) that were unsafe under dual-loss but become safe once the aggressive loss term is gone.
 
 ### Updated 24-hour ordered plan
 
@@ -188,7 +188,7 @@ Replaces the "validation sprint plan" earlier in this document.
 
 A fifth principle worth keeping with the four above:
 
-- **Hypotheses are tested in the direction the data points, not the direction you expected.** The probe predicted ratio &lt; 0.01 (CRF collapsed) and found ratio &gt; 8 (CRF dominant) — opposite direction, same repair. The original hypothesis was a useful scaffold for designing the experiment; falsifying it cleanly was more valuable than confirming it would have been. Build experiments around what would change your mind, not around what would confirm what you already believe.
+- **Hypotheses are tested in the direction the data points, not the direction you expected.** The probe predicted ratio &lt; 0.01 (CRF collapsed) and found ratio &gt; 8 (CRF dominant) — opposite direction, same repair. The original hypothesis was a useful scaffold for designing the experiment; falsifying it directly was more valuable than confirming it would have been. Build experiments around what would change your mind, not around what would confirm what you already believe.
 
 The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../site-2026-08/concepts/dual-loss-curvature-conflict.mdx).
 

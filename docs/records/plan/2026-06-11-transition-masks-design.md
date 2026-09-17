@@ -3,7 +3,7 @@
 Status: DESIGN ONLY (night-11). Increment 1 (emission mask, v4.3.0) and the span bridge (v4.4.0
 corrective) shipped; the train-time loss-mask pairing is implemented and banked
 (`use_conventions_loss_mask`, probe deferred by consult — rides the next full run). Transition
-masks are the next decode-side increment, recorded here with their failure mode BEFORE anyone
+masks are the next decode-side increment, recorded here with their failure mode before anyone
 implements them in a hurry.
 
 ## The idea
@@ -27,7 +27,7 @@ correct digits; "47110…" absorbing a house number corrupts the field outright)
 mask implementation must ship with this as a regression TEST CASE: the FR digit-split rows +
 the glue rows, asserted not-worse under the mask.
 
-## Why it is NOT being built tonight
+## Why it is not being built tonight
 
 1. The motivating classes are now covered upstream: the digit-split died with the #511 relabel
    (in-weights, measured 6→2 FR misses with no mask), and the glue class died with the #513
@@ -41,7 +41,7 @@ the glue rows, asserted not-worse under the mask.
 
 ## When to revisit
 
-- A check FAIL whose row characterization shows an ORDERING error (not a span/boundary error)
+- A check fail whose row characterization shows an ORDERING error (not a span/boundary error)
   in a conventioned system.
 - The double-postcode class surviving the next corpus pass.
 - The `de` conventions row shipping (its postcode shape + the transition pair come as a unit).

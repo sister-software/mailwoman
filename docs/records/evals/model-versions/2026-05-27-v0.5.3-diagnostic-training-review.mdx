@@ -100,7 +100,7 @@ The 29M model quantizes from 66 MB (fp32) to 17 MB (int8) with negligible accura
 
 ## Demo preset results (v0.5.2 weights + inference enhancements)
 
-:::caution[These results use the currently deployed **v0.5.2 model weights** (which are actually v0.5.1's `model-stage2-step-001800-int8.onnx` with the v0.1.0 tokenizer), not the v0.5.3 checkpoint. The inference-time enhancements (FST prior, QueryShape locality guard, Wikipedia importance, grouper-audit) run on top of whatever model is loaded. Results below may appear better than the raw model warrants because the priors and grouper-audit are compensating for model weaknesses.]
+:::caution[These results use the currently deployed **v0.5.2 model weights** (which are v0.5.1's `model-stage2-step-001800-int8.onnx` with the v0.1.0 tokenizer), not the v0.5.3 checkpoint. The inference-time enhancements (FST prior, QueryShape locality guard, Wikipedia importance, grouper-audit) run on top of whatever model is loaded. Results below may appear better than the raw model warrants because the priors and grouper-audit are compensating for model weaknesses.]
 :::
 
 ### Neural-only (no pipeline priors, no FST)
@@ -131,7 +131,7 @@ The full pipeline with all inference-time enhancements active:
 | 400 Broad St, Seattle, WA 98109                | house_number=400, street=Broad St, region=WA, postcode=98109                 | Lost locality=Seattle (grouper-audit injected locality=Broad).                                                   |
 | 90210                                          | postcode=90210                                                               | Correct.                                                                                                         |
 
-**Default pipeline: 1/6 correct.** The grouper-audit fills the gaps the model leaves, but the phrase grouper's proposals are often wrong (locality=Pennsylvania, locality=Ave, etc.) because they're structural guesses without semantic understanding.
+**Default pipeline: 1/6 correct.** The grouper-audit fills the gaps the model leaves, but the phrase grouper's proposals are frequently wrong (locality=Pennsylvania, locality=Ave, etc.) because they're structural guesses without semantic understanding.
 
 ### Analysis
 
@@ -143,13 +143,13 @@ The pipeline path reveals the truth: the grouper-audit fills those gaps with pro
 2. **The phrase grouper's structural proposals are low quality for these gaps.** It proposes `LOCALITY_PHRASE("Pennsylvania")` based on capitalization, not semantics. When injected at 0.55 × grouper confidence, these wrong provisional nodes appear in the output.
 3. **The JSON dedup (first-occurrence-wins) is not the issue.** The grouper-audit nodes aren't competing with neural nodes — they're filling spans the neural model left completely empty.
 
-The 4/6 "correct" neural-only results for v0.5.2 are correct by omission — the model gets the tags it DOES emit right but doesn't emit tags for most of the address.
+The 4/6 "correct" neural-only results for v0.5.2 are correct by omission — the model gets the tags it does emit right but doesn't emit tags for most of the address.
 
 ### v0.5.3 (step-028000, best checkpoint) — neural-only
 
 | Preset                                         | Result                                                                                                | Assessment                                        |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| 1600 Pennsylvania Ave NW, Washington, DC 20500 | house_number=1600, street=Pennsylvania Ave NW, **locality=Washington**, **region=DC**, postcode=20500 | **All correct.** Locality/region confusion FIXED. |
+| 1600 Pennsylvania Ave NW, Washington, DC 20500 | house_number=1600, street=Pennsylvania Ave NW, **locality=Washington**, **region=DC**, postcode=20500 | **All correct.** Locality/region confusion fixed. |
 | 350 5th Ave, New York, NY 10118                | house_number=350, street=5th Ave, **locality=New York**, **region=NY**, postcode=10118                | **All correct.**                                  |
 | Pier 39, San Francisco, CA 94133               | street=Pier 39, **locality=San Francisco**, region=CA, postcode=94133                                 | **Correct.**                                      |
 | 1060 W Addison St, Chicago, IL 60613           | house_number=1060, street=W Addison St, locality=Chicago, region=IL, postcode=60613                   | **Correct.**                                      |
@@ -192,7 +192,7 @@ Add f1.locality, f1.region, f1.street, f1.house_number, f1.postcode, f1.venue co
 
 | #   | Question                             | Method                                                                           |
 | --- | ------------------------------------ | -------------------------------------------------------------------------------- |
-| 1   | Demo presets pass?                   | 6 manual tests, neural-only AND full pipeline. Must be 6/6.                      |
+| 1   | Demo presets pass?                   | 6 manual tests, neural-only and full pipeline. Must be 6/6.                      |
 | 2   | Per-tag F1 improves on core tags?    | Golden eval matrix, locality/region/street/house_number each ≥ previous release. |
 | 3   | Overconfident-wrong doesn't regress? | Must be ≤ previous + 2pp in hybrid-joint mode.                                   |
 | 4   | No new failure-class zero-outs?      | Check the kryptonite and adversarial sets.                                       |
@@ -206,18 +206,18 @@ The wof-admin downweight (2.0 → 0.3) didn't starve the model — it forced it 
 
 ## Addendum: confusion log and lessons learned
 
-This session had significant thrashing. Documenting the confusion points so future sessions avoid them.
+This session had measured thrashing. Documenting the confusion points so future sessions avoid them.
 
 ### Mistakes made
 
-| #   | What happened                                                                             | Root cause                                                                                                                                   | Time wasted                                 |
-| --- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| 1   | Ran uncompiled TSX via `npx tsx`, blamed missing React import. Created PR, then reverted. | Didn't know the CLI must be run from compiled output (`node mailwoman/out/cli.js`).                                                          | ~30 min                                     |
-| 2   | Compared val_macro_f1 across tokenizer versions (0.579 vs 0.638), concluded regression.   | Different tokenizers produce incomparable BIO alignments. No guard against this comparison.                                                  | ~2 hours of wrong-direction analysis        |
-| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJSON` hides all-O spans. The neural model was barely emitting tags — the audit was correctly filling gaps.                          | ~1 hour                                     |
-| 4   | Printed `tree.roots.map(tag)` and reported 4% coverage. Concluded tag collapse.           | Tree uses containment nesting (`region → locality → street → house_number`). Only top-level roots visible without traversal.                 | ~30 min                                     |
-| 5   | DeepSeek recommended "do not ship, revert to v0.5.1 recipe."                              | Trusted the same invalid F1 comparison. Wrote 150 lines of analysis before running a single functional test.                                 | ~1 hour of wrong-direction planning         |
-| 6   | DeepSeek diagnosed wof-admin downweight as "caused tag collapse."                         | Confirmation bias — once the F1 comparison "proved" regression, every observation confirmed it. The downweight was actually the correct fix. | Cascading effect on all subsequent analysis |
+| #   | What happened                                                                             | Root cause                                                                                                                          | Time wasted                                 |
+| --- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 1   | Ran uncompiled TSX via `npx tsx`, blamed missing React import. Created PR, then reverted. | Didn't know the CLI must be run from compiled output (`node mailwoman/out/cli.js`).                                                 | ~30 min                                     |
+| 2   | Compared val_macro_f1 across tokenizer versions (0.579 vs 0.638), concluded regression.   | Different tokenizers produce incomparable BIO alignments. No guard against this comparison.                                         | ~2 hours of wrong-direction analysis        |
+| 3   | Blamed grouper-audit for "overriding neural output" (pipeline 1/6 vs neural 4/6).         | `decodeAsJSON` hides all-O spans. The neural model was barely emitting tags — the audit was correctly filling gaps.                 | ~1 hour                                     |
+| 4   | Printed `tree.roots.map(tag)` and reported 4% coverage. Concluded tag collapse.           | Tree uses containment nesting (`region → locality → street → house_number`). Only top-level roots visible without traversal.        | ~30 min                                     |
+| 5   | DeepSeek recommended "do not ship, revert to v0.5.1 recipe."                              | Trusted the same invalid F1 comparison. Wrote 150 lines of analysis before running a single functional test.                        | ~1 hour of wrong-direction planning         |
+| 6   | DeepSeek diagnosed wof-admin downweight as "caused tag collapse."                         | Confirmation bias — once the F1 comparison "proved" regression, every observation confirmed it. The downweight was the correct fix. | Cascading effect on all subsequent analysis |
 
 ### The pattern
 
@@ -227,10 +227,10 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 
 ### Process changes adopted
 
-1. **Demo presets are a release check.** Run them BEFORE writing any verdict on a training run.
+1. **Demo presets are a release check.** Run them before writing any verdict on a training run.
 2. **Never compare F1 across tokenizer versions.** Add `tokenizer_version` to eval headers.
 3. **When metrics disagree with functional tests, trust the functional test.** Investigate the metric.
-4. **Print raw BIO coverage, not just JSON projection.** `decodeAsJSON` hides the model's gaps.
+4. **Print raw BIO coverage, notJSON projection.** `decodeAsJSON` hides the model's gaps.
 5. **After tokenizer vocab change, recheck param count.** 48K vocab added 9.2M embedding params.
 6. **DeepSeek consultations must include functional test results** alongside metrics. Aggregate metrics without functional evidence are insufficient to conclude.
 
@@ -246,7 +246,7 @@ The fix is not more metrics. It's a mandatory step where you look at the actual 
 
 ### DeepSeek consultation improvements
 
-**Evidence checklist.** The skill instructions should require that every consultation prompt includes: (1) functional test output alongside aggregate metrics, (2) tokenizer version when comparing models, (3) raw BIO output not just JSON projection, (4) explicit "what changed" matrix for multi-variable comparisons.
+**Evidence checklist.** The skill instructions should require that every consultation prompt includes: (1) functional test output alongside aggregate metrics, (2) tokenizer version when comparing models, (3) raw BIO output notJSON projection, (4) explicit "what changed" matrix for multi-variable comparisons.
 
 **Verify-before-concluding guard.** Add a penultimate turn to the session pattern: "Before concluding — did we verify against functional tests? Do metrics and functional tests agree?" This would have prevented the "do not ship" verdict.
 

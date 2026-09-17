@@ -12,7 +12,7 @@ _A collaborative day that started as three namesake bugs and turned into an arch
 
 ## The decision that mattered: not building a model
 
-#265 asked whether a supplementary forward address-system model was worth building. The measurement said no, and saying no was the win:
+#265 asked whether a supplementary forward address-system model was worth building. The measurement said no, and saying no was the result:
 
 - The US two-pairs residual (Augusta) is small and rule-shaped — a derived `country_hint` closes it.
 - The off-map international "0%" was a coverage hole, and a model cannot route to a place that isn't in the gazetteer.
@@ -40,7 +40,7 @@ No measured residual justified a learned model. The international change was cov
 ## Open / next
 
 - **#838** merges to close the #833 family completely.
-- **R2 deploy + B3 (#260):** the staged coverage _candidate_ table makes the win demo-visible in the browser, but the candidate path is denormalized (no `parentId` scoping), so adminCoherence needs a candidate-table change to reach the browser. `country_hint` already works there (the candidate lookup honors a country filter). An R2 deploy is operator-conditional.
+- **R2 deploy + B3 (#260):** the staged coverage _candidate_ table makes the result demo-visible in the browser, but the candidate path is denormalized (no `parentId` scoping), so adminCoherence needs a candidate-table change to reach the browser. `country_hint` already works there (the candidate lookup honors a country filter). An R2 deploy is operator-conditional.
 - **"Tbilisi, Georgia" (full-name country)** still mis-routes to US Georgia — the reverse namesake plus the coverage-added intl localities lacking parent ancestry. A #266 data-quality follow-up.
 - **#261** (case-aug retrain, check-failed) and **#259** (the dev-symlink that made the #261 check baseline unfaithful) remain operator calls.
 

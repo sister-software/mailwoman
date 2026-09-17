@@ -9,7 +9,7 @@ inside another locale's package can never fire. Germany is the first locale to g
 
 Deutsche Post routes `PLZ Stadt` and carries **no Ortsteil field**, so there is no postal source to
 harvest — the same situation as the US, and the opposite of France, where BAN's `nom_ld` IS the
-postal line. WOF's German borough/neighbourhood records are the Ortsteile and Stadtteile that
+postal line. WOF's German borough/neighborhood records are the Ortsteile and Stadtteile that
 German addresses do carry when they carry anything: **85,605 pairs**, the largest instance in the
 campaign after France. Top parents are Köln (170), Wuppertal (159), Solingen (157).
 
@@ -27,7 +27,7 @@ nothing is a mechanism bug** — the R6 lesson, now applied rather than rediscov
 
 ## Bars
 
-- **B-R9.1 (no regression).** Gauntlet PASS; neural suite 503/503.
+- **B-R9.1 (no regression).** Gauntlet pass; neural suite 503/503.
 - **B-R9.2 (venue-confound floor).** 70-row board: 45 directional-class surfaces (`Nord`, `Süd`,
   `Ober`, `Neu`, `Groß`… from 9,406 available) plus 25 others, each opening a German venue name
   (`Apotheke`, `Bäckerei`, `Autohaus`). **0/70 false positives.**
@@ -54,4 +54,4 @@ version its dependents pin.
 
 ES and IT are now purely mechanical: WOF has 1,327 and 1,183 pairs respectively, both write the
 postcode first, and both need a codex postcode module (neither has one today — `codex/` covers au,
-ca, de, fr, gb, jp, nz). Ireland still additionally needs its licence survey.
+ca, de, fr, gb, jp, nz). Ireland still additionally needs its license survey.

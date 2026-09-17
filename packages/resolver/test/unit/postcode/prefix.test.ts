@@ -15,7 +15,7 @@
  *     a hit is never worse than abstention by construction.
  *   - **B3-3** — NI ≥95% country scope GB + NIR ancestry + correct district named, 0% coordinate.
  *     The ancestry-only tier resolves with no lat/lon — absence, never 0,0 (meaning-of-zero) — and
- *     the metadata contract carries `postcode_prefix` + `postcode_prefix_ancestors`.
+ *     the metadata contract includes `postcode_prefix` + `postcode_prefix_ancestors`.
  *   - **B3-5** — structural: the index is `PostcodePrefixIndexLike` (`probe` + optional `country`),
  *     injected, never imported from `@mailwoman/neural`. The fake indexes below are plain objects
  *     satisfying the structure — the resolver consumes any implementation.

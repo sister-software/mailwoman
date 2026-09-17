@@ -11,7 +11,7 @@ for).
 
 Stop condition 2 says a large downstream phase needs a concrete product requirement on its own
 evidence, and that a recorded GO is not one. This record supplies that requirement, states the
-strength the evidence actually carries, and decides the surface, the dependency direction, the
+strength the evidence carries, and decides the surface, the dependency direction, the
 default posture, the bar any default change must clear, and the rollback story. It implements
 nothing.
 
@@ -34,7 +34,7 @@ alphabetical order.
    The boundary record's §6 constraint on `@mailwoman/core` is **left standing, unamended** (§3.2,
    §10). The `devDependency` becomes a real dependency only in a change published by the same
    coordinated release that moves `@mailwoman/geographic-model` off `0.0.0` (§3.3).
-4. **The default posture is OFF, and a default change is NOT authorized by this record.** The D-rule
+4. **The default posture is off, and a default change is not authorized by this record.** The D-rule
    admits three routes for a mechanism with unmeasured effect on a tier-1 locale — repair it, admit
    it per locale, or ship it opt-in. This record takes the third (§4).
 5. **A supported opt-in surface is authorized**, conditional on the four prerequisites in §8. Two of
@@ -95,7 +95,7 @@ advance for this probe.
 Three absences, each stated so that nobody later reads it as a null result.
 
 - **Prevalence.** No committed input set holds an activity-shaped query that predates the probe
-  (§5.5's first bound), and no traffic census exists anywhere in the repository. How often a real
+  (§5.5's first bound), and no traffic census exists anywhere in the repository. How frequently a real
   caller types an activity-phrased POI query is **unknown**, not zero.
 - **Recognition breadth.** Ten phrases, four of them registered, six never graded against anything.
   §11's positive control shows two of the six ungraded phrasings — "purchase medicine" and "collect a
@@ -481,7 +481,7 @@ avoid. #1965's coverage-qualified absence observations need the same route to th
 
 Per §3.1 the builder moves out of the eval harness into the runtime tree with a real export subpath.
 Per §3.3 its header's release-list reasoning is now false in both halves and must be rewritten to
-state the version constraint that actually binds, not the membership one that no longer does. The
+state the version constraint that binds, not the membership one that no longer does. The
 probe's definition and freeze record show an empty diff across the move.
 
 ---

@@ -16,7 +16,7 @@
  *   `@mailwoman/resolver` (backend-agnostic — it cannot import a backend),
  *   `@mailwoman/resolver-wof-sqlite` (the gazetteer schema + both lookups), and the FST builder that
  *   stamps referential scores into the decode-bias artifact. `core/resolver/types.ts` already owns the
- *   `ResolvedPlace` contract these three share, so the score that contract carries belongs beside it.
+ *   `ResolvedPlace` contract these three share, so the score belongs beside that contract.
  */
 
 /**

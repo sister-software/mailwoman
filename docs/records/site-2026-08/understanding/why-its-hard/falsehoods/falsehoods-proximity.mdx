@@ -19,17 +19,17 @@ _"Close enough" is a statement about your use case, not about the coordinate. A 
 
 Every address has multiple correct coordinates, depending on what you mean by "the address":
 
-| What you mean             | The coordinate                                      | Precision                                                                    |
-| ------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------- |
-| The public entrance       | Street-facing door                                  | Sub-meter                                                                    |
-| The delivery entrance     | Rear loading dock, side door                        | Sub-meter, possibly different street                                         |
-| The package drop-off      | Mailroom, front desk, lobby                         | Within the building, possibly different floor                                |
-| The emergency entrance    | Clearly marked, accessible, fire department key box | Sub-meter                                                                    |
-| The parcel centroid       | Tax assessor's coordinate for the land parcel       | Often the geometric center of the lot, not the building                      |
-| The building centroid     | Geometric center of the building footprint          | If the building is at the back of the lot, off by 30+ meters from the street |
-| The street frontage point | Where the driveway meets the road                   | Off by 10-100 meters from the building                                       |
-| The rooftop               | The center of the building's roof                   | Same as building centroid, different elevation                               |
-| The mailbox               | Where the postal carrier delivers                   | May be at the curb, on the house, or at a cluster box down the street        |
+| What you mean             | The coordinate                                               | Precision                                                                    |
+| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| The public entrance       | Street-facing door                                           | Sub-meter                                                                    |
+| The delivery entrance     | Rear loading dock, side door                                 | Sub-meter, possibly different street                                         |
+| The package drop-off      | Mailroom, front desk, lobby                                  | Within the building, possibly different floor                                |
+| The emergency entrance    | the result shows marked, accessible, fire department key box | Sub-meter                                                                    |
+| The parcel centroid       | Tax assessor's coordinate for the land parcel                | frequently the geometric center of the lot, not the building                 |
+| The building centroid     | Geometric center of the building footprint                   | If the building is at the back of the lot, off by 30+ meters from the street |
+| The street frontage point | Where the driveway meets the road                            | Off by 10-100 meters from the building                                       |
+| The rooftop               | The center of the building's roof                            | Same as building centroid, different elevation                               |
+| The mailbox               | Where the postal carrier delivers                            | May be at the curb, on the house, or at a cluster box down the street        |
 
 None of these is "the coordinate." Each is correct for a specific purpose. A geocoder that returns one coordinate is making an implicit choice about which purpose it serves — and that choice may be wrong for the consumer's use case.
 
@@ -80,7 +80,7 @@ Google's Geocoding API returns a `location_type` with each result: `ROOFTOP`, `R
 
 A shopping mall at one lat/lon has 100+ addresses. An office tower has one address per floor. A post office has hundreds of PO box addresses at one coordinate. Reverse-geocoding the coordinate returns the mall, the tower, or the post office — not the specific store, suite, or box.
 
-The reverse geocode is answering "what place is at this coordinate?" not "what addresses resolve to this coordinate?" The latter question requires a forward geocode of every candidate address and comparison of the resulting coordinates. The former question is what most geocoders actually answer.
+The reverse geocode is answering "what place is at this coordinate?" not "what addresses resolve to this coordinate?" The latter question requires a forward geocode of every candidate address and comparison of the resulting coordinates. The former question is what most geocoders answer.
 
 ## How traditional geocoders handled these
 
@@ -112,4 +112,4 @@ The reverse geocode is answering "what place is at this coordinate?" not "what a
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [Falsehoods about address shapes and dimensions](./falsehoods-shapes.mdx) — the spatial companion piece
 - [How can a building have two addresses?](../../the-problem/how-can-a-building-have-two-addresses.mdx) — why a building has multiple correct coordinates
-- [How mail delivery actually works](../../the-problem/how-mail-delivery-works.mdx) — the delivery chain that consumes these coordinates
+- [How mail delivery works](../../the-problem/how-mail-delivery-works.mdx) — the delivery chain that consumes these coordinates

@@ -8,9 +8,9 @@ title: v3.0.1 span-head re-probe — CHECK PASS, the arc's premise holds
 
 > `seg@1 > token@1` on the parity corpus, via `scripts/eval_seg_at_1.py`.
 > v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers).
-> Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
+> Secondary read: the span NLL must converge. If loss again ends ~17 and still falling, the
 > LR is not the binding constraint and the fork reopens.
-> If seg@1 STILL loses with a converged span loss: that IS the falsification.
+> If seg@1 STILL loses with a converged span loss: that is the falsification.
 
 ## Verdict: **PASS**
 
@@ -22,7 +22,7 @@ title: v3.0.1 span-head re-probe — CHECK PASS, the arc's premise holds
 **seg@1 beats token@1 by +7.9pp under identical conditions.** Phase 1's question — _does a segment
 decode over LEARNED span scores beat the token decode?_ — is answered **yes**.
 
-## The secondary read confirms the diagnosis, not just the outcome
+## The secondary read confirms the diagnosis, notthe outcome
 
 The v3.0.0 write-up called the failure _under-training, not falsification_, on the strength of a loss
 that was still falling at 2k with raw span NLL ~35. One variable (the head's LR) tested that claim:
@@ -62,7 +62,7 @@ span objective is shaping the shared encoder to the BIO head's benefit — the s
 pressure helps" effect stage-1's aux head showed, but larger. Worth confirming on production config
 in Phase 2; not claimed as a shipped win here.
 
-## What this does NOT establish
+## What this does not establish
 
 - **These absolutes are channel-starved.** `eval_seg_at_1.py` feeds no anchor/gazetteer/country
   channels, no postcodeRepair, no word-consistency heal (the #718 trap). Its token@1 reads 0.4906
@@ -71,7 +71,7 @@ in Phase 2; not claimed as a shipped win here.
 - **The 0.90 parity floor is untouched by this.** Phase 1 was never a promote check; this checkpoint
   ships nowhere. Whether seg@1 clears 0.90 under production config is a Phase-2 question, and the
   night-3 oracle@10 ceiling (0.749 over v264's emissions) says the floor needs the recall class too,
-  not just the boundary class.
+  notthe boundary class.
 - **2k steps, one seed.** No claim about the 8k shape.
 
 ## Run facts
@@ -79,7 +79,7 @@ in Phase 2; not claimed as a shipped win here.
 |              |                                                                       |
 | ------------ | --------------------------------------------------------------------- |
 | Run          | `ap-XoqeNxSPUsObFIpsM7nXZL`, A100, 2000/2000, ~23 min                 |
-| Variable     | `train.span_head_learning_rate: 1e-3` — the ONE change vs v3.0.0      |
+| Variable     | `train.span_head_learning_rate: 1e-3` — the one change vs v3.0.0      |
 | Param groups | head 101,076 @ 1e-3 \| encoder 39,259,055 @ 1e-5 (printed by the run) |
 | Init         | `init_from` v264 step-008000, `missing=9 unexpected=0`                |
 | NaN          | none — fp32 partition math held again                                 |

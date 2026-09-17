@@ -49,7 +49,7 @@ Almost every override is a collision between a **rare-but-real** meaning and a *
 `ma` (Mannheim / Massachusetts) · `in` (preposition / Indiana) · `a` (article / A Street DC) ·
 `art` (Artery, Art TX / the word "art")
 
-A dictionary lookup has no locale, no context, and no confidence. A token has ONE meaning. So when
+A dictionary lookup has no locale, no context, and no confidence. A token has one meaning. So when
 two meanings collide, one must **die — globally and permanently**. There is no "unless the query
 smells like Spain."
 
@@ -73,8 +73,8 @@ Calle Mayor 5, Madrid → {hn: 5, street: "Calle Mayor", locality: Madrid}  ✓ 
 Italy, TX             → {country: Italy, region: TX}                      ✗  WE FAIL THIS
 ```
 
-**4 of 5 — and the miss is the honest part.** `Italy, TX` is the exact row Pelias hand-deleted
-(`# remove problematic locality names`), and we get it wrong too. We simply get it wrong _differently_:
+**4 of 5 — and the miss is the direct part.** `Italy, TX` is the exact row Pelias hand-deleted
+(`# remove problematic locality names`), and we get it wrong too. We only get it wrong _differently_:
 Pelias deletes the locality; we call Italy a country.
 
 So the thesis is not "we win." It is narrower and more defensible:

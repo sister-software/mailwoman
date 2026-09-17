@@ -78,7 +78,7 @@ with no coordinate, and `〒885-0061 宮崎県都城市下長飯町1867-2` answe
    in the default map; only the character-path model emits the tags, so no Latin parse reaches them.
 2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs, which named no JP
    tag, so a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
-   ABOVE `district`: a district resolves without its municipality as a parent more often than not, and the unscoped
+   ABOVE `district`: a district resolves without its municipality as a parent more frequently than not, and the unscoped
    namesake it then picks can be another prefecture's (`千葉県市原市大作` → 921 km). District-first 202, municipality-first 271.
 3. **The postal mark.** The normalizer strips `〒` for the SentencePiece tokenizer, where it is byte-fallback OOV. The
    character model was trained with the mark in front of every postcode and misreads the prefecture boundary without it.
@@ -102,7 +102,7 @@ board-routed, reads 0 rows differed (the run id is in the #2164 comment).
 
 **The scoped split (#2175).** The resolver walk now probes a compound municipality as a pair after the whole span
 misses: the head (`神戸市`, `猿島郡`) under the node's own parent, then the tail (`西区`, `五霞町`) as the head's child with
-the parent fallback OFF, so a namesake outside the head is never admissible; a county head with no key sends the town
+the parent fallback off, so a namesake outside the head is never admissible; a county head with no key sends the town
 under the prefecture the walk already holds. Same 300 rows: 282 accepted (94.0%). Same 2,000 rows: **1,889 (94.5%)**,
 1,048 within 5 km, 4 beyond 50 km — all four `和歌山県日高郡美浜町`, where the scoped town probe missed (Wakayama's 美浜町
 has no key) and the candidate backend's own region-scope fallback re-admitted Aichi's, 184 km away. The tail probe now

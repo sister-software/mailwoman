@@ -4,7 +4,7 @@ The first UK accuracy measurement this project can run without licensed data, pu
 limits stated before its numbers.
 
 **Contains OS data © Crown copyright and database right 2026** (Code-Point Open, Open Government
-Licence v3, acquisition 2026-08-05).
+license v3, acquisition 2026-08-05).
 
 ## What this measures, and what it cannot
 
@@ -30,7 +30,7 @@ Licence v3, acquisition 2026-08-05).
   Code-Point Open and is therefore not in this record.
 - **Legs per postcode:** as published (`SW10 0AA`); lowercased and unspaced (`sw100aa` — the user
   register); country-suffixed (`SW10 0AA, UK`); and a **typo leg** — the final letter stepped to
-  its successor. 348 of the 600 mutants turn out to be real neighbouring units (measured, not
+  its successor. 348 of the 600 mutants turn out to be real neighboring units (measured, not
   assumed — the first draft of this leg reasoned "mutants almost never exist" and was wrong by
   58%); those are out of the typo leg's scope. The remaining **252 phantom postcodes must
   ABSTAIN**: a "corrected" postcode is a different postcode, and snapping `BT3 9QQ` to `S3 9QQ`

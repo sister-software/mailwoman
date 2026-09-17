@@ -66,7 +66,7 @@ Order of work:
 2. **Method 2 implementation**: given `(street, number, scope)`, find bracketing address points
    on the normalized street; interpolate linearly between them; single-sided bracket =
    extrapolation with an explicit uncertainty penalty; no bracket = fall through to TIGER.
-   Same honest-eval harness, same gold, held-out points interpolated only from non-held-out
+   Same direct-eval harness, same gold, held-out points interpolated only from non-held-out
    neighbors (non-circular by construction).
 3. **Side-of-street offset** (~10 m perpendicular on parity match) only after the above — it is
    not the dominant term.
@@ -118,7 +118,7 @@ predicts where addresses sit on a block. Verdict from review: keep it, as resear
 corrections. First, drop the location-encoder framing — GeoCLIP/SatCLIP encode _global_
 position for geo-localization; this problem is _where along a 200 m segment_, and the
 informative features are segment-local (bracketing-number positions, density, footprint
-geometry). SatCLIP's own card rules out fine-grained many-close-location use. Second, the
+geometry). SatCLIP's own card rules out fine-grained several-close-location use. Second, the
 baseline to beat is Method 2 itself — which is already nearest-neighbor regression on real
 data. The bar: beat it per density stratum on the same held-out gold, with the deterministic
 tier as the abstain fallback. No ship commitment until that bar clears.

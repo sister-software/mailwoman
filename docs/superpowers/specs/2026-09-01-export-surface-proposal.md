@@ -1,6 +1,6 @@
-# The export surface: 727 subpaths, and what they were actually buying
+# The export surface: 727 subpaths, and what they were buying
 
-**Date:** 2026-09-01 · **Status:** DONE, with two recommendations measured and rejected · **Refs:** #2050
+**Date:** 2026-09-01 · **Status:** done, with two recommendations measured and rejected · **Refs:** #2050
 
 Every number here was re-derived on `main` at `dcfd5f106`; §6 has the commands. Four of the operator's
 figures were confirmed exactly and four surrounding claims needed correcting — §5 lists both, because a record
@@ -11,7 +11,7 @@ that only reports agreement is not worth re-reading.
 ## Outcome (2026-09-01, later the same day)
 
 **727 → 641 subpaths**, across #2058, #2061, #2062 and #2063, all merged. The folds and the collapse landed
-together, as §4.1 asked, because the directory structure IS the new export list.
+together, as §4.1 asked, because the directory structure is the new export list.
 
 | workspace             |                                            subpaths |
 | --------------------- | --------------------------------------------------: |
@@ -21,13 +21,13 @@ together, as §4.1 asked, because the directory structure IS the new export list
 | `neural`              |                                             40 → 31 |
 | `resolver`            |                                             15 → 11 |
 
-**Both of the remaining recommendations in §0 were measured, and BOTH were wrong.** That is the useful part
+**Both of the remaining recommendations in §0 were measured, and both were wrong.** That is the useful part
 of this record now.
 
 ### §0.2 — `sideEffects: false` is correct, but not for the reason given
 
 Landed on the **43 of 59** published packages that warrant it, by walking each module's top-level statement
-list (an expression statement, a bare `import "x"` or a top-level await RUNS; a declaration does not). The
+list (an expression statement, a bare `import "x"` or a top-level await runs; a declaration does not). The
 16 that cannot claim it are almost all entries — `lib/cli.ts`, `scripts/*.ts` — not library modules.
 
 The rationale here said it would let a barrel tree-shake, demoting the browser-safe-leaf discipline to
@@ -41,9 +41,9 @@ _(A first pass at the audit reported 13 clean packages. It used a regex, and `^`
 an indented statement inside a function exactly as happily as a top-level one. It also flagged `neural`,
 which already declared the field — that contradiction is what exposed it.)_
 
-### §0.4 — the docs alias map must NOT be derived from `exports`
+### §0.4 — the docs alias map must not be derived from `exports`
 
-This looked obviously right and is the opposite of right. **The alias list's job is to DIFFER from the
+This looked right and is the opposite of right. **The alias list's job is to DIFFER from the
 exports map.** `@mailwoman/resolver-wof-sqlite` now advertises both `./fst` and `./fst/deserialize-web`;
 Node callers should take the barrel and the browser must take the leaf, because the barrel re-exports
 `fst/freshness`, which reaches `@mailwoman/core/fs`. A derivation reads both entries and has no way to
@@ -96,7 +96,7 @@ The cause is structural rather than anybody's oversight: **a per-FILE subpath ha
 public-API decision.** Every shared module lands with a manifest entry, so the map grows one line per refactor
 whether or not anyone outside the package should reach that file.
 
-## 2. What the subpaths are actually buying
+## 2. What the subpaths are buying
 
 Measured, the answer is **bundle isolation, not API design**. Three leaves exist because a barrel import
 dragged a Node-only dependency into a browser graph:
@@ -135,7 +135,7 @@ It has not been noticed because it fails softly: `resolvePackageFile` returns `n
 
 `mailwoman`'s 55 collapse toward the count of its top-level directories; `core`'s 80 toward `./fs`, `./utils`,
 `./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure is not predictable before the
-folds are drawn, which is the reason for the sequencing in §4: **the directory structure IS the new export
+folds are drawn, which is the reason for the sequencing in §4: **the directory structure is the new export
 list**, so drawing it twice would be doing the work twice.
 
 `dev-mcp` is the single largest cheap win — **51 subpaths, private**, so a `./*` wildcard there breaks no
@@ -149,7 +149,7 @@ private but exports nothing at all, so it is not in scope.
 2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
    package listing every removed path, rather than two rounds of consumer churn. See
    `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6, which sizes what is left to bundle.
-3. **`sideEffects: false` and the leaf docstrings land FIRST**, before any collapse. Both are prerequisites:
+3. **`sideEffects: false` and the leaf docstrings land first**, before any collapse. Both are prerequisites:
    without the flag a barrel import stops tree-shaking, and without the docstrings the leaves get collapsed by
    someone who cannot see why they exist.
 4. **Derive the docs alias map before the folds move anything**, so the folds do not have to be mirrored by
@@ -169,7 +169,7 @@ Confirmed exactly: **727** total; `core` 80, `resolver-wof-sqlite` 61, `mailwoma
 | "each has a stated reason"          | **1 of 3 does**             | §2.1                                                  |
 
 The `lib/` move (#2051) was deliberately subpath-neutral — it changed only the dev-only `node` condition — so
-neither of today's PRs is a source of growth. The growth is real; it just belongs to the dedup arc.
+neither of today's PRs is a source of growth. The growth is real; itbelongs to the dedup arc.
 
 ## 6. Reproducing every number here
 

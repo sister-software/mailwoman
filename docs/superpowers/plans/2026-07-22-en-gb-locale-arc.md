@@ -4,7 +4,7 @@
 
 **Goal:** Ship en-GB parsing (with the `dependent_locality` dead-tag resurrection) end to end: PPD-derived corpus extract → 2k probe → resolver artifacts → `@mailwoman/neural-weights-en-gb` overlay package.
 
-**Architecture:** PPD (31.3M rows, on disk) is preprocessed into an OA-shaped tuples CSV consumed by the existing `locale` extract recipe via `districtAsLocality` (the NZ mechanism: DISTRICT→locality, CITY→dependent_locality). The training probe clones the v3.8.5 recipe and adds two NEW mechanisms: `reinit_label_rows` (neutral re-init of classifier rows 7/8 after `init_from`) and `classifier_learning_rate` (a `classifier.`-prefix param group, #727 precedent). Resolver/packaging reuse existing GB scaffolding (`gazetteer postcode-binary` already has GB wired; `uk_postcode` already recognized).
+**Architecture:** PPD (31.3M rows, on disk) is preprocessed into an OA-shaped tuples CSV consumed by the existing `locale` extract recipe via `districtAsLocality` (the NZ mechanism: DISTRICT→locality, CITY→dependent_locality). The training probe clones the v3.8.5 recipe and adds two new mechanisms: `reinit_label_rows` (neutral re-init of classifier rows 7/8 after `init_from`) and `classifier_learning_rate` (a `classifier.`-prefix param group, #727 precedent). Resolver/packaging reuse existing GB scaffolding (`gazetteer postcode-binary` already has GB wired; `uk_postcode` already recognized).
 
 **Tech Stack:** TypeScript (node type-stripping, vitest), Python (torch/Modal), Kysely-free (no DB work in this arc), Pastel CLI.
 
@@ -18,7 +18,7 @@
 - Compiled CLI for runs: `yarn compile` then `node mailwoman/out/cli.js ...`. Never `npx tsx`.
 - Zero raw `process.env`/`process.argv` in shipped code — use `@mailwoman/core/env` + `core/utils/scripting`; data paths via `dataRootPath()` (never hardcode `/mnt/playpen/mailwoman-data`).
 - Acronym casing: whole camelCase components (`extractPPD`, not `extractPpd`).
-- NEVER wrap `modal run -d` in shell `timeout`. Launch detached, poll with `run_in_background` + until-loops.
+- never wrap `modal run -d` in shell `timeout`. Launch detached, poll with `run_in_background` + until-loops.
 - PPD snapshot (frozen): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/pp-complete.csv` (31,346,259 rows, md5 recorded). Column order: `0 id, 1 price, 2 date, 3 postcode, 4 type, 5 newbuild, 6 tenure, 7 PAON, 8 SAON, 9 street, 10 locality, 11 town, 12 district, 13 county, 14 category, 15 status`. All fields ALL-CAPS. Modern rows fill `locality` only when ≠ town; 1995-era rows pad `locality`=town (~64% of filled) — drop when equal.
 - Label indices (STAGE3, num_labels=33): `B-dependent_locality`=7, `I-dependent_locality`=8. Classifier: `model.classifier` = `nn.Linear(384, 33)`.
 - Promotion/ship of any model is the operator's act. Probe grading is reported against the pre-registration in the spec, never silently reinterpreted.
@@ -419,7 +419,7 @@ it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLoca
 - [ ] **Step 2: Run to verify the new test passes already or fails only on fixture plumbing**
 
 Run: `yarn vitest run corpus/src/extract-recipes/locale.test.ts`
-Expected: the GB test should PASS with no production change (`readTuples` is source-agnostic) — it locks the mapping. If it fails, fix the test fixture, not `readTuples`.
+Expected: the GB test should pass with no production change (`readTuples` is source-agnostic) — it locks the mapping. If it fails, fix the test fixture, not `readTuples`.
 
 - [ ] **Step 3: Add the `COUNTRY_SOURCES.GB` entry**
 
@@ -507,7 +507,7 @@ Expected: dependent_locality present on a substantial fraction (PPD profile says
 
 - [ ] **Step 3: Build the GB golden board**
 
-Generate 120 rows from the PPD tail (held-out modern rows, NOT rows used in the extract — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
+Generate 120 rows from the PPD tail (held-out modern rows, not rows used in the extract — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
 
 - [ ] **Step 4: Promote the NZ board**
 
@@ -536,12 +536,12 @@ git commit -m "feat(eval): GB golden board (120 rows) + promote NZ suburb board 
 
 - [ ] **Step 1: Write the characterization test**
 
-Add an `emitSpans`-level case: token sequence for `"Plimmerton, Porirua"` labeled `B-dependent_locality` + `B-locality` (comma between) must yield TWO spans with distinct tags; and the same-tag case `B-locality "Springfield" , B-locality "Chicago"` must stay two spans (documents the comma guard).
+Add an `emitSpans`-level case: token sequence for `"Plimmerton, Porirua"` labeled `B-dependent_locality` + `B-locality` (comma between) must yield two spans with distinct tags; and the same-tag case `B-locality "Springfield" , B-locality "Chicago"` must stay two spans (documents the comma guard).
 
 - [ ] **Step 2: Run**
 
 Run: `yarn vitest run core/decoder/build-tree.test.ts neural/span-bridge.test.ts`
-Expected: PASS with no production change. If it PASSES: the "heal lumps" claim is falsified at pipeline level — the lumping seen in the NZ probes was the MODEL emitting one span (which the resurrection addresses). Update the spec's Phase 3 heal bullet with this finding and delete the heal-fix acceptance criterion. If it FAILS: keep the test, fix the merge guard it exposes, and record which mechanism it was.
+Expected: PASS with no production change. If it passes: the "heal lumps" claim is falsified at pipeline level — the lumping seen in the NZ probes was the MODEL emitting one span (which the resurrection addresses). Update the spec's Phase 3 heal bullet with this finding and delete the heal-fix acceptance criterion. If it fails: keep the test, fix the merge guard it exposes, and record which mechanism it was.
 
 - [ ] **Step 3: Commit (either outcome)**
 
@@ -560,7 +560,7 @@ git commit -m "test(decoder): characterize dependent_locality/locality comma sep
 - Modify: the `TrainConfig` dataclass (find it where `span_head_learning_rate` is declared — same file or `config.py`; add both fields with `None`/empty defaults so every existing config parses unchanged)
 - Test: `corpus-python/tests/test_resurrection.py` (create; if the tests dir has another name, follow the existing pytest layout — check `corpus-python/pyproject.toml` for testpaths)
 
-**Design constraint (do not "simplify" this):** Adam's update is scale-invariant in the gradient (m̂/√v̂), so a gradient hook that scales rows 7/8 CANNOT create an effective per-row LR. The row carve-out must be a real param group. Since AdamW groups operate on whole tensors and `classifier` is one `nn.Linear(384, 33)`, the group is the WHOLE classifier (prefix `classifier.`), exactly parallel to the shipped `span_head_learning_rate` prefix mechanism. The row-level precision comes from `reinit_label_rows` (only rows 7/8 are reset); the live rows ride the hot LR for 2k steps and the pre-registered guards (golden us/fr, boards, presets) catch any drift.
+**Design constraint (do not "simplify" this):** Adam's update is scale-invariant in the gradient (m̂/√v̂), so a gradient hook that scales rows 7/8 CANNOT create an effective per-row LR. The row carve-out must be a real param group. Since AdamW groups operate on whole tensors and `classifier` is one `nn.Linear(384, 33)`, the group is the whole classifier (prefix `classifier.`), exactly parallel to the shipped `span_head_learning_rate` prefix mechanism. The row-level precision comes from `reinit_label_rows` (only rows 7/8 are reset); the live rows ride the hot LR for 2k steps and the pre-registered guards (golden us/fr, boards, presets) catch any drift.
 
 - [ ] **Step 1: Write failing tests**
 
@@ -716,11 +716,11 @@ git commit -m "feat(train): dead-tag resurrection changes — reinit_label_rows 
 modal volume ls mailwoman-data /data/ 2>/dev/null || modal volume ls <volume-name>
 ```
 
-Find the exact dir holding the shipped v385 step-008000 checkpoint (the v3.8.5 config's `output_dir` string was a reused `output-v384-latam-probe-s42` — do NOT trust the config header; list the volume). Record the real path; it becomes `init_from`.
+Find the exact dir holding the shipped v385 step-008000 checkpoint (the v3.8.5 config's `output_dir` string was a reused `output-v384-latam-probe-s42` — do not trust the config header; list the volume). Record the real path; it becomes `init_from`.
 
 - [ ] **Step 2: Write the config**
 
-Clone `v3.8.5-latam-8k.yaml` verbatim, then apply EXACTLY these deltas (header comment documents each, per config-header discipline):
+Clone `v3.8.5-latam-8k.yaml` verbatim, then apply exactly these deltas (header comment documents each, per config-header discipline):
 
 - `data.corpus_dir:` → the v0.14.0-gb overlay path (Step 3)
 - `data.source_weights:` add `synth-gb: 6.0`
@@ -740,7 +740,7 @@ Follow `corpus-python/modal/CLAUDE.md` (the runbook is the authority): overlay `
 
 - [ ] **Step 4: Startup-census dry-run check (the NZ allowlist lesson)**
 
-After launch (Task 8) the FIRST verification is the startup census: GB rows DRAWN > 0 from `synth-gb`. If the census log truncates (the v383 gap), grade the source multinomial locally with the data_loader against the overlay manifest before letting the run continue.
+After launch (Task 8) the first verification is the startup census: GB rows DRAWN > 0 from `synth-gb`. If the census log truncates (the v383 gap), grade the source multinomial locally with the data_loader against the overlay manifest before letting the run continue.
 
 - [ ] **Step 5: Commit**
 
@@ -756,7 +756,7 @@ git commit -m "feat(train): v3.10.0-gb-probe config — GB extract + dependent_l
 - [ ] **Step 1: Launch detached** — `modal run -d corpus-python/modal/train_remote.py --config v3.10.0-gb-probe.yaml --resume none` (never wrapped in `timeout`). Verify census per Task 7 Step 4.
 - [ ] **Step 2: On completion** — export + quantize per the runbook two-step (`export_onnx` then `quantize_onnx` → `model-v3100-gb-probe-int8.onnx`), package-shaped.
 - [ ] **Step 3: Grade against the pre-registration** — NZ 246-row board, GB 120-row board, golden us/fr, digit + FR fragment boards, 6 demo presets byte-identical (use the eval-harness; never compare across harnesses — the #727 lesson).
-- [ ] **Step 4: Report** — reads vs pre-registration, verbatim, to the operator. PASS → operator decides 8k. FAIL on primary → invoke the pre-registered fallback (locality-mapped), no knob iteration.
+- [ ] **Step 4: Report** — reads vs pre-registration, verbatim, to the operator. PASS → operator decides 8k. fail on primary → invoke the pre-registered fallback (locality-mapped), no knob iteration.
 
 ---
 

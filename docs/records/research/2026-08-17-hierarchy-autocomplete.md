@@ -3,7 +3,7 @@
 Research date: 2026-08-17. Question, verbatim in spirit: _"I'm not aware of prior art for the inner
 bones of an autocomplete engine as a means to enumerate an ancestry graph"_ — is a completion
 structure whose states/entries encode the containment hierarchy (so one prefix walk enumerates
-lexical continuations AND admin ancestors/descendants) novel, or does it have a name?
+lexical continuations and admin ancestors/descendants) novel, or does it have a name?
 
 Tags: **[S]** = search-verified this session (source in the register at the end). **[M]** = from
 memory / training knowledge, not re-verified. Anything published after 2025 is flagged inline.
@@ -32,7 +32,7 @@ query-time joins ("show the term's parents next to the suggestion", Drupal modul
 academic art embeds geometry, not ancestry. So: not novel as parts — twofishes got 80% of the way in
 2012 and nobody named it — but the unification, the PCN1 child-distribution direction, and using the
 walk itself for descendant enumeration have no established name. If you need a name to cite against,
-the honest construction is **"top-k completion with materialized-path payloads"**, with Roy &
+the direct construction is **"top-k completion with materialized-path payloads"**, with Roy &
 Chakrabarti's "materialized trie" as the closest academically named ancestor.
 
 ---
@@ -218,12 +218,12 @@ instinct.
   enumeration = contiguous range scan; the classic cost is relabeling on update [S].
 - **GRAIL** (Yildirim, Chaoji, Zaki, VLDB 2010): randomized _multiple_ interval labels per node for
   reachability on large **DAGs** — constant-time negative answers, fallback search on positives;
-  linear index size [S]. The right tool the moment the hierarchy is honestly a DAG (WOF multiple
+  linear index size [S]. The right tool the moment the hierarchy is directly a DAG (WOF multiple
   hierarchies, disputed territories).
 - **Closure table**: one row per (ancestor, descendant [, depth]) [S]. Nominatim's
   `place_addressline` _is_ a closure table with per-edge flags (`fromarea`, `isaddress`) [S].
 
-### What shipped geo systems actually use
+### What shipped geo systems use
 
 Uniformly the materialized-path/fixed-slot family (GeoNames columns, WOF/Overture arrays, Pelias
 flat fields, twofishes id lists, Nominatim closure rows). I found **no shipped geocoder using
@@ -250,7 +250,7 @@ neutralize the update cost entirely.
 established in both shipped geocoders (spatial form) and geoparsing research (hierarchy form).
 **Does not cover:** doing the congruence check with O(1) interval labels _inside_ an autocomplete /
 candidate ranker — the literature does joins or geometry. The encoding trade-off for candidate.db is
-a genuine open design choice; see "What to borrow."
+an actual open design choice; see "What to borrow."
 
 ---
 
@@ -260,7 +260,7 @@ a genuine open design choice; see "What to borrow."
   `isShortName`, `isColloquial`, `isHistoric`, and pseudo-language codes `post` (postal), `iata`/
   `icao`/`faac`, `abbr`, `link`, `fr_1793` [S]. This is the most role-articulate open gazetteer
   name model — yet it still has **no "translation-gloss, not a name" flag**; a Hungarian `Tó` row
-  on Lake County is representable and indistinguishable from a genuine Hungarian exonym.
+  on Lake County is representable and indistinguishable from an actual Hungarian exonym.
 - **WOF names**: BCP-47/RFC 5646 with privateuse tags inherited from Yahoo GeoPlanet's single-letter
   types — `x_preferred`, `x_variant` ("well-known unofficial variant"), `x_colloquial` ("Big
   Apple", also accent-stripped forms), plus abbreviation type A ("NYC") [S]. The docs do not address
@@ -296,7 +296,7 @@ _dictionaries_ (libpostal); editorial exclusion of glosses (OSM); rule-based suf
 translation-gloss of a common noun, not a referring name" as a machine-readable role, or that
 conditions index membership on it. The role-lens table (surface × language/script → role) has
 assembled precedents but no existing instance. The `to` defect class is unmodeled everywhere; the
-anomaly signal we measured (221 keys on a 63-person neighbourhood) appears to be novel as a
+anomaly signal we measured (221 keys on a 63-person neighborhood) appears to be novel as a
 discriminator.
 
 ---
@@ -367,12 +367,12 @@ predecessor stand in_" is not.
 
 ### Gap 2: before-direction adjacency (what precedes a token)
 
-- The named structure to cite (and the cheapest to build honestly): a **reversed word-token FST**
+- The named structure to cite (and the cheapest to build directly): a **reversed word-token FST**
   over the same normalized token streams — the `ReverseStringFilter` trick at word granularity [S],
   which for multi-token names is equivalent to a suffix-trie restricted to token boundaries. Build
   it with the existing fst-builder by feeding reversed token sequences; `walk(["york"])` on it
   enumerates predecessors ("new", "west", …) with the same BFS implementation.
-- If "enter at any token" is wanted (not just last-token-known), the named upgrade is the **factor
+- If "enter at any token" is wanted (notlast-token-known), the named upgrade is the **factor
   automaton of the name set** (Mohri et al.) [S] — the ASR-biasing lineage the FST curation header
   already cites; but note AnalyzingInfixSuggester [S] as the precedent that an inverted index on
   token positions can beat an automaton here on implementation cost.
@@ -432,7 +432,7 @@ Search-verified [S]:
 18. Leidner spatial minimality; GeoTxt containment heuristics; Spatial-Hierarchy Sets — geoparsing literature.
 19. GeoNames alternateNames: isPreferredName/isShortName/isColloquial/isHistoric + abbr/link/post/iata pseudo-langs; admin1–4 code columns — geonames readme.txt.
 20. WOF names: RFC 5646 with x_preferred/x_variant/x_colloquial privateuse (GeoPlanet lineage); docs silent on gloss-vs-name — whosonfirst.org/docs/names.
-21. OSM Names policy: avoid manufactured transliterations/translations not in actual use; name:* = names actually used — OSM wiki.
+21. OSM Names policy: avoid manufactured transliterations/translations not in actual use; name:* = names used — OSM wiki.
 22. libpostal: per-language dictionaries with typed files (street_types, stopwords, ambiguous_expansions…) — repo + Mapzen "Inside Libpostal".
 23. normalize-japanese-addresses: pref/city/town levels, prefecture completion on ambiguity — Geolonia repo.
 24. ICU folding locale-blind; Turkic I/ı needs dedicated handling (foldTurkic separate) — Elastic/OpenSearch/ICU docs.
@@ -447,7 +447,7 @@ From memory [M], not re-verified this session:
 a. Carmen degens superseded by fuzzy-phrase crate (repo deleted; changelog fragments only).
 b. WOF `wof:hierarchy` = array of ancestor-maps per record, multiple hierarchies allowed (DAG) — well-established WOF schema knowledge; docs page not re-fetched.
 c. Pelias autocomplete admin boosting details; QAC survey (Cai & de Rijke 2016); Freebase suggest "notable type"; Dietz 1982 pre/post-order labeling; twofishes prefix index storage (Mongo/HFile).
-d. Google Places internals genuinely undocumented (absence-claim: no public source found — consistent with search, but absence is unprovable).
+d. Google Places internals in fact undocumented (absence-claim: no public source found — consistent with search, but absence is unprovable).
 
 ## Primary sources (the ones worth re-opening)
 

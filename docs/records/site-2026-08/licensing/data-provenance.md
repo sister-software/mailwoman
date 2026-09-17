@@ -110,7 +110,7 @@ afterthoughts:
   first.
 - `THIRD_PARTY_NOTICES.md` credits OSM only as reaching us _via WOF and Overture_ (development-time). When
   first-party OSM extracts ship, it needs a new entry for the `@mailwoman/osm` distribution. We hold that edit
-  until the extracts actually ship — adding it sooner would document a distribution that isn't happening.
+  until the extracts ship — adding it sooner would document a distribution that isn't happening.
 
 (The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that
 "the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the

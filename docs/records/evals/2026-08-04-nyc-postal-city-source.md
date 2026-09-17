@@ -1,7 +1,7 @@
 # NYC ZIP→delivery-city is already on disk — GeoNames postal, unwired for US (2026-08-04)
 
 Answers [#1446](https://github.com/sister-software/mailwoman/issues/1446)'s open question: does the
-postal-city builder's source genuinely lack NYC rows, or carry them and drop them?
+postal-city builder's source in fact lack NYC rows, or carry them and drop them?
 
 **Neither. The question was aimed at the wrong artifact.** Overture's US addresses carry no
 `postal_city` for New York City, but that is a source-mix fact rather than a gap worth closing there.
@@ -26,9 +26,9 @@ US	11375	Forest Hills	New York	NY	Queens	081	40.7229	-73.8473	4
 US	10301	Staten Island	New York	NY	Richmond	085	40.6316	-74.0927	4
 ```
 
-41,488 distinct US postcodes; 311 across the five NYC counties, including the Queens neighbourhood
+41,488 distinct US postcodes; 311 across the five NYC counties, including the Queens neighborhood
 delivery cities (Astoria, Flushing, Long Island City, Sunnyside, Bayside, Little Neck) that #1446
-flagged as the hard case — Queens is the borough where USPS uses neighbourhood names rather than the
+flagged as the hard case — Queens is the borough where USPS uses neighborhood names rather than the
 borough name.
 
 Measured against the Overture hole:
@@ -86,7 +86,7 @@ Two smaller traps in the same investigation, both worth avoiding next time:
   unverified schema reading it was meant to correct. Confirm what a column means before using it to
   validate another column.
 
-## What is NOT yet established
+## What is not yet established
 
 `ingestGeonamesPostal` (`resolver-wof-sqlite/geonames-postal.ts`) exists and is reachable from
 `foldGeonames` via an optional `postalCountries` parameter — which **no caller anywhere in the tree
@@ -114,6 +114,6 @@ postal_city, geo_locality, divergent)`) but is built `FROM overture:US`, so it i
 ## The open question this raises
 
 Several sources here carry US postcodes at different vintages, and freshness matters unevenly by
-granularity: the leading digits (sectional centre) are near-static, while individual 5-digit
+granularity: the leading digits (sectional center) are near-static, while individual 5-digit
 assignments and their delivery-city labels turn over. Choosing a source on coverage alone is not
 enough — see the follow-up survey.

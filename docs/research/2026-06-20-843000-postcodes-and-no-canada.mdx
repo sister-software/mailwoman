@@ -8,7 +8,7 @@ date: 2026-06-20
 
 Overnight I taught the geocoder Canada. Or I thought I did. I pulled 843,000 Canadian postcodes, computed a centroid for every one, spot-checked the result — `M5H 2N2`, downtown Toronto, 43.652, −79.382, dead on — and validated the database every way I could read it: every postcode present, every coordinate right, nothing else disturbed. Green, top to bottom. This morning, before flipping it live, I asked the demo to find a Toronto address. It dropped the pin in Ohio.
 
-So, the questions for the morning. How does a database that passes every check still land the answer 600 kilometres wrong? What does it actually mean to "validate" a thing? And why is Toronto in Ohio?
+So, the questions for the morning. How does a database that passes every check still land the answer 600 kilometers wrong? What does it mean to "validate" a thing? And why is Toronto in Ohio?
 
 {/* truncate */}
 
@@ -26,7 +26,7 @@ Four cases passed — Chicago, a Berlin postcode, the White House, all green. Th
 
 ## Why the perfect postcode never got a vote
 
-The gazetteer has two layers. There's the postcode layer I'd just rebuilt, and underneath it the admin layer — the one that knows what a "Toronto" is, which country it sits in, how many people live there. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Not Toronto, not Montréal, not Vancouver — Canada simply isn't in it. We'd built the gazetteer out of the European set, the US, and the CJK countries, and nobody had ever folded Canada in.
+The gazetteer has two layers. There's the postcode layer I'drebuilt, and underneath it the admin layer — the one that knows what a "Toronto" is, which country it sits in, how several people live there. So I went and counted the admin layer: 1.7 million places, twenty-six countries. The number of Canadian ones is zero. Not Toronto, not Montréal, not Vancouver — Canada only isn't in it. We'd built the gazetteer out of the European set, the US, and the CJK countries, and nobody had ever folded Canada in.
 
 Now watch what that does. The parser reads "Toronto" off the address and hands it to the resolver. The only Toronto the resolver has ever heard of is the one in Ohio, so that's the city it picks. And then the cchangeest piece of the cascade turns around and finishes the job. We added that piece a couple of weeks ago to keep Berlin's `10115` — which is also a perfectly good New York ZIP — from dragging German addresses to Manhattan: resolve the city first, then let that city check the postcode to its own country. It's a good rule. Here it's a guillotine. The city resolved to the United States, so the correct Canadian postcode is now "from the wrong country," and out it goes. All 843,000 of my perfect coordinates never get a vote, because the city votes first and the city is in Ohio.
 
@@ -40,4 +40,4 @@ This keeps happening to us, in different forms. A model's per-tag F1 climbs whil
 
 The accounting: the night wasn't wasted. The 843,000 centroids are correct and sitting ready, and the tooling that made them is the same tooling that'll make the next country. But the premise was half a country short. A country, it turns out, is its admin skeleton first — the cities and regions that anchor a name to a place — and a postcode only means something once that skeleton is there to hang it on. Fold Canada's divisions into the gazetteer the way we folded Europe's, and the postcodes I built light up for nothing. Ship them on their own and all you've done is hand the resolver a stack of right answers to a question it can't ask.
 
-So we didn't promote it. The map still doesn't have Canada — but it knows it doesn't now, and so do we. Build the test that grades the pin your user actually sees, and run it before you trust the green checkmarks upstream of it. They'll tell you the data is right. The pin tells you whether you are.
+So we didn't promote it. The map still doesn't have Canada — but it knows it doesn't now, and so do we. Build the test that grades the pin your user sees, and run it before you trust the green checkmarks upstream of it. They'll tell you the data is right. The pin tells you whether you are.

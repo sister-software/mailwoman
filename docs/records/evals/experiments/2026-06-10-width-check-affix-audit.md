@@ -31,7 +31,7 @@ FAIL, 6 of 12 checks:
 | FR (both)       | no-reg    | pass                                                 | ✓   |
 | DE deorder int8 | ≥ 83.8    | NOT FOUND (harness wart on the int8 leg; immaterial) | ✗   |
 
-NOT promoted. Artifacts banked: int8 md5 `33527afae87526f667c7e83453a723e6` (43 MB —
+not promoted. Artifacts banked: int8 md5 `33527afae87526f667c7e83453a723e6` (43 MB —
 the size alone disqualifies it as a ship default). The intersection rider
 (`synth-intersection: 2.0`) was a data no-op: the v0.4.12 manifest carries zero
 intersection-named extracts, so the weight sampled nothing. Recorded on #487.

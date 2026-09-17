@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The salted case identifier (#1902) — the only thing a published premise-linkage result carries
+ *   The salted case identifier (#1902) — the only field a published premise-linkage result includes
  *   that is derived from the address.
  *
  *   A bare hash of the input would be reversible in practice: the address space a provider grants

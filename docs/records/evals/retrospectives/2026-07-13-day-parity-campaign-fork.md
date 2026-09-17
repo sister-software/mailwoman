@@ -16,7 +16,7 @@ NPM-promote bar); the full gauntlet.
 | ----------------- | ----------------------------------- | ----------------------------- | --------------------------------- | ------------------------------------------ |
 | v253 (extract-v3) | +global locality twins              | .74/.99/.52                   | −2.3 / −3.2                       | **PASS**                                   |
 | v254 (extract-v4) | +comma-free context, +famous twins  | .76/.99/.588                  | −2.5 / −2.5                       | **PASS**                                   |
-| v255 (extract-v5) | +US admin pairs, +directional twins | .78/.96/**.5955**@2k          | flips 63→21 / 46→20 (repaired)    | **FAIL** (Dublin pin re-broke, both ckpts) |
+| v255 (extract-v5) | +US admin pairs, +directional twins | .78/.96/**.5955**@2k          | flips 63→21 / 46→20 (repaired)    | **fail** (Dublin pin re-broke, both ckpts) |
 
 The oscillation — twins fix bare-locality robustness and erode US admin recall; the counterweight
 repairs US recall and re-breaks bare-locality — is a capacity/stability constraint at 29M params
@@ -31,11 +31,11 @@ seventh solo run; the fork goes to the operator (documented on #1102):
 - **Gold triage applied** (33 tombstones, dual-number reporting everywhere; triaged street
   denominator 267). Proposal + borderlines-kept documented; operator ratifies any default flip.
 - **Flip census tooling** (`us-recall-flip-census.run.ts`) — named both erosion mechanisms
-  (region absorbed INTO locality 40/63; exotic-script + directional-prefixed localities dropped
+  (region absorbed into locality 40/63; exotic-script + directional-prefixed localities dropped
   42/46) and proved the v255 counterweight repaired them.
 - **#1100 secondary-address epic: both data deliverables shipped** — Pub-28 C2 extension
   (requires-range flags + matchers; the table itself already existed, salvage-first via subagent)
-  and the NEW per-locale level-semantics table (11 lexicons + IMDF ordinals, 40 tests; codex now
+  and the new per-locale level-semantics table (11 lexicons + IMDF ordinals, 40 tests; codex now
   338 tests).
 - **#1101 filed + scoped** (punctuation-drop augmentation; whitespace-only measured at 64% of
   parity gold — operator-elevated to first-class, gauntlet `*_undelimited` kinds + metamorphic
@@ -58,7 +58,7 @@ cheapest falsifier. **v256-dynamics-probe**: v255's exact composition, gentle dy
 | parity street (v1 denom)     | 0.55                 | 0.4833 (2k, undertrained) |
 | parity postcode              | 0.96–0.99            | 0.9861 PASS               |
 
-**Schedule, not capacity.** The gentle LR + longer warmup held BOTH the US admin-recall repair AND
+**Schedule, not capacity.** The gentle LR + longer warmup held both the US admin-recall repair and
 bare-locality robustness at 2k steps — the two objectives that oscillated under 5e-5/8k. The
 oscillation was an optimization-dynamics artifact, not a 29M-param ceiling. Street 0.4833 is low
 only because 2k ≪ 8k; the diagnostic wasn't a candidate.
@@ -73,9 +73,9 @@ path or a destructive package swap, a `--weights-cache` path was added to the ga
 e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
 graded through it (md5-confirmed the cache model loaded, not the shipped one) and **PASSED the
 regression layer 30/30 counted cases — including the Dublin bare-city coordinate pin** that broke
-v255. The schedule verdict is now confirmed at the coordinate level, not just the parse level.
+v255. The schedule verdict is now confirmed at the coordinate level, notthe parse level.
 
-**Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but NOT
+**Next (operator greenlight):** `v2.5.7-fragment-v5-gentle-full` staged and committed but not
 launched — the full 8k run at v256's gentle schedule. Expected to recover street toward 0.55–0.60
 without the oscillation. Held for greenlight because the probe result reframes the fork itself.
 
@@ -89,21 +89,21 @@ loss 0.75→0.70) and graded package-shaped. It is the campaign's **first stable
 | parity street (triaged) | 0.5356                         | +0.139     | −0.060                |
 | parity house_number     | 0.7671                         | +0.066     | ~                     |
 | parity postcode         | 0.9861 PASS                    | ~          | ~                     |
-| gauntlet regression     | **PASS** (Dublin held)         | holds      | v255 **FAILED**       |
-| gauntlet metamorphic    | **PASS** (5 anchor-off xfails) | holds      | ~                     |
+| gauntlet regression     | **pass** (Dublin held)         | holds      | v255 **FAILED**       |
+| gauntlet metamorphic    | **pass** (5 anchor-off xfails) | holds      | ~                     |
 | US flip census          | 5 region / 0 locality per 600  | preserved  | better than v255      |
 
 v257 trades ~6pp of v255's unstable street peak for full gauntlet stability + preserved US recall —
 the schedule fix at 8k scale. It does **not** clear the SWAPS street floor (0.90), so the v7 swaps
 stay conditional; the residual is the #727 boundary-absorption class (golden confused-tags confirm it:
-"05770 VT DELONG LN" → street got "VT Delong"). **NOT promoted:** doesn't unblock v7, needs card
+"05770 VT DELONG LN" → street got "VT Delong"). **not promoted:** doesn't unblock v7, needs card
 regen, and the golden 2pp check is schema-confounded (golden v0.1.2 uses the flat pre-split street
 schema — parity is the schema-correct check). Promote-as-strict-improvement is a clean operator call.
 Full grade: `models/candidates/v257-fragment-v5-gentle-full/MANIFEST.md`.
 
 ## Decisions under the standing grant
 
-Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did NOT
+Merged/pushed directly to main throughout (docs, tooling, codex tables, configs). Did not
 exercise the promote/publish grant: v253/v254 fail the 2pp default check, v255 fails the gauntlet
 — experimental-shipping a blocked-for-default artifact adds nothing the fork decision doesn't
 supersede. Treadmill compliance outranked grant flexing.

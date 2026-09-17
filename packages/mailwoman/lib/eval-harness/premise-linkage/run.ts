@@ -157,7 +157,7 @@ export function outcomeFor(
 /**
  * The coordinate this arm is graded on.
  *
- * The #1901 contract carries the provider's coordinate BESIDE Mailwoman's own and leaves the choice to the consumer.
+ * The #1901 contract includes the provider's coordinate BESIDE Mailwoman's own and leaves the choice to the consumer.
  * This harness is that consumer, and the choice is stated here rather than implied: when the provider committed to a
  * premise, its coordinate is the one the authoritative arm asserted; everywhere else the arm's answer is Mailwoman's.
  */

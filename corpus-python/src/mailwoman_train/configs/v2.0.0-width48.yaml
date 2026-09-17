@@ -4,7 +4,7 @@
 # clues always present), the frozen-head probe eliminated output competition (frozen 29M features
 # = P100/R~25 — the representation LACKS the affix feature). Capacity earned its evidence.
 # Reasoned deltas vs v1.0.0-consolidation:
-#   - use_affix_head: true (the #492 head + gaz skip — keep at width; checkpoint contract carries it)
+#   - use_affix_head: true (the #492 head + gaz skip — keep at width; the checkpoint includes it)
 #   - synth-affix 2.0 -> 5.0 (Run A's level; 20x was a 29M workaround, not a recipe)
 #   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING recipe formats only; the real eval's
 #     gap forms (corner-of/intersection-of/unpadded) may lag — REPORT, not check, on intersection)

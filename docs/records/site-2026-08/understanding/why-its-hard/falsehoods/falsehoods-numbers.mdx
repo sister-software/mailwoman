@@ -28,7 +28,7 @@ Rule-based geocoders from Pelias to libpostal to Google's early API all had a `h
 
 ### "No buildings have negative numbers."
 
-`Minusone Priory Road, Newbury, RG14 7QS` is a real address. No database renders this as `-1` — it's the word "Minusone." The street name is "Minusone Priory Road." A parser that expects building numbers to start addresses will see `Minusone` and try to classify it. A parser that allows word-prefix building numbers will try `Minusone` as a building number. Both are wrong. The number IS the street name.
+`Minusone Priory Road, Newbury, RG14 7QS` is a real address. No database renders this as `-1` — it's the word "Minusone." The street name is "Minusone Priory Road." A parser that expects building numbers to start addresses will see `Minusone` and try to classify it. A parser that allows word-prefix building numbers will try `Minusone` as a building number. Both are wrong. The number is the street name.
 
 ### "Building numbers are unique per street."
 

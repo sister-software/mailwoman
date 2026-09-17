@@ -23,9 +23,9 @@ signature_ of exactly that:
 
 Both point to the same missing ingredient. Two prior recipe cycles (v0.6.x held,
 v0.7.x calibration null) failed to move these because they tuned the _labeled_
-corpus mixture — not the thing that's actually absent.
+corpus mixture — not the thing that's absent.
 
-## The key property: pre-training adds ZERO bytes to the shipped model
+## The key property: pre-training adds zero bytes to the shipped model
 
 This is a **training-time phase, not a runtime component.** The lifecycle changes
 from one phase to two:
@@ -71,7 +71,7 @@ early CLM data-efficiency + a bidirectional MLM/RTD finish. For pure BIO tagging
 today, that's speculative future-proofing, not a current need.
 
 **Note on calibration specifically:** no study isolates CLM-vs-MLM _downstream
-calibration_ — the calibration win is from _pre-training presence_, not the
+calibration_ — the result is from _pre-training presence_, not the
 objective. The objective-independent calibration change is **label smoothing +
 temperature scaling** (already partially explored in v0.7.0). So: pre-train (any
 bidirectional objective) **and** keep label smoothing in the fine-tune.
@@ -81,7 +81,7 @@ bidirectional objective) **and** keep label smoothing in the fine-tune.
 **Stage A — TAPT probe (lowest risk, do first).** Take the address strings we
 already template, strip the labels, and run **whole-word MLM at ~40%** on the
 existing 29M architecture + the **frozen existing 16k SentencePiece tokenizer**
-for a few hours on one A100 — even just the ~10M strings we can cheaply assemble.
+for a few hours on one A100 — eventhe ~10M strings we can cheaply assemble.
 Then fine-tune the BIO head from those weights with a **low LR + label smoothing**
 (ideally keeping a small auxiliary MLM loss to resist catastrophic forgetting,
 which otherwise erases the calibration benefit — Tao et al. arXiv 2305.19249).
@@ -129,7 +129,7 @@ pre-training isn't the change at this scale.
 **Parallel — touches zero resolver code.** The resolver consumes the parser's BIO
 output; pre-training changes only the encoder weights behind that interface.
 Convergence point: land the OpenAddresses real-point eval first so both tracks
-share one honest scoreboard, and **re-run the arbiter eval after any new model**
+share one direct scoreboard, and **re-run the arbiter eval after any new model**
 (a better-calibrated parser may change the arbiter's win margin).
 
 ## Sources

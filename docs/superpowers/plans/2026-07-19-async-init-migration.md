@@ -28,8 +28,8 @@ Claude-Session: https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 - Only two real consumers of `core/lifecycle/`: `core/scripting/utils/index.ts` (`ServiceRepository`) and `core/api/APIClient.ts` (`ServiceSymbol.isAsyncDisposable`). Every other repo mention of "lifecycle" is prose in comments.
 - **Nothing in the repo ever registers a service** into `ServiceRepository` — its registry is empty at runtime; `postScriptCleanup`'s dispose call is a forward-compatibility hook. Migrating to `defaultRegistry` preserves observable behavior exactly (abort + no-op disposal).
 - `AsyncDisposableLRUCache` has zero consumers — deleted with the module.
-- `lru-cache` in `core/package.json` (^11.5.2, ~line 318) is used ONLY by the deleted module. `corpus/` imports lru-cache but declares its own `^11.5.2` (verified corpus/package.json:98) — removing core's copy is safe.
-- The old `ServiceSymbol.isAsyncDisposable` used `Object.hasOwn` on the instance, so it NEVER matched prototype-implemented disposables — `APIClient`'s cache disposal has been dead code. The migration makes it live; that behavior change is intended and gets a regression test.
+- `lru-cache` in `core/package.json` (^11.5.2, ~line 318) is used only by the deleted module. `corpus/` imports lru-cache but declares its own `^11.5.2` (verified corpus/package.json:98) — removing core's copy is safe.
+- The old `ServiceSymbol.isAsyncDisposable` used `Object.hasOwn` on the instance, so it never matched prototype-implemented disposables — `APIClient`'s cache disposal has been dead code. The migration makes it live; that behavior change is intended and gets a regression test.
 
 ---
 
@@ -44,7 +44,7 @@ Claude-Session: https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 **Interfaces:**
 
 - Consumes: `isAsyncDisposable(input: unknown): input is AsyncDisposable` from `async-init` (chain-walking guard).
-- Produces: `APIClient` whose `[Symbol.asyncDispose]` actually disposes prototype-implemented cache storages.
+- Produces: `APIClient` whose `[Symbol.asyncDispose]` disposes prototype-implemented cache storages.
 
 - [ ] **Step 1: Create the worktree** (superpowers:using-git-worktrees), branch `feat/async-init-migration` off `main`. All subsequent steps run inside it. Run `yarn install` once to hydrate.
 
@@ -112,7 +112,7 @@ Implementer latitude: if `buildStorage`'s option or return types disagree with t
 - [ ] **Step 4: Run test to verify it fails**
 
 Run: `yarn vitest run core/api/APIClient.test.ts` — and if the root invocation doesn't pick up core's vitest config (core has its own `vitest.config.ts` with sibling-alias rules), run it from the workspace instead: `cd core && yarn vitest run api/APIClient.test.ts`. Use whichever form works for the remaining test steps too.
-Expected: FAIL — `disposeCount` is 0 (old predicate misses the prototype method).
+Expected: fail — `disposeCount` is 0 (old predicate misses the prototype method).
 
 - [ ] **Step 5: Migrate APIClient**
 
@@ -212,13 +212,13 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 }
 ```
 
-Semantics notes (document in the commit body, not code comments): `defaultRegistry.dispose()` aborts the registry's own signal BEFORE disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
+Semantics notes (document in the commit body, not code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
 
 - [ ] **Step 3: Verify the scripting suite + types**
 
 Run: `yarn vitest run core/scripting 2>/dev/null || yarn vitest run --dir core` (fall back to the core suite if scripting has no dedicated tests)
 Run: `yarn workspace @mailwoman/core run check-types 2>/dev/null || yarn tsc --noEmit -p core`
-Expected: green / exit 0. (Adapt the exact check-types invocation to what core's package.json actually offers — read its scripts.)
+Expected: green / exit 0. (Adapt the exact check-types invocation to what core's package.json offers — read its scripts.)
 
 - [ ] **Step 4: Commit**
 
@@ -240,7 +240,7 @@ dropped. Nothing registers services today, so behavior is unchanged."
 **Files:**
 
 - Delete: `core/lifecycle/index.ts`, `core/lifecycle/services.ts`, `core/lifecycle/ServiceSymbol.ts`, `core/lifecycle/lru-cache.ts`
-- Modify: `core/package.json` — remove `./lifecycle` from BOTH exports maps; remove `"lru-cache": "^11.5.2"` from dependencies
+- Modify: `core/package.json` — remove `./lifecycle` from both exports maps; remove `"lru-cache": "^11.5.2"` from dependencies
 
 - [ ] **Step 1: Delete the module**
 
@@ -260,7 +260,7 @@ In `core/package.json` delete the dev-map entry (~lines 97-100):
 		},
 ```
 
-AND the `publishConfig.exports` entry (~lines 241-243):
+and the `publishConfig.exports` entry (~lines 241-243):
 
 ```json
 			"./lifecycle": {
@@ -279,7 +279,7 @@ Delete `"lru-cache": "^11.5.2",` from `core/package.json` dependencies (corpus d
 grep -rn "ServiceRepository\|ServiceSymbol\|AsyncDisposableLRUCache\|ServiceMethodResolver\|lifecycle/index\|lifecycle/ServiceSymbol" --include="*.ts" . | grep -v node_modules | grep -v "/out/" | grep -v worktrees | grep -v ".claude"
 ```
 
-Expected: NO hits in source files (docs/ mentions in historical records are fine and out of scope — do not edit dated docs).
+Expected: no hits in source files (docs/ mentions in historical records are fine and out of scope — do not edit dated docs).
 
 - [ ] **Step 5: Commit**
 
@@ -327,7 +327,7 @@ yarn workspace @mailwoman/core pack -o /tmp/claude-1000/-home-lab-Projects-mailw
 tar -tzf /tmp/claude-1000/-home-lab-Projects-mailwoman/52b1cbdf-08a6-4826-93ee-2cbe4006d58b/scratchpad/core-probe.tgz | grep -i lifecycle
 ```
 
-Expected: pack succeeds; the grep finds NOTHING (no lifecycle files in the tarball).
+Expected: pack succeeds; the grep finds nothing (no lifecycle files in the tarball).
 
 - [ ] **Step 4: Push branch + open PR**
 

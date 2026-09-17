@@ -17,7 +17,7 @@ The DeepSeek consult claimed the gazetteer channel already does multi-word phras
 projection, making a country channel a "data-only" extension. **Verified against the code — the first
 half is TRUE, the conclusion is FALSE:**
 
-- **Multi-word phrase-match + SP projection: CONFIRMED.** `neural/gazetteer-inference.ts`
+- **Multi-word phrase-match + SP projection: confirmed.** `neural/gazetteer-inference.ts`
   `gazetteerCharPaint` (the longest-first n-gram scan, `max_ngram=7`) + `buildGazetteerFeatures` (the
   first-non-whitespace-char → piece projection); Python mirror `corpus-python/.../gazetteer_anchor.py`
   `gazetteer_char_paint` + `realign_gazetteer_to_pieces`. Both load the SAME JSON so they can't drift.
@@ -33,15 +33,15 @@ half is TRUE, the conclusion is FALSE:**
 the WOF-admin case still fails (#1104).** The failure is not a data gap; it is a signal-salience gap.
 Two concrete code-level reasons the shared slot is insufficient:
 
-1. **Dilution.** The country bit is one of a 5-hot vector sharing ONE learned projection
+1. **Dilution.** The country bit is one of a 5-hot vector sharing one learned projection
    (`model.py` `gazetteer_projection: Linear(5, hidden)`) with region/po_box/cedex/homograph. The
    country signal has no dedicated capacity.
 2. **Suppression.** The shipped choreography `suppress_gazetteer_near_postcode` (model-card
    `suppress_gazetteer_near_postcode: true`) ZEROS the whole gazetteer vector — country bit included —
    for pieces adjacent to a postcode-anchor hit. A trailing "…12345 USA" has its country clue
-   suppressed exactly where a country most often appears.
+   suppressed exactly where a country most frequently appears.
 
-Adding a NEW gazetteer slot (5→6) would also change the model's input dimension → a full retrain. So
+Adding a new gazetteer slot (5→6) would also change the model's input dimension → a full retrain. So
 there is no "data-only, no-retrain" path either way. Given a retrain is mandatory, pick the
 representation that gives the model the cleanest, highest-salience country signal.
 
@@ -51,7 +51,7 @@ A dedicated soft-feed channel, sibling of the postcode anchor (#239/#240) and th
 (#464), NOT an extension of the gazetteer's country slot. Rationale, grounded in the code reality
 above:
 
-- **De-entanglement / capacity.** Country gets its OWN projection (`Linear(2, hidden)`) + its own
+- **De-entanglement / capacity.** Country gets its own projection (`Linear(2, hidden)`) + its own
   learned confidence weight — a distinct, stronger trust for the closed class, exactly the
   leading-long-form case where the shared-vector signal proved too weak.
 - **Immunity to near-postcode suppression.** The country channel is built independently and is NOT
@@ -84,12 +84,12 @@ ambiguity flag is computed from codex (US-state-name / abbreviation collision) p
 common-word list — no hand-maintained homograph table.
 
 The matcher DELIBERATELY REUSES the gazetteer's tested `gazetteerCharPaint` / `gazetteer_char_paint`
-(one phrase-scan algorithm, two vocabularies), so the two channels cannot drift on HOW a phrase is
+(one phrase-scan algorithm, two vocabularies), so the two channels cannot drift on how a phrase is
 matched. Only the vocabulary and the emitted feature differ.
 
 ## What was implemented (this branch: `feat/country-lexicon-channel`)
 
-Everything defaults OFF — zero impact on the shipped model until the activation retrain flips one
+Everything defaults off — zero impact on the shipped model until the activation retrain flips one
 config flag. Verified: neural `tsc --noEmit` clean, 303 neural vitest pass, corpus-python model
 forward + config round-trip + encode_row emit + the 3-channel matcher parity all pass.
 
@@ -163,7 +163,7 @@ After training:
    missing.
 
 **Grade PACKAGE-SHAPED** (`--weights-cache`), never `--model` alone — the #718 trap: explicit-path
-model loading feeds NO sibling channels, so a `--model`-only grade would silently run country-OFF and
+model loading feeds no sibling channels, so a `--model`-only grade would silently run country-OFF and
 mismeasure.
 
 ## Expected check

@@ -92,7 +92,7 @@ White House Grounds, Washington, District of Columbia, United States
 
 ## The enriched block plain Nominatim doesn't send
 
-Every result carries an OpenCage-style `annotations` block that upstream Nominatim has no equivalent for: coordinate formats (DMS, MGRS, geohash, Maidenhead, Mercator), a qibla bearing, sun times, the IANA timezone, and — when their data bundles are mounted — the UN/LOCODE and EU NUTS codes. geopy keeps it on `loc.raw["annotations"]`:
+The API returns an OpenCage-style `annotations` block that upstream Nominatim has no equivalent for: coordinate formats (DMS, MGRS, geohash, Maidenhead, Mercator), a qibla bearing, sun times, the IANA timezone, and — when their data bundles are mounted — the UN/LOCODE and EU NUTS codes. geopy keeps it on `loc.raw["annotations"]`:
 
 ```python
 loc = geo.geocode("1600 Pennsylvania Avenue NW, Washington, DC 20500")

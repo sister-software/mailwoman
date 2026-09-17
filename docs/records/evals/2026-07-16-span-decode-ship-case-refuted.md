@@ -42,7 +42,7 @@ worse one.
 §6 recommended the flag on the belief that the span decode **owned** the bare-fragment class — that
 the +23.8pp was the span head's to give. T1c and T2 falsified the belief:
 
-- **T1c** found the cause: the house number is a **licence**, not a hint. Bare streets read as
+- **T1c** found the cause: the house number is a **license**, not a hint. Bare streets read as
   localities because the training distribution taught that, not because the decode couldn't express
   the span.
 - **T2** fixed the distribution. The class the span decode was ordered to rescue got rescued by
@@ -81,7 +81,7 @@ What it produced instead is the reason the fix exists at all. `oracle@k` and the
 the instruments that made the headroom **visible** (oracle@10 0.775 against a 0.577 rank-1 — a gap
 nobody could see when every check scored top-1). That gap is what motivated T1a's cross-tab, which
 found the digit-eating and forced the hallucination check, which motivated T1c's board, which found
-the licence, which built T2's extract, which fixed the class.
+the license, which built T2's extract, which fixed the class.
 
 The arc asked "can a better decode find the right answer?" The reply turned out to be: the right
 answer was never in the list to be found — it wasn't in the training data. **The instrument

@@ -39,7 +39,7 @@ pipeline (`scripts/eval-v062-checkpoint.sh`) completes.
 | dep_locality hallucinations  | 0          | 1066 ❌           | **TBD (target ≤100)** | —           |
 | street_suffix hallucinations | 0          | 198               | **TBD**               | —           |
 | v0-vs-neural harness pass    | 14.4%      | (≈14.4%)          | **TBD**               | —           |
-| Pre-publish 2D eval check    | (baseline) | FAIL ❌           | **TBD (target PASS)** | —           |
+| Pre-publish 2D eval check    | (baseline) | FAIL ❌           | **TBD (target pass)** | —           |
 
 ## Per-tag breakdown (TBD)
 
@@ -87,8 +87,8 @@ Apply DeepSeek turn 7's promotion decision tree:
 | Check | Harness pass | Action                                |
 | ----- | ------------ | ------------------------------------- |
 | Pass  | ≥ 25%        | Promote v0.6.2 to default on HF       |
-| Pass  | 15-24%       | Ship as experimental — do NOT promote |
-| Pass  | ≤ 14.4%      | HOLD — sidegrade not release          |
+| Pass  | 15-24%       | Ship as experimental — do not promote |
+| Pass  | ≤ 14.4%      | hold — sidegrade not release          |
 | Fail  | any          | HOLD                                  |
 
 **Verdict: TBD**

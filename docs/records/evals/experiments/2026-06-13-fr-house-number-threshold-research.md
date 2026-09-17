@@ -47,7 +47,7 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
   At weight 6.0 the synthetic extract overwhelms real BAN and the model fits the generator's caricature
   of reordered French, not the real eval distribution.
 - **Simplicity-bias fallback (the fragmentation mechanism).** When weight 6.0 corrupts the dominant
-  "leading-token = house*number" shortcut \_without* installing a robust discriminator, the model falls
+  "leading-token = house*number" shortcut \_without* installing a resilient discriminator, the model falls
   to the next-simplest spurious feature rather than the intended one (Shah et al., "Pitfalls of
   Simplicity Bias", NeurIPS 2020). Here that fallback is "leading _digit_" — so it carves a house
   number (`4`) out of the front of the postcode (`47110`), leaving `7110`. This is the piece pure
@@ -88,9 +88,9 @@ It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored
 
 ## Reframed recommendation
 
-The research shifts my earlier "hold" lean. The honest reading:
+The research shifts my earlier "hold" lean. The direct reading:
 
-- **The shipped v4.5.0 is the weaker model for this stratum (54.5%).** v1.5.0 (87.4%) is a large, honest
+- **The shipped v4.5.0 is the weaker model for this stratum (54.5%).** v1.5.0 (87.4%) is a large, direct
   improvement that sits at the literature frontier for reordered house numbers. Holding it back against
   a bar that the SOTA itself can't clear is hard to justify.
 - **So the defensible path is: re-baseline the `fr.house_number` floor to a literature-anchored

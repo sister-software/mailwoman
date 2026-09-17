@@ -112,11 +112,11 @@ the classes it does not contain, at any exposure that teaches anything.
 ### v4.11.0 — the composition hypothesis, tested and eliminated
 
 The conclusion below was that an admin-only extract damages the classes it does not contain. v4.11.0
-tested it directly by putting the same surface into rows that DO contain them.
+tested it directly by putting the same surface into rows that do contain them.
 
 `house-venue` was already emitting the target tail — `Springfield, IL 02101` and `Bengaluru,
 Karnataka 560038` are the same locality-region-postcode shape — and every row it emits carries a
-venue, a street AND a house number. 18,000 IN/PT/MX rows with real
+venue, a street and a house number. 18,000 IN/PT/MX rows with real
 postcodes were emitted under the EXISTING `synth-house-venue` source, so they took a share of a bucket
 that has shipped at weight 2.0 rather than claiming a new share. Measured on the extract: venue 100%,
 street 100%, house_number 100%.
@@ -127,7 +127,7 @@ street 100%, house_number 100%.
 **5 improved / 18 regressed, net −13. FR −3, GB −5, IE −3. Nine venue-led regressions.**
 
 No new source, no new share, the alternatives present in every row — and the same countries lost the
-same classes. So the cause is NOT the extract's internal composition, and it is not exposure:
+same classes. So the cause is not the extract's internal composition, and it is not exposure:
 
 | run         | new source? | own share? | venue/street present? |     net | venue-led |
 | ----------- | ----------- | ---------- | --------------------- | ------: | --------: |
@@ -179,7 +179,7 @@ Both readings matter and neither was available before:
 
 1. **The arc over-attributed.** A third of every "regression" charged to these extracts was the price of
    fine-tuning at all. Five runs of extract-blame were measuring a mixture.
-2. **The arc was not wrong.** Eight to nine rows ARE the data's doing, and they are the right ones —
+2. **The arc was not wrong.** Eight to nine rows are the data's doing, and they are the right ones —
    `gb-venue-ye-three-lords`, `gb-lex-cafe-st-marys`, `gb-op2-four-seasons-cjk` appear only in the
    treated arms. The venue diagnosis holds for that subset.
 
@@ -203,7 +203,7 @@ rather than a preference.
 ### The control as originally specified (kept — the reasoning stands)
 
 If the same nine rows regress under every intervention, the next question is whether they regress
-under NO intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
+under no intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
 
 - If those nine still move, the arc's entire premise is wrong. The regressions are an artifact of
   fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about extracts is
@@ -220,7 +220,7 @@ should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
 
 **4 improved / 10 regressed, net -6.**
 
-Regressions fell 18 -> 10. But ten IS the null's tax, so the extract now costs nothing beyond it — and
+Regressions fell 18 -> 10. But ten is the null's tax, so the extract now costs nothing beyond it — and
 adds nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
@@ -263,7 +263,7 @@ countries. Composition and share modulate the size of the shift; the shift itsel
 
 That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
 US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
-experiment is therefore NOT another extract — it is the same data against a different training shape
+experiment is therefore not another extract — it is the same data against a different training shape
 (no EWC brake, or a longer run, or a from-scratch base that sees all the tails at once). That is a
 larger commitment than a fine-tune and should be scoped as one.
 
@@ -291,11 +291,11 @@ source this project consumes was checked on 2026-08-23:
 | Overture, local snapshot                                                             | `places` theme only; no addresses theme downloaded |
 
 So VE postcodes are not an acquisition someone forgot to run. They are absent from the open corpus this
-project is built on. The one avenue NOT checked is Overture's upstream `addresses` theme, which is not
+project is built on. The one avenue not checked is Overture's upstream `addresses` theme, which is not
 mirrored locally — worth one query before concluding it is unobtainable, not worth assuming it helps.
 
 That makes the VE question a product decision rather than a data-fetching task: either a synthetic
-4-digit code paired with a REAL (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
+4-digit code paired with a real (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
 `house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
 `packages/corpus/lib/synthesizers/house-venue.ts`.
 

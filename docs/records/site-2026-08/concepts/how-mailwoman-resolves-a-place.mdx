@@ -31,7 +31,7 @@ hierarchy:
   region               IL [wof:85688697] (40.1242, -89.1486)
 ```
 
-That's Abraham Lincoln's house. The rest of this page accounts for those lines: which of America's many Springfields, why the coordinate is a rooftop rather than a city centroid, and what `uncertainty_m: 1` is promising.
+That's Abraham Lincoln's house. The rest of this page accounts for those lines: which of America's several Springfields, why the coordinate is a rooftop rather than a city centroid, and what `uncertainty_m: 1` is promising.
 
 ## What resolution adds
 
@@ -81,10 +81,10 @@ Scoping is a bet that the parent resolved correctly, so it's hedged, and the hed
 - **An empty scope triggers one retry without the parent** (the country constraint stays). A gazetteer whose ancestor chain is missing a link shouldn't turn a resolvable town into a null.
 - **A resolved region whose child locality failed** means the greedy order probably picked the wrong region: a bare "ME" reads as Maine, but also as Messina, Italy. A post-walk pass re-asks the question jointly: which same-named region candidate has a locality of this name under it? Both nodes are re-picked as a pair, and the swap is recorded on the node.
 - **An explicit country token gets the same joint treatment.** For "Vienna, Austria" the resolver re-picks the locality to the same-named place inside the country the address itself names; the resolved output is the Austrian capital (48.2085, 16.3721), not a populous namesake abroad.
-- **A resolved postcode is an anchor.** Postcodes are unambiguous within a country in a way town names are not. A locality that resolves more than 50 km from its sibling postcode gets re-picked to the same-named candidate nearest that postcode; if none reconciles, the coordinate falls back to the postcode's area and the node is flagged `postcode_city_mismatch` — the case where your input, not the map, is likely wrong. This pass exists because of a measured failure class: "06260 Saint-Pierre", one of many French Saint-Pierres, once resolved 617 km from its own postcode.
+- **A resolved postcode is an anchor.** Postcodes are unambiguous within a country in a way town names are not. A locality that resolves more than 50 km from its sibling postcode gets re-picked to the same-named candidate nearest that postcode; if none reconciles, the coordinate falls back to the postcode's area and the node is flagged `postcode_city_mismatch` — the case where your input, not the map, is likely wrong. This pass exists because of a measured failure class: "06260 Saint-Pierre", one of several French Saint-Pierres, once resolved 617 km from its own postcode.
 - **When nothing resolved at all**, a last-resort pass re-reads the raw text against the gazetteer — the model occasionally fragments an accented name ("Grudziądz") into pieces no lookup can match — and injects the recovered locality, marked as recovered rather than asserted.
 
-Every pass stamps what it did into node metadata (`admin_coherence_repicked`, `postcode_city_mismatch`, `span_rescore`, …), and each fires only on failure, so a tree that resolved cleanly passes through byte-identical. Nothing is settled silently; you can always see which side won.
+Every pass stamps what it did into node metadata (`admin_coherence_repicked`, `postcode_city_mismatch`, `span_rescore`, …), and each fires only on failure, so a tree that resolved directly passes through byte-identical. Nothing is settled silently; you can always see which side won.
 
 ## The precision ladder
 

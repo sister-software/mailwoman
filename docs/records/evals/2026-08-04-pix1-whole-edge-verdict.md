@@ -17,7 +17,7 @@ ruled for a format change instead, and the shipped mechanism reads the parent's 
 > Bar: **byte-identical output on every case whose fired child tag has ≥2 allowed parents.** A single
 > diff falsifies the construction argument above and the design goes back for a per-tag δ.
 
-**VACUOUS on the preregistered instrument.** Every SHIPPED pair index asserts `dependent_locality`
+**VACUOUS on the preregistered instrument.** Every shipped pair index asserts `dependent_locality`
 and nothing else, and `WESTERN_PARENT_OF.dependent_locality` is `["locality"]` — exactly one allowed
 parent. So the bar's population is empty by construction:
 
@@ -87,14 +87,14 @@ the document claims, and it is worth naming that the general board would have hi
 > Bar: **≤2% parent-tag false positives**, the shipped GB floor B-R5.2 used for the child.
 
 Graded as the FPs the parent bias CREATES — a row correct with the bias off and wrong with it on.
-A row already wrong at OFF is a pre-existing child-side defect, not this bar's business.
+A row already wrong at off is a pre-existing child-side defect, not this bar's business.
 
 **Broad homonym board (120 rows,** including the five named rows: `Buffalo, New York`,
 `Springfield, Washington`, `Vancouver, Washington`, `Kansas City, Kansas`,
 `Oklahoma City, Oklahoma`**): the pair prior fires on 0/120.** 0.00% FP, and vacuously so — nothing
 to amplify.
 
-**Amplification stratum (56 rows, 56/56 fire).** Built from index entries whose parent fold IS a US
+**Amplification stratum (56 rows, 56/56 fire).** Built from index entries whose parent fold is a US
 state name and whose child fold also names a locality in that same state, so `<child>, <state>` reads
 as city-in-state and the child bias fires anyway:
 
@@ -150,7 +150,7 @@ is the pre-existing `si-sentinel-apace` failure, present on both legs and on `ma
 
 ## The defect the bars caught
 
-The first implementation biased the parent's WHOLE comma-delimited segment. #1308 strips a same-field
+The first implementation biased the parent's whole comma-delimited segment. #1308 strips a same-field
 postcode from the probe KEY but leaves `pieceIndices` spanning the segment, so a French parent field
 `12210 Montpeyroux` — key `montpeyroux` — took the `locality` bias across the postcode too:
 
@@ -189,7 +189,7 @@ The operator ruled against the derivation this page graded. `WESTERN_PARENT_OF` 
 the tree builder will accept for a tag_, which is not the question a retrieval index is asking, and the
 two diverge in both directions:
 
-- It cannot express an edge the extraction actually observed. The US WOF source admits `borough` as a
+- It cannot express an edge the extraction observed. The US WOF source admits `borough` as a
   parent placetype, so `pair-index-us.bin` carries ("park slope", "brooklyn") — a `dependent_locality`
   under a `dependent_locality`. Containment gives `dependent_locality` exactly one allowed parent,
   `locality`. The derived mechanism biased the wrong label on every such row.
@@ -206,13 +206,13 @@ parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` �
 
 **Shipped default-on at δ=5 for us/gb/nz/fr**, carried in the artifact header (`PairIndexHeader.parentDelta`)
 exactly as `delta` and `transitionBeta` are, so the classifier auto-wires it with no code that knows
-which locale is which. `de`/`in`/`es`/`it` ship WITHOUT the key: no board has graded the parent side
+which locale is which. `de`/`in`/`es`/`it` ship without the key: no board has graded the parent side
 there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an inherited magnitude.
 `MAILWOMAN_PAIR_PARENT_DELTA` still overrides the header, for sweeps.
 
 ### Check receipts on the per-record mechanism
 
-Rebuilt all eight dev pair indexes at schema 3. OFF leg = the same artifacts with `parentDelta` removed
+Rebuilt all eight dev pair indexes at schema 3. off leg = the same artifacts with `parentDelta` removed
 from the header (entries, `buildDate` and every other field byte-identical — one key apart, a tighter
 control than a second build).
 

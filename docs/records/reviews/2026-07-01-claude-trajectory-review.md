@@ -1,12 +1,12 @@
 # Mailwoman trajectory review and re-railing plan — 2026-07-01
 
-**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months actually went versus where the plan said they would go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction, not code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
+**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months went versus where the plan said they would go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction, not code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
 
 ---
 
 ## Verdict
 
-The project matured from "does the model parse" into "does the system geocode" — and that transition succeeded. The risk now is not the code; it is that the measurement system, the public demo, and the roadmap have all fallen behind what the pipeline can actually do, while the hardest remaining model problem sits stalled behind an unmade budget decision.
+The project matured from "does the model parse" into "does the system geocode" — and that transition succeeded. The risk now is not the code; it is that the measurement system, the public demo, and the roadmap have all fallen behind what the pipeline can do, while the hardest remaining model problem sits stalled behind an unmade budget decision.
 
 Three facts frame everything below:
 
@@ -18,7 +18,7 @@ The process discipline that got the project here — pre-registered checks, fals
 
 ---
 
-## Where the trajectory actually went
+## Where the trajectory went
 
 The repo dates to 2019 (Pelias-parser lineage) and was near-dormant through early 2025: a few commits a month, none in most months. Then 534 commits in May 2026 and 993 in June — 1,547 commits in two months, effectively one operator plus autonomous night shifts. In that window the project went from a rules parser to a 35-workspace monorepo: neural parser, WOF resolver, formatter, record matcher, three drop-in API surfaces (Nominatim/Photon/libpostal), a browser runtime, and a coverage-tile pipeline.
 

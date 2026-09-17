@@ -26,7 +26,7 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
 | Address rows                                                     |                          262,068 |
 | Rows with `certification_commune = 1`                            |                  188,499 (71.9%) |
 | Communes                                                         |                              391 |
-| Communes with EVERY address certified                            |                      178 (45.5%) |
+| Communes with every address certified                            |                      178 (45.5%) |
 | Communes with some addresses certified                           |                              111 |
 | Communes with none certified                                     |                              102 |
 | `source_position`: `commune` / `inconnue` / `arcep` / `cadastre` | 212,873 / 43,764 / 3,270 / 2,161 |
@@ -39,7 +39,7 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
   (the upstream field name and the `source_position = commune` co-occurrence support this; the BAN documentation
   states it as the field's meaning). A commune whose every address is certified has DESIGNATED its set; a mixed or
   uncertified commune has not, and its rows are `source_present`.
-- Decision the plan asked for: the FR arm CAN carry a per-commune `designated` basis, but only after the extract keeps
+- Decision the plan asked for: the FR arm can carry a per-commune `designated` basis, but only after the extract keeps
   `certification_commune` and the coverage build writes `designated` for wholly certified communes and
   `source_present` for the rest. Until then the FR layer is `source_present` everywhere, and `requireExclusionBasis`
   refuses every FR exclusion — which is the correct answer for a layer that has not yet said which communes are whole.

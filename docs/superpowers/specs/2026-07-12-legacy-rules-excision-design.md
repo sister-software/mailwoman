@@ -110,7 +110,7 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 1. **Phase 0:** archive probe + golden capture (all four artifacts).
 2. **Projection:** build `toLibpostal()` in `annotations/` with unit tests against the libpostal golden.
 3. **Swaps, one PR each, eval-conditional:** `/v1/parse` → native neural (check: semantic component-level comparison vs golden + emitted OpenAPI update) → libpostal `/parse` (check: byte-level non-regression vs golden; fix the docstring) → nominatim `streetParts` from the neural parse (check: `/search` golden, byte-level).
-4. **Weights guard** lands with the `/v1/parse`-era CLI work (it must exist before the fallback dies).
+4. **Weights guard** arrives with the `/v1/parse`-era CLI work (it must exist before the fallback dies).
 5. **Rehoming:** `Classification.ts` → `core/types/`; break `context → solver` edge; move `proposal-pipeline.ts`.
 6. **Umbrella surface:** remove the classifiers re-export + `utils/parser.ts` consumers (keeps CI green through deletion).
 7. **Parity conversion** (after 5 — fixtures import the cleaned graph), then delete the old parity files.
@@ -123,7 +123,7 @@ Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (
 - Every swap PR carries its golden-set check; the goldens are committed fixtures, so checks outlive the parser.
 - Converted parity fixtures join the neural eval suite in the same PR that deletes their source files — coverage never dips between PRs.
 - CI sheds ~6.8k LOC of legacy tests at step 8; `ci:test` keeps running the full remaining suite.
-- Standing eval checks (`mailwoman eval promote`, demo presets) run per swap; ledger append on PASS as usual.
+- Standing eval checks (`mailwoman eval promote`, demo presets) run per swap; ledger append on pass as usual.
 
 ## Migration guide (outline, ships in docs)
 

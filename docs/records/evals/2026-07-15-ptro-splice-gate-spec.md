@@ -5,11 +5,11 @@
 commitment to a per-locale non-inferiority leg, declared in advance. The FR n=3000 coordinate leg
 from v5.1.0 is the template.
 
-**Commit-record caveat (honest sequencing).** This file was authored before any leg was graded, and
+**Commit-record caveat (direct sequencing).** This file was authored before any leg was graded, and
 its bars are unedited since. But the commit that was supposed to land it first _failed silently_ —
 the pre-commit hook runs the compiled CLI and `out/` was stale from another branch, and a `tail -1`
-pipe hid the error — so it entered git AFTER the v266 grading below rather than before it. The bars
-were not tuned to the result (v266 is a no-op; there was nothing to tune toward), but the git record
+pipe hid the error — so it entered git after the v266 grading below rather than before it. The bars
+were not tuned to the measured output (v266 is a no-op; there was nothing to tune toward), but the git record
 cannot prove that ordering, and pretending otherwise is worth less than saying so. Protocol lesson in
 the night-3 postmortem: verify the commit landed, and rebuild `out/` after any branch switch.
 
@@ -64,7 +64,7 @@ Plus the standing battery, unchanged and non-negotiable:
   byte-fallback words must disappear from the tokenization.
 - Parity floors (`eval parity`, ship config): house_number / postcode / street must not regress.
 - Golden 2pp per-tag promote check (`eval error-analysis`).
-- Gauntlet (regression + metamorphic) PASS.
+- Gauntlet (regression + metamorphic) pass.
 - Demo presets 6/6, zero grouper-audit nodes.
 - FR non-inferiority: `oa-fr-coord-150` — no overlap, so this is a control leg; a move here means
   the "no overlap ⇒ no change" reasoning is wrong and the whole splice is suspect.
@@ -74,7 +74,7 @@ Plus the standing battery, unchanged and non-negotiable:
 
 ## RESULT — v266 (OA-sourced) is FALSIFIED at the data level, no GPU spent
 
-The splice built and mean-init'd cleanly (74,253 vocab, package-shaped candidate at
+The splice built and mean-init'd directly (74,253 vocab, package-shaped candidate at
 `scratchpad/v266-cache`), and then did **nothing**: tokenization byte-identical to v264 on PT/RO
 inputs, parity identical (PT 5/8, RO 4/5, CZ 2/3, PL 5/6, SK 1/1 — every cell unchanged). The
 accepted-locale legs were never reached, because the target legs failed first. Cause, measured in the
@@ -91,11 +91,11 @@ source data rather than inferred:
   unigram produced exactly one RO-diacritic piece (`Î`). `ț` byte-fallback is untouched
   (`en|<0xC8>|<0x9B>|ei` before and after).
 
-The `--accept-overlap cz,es,nl` legs are therefore **moot for v266** and are NOT reported as passes:
+The `--accept-overlap cz,es,nl` legs are therefore **moot for v266** and are not reported as passes:
 an unchanged tokenizer trivially cannot move them, and reporting "no regression" from a no-op would
 be a fake green.
 
-## The fix, mechanism-confirmed (v267 — a NEW candidate, NOT covered by this spec)
+## The fix, mechanism-confirmed (v267 — a new candidate, not covered by this spec)
 
 Re-sourcing the splice text from **WOF native-language names** (`names` table, `language=''`, PT+RO;
 23,768 names, 3,836 with `ț`/`ș`, 2,260 with `ã`/`õ`/`ç`) via the tool's existing `--extra-text`
@@ -113,10 +113,10 @@ level:
 `fr` (`é`), `it` (`ã`), and `pl` (`ó`) — on top of cz/es/nl. FR is the largest trained locale and is
 exactly what the v5.1.0 "net-positive by luck" incident ran through. Accepting six locales requires a
 fresh pre-registration with six legs, graded before promotion; that is a new check spec, not an
-amendment to this one, and it is deliberately NOT rushed to fit a shift boundary. Artifacts staged
+amendment to this one, and it is deliberately not rushed to fit a shift boundary. Artifacts staged
 for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v264: 39.8 MB, +0.3%).
 
-### v267 characterization (measured, NOT a check run — the legs it needs aren't pre-registered yet)
+### v267 characterization (measured, not a check run — the legs it needs aren't pre-registered yet)
 
 Ship-config parity, full per-fixture diff vs v264 (`scratchpad/diff-v264-v267.mjs`, untruncated):
 
@@ -131,13 +131,13 @@ Ship-config parity, full per-fixture diff vs v264 (`scratchpad/diff-v264-v267.mj
 | **ASCII-only fixtures with any output drift** | —             | **0** (the byte-identity guarantee holds) |
 
 Net street +1 = **fixed 2, broke 1**. The two fixes are the exact target rows
-(`Tv. dos Fiéis de Deus…`, `Splaiul Independenței 313`). The break is real and worth naming:
+(`Tv. dos Fiéis de Deus…`, `Splaiul Independenței 313`). The break matters naming:
 
 > `BR v1-address.bra-1` `"Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil"` —
 > street `"Rua Raul Leite Magalhães"` → **`""`** (emitted nowhere).
 
 **Brazilian** Portuguese — a PT-family locale that is not in the overlap check's `--trained-samples`
-list at all, so the check never saw it. That is a gap in the check's locale inventory, not just this
+list at all, so the check never saw it. That is a gap in the check's locale inventory, notthis
 candidate's problem: `pt-BR` (and the OA `br` set) should join the standing sample list before any
 PT-touching splice is graded again.
 
@@ -150,6 +150,6 @@ between runs. The full diff shows zero ASCII drift. Never diff two runs through 
 
 Ship **only** on a clean sweep: every accepted-locale leg within its bar, PT/RO improved, no floor
 or check regression, size within budget. Any accepted-locale leg outside its bar = the splice does
-not ship as-is (the honest outcome is a narrower splice — RO-only, which has no `Á/É/À/Ú/â`
+not ship as-is (the direct outcome is a narrower splice — RO-only, which has no `Á/É/À/Ú/â`
 exposure — not a relaxed bar). Bars are not editable after the first measurement; a miss is an
 adjudication, and the revision protocol's human-in-the-loop is the buffer, not a constant.

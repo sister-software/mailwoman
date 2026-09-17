@@ -8,7 +8,7 @@ Scope: public docs, concept articles, plan/reference docs, eval reports, retrosp
 
 Mailwoman's direction is coherent and worth continuing: a TypeScript-native address parser/resolver that runs in Node and the browser, combines deterministic rules with a small neural classifier, and uses a staged pipeline to keep learned, lookup, and constraint-composition knowledge in the right layers. The best project idea is not "neural geocoding" in the abstract; it is the Knowledge Ladder: learn context-sensitive address structure, look up world facts in a gazetteer, then reconcile candidates rather than trusting local argmaxes.
 
-The main risk is not that the architecture is wrong. The risk is that the docs and roadmap let too many states coexist: historical plan, shipped code, in-progress training, feature-flag scaffolding, and public product story are interleaved without a single canonical status layer. A newcomer can understand the philosophy, but cannot reliably answer "what can I install today, what works, and what is still experimental?"
+The main risk is not that the architecture is wrong. The risk is that the docs and roadmap let too several states coexist: historical plan, shipped code, in-progress training, feature-flag scaffolding, and public product story are interleaved without a single canonical status layer. A newcomer can understand the philosophy, but cannot reliably answer "what can I install today, what works, and what is still experimental?"
 
 The documentation needs curatorial direction more than prose rewrites. Preserve the strong essays. Add a status page, getting-started path, API reference, audience labels, and a current-state reconciliation sweep. Move operator material out of the default reader path. Treat blog posts as narrative explanations, not canonical status.
 
@@ -18,7 +18,7 @@ The stated target reader is a capable software engineer with basic geocoding int
 
 - The "Understanding Mailwoman" track is strong at explaining why addresses are hard before selling the solution.
 - The "simple geocoders" appendix is unusually credible because it steel-mans alternatives.
-- The "Two voices arguing inside a model" blog post is the best ML primer in the repo: concrete, honest, and non-condescending.
+- The "Two voices arguing inside a model" blog post is the best ML primer in the repo: concrete, direct, and non-condescending.
 - The WOF content gives a rare practical bridge between geocoding theory and real open-data engineering.
 
 But the reader is repeatedly dropped into operator state:
@@ -56,7 +56,7 @@ This split is correct. Runtime consumers get npm packages, browser viability, an
 
 ### Small encoder-only classifier
 
-The small transformer is a sound fit for token/span labelling. A generative LLM would be slower, harder to audit, and worse aligned with "return spans from the input." The docs should keep explaining that the model labels existing tokens; it does not generate addresses or memorize the world.
+The small transformer is a sound fit for token/span labeling. A generative LLM would be slower, harder to audit, and worse aligned with "return spans from the input." The docs should keep explaining that the model labels existing tokens; it does not generate addresses or memorize the world.
 
 ### Rules plus neural, not rules versus neural
 
@@ -114,7 +114,7 @@ Per-component F1 is not enough for this project. Each ship should report:
 - full-parse exact match
 - empty-parse rate
 - overconfident-wrong rate
-- calibration by parse, not just token
+- calibration by parse, nottoken
 - top-1 resolver accuracy and top-5 recall where gold exists
 - per-failure-class results from the "addresses that break geocoders" taxonomy
 
@@ -291,7 +291,7 @@ This preserves depth while giving each audience a door.
 After the independent pass, the two provided Deepseek notes largely confirmed the same conclusions: strong architecture, serious status drift, missing status/getting-started/API pages, terminology confusion, and end-to-end reconcile validation as a key next step. Two points from those notes are worth carrying forward explicitly:
 
 - The "gap" sentence from `CONTEXT.md` should be louder: there is no widely adopted neural address parser shipped as a library.
-- The current usable-product story must be honest: yes, you can run pieces today, but the neural model's standalone component F1 is limited and the strongest architecture path still needs end-to-end default-path validation.
+- The current usable-product story must be direct: yes, you can run pieces today, but the neural model's standalone component F1 is limited and the strongest architecture path still needs end-to-end default-path validation.
 
 ## Bottom line
 

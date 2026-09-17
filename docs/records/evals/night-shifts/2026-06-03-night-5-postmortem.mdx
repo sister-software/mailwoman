@@ -5,7 +5,7 @@ US, NL, FR, and DE across five feature PRs, on both the Node (SQLite) and browse
 GPU, all from our own WOF data. And it already pays off:
 on the same 3,000 German addresses, a regex plus a gazetteer lookup geolocates to a 2.8 km median, where
 the full neural-parser-plus-resolver pipeline lands at 10 km.** That is the anchor-first thesis working:
-when the neural parser is out of distribution on a locale, a structured signal carries the address anyway.
+when the neural parser is out of distribution on a locale, the anchor still geolocates the address.
 
 ## What shipped
 
@@ -61,7 +61,7 @@ when the neural parser is out of distribution on a locale, a structured signal c
 
 - The WOF German postcode repo is rougher than expected. Roughly a third of its records are bare stubs
   with no coordinates and no usable hierarchy, so the WOF-pure path tops out near 66% DE placement. The
-  honest fix crosses a policy line (see open questions).
+  direct fix crosses a policy line (see open questions).
 - Per-locale coverage is a grind, and not every locale rewards it. FR and DE were quick. IT cost an
   admin-repo clone and build only to reveal unusable postcode hierarchy (73% orphans, wrong parents), and
   ES has no parent reference to borrow from at any cost. The lesson: probe each WOF postcode repo's data

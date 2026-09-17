@@ -16,18 +16,18 @@ substance lives in two documents this memo does not duplicate:
   `char_ids (B,S,W)` with S=label units / W=composition window; sealed char vocab; one-char CJK
   units at ctx=3/W=7; compact `2-3-16` as whole-span house_number) and the full Leg-1 probe spec.
 
-## Where this actually stands (the punt audit)
+## Where this stands (the punt audit)
 
 | Milestone                                                                  | Status                                                            |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | Architecture decision (char + router; no SP retrain; no unification in v8) | **DECIDED** 2026-07-18                                            |
-| Schema (JP seven declared, per-locale blocking designed)                   | **DONE on paper** — activation is Phase 2                         |
+| Schema (JP seven declared, per-locale blocking designed)                   | **done on paper** — activation is Phase 2                         |
 | CharCNN encoder + char tokenizer                                           | **COMMITTED CODE**, ONNX-clean, conditional off since #825        |
 | **Phase 0 — the BIO-alignment de-risk** (the named biggest risk)           | **RETIRED 2026-07-18: 1,560/1,560 aligned** (`align.ts` verified) |
 | Data: JP Overture 19.6M on disk; KR juso 6.17M acquired; TW 9.7M on disk   | **ACQUIRED**                                                      |
 | Leg-1/Leg-2 probes (specced, conditional, ~2 A100-hours total)             | **NEVER RUN** ← the punt                                          |
 
-The honest summary: everything cheap and hard was done in July; the two one-hour training probes
+The direct summary: everything cheap and hard was done in July; the two one-hour training probes
 that convert the design into a verdict were never launched. That is what changes now.
 
 ## The committed schedule
@@ -37,7 +37,7 @@ that convert the design into a verdict were never launched. That is what changes
 - **Leg 1 (JP viability, checks Arc 2):** bare CharCNN model, ~200k JP rows on the universal
   STAGE3 subset (D5: no JP-seven yet, compact numbers as whole-span house_number), held-out by
   municipality bucket, scored on JP coordinate-acceptability. **Pre-registered check: ≥ 0.70**
-  (the bare-Latin substrate floor). The FAIL ladder is written (per-tag split → boundary audit →
+  (the bare-Latin substrate floor). The fail ladder is written (per-tag split → boundary audit →
   collapse check) and _cannot_ indict alignment — Phase 0 retired that.
 - **Leg 2 (unification bake-off, checks v9's shape, not v8):** the same bare char model on the
   Latin corpus vs bare SP on the Latin coord boards. Run in the same session; record the delta.
@@ -70,5 +70,5 @@ stands as the operator's headline preference unless reprioritized at the Leg-1 v
 
 East-Asian address stock is a validation/record-matching segment no in-process competitor serves;
 the char model is _small_ (the 28M SP embedding table collapses to ~0.3M), so the pocket/browser
-story survives. A JP-capable base extends the B11 surface to JP-market customers with the same
+the result. A JP-capable base extends the B11 surface to JP-market customers with the same
 fine-tune template — one more reason Arc 2 is foundation work, not a side quest.

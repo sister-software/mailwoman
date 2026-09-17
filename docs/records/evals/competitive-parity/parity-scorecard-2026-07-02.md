@@ -1,7 +1,7 @@
 # Parity Scorecard — 2026-07-02 (the #885 measurement re-anchor: full re-score of the shipped 5.0.0 line)
 
 Supersedes [2026-06-11](./parity-scorecard-2026-06-11.md) — the first complete per-tag scorecard
-since it. Same two lenses, same rules: arena head-to-head is whole-parse-strict (honest,
+since it. Same two lenses, same rules: arena head-to-head is whole-parse-strict (direct,
 understates per-tag wins); per-tag F1 is what the campaigns move; real-OOD columns are the truth
 for campaign tags. Self-emitted from `scripts/eval/promotion-check.ts` (the #479 battery:
 `per-locale-f1.ts` + `score-affix.ts` + `score-country-homograph.ts` + `de-order-eval.ts` +
@@ -12,7 +12,7 @@ of the [2026-07-01 trajectory review](https://github.com/sister-software/mailwom
 the north-star moved to the assembled coordinate, five label-F1 regressions shipped as
 "coordinate-invisible" with per-case justification but no periodic backstop. This re-score is the
 backstop: it re-measures every v4.4.0-check subset against the currently shipped bytes and asks
-whether the deferred label debt stayed bounded. **Verdict: it did — 17/17 floors PASS
+whether the deferred label debt stayed bounded. **Verdict: it did — 17/17 floors pass
 (`verdict.json`), and most of the ledger moved the other way.** Two unsigned drifts surface and
 go on the record: `fr.cedex_real` 96.1 → 89.4 (still 19pp above floor) and the unfloored
 libpostal clean-canonical arena 36 → 30%.
@@ -57,9 +57,9 @@ last full baseline).
 | us.street (folded) | golden dev              |     74 |   75.5 |   77.9 |   **82.3** |   +4.4 | PASS                |
 | us.locality        | golden dev              |   62.2 |   74.4 |   75.7 |   **76.7** |   +1.0 | PASS                |
 | us.region          | golden dev              |   80.1 |   89.1 |   90.3 |   **88.6** |   −1.7 | PASS                |
-| us.postcode        | golden dev              |   95\* |   97.8 |   98.3 |   **95.0** | −3.3 † | PASS (0.005 margin) |
+| us.postcode        | golden dev              |   95\* |   97.8 |   98.3 |   **95.0** | −3.3 † | pass (0.005 margin) |
 | us.micro           | golden dev              |   81.6 |   85.1 |   86.1 |   **85.7** |   −0.4 | PASS                |
-| fr.postcode        | golden dev              | 99.3\* |   99.7 |   99.6 |   **99.3** | −0.3 † | PASS (0.04 margin)  |
+| fr.postcode        | golden dev              | 99.3\* |   99.7 |   99.6 |   **99.3** | −0.3 † | pass (0.04 margin)  |
 | fr.house_number    | golden dev              |     91 |   97.7 |   97.2 |   **98.1** |   +0.9 | PASS                |
 | fr.region          | golden dev              |   16.2 |   16.2 |   25.6 |   **48.4** |  +22.8 | PASS                |
 | de.native_locality | de-order (anchor on)    |   83.8 |   90.1 |   91.0 |   **91.1** |   +0.1 | PASS                |
@@ -68,7 +68,7 @@ last full baseline).
 † The two documented v4.15.0 check revisions — the drop is the priced-in #723 trade, not new
 drift. Note both now sit **exactly at their revised floors** (us.postcode 95.005/95.0,
 fr.postcode 99.341/99.3): the floors have zero slack left, which is the correct design (the floor
-IS the shipped level) but means any future hair of postcode loss fails the check loudly.
+is the shipped level) but means any future hair of postcode loss fails the check loudly.
 
 ⚠ `fr.cedex_real` 96.1 → 89.4 is the one >2pp real-OOD move with no written justification in any
 promotion doc between v4.4.0 and v4.15.0 — the exact pattern #885 exists to catch. It remains
@@ -95,7 +95,7 @@ libpostal (clean/canonical) arena dipped 36 → 30%** — the neural parser now 
 multi-locale releases. Unfloored, flagged-not-conditional (the same hygiene as the 06-11 perturb note):
 if a future release wants to check it, this is the baseline to floor.
 
-## The assembled coordinate (the north star, for anchor)
+## The assembled coordinate (the guide, for anchor)
 
 Label-F1 above is the drift backstop, not the verdict. The shipped line's coordinate record,
 measured this week on the same artifact (see `#884` and the [day eval](https://github.com/sister-software/mailwoman/blob/feat/825-v196-slavic-anchor/docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md)):

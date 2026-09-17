@@ -14,7 +14,7 @@
 
 - **`erasableSyntaxOnly: true`** — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has ZERO runtime dependencies.** Not `@mailwoman/core`, not `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
+- **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core`, not `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
 - **Acronym casing:** whole camelCase components — `parseJSON`, `readID`, `POILookup`. `ID` never `Id`. Enforced by `sister-software/no-title-case-acronym` in `yarn lint:oxlint`.
 - **No raw `process.env` / `process.argv`** — CI-enforced. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `mailwomanDataRoot`). Never hard-code `/mnt/playpen/mailwoman-data`.
@@ -76,7 +76,7 @@ Classify by hand — this is a judgement the measurement cannot make. The classe
 
 `fold_failure` is not one class. `normalizeLocalityForKey` — the fold `constraint-census` keys with — was
 measured correct (NFKD, strip combining marks, lowercase, strip `.,'’`, collapse whitespace), so the
-denominator is NOT contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
+denominator is not contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
 that produces three distinct failures. Record which one each row is:
 
 | Sub-mechanism       | Board row        | Folds to         | Register likely holds |
@@ -752,7 +752,7 @@ yarn compile
 yarn vitest run packages/core/lib/layers
 ```
 
-Expected: PASS. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
+Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
 
 - [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes, not what it is called**
 
@@ -890,7 +890,7 @@ yarn compile
 yarn vitest run packages/bdc packages/spatial
 ```
 
-Expected: PASS. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
+Expected: pass. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
 `build-bdc.ts`'s own coverage-cell derivation — that test is the regression net for this move and must not
 be edited.
 
@@ -931,7 +931,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: PASS. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
+Expected: pass. Record the test count — it must be identical after the change. **The whole acceptance criterion of this task is that this file's assertions never change.**
 
 - [ ] **Step 2: Add the dependency**
 
@@ -981,7 +981,7 @@ yarn compile
 yarn vitest run packages/bdc/lib/sdk/plausibility.test.ts
 ```
 
-Expected: PASS with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
+Expected: pass with the same test count as Step 1, and **zero edits to the test file**. If a test needed changing, the re-expression changed behaviour and must be redone.
 
 - [ ] **Step 6: Commit**
 
@@ -1182,7 +1182,7 @@ Expected: PASS, 5 tests.
 
 `uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
 cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
-Ireland coordinate returns `null` for the OTHER reason (NI is outside OS Open UPRN coverage — the
+Ireland coordinate returns `null` for the other reason (NI is outside OS Open UPRN coverage — the
 `uprn-lookup.ts` docstring names it). If NI returns an exclusion, the coverage read is wrong.
 
 - [ ] **Step 7: Commit**
@@ -1387,7 +1387,7 @@ describe("epistemic_status", () => {
 })
 ```
 
-Use the fixture helpers already present in that file; if none matches, build the result through the same path the neighbouring tests use rather than inventing a new harness.
+Use the fixture helpers already present in that file; if none matches, build the result through the same path the neighboring tests use rather than inventing a new harness.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -1670,7 +1670,7 @@ export function parseH1(fields: string[]): { housing_units: number; occupied: nu
 }
 ```
 
-Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros — and the loader must `yield` a count of those, because a silent zero here is indistinguishable from a genuinely empty block.
+Extract `seg2Path` beside `seg1Path` (`${fileAbbr}00002${vintage}.pl`), then add a pass that reads segment 2 into a `Map<string, ReturnType<typeof parseH1>>` keyed by GEOID before the existing segment-1 loop, and spread the H1 fields into each `batch.push({...})`. A LOGRECNO present in segment 1 but absent from segment 2 gets zeros — and the loader must `yield` a count of those, because a silent zero here is indistinguishable from a in fact empty block.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1734,7 +1734,7 @@ Read `packages/ban/lib/sdk/fetch.ts` and `packages/ban/lib/sdk/extract.ts` for f
 
 Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 
-- **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and NO row for the rest (absent is unknown; never a zero-completeness row).
+- **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and no row for the rest (absent is unknown; never a zero-completeness row).
 - **SOURCE_PRESENT only** — no per-commune signal exists. The FR lexical arm does not ship. Record this as a closed negative result so it is not re-proposed.
 
 Either verdict must state what was measured, not what was assumed.
@@ -1758,7 +1758,7 @@ whether that is true of the data or only of the sentence."
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
 
-**Codebase survey, 2026-08-21 — what this plan does NOT build because it already exists.** `UPRNLookup`
+**Codebase survey, 2026-08-21 — what this plan does not build because it already exists.** `UPRNLookup`
 (`resolver-wof-sqlite/uprn-lookup.ts`) already does the bounded nearest-point search Task 5 was going to
 write, and already names the coverage consult as the caller's obligation. `res9ShortCellToRes6Parent`
 already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-derived.

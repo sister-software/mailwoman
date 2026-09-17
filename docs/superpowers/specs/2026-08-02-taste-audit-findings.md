@@ -45,7 +45,7 @@ and B14's test fixtures.
 1. **The great-circle cluster** (7 candidates) → **0 findings**. Five were importers, one a
    documented adapter, one a deliberate variant for a different quantity.
 2. **B1** said move all three point-in-polygon copies to `@mailwoman/spatial`. `nuts-lookup` and
-   `timezone-lookup` each carry ONE dependency (zero-dep `@mailwoman/annotations`); spatial pulls
+   `timezone-lookup` each carry one dependency (zero-dep `@mailwoman/annotations`); spatial pulls
    `@mailwoman/core` and its ~11 MB of shipped data. Three orders of magnitude for fifteen lines.
    One moved, two documented in place.
 3. **A1** called nine files nine forks with a "4.3× size spread = divergence". Reading their
@@ -654,7 +654,7 @@ them.
 
 ## Appendix: the embedded-newline census (2026-08-03)
 
-The CSV parse fix only changes extract bytes for a source that actually carries a newline inside a
+The CSV parse fix only changes extract bytes for a source that carries a newline inside a
 quoted field. That is measurable rather than arguable, so it was measured — every OpenAddresses
 member reachable on the lab host, scanned for lines with an odd number of quotes:
 

@@ -14,7 +14,7 @@ Every review — from three different models across two dates — converges on t
 | **Current risk**   | Architecture is ahead of integration. The reconcile path and top-K pipeline exist in code but aren't wired as the default, so the architectural thesis is unproven end-to-end.                                       |
 | **Training**       | Divergence is the active blocker. CE-only training is the right current experiment. v0.5.0 repeated the scope-bundling mistake v0.4.0's retrospective warned about.                                                  |
 | **Docs structure** | Missing a canonical status page, getting-started guide, and API reference. Terminology drift (Stage/Tier/Phase/Thread) needs reconciliation. Operator docs and user docs are interleaved without audience signposts. |
-| **Blog posts**     | Unusually strong and honest, but serial-narrative assumptions and missing search-engine preambles make them hostile to inbound readers.                                                                              |
+| **Blog posts**     | Unusually strong and direct, but serial-narrative assumptions and missing search-engine preambles make them hostile to inbound readers.                                                                              |
 | **Synthetic data** | LLM-generated corpus rows need curriculum controls — alignment validation alone is insufficient.                                                                                                                     |
 | **Next moves**     | Narrow the next cycle: status clarity, reconcile integration, product-level evals, one-variable training discipline, then spend.                                                                                     |
 
@@ -24,7 +24,7 @@ Every review — from three different models across two dates — converges on t
 
 ### Phase A — Curatorial cleanup (this week, zero GPU, zero code changes)
 
-These are docs-only changes that reduce status confusion immediately. They unlock every subsequent phase by ensuring contributors and reviewers share a single picture of what's shipped.
+These are docs-only changes the result status confusion immediately. They enable every subsequent phase by ensuring contributors and reviewers share a single picture of what's shipped.
 
 **Owner: human (docs track). Issues filed separately as needed.**
 
@@ -39,7 +39,7 @@ These are docs-only changes that reduce status confusion immediately. They unloc
 | Corpus              | corpus-v0.3.0 (677M rows). corpus-v0.4.0 (v0.3.0 + 4,771 kryptonite + ~73K transliteration pairs) exists but no stable classifier trained on it yet.                                                                                                                                                                                                                         |
 | Tokenizer           | v0.1.0 (16K vocab) — used by v0.4.0 weights. A1 (48K vocab, trained on corpus-v0.4.0) — trained, not yet used in stable classifier.                                                                                                                                                                                                                                          |
 | Runtime stages      | Table: each of the 6 stages, status (✅ default / 🚩 opt-in / 🧪 scaffold / ❌ not built), and what model weights it works with.                                                                                                                                                                                                                                             |
-| Browser demo        | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode is NOT active in the demo.                                                                                                                                                                                                                                                                        |
+| Browser demo        | Runs v0.4.0 weights + WOF SQLite in-browser. ~60MB cold load. Joint decode is not active in the demo.                                                                                                                                                                                                                                                                        |
 | Training state      | CE-only smoke passed (val_macro_f1=0.444, no divergence past step 2000). Full 50K CE-only run in progress. Target: first v0.5.0 weights that train stably.                                                                                                                                                                                                                   |
 | Known regressions   | Postcode F1 0.69 (down from 0.76 in v0.3.0). Coarse labels (country 0.21, region 0.19) remain rule-carried. Full-parse exact match ~0.08.                                                                                                                                                                                                                                    |
 | Not supported       | Rooftop/address-point geocoding. Multi-locale ensemble. Japanese addresses. PO boxes. Unit/apartment parsing.                                                                                                                                                                                                                                                                |
@@ -54,7 +54,7 @@ These are docs-only changes that reduce status confusion immediately. They unloc
 - 5-line Node.js example (parse → inspect components → resolve → get coordinates)
 - 5-line browser example (dynamic import, same API surface)
 - CLI example (`mailwoman parse "350 5th Ave, New York, NY 10118" --neural --format json`)
-- Honest caveats: model quality, resolver precision (admin/postcode-level, not rooftop), browser load time
+- direct caveats: model quality, resolver precision (admin/postcode-level, not rooftop), browser load time
 - Link to demo, status page, API reference
 
 #### A3. Create `/docs/api`
@@ -181,7 +181,7 @@ Decision matrix (from the Claude×DeepSeek follow-up):
 #### C2. If CE-only diverges
 
 - Bisect corpus: A1 tokenizer + corpus-v0.3.0 (keep tokenizer win, revert corpus)
-- If that trains cleanly: transliteration data is the destabilizer → cap B2 at low batch weight, retrain
+- If that trains directly: transliteration data is the destabilizer → cap B2 at low batch weight, retrain
 - If that also diverges: revert tokenizer to v0.1.0 → the A1 tokenizer itself is the destabilizer
 
 #### C3. Synthetic data curriculum (regardless of C1/C2 outcome)

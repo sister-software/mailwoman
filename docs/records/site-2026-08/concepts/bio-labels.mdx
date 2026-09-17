@@ -13,7 +13,7 @@ tags:
 
 # BIO labels
 
-BIO labelling is the trick that lets a token classifier (which decides one token at a time) emit **spans** (groups of consecutive tokens that mean one thing together). It is the standard approach for sequence labelling tasks in NLP — Named Entity Recognition, part-of-speech tagging, address parsing.
+BIO labeling is the trick that lets a token classifier (which decides one token at a time) emit **spans** (groups of consecutive tokens that mean one thing together). It is the standard approach for sequence labeling tasks in NLP — Named Entity Recognition, part-of-speech tagging, address parsing.
 
 This article explains the scheme, why it works, and a failure mode (the orphan-I) that motivated the decode-time fix covered in [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx#decoding-a-valid-sequence-and-building-the-tree). For the full walkthrough of a parse, start there; this page is the deep dive on the label space itself.
 
@@ -25,7 +25,7 @@ Each token gets exactly one label. The label is either:
 - **`B-X`** — the token is the **beginning** of an `X` span.
 - **`I-X`** — the token is **inside** a continuing `X` span.
 
-So a 3-token "Saint Petersburg, FL" labelled correctly looks like:
+So a 3-token "Saint Petersburg, FL" labeled correctly looks like:
 
 ```
 Saint          → B-locality
@@ -158,5 +158,5 @@ Expand the **BIO labels** section to see the word-level BIO label breakdown for 
 
 - [How Mailwoman parses an address](./how-mailwoman-parses-an-address.mdx) — the full parse this label space plugs into
 - [CRF decoder](./crf-decoder.mdx) — the structural-validity layer
-- [Tokenization](./tokenization.mdx) — what gets labelled
+- [Tokenization](./tokenization.mdx) — what gets labeled
 - [Training pipeline](./training-pipeline.mdx) — how BIO labels become training data

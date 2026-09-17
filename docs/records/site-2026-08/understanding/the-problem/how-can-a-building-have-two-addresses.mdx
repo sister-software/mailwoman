@@ -94,7 +94,7 @@ venue: Empire State Building
 locality: New York City
 ```
 
-And let the resolver return candidates for "Empire State Building" in New York City — which will include the 350 5th Ave location with high confidence. The parser does not need to know that "Empire State Building" and "350 5th Ave" are the same place. The resolver knows that because WOF stores both as names for the same `wof:id`.
+And let the resolver return candidates for "Empire State Building" in New York City — which will include the 350 5th Ave location with high confidence. The parser does not need to know that "Empire State Building" and "350 5th Ave" are the same place. The the system that because WOF stores both as names for the same `wof:id`.
 
 When the input is `350 5th Ave, New York, NY 10118` and the resolver returns the WOF record for the Empire State Building, the output should include the WOF ID and coordinates, but also preserve the raw parsed address. The user might need the mailing address form, not the building name.
 
@@ -115,7 +115,7 @@ components: {
 }
 ```
 
-The `unit` tag is optional — many addresses do not have units. But its presence in the schema means the parser can recognize and extract unit information when it exists, and flag its absence when the building is known to be multi-unit (from the resolver's building metadata).
+The `unit` tag is optional — several addresses do not have units. But its presence in the schema means the parser can recognize and extract unit information when it exists, and flag its absence when the building is known to be multi-unit (from the resolver's building metadata).
 
 ## See also
 

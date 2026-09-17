@@ -8,11 +8,11 @@ substantially eaten.
 ## What shipped
 
 - **v4.2.0 — the v1.0 parity flag-plant — live on every surface, byte-verified — and in true ship config it beats v0 on the CLEAN arena (41 vs 29), the first time ever.** Ship check
-  4/4 (`2026-06-10-night-10-ship-check.md`): honest-eval VT identical to baseline, presets
+  4/4 (`2026-06-10-night-10-ship-check.md`): direct-eval VT identical to baseline, presets
   clean (+ the intended affix split), int8 ≤0.1pp of fp32 (deterministic quant, md5
   `9eb4a99f…`), DE native 90.9. Merge sequence #468 → #469 → #491 (epic #466 closed), zero
   conflicts (the operator's squash choreography worked exactly as designed), zero
-  merge-wall blocks. Bookkeeping #494 (cards w/ honest `init_from` lineage, ledger row,
+  merge-wall blocks. Bookkeeping #494 (cards w/ direct `init_from` lineage, ledger row,
   scorecard re-emit, status/releases contract pages). HF staged + default; **the R2 leg**
   (10 objects, served-model md5 = the conditional artifact); `publish.yml` → npm 4.2.0
   (registry-direct verified), tag + release object.
@@ -53,7 +53,7 @@ substantially eaten.
 - **I published a wrong finding and corrected it hours later.** The NAD note's Finding 2
   attributed the locality gap to vanity cities; the measurement said census designations
   (1/461 vs 54%). Correction block published same-night, #498 filed with the real numbers.
-  Lesson: classify the misses BEFORE naming the cause — the attribution was plausible,
+  Lesson: classify the misses before naming the cause — the attribution was plausible,
   available, and wrong.
 - **The arena harness graded the wrong model silently** (env vars, not flags; the
   identical-to-baseline numbers were the tell). Caught before publication; the env-var
@@ -65,13 +65,13 @@ substantially eaten.
 
 ## Decisions made autonomously (alternatives considered)
 
-1. **Ran honest-eval with zero-filled gaz clues** (harness lacks the flag) — accepted as
+1. **Ran direct-eval with zero-filled gaz clues** (harness lacks the flag) — accepted as
    conservative-valid since it PASSED degraded; alternative was harness surgery mid-check
    (rejected: check integrity over completeness).
 2. **Repairs-in-both for `parseWithLogits`** — reconcile must see user-path tokens; the
    opts were silently ignored before, so no default change. Alternative (document the skip)
    rejected as preserving a latent divergence.
-3. **Arena dip (−2/3pp whole-parse) reported with caveats, NOT treated as a check** — the
+3. **Arena dip (−2/3pp whole-parse) reported with caveats, not treated as a check** — the
    arenas were never pre-registered as ship criteria; adding one retroactively is check
    drift in the other direction. Flagged for morning eyes instead.
 4. **#487 eval build deferred** (census downloads + shapefile parsing at hour 7) — recipe
@@ -106,7 +106,7 @@ substantially eaten.
 |                                   |                                                                                                                          |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | shift span                        | 08:08–15:00 UTC (operator offline)                                                                                       |
-| models trained                    | **0** (treadmill guard held; 1 export + 2 quant runs, ~3 min A100)                                                       |
+| models trained                    | **0** (the result; 1 export + 2 quant runs, ~3 min A100)                                                                 |
 | released                          | v4.2.0: npm (13 pkgs, registry-verified), HF + R2 (md5-verified), tag, release object                                    |
 | PRs merged                        | 10 — #491, #494, #495, #496, #497, #499, #500, #501, #502, #503 (gaz-fed arenas)                                         |
 | issues closed                     | #466, #472, #476, #479 (+ #475/#481/#487/#478 advanced with scoped completions)                                          |

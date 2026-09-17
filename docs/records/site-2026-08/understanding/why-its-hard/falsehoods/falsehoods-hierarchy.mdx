@@ -44,7 +44,7 @@ A parser that classifies `Quebec` as `region` will be wrong when the user means 
 
 ### "A locality is a municipality."
 
-`Brooklyn, NY` is a borough of New York City, not a municipality. USPS accepts it as a "preferred last line" city for many NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
+`Brooklyn, NY` is a borough of New York City, not a municipality. USPS accepts it as a "preferred last line" city for several NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
 
 `Hollywood, CA` is a neighborhood of Los Angeles, not an independent city. USPS accepts it. `Beverly Hills, CA 90210` is an independent city, but USPS allows "Los Angeles, CA 90210" as an alternate mailing city name. The same ZIP code can map to different municipal cities and different postal cities.
 
@@ -62,7 +62,7 @@ Geocoders that maintain their own administrative boundary snapshots go stale. Th
 
 **libpostal** handles administrative hierarchy through per-label classification. The CRF learns that a token after a locality and before a postcode is likely a region. The CRF does not know that `IL` is Illinois — it learns the statistical distribution of where region-shaped tokens appear. This works for structural identification but not for disambiguation: libpostal correctly identifies `region=IL` but cannot tell you whether `Springfield, IL` is a valid combination.
 
-**Pelias** uses WOF gazetteer lookup for the `whos_on_first` classifier. Tokens matching known administrative names are classified by placetype (country, region, locality, neighbourhood). Pelias also uses the Elasticsearch-backed resolver to find candidate places and score them by name match + population. But Pelias's parser and resolver are separate — the resolver cannot feed back into the parser to correct a misclassification. If the parser tags `Quebec` as `region` when the user meant Quebec City, the resolver searches for regions named Quebec and returns the province, not the city.
+**Pelias** uses WOF gazetteer lookup for the `whos_on_first` classifier. Tokens matching known administrative names are classified by placetype (country, region, locality, neighborhood). Pelias also uses the Elasticsearch-backed resolver to find candidate places and score them by name match + population. But Pelias's parser and resolver are separate — the resolver cannot feed back into the parser to correct a misclassification. If the parser tags `Quebec` as `region` when the user meant Quebec City, the resolver searches for regions named Quebec and returns the province, not the city.
 
 **Google's API** handles most of these through its integrated model. `Brooklyn, NY` resolves to Kings County, New York City. `Springfield` alone returns the most-popular Springfield (IL) with a structured address that includes the state. But the user cannot inspect how Google disambiguated — the result is a single coordinate, not a candidate set.
 
@@ -76,9 +76,9 @@ Geocoders that maintain their own administrative boundary snapshots go stale. Th
 
 ## What Mailwoman still can't do
 
-- **Postal city vs. legal municipality.** The resolver uses WOF's administrative hierarchy, which reflects legal boundaries. `Brooklyn, NY` as a postal city is not in WOF's hierarchy — WOF has Kings County (legal) and New York City (legal), with Brooklyn as a neighbourhood. The reconciler can find that the ZIP code's parent chain includes Kings County, but it cannot return "Brooklyn" as the municipality name without an alias layer.
+- **Postal city vs. legal municipality.** The resolver uses WOF's administrative hierarchy, which reflects legal boundaries. `Brooklyn, NY` as a postal city is not in WOF's hierarchy — WOF has Kings County (legal) and New York City (legal), with Brooklyn as a neighborhood. The reconciler can find that the ZIP code's parent chain includes Kings County, but it cannot return "Brooklyn" as the municipality name without an alias layer.
 - **Real-time administrative boundary updates.** WOF SQLite is a snapshot. When cities annex or counties dissolve, the snapshot drifts. The resolver can be updated independently, but the update must be triggered.
-- **City-state disambiguation without context.** `Singapore, Singapore` is unambiguous because the country IS the city. `Mexico` without context is ambiguous between the country and Mexico City. The resolver returns both candidates; the downstream application must decide which the user meant.
+- **City-state disambiguation without context.** `Singapore, Singapore` is unambiguous because the country is the city. `Mexico` without context is ambiguous between the country and Mexico City. The resolver returns both candidates; the downstream application must decide which the user meant.
 
 ## References
 

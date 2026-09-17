@@ -38,14 +38,14 @@ on the comma. Enabling it at 0.3 closes the case:
 ```
 
 The Gauntlet's `INV[comma-drop]` goes 8/10 → 9/10 held, and the White House holds on merit (graded against
-the original xfail list). Regression, metamorphic, and held-out all pass: **VERDICT: PASS — clear to ship.**
+the original xfail list). Regression, metamorphic, and held-out all pass: **VERDICT: pass — clear to ship.**
 
 ## Digit ownership
 
 The second change is the `synth-no-fragment` extract at its all-length long-number boost — the corpus change
 that teaches the street/number boundary, so a bare `Nordtømmesvegen 178` reads `house_number 178` rather
 than a postcode. On the Norwegian digit board, `bare-street-hn` moves 0.693 → 0.733 (+4pp), the `bare-pc`
-negative guard holds at 1.000, and the contextful classes hold. The gain is a clean net-positive, not a
+the bare-postcode class stays at 1.000, and the contextful classes hold. The change is a clean net-positive, not a
 trade — the tokenizer-level alternative (a number-piece vocab splice) cleared more on-board but failed the
 golden check on five tags, so it was not shipped.
 
@@ -54,7 +54,7 @@ golden check on five tags, so it was not shipped.
 - **Golden check** (`v6.0.0-shipped-baseline`, package-shaped `--weights-cache`, int8 candidate vs int8
   shipped): PASS. Zero tags regress more than 2 pp below shipped; the only >2 pp mover is
   `us.country_homograph_f1` **+2.3**. `fr.house_number` and the postcode tags hold.
-- **Gauntlet**: PASS — the first green run. 6.4.0 fails the same metamorphic comma-drop invariant.
+- **Gauntlet**: pass — the first green run. 6.4.0 fails the same metamorphic comma-drop invariant.
 
 ## Known open
 
@@ -62,7 +62,7 @@ The **French** comma-free case (`181 Rue du Chevaleret Paris`) is not fixed and 
 xfail. It is not French-specific and not a resolver gap: it is the **no-anchor bare-terminal-locality**
 case — a locality that is the last token with no trailing state or postcode to anchor it. A trailing state
 (`Washington DC`) or a postcode before the locality (`75013 Paris`) anchors the segmentation and resolves
-correctly; a bare terminal toponym is genuinely ambiguous against a street continuation, and the punct-drop
+correctly; a bare terminal toponym is in fact ambiguous against a street continuation, and the punct-drop
 augmentation does not disambiguate it. Closing it needs a locality name-index
 ([#30](https://github.com/sister-software/mailwoman/issues/30)) or a targeted no-anchor augmentation,
 tracked separately. It is low-frequency — nearly all real geocoding traffic carries a postcode or region.

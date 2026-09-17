@@ -18,7 +18,7 @@ Both facts point at the same change: **keep the hot classifier LR only for the w
 it, then anneal to base** — never yet tried in this arc (every run held classifier LR at 0.001
 for all 8k steps).
 
-## The run (ONE variable vs v3.12.0-comma-robust)
+## The run (one variable vs v3.12.0-comma-resilient)
 
 Clone `v3.12.0-comma-robust.yaml` verbatim (NZ allowlist stays; punct-drop 0.6 stays — it did no
 harm and the matched share is principled) + the single change:
@@ -36,7 +36,7 @@ Cost: about 25 min A100 (about $1.50) + the standard grade.
 
 ## Pre-registered acceptance (inherited verbatim from v3.12 — no reinterpretation)
 
-1. PRIMARY: a gauntlet-clean checkpoint exists; invariance suite (`--baseline v385`) shows NO new
+1. PRIMARY: a gauntlet-clean checkpoint exists; invariance suite (`--baseline v385`) shows no new
    violation class at the selected checkpoint; **checked at every checkpoint, odd included**.
 2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥ 66 tag-correct; FP 0 on gb-golden's own
    no-dependent_locality rows (the venue-confound floor stays a separately-reported number).
@@ -53,5 +53,5 @@ Cost: about 25 min A100 (about $1.50) + the standard grade.
 
 The phase boundary (2000) is taken from the checkpoint-sweep's resurrection-window measurement
 (~2k) and cRT's clean-through-6k read. If the operator prefers more margin, 3000 is defensible
-(cRT was still clean at 4k and 6k); the pre-registration above assumes 2000. Pick ONE before
+(cRT was still clean at 4k and 6k); the pre-registration above assumes 2000. Pick one before
 launch — the boundary is not sweepable inside this registration.

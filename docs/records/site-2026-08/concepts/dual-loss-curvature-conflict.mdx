@@ -17,15 +17,15 @@ If you haven't read [the v0.4.0 ablation retrospective](https://github.com/siste
 
 ## The failure fingerprint
 
-Across every recipe variant tried — different learning rates, hidden sizes, with and without class weights, with and without per-token CRF normalisation, with and without phrase-prior input features — training showed the same shape:
+Across every recipe variant tried — different learning rates, hidden sizes, with and without class weights, with and without per-token CRF normalization, with and without phrase-prior input features — training showed the same shape:
 
 1. **Clean descent through warmup.** Loss drops monotonically as expected.
 2. **Brief plateau near loss 0.41** (the deepest point any run reached).
 3. **Sharp climb back to the starting magnitude** over the next 100-300 steps.
 
-Validation macro-F1 mirrored the train loss curve: peaked when loss bottomed, collapsed to roughly random-baseline as loss climbed. The collapse step shifted with learning rate (lower LR → later collapse), but a factor-2 LR drop only delayed the collapse by ~1.3× — too sub-linear for "we just picked too high an LR" to explain.
+Validation macro-F1 mirrored the train loss curve: peaked when loss bottomed, collapsed to roughly random-baseline as loss climbed. The collapse step shifted with learning rate (lower LR → later collapse), but a factor-2 LR drop only delayed the collapse by ~1.3× — too sub-linear for "wepicked too high an LR" to explain.
 
-The bisect ruled out: learning rate, per-token CRF normalisation (§1), class-weighted cross-entropy (§3), hidden size (h384 vs h256), phrase-prior input features. That left two suspects — the tokenizer / corpus pair — and one we hadn't named: the dual loss itself.
+The bisect ruled out: learning rate, per-token CRF normalization (§1), class-weighted cross-entropy (§3), hidden size (h384 vs h256), phrase-prior input features. That left two suspects — the tokenizer / corpus pair — and one we hadn't named: the dual loss itself.
 
 ## The diagnostic technique
 
@@ -66,7 +66,7 @@ Two conclusions, both unexpected before the probe:
 
 The probe results are consistent with a specific story about why dual-loss training survives early and breaks late:
 
-**Above loss ~0.41 (cooperative regime).** The model starts at high entropy — random predictions, no structural understanding. Both loss surfaces slope downhill toward the same broad basin: "become less random." CE wants to refine per-token accuracy from random. CRF wants to maximise transition-probability coherence from random. Both objectives direct the optimiser the same way. Training descends cleanly.
+**Above loss ~0.41 (cooperative regime).** The model starts at high entropy — random predictions, no structural understanding. Both loss surfaces slope downhill toward the same broad basin: "become less random." CE wants to refine per-token accuracy from random. CRF wants to maximise transition-probability coherence from random. Both objectives direct the optimiser the same way. Training descends directly.
 
 **Below loss ~0.41 (conflict regime).** The model exits the high-entropy basin and starts making fine-grained decisions — specific per-token trade-offs between similar tags, structural patterns the CRF can score. CE and CRF stop agreeing. CE wants to refine per-token accuracy. CRF wants transition-probability shapes that may push individual tokens toward technically-coherent but locally-wrong tags. The two objectives now point in opposing directions on this data.
 
@@ -79,7 +79,7 @@ The "below 0.41" boundary is specific to this data and architecture: it marks th
 Several recipe knobs that ought to address this all failed in mailwoman's v0.5.0 attempts:
 
 - **Lowering `crf_loss_weight`** from 0.1 to 0.05 produced the v0.4.0-shipped weights, which still showed early signs of the same fingerprint (postcode regressed, full-parse exact match fell). The gradient-norm asymmetry is large enough that lowering the weight knob doesn't keep up — at `crf_loss_weight=0.05`, CRF still contributes 0.05 × 16 = 0.8× CE in optimization.
-- **Per-token CRF normalisation** (§1) — was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows the _gradient_ magnitudes are still wildly different even when _loss_ magnitudes were normalised. Loss-magnitude balance does not imply gradient-magnitude balance.
+- **Per-token CRF normalization** (§1) — was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows the _gradient_ magnitudes are still wildly different even when _loss_ magnitudes were normalized. Loss-magnitude balance does not imply gradient-magnitude balance.
 - **Global gradient clipping** to norm 1.0 — applied to the combined gradient after the dual-loss sum. Doesn't address the _relative_ dominance; CRF's 16× share of the budget is preserved through clipping.
 
 The pattern: knobs that _scale_ loss values don't fix asymmetric _curvature_. Below the cooperative-regime boundary, CRF NLL has a loss surface where small parameter changes produce large gradients on this data — and no amount of multiplicative weighting will rebalance that against CE's gentler surface.
@@ -111,7 +111,7 @@ Inference unchanged. The runtime still calls `model.crf.decode(emissions, mask)`
 A CE-only smoke run that has to convince you the repair works:
 
 - **Loss stable past step 2000.** Every prior dual-loss run diverged by step 2000. If CE-only stays at or below its basin minimum past that point, the repair holds.
-- **val_macro_F1 ≥ 0.35 at step 2000.** v0.4.0-shipped is 0.36; h256-bisect peaked at 0.40 before diverging. 0.35 says "stable AND nearly as good as the best dual-loss checkpoint ever reached" — and the stability is the win that matters.
+- **val_macro_F1 ≥ 0.35 at step 2000.** v0.4.0-shipped is 0.36; h256-bisect peaked at 0.40 before diverging. 0.35 says "stable and nearly as good as the best dual-loss checkpoint ever reached" — and the stability is the result that matters.
 - **Per-tag F1 trajectory.** Total macro_F1 hides tag-level collapse. If `venue` F1 drops from 0.39 to 0.05 while `house_number` climbs, you have a quality redistribution problem CE-only hasn't fixed. Cost: zero — confusion matrices for per-tag F1 are already computed during eval.
 
 If the smoke passes those checks, promote to a full 50K-step CE-only training run. Quality refinements (class weights, source weights, longer schedules) become safe to layer on top — they were unsafe under dual-loss because they amplified whichever loss was already aggressive.
@@ -137,7 +137,7 @@ When Mailwoman trains its model, it uses two different scoring systems — call 
 - **Voice A** (cross-entropy loss) asks: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
 - **Voice B** (CRF loss) asks: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
 
-Both voices are useful. A working address parser needs both per-word accuracy AND sensible patterns. The model's training combined both voices, with Voice B scaled down to 5% of Voice A's contribution — the assumption being that Voice B would contribute lightly as a structural nudge.
+Both voices are useful. A working address parser needs both per-word accuracy and sensible patterns. The model's training combined both voices, with Voice B scaled down to 5% of Voice A's contribution — the assumption being that Voice B would contribute lightly as a structural nudge.
 
 ### The cooperative regime
 
@@ -149,13 +149,13 @@ At the top of the hill (high loss, model is still random), every direction is do
 
 As you descend into a specific valley (loss gets lower, model gets better), the landscape becomes more detailed. The two GPSes start disagreeing: Voice A says the valley floor is to the left; Voice B says it's to the right. They no longer see the same valley.
 
-When that happens, your hiking direction is determined by **whichever GPS is shouting louder**. We measured this directly — took a snapshot of the model just before the climb started and measured each voice's contribution. Voice B's gradient was **16× larger** than Voice A's. Even scaled to 5%, Voice B was contributing roughly 80% as much as Voice A to the actual parameter updates.
+When that happens, your hiking direction is determined by **whichever GPS is shouting louder**. We measured this directly — took a snapshot of the modelbefore the climb started and measured each voice's contribution. Voice B's gradient was **16× larger** than Voice A's. Even scaled to 5%, Voice B was contributing roughly 80% as much as Voice A to the actual parameter updates.
 
 Voice B pulled the model away from the basin Voice A was guiding it toward. Voice A's score (per-word accuracy) got worse — which we saw as the loss climbing back up.
 
 ### The fix
 
-**Silence Voice B during training.** Keep it for inference (when the trained model actually parses addresses), where its structural rules — "no orphan tags, no invalid BIO sequences" — are enforced by the frozen CRF mask. But during training, let Voice A guide the model alone.
+**Silence Voice B during training.** Keep it for inference (when the trained model parses addresses), where its structural rules — "no orphan tags, no invalid BIO sequences" — are enforced by the frozen CRF mask. But during training, let Voice A guide the model alone.
 
 This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask, not from training the transition matrix. Training the transition matrix is what was fighting with Voice A.
 
@@ -163,7 +163,7 @@ This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural
 
 1. **"Add two losses together with weights" can be a disaster.** Two loss functions can have wildly different gradient magnitudes even when their loss _values_ look comparable. Multiplicative scaling on the loss value does not produce balanced contributions to the optimizer.
 2. **Cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered more than a month of retraining experiments. Always exhaust the zero-GPU diagnostic ladder before a retrain.
-3. **ML debugging is more like programming debugging than the field admits.** Bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for what's happening inside the model. Once you have it, the bug is usually findable.
+3. **ML debugging is more like programming debugging than the field admits.** Bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for what's happening inside the model. Once you have it, the bug is typically findable.
 
 ## See also
 

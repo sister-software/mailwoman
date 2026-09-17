@@ -28,7 +28,7 @@ loc = geo.geocode("1600 Pennsylvania Avenue NW, Washington, DC 20500")
 print(loc.latitude, loc.longitude)   # 38.8977 -77.0365
 ```
 
-Same call you already had. It now resolves against a rooftop-level result on your own box, and the result carries an OpenCage-style `annotations` block — timezone, coordinate formats, the things upstream Nominatim leaves empty — hanging off `loc.raw`.
+Same call you already had. It now resolves against a rooftop-level result on your own box, The API returns an OpenCage-style `annotations` block — timezone, coordinate formats, the things upstream Nominatim leaves empty — hanging off `loc.raw`.
 
 ## One `docker run` for the server
 
@@ -69,4 +69,4 @@ And the license is AGPL, with a commercial option. If you're embedding it in som
 
 ## Where it stops
 
-None of this changes what the geocoder does — it's the same parser and the same resolver from a month of eval posts. What changed is the distance between reading this and having an endpoint, which is now a `docker run` or an `npm install`, not a migration. The address still turns into a coordinate. It just does it inside the stack you already have.
+None of this changes what the geocoder does — it's the same parser and the same resolver from a month of eval posts. What changed is the distance between reading this and having an endpoint, which is now a `docker run` or an `npm install`, not a migration. The address still turns into a coordinate. Itdoes it inside the stack you already have.

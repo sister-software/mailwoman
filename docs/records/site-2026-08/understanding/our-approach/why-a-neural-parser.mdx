@@ -24,7 +24,7 @@ This article explains why a neural approach addresses these problems better than
 
 ## The bitter lesson, applied to addresses
 
-Richard Sutton's 2019 essay "The Bitter Lesson" argues that over the history of AI, general methods that leverage computation have consistently outperformed hand-crafted domain-specific approaches. The lesson is bitter because the short-term win — encode your knowledge into rules — almost always loses to the long-term win — build a system that learns from data.
+Richard Sutton's 2019 essay "The Bitter Lesson" argues that over the history of AI, general methods that use computation have consistently outperformed hand-crafted domain-specific approaches. The lesson is bitter because the result — encode your knowledge into rules — almost always loses to the result — build a system that learns from data.
 
 Applied to address parsing:
 
@@ -60,7 +60,7 @@ The argument for training from scratch: address text is unlike natural language.
 
 The argument against: a pretrained model already knows what a token IS — how characters form subwords, how subwords form words, how punctuation structures phrases. That knowledge transfers even when the domain vocabulary is different. The empirical question is whether this transfer benefit outweighs the domain-mismatch cost. The answer will come from the v0.5.0 training experiments.
 
-### What the model actually does
+### What the model does
 
 The model takes a tokenized address string and produces, for each token, a probability distribution over 21 BIO labels (B-country, I-country, B-region, I-region, ..., O). The labels mark span boundaries: a contiguous sequence of `B-venue, I-venue, I-venue` means "this three-token span is a venue name."
 
@@ -80,10 +80,10 @@ Mailwoman v2 keeps every rule classifier from v1:
 
 - `house_number` — regex patterns for "number, possibly with letter suffix."
 - `postcode` — country-specific format patterns (US 5-digit, FR 5-digit, UK outward code).
-- `whos_on_first` — gazetteer lookup for country, region, locality, and neighbourhood names.
+- `whos_on_first` — gazetteer lookup for country, region, locality, and neighborhood names.
 - `street_prefix` / `street_suffix` — dictionaries of known directionals and street types.
 
-These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode IS a postcode — a model gains nothing by re-learning that pattern.
+These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode is a postcode — a model gains nothing by re-learning that pattern.
 
 The **policy registry** decides, per component, per locale, which classifier(s) get authority:
 

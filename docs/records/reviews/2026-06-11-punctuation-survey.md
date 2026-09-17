@@ -230,7 +230,7 @@ char_filter provides most of it.
   semicolon-separated `field=value` pairs; punctuation normalization inside free-form queries
   is not documented ([HERE Geocoding & Search docs](https://www.here.com/docs/category/geocoding-search-v7)).
 
-The honest summary: commercial systems document punctuation as _input contract_ (what you may
+The direct summary: commercial systems document punctuation as _input contract_ (what you may
 send) rather than _mechanism_ (what they do with it). No design evidence to mine beyond "they
 reserve list delimiters and discourage sub-premise content."
 
@@ -246,7 +246,7 @@ can't: in canonical data, punctuation is frequently **presentation over real str
   comma-separated vs 266k semicolon-separated values as of January 2026. Same glyph class,
   two different data dialects.
 - **Hyphen ranges are ambiguous by design**: "10-95" is either a literal label (the NYC Queens
-  `69-10` class, where the hyphenated form IS the house number) or a range to interpolate —
+  `69-10` class, where the hyphenated form is the house number) or a range to interpolate —
   OSM disambiguates with a _separate tag_ (`addr:interpolation`), not by syntax. A parser that
   splits every numeric hyphen is wrong in Queens; one that never splits is wrong on ranges.
 - **Czech/Slovak slash numbers**: the displayed `123/4` is conscription number + orientation
@@ -260,7 +260,7 @@ can't: in canonical data, punctuation is frequently **presentation over real str
 
 Implication for us: Austria/Czechia's `14/2`, Australia's `1/123`, USPS's `123 1/2` are three
 different structures under one glyph, distinguishable only by locale + position. "Parse the
-slash as structure, locale-conditionally" is aligned with how the canonical data is actually
+slash as structure, locale-conditionally" is aligned with how the canonical data is
 modeled; "delete the slash" destroys exactly the bits the data model keeps in separate fields.
 
 ---

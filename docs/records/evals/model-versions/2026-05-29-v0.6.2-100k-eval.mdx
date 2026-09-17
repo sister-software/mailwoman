@@ -8,7 +8,7 @@ title: "v0.6.2 step 100K eval — HOLD per check, but v0.6.3 directly addresses 
 The v0.6.2 corpus-rebalance retrain (per the
 [street-supplement architecture](../../site-2026-08/concepts/street-supplement-architecture.mdx))
 reached step 100K and was evaluated against v0.6.0 via the 2D pre-publish check +
-v0-vs-neural harness. Verdict: **HOLD** (1 check violation), but the picture is much
+v0-vs-neural harness. Verdict: **hold** (1 check violation), but the picture is much
 better than the step-20K early eval suggested, and v0.6.3 — pre-staged on Modal — directly
 addresses the only remaining regression.
 
@@ -35,7 +35,7 @@ addresses the only remaining regression.
 | `locality` hallucinations           | 526             | 718             | **508** ✓                                        |
 | `region` recall                     | 65.2%           | 67.5%           | **67.6%** ✓ (+2.4pp)                             |
 | `postcode` recall                   | 76.0%           | 81.7%           | **84.1%** ✓ (+8.2pp)                             |
-| `street` recall                     | 27.7%           | 22.4%           | **27.1%** (-0.6pp — basically baseline)          |
+| `street` recall                     | 27.7%           | 22.4%           | **27.1%** (-0.6pp — in practice baseline)        |
 | `house_number` recall               | 79.0%           | 75.0%           | **74.0%** ❌ (-5.0pp — only remaining violation) |
 | `country` recall                    | 24.5%           | 36.3%           | 33.1% ✓ (+8.6pp)                                 |
 | `venue` recall                      | 29.0%           | 29.4%           | 29.3% (-)                                        |
@@ -66,7 +66,7 @@ The headline tags:
 ![v0.6.2 vs v0.6.2b f1.dependent_locality](../charts/v06x-f1-dependent_locality.svg)
 
 `dependent_locality` is 0 throughout both runs — confirming the v0.6.1
-regression is fully fixed at training time, not just at golden-eval time.
+regression is fully fixed at training time, notat golden-eval time.
 `house_number` stays near the 0.99 val-set ceiling (the regression to 74%
 shows up only on golden's harsher OpenAddresses cases).
 
@@ -127,7 +127,7 @@ Bistro` from `ADVERSARIAL_VENUES`. A module-load-time assertion now rejects any 
 ### Harness: essentially tied
 
 The v0-vs-neural harness pass rate moved 14.4% → 14.0%. Per the decision tree this is a
-sidegrade, and combined with the check failure, the strict reading is HOLD.
+sidegrade, and combined with the check failure, the strict reading is hold.
 
 But the per-tag picture shows real improvements on most tags. The harness measures strict
 deep-equality against the v0 rule-based parser's hand-tuned acceptance criteria — which is
@@ -142,11 +142,11 @@ Per the decision tree DeepSeek turn 7 / 8 established:
 | ---------- | ------------ | ---------------------------- |
 | Pass       | ≥ 25%        | Promote to default (HF)      |
 | Pass       | 15-24%       | Ship as experimental         |
-| Pass       | ≤ 14.4%      | HOLD (sidegrade not release) |
+| Pass       | ≤ 14.4%      | hold (sidegrade not release) |
 | **Fail**   | **any**      | **HOLD**                     |
 
 **v0.6.2 falls in row 4: HOLD.** Reasoning: the check failure is structural (house_number
-regression at 5pp, well above the 2pp threshold), and even though many tags improved,
+regression at 5pp, well above the 2pp threshold), and even though several tags improved,
 shipping with a 5pp drop on a high-baseline tag would surface as a real quality regression
 to downstream users.
 
@@ -162,7 +162,7 @@ Expected v0.6.3 outcome:
 - `dependent_locality` stays at 0 (the recipe preserves what v0.6.2 fixed)
 - Other tags maintain or modestly improve
 
-If v0.6.3 passes the check AND beats the harness baseline, it promotes. If it passes the check
+If v0.6.3 passes the check and beats the harness baseline, it promotes. If it passes the check
 but doesn't move the harness needle, it ships as experimental. If the house_number fix
 doesn't materialize, the linter design (see `project-corpus-poisoning-vulnerability` memory)
 becomes the priority — we need preventative checks before the next synth extract goes in.

@@ -49,7 +49,7 @@ gold "Treuen Vogtl"   resolved "Treuen"       (point inside Treuen ✓)
 These are not errors. The resolver found the right place; the metric demands an exact string the
 gazetteer doesn't use. Retraining cannot fix a measurement bug.
 
-**Berlin is a genuine failure — but not the one we were retraining for.** Berlin's PIP equals its
+**Berlin is an actual failure — but not the one we were retraining for.** Berlin's PIP equals its
 name-match (36.3%), so there's no hidden artifact. Looking closer: of 1,500 Berlin rows, **955 resolve to
 nothing at all**, and the 545 that resolve all resolve correctly to Berlin. Berlin's problem is not a
 wrong pick or a too-small polygon — it's that the model drops the locality span entirely in the
@@ -61,9 +61,9 @@ never touched it.
 
 ## Native German is essentially solved
 
-The other half of the story is native order — the layout real feeds and users actually use. By PIP it is
+The other half of the story is native order — the layout real feeds and users use. By PIP it is
 **96.2%** (anchor on), against a name-match that said 83.5%, a 12.7pp undersell. Berlin native is 99.2%, so
-the city-state bug is international-order ONLY. The full 2×2 (`scripts/eval/de-pip-eval.sh`):
+the city-state bug is international-order only. The full 2×2 (`scripts/eval/de-pip-eval.sh`):
 
 | order  | anchor | name-match | PIP-containment |
 | ------ | ------ | ---------: | --------------: |
@@ -74,7 +74,7 @@ the city-state bug is international-order ONLY. The full 2×2 (`scripts/eval/de-
 
 Two things fall out. The anchor does real work on native order (PIP 61 → 96), and it slightly _hurts_
 international PIP (59.6 off → 56.1 on) — the anchor was never the international change. And native German,
-measured honestly, beats Pelias comfortably and is done. The genuine residual is one thing: Berlin in
+measured directly, beats Pelias comfortably and is done. The actual residual is one thing: Berlin in
 international order. Everything else is the name-match artifact.
 
 ## Why three retrains "failed"

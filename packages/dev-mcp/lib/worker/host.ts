@@ -15,7 +15,7 @@
  *
  *   - In-flight tool calls are REJECTED with a restart error — they were running against the old module graph and
  *     their results would be unattributable.
- *   - Background jobs die with the child (the worker's SIGTERM handler cancels them); the restart result carries the
+ *   - Background jobs die with the child (the worker's SIGTERM handler cancels them); the restart result includes the
  *     aborted-call count so nothing disappears silently.
  *   - Engines are rebuilt lazily by the next call, per the registry's own contract.
  *

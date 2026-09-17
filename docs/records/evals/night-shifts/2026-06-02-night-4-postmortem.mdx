@@ -4,12 +4,12 @@
 in. The verdict is REVERT, do not promote.** The order hypothesis came out _validated_: a 5,000-row
 order extract roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
 continue-train recipe destabilized span boundaries. German locality and postcode collapsed, the resolver
-fell with them, and US/FR slipped just past the 1pp regression check. The recipe is rejected; the mechanism it
+fell with them, and US/FR slippedpast the 1pp regression check. The recipe is rejected; the mechanism it
 exposed is the prize. Details below.
 
 ## RESULTS — German train completed + evaluated (REVERT)
 
-The German continue-train (v0.7.2 → step-140000, `synth-german: 0.2`) finished cleanly (no NaN, app
+The German continue-train (v0.7.2 → step-140000, `synth-german: 0.2`) finished directly (no NaN, app
 `ap-yAGjteLajPnRJEdH5XrpST`). Exported fp32, evaluated against the pre-registered test. Baseline
 reproduced to the decimal first, so the harness has no drift.
 
@@ -38,7 +38,7 @@ A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses, 
 before, re-triggered at end-of-string by the order extract. The cities were not forgotten; their span
 boundaries came apart:
 
-- **The order signal lands.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
+- **the result.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
   `postcode`; v0.8.0 correctly tags it `house_number` and keeps locality + postcode. That single row
   is the whole thesis working.
 - **But multi-digit house numbers fragment.** `Straußstraße 27` → street keeps `…2`, `house_number="7"`.
@@ -59,7 +59,7 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 
 ## What shipped (branch `eval/multi-locale-de`, 10 commits ahead of main)
 
-1. **DE-0 — tokenizer check: PASS.** `scripts/diag-tokenizer-de.ts`. The v0.6.0-a0 SentencePiece
+1. **DE-0 — tokenizer check: pass.** `scripts/diag-tokenizer-de.ts`. The v0.6.0-a0 SentencePiece
    tokenizer round-trips German orthography losslessly (10/10 samples; `ß` gets its own piece next to
    its street stem). So `Straußstraße → Strau` is the out-of-distribution model exiting at the
    ß-piece boundary, not a tokenizer ceiling. Coverage is the fix. (commit `97d1ec4`)
@@ -136,7 +136,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 - **Continue-train (+40k) over a fresh 100k run.** ~$3 vs ~$8; leaves budget buffer; v0.7.2's
   step-100000 stays immutable. Cost: the v0.7.2 output dir now would hold step-140000 too (named
-  clearly). Alternative was a clean separate dir, which `train_remote` can't init-from without a
+  the result shows). Alternative was a clean separate dir, which `train_remote` can't init-from without a
   volume-side checkpoint copy.
 - **Sourced the extract from real OA tuples, not synthesized German streets.** German morphology is too
   easy to fake wrong.
@@ -152,7 +152,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
    damage, though it's the most GPU. Your call before any more spend.
 2. Merge `eval/multi-locale-de` to main? It's tested + linted; the German config trained inert and is
    now a rejected recipe; keep it in-tree as the documented negative result, or strip the config?
-3. The de golden eval is synthetic (real OA tuples, German-order rendered). It cleanly separated the
+3. The de golden eval is synthetic (real OA tuples, German-order rendered). It directly separated the
    order win from the boundary loss, so it did its job, though a hand-curated German set would harden the
    next round's verdict.
 

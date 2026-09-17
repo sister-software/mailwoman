@@ -196,7 +196,7 @@ def test_piece_span_is_declared_in_types() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygiene.py -q
 ```
 
-Expected: both tests FAIL. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
+Expected: both tests fail. The first lists exactly the five `tokenizer.py` sites at lines 541, 550, 566, 583 and 598 — and nothing else. The second fails with `ModuleNotFoundError: No module named 'mailwoman_train.types'`.
 
 If the first test names more than those five, the cycle reachability walk is over-reaching; read the extra entries before weakening the assertion. If it names fewer, the walk is under-reaching and the detector is worthless — a false negative here is indistinguishable from a clean tree.
 
@@ -254,7 +254,7 @@ uv run --extra dev --extra train pytest tests/mailwoman_train/test_import_hygien
 uv run --extra dev --extra train pytest tests -q
 ```
 
-Expected: the hygiene test PASSES, and the suite reports at least **984 passed** (983 plus the two new tests, minus none).
+Expected: the hygiene test passes, and the suite reports at least **984 passed** (983 plus the two new tests, minus none).
 
 - [ ] **Step 8: Lint, type-check, commit**
 
@@ -297,7 +297,7 @@ This is the measured boundary — every name that crosses a builder today:
 | `tw_registry.py:29`                                   | `build_tw_slice`    | `ascii_digits`, `normalize_text`                                                                                                       |
 | `build_kr_slice.py:52`, `build_registry_corpus.py:34` | `build_cjk_overlay` | `verify_cn_record`                                                                                                                     |
 
-`BOARD_BUCKET_MIN` does NOT move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
+`BOARD_BUCKET_MIN` does not move. It is 90 in `build_tw_slice.py` and a different value in `build_jp_slice.py`; the two importers alias it apart (`JP_BOARD_BUCKET_MIN`, `TW_BOARD_BUCKET_MIN`). It is a per-country constant and stays with its country in Task 13.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -341,7 +341,7 @@ def test_builder_machinery_answers_from_corpora() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_text_normalize.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.text'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.text'`.
 
 - [ ] **Step 3: Create the two packages**
 
@@ -627,7 +627,7 @@ If `load_config(None, strict=False)` does not yield a usable default, read `conf
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_encoder_split_parity.py -q
 ```
 
-Expected: PASS before any split. Save the logits to a file the split can diff against:
+Expected: pass before any split. Save the logits to a file the split can diff against:
 
 ```bash
 uv run python - <<'PY' > /tmp/encoder-reference.txt
@@ -830,7 +830,7 @@ def test_train_callback_protocol_declares_the_expected_members() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.protocols'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.protocols'`.
 
 - [ ] **Step 3: Write `protocols.py`**
 
@@ -897,7 +897,7 @@ uv run --extra dev --extra train pytest tests/mailwoman_train/test_protocols.py 
 uv run --extra dev --extra train pytest tests -q
 ```
 
-Expected: PASS; at least 992 passed overall.
+Expected: pass; at least 992 passed overall.
 
 - [ ] **Step 5: Commit**
 
@@ -975,7 +975,7 @@ def test_every_shipped_callback_satisfies_the_protocol() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_train_callbacks.py -q
 ```
 
-Expected: FAIL with `ImportError: cannot import name 'callbacks'`.
+Expected: fail with `ImportError: cannot import name 'callbacks'`.
 
 - [ ] **Step 3: Write the five callbacks**
 
@@ -1091,7 +1091,7 @@ def test_an_unknown_code_names_the_known_ones() -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_country_registry.py -q
 ```
 
-Expected: FAIL with `ModuleNotFoundError: No module named 'mailwoman_train.countries'`.
+Expected: fail with `ModuleNotFoundError: No module named 'mailwoman_train.countries'`.
 
 - [ ] **Step 3: Move Japan**
 
@@ -1224,7 +1224,7 @@ git commit -m "refactor(train): key per-country code by country under countries/
 - Consumes: every role module.
 - Produces: `cli.main(argv=None)`, and one `cli/commands/<name>.py` per subcommand, each exporting `add_parser(subparsers) -> None` and `run(args) -> int`.
 
-`scripts/verify_toolchain.py` does NOT move. Measured reason: its imports are `importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib` — standard library only — and `.husky/pre-commit:63` plus `package.json:54` invoke it as bare `python3` with no `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+`scripts/verify_toolchain.py` does not move. Measured reason: its imports are `importlib.metadata`, `re`, `sys`, `tomllib` and `pathlib` — standard library only — and `.husky/pre-commit:63` plus `package.json:54` invoke it as bare `python3` with no `uv run`. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1270,7 +1270,7 @@ def test_each_subcommand_accepts_help(name: str) -> None:
 uv run --extra dev --extra train pytest tests/mailwoman_train/test_cli_commands.py -q
 ```
 
-Expected: FAIL with `ImportError: cannot import name 'build_parser' from 'mailwoman_train.cli'`.
+Expected: fail with `ImportError: cannot import name 'build_parser' from 'mailwoman_train.cli'`.
 
 - [ ] **Step 3: Split `cli.py`**
 
@@ -1466,9 +1466,9 @@ Rewrite each hit. The known set: `REPRODUCIBILITY.md:28,31`, `packages/mailwoman
 
 Leave `docs/records/` alone — those are dated point-in-time records and keep the path that was true when written.
 
-- [ ] **Step 5: Confirm the Bash write guard still fires**
+- [ ] **Step 5: the result still fires**
 
-The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196`, not a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could actually type.
+The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196`, not a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
 
 - [ ] **Step 6: Commit**
 
@@ -1539,7 +1539,7 @@ Transcribe each into a `CorpusVersion`. Read every one; the generator gives you 
 uv run --extra dev --extra train pytest tests/launch/test_sync_table_parity.py -q
 ```
 
-Expected: PASS. A failure names the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
+Expected: pass. A failure names the version whose generated commands differ from the frozen census. Fix the table entry, never the fixture.
 
 - [ ] **Step 5: Collapse the seven `mean_init_*`**
 

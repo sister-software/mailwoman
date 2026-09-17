@@ -17,7 +17,7 @@ Programmers consistently assume streets have type suffixes, don't contain number
 
 ### "Street names end in descriptors like 'street', 'avenue', or 'drive'."
 
-`Piccadilly, London, W1J 9PN` has no type suffix. Neither does `Broadway, New York, NY` nor `The Strand, London`. Many of the world's most famous streets lack the suffix pattern that address validators demand.
+`Piccadilly, London, W1J 9PN` has no type suffix. Neither does `Broadway, New York, NY` nor `The Strand, London`. several of the world's most famous streets lack the suffix pattern that address validators demand.
 
 Pelias's `street` classifier uses a suffix dictionary to identify street tokens: if a token ends in "Street," "Avenue," "Road," "Boulevard," etc., it's likely part of a street name. Without a suffix, the classifier relies on position (token after a house number) and neighboring components. `Piccadilly` alone, without a postcode or locality context, could be a venue, a locality, or a street — Pelias has no way to distinguish.
 

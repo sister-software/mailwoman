@@ -9,7 +9,7 @@ tags:
 
 # What is an address?
 
-Addresses look obvious — you see one every day — but parsing them turns out to be one of the harder problems in natural language processing, because a single string can mean many places, and a single place can be written many ways.
+Addresses look obvious — you see one every day — but parsing them turns out to be one of the harder problems in natural language processing, because a single string can mean several places, and a single place can be written several ways.
 
 This article defines what Mailwoman means by "address" and what data shape comes out of the parser.
 
@@ -22,8 +22,8 @@ Mailwoman models an address as a **bag of typed components**. Each component is 
 | `country`                          | `"United States"`, `"USA"`, `"FR"`           | no                |
 | `region`                           | `"NY"`, `"Île-de-France"`                    | no                |
 | `subregion`                        | `"Brooklyn"`, `"Manhattan"`                  | no                |
-| `locality`                         | `"New York"`, `"Paris"`                      | usually           |
-| `dependent_locality`               | `"Greenpoint"` (neighbourhood)               | no                |
+| `locality`                         | `"New York"`, `"Paris"`                      | typically         |
+| `dependent_locality`               | `"Greenpoint"` (neighborhood)                | no                |
 | `postcode`                         | `"10118"`, `"75008"`                         | no                |
 | `cedex`                            | `"CEDEX 08"` (FR-specific)                   | no                |
 | `street`                           | `"5th Ave"`, `"Rue Lafayette"`               | when street-level |
@@ -36,7 +36,7 @@ Mailwoman models an address as a **bag of typed components**. Each component is 
 
 The full canonical vocabulary lives in `core/types/component.ts`. Adding a tag requires a written rationale because everything downstream is keyed off this list.
 
-A parsed result is therefore a **flat dictionary** with optional repeated tags (rare; usually each tag appears at most once), not a tree. The exact shape:
+A parsed result is therefore a **flat dictionary** with optional repeated tags (rare; typically each tag appears at most once), not a tree. The exact shape:
 
 ```ts
 interface ParsedAddress {
@@ -73,7 +73,7 @@ Buffalo Wild Wings, Buffalo, NY 14201
 Buffalo Buffalo (the famous Cornell sentence)
 ```
 
-"Buffalo" can be a locality (Buffalo, NY), a venue (Buffalo Wild Wings has it in the name), an animal name, or even a verb. Context decides which. A rule that hardcodes "Buffalo = locality" is wrong in two of the three cases.
+"Buffalo" can be a locality (Buffalo, NY), a venue (Buffalo Wild Wings has it under), an animal name, or even a verb. Context decides which. A rule that hardcodes "Buffalo = locality" is wrong in two of the three cases.
 
 **3. Multi-word components are common.**
 
@@ -103,7 +103,7 @@ US addresses put the postcode after the region. French addresses put it before t
 
 ## The adversarial cases
 
-The Mailwoman team keeps a [hand-labelled adversarial corpus](https://github.com/sister-software/mailwoman/blob/main/data/eval/golden/v0.1.2/adversarial.jsonl) of 54 entries that target known failure modes. A few examples:
+The Mailwoman team keeps a [hand-labeled adversarial corpus](https://github.com/sister-software/mailwoman/blob/main/data/eval/golden/v0.1.2/adversarial.jsonl) of 54 entries that target known failure modes. A few examples:
 
 | category           | example                                        | the trap                                     |
 | ------------------ | ---------------------------------------------- | -------------------------------------------- |

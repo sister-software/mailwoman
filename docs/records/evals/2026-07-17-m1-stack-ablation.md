@@ -31,7 +31,7 @@ consolidation ledger (P2): it prices what each layer warrants at inference time 
 
 ## The four findings
 
-**1. The gazetteer channel IS the stack.** Removing it costs −10.4 micro on golden-us and
+**1. The gazetteer channel is the stack.** Removing it costs −10.4 micro on golden-us and
 collapses the country tag everywhere (−66.5 us / −60.0 fr / −63.4 parity — country is carried
 almost entirely by the atlas feed), with locality −21.6 and region −16.6 on US riding with it. The
 raw-model rows confirm it: of the ~9-point total stack value on us/fr/parity, nearly all of it is

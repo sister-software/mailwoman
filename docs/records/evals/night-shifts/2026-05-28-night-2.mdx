@@ -46,7 +46,7 @@ ACTIVE_TAGS = STAGE2_TAGS  # 10 tags, 21 BIO labels
 ACTIVE_TAGS = STAGE3_TAGS  # 16 tags, 33 BIO labels
 ```
 
-STAGE3 appends to STAGE2 without reordering — IDs are preserved. Existing v0.4.0 extracts work unchanged. Models trained on STAGE2 IDs decode correctly against STAGE3; the new logit slots just never get argmax'd.
+STAGE3 appends to STAGE2 without reordering — IDs are preserved. Existing v0.4.0 extracts work unchanged. Models trained on STAGE2 IDs decode correctly against STAGE3; the new logit slotsnever get argmax'd.
 
 ### Golden eval expansion
 

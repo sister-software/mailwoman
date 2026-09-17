@@ -25,7 +25,7 @@ Phase 1's +7.9pp was measured in the channel-starved Python check, where `token@
 instead of 0.5693. **A large part of that gap was the BIO head's starvation, not the span head's
 strength.** Feed the channels and the BIO head recovers most of it. The Phase-1 doc flagged the
 absolutes as non-comparable; it did not anticipate that the _margin_ would shrink this much, and the
-honest correction belongs at the top rather than in a footnote.
+direct correction belongs at the top rather than in a footnote.
 
 ## What survives the correction — and it's the part that matters
 
@@ -34,7 +34,7 @@ same instrument, channels fed both times. That was Phase 1's actual falsifier an
 
 **2. The secondary read passed: oracle@10 rose 0.749 → 0.7753** (+2.6pp), oracle@5 0.663 → 0.7228
 (+6.0pp). The config pre-registered this: _"If seg@1 crosses but oracle@10 is flat, the scorer
-reshuffled the list without learning better spans."_ It is not flat. The **list** genuinely improved.
+reshuffled the list without learning better spans."_ It is not flat. The **list** in fact improved.
 
 **3. On the class the arc targets, it is not close:**
 
@@ -84,7 +84,7 @@ is a real drift hazard — a transposed unflatten in one host would mis-tag ever
 PLACETYPE_ORDER failure mode, one layer down). A **cross-runner parity test** pins them: the same
 flat buffer must produce the same nested array on both sides.
 
-**#378 SLO, measured on `onnxruntime-web`'s WASM EP** — the runtime the demo actually runs, not the
+**#378 SLO, measured on `onnxruntime-web`'s WASM EP** — the runtime the demo runs, not the
 `onnxruntime-node` bench Phase 2 used:
 
 |                                | ms/infer             | spans read |
@@ -94,7 +94,7 @@ flat buffer must produce the same nested array on both sides.
 | **delta**                      | **+0.08 ms (+0.5%)** |            |
 
 That is the **full** cost — this runner unflattens the span tensor on _every_ inference, so it
-includes the decode-side marshalling, not just the graph. Reproducible via
+includes the decode-side marshalling, notthe graph. Reproducible via
 `neural-web/span-slo.bench.test.ts` (reported, never asserted — a wall-clock threshold in CI is a
 flake generator).
 
@@ -111,4 +111,4 @@ is the speculative structure this project keeps refusing (cf. the `<= -0.5` impo
 Phase 4 is now the whole ballgame: resolver rerank over the k-best list + the isotonic calibration for
 the ambiguity check + option C (kind-posterior + recall-weighted loss) for the 17 locality-refusals the
 span head provably does not fix. The headroom is measured (oracle@5 0.723 vs shipped 0.573); the
-question is how much of it evidence-based reranking can actually collect.
+question is how much of it evidence-based reranking can collect.

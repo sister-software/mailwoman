@@ -48,14 +48,14 @@ Every row exists today. The last column says what the suggestion layer would hav
 
 | Thing                   | Where                                       | Role                                                                                                                             |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `formatAddress`         | `formatter/format.ts:153`                   | `(components: ComponentDict, country: string, opts) => string`. Takes a FLAT dict, not an `AddressTree`                          |
+| `formatAddress`         | `formatter/format.ts:153`                   | `(components: ComponentDict, country: string, opts) => string`. Takes a flat dict, not an `AddressTree`                          |
 | `toOpenCageComponents`  | `formatter/format.ts:299`                   | The slot mapping. `venue → house`, `locality → city`, `dependent_locality → suburb`/`quarter`/`place` per country                |
 | `canonicalKey`          | `formatter/key.ts:86`                       | The canonical match key. `KEY_FIELD_ORDER` at `:30-46` deliberately excludes `venue` and `attention`                             |
 | `normalizeAddressToken` | `formatter/key.ts:63-79`                    | NFKD → strip marks → lowercase → drop apostrophes → non-alphanumeric to space → collapse. The only case-folder in the round trip |
 | `reconcileComponents`   | `formatter/format.ts:279`                   | A containment filter: drop a component whose value is absent from the rendered string. Used by the corpus adapters               |
 | `/v1/format`            | `api/routes.ts:214-222`, handler `:401-407` | POST, body `{components, country, options}` → `{formatted, canonicalKey}`. Takes a dict, never a raw string                      |
 | `PostalAddress`         | `record/address.ts:75`                      | Carries `raw` (`:95`), `formatted` (`:87`), `canonicalKey` (`:83`) side by side                                                  |
-| `createPostalAddressID` | `address-id/index.ts:128`                   | `<state>.<H3 cell>.<hash>`; `canonicalizeForHash` (`:100`) is the ONE place the full `normalize` pipeline runs before hashing    |
+| `createPostalAddressID` | `address-id/index.ts:128`                   | `<state>.<H3 cell>.<hash>`; `canonicalizeForHash` (`:100`) is the one place the full `normalize` pipeline runs before hashing    |
 
 **Nothing in the repo compares a render against the input it came from.** Verified by grep over
 round-trip / reparse / reformat patterns and over every call site of `formatAddress`, `canonicalKey`
@@ -68,7 +68,7 @@ diffs them. The only statements of the idea are two plan lines:
 
 Also worth recording because it will mislead a reader: **`formatter/README.md:30-52` documents a
 signature the code does not have** (`formatAddress(components: ClassificationMap, opts?)`, and a key
-that is "abbreviation-expanded" — `key.ts:16-19` says expansion is deliberately NOT done).
+that is "abbreviation-expanded" — `key.ts:16-19` says expansion is deliberately not done).
 
 ### A.2 The confidence and abstention substrate
 
@@ -107,10 +107,10 @@ suggestion layer can name the change.
 | Case normalization (#690/#829)         | `neural/case-normalize.ts:140`, applied `classifier.ts:607`, `:668`           | **ON** (`!== false`)          | `trace.caseNormalized` only (`neural/trace.ts:122`)                                    | No                                          |
 | `@mailwoman/variant-aliases`           | `variant-aliases/lookup.ts:79`                                                | **Not wired**                 | n/a — `AliasLookupResult` already carries `{alias, confidence}`                        | n/a                                         |
 | Trigram fuzzy tier                     | `resolver-wof-sqlite/candidate-lookup.ts:444-460`, scorer `name-score.ts:42`  | ON, name-only since #1480     | **No.** The Jaccard is computed at `:450` and discarded                                | No — `PlaceCandidate` has no `matchType`    |
-| Postal-city short-circuit (#741)       | `resolver-wof-sqlite/candidate-lookup.ts:316-335`                             | ON when the side-index exists | **No.** Returns one synthetic candidate with `score: 1, exactMatch: true`              | No                                          |
+| Postal-city short-circuit (#741)       | `resolver-wof-sqlite/candidate-lookup.ts:316-335`                             | on when the side-index exists | **No.** Returns one synthetic candidate with `score: 1, exactMatch: true`              | No                                          |
 | Postal-city alias scorer (#475)        | `resolver-wof-sqlite/lookup.ts:1056-1105`                                     | Opt-in (env)                  | No — which alias matched is lost in a scalar                                           | No                                          |
 | `applyPostcodeConsistency` (#370/#945) | `resolver/resolve.ts:266`, called `:850`                                      | **ON**                        | Yes: `postcode_repicked` `:321`, `postcode_city_mismatch` + `coordinate_source` `:329` | Tree metadata only                          |
-| `postcodeCountryCoherence` (#42/#1477) | `resolver/postcode-country-coherence.ts:277-290`, called `resolve.ts:792-815` | **ON** since 2026-08-05       | Yes: `postcode_country_scope`, `postcode_country_scope_km`                             | **Yes** — the only one that reaches the API |
+| `postcodeCountryCoherence` (#42/#1477) | `resolver/postcode-country-coherence.ts:277-290`, called `resolve.ts:792-815` | **on** since 2026-08-05       | Yes: `postcode_country_scope`, `postcode_country_scope_km`                             | **Yes** — the only one that reaches the API |
 
 **The normalize finding is the cheapest fix in this document.** `NormalizedInput` carries the full
 transform list. `NormalizedInputLite` (`core/pipeline/types.ts:112`) declares only
@@ -300,7 +300,7 @@ postcode-free arm re-emitted A postcode     16 / 139
 
 Per locale, which is the ablation map's first row:
 
-> **Correction 2026-08-05 (ablation run, PR #1500):** the GB row below was measured WITHOUT the GB
+> **Correction 2026-08-05 (ablation run, PR #1500):** the GB row below was measured without the GB
 > weight artifacts — the S-2 worktree carried no `pair-index-gb` and no `fst-en-gb`, so GB graded
 > through the bare base package. The other locales reproduce byte-for-byte under the full
 > environment; GB corrects to **26/47 (55.3%) within 5 km, 17/47 (36.2%) over 100 km, p50 1.97 km**.
@@ -332,7 +332,7 @@ Per locale, which is the ablation map's first row:
    rooftop → admin). The postcode is the only evidence #42's coherence pass has to override a wrong
    country prior, so deleting it deletes the override. A completion nudge is therefore worth most
    exactly where the country prior is least trustworthy.
-3. **Deleting a postcode does not yield "no postcode" — 16 of 139 rows emit a DIFFERENT token as the
+3. **Deleting a postcode does not yield "no postcode" — 16 of 139 rows emit a different token as the
    postcode, and 0 of 139 recover the deleted one.** The substitutes:
 
 ```
@@ -396,9 +396,9 @@ max span confidence reduce, applied to the 76
    `>= 0.95` the single survivor is `+1 (555) 867-5309` → `"1, 867-5309"` at **0.964** — the same
    phone number the 2026-08-04 review found at the top of its violation set. It is the
    highest-confidence row in the entire garbage board, higher than any real address in it. The
-   fullwidth `３５０ ５ｔｈ Ａｖｅ`, which the layer SHOULD nudge to `350 5th Ave`, sits at 0.923.
+   fullwidth `３５０ ５ｔｈ Ａｖｅ`, which the layer should nudge to `350 5th Ave`, sits at 0.923.
    Confidence orders these two backwards.
-3. **Confidence AND corroboration together reach zero on the bars that matter.** 41 of the 76
+3. **Confidence and corroboration together reach zero on the bars that matter.** 41 of the 76
    suggestions carry a `no-resolve` or `no-component` bar (the true violations). Under
    `maxSpanConfidence >= 0.918` alone, 1 survives. Under `componentCount >= 3` alone, 8 survive.
    Under **both, 0 of 41 survive** — and the three rows that clear the conjunction all carry the
@@ -591,7 +591,7 @@ resolved node's coordinate. Three sources in ascending order of what they can as
    (`2026-08-05-postcode-structure-arc.md`, Mechanism 3). A rooftop-tier resolve yields a unit code;
    an admin-tier resolve yields whatever the dispersion supports, and where that is a district it
    says district.
-2. **The arc's B2 containment coherence**, for the case where a postcode IS present and disagrees
+2. **The arc's B2 containment coherence**, for the case where a postcode is present and disagrees
    with the street. That mechanism produces "the nearest consistent completion"; this layer renders
    it as a `replace` op with the disagreement as its evidence.
 3. **PFX1 for a PARTIAL code.** `SW1A` with no unit, `BT9` with no unit. The completion is the
@@ -668,7 +668,7 @@ exists to avoid.
   emitted `replace` ops are correct against the case's asserted components, on the rows that assert
   any** — with the abstention rate reported beside it, because a layer that abstains on 54 of 55 and
   gets the last one right has not passed.
-- **B3-3 (no new confident false positive).** The whole Gauntlet, snap ON vs OFF. Bar: **zero rows
+- **B3-3 (no new confident false positive).** The whole Gauntlet, snap on vs off. Bar: **zero rows
   where the snap moves an assembled coordinate outside its existing tolerance.**
 
 **Kill condition.** B3-2's precision cannot clear 90% without an abstention rate that makes the tier
@@ -702,7 +702,7 @@ Each of the three closes one attribution class. None of them changes an answer.
 ### C.5 The ablation map — the dual of this layer
 
 The operator filed the deletion-ablation runner the same day, and the two are duals: **the map ranks
-WHICH completion is worth making, per locale.** Where deleting a component barely moves the
+which completion is worth making, per locale.** Where deleting a component barely moves the
 resolution, completing it is low-value advice; where deletion craters it, completion is the top
 nudge. S-2 is the map's first row, measured for `postcode` across 18 locales, and it already
 separates GB (36.2% of rows over 100 km without it — corrected, see the S-2 note) from US (9.1%).
@@ -805,7 +805,7 @@ The coupling to the postcode arc is one-directional and must be explicit: **this
 the arc's mechanisms and blocks none of them.** The arc's B2 (containment coherence) is the engine
 behind "your postcode and your street disagree"; the arc's PFX1 is what lets a partial code
 contribute; the arc's Mechanism 1 is what stops a house number from occupying the postcode slot. If
-the arc stalls, Mechanism 1 of THIS document still ships — the format nudge needs no gazetteer at
+the arc stalls, Mechanism 1 of this document still ships — the format nudge needs no gazetteer at
 all.
 
 ## Explicitly out of scope

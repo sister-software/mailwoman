@@ -113,7 +113,7 @@ const { runtime, releases, forceWASM, geoBias, calibrator, traceParse, supportsT
 })
 ```
 
-Render the map immediately at `DEFAULT_CENTER` and let the geolocation answer move the bias, which is the spec's non-blocking rule; `DEFAULT_CENTER` is the contiguous-US centre the hook already carries. The fake runtime stays reachable behind `?runtime=fake` for the shell smoke and Storybook parity, read in `routes.ts` as `runtimeModeFromSearch(search): "real" | "fake"` with a unit test.
+Render the map immediately at `DEFAULT_CENTER` and let the geolocation answer move the bias, which is the spec's non-blocking rule; `DEFAULT_CENTER` is the contiguous-US center the hook already carries. The fake runtime stays reachable behind `?runtime=fake` for the shell smoke and Storybook parity, read in `routes.ts` as `runtimeModeFromSearch(search): "real" | "fake"` with a unit test.
 
 - [ ] **Step 5: Build and run the real thing**
 

@@ -11,15 +11,15 @@ tags:
 
 # The database fallacy
 
-There is a persistent belief in geocoding: **"If we just had a database of all addresses, this problem would be trivial."** The belief is wrong in three independent ways. Together, they make the database approach structurally inadequate.
+There is a persistent belief in geocoding: **"If wehad a database of all addresses, this problem would be trivial."** The belief is wrong in three independent ways. Together, they make the database approach structurally inadequate.
 
 ## Fallacy 1 — There is no master list
 
-Every attempt to build a comprehensive address database has produced a partial, outdated, purpose-specific snapshot.
+Every attempt to build a complete address database has produced a partial, outdated, purpose-specific snapshot.
 
 ### The USPS AMS
 
-The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (many rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people use for places — only the USPS-preferred form.
+The US Postal Service maintains the **Address Management System** (AMS), the closest thing to a master list for US addresses. It contains every delivery point the USPS recognizes — about 165 million addresses. It is not public. It is licensed to commercial mailers under strict terms. It does not include addresses that USPS does not deliver to (several rural areas, some apartment buildings that use cluster boxes with non-standard numbering). It does not include the names people use for places — only the USPS-preferred form.
 
 ### National address gazetteers
 
@@ -28,7 +28,7 @@ The US Postal Service maintains the **Address Management System** (AMS), the clo
 | France  | BAN (Base Adresse Nationale)       | ~25M addresses | Updated monthly, ~95% commune coverage                         |
 | UK      | AddressBase Plus (Ordnance Survey) | ~40M addresses | Updated every 6 weeks, licensed                                |
 | Canada  | National Address Database (NAD)    | ~14M addresses | Incomplete — assembled from volunteer provincial contributions |
-| Japan   | MLIT address data                  | ~30M addresses | Comprehensive but in Japanese only                             |
+| Japan   | MLIT address data                  | ~30M addresses | complete but in Japanese only                                  |
 | India   | None                               | 0              | No national address database exists                            |
 
 Each is built for a different purpose: postal delivery (USPS), land registration (AddressBase), census enumeration (MLIT), or navigation (OpenStreetMap). They disagree on what counts as an address. A French commune may have a BAN entry for every building but the postal service delivers to a subset. A UK address in AddressBase may have a UPRN (Unique Property Reference Number) that no other system uses. There is no universal key.
@@ -74,7 +74,7 @@ Non-US postcodes are even less polygon-like:
 
 - UK postcodes (e.g., `SW1A 1AA`) cover about 15 addresses on average — small enough to be effectively points, but not routing areas.
 - Canadian postcodes (e.g., `K1A 0B1`) cover one side of one block face in urban areas, or an entire rural route.
-- Irish postcodes (Eircode) are unique per delivery point — each address gets its own postcode. The postcode IS the address.
+- Irish postcodes (Eircode) are unique per delivery point — each address gets its own postcode. The postcode is the address.
 - French postcodes (e.g., `75008`) correspond to commune boundaries — they are effectively municipal codes that happen to use 5 digits.
 
 A geocoder that treats all postcodes as polygons will produce different error characteristics in every country.
@@ -83,7 +83,7 @@ A geocoder that treats all postcodes as polygons will produce different error ch
 
 Municipalities annex, de-annex, incorporate, dissolve, and rename themselves. Postcodes get split. Streets get renamed. The half-life of an address is about **5 years** in any urban area — after 5 years, roughly half of the addresses in a fast-growing city have changed in some administratively meaningful way.
 
-| What changes            | How often          | Example                                                        |
+| What changes            | How frequently     | Example                                                        |
 | ----------------------- | ------------------ | -------------------------------------------------------------- |
 | Municipality annexation | Annual             | Austin, TX annexed ~50 sq mi between 2010-2020                 |
 | Street renaming         | Ongoing            | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn       |
@@ -109,7 +109,7 @@ A parser that tries to memorize addresses will be wrong on every address that ch
 
 ## See also
 
-- [How mail delivery actually works](../the-problem/how-mail-delivery-works.mdx) — the system that doesn't need a perfect database either
+- [How mail delivery works](../the-problem/how-mail-delivery-works.mdx) — the system that doesn't need a perfect database either
 - [The 90% trap](./the-90-percent-trap.mdx) — why 90% database coverage is deceptively expensive
 - [The tokenization tautology](./the-tokenization-tautology.mdx) — why traditional parsers fall into a related completeness trap
 - [What is an address?](../the-problem/what-is-an-address.mdx) — the data model these databases attempt to capture

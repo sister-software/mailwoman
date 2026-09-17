@@ -25,7 +25,7 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
  * The six ways a truth-graded row can relate to the answers on hand, plus the ungraded bucket.
  *
  * - `correct_as_is` — the delivered answer is inside tolerance; no rescue question arises.
- * - `entity_rescued_already` — the #1585 wire fired (the result carries `entity`) and the answer is correct: the CURRENT
+ * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`) and the answer is correct: the CURRENT
  *   mechanism already performed the rescue.
  * - `rescue_available_entity` — delivered answer wrong; the unconditional fork-entity probe holds a hit inside tolerance.
  *   The check (incumbent resolved) is what stands between the row and the right answer.
@@ -65,7 +65,7 @@ export interface RescueRowInput {
 	lat: number | null
 	lon: number | null
 	/**
-	 * True when the delivered result carries `entity` — the #1585 wire fired under the current check.
+	 * True when the delivered result includes `entity` — the #1585 wire fired under the current check.
 	 */
 	entityFired: boolean
 	/**

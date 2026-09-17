@@ -4,12 +4,12 @@
 
 **Status: PROMOTABLE — all guards pass. Promote is the operator's call (HF upload + npm release, staged not shipped).**
 
-## The win
+## The observed result
 
-- **MX locality +8.7** (74.0 → 82.7, native-order held-out board). The first genuinely-new locale coverage — the model now parses Mexican addresses (Spanish city surfaces, `Privada`/`Calle` streets) meaningfully better than shipped.
+- **MX locality +8.7** (74.0 → 82.7, native-order held-out board). The first in fact-new locale coverage — the model now parses Mexican addresses (Spanish city surfaces, `Privada`/`Calle` streets) meaningfully better than shipped.
 - **CA neutral** — v381 already parses Canadian (US-order) addresses; CA adds coverage-provenance but no measurable gain. Ships free.
 
-## The guards (all PASS)
+## The guards (all pass)
 
 **Golden 2pp check** (`data/eval/golden/v0.1.2`, channels-on, v385 vs shipped v381, same run):
 

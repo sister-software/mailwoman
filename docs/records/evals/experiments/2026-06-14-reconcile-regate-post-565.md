@@ -65,7 +65,7 @@ weights, same grouper, only the `jointReconcile` flag differs):
 
 US has no offsetting win — street regresses 2.4pp, locality 1.8pp, everything else flat. FR is the
 damning column: reconcile takes **street from 79.4% to 65.7% (−13.7pp)**, with locality and region also
-down. Its only gain anywhere is FR house_number (+1.8pp). The locale #427 said reconcile helps is the
+down. the result observed anywhere is FR house_number (+1.8pp). The locale #427 said reconcile helps is the
 locale it hurts most.
 
 ### Precondition — #565 worked, but reconcile still isn't at parity

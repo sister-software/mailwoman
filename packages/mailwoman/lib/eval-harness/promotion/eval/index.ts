@@ -407,7 +407,7 @@ async function runLoreGuards(env: {
  * sidecar (by design).
  *
  * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling; nothing about the
- * leg's behavior changed in the lift.
+ * leg's behavior changed in the comparison.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike

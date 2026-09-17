@@ -20,7 +20,7 @@ Jyllandsgade 15, 9000 Aalborg
 Jyllandsgade 75, 9000 Aalborg
 ```
 
-Also easy — no. They're 650 metres apart.
+Also easy — no. They're 650 meters apart.
 
 Now imagine a string-similarity matcher looking at those same four lines. The first pair, the _same_ place, scores low: different punctuation, "Street" vs "St", a reordered unit. The second pair, _different_ places, scores 0.96 — one character apart. The tool you'd reach for gets both backwards. This isn't a tuning problem you can threshold your way out of. It's the wrong coordinate system.
 
@@ -28,7 +28,7 @@ Now imagine a string-similarity matcher looking at those same four lines. The fi
 
 ## An address is a location wearing a costume
 
-An address is not text. It is a point on the Earth that happens to be written down, and the writing is lossy, inconsistent, and adversarially formatted by a hundred different intake forms. "650 metres apart" is a fact about the world. "One character apart" is a fact about the costume.
+An address is not text. It is a point on the Earth that happens to be written down, and the writing is lossy, inconsistent, and adversarially formatted by a hundred different intake forms. "650 meters apart" is a fact about the world. "One character apart" is a fact about the costume.
 
 Here is the same matching decision, scored two ways:
 
@@ -42,9 +42,9 @@ Three things change, and they drive the rest.
 
 **Blocking becomes a partition, not a search cluster.** The expensive part of matching a million records is not scoring a pair — it is finding the pairs worth scoring without comparing all 500 billion of them. The textbook answer is a search cluster: stand up Elasticsearch, index everything, query for candidates. Geocode-first replaces that infrastructure with a single pass through the data. Two records falling into the same ~5 km cell are candidates; everything else is skipped. The geocoder already did the partition. We have measured the matcher resolving half a million records in about a minute in one Node process on commodity hardware, against a baseline that requires standing up a search index — no server, no Docker, no process to keep alive. The number is what it is; the architecture is what matters.
 
-**Distance becomes a feature you can calibrate.** Same building: ~30 metres. Same block: ~300 metres. The geocoder knows its own error — rooftop points are tight, interpolated points looser, centroids looser still — so distance evidence can be weighted by placement quality. A string matcher has no equivalent. It can tell you two streets are spelled similarly. It cannot tell you whether they are the same building.
+**Distance becomes a feature you can calibrate.** Same building: ~30 meters. Same block: ~300 meters. The geocoder knows its own error — rooftop points are tight, interpolated points looser, centroids looser still — so distance evidence can be weighted by placement quality. A string matcher has no equivalent. It can tell you two streets are spelled similarly. It cannot tell you whether they are the same building.
 
-**Shared addresses carry different evidentiary weight by rarity.** Two records at the same clinic tower agreeing on the address is weak evidence they are the same entity — fifty providers share that building. Two records agreeing on a rural address with one occupant is strong evidence. It is TF-IDF for places: weight an address agreement by how many distinct entities sit on it. On a real provider-registry deduplication, turning that on moved F1 by roughly twenty points in a single change. Most of the gain was recall — a provider's own rare address re-stitched records that name drift had split apart — rather than the precision we had expected. The data surprised us. We adjusted.
+**Shared addresses carry different evidentiary weight by rarity.** Two records at the same clinic tower agreeing on the address is weak evidence they are the same entity — fifty providers share that building. Two records agreeing on a rural address with one occupant is strong evidence. It is TF-IDF for places: weight an address agreement by how several distinct entities sit on it. On a real provider-registry deduplication, turning that on moved F1 by roughly twenty points in a single change. Most of the result was recall — a provider's own rare address re-stitched records that name drift had split apart — rather than the precision we had expected. The data surprised us. We adjusted.
 
 ## The receipts
 
@@ -56,7 +56,7 @@ Resolving across the three datasets is where the architecture shows its purpose.
 
 Once stitched, you can ask the question the fragmented data was hiding: which entities appear in the eligibility sources but not the funding ones? That anti-join is what someone currently finds by squinting at a map. We produce it as a layer that drops onto the map directly.
 
-A careful word on that, because it matters. We produce the reconciliation, not the conclusion. An entity in the "eligible, not enrolled" set is a candidate for review, not an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not actually eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates. What a correlation means is the analyst's call.
+A careful word on that, because it matters. We produce the reconciliation, not the conclusion. An entity in the "eligible, not enrolled" set is a candidate for review, not an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates. What a correlation means is the analyst's call.
 
 ## The number was lying too
 

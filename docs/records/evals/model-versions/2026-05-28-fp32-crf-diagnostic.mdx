@@ -86,7 +86,7 @@ Training reached step 3000 with no NaN. Loss curve:
 | 2500     | 0.5927     | 3.6348      | 0.2979   |
 | 2825     | 0.4913     | —           | —        |
 
-Both previously-NaN'd steps (bold) cleared cleanly. macro_f1 climbing monotonically:
+Both previously-NaN'd steps (bold) cleared directly. macro_f1 climbing monotonically:
 0.2235 → 0.2589 → 0.2979. val_loss dropping: 4.34 → 3.85 → 3.63.
 
 **The bf16 + masked -inf transition hypothesis is empirically confirmed.** fp32 precision
@@ -107,9 +107,9 @@ runs in bf16 for throughput as before.
    A100-SXM4-40GB, comparable to v0.6.0's CE-only throughput. The autocast boundary only
    affects the CRF forward (a small linear-in-seq-len operation), not the encoder.
 
-4. **The NaN protocol's "diagnose ONE knob → retry" rule paid off here.** The fp32
+4. **The NaN protocol's "diagnose one knob → retry" rule paid off here.** The fp32
    experiment was a 30-min run that closed a question that had been open since the
-   postmortem. The cost of NOT running it was indefinite future uncertainty.
+   postmortem. The cost of not running it was indefinite future uncertainty.
 
 ## Reproducing
 

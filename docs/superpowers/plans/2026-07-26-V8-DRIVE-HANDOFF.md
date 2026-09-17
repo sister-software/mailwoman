@@ -1,10 +1,10 @@
-# v8 drive handoff — DeepSeek takes the reduce (2026-07-26)
+# v8 drive handoff — DeepSeek takes the result (2026-07-26)
 
 **For:** DeepSeek (driving lead) · **From:** Claude (coordinating) · **Repo:** mailwoman @ `main`
 (`c4713a54` or later).
 
 You now own the drive to **v8.0.0**. The FST / comma-free / #1143 arc is closed and merged (#1319);
-this doc hands you the reduce. **The authoritative plan is `MAILWOMAN_ROAD_TO_V8.md` (on main) — read it
+this doc hands you the result. **The authoritative plan is `MAILWOMAN_ROAD_TO_V8.md` (on main) — read it
 first.** This is the driver's synthesis on top of it: current state, the two open checks, sequencing,
 the operator-only decisions, and the non-negotiable discipline.
 
@@ -19,13 +19,13 @@ the operator-only decisions, and the non-negotiable discipline.
 - **Release implementation is outage-safe.** `scripts/copy-weights.ts` now materializes `fst-<locale>.bin`
   into the weights packages (VERIFIED end-to-end: packs a real 3.8M file, zero symlinks in the
   tarball, files-guard passes). Before this, the next release would have shipped broken packages.
-- **Comma-free is settled as a decode dead end** — the real fix is training (#1102). Do NOT reopen a
+- **Comma-free is settled as a decode dead end** — the real fix is training (#1102). Do not reopen a
   decode mechanism for it; the open-vocab wall is structural.
 
 ## The mission
 
 Reduce **v8.0.0**. Per roadmap §4 there are three checks: **Track F** (done), **Track A** (breaking batch),
-**Track B** (extract routing skeleton). Per §1: _"v8.0.0 reduces when the breaking batch is staged AND the
+**Track B** (extract routing skeleton). Per §1: _"v8.0.0 reduces when the breaking batch is staged and the
 extract routing skeleton (Track B) is real."_ So your critical path is **A + B**. Everything else either
 rides v8.x minors or checks itself.
 
@@ -33,14 +33,14 @@ rides v8.x minors or checks itself.
 
 ## Check 1 — Track A: the breaking-change batch (mechanical; a focused session, not an arc)
 
-One **documented PR train**, a migration note per item, **NO behavior change** (the publish guard +
-tarball verification run unchanged — behavior must not move in this track). The audit IS the task —
+One **documented PR train**, a migration note per item, **no behavior change** (the publish guard +
+tarball verification run unchanged — behavior must not move in this track). The audit is the task —
 **re-verify each item against current main**, don't trust this list blindly:
 
-- **#875 acronym batch** — the _public_ sweep already SHIPPED (AGENTS.md reconciled: zero exported
+- **#875 acronym batch** — the _public_ sweep already shipped (AGENTS.md reconciled: zero exported
   lowercase-acronym identifiers remain). Residual is ~11 **internal cosmetic** locals across 6 files —
   non-breaking, optional. Do it or skip it; it does not check the major.
-- **#1096 `variant-aliases`** — zero runtime importers. Wire it into the pipeline OR remove the
+- **#1096 `variant-aliases`** — zero runtime importers. Wire it into the pipeline or remove the
   published workspace. **[OPERATOR DECISION — deleting a published package.]**
 - **#1094 libpostal house/near/category** — check golden-check traffic; if the excised labels stayed
   silent, drop the compat surface for real. **[OPERATOR DECISION if it removes public surface.]**
@@ -55,7 +55,7 @@ tarball verification run unchanged — behavior must not move in this track). Th
 
 ## Check 2 — Track B: weights-extract routing skeleton (epic #1177) — THE CRITICAL PATH
 
-This is the pole that sets the reduce date. The overlay _mechanism_ is shipped and battle-tested (the
+This is the pole that sets the result date. The overlay _mechanism_ is shipped and battle-tested (the
 en-gb/en-nz overlays; the fr-fr→en-us base). What's **unbuilt** is the _formalization_:
 
 - **base-latn + overlays:** dedupe the per-locale weight packages onto one base Latin model with
@@ -72,15 +72,15 @@ en-gb/en-nz overlays; the fr-fr→en-us base). What's **unbuilt** is the _formal
 output on its golden boards**, and the release train publishes the attached family green. Scope it as
 a proper arc — the runbook exists, the packaging/release engineering doesn't.
 
-## Explicitly NOT blocking v8.0.0 (do not block the reduce on these)
+## Explicitly not blocking v8.0.0 (do not block the result on these)
 
 Track C (non-Latin JP/KR/CJK — #1176/#1266, rides minors), most of Track D (evidence-layer second
 index family — #1288/#1296/#1267, each checks itself), Track E base models (check on #1102 whenever
-they arrive). Surface them, don't let them hold the reduce.
+they arrive). Surface them, don't let them hold the result.
 
-## The reduce itself (once A + B land)
+## the result itself (once A + B land)
 
-- **Two-phase PR publish flow ONLY** (`mailwoman-release` skill + `RELEASING.md`) — never local.
+- **Two-phase PR publish flow only** (`mailwoman-release` skill + `RELEASING.md`) — never local.
 - **Version = v8.0.0** (major; the breaking batch is the justification). Verify the number first:
   `npm view mailwoman version` + `git tag -l 'v*'`, take the next after the latest published.
 - **HF staging now includes per-locale `fst-<locale>.bin`** — your own publish-hf change enables it;
@@ -99,7 +99,7 @@ they arrive). Surface them, don't let them hold the reduce.
 
 1. **Verify before verdict.** Re-run any required number on the live CLI before acting; a report
    (including this one) is not truth.
-2. **Measure in the SHIPPED configuration.** Candidate-cache numbers ≠ shipped numbers; when an
+2. **Measure in the shipped configuration.** Candidate-cache numbers ≠ shipped numbers; when an
    identical-artifact rerun disagrees, suspect the cache.
 3. **Pre-register bars in writing before measuring** (`.superpowers/sdd/progress.md`, dated). A bar
    revision is dated + operator-ratified + carries a retirement condition — never silent.
@@ -111,7 +111,7 @@ they arrive). Surface them, don't let them hold the reduce.
 5. **PR everything from `origin/main`; releases via the two-phase flow only.** No silent check drift —
    a shipped regression needs a dated, ratified bar revision with a retirement condition.
 
-## Operator-only decisions (do NOT decide these alone — surface and wait)
+## Operator-only decisions (do not decide these alone — surface and wait)
 
 - Track A: delete-vs-wire #1096; remove #1094 public surface; the #1108 fallback removal.
 - The **v8.0.0 reduce go/no-go**.
@@ -123,7 +123,7 @@ staged; Track B green; ready to reduce).
 
 ## Pointers
 
-- `MAILWOMAN_ROAD_TO_V8.md` — the source of truth. §4 = reduce criteria, §6 = open-decisions register.
+- `MAILWOMAN_ROAD_TO_V8.md` — the authoritative record. §4 = reduce criteria, §6 = open-decisions register.
 - `docs/superpowers/plans/2026-07-26-WRAP-HANDOFF.md` + `2026-07-25-SESSION-REPORT-fst-arcs.md` — the
   just-closed arc.
 - `.superpowers/sdd/progress.md` — the dated ledger.

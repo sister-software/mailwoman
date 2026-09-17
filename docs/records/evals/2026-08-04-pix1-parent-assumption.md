@@ -6,7 +6,7 @@ stated assumption that "the parent keeps the model's own — typically strong `l
 (`neural/placetype-pair-prior.ts:159`). Here the parent's own read is `B-region` by 4.21 nats,
 because the trailing `ny` re-anchors "New York" to the state. The prior is logit-blind by
 construction — `buildPlacetypePairPriors(opts, pieces, labels)` never receives the emissions — so
-nothing checks whether the assumption it rests on actually held.
+nothing checks whether the assumption it rests on held.
 
 ## This is not a suppression problem
 
@@ -82,7 +82,7 @@ the pair prior assumes it landed there.
    (child, parent) admin relation; asserting only half of it is what produces the zero-locality tree.
    Reaches the R5-intended shape (`dep_loc=Brooklyn, locality=New York`) rather than merely avoiding
    the bad one. Larger surface: it can now move a span the model was confident about, so it needs its
-   own δ and its own confound board — a region genuinely named the same as a city ("New York",
+   own δ and its own confound board — a region in fact named the same as a city ("New York",
    "Washington", "Québec") is the confound class, and it is not small.
 
 Both are default-on changes on a tier-1 locale, so either needs the full gauntlet plus the GB/NZ pair

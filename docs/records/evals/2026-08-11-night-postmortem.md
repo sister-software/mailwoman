@@ -21,7 +21,7 @@ operator-directed issue sweep, and the production e2e matrix completion.
   since the v7 lexicon rename on 2026-08-05 (tolerant 404, zero errors anywhere) — a
   locality_surface-REQUIRED model served OOD for six days. TDD, 4 new tests.
 - **#1587** — board #47 closed: `--int8-weights-cache` pairs with `--weights-cache` so floors AND
-  the int8 delta cap grade package-shaped in ONE run. Verified against the shipped v9.1.0 pair on
+  the int8 delta cap grade package-shaped in one run. Verified against the shipped v9.1.0 pair on
   v9.0.0-base: PASS, zero failed floors, `us.country_homograph_f1` **83.3 in both precisions**
   (the old `--model` dual read 7.1 — under-fed, floors invalid), max delta 0.3pp byte-matching the
   release's two-run evidence. Receipt: `scratchpad/check-47-paired-verify/`.
@@ -32,7 +32,7 @@ operator-directed issue sweep, and the production e2e matrix completion.
   `#mw-pipeline-input`, `#addr-suggest-list` → `#mw-demo-suggest-list`, heading dropped, chips
   rotated). The suite had been unable to run against prod at all.
 - **#1591** — the coverage-register design record (`docs/superpowers/specs/`), the night's
-  synthesis: all three runnable inferential-resolution falsifiers converged on honest per-cell
+  synthesis: all three runnable inferential-resolution falsifiers converged on direct per-cell
   coverage assertions as phase 1.
 
 **Production changes beyond code:** the demo repointed to v9.1.0 — R2 + HF `defaultVersion`
@@ -47,7 +47,7 @@ prod e2e cascade at 8/9 (the one red is pre-existing, filed #1589).
 - **Board #17 closed** — post-fanout panel A/B (`task28/`, receipt §13): control 325/390/404 →
   new 328/393/408 @1/5/25 km, four movers, all better, zero regressions. `Weimar Thüringen`
   435 km AT → 0.00 km DE and `Rotterdam` 5704 km US → 11 km NL are new coverage-jump wins;
-  `Warwick`/`Windsor` are now correct in BOTH arms (the v9.1.0 model absorbed them).
+  `Warwick`/`Windsor` are now correct in both arms (the v9.1.0 model absorbed them).
 - **Falsifiers 1–3 graded** (`falsifiers/GRADING.md`, bars pre-registered per probe):
   negative evidence shrinks **1/47** missed candidate sets (35/47 wrong answers sit in unheld
   ground — the design doc's kill condition, met); naming families exist at **19.5%** of localities
@@ -85,7 +85,7 @@ prod e2e cascade at 8/9 (the one red is pre-existing, filed #1589).
 - **The intent-rules scaling canary hardened** (PR #1595) after its third same-night load flake
   (3.19–3.25x against the 3x bar, algorithm healthy each time): paired back-to-back arms + median
   per-pair ratio replace sequential best-of blocks; the bar itself untouched.
-- The scheduled demo smoke now RUNS (unblocked by #1590) and honestly reds on the Zabiče case
+- The scheduled demo smoke now runs (unblocked by #1590) and directly reds on the Zabiče case
   every cycle until the demo republish — flagged as an operator decision, not silently quieted.
 
 ## The issue sweep (operator-directed, 10:20–12:10 UTC)
@@ -115,10 +115,10 @@ Six issues resolved, three advanced with receipts:
   already-shipped, 2 open (data pull `--host`, progress bar), the terminal-clear unreproduced with
   pty receipts.
 - **#1528 advanced to close** (PR #1599) — the derived-weights key hashes the COMPILED builder
-  counterparts + the postcode pipeline dir (where #1527's fix actually lived), and a serve-time
+  counterparts + the postcode pipeline dir (where #1527's fix lived), and a serve-time
   PCB1 floor guard evicts poisoned entries and refuses poisoned stashes (the 0-record GB
   reproduction pinned in tests).
-- **#1375 advanced** — the FIRST real-PBF build-local OSM runs: DC 18 rows with an EXACT Overpass
+- **#1375 advanced** — the first real-PBF build-local OSM runs: DC 18 rows with an EXACT Overpass
   match (18 = 18 inside `area[wikidata=Q61]`; a naive bbox reads 51 by crossing into VA/MD),
   VT 103 rows triangulating between polygon truth (95) and bbox world (261) per the Geofabrik
   buffer; 18/18 coverage-derivation agreement. Finding fed to the coverage-register record: the
@@ -138,8 +138,8 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   viewport suite drives the real map through, dropped by the port and restored with a documented
   TEST INJECTION POINT comment; the `/debug/` trailing-slash navigation missed by #1590 because the spec
   bypasses the fixture).
-- **#1602 filed (NEW model-boundary finding)**: `1502 A Cage Street, Houston, TX 77020` misses the
-  situs tier on prod AND the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`
+- **#1602 filed (new model-boundary finding)**: `1502 A Cage Street, Houston, TX 77020` misses the
+  situs tier on prod and the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`
   while the TX extract keys `street_norm="a cage street"`, `number="1502"`; either mismatch kills
   the keyed probe. The #48 (identifier/unit boundary) family, now with a live resolver-visible
   receipt and two change shapes (a leading-letter-street board stratum; a self-validating probe
@@ -169,7 +169,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   cache 1000 → 4000) hit the same under-1k/s cliff at ~1.1M nodes, so the second knob was not turned
   solo. Diagnosis (append-mode COPY into a `planet_osm_nodes` btree that no longer fits the buffer
   pool) + a three-way fork recorded in `pelias-rig/logs/nominatim-append-ledger.txt`.
-- **Two honest e2e reds left standing, not relaxed**: the Zabiče SI case (the demo's stale
+- **Two direct e2e reds left standing, not relaxed**: the Zabiče SI case (the demo's stale
   candidate gazetteer — Node resolves `Zabiče 8, 6250 Zabiče` to 45.508/14.369 SI correctly; the
   browser serves the pre-importance artifact) and the autocomplete typeahead (interaction drift
   beyond ids).
@@ -179,7 +179,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 - The verification-finds-defects loop: every deliverable's verification pass surfaced a real
   latent defect (repoint → #1586 + #1588; e2e → #1590 + #1589; the check PR → the reach-around
   guard catch). None were worked around; all were fixed or filed with receipts.
-- Pre-registered falsifiers did their job: two of three KILLED their own hypotheses cleanly, and
+- Pre-registered falsifiers did their job: two of three KILLED their own hypotheses directly, and
   the convergence produced a design record instead of three disconnected negative results.
 - The measured-change discipline: the append's first collapse got a measured knob (cache), the
   second identical collapse got the treadmill guard, not a third guess.
@@ -236,6 +236,6 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 | Modal spend                | $0 of $30                                                                                          |
 | NaN incidents              | 0                                                                                                  |
 | CI failures on own changes | 3 (1 load flake rerun; 2 real catches — the reach-around guard, the man-page rootDir — both fixed) |
-| Dark workflows healed      | version-parity (2 stacked breaks, 5 days dark); demo-smoke unblocked to an honest red              |
+| Dark workflows healed      | version-parity (2 stacked breaks, 5 days dark); demo-smoke unblocked to an direct red              |
 | Demo regressions           | 0 introduced; 2 latent defects found + fixed (#1586, #1588)                                        |
 | Production state           | demo on v9.1.0 (R2+HF), all md5-verified; npm untouched                                            |

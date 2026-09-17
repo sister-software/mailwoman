@@ -132,9 +132,9 @@ export interface ZoningDesignationRoute extends Disposable {
 	/**
 	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
 	 *
-	 * `null` and `undefined` are both accepted because a geocode result carries `lat`/`lon` as nullable — a caller that
-	 * had to narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal
-	 * here rather than a caller's problem.
+	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
+	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
+	 * rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
 }

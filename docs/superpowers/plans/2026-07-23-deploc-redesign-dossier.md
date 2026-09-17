@@ -1,6 +1,6 @@
 # dependent_locality redesign dossier — morning read, 2026-07-23
 
-**Status:** stop rule executed TWICE (v3.11.x lineage closed; v3.12.0 no clean checkpoint). No knob
+**Status:** stop rule executed twice (v3.11.x lineage closed; v3.12.0 no clean checkpoint). No knob
 iteration permitted. This doc is the evidence file + option space for the redesign discussion — it
 recommends, it does not decide. Sources: `.superpowers/sdd/progress.md`,
 `.superpowers/sdd/task-8-report.md` (§ "v3.12.0 ship grade"),
@@ -11,7 +11,7 @@ recommends, it does not decide. Sources: `.superpowers/sdd/progress.md`,
 
 **The one fact that closed everything:** `INV[comma-drop]` on
 `"1600 Pennsylvania Ave NW, Washington, DC 20500"` — the comma-free form loses rooftop resolution
-(38.8977,−77.0365 → 0,0). NEW vs the v385 profile (v385 holds this exact case, same session, same
+(38.8977,−77.0365 → 0,0). new vs the v385 profile (v385 holds this exact case, same session, same
 board). Present at **every checkpoint of every dep-loc-recipe run**: feed-2k/8k, consolidate-10k,
 and all 8 v3.12 checkpoints.
 
@@ -19,10 +19,10 @@ and all 8 v3.12 checkpoints.
 
 | #   | Hypothesis                                                                                                         | Test (run / checkpoints)                                                                                                                                                                      | Receipt                                                                                                                                                                                                                                  | Verdict                                                                                                                                                                 |
 | --- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Starvation** — tag dead because too few positive rows reach the fresh head                                       | probe-1 (2k, synth-gb w6.0 ≈ 1.3% dep-loc stream) → probe-2 (ONE var: w36.0 ≈ 6.6%)                                                                                                           | probe-1: decode 0/246 NZ + 0/69 GB, raw-BIO 2/69 gap 4.61. probe-2: decode **3/246 + 1/69 — first emissions ever**, raw-BIO 12/69 min-gap 0.000                                                                                          | **CONFIRMED as confound, then SUPERSEDED** — feed run (8k, 4-locale at matched 6.66% density) went back to 0/246 + 0/69 both layers. Density alone doesn't hold the tag |
+| 1   | **Starvation** — tag dead because too few positive rows reach the fresh head                                       | probe-1 (2k, synth-gb w6.0 ≈ 1.3% dep-loc stream) → probe-2 (one var: w36.0 ≈ 6.6%)                                                                                                           | probe-1: decode 0/246 NZ + 0/69 GB, raw-BIO 2/69 gap 4.61. probe-2: decode **3/246 + 1/69 — first emissions ever**, raw-BIO 12/69 min-gap 0.000                                                                                          | **confirmed as confound, then SUPERSEDED** — feed run (8k, 4-locale at matched 6.66% density) went back to 0/246 + 0/69 both layers. Density alone doesn't hold the tag |
 | 2   | **Encoder drift** — re-burial caused by the encoder moving under the head                                          | cRT probe `v3.12.0-crt-probe` (frozen encoder, 12,705 trainable params, ~5 min GPU), 1k–8k                                                                                                    | Reproduces the re-burial curve with the encoder frozen: GB raw-BIO 3/69→1→0→4, gap erosion 4.591→4.867; decode 0 throughout; digit board tracks feed within 1pp at every checkpoint (0.895/0.848/0.795/0.870 vs 0.890/0.853/0.782/0.868) | **FALSIFIED** — re-burial is a **classifier equilibrium**, not representation drift. Side-finding: digit-board sensitivity lives substantially in the classifier layer  |
 | 3   | **Late-save / data-order anomaly** — the 7850–7950 train-loss bump immediately before the 8k save caused the break | `v3.11.1-deploc-consolidate`: resume feed-8k +2k at damped classifier LR                                                                                                                      | Comma-drop break **byte-identical 8k ≡ 10k**; every other guard PASSes at 10k (golden-us at 0.06pp margin)                                                                                                                               | **FALSIFIED** — stable learned behavior, not churn. Stop rule #1 executed; v3.11.x closed                                                                               |
-| 4   | **Comma-share** — dep-loc extracts ~100% comma-structured promoted commas to required boundary evidence            | `v3.12.0-comma-robust`: Step-0-verified Fix B, `augment_punct_drop_prob` 0.3→0.6 (comma-free share 0.377, matched to base corpus; extracts measured 23.8–25.0%), 8k, all 8 checkpoints graded | Pennsylvania break NEW at **all 8** checkpoints (invariance suite + gauntlet agree); invariance-NEW 5–9 per checkpoint; gauntlet 3→3→3→3→**1**(5k)→**1**(6k)→**1**(7k)→3(8k, + new `BAND[transpose]` 1295.2km)                           | **FALSIFIED** — the one pre-registered variable, aimed at exactly this failure class, moved nothing on it in 8k steps                                                   |
+| 4   | **Comma-share** — dep-loc extracts ~100% comma-structured promoted commas to required boundary evidence            | `v3.12.0-comma-robust`: Step-0-verified Fix B, `augment_punct_drop_prob` 0.3→0.6 (comma-free share 0.377, matched to base corpus; extracts measured 23.8–25.0%), 8k, all 8 checkpoints graded | Pennsylvania break new at **all 8** checkpoints (invariance suite + gauntlet agree); invariance-NEW 5–9 per checkpoint; gauntlet 3→3→3→3→**1**(5k)→**1**(6k)→**1**(7k)→3(8k, + new `BAND[transpose]` 1295.2km)                           | **FALSIFIED** — the one pre-registered variable, aimed at exactly this failure class, moved nothing on it in 8k steps                                                   |
 
 Four mechanisms measured and closed. Full transcripts:
 `scratchpad/gb-probe-grade/{invariance,gauntlet}-cr-00[1-8]000.txt`; grades in
@@ -43,9 +43,9 @@ Four mechanisms measured and closed. Full transcripts:
 - **The NZ allowlist fix works.** v3.12 produced the first NZ decode emissions ever (peak 5/246 @
   6k, 100% tag-correct where fired; raw-BIO 15/246 @ 6k — more than the entire v3.11.x lineage's
   7 graded checkpoints combined, which totaled 4 firings). Resurrection generalizes across
-  locales once the extract actually flows (`country_weights NZ: 1.0`; the v3.11.x "4-locale" mass
+  locales once the extract flows (`country_weights NZ: 1.0`; the v3.11.x "4-locale" mass
   was silently 3).
-- **The break narrows to ONE stubborn class late-run.** v3.12 steps 5k–7k hold gauntlet at exactly
+- **The break narrows to one stubborn class late-run.** v3.12 steps 5k–7k hold gauntlet at exactly
   1 violation — Pennsylvania comma-drop only; the NY-cell trio (num-ordinal/abbrev, the 350-Fifth-Ave
   283.5km class) heals at 5k and stays healed through 7k. 8k regresses (3 violations + the new
   1295km transpose). Best invariance-NEW count is also 7k (5). Something late-run partially
@@ -53,7 +53,7 @@ Four mechanisms measured and closed. Full transcripts:
 
 ## 3. The surviving hypothesis space
 
-Why does the Pennsylvania comma-drop break appear in ALL dep-loc-recipe runs and never in v385?
+Why does the Pennsylvania comma-drop break appear in all dep-loc-recipe runs and never in v385?
 Remaining candidate common factors — every run shared all four of: hot classifier LR (1e-3, 10×
 base), reinit of rows 7/8, ~3.2M dep-loc extract rows, init_from v385.
 
@@ -74,7 +74,7 @@ decision margins at initialization.
 _Cheapest probe (≤2k, ~$0.50):_ feed recipe, hot LR, **no reinit** (rows kept from v385). Break
 present without reinit → kills (b) as necessary; break absent → reinit is required for the
 damage. Zero-GPU complement: cosine/margin analysis of the non-dep-loc classifier rows feed-8k vs
-v385 (the row-7/8 cosine instrument from the run-A adjudication, pointed at the OTHER rows) —
+v385 (the row-7/8 cosine instrument from the run-A adjudication, pointed at the other rows) —
 large drift in `locality`/`postcode` rows would implicate the trunk perturbation directly.
 
 **(c) The 3.2M-row dep-loc mass shifts boundary-evidence statistics in a way punct-drop can't
@@ -85,7 +85,7 @@ comma-free share" is not sufficient; the confound would be a second-order statis
 _Cheapest probes (zero-GPU):_ (1) **Pennsylvania logit-trace diff** — per-token argmax + gap dumps
 (the `TRACE_PRIOR_KINDS` / emission-dump plumbing in `neural/trace.ts`, plus the raw-BIO primitives
 in `scratchpad/gb-probe-grade/`) on the comma'd and comma-free forms across v385 / feed-8k /
-v3.12-7k: WHICH token flips to WHAT tag when the commas leave? That names the mechanism regardless
+v3.12-7k: which token flips to what tag when the commas leave? That names the mechanism regardless
 of hypothesis. (2) Corpus-stat diff: boundary-evidence statistics (comma-conditional transition
 counts, admin density, field order) of the four extracts vs the base stream. (3) Eval-time ablation:
 the conditional-bias implementation (`conditional-bias-rescue.mjs`) inverted — bias AGAINST rows 7/8 on
@@ -101,7 +101,7 @@ The first two alone likely split the space before any GPU spend.
 
 ## 4. The option space (recommendation inputs, not a decision)
 
-**(A) Diagnose-first micro-arc.** The zero-GPU probes above, then ONE targeted run chosen by their
+**(A) Diagnose-first micro-arc.** The zero-GPU probes above, then one targeted run chosen by their
 verdict, under a new pre-registration. Highest information per dollar; respects the stop rule's
 spirit (redesign from mechanism, not another knob). Risk: one more elapsed day before any model
 ships — which option D absorbs.
@@ -118,13 +118,13 @@ A and B compose: A's zero-GPU day, then B as the one targeted run if the trace e
 the LR/schedule.
 
 **(C) Accept-and-check.** Ship a 7k-class checkpoint with the single Pennsylvania violation
-adjudicated as acceptable. **NOT recommended:** the gauntlet metamorphic bar is a pre-registered
+adjudicated as acceptable. **not recommended:** the gauntlet metamorphic bar is a pre-registered
 hard check that has now survived two stop-rule executions; waiving it post-hoc for a US-invariance
 regression on the most famous address in the eval set would be check drift of precisely the kind the
-pre-registrations exist to prevent — and a NEW violation class vs v385 is a shipped-user regression,
+pre-registrations exist to prevent — and a new violation class vs v385 is a shipped-user regression,
 not a missing feature.
 
-**(D) Locality-mapped v1 for the October talk.** en-GB ships on v385 — which is ALREADY the shipped
+**(D) Locality-mapped v1 for the October talk.** en-GB ships on v385 — which is already the shipped
 state: the merged arc code (prior inert-but-ready, `neural-weights-en-gb` shipping no model of its
 own, cards keeping v385 identity) was designed for exactly this posture, and the night pivot's code
 release (5 production bug fixes + en-gb package) is in flight. Zero model risk, zero GPU. The
@@ -138,7 +138,7 @@ catch) is already fully receipted whether or not a new model lands first.
 | ------------------------------------ | -----------: | ------: | --------------------------------------------------------------------------------------------- |
 | A (zero-GPU probes + 1 targeted run) |          1–2 |   ~$2–4 | probes $0 (checkpoints local); one 2k probe ~$0.50; one 8k candidate ~$1.50 + export/quantize |
 | B (two-phase schedule, one run)      |            1 |     ~$2 | 8k ≈ 25 min A100 ~$1.50 + export/quantize/grading; launch-ready today                         |
-| C (accept-and-check 7k)              |          0.5 |      $0 | grading/battery only — but see NOT recommended                                                |
+| C (accept-and-check 7k)              |          0.5 |      $0 | grading/battery only — but see not recommended                                                |
 | D (v385 locality-mapped v1)          |           ~0 |      $0 | already the shipped state; code release in flight                                             |
 
 A+B combined (the likely path if the operator wants a model this week): ~2 agent-nights, ≤$5.

@@ -34,13 +34,13 @@ What the loader (`neural-web/loader.ts`) fetches and runs before the first parse
 | int8 ONNX model                    | **~29 MB** (measured)                                                      | HTTP fetch from R2                     | the dominant cold cost — ~23 s @ 10 Mbps, ~4.6 s @ 50 Mbps |
 | onnxruntime-web WASM               | a few MB (estimated)                                                       | HTTP + compile                         | one-time WASM compile                                      |
 | tokenizer + anchor + postcode bins | ~MB (estimated)                                                            | HTTP fetch                             | small                                                      |
-| `candidate.db` warmup              | **~12 cold byte-range fetches** (measured, candidate-table spike)          | sql.js-httpvfs over a **1.3 GB** R2 DB | NOT a full download — header + B-tree nodes only           |
+| `candidate.db` warmup              | **~12 cold byte-range fetches** (measured, candidate-table spike)          | sql.js-httpvfs over a **1.3 GB** R2 DB | not a full download — header + B-tree nodes only           |
 | model session-init                 | **126 ms** (measured, node native EP)                                      | local                                  | WASM EP is ~3–5× → est. ~400–600 ms in-browser             |
 | first (cold) parse                 | **219 ms** (measured, node; includes one-time lazy decoder/gazetteer init) | local                                  | amortized after the first parse                            |
 
 Per-keystroke floor (node native EP, measured): **warm parse 5.7 ms**. The browser WASM EP runs ~3–5× slower,
 so a ~15–30 ms in-browser parse is the realistic estimate — comfortably inside the 50 ms parse budget. The
-resolve half (the candidate-table SQLite probe) is the half we have NOT measured in-browser and is the
+resolve half (the candidate-table SQLite probe) is the half we have not measured in-browser and is the
 suspected per-keystroke bottleneck (DeepSeek S45).
 
 ## The bottleneck the numbers already name

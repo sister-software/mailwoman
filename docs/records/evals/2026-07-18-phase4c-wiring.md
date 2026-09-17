@@ -34,7 +34,7 @@ Two design moves, each measured:
    street is wrong/absent and the confirmed segmentation street replaces it. An unconfirmed street
    never overrides the model.
 
-## Result — the honest production delta (vs argmax, the baseline production runs)
+## Result — the direct production delta (vs argmax, the baseline production runs)
 
 | board (evidence-conditional street-splice) | argmax baseline | reranked  | delta         |
 | ------------------------------------------ | --------------- | --------- | ------------- |
@@ -48,7 +48,7 @@ Two design moves, each measured:
 
 273 fixes / 3 breaks on the fragment board. **Zero golden regression, +16.9pp on FR fragments.**
 Note the framing: the night's "+6.0pp" was measured against the span-head's own seg@1; against the
-model production actually runs (argmax), the fragment-street win is +16.9pp — the argmax baseline was
+model production runs (argmax), the result is +16.9pp — the argmax baseline was
 much lower on fragments than the segmentation seg@1 the board used.
 
 ## Status + what's next

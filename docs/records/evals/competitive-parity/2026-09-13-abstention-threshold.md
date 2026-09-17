@@ -40,7 +40,7 @@ Every arm reports confidence as the winner's margin over the runner-up within th
 considered, normalized into [0, 1], and **1 when there was no runner-up**. The sweep re-grades the
 committed results: a selection whose confidence falls below the threshold is re-read as an abstention.
 
-No resolver is re-run, so the walk is held fixed. A resolver that actually refused a node could ask
+No resolver is re-run, so the walk is held fixed. A resolver that refused a node could ask
 different questions afterwards, through `parentFallback` and `hierarchyCompletion`, and reach a
 different final selection. Everything in the next two sections is therefore an upper bound on what a
 threshold over this signal can provide at the final selection, not a prediction of shipped behaviour. The
@@ -86,7 +86,7 @@ is the threshold and nothing else.
 | 0.20      | 5.9 points    | 7.553e-2        | none                    | no              |
 | 0.30      | 0.8 points    | 8.570e-1        | none                    | no              |
 
-### What the first step actually moves
+### What the first step moves
 
 Threshold 0.01 withholds only the selections whose margin is effectively zero. It withholds 107 of
 Mailwoman's 383 selections:
@@ -134,7 +134,7 @@ all. The same value means opposite things on either side of the panel:
 | gold present  |                    134 | 129 (96.3%)       |
 | withheld gold |                     28 | 0 by construction |
 
-A lone candidate is usually the right one when the gold is in the pool, and necessarily the wrong one
+A lone candidate is typically the right one when the gold is in the pool, and necessarily the wrong one
 when it is not. Abstaining on absent gold needs a signal about the winner's **fit to the query** —
 how much of the input it explains, whether its hierarchy is consistent with the rest — not its lead
 over rivals it never had.
@@ -154,7 +154,7 @@ candidate.
 ### Correction: nine of the twenty-eight name the right place
 
 Three of those five exemplars are correct answers. The withheld-gold stratum removes the ids the
-`gn:id` concordance links, and the gazetteer carries many settlements twice — once as a `locality`,
+`gn:id` concordance links, and the gazetteer carries several settlements twice — once as a `locality`,
 once as the `localadmin` with the same name at the same centroid — so removing the concorded id
 leaves the twin answerable:
 
@@ -187,7 +187,7 @@ stratum whatever the outcome:
 | no `bare_race`     |                   31 | 18 (58.1%) |
 
 On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE, not a failure: bare-toponym
-rows do select more often than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
+rows do select more frequently than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
 stratum carries the check and a quarter of those rows still abstained. The enrichment is worth a
 separate measurement; it is not on its own evidence that the race manufactures these selections.
 
@@ -204,7 +204,7 @@ it was fixed ([#2265](https://github.com/sister-software/mailwoman/issues/2265))
 (`packages/resolver/lib/resolve/passes.ts`) — it declines only when the tree already holds a resolved
 place. A `minWinningScore` refusal leaves a tree with no resolved place, which is precisely the
 recovery pass's trigger condition, so the recovery re-issued the byte-identical locality lookup the
-floor had just declined. Measured before the fix, raising the floor across the whole populated range
+floor haddeclined. Measured before the fix, raising the floor across the whole populated range
 of the scale moved the false-selection rate from 75 of 100 rows to 74 — one row — and moved selection
 accuracy not at all. The handover was visible in the mechanism strings: at floor 4 the withheld-gold
 rows decided by `picked:ranked` fell from 56 to 8 while `picked:span_rescore` rose from 18 to 66.

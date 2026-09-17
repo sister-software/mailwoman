@@ -19,14 +19,14 @@ pre-window and the walk's post-importance re-rank). It stands down entirely unde
 caller country (#912 posture) and on artifacts without the ancestors sidecar (capability-conditional;
 the pick's `metadata.admin_containment` reads `unavailable`).
 
-## Evidence (ON vs OFF, one declared variable, house graders)
+## Evidence (on vs off, one declared variable, house graders)
 
 | leg              | result                                                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | board (558)      | 7 differed; **2 improved / 0 regressed / 556 neutral**; region-contradicted census 15 → 12                                                        |
 | panel v2.1 (420) | 12 changed rows, **12 improvements, 0 regressions**; rooftop @25km **256 → 264**, @5km 247 → 255, @1km 218 → 223 (n=345); city-only @25km 57 → 60 |
 | Weimar six       | qualifier-containing three land at **0.87 / 1.72 / 1.94 km** (from 5,800–8,600 km); the three with no parsed region node unchanged, correctly     |
-| gauntlet         | regression 353/354 both arms, byte-identical single pre-existing failure; metamorphic PASS both arms, identical 3 xfails                          |
+| gauntlet         | regression 353/354 both arms, byte-identical single pre-existing failure; metamorphic pass both arms, identical 3 xfails                          |
 | parity           | untouched — the change's first touchpoint is after the parse                                                                                      |
 
 Nine en-AU rooftop panel rows return from the wrong continent (0.09–3.8 km); `Georgetown, Penang` →

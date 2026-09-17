@@ -36,15 +36,15 @@ Pelias and `addressit` test suites, and `v0` _is_ our port of Pelias, so the sui
 parser against its own author's answer key. It cannot, even in principle, catch `v0` being wrong,
 because `v0`'s output **is** the definition of correct.
 
-So "neural scores 20.7%" measures one thing: **how often neural disagrees with Pelias's exact
+So "neural scores 20.7%" measures one thing: **how frequently neural disagrees with Pelias's exact
 conventions** — where to split a multi-word street, where a venue ends and a locality begins, the
-dozens of micro-decisions addressit happened to encode. It says nothing about how often neural is
+dozens of micro-decisions addressit happened to encode. It says nothing about how frequently neural is
 _wrong_. Useful as a regression check (did a retrain break something we used to match?); useless
 as a verdict on which parser is better.
 
 ## Decomposing the 20%
 
-To judge quality fairly we need benches drawn from _outside_ the Pelias lineage. We score both
+To judge quality moderately we need benches drawn from _outside_ the Pelias lineage. We score both
 parsers on three:
 
 | arena         | what it is                       |   n |      v0 |  neural |
@@ -60,7 +60,7 @@ Three different stories:
   neural looks worst there.
 - **Messy input → neural wins, decisively** (61% vs 39%) — and this is the biggest bench by
   far (398 cases), built by perturbing real addresses: dropped commas, abbreviations,
-  reordering, weird casing. It's the closest proxy we have to what people actually type, and
+  reordering, weird casing. It's the closest proxy we have to what people type, and
   it's the whole reason the neural model exists.
 - **Edge formats → both are bad.** PO boxes, military APO/FPO, and rural routes are **0% for
   both** parsers. Neither was built for them.
@@ -88,7 +88,7 @@ construction, and your challenger will always look broken. The suite is doing it
 faithfully measuring _agreement with the incumbent_. Just don't mistake that for a measure of
 quality.
 
-Measure on the distribution you actually serve. For us that's messy, abbreviated, real-world
+Measure on the distribution you serve. For us that's messy, abbreviated, real-world
 addresses — and there, the learned model is ahead.
 
 ---

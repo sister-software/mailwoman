@@ -30,7 +30,7 @@ import { POIExplorer } from "@site/src/components/POIExplorer/POIExplorer"
 
 ## Why "hospital, 350 5th Ave, New York" doesn't become a POI query
 
-Try that preset. The lexicon matches `hospital` as a subject, but the remainder — `350 5th Ave, New York` — leads with a house number. That's the signature of a venue-led full address ("the hospital located at this specific address"), not a category search, so the classifier's `structured_address` score wins and the query falls through to the "parses as an address" state instead of an Overpass export. This is the same guard [the parser uses in production](../our-approach/the-staged-pipeline.mdx) to keep full addresses from getting mis-routed into the POI branch just because they happen to start with a category word.
+Try that preset. The lexicon matches `hospital` as a subject, but the remainder — `350 5th Ave, New York` — leads with a house number. That's the signature of a venue-led full address ("the hospital located at this specific address"), not a category search, so the classifier's `structured_address` score wins and the query falls through to the "parses as an address" state instead of an Overpass export. This is the same guard [the parser uses in production](../our-approach/the-staged-pipeline.mdx) to keep full addresses from getting mis-routed into the POI branchbecause they happen to start with a category word.
 
 ## What isn't here yet
 

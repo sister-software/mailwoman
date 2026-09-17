@@ -3,8 +3,8 @@
 Night-4 of the #727 stage-2 arc (plan #1134), step 4: **the span-head training arc.** The phase-1
 probes (v3.0.0→v3.0.1) proved a trained semi-Markov span scorer beats flat-BIO decode, but on the
 v257 corpus and as a standalone head. This run answers the integration question — does that head
-survive being folded into the SHIPPED v381 recipe (v0.11.0-no-fragment corpus, all the ship
-channels), and how much k-best headroom does it actually expose for the phase-4c resolver rerank?
+survive being folded into the shipped v381 recipe (v0.11.0-no-fragment corpus, all the ship
+channels), and how much k-best headroom does it expose for the phase-4c resolver rerank?
 
 ## The recipe
 
@@ -24,7 +24,7 @@ Same corpus + tokenizer as v381 → every F1 comparison below is valid.
 | golden fr micro / exact      | 90.1 / 75.4   | 90.0 / 75.4     | GUARD PASS (noise)               |
 | seg@1 (parity 267, starved)  | token@1 0.558 | **0.588**       | CHECK PASS (+3.0pp)              |
 | oracle@5 (parity 267)        | —             | **0.7865**      | +6.4pp over v301's 0.7228        |
-| all-caps raw-case exact (P3) | 48.3          | 48.0            | FAIL (inert, −0.3pp vs +5pp bar) |
+| all-caps raw-case exact (P3) | 48.3          | 48.0            | fail (inert, −0.3pp vs +5pp bar) |
 
 train_loss 18.6→1.31; val macro_f1 0.6937 (= the 2k's 0.6936 — the token path is untouched, the
 span head is a purely additional output).
@@ -46,7 +46,7 @@ likewise saturates. The extra 6k steps refined train_loss (1.49→1.31) but not 
 the same 2k≈8k plateau the B4b digit arc hit. The 8k is the "complete" run (lowest loss, clean
 schedule) and the better-provenance substrate, but 2k would have served equally on the decode metrics.
 
-**P3 all-caps is inert — closed.** The augment failed its +5pp bar at 2k AND at 8k (48.0 vs 48.3 both
+**P3 all-caps is inert — closed.** The augment failed its +5pp bar at 2k and at 8k (48.0 vs 48.3 both
 times). More steps didn't help; the augment does not teach all-caps robustness at rate 0.15. The
 #690 title-case shim stays (worth +12.4pp raw-case today). A separate higher-rate probe is the only
 open path, and it's the operator's call — this augment, as configured, is a measured negative.
@@ -63,7 +63,7 @@ to emit it), staged at `scratchpad/v3101-cache` + the checkpoint on the training
 The measured chain now runs end to end: trained span head → k-best decode (PR #1154) → oracle@5
 0.786 headroom → name-evidence rerank (phase-4b: +18.5pp bare-street on the FR fragment board,
 148 fixes / 3 breaks). Every link is measured; none is promoted. Phase-4c (build
-`StreetLocalityEvidence`, wire the rerank behind a flag, re-run the full promote battery WITH the
+`StreetLocalityEvidence`, wire the rerank behind a flag, re-run the full promote battery with the
 rerank active) is the next arc, blocked on #1154 merging and the operator ratifying the spec.
 
 ## Artifacts
@@ -73,11 +73,11 @@ rerank active) is the next arc, blocked on #1154 merging and the operator ratify
 - int8 + sidecar: `output-v3100-span-ship-probe-s42/model-int8.onnx` + `semi-crf-transitions.json`.
 - Grade instruments: `scratchpad/grade-v3101.sh`, `oracle-read-v3101.mjs`, `eval_seg_at_1.py`.
 
-## Correction: the name-evidence rerank, re-measured on THIS model (not the v301 proxy)
+## Correction: the name-evidence rerank, re-measured on this model (not the v301 proxy)
 
 Phase-4b measured the name-evidence rerank on the v301 phase-1 head (the only span model then
 exported). Re-running the FR fragment board (n=1600) on the v3.10.1 8k substrate — the model
-phase-4c will actually decode — corrects the headline:
+phase-4c will decode — corrects the headline:
 
 | class              | v301-proxy seg@1 → rerank | **v3.10.1 8k seg@1 → rerank** |
 | ------------------ | ------------------------- | ----------------------------- |
@@ -91,7 +91,7 @@ phase-4c will actually decode — corrects the headline:
 
 - v0.11.0 corpus + 8k) is FAR stronger at rank-1 than the bare v257 phase-1 head — seg@1 0.791 vs
   0.619 — so it leaves less recoverable headroom (146 vs 202 recoverable rows). The rerank still earns
-  its keep (+6.0pp, 32:1), but the value has MOVED: bare-street is nearly solved by the model itself
+  its keep (+6.0pp, 32:1), but the value has moved: bare-street is nearly solved by the model itself
   (0.905), and **date-name is now the primary beneficiary** (+16.7pp — the class the model still finds
   hardest). The proxy's "+18.5pp bare-street" was a weak-model artifact; verify on the substrate you'll
   ship. Phase-4c is still worth building, but its pitch is date-name + the long tail, not bare-street.

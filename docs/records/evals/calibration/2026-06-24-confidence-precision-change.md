@@ -4,7 +4,7 @@ _2026-06-24. Shipped model `neural-weights-en-us` v4.13.0 (int8), calibrated via
 
 ## The claim
 
-A geocoder that returns a best guess gives you one number and no way to know which answers to trust. mailwoman returns a coordinate **and** a calibrated confidence, so you can set a threshold τ and accept only the answers it is at least τ confident about. As τ rises, precision rises and recall falls — a change no search index exposes. The question this report answers: does that change actually work — does higher confidence mean higher right-place rate, and does it hold on data the curve was not drawn on?
+A geocoder that returns a best guess gives you one number and no way to know which answers to trust. mailwoman returns a coordinate **and** a calibrated confidence, so you can set a threshold τ and accept only the answers it is at least τ confident about. As τ rises, precision rises and recall falls — a change no search index exposes. The question this report answers: does that change work — does higher confidence mean higher right-place rate, and does it hold on data the curve was not drawn on?
 
 ## The change (draw split, 236 rows)
 
@@ -45,9 +45,9 @@ The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-o
 
 The discrimination is the model flagging its own coverage. Where mailwoman has gazetteer depth (US, IT, FR) it is both precise and confident; where coverage is still being built (PL, PT, AU) it is correctly unsure, so a τ threshold removes exactly those answers. That is the asset: for a caller who must avoid wrong answers — a record-matcher deduping compliance data, say — the threshold reduces the error rate by trusting only the answers the model stands behind. Coverage breadth is a separate axis, tracked elsewhere.
 
-## What this report does NOT claim
+## What this report does not claim
 
-The plan opened as a head-to-head against Nominatim on the same messy set. That comparison is **withheld**: the Nominatim fetch hit rate-limiting during crash-restarted runs (AU returned nothing for all 63 valid AU addresses, FR 45% null, PT 38% null), so the competitor's recall and precision are unreliable here and any "mailwoman wins" read would be a rate-limit artifact. The clean competitive result stands from the 2026-06-23 benchmark (US right-place @25km, mailwoman 99% vs Nominatim 84%, #775) as supporting context, not as tonight's measurement. A spaced, policy-respecting re-fetch is the next step if the head-to-head on mess is wanted.
+The plan opened as a head-to-head against Nominatim on the same messy set. That comparison is **withheld**: the Nominatim fetch hit rate-limiting during crash-restarted runs (AU returned nothing for all 63 valid AU addresses, FR 45% null, PT 38% null), so the competitor's recall and precision are unreliable here and any "mailwoman wins" read would be a rate-limit artifact. Use the 2026-06-23 benchmark (US right-place @25km, mailwoman 99% vs Nominatim 84%, #775) as supporting context, not as tonight's measurement. A spaced, policy-respecting re-fetch is the next step if the head-to-head on mess is wanted.
 
 ## Reproduce
 

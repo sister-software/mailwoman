@@ -1,8 +1,8 @@
-# Going multi-locale starts with finding out what's actually broken (2026-06-02)
+# Going multi-locale starts with finding out what's  broken (2026-06-02)
 
 You have a parser trained on US and French addresses, and you want it to read German ones. The
 tempting move is to grab a pile of German data and retrain. Don't. Not yet. First find out what's
-actually broken, because "it doesn't work on German" hides at least three different failures, and
+ broken, because "it doesn't work on German" hides at least three different failures, and
 two of them aren't the parser's fault at all.
 
 This is the write-up of that finding-out, done as a night-shift before committing a single GPU-hour.
@@ -25,7 +25,7 @@ a finding feels like a crisis, check whether you're holding the instrument upsid
 So the resolver and the gazetteer already handle German. The gap is narrower than it looked, and it
 lives in the parser.
 
-## What the parser actually gets wrong, and why
+## What the parser  gets wrong, and why
 
 Here is the neural parser on real German addresses, next to the rule-based `v0`:
 
@@ -90,7 +90,7 @@ Straußstraße/B-street  27/B-house_number  12623/B-postcode  Berlin/B-locality
 Five thousand of those, weighted at 0.2 (a supplement, not a flood), continue-trained on top of
 v0.7.2. One variable changed against the previous recipe.
 
-## The baseline, and an honest stopping point
+## The baseline, and an direct stopping point
 
 Here's the "before," measured on a held-out German set the model has never seen:
 

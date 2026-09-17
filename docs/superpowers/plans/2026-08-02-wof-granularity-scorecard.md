@@ -48,7 +48,7 @@ empty), and the 5% parent-coverage floor wants a second calibration point, which
 
 **Context the implementer needs.** `PLACETYPE_PROJECTION` is the executable copy of the projection
 table in `docs/articles/plan/reference/placetype-evidence.mdx`. A `null` value means "in the
-vocabulary, deliberately NOT projected" — distinct from a placetype missing from the map entirely,
+vocabulary, deliberately not projected" — distinct from a placetype missing from the map entirely,
 which `buildPlacetypeCensus` reports in `unmappedPlacetypes` and the `census` command turns into a
 throw (`mailwoman/commands/gazetteer/census.tsx:78-83`). Today the map has 25 keys against a
 34-placetype vocabulary, so deepening the gazetteer past the current 9-placetype ingest allowlist
@@ -64,7 +64,7 @@ deliberately uncounted — with comments saying why. Do not invent a tag for eit
 
 Replace the whole `describe("PLACETYPE_PROJECTION", …)` block at `placetype-census.test.ts:62-76`.
 Note the third test: the old file asserted `expect("wing" in PLACETYPE_PROJECTION).toBe(false)`,
-which this task deliberately makes false, so it is replaced with a placetype that is genuinely not in
+which this task deliberately makes false, so it is replaced with a placetype that is in fact not in
 the WOF vocabulary.
 
 ```typescript

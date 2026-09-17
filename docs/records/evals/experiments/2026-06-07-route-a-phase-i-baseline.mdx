@@ -2,7 +2,7 @@
 
 The decision document for [epic #421](https://github.com/sister-software/mailwoman/issues/421). Before committing to making the joint-decode / concordance stage the default, we measured the _existing_ opt-in path (`forceJointReconcile`) head-to-head against the argmax default. The result is decisive, and it points the opposite way from what you'd hope.
 
-## Verdict: **STAY** — do not flip the default. Phase II (phrase grouper) is a hard check, not an option.
+## Verdict: **stay** — do not flip the default. Phase II (phrase grouper) is a hard check, not an option.
 
 Joint-decode wins enormously on the case it was built for and **catastrophically regresses everything else**, for one diagnosable reason. The "just flip the default" option is dead; the full programme is the only viable path, and it's blocked on a prerequisite.
 
@@ -23,7 +23,7 @@ The check (from #421) wants a regression rate **≤ 0.5%** to even consider flip
 
 ## Why — the phrase grouper, exactly as predicted
 
-The win and the loss have the same root. The reconciler decodes over the spans the phrase grouper proposes; when those proposals don't cover a multi-word component, it falls back to single-token spans. That's a _feature_ for the city-state collision (`…, Berlin, Berlin 10115` — the second `Berlin` is a single token the reconciler can re-tag as a locality, which argmax drops — hence +25pp). It's a _disaster_ for native-order locales whose place names are multi-word:
+the result and the loss have the same root. The reconciler decodes over the spans the phrase grouper proposes; when those proposals don't cover a multi-word component, it falls back to single-token spans. That's a _feature_ for the city-state collision (`…, Berlin, Berlin 10115` — the second `Berlin` is a single token the reconciler can re-tag as a locality, which argmax drops — hence +25pp). It's a _disaster_ for native-order locales whose place names are multi-word:
 
 ```
 "Reggio nell'Emilia"          argmax → "Reggio nell'Emilia" ✓     joint → "Reggio"        (fragmented)

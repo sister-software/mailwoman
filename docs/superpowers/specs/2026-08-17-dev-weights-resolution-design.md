@@ -44,7 +44,7 @@ generator"); the 9.0.0 lockstep miss is the prediction landing.
 
 Considered and rejected. `scratchpad/add-a-country-runbook.md` Addendum A argues that a JSON recipe is "the
 same shape as the thing that lagged" in #1015, that it adds a register, and that JSON cannot carry the
-reasoning a code comment does. The first two objections are decisive against a NEW file. The third turns out
+reasoning a code comment does. The first two objections are decisive against a new file. The third turns out
 not to apply: `release.config.json` already carries richer prose in `lineage` than the code comment it would
 replace.
 
@@ -110,13 +110,13 @@ empty and `base-latn` has no card at all.
 
 That is defensible for `model.onnx` and `tokenizer.model` — overlays share the base byte-for-byte via
 `mailwoman.baseWeights` and have no digest of their own — but it means the digest assertion covers one of
-ten packages, and it covers nothing an overlay actually ships: `postcode-gb.bin`, `pair-index-de.bin`, the
+ten packages, and it covers nothing an overlay ships: `postcode-gb.bin`, `pair-index-de.bin`, the
 lexicons, the per-locale FSTs.
 
 The link command refuses to link an overlay-owned artifact that has no recorded digest, rather than linking
 it unchecked. This is the runbook's closing move — "promote the warning to a check" — applied here.
 
-## What is NOT in scope
+## What is not in scope
 
 - The layered config file from `scratchpad/config-file-plan.md`. Superseded; see "Why not a config file".
 - Any change to `resolveFromPackageDir`'s sibling list or resolution order.

@@ -6,7 +6,7 @@
 # Why 0.05, not 0.1: v0.7.0 calibration at ls=0.1 reduce overconfidence 86→67% but left the
 # harness pass rate flat and dropped house_number ~6pp (not promoted — see
 # project-v07-calibration-result). 0.05 is the gentler middle ground (the staged fork): the
-# hypothesis is it recovers most of the calibration gain without the house_number damage.
+# hypothesis is it recovers most of the calibration improvement without the house_number damage.
 #
 # HONEST expectation (articulated before launch, per night-shift iteration discipline):
 # calibration improves (overconfidence down), harness ~flat-to-slightly-up, house_number

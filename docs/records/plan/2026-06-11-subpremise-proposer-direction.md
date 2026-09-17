@@ -27,7 +27,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
 
 1. **Input-layer clue (knowledge ladder rung 3.2 — cheapest, partially built).** The gazetteer
    channel's 5 dims already include a `po_box` bit. The nexus version: a **subpremise clue
-   dimension** that fires on ANY codex designator (unit, level, po_box-class, all locales) —
+   dimension** that fires on any codex designator (unit, level, po_box-class, all locales) —
    one bit + the designator's tag-class, the same multi-hot pattern. The model conditions; it
    never obeys. Cost: a lexicon rebuild + a channel-dim bump (retrain-coupled — rides a
    scheduled run, not its own).

@@ -11,7 +11,7 @@ Last night the plan was straightforward: mailwoman was missing a pile of non-US 
 
 ## The geocoder couldn't find Tirana
 
-Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got nothing. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins actually query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
+Start with the symptom. Ask mailwoman's drop-in API for `Tirana, Albania` and you got nothing. Same for Yerevan, Kabul, Ulaanbaatar, Sarajevo — 147 countries where the candidate gazetteer, the table the demo and the drop-ins query, held exactly zero rows. You didn't get a wrong coordinate, you got silence, as if the country didn't exist.
 
 That gap is easy to miss, because the cities that do resolve — Berlin, Paris, Tokyo — resolve beautifully, and those are the ones you check by hand. The hole was in the long tail of countries nobody on the team types into a demo at 2am.
 
@@ -25,7 +25,7 @@ So before betting the night on it, we ran the cheap version first. For the top c
 
 That killed the expensive theory and pointed at a boring data fix: pull the real GeoNames town-level dumps for all 147 countries and rebuild the table. It worked the way data fixes do — completely. Before, zero of twenty-five sampled capitals resolved. After, twenty-five of twenty-five, every one inside six kilometers, Tirana to the meter. The countries that already worked came through byte-for-byte identical, because every new row sat in a country that previously had none. No regression to argue about.
 
-That's the win, and we staged it to ship. It's the part you'd put in the changelog. I learned more from what came next.
+That's the result, and we staged it to ship. It's the part you'd put in the changelog. I learned more from what came next.
 
 ## Then the eval lied to me
 
@@ -37,7 +37,7 @@ I almost did. Then I checked which model the eval had loaded.
 
 It was a six-week-old build. The dev symlink that points at "the shipped model" had drifted to an old one — a test re-creates that symlink as a side effect, and it had been pinning the wrong file for weeks. Every eval that loaded the model by its default path was grading something we retired in May.
 
-Point the eval at what we actually ship and Portugal's 47 kilometers becomes 0.8. Poland 2.3. Australia 1.2. The disaster evaporated. The shipped parser was fine the whole time; the only broken thing was the ruler I measured it with. The retrain I was about to recommend would have fixed a problem that didn't exist — and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came. We didn't need a GPU. We needed to read a symlink.
+Point the eval at what we ship and Portugal's 47 kilometers becomes 0.8. Poland 2.3. Australia 1.2. The disaster evaporated. The shipped parser was fine the whole time; the only broken thing was the ruler I measured it with. The retrain I was about to recommend would have fixed a problem that didn't exist — and the multilocale parser that does fix this, for the cases where it's real, already sits in a validated checkpoint waiting on a promotion that never came. We didn't need a GPU. We needed to read a symlink.
 
 ## What went wrong, both times
 

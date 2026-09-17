@@ -63,10 +63,10 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ````
 
 - [ ] **Step 3: Write the rule files.** Each is a Vale `existence`/`substitution` rule; severities: banned words = error, weasel quantities = warning, anthropomorphism = warning.
-  - `Mailwoman/BannedWords.yml` (error): actually, basically, simply, obviously, clearly, just (softener caught as `just`), robust, the word for frictionless, comprehensive, various, numerous, leverage, plethora, myriad, delve, crucial, pivotal, vibrant, elevate, unlock, harness, foster, facilitate, honest(ly), genuine(ly), truly, effortlessly, cleanly, quietly.
-  - `Mailwoman/StockPhrases.yml` (error): "not just", "it's not just", "more than just", "isn't just", "less about .* more about", "here's the thing", "the uncomfortable truth", "what most people miss", "belt and suspenders", "required", "blast radius", "override", "north star", "first-class citizen", "source of truth" (prose only — `source-of-truth:` frontmatter is ignored via TokenIgnores addition `(^source-of-truth:.*)`).
+  - `Mailwoman/BannedWords.yml` (error): filler and marketing intensifiers.
+  - `Mailwoman/StockPhrases.yml` (error): contrastive slogans, metaphors, and consultant phrasing (prose only — `source-of-truth:` frontmatter is ignored via TokenIgnores addition `(^source-of-truth:.*)`).
   - `Mailwoman/Anthropomorphism.yml` (warning): "(parser|model|decoder|resolver|pipeline) (thinks|believes|wants|knows|decides to|tries to|gives up)". Suggested fixes in the rule message ("assigns", "scores", "returns").
-  - `Mailwoman/Weasel.yml` (warning): nearby, fairly, usually, often, many, a lot of, significant(ly) — message: "state the measured quantity or mark the sentence deliberately qualitative."
+  - `Mailwoman/Weasel.yml` (warning): unmeasured quantities such as "near", "typically", and "frequently" — message: "state the measured quantity or mark the sentence deliberately qualitative."
   - `Mailwoman/Terms.yml` (substitution, error): `zip code|zipcode → ZIP Code`, `whos on first|Who's on First → Who's On First`, `geo-code → geocode`, `lat/long|lat-long → latitude/longitude`, `postcode → postcode` (en-GB house term; ZIP Code stays for the US pages by vocabulary accept-list).
 - [ ] **Step 4: Fixture test.** `docs/scripts/vale-fixtures/dirty.md` containing one violation per rule; `clean.md` with compliant prose. Run `vale` on both: dirty must report ≥5 errors, clean must exit 0. Wire as `docs/scripts/check-vale-rules.sh` (three lines: run on dirty expecting failure, run on clean expecting success) and call it from the docs CI job.
 - [ ] **Step 5: CI wiring.** In `docs-build.yml` PR path-filtered job, add step "Prose lint" running `yarn workspace @mailwoman/docs lint:prose` after install, before build. (Corpus is old prose until Phase 3 — scope the step to `git diff --name-only origin/main... -- 'docs/articles/**/*.md*'` changed files until Task 23 flips it to full-corpus.)
@@ -81,11 +81,11 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 **Interfaces:**
 
-- Produces: check requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ `{tutorial, guide}`; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
+- Produces: check requiring on every published page: `role` ∈ the six-role enum; `verified-with` when role ∈ `{tutorial, guide}`; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
 
 - [ ] **Step 1: Write failing tests** for `validatePage`: missing role → error; bad role value → error; tutorial without `verified-with` → error; reference without `source-of-truth` → error; landing without `audience` → error; valid page → `[]`.
 - [ ] **Step 2: Rewrite the check.** Replace the `ROLE_REQUIRED_PAGES` hardcoded-path array with every-page enforcement; keep sidebar-orphan and duplicate-title checks as-is; empty the allowlist (old entries reference pages that will be gone).
-- [ ] **Step 3: Run tests** (`yarn workspace @mailwoman/docs vitest run scripts/`) → green. The full check will fail against the OLD tree — acceptable: wire the strict mode behind `--strict` flag; CI keeps legacy mode until Task 5 flips `docs-build.yml` to `--strict`.
+- [ ] **Step 3: Run tests** (`yarn workspace @mailwoman/docs vitest run scripts/`) → green. The full check will fail against the old tree — acceptable: wire the strict mode behind `--strict` flag; CI keeps legacy mode until Task 5 flips `docs-build.yml` to `--strict`.
 - [ ] **Step 4: Commit** `feat(docs): every-page frontmatter contract in the structure check`.
 
 ### Task 25: Writing-system derivation (execution order: after Task 2, before Task 5)
@@ -211,7 +211,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Modify: the three `developers/get-started/*.mdx` pages from Task 5
 - Create: `docs/scripts/verify-get-started.sh` (the cold-trial harness)
 
-- [ ] **Step 1:** Cold trial per the standalone-install probe pattern: `yarn compile`, `npm pack` the `mailwoman` + weights workspaces into a temp dir OUTSIDE the repo, `npm install` the tarballs, then run the pages' commands verbatim (first parse, first geocode via `data pull candidate`). Fix pages (or product) until the transcript matches the prose. Record versions into `verified-with:`.
+- [ ] **Step 1:** Cold trial per the standalone-install probe pattern: `yarn compile`, `npm pack` the `mailwoman` + weights workspaces into a temp dir outside the repo, `npm install` the tarballs, then run the pages' commands verbatim (first parse, first geocode via `data pull candidate`). Fix pages (or product) until the transcript matches the prose. Record versions into `verified-with:`.
 - [ ] **Step 2:** Encode as `verify-get-started.sh` so Task 23 re-runs it. **Commit** `docs(developers): get-started trio, verified cold`.
 
 ### Task 10: Tutorials 1–4 (parse · geocode · CSV · API server)
@@ -246,7 +246,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `developers/how-to/{batch-geocoding,validate-addresses,handle-messy-input,autocomplete,reverse-geocode,use-annotations,tune-confidence}.mdx`.
 
-- Briefs: batch (CPU note from the batch-path memory: session.run blocks the JS thread — worker pool pattern shown); validate (parse-confidence + codex checks, NOT deliverability claims); messy-input (normalize stage, lowercase register note); autocomplete (`autocomplete` command + library path); reverse (`reverse` + the WOFReverseGeocoder); annotations (`toOpenCage()`/`toNative()`); confidence (calibration story, thresholds by use).
+- Briefs: batch (CPU note from the batch-path memory: session.run blocks the JS thread — worker pool pattern shown); validate (parse-confidence + codex checks, not deliverability claims); messy-input (normalize stage, lowercase register note); autocomplete (`autocomplete` command + library path); reverse (`reverse` + the WOFReverseGeocoder); annotations (`toOpenCage()`/`toNative()`); confidence (calibration story, thresholds by use).
 - [ ] Every snippet executed against compiled CLI/library. Vale + de-slop. **Commit** `docs(how-to): integration wave`.
 
 ### Task 14: How-to wave 2 (operations surface)
@@ -297,7 +297,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `solutions/{eliminate-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
 
-- The manager register: problem → what changes → proof link → try-it + pricing links (the same two, every page). The storage-rights page draws licence contrasts ONLY from published terms with dated citations, neutrally framed. Price anchors only where publicly published.
+- The manager register: problem → what changes → proof link → try-it + pricing links (the same two, every page). The storage-rights page draws license contrasts only from published terms with dated citations, neutrally framed. Price anchors only where publicly published.
 - [ ] Same pipeline. **Commit** `docs(solutions): five pains, five pages`.
 
 ### Task 21: Resources — benchmarks + compare
@@ -313,8 +313,8 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Finalize `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx` (seeded in Task 5).
 
-- _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat licence, funded-by-customers posture. Register rules absolute here.
-- _security-and-compliance_ — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), licence tiers link.
+- _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat license, funded-by-customers posture. Register rules absolute here.
+- _security-and-compliance_ — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), license tiers link.
 - _pricing_ — the ratified three tiers ($0 AGPL / $250 mo · $2,400 yr Pro under the ~250-staff·$10M fence / Enterprise from $15k), grandfathering commitment, flat-price rationale sentence ("costs us the same"), no cadence commitment.
 - [ ] Same pipeline. **Commit** `docs(about): mission, trust, pricing`.
 

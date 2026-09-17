@@ -31,12 +31,12 @@ Nothing below invalidates a §7 phase or a §2 layer decision; the deltas are su
   has a validation vendor** — Sonar (385+ ISPs, partner directory) is the commercial flagship
   target and UISP the free-plugin distribution lane, with C5 (serviceability SaaS) as the live OEM
   reference. That converts §1's "users" from personas into named routes.
-- **Counsel batching**: §8's eight questions ride the ONE consolidated G1 session (with the
+- **Counsel batching**: §8's eight questions ride the one consolidated G1 session (with the
   license-fence, OEM-template, and ODbL items). Question 1 (the Fabric `location_id` join key)
   still checks 2a — unchanged, just scheduled.
 - **The enterprise line** (ROAD_TO_MAILWOMAN_V8_3_0 / B11): 2c's CRM record-match work doubles as
   an enterprise on-ramp — the acceptance-battery discipline from the retrain arc (per-customer
-  canaries, noise-honest margins) applies verbatim to record-match delivery. No design change;
+  canaries, noise-direct margins) applies verbatim to record-match delivery. No design change;
   named so 2c is scoped with that reuse in mind.
 - **C1 unblocked**: it was deferred on 2026-07-28 while the 8.2.0 arc owned the repo; the repo is
   free.
@@ -97,10 +97,10 @@ Row grain (verified against Nexus `sync/fcc/bdc/block-aggregator.ts:47`,
 | `low_latency`                   | boolean                                                                      |
 | `business_residential_code`     | B/R/both                                                                     |
 | `geoid`                         | 15-char census block GEOID — the **public** spatial key                      |
-| `location_id`                   | Fabric BSL id — opaque join key only (§2.2); NOT resolvable to a point by us |
+| `location_id`                   | Fabric BSL id — opaque join key only (§2.2); not resolvable to a point by us |
 
 **Spine keys.** `wof_id` (block-centroid PIP against the gazetteer at build time), `h3` (res-9
-integer short cell of the block centroid). `address_id` is NOT a spine key here — BDC claims are
+integer short cell of the block centroid). `address_id` is not a spine key here — BDC claims are
 block-grained, not address-grained; the `location_id` (BSL) that would make them address-grained
 is licensed and unresolvable (§2.2). This is a deliberate contract choice: bdc.db rows key at
 block resolution, and any per-address answer is an inference across the block, flagged as such.
@@ -118,7 +118,7 @@ name per vintage), each issue itself sealed. `source_vintage` carries the `as_of
 `build_sha` + `build_cmd` pin the exact filing files. A filing landscape is only ever "as of
 vintage X" — the vintage is required on every answer, not metadata.
 
-**Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage actually
+**Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage
 covered. A block with no filing row is **UNKNOWN** — no provider filed availability there in this
 vintage — never "no service exists." This is the whole epistemic spine of the vertical (§4):
 absence of a filing is not evidence of absence of service, and never evidence of implausibility.
@@ -164,7 +164,7 @@ names the missing layer, never fabricates a distance.
 **Tier / freshness / meaning-of-zero.** `build-local`, `freshness_policy = sealed` (rebuild-only),
 `layer_coverage` from the OSM survey extent. OSM telecom coverage is sparse and uneven — the
 coverage table is not decoration here, it is what stops a sparse cell from reading as "no fiber
-plant nearby, therefore implausible" (§4).
+plant near, therefore implausible" (§4).
 
 ### 2.4 Demographics — reuse the existing tiger workspace (shipped)
 
@@ -172,7 +172,7 @@ Market sizing needs population, housing-unit, and area counts per census unit. *
 exists in-tree** — `tiger/sdk/schema.ts` defines `TIGERBlockTable` (`population`,
 `housing_unit_count`, `block_group_code`, `block_code`, land area) and `PLBlockTable` (2020 P.L.
 94-171). The Nexus "TIGER block model with population/housing/area" salvage row is therefore
-**mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only genuinely new piece
+**mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only in fact new piece
 is exposing the block table as a demographics layer conforming to the layer contract (a thin
 manifest/coverage wrapper + a res-9 h3 column), so `market_size` reads it through the same
 `@mailwoman/core/layers` boundary as everything else. Census is public domain — shipped tier, sealed.
@@ -193,7 +193,7 @@ question (§7); not in the 2a–2c scope.
 
 ## 3. Primitives / tools
 
-Favor existing packages. The Phase-1 scope guard holds: verticals are agent workflows over the
+Favor existing packages. the result: verticals are agent workflows over the
 spine, not new ML product lines. But BDC needs a **data-acquisition provider** (fetch, parse,
 extract, ingest) exactly like `ban/` and `osm/`, so one new workspace is justified:
 
@@ -208,7 +208,7 @@ The three primitives, and where each lives:
 ### 3.1 `filing_landscape(area)` → provider/tech/speed census
 
 A census of the BDC filings in an area: which providers, which technologies, which advertised
-speeds, over how many blocks. Pure composition — `aggregate(bdc.db, area, h3res)` (the Phase-1
+speeds, over how several blocks. Pure composition — `aggregate(bdc.db, area, h3res)` (the Phase-1
 `@mailwoman/spatial` verb) grouped by `provider_id` / `technology_code` / speed bucket. Lives as
 a reader function in `@mailwoman/bdc`; the `area` is resolved by the existing geocode/gazetteer
 path (a WOF id, a bbox, or an h3 cell set). Returns per the coverage rule: the census is scoped
@@ -267,13 +267,13 @@ temptation to read absence as disproof is constant. The rules, pre-registered:
    self-reported and over-claim is the entire reason BDC challenges exist). The bundle reports
    "a filing corroborates the claim," never "the claim is true."
 2. **Positive evidence only.** The only strong output is **co-presence**: a matching filing
-   plus nearby physical plant in a well-surveyed cell. Everything else degrades toward
+   plus near physical plant in a well-surveyed cell. Everything else degrades toward
    uncertainty, not toward a negative verdict.
 3. **Absence is UNKNOWN, not implausible.** No filing in a block → unknown (unsurveyed by that
-   provider, or genuinely unserved — indistinguishable from the public record). No fiber plant
+   provider, or in fact unserved — indistinguishable from the public record). No fiber plant
    within range → unknown _unless_ the infra cell is well-surveyed, and even then it is
    "no corroborating plant found," not "impossible." The meaning-of-zero rule applies to
-   **conclusions**, not just to storage: `plausibility_check` never emits "implausible" from an
+   **conclusions**, notto storage: `plausibility_check` never emits "implausible" from an
    absence. The strongest negative it can emit is "no supporting evidence found, and coverage is
    good enough that this is informative" — still framed as absence-of-evidence.
 4. **coverage_confidence is mandatory on every answer.** A sparse-coverage cell collapses the
@@ -308,7 +308,7 @@ where one exists.
 | Organization / PointOfContact / OrganizationClassification models                          | Nexus `mailwoman/organization/*`, `mailwoman/contacts/PointOfContact.ts`                | provider registry entity shell (2c) — see §5.1                 |
 | Block×availability×demographics rollup SQL                                                 | `sync/commands/bdc/generate-provider-geojson.ts`                                        | design reference for `aggregate()` / `market_size`             |
 
-### Already ported — do NOT re-port
+### Already ported — do not re-port
 
 - **H3 48-bit short-cell packing** — `@mailwoman/spatial/h3` already exports `shortenH3Cell`,
   `expandH3Cell`, `shortCellToPoint`, `cellToPointLiteral` (Phase-1 landed it). Nexus stores the
@@ -319,7 +319,7 @@ where one exists.
   wrapper. (Block-intersection _queries_ may be new; add them to `@mailwoman/tiger` or compose
   from `@mailwoman/spatial` — do not fork a second block model.)
 
-### Does NOT port, and why
+### Does not port, and why
 
 - **Fabric data-source / migrations** (`sync/fcc/fabric/*`) — CostQuest-licensed (§2.2). Never.
 - **Redis** (dedup in `infer-locations.ts`, the `RedisManager`) — replaced by sqlite staging per
@@ -330,7 +330,7 @@ where one exists.
   `core/env` (zero-raw-`process.env` rule), the mailwoman async-init/lifecycle, and Pastel
   `cli-kit`. The `ServiceRepository.register` pattern in `client.ts` maps to the async-init
   package.
-- **ECFS / ULS clients, CAF / RDOF / tribal ingest** — do not exist in Nexus; genuinely new work,
+- **ECFS / ULS clients, CAF / RDOF / tribal ingest** — do not exist in Nexus; in fact new work,
   deferred (subsidy registry is already Phase-1-deferred).
 
 ### 5.1 The contacts gap (from the integration notes)
@@ -358,7 +358,7 @@ X)[keyof typeof X]`. Mechanical but touches every dictionary file.
   plausibility answer is a block-level inference. This is a correctness ceiling, not a bug; the
   bundle must always flag block-grain inference as such.
 - **OSM telecom sparsity** — telecom-infra coverage in OSM is thin and uneven; the physical
-  falsifier fires positively far less often than the filing evidence, and the coverage table
+  falsifier fires positively far less frequently than the filing evidence, and the coverage table
   carries the weight of not over-reading its absence.
 
 ## 7. Phasing
@@ -394,9 +394,9 @@ evidence into the `{ claim, evidence_found, coverage_confidence }` bundle; the
 Checks:
 
 - **Positive-evidence-only invariant test** — a fixture with a claim in a block that has NO
-  filing and NO nearby plant returns "unknown / insufficient evidence," and asserts the scorer
+  filing and no near plant returns "unknown / insufficient evidence," and asserts the scorer
   can NEVER emit "implausible" from an absence (§4). This is the required check.
-- Co-presence path — a claim with a matching filing + nearby well-surveyed plant returns high
+- Co-presence path — a claim with a matching filing + near well-surveyed plant returns high
   `evidence_found` + high `coverage_confidence`.
 - Layer-absent path — with the OSM infra layer absent, the bundle says "requires the
   locally-built OSM infra layer," never a fabricated distance.

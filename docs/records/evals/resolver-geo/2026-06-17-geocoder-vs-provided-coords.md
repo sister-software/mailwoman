@@ -21,12 +21,12 @@ Reproduce: `scripts/record-matcher/txhhsc-to-oarow.ts` → `scripts/eval/oa-reso
 3.4 km, which is just "the city's middle is a few km from the facility." Switch in the **address-point**
 tier where we have a rooftop for the parsed street + number, and p50 collapses to **0.7 km**; the
 **interpolation** tier (no exact point, interpolated along the street segment) lands p50 **0.1 km** —
-100 m, street-accurate. The honest caveat is **coverage**: the rooftop tier fires on 47% of these
+100 m, street-accurate. The direct caveat is **coverage**: the rooftop tier fires on 47% of these
 facilities and interpolation on a further 12.5%, so ~40% still fall back to the city centroid. The tail
 (p99 ~470–740 km) is wrong-place resolutions, not tier imprecision — a handful of facilities whose
 parse resolves to the wrong locality entirely.
 
-## The honest surprise — v0 out-parses neural on this distribution
+## The direct surprise — v0 out-parses neural on this distribution
 
 Graded through the same resolver, **the rules parser (v0) beats neural on locality-match here: 96.8% vs
 90.1%** (and coord p50 3.0 vs 3.4 km). That is the **inverse** of the clean-OpenAddresses result, where
@@ -52,9 +52,9 @@ construction). Re-running this eval with `--normalize-case`:
 | coord p50 (+address-point) |             0.7 km |                   **0.1 km** |
 | coord p99 (+address-point) |           486.8 km |                  **20.7 km** |
 
-The fix doesn't just close the gap — it **overtakes** v0 on locality (99.7 vs 96.8) and collapses the
+The fix doesn'tclose the gap — it **overtakes** v0 on locality (99.7 vs 96.8) and collapses the
 catastrophic-miss tail (p99 487 → 21 km), because correct localities resolve to the right place and the
-parsed street/number then hits the rooftop extract more often (47% → 62%). The one cost: region dips
+parsed street/number then hits the rooftop extract more frequently (47% → 62%). The one cost: region dips
 **100.0% → 98.0%** — title-casing the 2-letter state (`TX`→`Tx`) trips ~2% of region resolutions, a
 small, fixable artifact (preserve all-caps 2-letter state codes) against a large net win. Ships
 **default-OFF** behind the `normalizeCase` opt.

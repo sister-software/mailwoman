@@ -22,7 +22,7 @@ the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: a extract rec
 inherits vN-1's bugs.)
 
 **The mid-train read (40k) said US was untouched and CZ/PL was flat.** US coord p50 diff −0.002km,
-CI [−0.02, 0]. CZ/PL wrong-city rate unchanged. The extract was proving genuinely US-safe but not moving the
+CI [−0.02, 0]. CZ/PL wrong-city rate unchanged. The extract was proving in fact US-safe but not moving the
 coordinate.
 
 **The coverage detour, and the eyeball that overturned our own aggregate.** The operator asked us to scope
@@ -84,7 +84,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 - **Grading the coordinate, not label-F1.** This is the whole story. The retrain's content-gap win (100→17)
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
-  wrong-city buckets) is the honest metric for these locales and should be a standard part of the non-US check.
+  wrong-city buckets) is the direct metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
   atomic) proved the mechanism before a single GPU dollar. The expensive retrain came first only because it
   was the pre-registered plan; the cheap tokenizer probe should have been the opening move.

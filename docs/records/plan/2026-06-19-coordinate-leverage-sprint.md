@@ -14,7 +14,7 @@ discipline to the question "what do we build next," and the answer is **measure 
 a single zero-GPU diagnostic routes the entire cycle, with the one strategic choice surfaced
 for the operator rather than buried in an assumption.
 
-## The reframe — what we are NOT doing, and why
+## The reframe — what we are not doing, and why
 
 The research-romp triage's headline finding was a principled fix for the #727 admin-token
 fragmentation: a span-level head (GLiNER / Filtered Semi-Markov CRF) plus a lower-fertility
@@ -36,7 +36,7 @@ Where does the next coordinate-moving cycle go?
 1. **Learned resolver reranker** (GeoNorm / GBM-over-candidates) — lifts every already-covered match.
 2. **Coverage expansion** — US-rural gazetteer completeness (SD 62%, VT 31% locality resolution) and/or
    multi-locale gazetteer ingest (AU/ES/IT = zero rows in `admin-global-priority.db` today).
-3. **Multi-locale parser extracts** — generalize the FR-admin-split win to ES/IT/AU.
+3. **Multi-locale parser extracts** — generalize the result to ES/IT/AU.
 
 These are not equivalent in cost or in who they serve, and the bottleneck differs per locale. **We do
 not guess — we route on a measurement.**
@@ -70,7 +70,7 @@ flat, the candidate is buried and retrieval needs a different strategy, not a wi
 | `parse_blocker_pct`    | (zero-DB locales only) parser fails to produce a clean locality+admin split when truth has one |
 | `coverage_blocker_pct` | (zero-DB locales only) `1 − parse_blocker_pct`                                                 |
 
-**The zero-DB trick (measure a locale we can't yet resolve, with NO gazetteer):** for AU/ES/IT, run the
+**The zero-DB trick (measure a locale we can't yet resolve, with no gazetteer):** for AU/ES/IT, run the
 parser on public samples (OpenAddresses / OSM / synthetic) and compute the **admin-split detection
 rate** — does the parser emit a locality token and an adjacent admin token when the ground truth has
 both? That isolates "the parser is the blocker (admin-split extract, like FR)" from "the gazetteer is the
@@ -124,20 +124,20 @@ the reranker is dead on arrival** (ranking-gap 0.01% ≪ the 10% bar). DeepSeek'
 (coverage > reranker) is **confirmed and sharpened**: ranking headroom is ~0 (it bet 3–5%), and the US
 coverage gap is ~2% on this sample (it bet 12–15%).
 
-**The sharpening — what the coverage gap actually IS.** The dumped coverage-gap rows are almost all
+**The sharpening — what the coverage gap IS.** The dumped coverage-gap rows are almost all
 **township / CDP / civil-division granularity**, not "rural towns missing from WOF": `Monroe Twp`,
 `Saylor Twp`, `Bertram Twp` (Iowa civil townships); `Barre City` vs `Barre Town`, `Essex Town` vs
 `Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
-coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), NOT a
+coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), not a
 WOF re-ingest** — the places largely exist, they're modelled at a different granularity.
 
-**Honest caveats (do not over-read):**
+**direct caveats (do not over-read):**
 
 - The OA sample is a **7-state, rural-skewed** set (VT/IA/SD/MT + IL/CA/DC, ~1429 each), deliberately
   over-weighting the hard township states. A national, population-weighted coverage number is almost
-  certainly **lower** (urban volume resolves cleanly: CA/DC/IL coverage-gap ≈ 0–1%).
+  certainly **lower** (urban volume resolves directly: CA/DC/IL coverage-gap ≈ 0–1%).
 - Input is **clean** OA (correct region + postcode). Ranking-gap ≈ 0 is measured _given_ clean
   disambiguating context — which is exactly what a reranker would also have. The consult's
   reranker-helps-on-ambiguity case (missing postcode / wrong region) is **not** exercised by clean OA;
@@ -151,9 +151,9 @@ strategic fork below.
 ### Workstream A — EU parse-blocker result (2026-06-19)
 
 Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
-v4.11.0 parse, `normalizeCase` on). The proxy is **blocked on whether the admin token is actually IN the
+v4.11.0 parse, `normalizeCase` on). The proxy is **blocked on whether the admin token is IN the
 input** (the first reduce wasn't, and wrongly flagged ES/IT/NL as parser-blocked — OA writes "street,
-postcode locality" and the province is implied by the postcode, NOT a token, so there is nothing to
+postcode locality" and the province is implied by the postcode, not a token, so there is nothing to
 split). Corrected:
 
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |

@@ -64,7 +64,7 @@ needs:
    id. It is **containment within one vocabulary**, authored by Overture. `pharmacy` reads
    `health_and_medical > pharmacy`; `drugstore` reads `retail > drugstore`.
 2. **`CategoryRecord.overtureCategories`** — a **namespace translation**, curated seed id → the
-   Overture `taxonomy.primary` leaf ids a built `poi.db` actually stores. Six of 2,113 categories
+   Overture `taxonomy.primary` leaf ids a built `poi.db` stores. Six of 2,113 categories
    declare one (`bank`, `cafe`, `place_of_worship`, `school`, `supermarket`, `trail`). Absent means
    identity: the seed id is its own probe id.
 3. **`SynonymEntry`** — one phrase, **one** `categoryID`, optionally locale-hintd
@@ -126,7 +126,7 @@ capability.
 The path is: `matchPOISubject` splits the input at the first anchor separator whose prefix hits the
 injected lexicon (subject ≤ 8 tokens) → `poiTaxonomyLookup` probes exact phrase, then a small English
 singularization, then locale-normalized, then one-edit typo, then brand, then regional brand alias →
-the executor resolves an anchor centre and probes `poi.db` over
+the executor resolves an anchor center and probes `poi.db` over
 `resolveOvertureCategories(subject.categoryID)`, re-tagging every hit back to the canonical seed id.
 
 Two properties of that path matter to §5. The lexicon probe is **positive evidence only**: a miss
@@ -217,8 +217,8 @@ Two dependency rules follow, and both are required:
   `obtain_medication` as a stable identifier with provenance; #1683 owns whatever numbers get fitted
   against it. Neither re-declares the other's half. That split is what keeps an authored relationship
   from turning into a weight by adjacency.
-- **The ownership row states a category of record, not a licence to author freely** (added 2026-08-27,
-  #1961). Which concepts, activities, assertions and mappings the compiled model may actually carry is
+- **The ownership row states a category of record, not a license to author freely** (added 2026-08-27,
+  #1961). Which concepts, activities, assertions and mappings the compiled model may carry is
   the frozen set in §4 plus whatever an amendment to it admits — today that is §4.1's wave-1 set and
   nothing else. A record outside both widens this table in passing, which stop condition 5 refuses.
 
@@ -334,7 +334,7 @@ amendment admits that change. Three things about it:
   it does not materialize. The correction changes what the record means to a reader and to a reviewer,
   and changes no compiled byte beyond the field itself.
 
-#### What the closed vocabularies do NOT need
+#### What the closed vocabularies do not need
 
 - **`ConceptKind` gains no member, and `packages/geographic-model/lib/schema.ts` is not touched by this
   review.** `drugstore` is a class of premises a person can go to, which is `establishment` — already the
@@ -460,7 +460,7 @@ activity phrase, so anchor resolution is held constant and the subject is the on
 - `i need my prescription refilled near Tijuana`
 - `prescription near Denver CO`
 
-### 5.2 What the baseline actually does — measured, not reasoned
+### 5.2 What the baseline does — measured, not reasoned
 
 Running the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`:
 
@@ -528,7 +528,7 @@ affordance edge over a _set_ rather than a missing phrase.
 > Which entity kinds afford `obtain_medication`, in which country, with what modality, and on whose
 > authority.
 
-That is a one-activity-to-many-kinds edge carrying scope and provenance. Nothing on HEAD can hold it:
+That is a one-activity-to-several-kinds edge carrying scope and provenance. Nothing on HEAD can hold it:
 `SynonymEntry.categoryID` is single-valued and relation-free; `CategoryRecord.hierarchy` is
 containment; `CategoryRecord.overtureCategories` is a namespace translation authored per seed, with no
 relation type, no country scope and no per-assertion provenance.

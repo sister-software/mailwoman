@@ -28,13 +28,13 @@ Six threads merged to `main` before the C-train attempts began:
 - **Thread E** — `@mailwoman/phrase-grouper` workspace. Rule-based span proposer feeding Stage 2.7.
 - **Thread F** — verdict-smoke discipline. New `--smoke-mode constant` flag so the cosine-LR mask that hid v0.4.0's divergence cannot reoccur.
 
-C-train was the experiment that actually used all of it together for the first time.
+C-train was the experiment that used all of it together for the first time.
 
 ## The recipe we tried first
 
 Going in we had a clean confirmation from the operator: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were carried over from the C-s scaffold: a host-side YAML-drafting decision, not an operator confirmation.
 
-The 50-step constant-LR smoke passed cleanly. val_macro_f1 climbed 0.121 → 0.187 across 50 steps. The recipe looked stable.
+The 50-step constant-LR smoke passed directly. val_macro_f1 climbed 0.121 → 0.187 across 50 steps. The recipe looked stable.
 
 Promoted to full. The full run diverged at step 1000.
 
@@ -92,13 +92,13 @@ Only two architectural changes from the proven-stable v0.4.0 baseline remain:
 
 Both are real architectural changes from v0.4.0. Either could plausibly produce a confident-wrong degenerate minimum that the loss bottoms out at and then escapes from. We can't tell from the curves alone — the shape is the same regardless.
 
-The cheapest next bisect is **phrase priors OFF** (revert PR #128's input-layer features, keep A1 tokenizer). One YAML knob change, ~15min smoke + a partial train if smoke passes. That isolates whether the destabilizer is the phrase-prior projection or the new tokenizer's interaction.
+The cheapest next bisect is **phrase priors off** (revert PR #128's input-layer features, keep A1 tokenizer). One YAML knob change, ~15min smoke + a partial train if smoke passes. That isolates whether the destabilizer is the phrase-prior projection or the new tokenizer's interaction.
 
-If phrase-priors-off ALSO diverges, the next bisect is the A1 tokenizer itself: revert to v0.1.0's sentencepiece weights against the same corpus + recipe + h256. At that point we're back to v0.4.0's proven-stable shipping configuration; if even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition (the transliteration extracts' distribution might be the issue, not the tokenizer trained on them).
+If phrase-priors-off also diverges, the next bisect is the A1 tokenizer itself: revert to v0.1.0's sentencepiece weights against the same corpus + recipe + h256. At that point we're back to v0.4.0's proven-stable shipping configuration; if even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition (the transliteration extracts' distribution might be the issue, not the tokenizer trained on them).
 
 ## A discipline lesson worth keeping
 
-We caught a real bug in our verdict-smoke discipline along the way. The original 50-step smoke for v1 passed cleanly — train_loss descended, val_macro_f1 climbed, no NaN or spike. We promoted to full. Full diverged at step 1000 in a regime the smoke had never reached.
+We caught a real bug in our verdict-smoke discipline along the way. The original 50-step smoke for v1 passed directly — train_loss descended, val_macro_f1 climbed, no NaN or spike. We promoted to full. Full diverged at step 1000 in a regime the smoke had never reached.
 
 Two things had to change for the smoke to be a real predictor:
 
@@ -114,7 +114,7 @@ Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text d
 Most of the v0.5.0 fresh-slate work survives this episode intact:
 
 - **A1 tokenizer's byte-fallback wins are real.** Multi-script eval went from 36.7% to 18.2%, with B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all hitting or beating their v0.1.0 leakage baselines. That's a tokenizer that's fit for non-Latin addresses. It works fine for inference even though the classifier we'd train on top of it diverges.
-- **`corpus-v0.4.0` is sound.** corpus-audit passes; the substring-match validator caught the LLM's alignment failures; both adapter additions land cleanly via the new MANIFEST.json-driven harness. Whatever destabilises the train, it isn't a corpus integrity problem.
+- **`corpus-v0.4.0` is sound.** corpus-audit passes; the substring-match validator caught the LLM's alignment failures; both adapter additions land directly via the new MANIFEST.json-driven harness. Whatever destabilises the train, it isn't a corpus integrity problem.
 - **Stage 5 reconcile + phrase grouper + verdict-smoke discipline** all shipped and live in `main`. They run on v0.4.0 weights right now and produce correct output on the kryptonite catalogue. They'll keep working when v0.5.0 weights land.
 - **`TRAINING_ENV.md`** documents the playpen container's ROCm bootstrap recipe so the next training spawn doesn't re-discover the wall. ~15min one-time setup that took us most of an hour to invent the first time.
 
@@ -139,4 +139,4 @@ That's still a useful outcome. We have a smaller hypothesis space (two architect
 - Diverged train CSVs at `c-train-full-{DIVERGED-lr1.5e4,v2-watchdog-DIVERGED-step1200,v3-DIVERGED-step900,h256-bisect}.csv`
 - [v0.4.0 retrospective](/research/v0-4-0-ablation-campaign) — the sister piece
 
-Next: phrase-priors-off bisect. If that lands a stable train, we ship v0.5.0 weights without phrase-prior conditioning and pick up the priors as a v0.5.1 follow-up. If it doesn't, we revert the A1 tokenizer and confirm v0.4.0-shipped configuration trains cleanly on `corpus-v0.4.0` — which would isolate the destabilizer to corpus distribution effects from B2's transliteration mass.
+Next: phrase-priors-off bisect. If that lands a stable train, we ship v0.5.0 weights without phrase-prior conditioning and pick up the priors as a v0.5.1 follow-up. If it doesn't, we revert the A1 tokenizer and confirm v0.4.0-shipped configuration trains directly on `corpus-v0.4.0` — which would isolate the destabilizer to corpus distribution effects from B2's transliteration mass.

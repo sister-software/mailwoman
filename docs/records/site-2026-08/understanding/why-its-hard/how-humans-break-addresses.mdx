@@ -31,7 +31,7 @@ This article catalogs the failure modes by root cause, not by symptom. **None of
 | `SoHo, NY`       | New York City                |
 | `Shibuya, Japan` | Tokyo (with Shibuya as ward) |
 
-USPS accepts borough names as "preferred last line" cities for many New York City ZIP codes. Brooklyn, Queens, Bronx, and Staten Island are all valid mailing cities. But administratively, Brooklyn is a borough of New York City, not an independent municipality. Some systems normalize `Brooklyn, NY → New York, NY`. Others preserve the postal locality exactly. Both choices are valid. Neither is universally correct. The parser has to handle the ambiguity, not resolve it.
+USPS accepts borough names as "preferred last line" cities for several New York City ZIP codes. Brooklyn, Queens, Bronx, and Staten Island are all valid mailing cities. But administratively, Brooklyn is a borough of New York City, not an independent municipality. Some systems normalize `Brooklyn, NY → New York, NY`. Others preserve the postal locality exactly. Both choices are valid. Neither is universally correct. The parser has to handle the ambiguity, not resolve it.
 
 ### Independent city assumed part of larger metro
 
@@ -53,11 +53,11 @@ The human typed what they think of as "the metro area." The gazetteer disagrees.
 | Peking     | Beijing          |
 | Kiev       | Kyiv             |
 
-Both names in each pair are legitimate, used by millions; the speaker's choice between them often carries political or generational weight. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
+Both names in each pair are legitimate, used by millions; the speaker's choice between them frequently carries political or generational weight. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
 
 ### Postal city ≠ municipal city
 
-USPS uses delivery names that often differ from municipal boundaries:
+USPS uses delivery names that frequently differ from municipal boundaries:
 
 | USPS mailing city     | Actual municipality |
 | --------------------- | ------------------- |
@@ -86,7 +86,7 @@ République 12              ← French/European format
 12 Rue de la République    ← Anglophone reordered
 ```
 
-Many European addressing systems place the building number after the street name. German, Dutch, and Scandinavian addresses do the same. A parser that expects number-first will split `République` from `12` and tag them independently, missing the phrase boundary.
+several European addressing systems place the building number after the street name. German, Dutch, and Scandinavian addresses do the same. A parser that expects number-first will split `République` from `12` and tag them independently, missing the phrase boundary.
 
 ### Administrative before local
 
@@ -143,7 +143,7 @@ The mixed-script case is the hardest: the human typed the city in the script the
 
 ### Administrative hierarchy confusion
 
-| What they type | What they mean       | What the parser thinks                          |
+| What they type | What they mean       | What the the system                             |
 | -------------- | -------------------- | ----------------------------------------------- |
 | `Washington`   | Washington, DC       | Washington state? George Washington University? |
 | `Paris`        | Paris, France        | Paris, Texas? Paris, Ontario?                   |
@@ -183,7 +183,7 @@ The building at 123 Main Street contains 20 apartments. The human omitted the un
 
 ### ZIP code centroid as exact address
 
-A ZIP code is a delivery route, not a point. But many mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
+A ZIP code is a delivery route, not a point. But several mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
 
 This is an input-quality problem, not a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
 
@@ -208,7 +208,7 @@ The postal system already works this way. The Remote Encoding Center operator se
 
 ## See also
 
-- [How mail delivery actually works](../the-problem/how-mail-delivery-works.mdx) — the system these addresses enter
+- [How mail delivery works](../the-problem/how-mail-delivery-works.mdx) — the system these addresses enter
 - [Addresses that break geocoders](./addresses-that-break-geocoders.mdx) — concrete failure examples from the geocoding literature
 - [The database fallacy](./the-database-fallacy.mdx) — why there is no perfect reference set that fixes these problems
 - [Falsehoods about addresses](./falsehoods/falsehoods-about-addresses.mdx) — the falsehoods catalogue, organized by category

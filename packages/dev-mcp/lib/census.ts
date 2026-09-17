@@ -77,7 +77,7 @@ export interface CensusAggregate {
 	n: number
 	channels: Record<"anchor" | "gazetteer" | "country", ChannelTally>
 	/**
-	 * Per prior kind: rows where the prior record was present (L0) and rows where its own `applied` contract held (L1).
+	 * Per prior kind: rows where the prior record was present (L0) and rows where its own `applied` check passed (L1).
 	 */
 	priors: Record<TracePriorKind, { l0_present: number; l1_applied: number }>
 	emissions_moved_rows: number

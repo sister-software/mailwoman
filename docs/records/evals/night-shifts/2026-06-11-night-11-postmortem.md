@@ -3,18 +3,18 @@
 ## What shipped
 
 - **v4.4.0** — the boundary consolidation, end-to-end during the shift under granted ship-on-pass
-  authority: check PASS 17/17 (the densest pre-registered spec to date; the perturb arena conditional
+  authority: check pass 17/17 (the densest pre-registered spec to date; the perturb arena conditional
   for the first time), all backends byte-verified (HF default, R2 md5 `f086951a…`, npm 4.4.0
   registry-direct, docs-build green). po_box 0→89.1, cedex 0→96.1, intersections 0→100,
   perturb 64→72, FR region 16.2→25.6. #513 + #487 closed.
-- **`neural/span-bridge.ts`** — a permanent decoder layer born from the check's first FAIL:
+- **`neural/span-bridge.ts`** — a permanent decoder layer born from the check's first fail:
   punctuation-gap span bridging (the corpus label format cannot express intra-span punctuation;
   dotted po_box leaders decoded as period-truncated fragments at 98%). Required ship config from
   v4.4.0 (`requires_bridge`). Two iterations: the comma over-merge its first re-check caught is
   excluded by the separator rule. 8 tests.
 - **Train-time conventions loss-mask** — implemented, Modal-verified (gradient-isolation test
-  exact-zero via the NEW `run_tests` entrypoint), deliberately NOT ridden (unprobed) and its
-  probe deliberately NOT spent (consult: confounded attribution, sub-3pt unreadable at +4k).
+  exact-zero via the NEW `run_tests` entrypoint), deliberately not ridden (unprobed) and its
+  probe deliberately not spent (consult: confounded attribution, sub-3pt unreadable at +4k).
   Banked for the next full run with a pre-registered FR-region floor.
 - **codex `fr/cedex` module** (closes PR #516's documented gap; builder round-trips it loud),
   **DE leakage evidence** (0.7–1.3%, USPS-homograph mechanism — the future `de` row's evidence),
@@ -24,7 +24,7 @@
 - **Codex-review absorption**: reconcile-defaults docs corrected (status/api/STAGES), scorecard
   link + int8 size fixed, conventions glossary entry.
 - **S4 calibration refresh**: the isotonic tables now describe the shipped model (they were
-  three releases stale AND collected channel-bare). Collector upgraded to ship config; held-out
+  three releases stale and collected channel-bare). Collector upgraded to ship config; held-out
   ECE 0.0643 → 0.0034, OA-only 0.0113; per-locale tables beat global everywhere. Finding worth a
   flag: the consistent-label era model is UNDERconfident (mean conf 91.0 vs acc 97.45) — the
   miscalibration direction flipped from the v4.0.0 era.
@@ -42,7 +42,7 @@
 
 - **The corrective loop**: FAIL → row-level characterization → deterministic decode-side fix →
   re-check, twice in one night, both with regression tests, $0 GPU. The pre-registered check did
-  exactly its job: it caught a structural corpus-format limit (dotted spans) AND caught the
+  exactly its job: it caught a structural corpus-format limit (dotted spans) and caught the
   first fix over-reaching (comma merges) before either could ship.
 - **Probe-before-spend discipline paid out in both directions**: three data changes rode only
   after solo probes; the loss-mask probe was deferred because the consult showed the read would
@@ -71,7 +71,7 @@
    showed a structural format limit (10× exposure moved the number +2.9), making decode-side
    containment the only same-night option. Alternative (char-offset corpus labels) is recorded
    in the check doc as the structural cure.
-3. **Excluded commas from bridgeable gaps** after the second FAIL — alternative was tag-scoped
+3. **Excluded commas from bridgeable gaps** after the second fail — alternative was tag-scoped
    bridging (only po_box/cedex), rejected as a special case that would hide the same bug for the
    next dotted tag.
 4. **Deferred the conventions loss-mask probe** on consult advice — the FR-region recovery was

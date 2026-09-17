@@ -1,23 +1,23 @@
 # GB venue-led fine-tune — pre-registration (#1366, the first B11 template exercise)
 
 Written before any code, data, or GPU spend. This run is double-duty: fix the GB venue-led class
-AND exercise the B11 fine-tune template end-to-end for the first time (init_from model 7.0.0 +
+and exercise the B11 fine-tune template end-to-end for the first time (init_from model 7.0.0 +
 the Fisher/EWC brake + λ calibration + the acceptance battery as exit).
 
 ## The defect (from #1366, attribution verified on the rebuilt regression DB)
 
 GB venue-led full addresses ("Ye Three Lords, 27 Minories, London EC3N 1DE") never get a venue
 span on shipped 6.7.0 OR the 7.0.0 base. Mechanism: the house-venue extract taught FR
-("…, 75005 Paris") and US ("…, Springfield, IL 02101") tails; the GB tail — locality THEN
+("…, 75005 Paris") and US ("…, Springfield, IL 02101") tails; the GB tail — locality then
 postcode, no region, no comma ("London EC3N 1DE") — matches neither template, so GB venue-led
 rows fall into the shipped-era collapse (venue absorbed as locality/street).
 
-## The delta (ONE mechanism, pre-registered)
+## The delta (one mechanism, pre-registered)
 
 1. **Synthesizer**: a GB order in `synthesize-house-venue.ts` — tail `${locality} ${postcode}`,
    no region emitted, locale `en-GB`, both venue-before/after templates. GB house numbers sample
    RANGES some of the time ("287-293") — the range form appears in the target class.
-2. **Venue pool**: a GB-flavored pool alongside PLAIN_VENUES — institutional forms (Club/Centre/
+2. **Venue pool**: a GB-flavored pool alongside PLAIN_VENUES — institutional forms (Club/center/
    House/Arms/Station), "Ye"-archaic, and brand–dash–place compounds, INCLUDING directional-led
    names (the target class is venue-leading compass words). **The six probe venues themselves are
    excluded** — the gauntlet fixtures must stay held-out, not taught to.
@@ -31,7 +31,7 @@ rows fall into the shipped-era collapse (venue absorbed as locality/street).
 5. **EWC**: `ewc_fisher_path` = fisher-diag-v1 (the 7.0.0 artifact), `ewc_reference` = the base
    checkpoint, λ from the calibration below.
 
-## λ calibration (the template's one open knob — calibrated HERE, inherited by B11)
+## λ calibration (the template's one open knob — calibrated here, inherited by B11)
 
 Sweep λ ∈ {0, 1e2, 1e4, 1e6} × 2k-step probes on the identical feed/config. Per probe, grade at
 step-2000: (a) the GB venue target board (the extract's own held-out template rows + golden venue
@@ -41,10 +41,10 @@ becomes the B11 template default. Ties break to the larger λ.
 
 ## Bars (the main run at the chosen λ)
 
-- **V1 (target)**: all six #1366 gauntlet `improvement_target` fixtures flip to PASS at the ship
+- **V1 (target)**: all six #1366 gauntlet `improvement_target` fixtures flip to pass at the ship
   config. No partial credit — six of six.
 - **B1 (the guarantee check, the sellable sentence)**: the full `v7.0.0-base` spec passes with NO
-  floor waivers; gauntlet regression + metamorphic PASS; canary zero-flip; the P0 fragment grid
+  floor waivers; gauntlet regression + metamorphic pass; canary zero-flip; the P0 fragment grid
   within noise of the base. A Fisher-protected fine-tune must hold every base capability — that
   is the product claim this run dogfoods.
 - **Receipt**: per-λ probe table, the chosen λ with its rationale, before/after on the six
@@ -57,7 +57,7 @@ becomes the B11 template default. Ties break to the larger λ.
 - B1 misses at the chosen λ → do not ship; report the λ-vs-target conflict as the finding (it
   prices the B11 guarantee).
 - If only λ=0 clears V1, λ=0 IS the calibrated answer — record it; the template inherits it
-  honestly rather than a wished-for larger value.
+  directly rather than a wished-for larger value.
 
 ## What ships on PASS
 
@@ -90,8 +90,8 @@ question).
 venue on the board), λ=1e2/1e4 within noise of λ=0 → **λ=1e4 is the calibrated B11 template
 default**, with a receipt.
 
-**B1 (the guarantee check): PASS.** The 8k main (v4.1.1, weight 12, λ=1e4, md5 02b8c323…) passes
-the FULL v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
+**B1 (the guarantee check): pass.** The 8k main (v4.1.1, weight 12, λ=1e4, md5 02b8c323…) passes
+the full v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
 metamorphic + held-out). The sellable sentence — "a Fisher-protected fine-tune holds every base
 capability" — held on its first dogfood.
 
@@ -100,7 +100,7 @@ real partial progress on two more (New North: house_number "287-293" + postcode 
 Far East: the mixed-script venue now extracted in full). GB board: venue 53.8→80.8, locality
 54→78.8, postcode 74.5→92.3, all-components 10.5→20.5.
 
-**Why the residual three are NOT one more weight turn** (the reason this stops here per the stop
+**Why the residual three are not one more weight turn** (the reason this stops here per the stop
 rules): they fail through three different mechanisms, each outside the extract's teaching —
 
 1. _Typeless GB street names_ ("Minories" — no Road/St/Close token): board street accuracy sat
@@ -114,7 +114,7 @@ rules): they fail through three different mechanisms, each outside the extract's
 Each is nameable future work (a typeless-street extract leg; a venue-only doubled template in the
 no-street extract; an abbreviation-augmentation pass over the GB leg) — but that is three
 mechanisms, not the one contingency the envelope allows. **Stopped per pre-registration; the
-candidate (model 7.0.1-candidate, staged, NOT promoted) + all receipts go to the operator.**
+candidate (model 7.0.1-candidate, staged, not promoted) + all receipts go to the operator.**
 The six gauntlet fixtures stay `improvement_target`.
 
 ---
@@ -128,7 +128,7 @@ with rate-band + order tests. The fine-tune run (`v4.1.3-gb-venue-country-8k.yam
 weight 12 / λ=1e4) is DEFERRED on the operator's budget call: a fine-tune 7.0.1 would be
 superseded by the next base retrain anyway, and the extract code is the durable piece — the next
 base feed inherits it for free. Pre-registered bars for WHOEVER runs it: T1 `fr-op2-le-colimacon`
-flips to full PASS; T2 op2 venue-field hits at least double vs the staged 7.0.1 candidate;
+flips to full pass; T2 op2 venue-field hits at least double vs the staged 7.0.1 candidate;
 T3 the six #1366 fixtures ≥ the candidate's 2; B1 the full battery + gauntlet, no waivers.
 Stop rule: any miss → operator conversation, no contingency.
 
@@ -136,8 +136,8 @@ Stop rule: any miss → operator conversation, no contingency.
 
 ## Addendum 4 (2026-08-01) — country-tail RUN VERDICT: NEGATIVE (stopped per the stop rule)
 
-The v4.1.3 run (weight 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) FAILS its bars: T1 the FR control
-still fails at BOTH the pipeline and bare-classifier levels — the model learned to TAG the tail
+The v4.1.3 run (weight 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) fails its bars: T1 the FR control
+still fails at both the pipeline and bare-classifier levels — the model learned to TAG the tail
 (`country` now emits on tailed rows) without transferring venue competence through it (venue null
 everywhere; the FR control's house_number degraded 44→"4"); the corrected gauntlet shows 0 newly
 passing and a conditional regression (VERDICT FAIL). Mechanism read: at fine-tune weight the model solves

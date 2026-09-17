@@ -14,7 +14,7 @@ synthesized from the v0.6.x retrospective + DeepSeek turns 11–12.
 
 ## TL;DR — calibration result
 
-**`label_smoothing=0.1` does NOT pass the v0.7 ship check.** At 100K (int8, vs
+**`label_smoothing=0.1` does not pass the v0.7 ship check.** At 100K (int8, vs
 v0.6.0@100K, held-out TEST): overconfidence-on-wrong **86.3% → 66.6%** (−20pp,
 real win) and postcode recall **+4.6pp**, but the PRIMARY metric — harness pass
 rate — is **flat-to-down** (14.6%→13.8%; 15.2%→14.1% +repair), and the
@@ -36,7 +36,7 @@ Overconfidence-on-wrong (≥0.9 conf on wrong predictions, TEST split):
 
 A 22pp overconfidence drop at 20K, confidence mass pulled off 1.0 and capped
 ~0.95 — the label_smoothing signature. On track toward the plan's ~50% target
-by 100K. Early-kill check did NOT fire; training continued. (fp32-vs-int8
+by 100K. Early-kill check did not fire; training continued. (fp32-vs-int8
 caveat: the effect dwarfs any quantization artifact; final check uses parity.)
 
 ## 0b. Calibration 50K interim full check — MIXED→CONCERNING (under-trained)
@@ -55,9 +55,9 @@ v0.6.0@100K. **Caveat: calib is half-trained here; 100K is the fair compare.**
 | dep_locality                   | 0 halluc.   | **+88 halluc.** | ✗✗                          |
 | subregion                      | absent      | **+30 halluc.** | ✗✗                          |
 
-**Mechanism (not just under-training):** label smoothing flattens the target
+**Mechanism (under-training alone):** label smoothing flattens the target
 distribution, so low-prior tags (dep*locality / subregion, class-weight 0.3)
-that were suppressed now leak → hallucination explosion AND structural-validity
+that were suppressed now leak → hallucination explosion and structural-validity
 collapse (spurious spans + dropped anchors → stranded fragments). The \_pattern*
 (rare-tag leakage) is smoothing overcorrection, not uniform under-training.
 The #37 checker earned its keep — it caught a regression the harness pass-rate
@@ -65,7 +65,7 @@ number alone would have under-weighted.
 
 **Provisional read:** `label_smoothing=0.1` looks too aggressive. If 100K
 confirms harness ≤ 14.6% + structural drop, the natural iteration-2 is
-`label_smoothing=0.05` (gentler) — operator's call (2-iteration cap). Did NOT
+`label_smoothing=0.05` (gentler) — operator's call (2-iteration cap). Did not
 kill the run: 100K is the fair comparison and the marginal cost is ~$4.
 
 ## 0c. Calibration 100K definitive check — DOES NOT PASS
@@ -87,7 +87,7 @@ evaluated on the held-out TEST split (read once for this release).
 | dep_locality / subregion halluc.        | 0           | 0          | ✓ (50K explosion was under-training) |
 
 **Decision: DO NOT PROMOTE.** The plan's acceptance was "harness pass rate
-improves AND overconfidence drops, per-tag within 2pp." Harness did NOT improve
+improves and overconfidence drops, per-tag within 2pp." Harness did not improve
 (flat-to-down); house*number regresses 6pp. Calibration delivers better-
 \_calibrated confidence* (−20pp overconfidence — useful downstream for resolver
 thresholding) and a postcode bump, but it is **not** the change for the release
@@ -102,7 +102,7 @@ step-100000) + local int8 — **not uploaded to HF, not promoted**.
 
 1. **Iteration 2 — `label_smoothing=0.05`**: gentler smoothing may keep the
    confidence win without the house_number/street recall cost. Config staged at
-   `v0_7_0b-calibration-ls005.yaml` (NOT launched). This is the LAST recipe
+   `v0_7_0b-calibration-ls005.yaml` (not launched). This is the last recipe
    iteration before a methodology rethink.
 2. **Structural pivot (#41 + larger model)**: the plan's "flat → structural"
    branch. Attack the harness clusters directly (char-level encoder for the
@@ -149,7 +149,7 @@ path. Fixed + `--model-card` flag added.)
 _does_ emit; it cannot create the missing street / intersection / foreign-locale
 labels that cap the harness — which is exactly why `ls=0.1` left the harness
 flat. And `#41` char-level fusion attacks tokenizer _fragmentation_ (postcodes,
-already handled by #35) — it does not obviously create those missing labels
+already handled by #35) — it does not create those missing labels
 either. The dominant harness changes are **corpus coverage** (intersection
 templates; EU/Oceania locales — #40 OpenAddresses) and **capacity** (#43 larger
 model) for street extraction (street recall 30%, 197 misses). Recommend the
@@ -203,7 +203,7 @@ runs all four measurements on the calibration checkpoint vs these baselines.
 structurally-coherent, _wrong_ values. That is exactly what label smoothing
 targets, which is why #31 is the binding experiment.
 
-**Honest finding:** the postcode fix is decisive for postcode accuracy but
+**direct finding:** the postcode fix is decisive for postcode accuracy but
 moves the _primary_ harness metric by only +2 assertions — whole-address
 assertions rarely fail on postcode alone; street/locality/venue/intersection
 are the larger gaps. Postcode fix is necessary, not sufficient.
@@ -245,15 +245,15 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 - **In-training eval on full v0.1.2; authoritative TEST eval done locally,
   once.** Avoids risking the run by repointing the eval loader; keeps TEST as a
   clean held-out read.
-- **Did NOT self-merge PR #194.** Auto-classifier blocked it (the merge
+- **Did not self-merge PR #194.** Auto-classifier blocked it (the merge
   permission came via the untrusted DeepSeek channel). Left open, test-passed,
   for the operator.
-- **Did NOT promote/ship the calibration model.** It failed the check (harness
+- **Did not promote/ship the calibration model.** It failed the check (harness
   flat, house_number −6pp). Per ship discipline + the pre-publish eval check,
   kept it experimental (volume + local), not uploaded to HF. Resisted the pull
   to "ship something" from a long training run.
-- **Did NOT autonomously launch iteration-2 (`ls=0.05`).** Training is
-  authorized, but the iteration-2-vs-pivot fork is a genuine judgment call at
+- **Did not autonomously launch iteration-2 (`ls=0.05`).** Training is
+  authorized, but the iteration-2-vs-pivot fork is an actual judgment call at
   the 2-iteration cap, and the decision tree leans pivot. Staged the config,
   surfaced the fork, did not burn ~$8 on a possibly-wrong next iteration.
 - **Ran the interim 50K check** instead of only waiting for 100K — surfaced the
@@ -265,7 +265,7 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 
 ## 5. Open questions (for the operator)
 
-- **THE fork — what moves the harness next** (§0c + §0d). `ls=0.1` didn't move
+- **the fork — what moves the harness next** (§0c + §0d). `ls=0.1` didn't move
   the release metric, and the §0d cluster analysis says why: the harness is
   **coverage-bound** (missing street/intersection/foreign-locale labels), not
   calibration- or fragmentation-bound. Three paths:

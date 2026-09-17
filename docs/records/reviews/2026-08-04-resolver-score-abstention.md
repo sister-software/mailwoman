@@ -164,7 +164,7 @@ Nine of the 14 FTS violations score above the _lowest-scoring correct_ control l
 without the sign confusion: **there is no threshold on this field that separates the two populations**, and the
 thresholds that do best are different numbers on different backends because the scales are different.
 
-### What did NOT reproduce
+### What did not reproduce
 
 The framing this task arrived with was that **wrong answers score higher than right ones** — FTS 25.67 vs 24.33,
 candidate 6.52 vs 6.07. On the definitions above, that inequality does not hold: correct localities score _higher_

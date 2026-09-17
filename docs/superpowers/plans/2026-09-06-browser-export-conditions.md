@@ -612,7 +612,7 @@ Run, from `docs/`:
 yarn test:e2e --project=chromium test/browser/100-demo-cold-load.spec.ts test/browser/200-demo-resolve.spec.ts
 ```
 
-Expected: PASS. `100-demo-cold-load` asserts the page hydrates without style, terrain or asset errors, which is where a missing module surfaces at runtime rather than at build time.
+Expected: pass. `100-demo-cold-load` asserts the page hydrates without style, terrain or asset errors, which is where a missing module surfaces at runtime rather than at build time.
 
 - [ ] **Step 6: Commit**
 
@@ -650,7 +650,7 @@ If `EXIT=0`: replace the comment at lines 94-97 with
 // the persistent cache stays off until a build has been measured with it.
 ```
 
-and run Task 4 Step 5 again against the rspack build. Expected: PASS.
+and run Task 4 Step 5 again against the rspack build. Expected: pass.
 
 If the build fails: set `rspackBundler` back to `false` and replace the comment with the module the log names, in this shape:
 

@@ -52,7 +52,7 @@ Every word matters:
   [Closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx)
   for the night we learned the override version is wrong.)
 - **Calibrated.** The confidences are isotonic-calibrated against held-out
-  data, so "0.6" means right-about-60%-of-the-time, not "my rule was fairly
+  data, so "0.6" means right-about-60%-of-the-time, not "my rule was moderately
   specific." See [Confidence calibration](./confidence-calibration.mdx).
 
 ## The division of labor
@@ -73,7 +73,7 @@ provenance-tracked, license-tagged) from administrative places to points of
 interest, so a query like "coffee near Honolulu" resolves the same way
 "Honolulu" does: category intent detected, split from any location constraint,
 resolved against a database instead of guessed by a model that was never going
-to memorize every coffee shop. The consumer here is often an agent rather than
+to memorize every coffee shop. The consumer here is frequently an agent rather than
 a person typing into a search box, so mailwoman ships the layers and the tools
 (`@mailwoman/mcp`) and leaves the planning and the narrative to whatever's
 driving. The model still owns the grammar; the atlas gains layers.
@@ -95,7 +95,7 @@ uncertainty becomes an actionable measurement: the resolver can
 abstain on it, soft-score with it, or fall back to rules because of it. The
 capability difference shows up exactly where the
 [arena evals](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/parity-scorecard-2026-06-09.md) say it does: on noisy,
-degraded, real-user input — the queries a geocoder actually receives — the
+degraded, real-user input — the queries a geocoder receives — the
 model wins decisively, because degraded input is where sieves leak and
 posteriors bend.
 

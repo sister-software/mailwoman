@@ -83,9 +83,9 @@ If you run your own parser + resolver:
 
 The cost is engineering time — building the parser, maintaining the corpus pipeline, training models, integrating with downstream systems. Mailwoman exists to make that cost lower.
 
-## Why not just use what works for the 90% and fall back for the rest?
+## Why notuse what works for the 90% and fall back for the rest?
 
-This is the most common architecture: call Google/geocode.earth for the 90% that parses cleanly, fall back to manual review for the 10% that doesn't. But the fallback cost dominates the total.
+This is the most common architecture: call Google/geocode.earth for the 90% that parses directly, fall back to manual review for the 10% that doesn't. But the fallback cost dominates the total.
 
 Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that is 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
 
@@ -104,6 +104,6 @@ The economic argument for owning your parser is that you can make it better wher
 ## See also
 
 - [The database fallacy](./the-database-fallacy.mdx) — why the 90% that works is built on partial data
-- [How mail delivery actually works](../the-problem/how-mail-delivery-works.mdx) — the system that already handles ambiguity through human fallback
+- [How mail delivery works](../the-problem/how-mail-delivery-works.mdx) — the system that already handles ambiguity through human fallback
 - [Why a neural parser?](../our-approach/why-a-neural-parser.mdx) — the technical argument for the neural approach
 - [The case for simple geocoders](../alternatives/the-case-for-simple-geocoders.mdx) — the counterargument: when simple is the right choice

@@ -593,7 +593,7 @@ Expected: `EXIT=0`; 7 of 7 specs pass. `docusaurus serve` opens a browser throug
 yarn vitest --run --config vitest.fast.config.ts packages/resolver-wof-wasm/test/unit/httpvfs/candidate-parity.test.ts
 ```
 
-Expected: PASS. This is the browser-versus-Node candidate ranking parity; it moved packages and must still compare the same two implementations.
+Expected: pass. This is the browser-versus-Node candidate ranking parity; it moved packages and must still compare the same two implementations.
 
 ---
 

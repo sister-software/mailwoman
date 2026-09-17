@@ -42,7 +42,7 @@ fragmentation, not byte-fallback, is what corrupts the span surface when the mod
 and drops others. This is a tokenizer _granularity_ gap for CZ/PT/PL/RO (the FR/Nordic splices didn't
 reach them), not a coverage gap.
 
-**2. Context fixes the coverage class but NOT the boundary class.** Re-parsing the failing bare
+**2. Context fixes the coverage class but not the boundary class.** Re-parsing the failing bare
 forms with full address context:
 
 | input (bare → +context)                      | bare result               | +context result                  |
@@ -105,7 +105,7 @@ The signal is two-sided:
   the rules geocode, median 0 km. The parse-tag failures that are benign boundary/assembly differences
   (`Königsallee Düsseldorf` tagged as one street span) resolve to the same place.
 - **When the neural parse fails, a tail diverges hard**: 40% of the street-failing subset move >25 km,
-  often to a garbage geocode — `1210a IA 10 W IA` → American Samoa (10,053 km), `California` →
+  frequently to a garbage geocode — `1210a IA 10 W IA` → American Samoa (10,053 km), `California` →
   Maryland, `Texas 76013` → Michigan, bare `6000, NSW, Australia` → the AU country centroid. These are
   the bare-fragment / US-highway / bare-state-name classes.
 

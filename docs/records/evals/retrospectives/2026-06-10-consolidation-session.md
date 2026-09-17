@@ -77,10 +77,10 @@ Per the treadmill guard, no further recipe iteration. Three options, stated:
    the queue (#478) and revisit after the architecture work.
 
 Recommendation: **1 + queue 2**, with the US-street −2.3-vs-shipped called out to review
-as the main ship-risk. The guardrail win (locality +13–16, region +11, country 0→89.8, FR/DE
+as the main ship-risk. the result (locality +13–16, region +11, country 0→89.8, FR/DE
 recovered, micro +4.6) is too large to shelve over tags that were 0 in the shipped model.
 
-**Eval-procedure note (for whoever reruns these):** the gaz-trained models MUST be
+**Eval-procedure note (for whoever reruns these):** the gaz-trained models must be
 evaluated with `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`; without them
 score-affix zero-fills the clue and reports a fake affix crash.
 
@@ -113,10 +113,10 @@ region 80.1 · micro 81.6 · FR hn 92.0.
 
 - **country ≥83.3** is config-canonical (the v0.9.12 banked-change floor, "don't regress #464"). The
   consolidation _demonstrated_ 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
-  wrote ≥85; it was reconciled DOWN to the config's 83.3 — recorded here, not silent.
-- **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two REAL open gaps.
+  wrote ≥85; it was reconciled down to the config's 83.3 — recorded here, not silent.
+- **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two real open gaps.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
-  at ~76 (−4.4 vs v0.9.8) in every run** — a genuine guardrail regression the relaxed table had hidden.
+  at ~76 (−4.4 vs v0.9.8) in every run** — an actual guardrail regression the relaxed table had hidden.
 - **Any future relaxation of these numbers is a STATED decision with a reason, made here.** As of now,
   none is approved: the config check stands. If Run C lands affix ~75/63 and street ~76, that is a
   CHECK MISS to confront (re-baseline-with-reason, or iterate), not a pass.
@@ -131,12 +131,12 @@ section at the top of this doc. (Historical note: DeepSeek's pre-named capacity-
 suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
 not anticipate the transient-then-decay shape; the guard caught what the tell didn't.)
 
-**4. SHIP check — REQUIRED before tagging v4.2.0 (training-check pass is necessary, NOT sufficient).**
+**4. SHIP check — REQUIRED before tagging v4.2.0 (training-check pass is necessary, not sufficient).**
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
 
-- **Honest-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
+- **direct-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
   changed and the per-tag guardrail evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
-  **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-honest-eval-region-fix]]).
+  **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-direct-eval-region-fix]]).
 - **Demo presets** — functional tests before verdicts (house law, [[feedback-functional-before-verdict]]).
 - **int8 spot-check** — quantize, then RE-RUN country + affix + per-locale on the **int8** artifact
   (watch the value_info-strip quant fix, [[project-v4.1.0-release]]). Claim parity on int8, not fp32.
@@ -144,15 +144,15 @@ The flag-plant claim is made on the artifact users get, with resolver-coupled be
   at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
   at all" contract — v4.2.0 is its first test).
 
-**5. Merge debt — these merge to main BEFORE v4.2.0 is reduce (RELEASING flows from main; a model whose
+**5. Merge debt — these merge to main before v4.2.0 is reduce (RELEASING flows from main; a model whose
 recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreography) → **#469**
 (affix reroll) → **`feat/consolidation-466`** (consolidation + Run A/B configs + assemblers). PR
 **#489** (docs/releases page) is independent + conflict-free — merge any order. Operator-conditional (merge wall).
 
 **6. After the flag-plant — queue, not ad-hoc:** next substantive item is **#478** (arbitration
 layer, zero-GPU — converts the model wins into "pipeline never worse than v0"). po_box/cedex do
-NOT run standalone — they **ride the next consolidation-class run** (dilution lesson), so they're a
-queue slot, not a now. Lossless decomposition (the agent's "#32") is **NOT in the triaged backlog** —
+not run standalone — they **ride the next consolidation-class run** (dilution lesson), so they're a
+queue slot, not a now. Lossless decomposition (the agent's "#32") is **not in the triaged backlog** —
 if it's the post-parity differentiator, it needs a fresh issue with a real spec + a deliberate slot
 in **epic #488**, not an ad-hoc grab.
 
@@ -174,7 +174,7 @@ in **epic #488**, not an ad-hoc grab.
   `consolidation-tradeoff-2026-06-10`; notes in `.agents/skills/deepseek-consult/`):
   - Affix is **scheduling-bound, not capacity-bound** (diagnostic: prefix 27.6→75 in 2k
     steps @ affix 20×, postcode even +1.6, guardrail flat). _[SUPERSEDED by Run C: the 75 is a
-    transient that decays under sustained density — it IS a capacity/stability constraint;
+    transient that decays under sustained density — it is a capacity/stability constraint;
     see "Final result" above.]_
   - **Weight-merge is unsound** for our from-scratch (non-fine-tune) solo models — would
     wreck the CRF transition matrix. _(Stands.)_
@@ -215,9 +215,9 @@ in **epic #488**, not an ad-hoc grab.
 ## Open / next
 
 - **The fork decision** (this doc, above) — sent for operator review: re-baseline + ship Run
-  B / escalate architecture / hold. Then the SHIP check (honest-eval VT, demo presets, int8
+  B / escalate architecture / hold. Then the SHIP check (direct-eval VT, demo presets, int8
   spot-check, ledger + scorecard + releases.mdx) before any v4.2.0 tag.
-- **Merge debt (ordering for the reduce):** #468 (choreography) → #469 (affix) →
+- **Merge debt (ordering for the result):** #468 (choreography) → #469 (affix) →
   `feat/consolidation-466` (consolidation + Run A/B/C configs + assemblers + salvaged
   #463 evals). #489 already merged; #463 closed (assets salvaged).
 - **Post-parity queue:** #478 arbitration layer next (zero-GPU); po_box/cedex ride the next
@@ -231,6 +231,6 @@ in **epic #488**, not an ad-hoc grab.
 | models trained         | v1.0.0 consolidation (40k) + affix diagnostic (2k) + Run A (20k) + Run B (20k) + Run C (15k) ≈ 97k steps, ~2.6 A100-h |
 | GPU lost to error      | Run B ~35 min (init_from confound)                                                                                    |
 | consults               | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment               |
-| PRs/branches           | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the reduce                         |
+| PRs/branches           | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the result                         |
 | regressions shipped    | 0 (nothing promoted; v4.1.0 still default)                                                                            |
 | canonical-check status | no variant passes (affix + US street); fork pending review                                                            |

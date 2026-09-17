@@ -1,10 +1,10 @@
-# v3.12 — comma-robust dep-loc recipe (pre-registered proposal, OPERATOR-CONDITIONAL)
+# v3.12 — comma-resilient dep-loc recipe (pre-registered proposal, OPERATOR-CONDITIONAL)
 
-**Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc extracts are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
+**Date:** 2026-07-23 · **Status:** proposal, not launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc extracts are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
 
-## Step 0 — the why-3 verification (BEFORE any recipe is written; ~1 hour, zero GPU)
+## Step 0 — the why-3 verification (before any recipe is written; ~1 hour, zero GPU)
 
-The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply to the four NEW locale extracts, and at what effective share? Verify by (a) reading the augmentation keys' source-scoping in `data_loader.py`/config, (b) sampling ~2k rows of the v0.15.0 stream as the loader draws them and counting comma-free variants per source. The answer picks the fix:
+The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply to the four new locale extracts, and at what effective share? Verify by (a) reading the augmentation keys' source-scoping in `data_loader.py`/config, (b) sampling ~2k rows of the v0.15.0 stream as the loader draws them and counting comma-free variants per source. The answer picks the fix:
 
 - **Aug doesn't reach the new extracts** → Fix A: extend it to them (config-only).
 - **Aug reaches them but share too small vs the new mass** → Fix B: raise the share (one knob, pre-registered).
@@ -13,13 +13,13 @@ The base recipe inherits v381's punct-drop augmentation. Unknown: does it apply 
 ## The run (after Step 0 picks A or B)
 
 - Clone v3.11.0-deploc-feed verbatim + ONLY the Step-0 fix (one variable). Fresh output dir. 8k, same seed.
-- **Probe-level blocking at 2k** (the process fix, now mandatory): the invariance mini-suite (`mailwoman eval invariance --baseline v385`) runs at EVERY checkpoint grade, not at ship time. A 2k read showing the comma-drop class regressing = stop at probe cost.
-- Grade ALL checkpoints incl. odd ones (the 7k lesson: save_every 1000 exists to be used).
+- **Probe-level blocking at 2k** (the process fix, now mandatory): the invariance mini-suite (`mailwoman eval invariance --baseline v385`) runs at every checkpoint grade, not at ship time. A 2k read showing the comma-drop class regressing = stop at probe cost.
+- Grade all checkpoints incl. odd ones (the 7k lesson: save_every 1000 exists to be used).
 
 ## Pre-registered acceptance (full set, no reinterpretation)
 
-1. PRIMARY: gauntlet metamorphic layer = 0 violations at the selected checkpoint; invariance suite shows NO new violation classes vs the v385 baseline profile.
-2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥66 tag-correct, **FP 0 on the gb-golden board's own no-dependent_locality rows** (i.e. specificity on the golden board itself — the prior must not emit on a row that has no dependent_locality in gold). This is a DIFFERENT number from the venue-confound board's false-positive floor, documented separately: 0.738% (48/6,500) at δ=5.0 on the 6,500-row FSA venue-confound board is the accepted, already-shipped-artifact FP rate for THAT board and is not required to be zero — see `neural-weights-en-gb/model-card.json`'s `eval.venue_confound_fp`. Don't conflate the two: this bar guards against the RECIPE fix introducing new gb-golden collateral, not against re-litigating the venue-confound floor.
+1. PRIMARY: gauntlet metamorphic layer = 0 violations at the selected checkpoint; invariance suite shows no new violation classes vs the v385 baseline profile.
+2. GB dep-loc board with prior @ δ=5.0 ≥ 69/69 emit / ≥66 tag-correct, **FP 0 on the gb-golden board's own no-dependent_locality rows** (i.e. specificity on the golden board itself — the prior must not emit on a row that has no dependent_locality in gold). This is a different number from the venue-confound board's false-positive floor, documented separately: 0.738% (48/6,500) at δ=5.0 on the 6,500-row FSA venue-confound board is the accepted, already-shipped-artifact FP rate for that board and is not required to be zero — see `neural-weights-en-gb/model-card.json`'s `eval.venue_confound_fp`. Don't conflate the two: this bar guards against the RECIPE fix introducing new gb-golden collateral, not against re-litigating the venue-confound floor.
 3. All operator-ratified bars: digit ≥0.755, bare-locality ≥0.90, golden us/fr ±0.7pp, presets byte-identical, error-analysis ≤2pp/tag.
 4. STOP RULE: one run. If the Step-0-selected fix doesn't produce a gauntlet-clean checkpoint, the model side goes to a full redesign discussion (candidates on record: two-phase LR schedule variant; curriculum ordering; the augmentation-vs-mass interaction study) — no knob iteration inside this pre-registration.
 

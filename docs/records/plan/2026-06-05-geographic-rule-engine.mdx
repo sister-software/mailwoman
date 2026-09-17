@@ -7,9 +7,9 @@
 
 ## Where this came from
 
-We went looking at Japan to learn what the non-Latin story costs us, and the probe split the problem in two so cleanly that the whole design falls out of it. Run a real Japanese address through the current v0.7.2 universal parser and you see two failures that are nothing alike:
+We went looking at Japan to learn what the non-Latin story costs us, and the probe split the problem in two so directly that the whole design falls out of it. Run a real Japanese address through the current v0.7.2 universal parser and you see two failures that are nothing alike:
 
-- **(A) The model is out-of-distribution.** Romaji in Western order parses almost correctly (`1-1-1 Ginza, Chuo-ku, Tokyo 104-0061` → house*number / street / locality / postcode, all roughly right). Native kanji scatters the labels. This is a coverage problem — trainable — and in the meantime the postcode is a clean regex hit in \_every* sample, so coordinate-first resolution carries Japan exactly the way it carried out-of-distribution Dutch to 94.9%. The coarse win needs no parser change at all.
+- **(A) The model is out-of-distribution.** Romaji in Western order parses almost correctly (`1-1-1 Ginza, Chuo-ku, Tokyo 104-0061` → house*number / street / locality / postcode, all roughly right). Native kanji scatters the labels. This is a coverage problem — trainable — and in the meantime the postcode is a clean regex hit in \_every* sample, so coordinate-first resolution carries Japan exactly the way it carried out-of-distribution Dutch to 94.9%. the result needs no parser change at all.
 - **(B) The schema cannot represent the address.** There is no tag for 丁目/番/号 — chōme/banchi/gō, the district/block/building _coordinates_ that most of Japan uses instead of streets. The model jams them into `house_number`/`street`/`postcode` because those are the only slots that exist. A _perfectly_ trained model still couldn't emit a correct structure. Training can never fix this; it's a vocabulary gap.
 
 That distinction is the foundation of everything below. (A) lives in the resolver. (B) is the one thing that has to change in the parser — and we're going to change it the smallest way that works.
@@ -23,7 +23,7 @@ The implementation after the parse is not one monolithic resolver, and it is not
 Two things fall out for free:
 
 - **The dispatch chicken-and-egg dissolves.** To pick Sapporo's rules you must know you're in Sapporo — but `postcode → WOF locality → ancestors` already hands you the entire admin chain in the coarse pass we run today. Convention selection rides on it at zero cost.
-- **The two audiences are one pipeline at two depths.** Our need (postcode → region/locality, for training gold and coarse geocode) and a user's need (a specific address down to a building) are the same machine stopped at different depths, not two systems. The 2025 Digital Address code is just an early-exit pure-lookup strategy at the front.
+- **The two audiences are one pipeline at two depths.** Our need (postcode → region/locality, for training gold and coarse geocode) and a user's need (a specific address down to a building) are the same machine stopped at different depths, not two systems. The 2025 Digital Address code isan early-exit pure-lookup strategy at the front.
 
 This also retires an older open question. Direction D imagined a coarse-placer that decides _which locale model to reach for_ (#244/#245). With the rule engine, one universal parser plus a geography-keyed convention table replaces the model router for every Latin locale and every locale the postcode can anchor. We mostly don't need to reach for a different model.
 

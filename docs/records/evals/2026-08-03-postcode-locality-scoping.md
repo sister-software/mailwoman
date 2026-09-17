@@ -18,7 +18,7 @@ output coordinate.
 1. **The postcode reaches the lookup and is then discarded.** The locality query literally carries
    `postcode: "75001"`. The FTS backend's only consumer of that field is the
    `postcode_area_resolution` strategy, which is inert in this configuration, and the
-   name-match fallback that actually runs never reads it.
+   name-match fallback that runs never reads it.
 
 2. **Texas wins because of `--locale`, not the postcode.** `--locale` defaults to `en-US`, which
    the CLI turns into `ResolveOpts.defaultCountry = "US"`, which becomes a hard `spr.country = 'US'`
@@ -132,7 +132,7 @@ $ mailwoman geocode "12 Rue de Rivoli, 75001 Paris" --default-country none
   "lat": 48.855602, "lon": 2.35995, "resolution_tier": "address_point", "uncertainty_m": 1
 ```
 
-The second is the BAN rooftop for 12 Rue de Rivoli, to the metre. All the implementation needed to get
+The second is the BAN rooftop for 12 Rue de Rivoli, to the meter. All the implementation needed to get
 this right is already wired; one locale-derived default is standing on it.
 
 ### The worse-than-wrong case
@@ -301,7 +301,7 @@ short of covering this case.
 Measured effect of removing the default entirely (`--default-country none`): all four target cases
 correct, including the BAN rooftop at 1 m. The cost is that `London, Ontario` and bare `Paris` fall
 to population-first-global ranking, which is the regression class the locale default exists to
-prevent. So the honest framing is a narrowing of the default's scope, not its removal — and the
+prevent. So the direct framing is a narrowing of the default's scope, not its removal — and the
 narrowing predicate wants measuring on the resolver gauntlet before anyone believes a number in it.
 
 ---

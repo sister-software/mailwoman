@@ -37,7 +37,7 @@ the default-on flip were authorized, not self-granted._
   the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule, not the model.** The
   OA-broadened `OTHER` head already carried the open-set signal; the old rule (softmax max-prob) just
   conflated "which country?" with "is it in-map at all?". Reading total in-map **mass** `1 − P(OTHER)` and
-  routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (honest dev→test 91.3, vs the 89.1
+  routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (direct dev→test 91.3, vs the 89.1
   ceiling; the _pre-registered_ Mahalanobis and reject-head came in last and unnecessary). On the assembled
   check it lifts in-map right-country **85.3 → 91.2 %** (9 wins, 0 regressions).
 - **Misroute check (#609).** The check that conditional default-on: does the prior ever push an _in-map_ address to
@@ -85,7 +85,7 @@ the default-on flip were authorized, not self-granted._
   closes the window now, but the lesson cost a bad version on the registry.
 - **The misroute eval is conservative and can't fully validate thin-coverage locales.** Absolute right-country
   rates were depressed (NL 35 %, KR 26 %) by the en-US model being OOD on non-US addresses + thin WOF coverage
-  — so the eval cleanly answers the _misroute_ question (0) but doesn't certify resolution _quality_ for NL/DE/
+  — so the eval directly answers the _misroute_ question (0) but doesn't certify resolution _quality_ for NL/DE/
   KR. The distribution's real value (European cross-border namesakes) is likewise under-exercised by a US-heavy
   test set. Both want a locale-native eval set we don't have yet.
 - **A cross-PR doc dependency bit the merge order.** The M1 code comments reference the soft-signal spec, which
@@ -140,7 +140,7 @@ the default-on flip were authorized, not self-granted._
 | PRs merged                   | 5 in the arc (#606, #608, #609, #610, #611) + #596 (v4.8.1) lead-in                                                           |
 | npm releases                 | v4.8.0 (broken) → v4.8.1 (fix + `ci:smoke`) → **v4.9.0** (the arc)                                                            |
 | packages published           | 13 × 3 reduces, all verified registry-direct at 4.9.0                                                                         |
-| checks / evals run           | M1 country-disambig, M2 open-set (component, honest dev→test), M2 pipeline, across-11 misroute (2 000 rows), distribution A/B |
+| checks / evals run           | M1 country-disambig, M2 open-set (component, direct dev→test), M2 pipeline, across-11 misroute (2 000 rows), distribution A/B |
 | models trained               | 0 — M2 was a _decision rule_, no retrain (the OA retrain was night-15)                                                        |
 | Modal / GPU time             | 0 (CPU-only)                                                                                                                  |
 | DeepSeek consults            | 1 (open-set validation → the asymmetry insight)                                                                               |

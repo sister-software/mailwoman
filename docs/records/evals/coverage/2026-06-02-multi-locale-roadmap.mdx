@@ -2,7 +2,7 @@
 
 The German coverage extract taught the model one thing: addresses where the house number comes after
 the street and the postcode comes before the city. Before generalizing that recipe to more locales,
-it's worth knowing which locales actually have that problem, because "the parser is bad at European
+it's worth knowing which locales  have that problem, because "the parser is bad at European
 addresses" is not one bug. A spot-check of the v0.7.2 parser against a handful of native-order
 addresses per locale sorts them into three groups.
 
@@ -58,7 +58,7 @@ at roughly 0.5 to 1.1 pieces per character, the same range as Latin. The 48K voc
 subword pieces (and for CJK, per-character pieces) for all of them, not raw byte soup.
 
 So the non-Latin collapse measured earlier is not the tokenizer shredding the script. The pieces
-exist; their embeddings are just under-trained, because the corpus is almost entirely Latin. That is
+exist; their embeddings areunder-trained, because the corpus is almost entirely Latin. That is
 the same diagnosis as German: coverage, not tokenizer. The synth-from-real-OA recipe therefore reaches
 past the Latin scripts, and the expensive option of swapping in a multilingual encoder is less
 necessary than it looked, since the vocabulary is already multilingual enough to learn from.
@@ -68,7 +68,7 @@ necessary than it looked, since the vocabulary is already multilingual enough to
 Hold all of this behind the German result. If the German train lifts street and house_number without
 costing US or French accuracy, the recipe is proven and ES, IT, and NL follow on the same rails. If
 German shows interference instead, that same interference would hit the others, and pre-building them
-would just be three more extracts to pull back out. So this is a map, not a backlog. Measure the first
+wouldbe three more extracts to pull back out. So this is a map, not a backlog. Measure the first
 one before you commit to the rest.
 
 The spot-check is directional (a few hand-written addresses per locale, not a labeled set); treat the

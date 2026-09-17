@@ -53,7 +53,7 @@ prototype:
 Candidate shaping happens between candidate lookup and ordering. The `PlaceLookup` backend
 (`@mailwoman/resolver-wof-sqlite`) returns candidates; `@mailwoman/resolver` decorates the tree and
 then orders through `span-rescore.ts` and `rankByImportance` in `toponym-prior.ts`. The prior's
-runtime surface is a decoration step that runs on the decorated tree BEFORE any ordering, and it
+runtime surface is a decoration step that runs on the decorated tree before any ordering, and it
 touches exactly two things:
 
 1. The candidate SET, by hard exclusion, only where section 5 permits it.

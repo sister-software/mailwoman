@@ -6,7 +6,7 @@
 ## The problem
 
 `AGENTS.md` states that four words — the three the `AmbiguousShorthand` rule listed then, and the retired one `repo-health` already
-counts — are banned "in replies AND in
+counts — are banned "in replies and in
 every committed prose surface", because each stands for four or five different things and a reader
 cannot tell which one a sentence means. Three Vale configs enforce parts of that claim, and the
 claim is wider than the enforcement:
@@ -101,7 +101,7 @@ order below keeps every intermediate state shippable and every diff reviewable.
 ## Two tensions the sweep will hit, decided here
 
 **`source of truth` (9 hits) is flagged by `StockPhrases`,** and `AGENTS.md` uses it as contract
-language: "`SCHEMA.mdx` is the single source of truth for the `ComponentTag` union." The phrase names
+language: "`SCHEMA.mdx` is the single authoritative record for the `ComponentTag` union." The phrase names
 a real property — which document wins when two disagree. Keep the phrase; add it to the accept list
 rather than reword nine contracts.
 

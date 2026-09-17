@@ -21,7 +21,7 @@ that share an NPI _should_ land together; a cluster fusing two NPIs is an
 over-merge; an NPI split across clusters is an under-merge. No labels, no
 adjudication — just count. Tempting, and on this registry, wrong by construction.
 
-## One organization, many NPIs
+## One organization, several NPIs
 
 The NPI is a registration key, not an organization key. A single hospital system
 holds a **separate NPI for every billing subpart** — each clinic, each
@@ -29,12 +29,12 @@ department, sometimes each location — plus legal-form variants, state qualifie
 and the occasional typo'd re-registration. `Baylor College of Medicine` appears
 four times at one address (`1504 Taub Loop`); `WAL-MART STORES TEXAS LLC` and
 `… LP` are the same Walmart pharmacy under two corporate skins. These are not
-distinct entities. They are one organization wearing many registration numbers.
+distinct entities. They are one organization wearing several registration numbers.
 
 So when the matcher does exactly the right thing — recognizing that four
 co-located `Baylor` records are one place — NPI-as-truth scores all six of those
 within-org pairs as **over-merges**. The matcher is penalized for being correct.
-The lower its measured precision, the better it may actually be working.
+The lower its measured precision, the better it may be working.
 
 ## Four rulers, one set of clusters
 

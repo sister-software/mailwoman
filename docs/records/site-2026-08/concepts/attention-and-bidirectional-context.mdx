@@ -18,7 +18,7 @@ specifically the operator's question from
 The short answer: **yes, but it's not directional. Every token influences every
 other token in both directions through all six attention layers.**
 
-## What attention actually computes
+## What attention computes
 
 Each transformer layer computes, for every token position `t`:
 
@@ -30,8 +30,8 @@ Where `attention_weight_{t,s}` measures how relevant the token at position `s`
 is to the token at position `t`. Computed via the standard scaled-dot-product
 attention: `softmax(query_t · key_s / sqrt(d))`.
 
-This is **bidirectional**: position `t` attends to ALL positions (including
-positions both before and after itself), not just earlier ones. There's no
+This is **bidirectional**: position `t` attends to all positions (including
+positions both before and after itself), notearlier ones. There's no
 causal mask — this is a BERT-style encoder, not GPT-style.
 
 The transformer stacks 6 of these attention layers. After 6 layers, a token's
@@ -75,7 +75,7 @@ Address parsing requires global coherence. Consider:
 | `5th Portland Street, Boston, MA 02101`     | `Portland` = part of street name |
 
 The same first token (`Portland`) gets three different labels. The
-discriminator is what comes AFTER. A unidirectional model (left-to-right
+discriminator is what comes after. A unidirectional model (left-to-right
 RNN, GPT-style) sees only what's already been processed when it gets to
 `Portland`. A bidirectional encoder sees everything.
 
@@ -118,7 +118,7 @@ distinctions (Manhattan-vs-Brooklyn-vs-Queens-vs-Bronx for "borough"
 classification, say) might compress into the same neighborhood of activation
 space and be confused.
 
-## What this CAN do that v0 couldn't
+## What this can do that v0 couldn't
 
 The v0 rule-based parser computes per-token classifications independently
 and then reconciles via solvers. Each classifier looks at the token's
@@ -130,7 +130,7 @@ distinction between "what does this token look like in isolation" and
 the attention computation. The result is more general: the model can
 handle co-occurrence patterns the rule writers didn't anticipate.
 
-The cost is that you can't easily debug WHY the model made a particular
+The cost is that you can't easily debug why the model made a particular
 decision. v0's classifier + solver chain produces an interpretable
 decomposition. The encoder produces a hidden state vector. The architecture
 docs (see

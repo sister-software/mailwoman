@@ -69,7 +69,7 @@ for await (const record of geocodeStream(onlyWithAddress(normalized), { mapping,
 }
 ```
 
-That filter is the quiet win. Geocoding is the expensive stage, so every row you discard _before_ it is a worker dispatch you never pay for. Normalize a million rows, keep the 300 K with a usable address, and only those reach the pool. Filtering is a microsecond; geocoding is milliseconds — do the cheap rejection first.
+That filter is the result. Geocoding is the expensive stage, so every row you discard _before_ it is a worker dispatch you never pay for. Normalize a million rows, keep the 300 K with a usable address, and only those reach the pool. Filtering is a microsecond; geocoding is milliseconds — do the cheap rejection first.
 
 ## How the workers stay cheap
 
@@ -94,7 +94,7 @@ A sweep over real NPPES addresses on a 16-core box, single 4 GB gazetteer:
 |       4 |     47 rows/s |     1.1× |
 |       6 |     43 rows/s |       1× |
 
-Throughput peaks at two workers and _declines_ from there — by six, you're back to single-threaded, having spent six cores to get there. Capping per-worker inference threads didn't move it either; the ceiling is the shared database, not the CPU. So treat `concurrency` as something you sweep for your data and your disk, starting low. The win from threading geocode is real but modest (~1.4×), and the way to lose it is to ask for more.
+Throughput peaks at two workers and _declines_ from there — by six, you're back to single-threaded, having spent six cores to get there. Capping per-worker inference threads didn't move it either; the ceiling is the shared database, not the CPU. So treat `concurrency` as something you sweep for your data and your disk, starting low. The result of threading geocode is real but modest (~1.4×), and the way to lose it is to ask for more.
 
 If your gazetteer fits in RAM, or you've attached it across disks, your curve will sit higher — measure it. The default (`min(4, cores)`) is deliberately conservative so the out-of-the-box behavior helps rather than thrashes.
 
@@ -102,4 +102,4 @@ If your gazetteer fits in RAM, or you've attached it across disks, your curve wi
 
 Not every ingest needs a coordinate. If you're loading records to dedupe by name and org, or to join on an ID, the address never gets geocoded — so there's no heavy stage to thread, and `normalizeCSV` on its own is the whole job. Reaching for `geocodeStream` there would only add worker overhead to microsecond work, the exact loss from two sections ago. Thread the stage that warrants it; leave the cheap one alone.
 
-Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup/entity-resolution step this ingest usually feeds, and [Displaying results on a map](./display-on-a-map.md) covers turning the output into a map you can eyeball.
+Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup/entity-resolution step this ingest typically feeds, and [Displaying results on a map](./display-on-a-map.md) covers turning the output into a map you can eyeball.

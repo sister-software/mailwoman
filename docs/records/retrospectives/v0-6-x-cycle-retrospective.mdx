@@ -87,7 +87,7 @@ infrastructure layer that v0.7 will sit on top of:
   — per-country postcode accuracy check. Created as the v0.7 regression
   fence for what should be a slam-dunk metric.
 
-## 3. What v0.6.x actually revealed
+## 3. What v0.6.x revealed
 
 ### 3.1 The corpus-recipe knob is too coarse to stabilize the model
 
@@ -131,7 +131,7 @@ recall, not the harness.
 ### 3.3 The model is overconfident, not undertrained
 
 The per-token confidence probe found 81% of WRONG predictions land at
-≥ 0.9 confidence on BOTH v0.6.2 and v0.6.2b. This is calibration
+≥ 0.9 confidence on both v0.6.2 and v0.6.2b. This is calibration
 crisis-level — the model is decisively wrong, not uncertain. Two
 implications:
 
@@ -168,11 +168,11 @@ values in the 2D check (2pp recall drop, 100 hallucination count) were
 calibrated against the same set we've been reading. Some check
 pass/fail decisions may have been false positives.
 
-The model has never seen v0.1.2 in training. But the recipe HAS been
+The model has never seen v0.1.2 in training. But the recipe has been
 tuned against it three times. That's decision-side leakage, even if it
 isn't training-side.
 
-## 4. What did NOT cause v0.6.x's pathology
+## 4. What did not cause v0.6.x's pathology
 
 For the record, so future-us doesn't relitigate these:
 
@@ -218,7 +218,7 @@ the speculative-architecture work (per-locale routing) to v0.8.
 - Early-eval checks against DEV; release-check against TEST (touched once).
 - Measure: **harness pass rate** (PRIMARY — replaces per-tag recall as
   the release metric), overconfidence %, per-tag recall on held-out test.
-- Decision: ship if harness improves AND overconfidence drops; pivot if
+- Decision: ship if harness improves and overconfidence drops; pivot if
   not.
 
 **P1 — Postcode fix** (depends on diagnostic + calibration result)
@@ -305,7 +305,7 @@ The v0.8+ direction (informed by DeepSeek turn 12):
   `street` → `house_number`. Consumers opt in. Avoid lossy universal
   projection.
 
-This work is meaningful but is NOT what v0.6.x failures were pointing
+This work is meaningful but is not what v0.6.x failures were pointing
 at. v0.7 fixes the measured problems; v0.8 starts the structural
 direction.
 

@@ -238,7 +238,7 @@ export function hasResolvedPlace(
  * modifier inside a name, not a name. Probing it anyway matches a real US place (`New`, wof:1276997945) and pins the
  * address to Kentucky — an answer strictly worse than none, because it is confident and wrong.
  *
- * Deliberately not confidence-conditioned, unlike {@link confidentRanges}. The country node in that case carries 0.68,
+ * Deliberately not confidence-conditioned, unlike {@link confidentRanges}. The country node has score 0.68 in that case,
  * under the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way,
  * and the interior of a name the parse doubts is not thereby a better standalone candidate. Single-token spans are
  * excluded — there is no interior to protect.

@@ -84,7 +84,7 @@ export const PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
 Reading the rule for `street`: a street tries to nest under
 `dependent_locality` first, then `locality`, then `subregion`, then
 `region`. The tree builder walks this list and parents the street to the
-first listed tag that ACTUALLY has a labeled span in this address.
+first listed tag that has a labeled span in this address.
 Missing tags fall through.
 
 ## The tree-building walk
@@ -131,12 +131,12 @@ shipped — see
 deferred items) would check the AddressTree's structural validity as a
 final quality check.
 
-### It's the schema's source of truth
+### It's the schema's authoritative record
 
 The `PARENT_OF` map is the canonical statement of "what nests in what."
 The
 [street-supplement architecture](./street-supplement-architecture.mdx)
-treats this as the schema's source of truth — extending it (e.g. adding
+treats this as the schema's authoritative record — extending it (e.g. adding
 `dependent_street → street`) is a schema-level decision that flows into
 training corpus design, eval golden sets, and downstream consumers.
 
@@ -146,7 +146,7 @@ placetype DAG and mailwoman's `PARENT_OF` map are related but distinct
 ontologies — the model's tags answer "what role does this span play in
 an address," while WOF's placetypes answer "what kind of geographical
 feature is this." The containment rules let us project model output
-into either ontology cleanly.
+into either ontology directly.
 
 ## What this CAN'T do
 

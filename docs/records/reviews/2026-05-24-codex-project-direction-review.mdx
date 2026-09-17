@@ -4,7 +4,7 @@
 
 Mailwoman is on the right strategic track. The strongest idea in the project is still the Pelias-style split between parsing and resolving, updated for a modern TypeScript/runtime world: a small contextual parser proposes possibilities, deterministic structure supplies cheap priors, and a resolver/gazetteer checks world coherence. That direction is better than either "rules forever" or "one model does everything."
 
-The current work is a significant step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a measured step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
 
 Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis, not as a release train.
 
@@ -25,7 +25,7 @@ That is the correct historical synthesis. Geocoding has never only been NLP and 
 
 Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The new `alternatives` field and `--candidates` CLI direction are especially aligned with graceful failure.
 
-This is also where Mailwoman can be meaningfully better than old geocoders: not just "more correct top-1," but more honest about ambiguity. `Springfield`, `Paris`, and postalcode placeholder failures should surface as candidate sets and diagnostics.
+This is also where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity. `Springfield`, `Paris`, and postalcode placeholder failures should surface as candidate sets and diagnostics.
 
 ### 2. Small, TypeScript-first neural runtime is justified
 
@@ -172,11 +172,11 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 
 ### Change or tighten
 
-- Make `docs/articles/plan/v0-5-0-shipped.md` the temporary source of truth, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
+- Make `docs/articles/plan/v0-5-0-shipped.md` the temporary authoritative record, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
 - Move from "model F1" checks to "pipeline outcome" checks: parse exact match, top-k resolver recall, graceful failure, and calibration.
 - Treat `reconcileSpans` as an integration priority, not a future idea.
 - Promote `predict_top_k` from Python training support into TypeScript/browser runtime support.
-- Use synthetic data as a controlled source with explicit weights, not just extra rows.
+- Use synthetic data as a controlled source with explicit weights, notextra rows.
 - Create an explicit "expensive run preflight" checklist that must pass before rented GPU time.
 
 ### Defer
@@ -219,7 +219,7 @@ Run the next cheap-but-informative experiments before any full retrain:
 
 Decision:
 
-- If A1 + v0.3 trains cleanly, ship tokenizer win without B2 mass and defer transliteration training.
+- If A1 + v0.3 trains directly, ship tokenizer win without B2 mass and defer transliteration training.
 - If v0.1 + v0.4 diverges, corpus composition is the blocker.
 - If only A1 diverges, investigate vocab/embedding frequency and maybe reduce vocab or initialize from A0 differently.
 
@@ -291,7 +291,7 @@ Then spend on a full C-train. Not before.
 The project should aim to become the TypeScript-native open geocoding front end: parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
 
 - easy to deploy
-- honest about ambiguity
+- direct about ambiguity
 - cheap enough for browsers and serverless
 - retrainable on open data
 - calibrated enough that downstream systems can decide when to ask for more context

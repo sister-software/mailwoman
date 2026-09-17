@@ -5,7 +5,7 @@ anchor-on pilot) · **Question:** the German "collapse" was largely an eval-orde
 native German order, our OA eval renders US/international order. Does training the German extract in **both**
 orders close the international-order gap?
 
-The honest answer: **partly, and not where it counts yet** — and the 2×2 says something more interesting than
+The direct answer: **partly, and not where it counts yet** — and the 2×2 says something more interesting than
 a single number would have.
 
 ## The 2×2 (DE locality-match, 3,000 real OpenAddresses points, through the resolver)
@@ -87,7 +87,7 @@ We took the first fix — render the `City, Region Postcode` tail the synth had 
 
 US 97.2 / FR 84.9 held; no collapse. The region tail did _exactly_ what it was designed to — international
 **region-match went 0% → ~40%** (Berlin 45.6, Sachsen 30.9), and Berlin's international locality nudged
-34.4 → 38.7 — but **locality stayed flat**. The model now segments the tail correctly; it just doesn't move
+34.4 → 38.7 — but **locality stayed flat**. The model now segments the tail correctly; itdoesn't move
 the number we care about, because the number we care about was never capped by the tail. The anchor-on
 international gap is `83.6 − 44.7 = 38.9pp`, four times the 10pp the pre-registered check allowed.
 
@@ -101,7 +101,7 @@ of the locality when the postcode trails it.
 inject the same anchor at the postcode token _and_ the first token, an order-independent global signal the
 locality can attend back to. It's a training-code change, not model surgery — the model already adds the
 anchor per-token, so it's a matter of placing one at position 0. But three iterations in without a promotion,
-the honest question DeepSeek raised is whether a trained-in _always-on_ anchor is the right design at all:
+the direct question DeepSeek raised is whether a trained-in _always-on_ anchor is the right design at all:
 it's a +35pp native win and a −4pp international loss, and an order-conditioned anchor is the alternative.
 
 ## v0.9.4 dual-injection: the anchor's asymmetry doesn't yield to architecture either
@@ -132,8 +132,8 @@ an architectural change at it; none of them moved it. **The anchor's native-help
 sequence. And it's a real geographic miss, not a metric mirage: PIP-containment is 96.3% on native German, 57%
 on international.
 
-So the corpus and the architecture are both exhausted, and the honest conclusion is the one DeepSeek raised at
-the very start: a trained-in, always-on anchor may simply be the wrong shape for order robustness. The next
+So the corpus and the architecture are both exhausted, and the direct conclusion is the one DeepSeek raised at
+the very start: a trained-in, always-on anchor may only be the wrong shape for order robustness. The next
 move is a strategic choice, not another tuning pass — an order-conditioned anchor, or accepting the asymmetry
 (native German is excellent and that's what production would ship), or a different international approach
 entirely. It's also cross-reducing: the same anchor would carry the same asymmetry into every locale, so it
@@ -143,8 +143,8 @@ checks the multi-locale retrain program. v0.6.0 stays the production default thr
 
 With the operator away and the data in, we put the fork to DeepSeek, which held delegated authority for the
 shift, across a third consult turn. Its call was **(b): accept the asymmetry, and burn no more GPU.** Three
-independent retrains had failed to move the anchor-on international number; the native gain (+35pp) is large,
-robust, and generalizes (US 96.4, FR 84.9 hold), while the international penalty (−4pp) is small and stable.
+independent retrains had failed to move the anchor-on international number; the result (+35pp) is large,
+resilient, and generalizes (US 96.4, FR 84.9 hold), while the international penalty (−4pp) is small and stable.
 Anchor-_off_ international already lands near 48% locality-match, competitive with the non-neural baselines, so
 a model can serve international-order German through the `c=0` identity path and lose nothing the anchor was
 giving it. This is the research line; v0.6.0 ships unchanged regardless.
