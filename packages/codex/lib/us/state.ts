@@ -97,6 +97,15 @@ export function isUSStateAbbreviation(input: unknown): input is USStateAbbreviat
 }
 
 /**
+ * Normalize a USPS state-or-territory abbreviation, or return `undefined` when `value` is not one.
+ */
+export function formatAsUSStateAbbreviation(value: string): USStateAbbreviation | undefined {
+	const code = value.trim().toUpperCase()
+
+	return isUSStateAbbreviation(code) ? code : undefined
+}
+
+/**
  * Full names for the 50 states, DC, and the five primary territories, keyed by USPS abbreviation. The names half of the
  * closed region vocabulary — where the country/state homographs live ("Georgia", "Washington"), which the
  * gazetteer-anchor lexicon needs to flag candidate-tag collisions. Source: USPS Publication 28, Appendix B.

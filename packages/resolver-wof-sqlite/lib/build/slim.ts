@@ -152,7 +152,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 	// Callers pass `""` for extracts that don't exist yet (e.g. a not-yet-built custom postcode DB).
 	// Skip empties up front; require every remaining path to exist.
-	const inputs = opts.inputs.filter((p) => p.length > 0)
+	const inputs = opts.inputs.filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
 

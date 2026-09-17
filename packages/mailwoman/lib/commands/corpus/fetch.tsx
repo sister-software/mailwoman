@@ -9,6 +9,7 @@
  *   sha256). See `@mailwoman/corpus/tools` `fetch/index.ts` for the source registry + license tiers.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 
@@ -18,7 +19,6 @@ import {
 	type CommandComponent,
 	type OptionsOf,
 	reportToStderr,
-	splitList,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -107,7 +107,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchJusoKR({ ...base, month: options.month }, reportToStderr)
 		case "localdata-kr":
 			return fetchLocaldataKR(
-				{ ...base, categories: options.categories === undefined ? undefined : splitList(options.categories) },
+				{ ...base, categories: options.categories === undefined ? undefined : extractDelimited(options.categories) },
 				reportToStderr
 			)
 		case "ban":
@@ -131,7 +131,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 				{
 					...base,
 					// Undefined = every country the source's own countryInfo.txt catalogs; present dumps are skipped.
-					countries: options.countries === undefined ? undefined : splitList(options.countries),
+					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
 			)
@@ -141,7 +141,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					...base,
 					// Undefined, not an empty list, when the flag is absent — the module's own default set is the answer for
 					// 'fetch what the corpus wants', and an empty array would fetch nothing while looking deliberate.
-					countries: options.countries === undefined ? undefined : splitList(options.countries),
+					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
 			)

@@ -481,7 +481,7 @@ export function deriveExpectedRung(
 		countryName && !countryPlace ? `country "${countryName}" (unresolved)` : undefined,
 		// Untyped words still in the input. Third kind, same consequence — see `residualWords`.
 		residual.length ? `${residual.length} untyped input word(s) (${residual.slice(0, 3).join(", ")})` : undefined,
-	].filter((entry) => entry != null && entry.length > 0)
+	].filter((entry) => entry != null && entry.length)
 
 	const declineToConstrain = (why: string): ExpectedRung => ({
 		kind: UNCONSTRAINED_RUNG,
@@ -767,7 +767,7 @@ export function residualWords(ablatedInput: string, remaining: RemainingComponen
 	const accounted = new Set(
 		Object.values(remaining)
 			.flatMap((value) => value.toLowerCase().split(/[^\p{L}\p{N}]+/u))
-			.filter((token) => token.length > 0)
+			.filter((token) => token.length)
 	)
 
 	return ablatedInput

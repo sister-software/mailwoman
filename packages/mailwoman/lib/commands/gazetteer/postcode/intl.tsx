@@ -46,7 +46,7 @@ import { GeoPoint } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 import type { PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -365,7 +365,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof spec> = ({ options }) => {
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
 
-		const countries = options.countries ? splitUpperList(options.countries) : ["PL", "CZ"]
+		const countries = options.countries ? splitCountryCodes(options.countries) : ["PL", "CZ"]
 
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut

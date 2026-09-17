@@ -63,7 +63,7 @@ const refused = new Set(
 	values["refuse-country"]
 		.split(",")
 		.map((cc) => cc.trim().toLowerCase())
-		.filter((cc) => cc.length > 0)
+		.filter((cc) => cc.length)
 )
 
 const wanted = new Set(

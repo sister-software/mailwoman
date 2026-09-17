@@ -148,7 +148,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 }
 
 function evaluateLines(layout: AddressLayout, components: ComponentDict): readonly AddressPiece[] {
-	const lines = layout.lines.map((line) => evaluateLine(line, components)).filter((line) => line.length > 0)
+	const lines = layout.lines.map((line) => evaluateLine(line, components)).filter((line) => line.length)
 
 	return lines.flatMap((line, index) => (index > 0 ? [{ tag: null, text: "\n" }, ...line] : line))
 }

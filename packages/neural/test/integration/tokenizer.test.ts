@@ -45,7 +45,7 @@ describe("MailwomanTokenizer — Python parity", () => {
 })
 
 describe("MailwomanTokenizer — offset reconstruction", () => {
-	test.each(fixture.filter((f) => f.raw.length > 0))(
+	test.each(fixture.filter((f) => f.raw.length))(
 		"every piece's literal text matches raw.slice(start, end) for $raw",
 		async ({ raw }) => {
 			const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)

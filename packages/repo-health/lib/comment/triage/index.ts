@@ -87,7 +87,7 @@ const LONG_COMMENT_MINIMUM_SENTENCES = 8
  * terminator, so only segments carrying a non-space character count.
  */
 function countSentences(prose: string): number {
-	return prose.split(/[.!?](?:\s|$)/).filter((segment) => segment.trim().length > 0).length
+	return prose.split(/[.!?](?:\s|$)/).filter((segment) => segment.trim().length).length
 }
 
 function digest(value: string): string {

@@ -23,7 +23,7 @@ import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
  * because containment is containment whatever tier the container sits at.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
-	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim().length > 0)?.value.trim()
+	return firstNodeWhere(roots, (n) => n.tag === "region" && n.value.trim())?.value.trim()
 }
 
 /**

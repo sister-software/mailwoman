@@ -18,7 +18,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 
@@ -38,7 +38,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-const csv = (raw: string | undefined): string[] | undefined => (raw ? splitUpperList(raw) : undefined)
+const csv = (raw: string | undefined): string[] | undefined => (raw ? splitCountryCodes(raw) : undefined)
 
 const GazetteerBuildAdmin: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {

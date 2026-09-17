@@ -780,12 +780,12 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
  * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
  */
-export async function resolvePlacetypeCensusPath(country: string): Promise<string | undefined> {
-	if (!country) return undefined
+export async function resolvePlacetypeCensusPath(country: string): Promise<PathBuilder | null> {
+	if (!country) return null
 
-	const candidate = String(dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`))
+	const candidate = dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`)
 
-	return (await pathExists(candidate)) ? candidate : undefined
+	return (await pathExists(candidate)) ? candidate : null
 }
 
 /**
@@ -802,10 +802,10 @@ export async function resolvePlacetypeCensusPath(country: string): Promise<strin
 export async function loadPlacetypeCensus(
 	country: string,
 	explicitPath?: string
-): Promise<PlacetypeCensusResolver | undefined> {
+): Promise<PlacetypeCensusResolver | null> {
 	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 
-	if (!path) return undefined
+	if (!path) return null
 
 	try {
 		const census = new PlacetypeCensusResolver(new Uint8Array(await readLocalBuffer(path)))
@@ -820,7 +820,7 @@ export async function loadPlacetypeCensus(
 		console.error(`[mailwoman/neural] failed to parse ${path}: ${(error as Error).message}`)
 	}
 
-	return undefined
+	return null
 }
 
 /**

@@ -28,7 +28,7 @@
  * Adding a locale is additive and safe — surfaces are deduplicated — but every addition grows the candidate table, so
  * it earns its place by contributing surfaces a user would plausibly type.
  */
-export const DISPLAY_NAME_LOCALES = [
+export const DISPLAY_NAME_LOCALES: readonly Intl.UnicodeBCP47LocaleIdentifier[] = [
 	"en",
 	"zh-Hans",
 	"zh-Hant",
@@ -53,7 +53,7 @@ export const DISPLAY_NAME_LOCALES = [
 	"uk",
 	"sv",
 	"el",
-] as const
+]
 
 /**
  * `long` is the ordinary name, `short` supplies the abbreviations people actually type (`UK`, `US`, `アメリカ`), and

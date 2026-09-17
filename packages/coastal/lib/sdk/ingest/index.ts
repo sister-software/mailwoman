@@ -444,7 +444,7 @@ export async function* readCoastalInstabilityFeatures(
 
 		const units = [properties.smp_pu1, properties.smp_pu2, properties.smp_pu3, properties.smp_pu4, properties.smp_pu5]
 			.map((unit) => verbatimText(unit)?.trim() ?? "")
-			.filter((unit) => unit.length > 0)
+			.filter((unit) => unit.length)
 
 		yield {
 			areaID: `${kind}:${String(properties.object_id)}`,

@@ -168,7 +168,7 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 
 	// The postcode spans in document order — the same walk `firstPostcodeValue` uses, so the verdict's
 	// "first confirmed" is the node `state.postcode` will read.
-	const postcodes = collectNodes(roots, (n) => n.tag === "postcode" && n.value.trim().length > 0)
+	const postcodes = collectNodes(roots, (n) => n.tag === "postcode" && n.value.trim())
 
 	if (!postcodes.length) return verdict
 

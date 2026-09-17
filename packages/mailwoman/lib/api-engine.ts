@@ -86,7 +86,7 @@ async function wofPaths(): Promise<string[]> {
 		? env
 				.split(",")
 				.map((p) => p.trim())
-				.filter((p) => p.length > 0)
+				.filter((p) => p.length)
 		: undefined
 
 	return await existingWOFDatabasePaths(explicit)

@@ -75,7 +75,7 @@ const MAX_QUERY_LEN = 512
 const BINARY_NAME = "mailwoman-nominatim"
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
-	return parts.filter((part) => part !== undefined && part.length > 0).join(", ")
+	return parts.filter((part) => part !== undefined && part.length).join(", ")
 }
 
 async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {

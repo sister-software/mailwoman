@@ -10,6 +10,8 @@
  *   Maintainer-only: needs the local databases + `tippecanoe` on PATH + the @duckdb/node-api dev dep.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { Box, Text } from "ink"
@@ -20,7 +22,6 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
-	splitList,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -110,7 +111,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 		return buildCoverageTiles(
 			{
 				states: options.states,
-				excludeStates: splitList(options.excludeStates),
+				excludeStates: extractDelimited(options.excludeStates),
 				dataRoot: options.dataRoot,
 				interpRoot: options.interp ? options.interpRoot : null,
 				fineRes: options.fineRes,
@@ -124,7 +125,7 @@ const CoverageBuild: CommandComponent<typeof spec> = ({ options }) => {
 				wofDB: options.postcode ? options.wofDB : null,
 				postcodeCeiling: options.postcodeCeiling,
 				salienceFloor: options.salienceFloor,
-				postcodeExcludeCountries: splitList(options.postcodeExclude),
+				postcodeExcludeCountries: extractDelimited(options.postcodeExclude),
 				tileMaxZoom: options.maxZoom,
 				out: options.out,
 				keepNdjson: options.keepNdjson,

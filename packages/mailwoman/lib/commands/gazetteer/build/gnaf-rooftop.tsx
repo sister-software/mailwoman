@@ -10,7 +10,9 @@
  *   `@mailwoman/resolver-wof-sqlite` peers.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -45,7 +47,7 @@ const GazetteerBuildGNAFRooftop: CommandComponent<typeof spec> = ({ options }) =
 		const r = await buildGNAFRooftopDatabase({
 			standardDir: options.standardDir,
 			out: options.out,
-			states: options.states === undefined ? undefined : splitList(options.states),
+			states: options.states === undefined ? undefined : extractDelimited(options.states),
 			release: options.release,
 			buildSHA: options.buildSha,
 			createdAt: options.createdAt,

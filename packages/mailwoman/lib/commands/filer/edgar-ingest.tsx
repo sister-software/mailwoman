@@ -39,7 +39,7 @@ const FilerEdgarIngest: CommandComponent<typeof spec> = ({ options }) => {
 		const names = (await readLocalTextFile(options.names))
 			.split("\n")
 			.map((line) => line.trim())
-			.filter((line) => line.length > 0)
+			.filter((line) => line.length)
 
 		// oxlint-enable mailwoman/prefer-spliterator
 

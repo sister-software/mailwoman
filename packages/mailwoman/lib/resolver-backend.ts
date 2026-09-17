@@ -85,7 +85,7 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
 		return raw
 			.split(",")
 			.map((path) => path.trim())
-			.filter((path) => path.length > 0)
+			.filter((path) => path.length)
 	}
 
 	return [...wofExtractPaths(dataRoot)]
@@ -295,7 +295,7 @@ export async function resolvePOIResolverPaths(options: {
 		? options.resolveDB
 				.split(",")
 				.map((path) => path.trim())
-				.filter((path) => path.length > 0)
+				.filter((path) => path.length)
 		: undefined
 
 	return { candidateDB, wofPaths: await existingWOFDatabasePaths(explicit) }

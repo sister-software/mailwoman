@@ -86,7 +86,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 			? tail
 					.split(",")
 					.map((segment) => segment.trim())
-					.filter((segment) => segment.length > 0)
+					.filter((segment) => segment.length)
 			: tailWithoutCommas(tail)
 
 		for (const segment of segments) {
@@ -106,7 +106,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
  * → [`Xinjiang Uyghur`].
  */
 function tailWithoutCommas(tail: string): string[] {
-	const words = tail.split(/\s+/u).filter((word) => word.length > 0)
+	const words = tail.split(/\s+/u).filter((word) => word.length)
 	const last = words.at(-1)
 
 	if (last && /^china$/iu.test(last) && words.length > 1) {

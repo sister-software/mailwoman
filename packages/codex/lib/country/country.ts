@@ -40,7 +40,7 @@ export const COUNTRY_SURFACE_FORMS = {
 	IE: ["Ireland", "Éire", "IE", "IRL"],
 	MX: ["Mexico", "México", "MX", "MEX"],
 	JP: ["Japan", "日本", "Nippon", "JP", "JPN"],
-} as const satisfies Partial<Record<string, readonly string[]>>
+} as const satisfies Partial<Record<CountryISO2, readonly string[]>>
 
 export type CountrySurfaceISO2 = keyof typeof COUNTRY_SURFACE_FORMS
 
@@ -167,6 +167,20 @@ export function countryCodeForTable(country: string | null | undefined): string 
 	if (trimmed.length === 2) return trimmed.toUpperCase()
 
 	return matchCountry(trimmed)?.iso2
+}
+
+/**
+ * Normalize and validate an ISO 3166-1 alpha-2 code. This is for a field or flag that explicitly asks for a country
+ * code; address-text recognition belongs to {@link matchCountry} instead.
+ */
+export function formatAsCountryISO2(value: string): CountryISO2 {
+	const code = value.trim().toUpperCase()
+
+	if (!Object.values(CountryISO2).includes(code as CountryISO2)) {
+		throw new TypeError(`expected an ISO 3166-1 alpha-2 country code, got ${value}`)
+	}
+
+	return code as CountryISO2
 }
 
 /**

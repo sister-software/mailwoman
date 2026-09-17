@@ -44,6 +44,20 @@ export function scriptEntryPath(): string {
 }
 
 /**
+ * Given a string, splits it on the given delimiter and returns the non-empty trimmed entries.
+ *
+ * @returns An array of non-empty trimmed entries.
+ */
+export function extractDelimited(value?: string | null, delimiter = ","): string[] {
+	return (
+		value
+			?.split(delimiter)
+			.map((entry) => entry.trim())
+			.filter(Boolean) ?? []
+	)
+}
+
+/**
  * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
  * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself; a caller
  * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The

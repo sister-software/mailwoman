@@ -68,7 +68,7 @@ function segmentsOf(text: string): string[] {
 	return text
 		.split(",")
 		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 }
 
 /**

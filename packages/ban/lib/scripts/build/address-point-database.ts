@@ -89,7 +89,7 @@ async function parse(): Promise<BuildArgs> {
 		? values.depts
 				.split(",")
 				.map((d) => d.trim())
-				.filter((d) => d.length > 0)
+				.filter((d) => d.length)
 		: null
 
 	return { country, csvDir, release, output, depts }

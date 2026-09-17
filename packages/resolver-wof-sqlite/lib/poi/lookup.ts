@@ -398,7 +398,7 @@ function sanitizePOINameQuery(text: string): string {
 		.replaceAll(/["*:]/g, "")
 		.trim()
 		.split(/\s+/u)
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 		.map((token) => `"${token.replaceAll('"', '""')}"`)
 		.join(" ")
 }

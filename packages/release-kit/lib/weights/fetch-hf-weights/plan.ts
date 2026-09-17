@@ -24,6 +24,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { trackedFiles } from "@mailwoman/core/git"
+import { isPresent } from "@mailwoman/core/objects"
 import { readReleaseConfig, repoCommittedSoftFeedSources } from "@mailwoman/core/release-config"
 import { resolvePath } from "path-ts"
 
@@ -221,11 +222,11 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolvePath(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
-	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(cardPath)
+	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: string; sidecar?: string } }>(cardPath)
 
 	const declared = [card.fisher_artifact?.file, card.fisher_artifact?.sidecar]
 
-	return declared.filter((name): name is string => typeof name === "string" && name.length > 0)
+	return declared.filter(isPresent)
 }
 
 /**

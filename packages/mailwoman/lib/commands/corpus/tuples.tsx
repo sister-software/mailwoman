@@ -25,7 +25,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -68,7 +68,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 		if (!options.out) throw new CommandError("--out <tuples.jsonl> required")
 
 		const tools = await import("@mailwoman/corpus/tools/postcode-triples")
-		const countries = splitUpperList(options.countries)
+		const countries = splitCountryCodes(options.countries)
 
 		type Extracted =
 			| Awaited<ReturnType<typeof tools.readTriplesFromParentJoin>>[number]

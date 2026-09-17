@@ -12,6 +12,8 @@
  *   (`id < 2e9`) → the priority countries; Overture divisions (`8e12 ≤ id < 9e12`) → the 86; the GeoNames
  *   alias fold (`id ≥ 9e12`) → the 161. See RELEASING.md "Rebuilding + swapping the canonical admin
  *   gazetteer" and the #1021 PR.
+ *
+ * 	 TODO: Move most of this to JSON configuration files.
  */
 
 /**
@@ -357,26 +359,22 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
  * the artifact (1,839,678 of 1,895,753 rows, ~946 MB). Keep the order: it is what makes a rebuild id-comparable to the
  * frozen database.
  */
+
 /**
- * The tail database's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05;
- * BE joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the
- * panel's, while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity check
- * against the prior database, and swap under the .prev rotation.
+ * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05; BE
+ * was added on 2026-08-12 (the eu-mixed lane). Any change here re-freezes the artifact: rebuild, run the parity check
+ * against the previous database, and rotate via the .prev workflow.
  *
- * THE FIRST TEN ARE ORDER-CRITICAL AND EVERYTHING ELSE IS APPENDED. Ids are positional in ingest order, so a country
- * inserted rather than appended moves every id after it — the parity check reads ids as well as counts for exactly that
- * reason, and a rebuild that reorders reports zero lost codes while breaking every stored id.
+ * The first ten entries are order-critical; all later countries must be appended. Ids are positional in ingest order,
+ * so inserting a country shifts every following id. The parity check validates ids as well as counts for this reason.
  *
- * The tail was ten countries because it is the residue of #920's namesake campaign, not because anyone decided the rest
- * should have no postcodes. GeoNames publishes 121 countries and the gazetteer carried a postcode tier for 28; the
- * appended set is the 93 that had data on disk and no tier, among them KR (34,249 codes, a tier-5 locale the scope
- * table already claims), RO (37,914, tier 2) and IN (19,238, ships weights). Measured on the rebuild: 10 → 103
- * countries, 57,221 → 505,784 codes, with zero codes lost and zero ids moved on the original ten.
+ * Historically this tail started as ten countries from #920. GeoNames publishes 121 countries, while the gazetteer had
+ * a postcode tier for 28; the appended set adds the 93 with on-disk data and no tier. On rebuild this changed coverage
+ * from 10 to 103 countries and from 57,221 to 505,784 codes, with no code loss and no id movement in the original ten.
  *
- * Count at the unit a resolver reads. GeoNames postal publishes one row per (postcode, settlement) AND repeats a
- * hyphenated format both ways, so dump rows overstate distinct codes — 938,543 rows fold to 448,563 codes across the
- * appended 93, and fifteen countries inflate above 1.5×, PE by 36.32×. A priority list built from row counts puts India
- * second; built from codes it is seventh.
+ * Prefer counts at resolver granularity. GeoNames postal publishes one row per (postcode, settlement) and duplicates
+ * some hyphenated formats, so raw row totals overstate distinct codes. Across the appended 93, 938,543 rows fold to
+ * 448,563 codes.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"FI",

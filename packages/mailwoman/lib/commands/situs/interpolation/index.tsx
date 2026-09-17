@@ -44,7 +44,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	positiveInteger,
-	splitUpperList,
+	splitUSStateCodes,
 	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
@@ -474,9 +474,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		const BUILD_ONLY = options.buildOnly
 
 		// States to process — filtered by --states flag if provided.
-		const TARGET_STATES = options.states
-			? splitUpperList(options.states).filter((s) => s in STATE_FIPS)
-			: Object.keys(STATE_FIPS)
+		const TARGET_STATES = options.states ? splitUSStateCodes(options.states) : Object.keys(STATE_FIPS)
 
 		if (!TARGET_STATES.length) {
 			throw new CommandError("No valid states specified. Check --states values against the STATE_FIPS map.")

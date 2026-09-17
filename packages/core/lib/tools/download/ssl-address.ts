@@ -67,7 +67,7 @@ export interface DownloadSSLAddressOptions {
 async function fetchCountryCodes(): Promise<string[]> {
 	const data = await sslAddressClient.fetch<{ countries?: string }>({ url: BASE_URL }).then(pluckResponseData)
 
-	return (data.countries ?? "").split("~").filter((code) => code.length > 0)
+	return (data.countries ?? "").split("~").filter((code) => code.length)
 }
 
 /**

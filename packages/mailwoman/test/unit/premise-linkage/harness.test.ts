@@ -500,8 +500,8 @@ describe("#1902: the authoritative arm consumes the #1901 provider contract", ()
 		})
 
 		expect(log.length).toBeGreaterThan(0)
-		expect(log.every((query) => typeof query.rawQuery === "string" && query.rawQuery.length > 0)).toBe(true)
-		expect(log.every((query) => query.normalizedQuery.length > 0)).toBe(true)
+		expect(log.every((query) => typeof query.rawQuery === "string" && query.rawQuery.length)).toBe(true)
+		expect(log.every((query) => query.normalizedQuery.length)).toBe(true)
 		expect(log.some((query) => query.components.some((component) => component.tag === "locality"))).toBe(true)
 	})
 

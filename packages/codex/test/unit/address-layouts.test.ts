@@ -109,7 +109,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a
 			// field compares equal to one that never had it.
 			.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`))
-			.filter((line) => line.length > 0)
+			.filter((line) => line.length)
 	)
 }
 

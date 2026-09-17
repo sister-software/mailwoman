@@ -68,5 +68,5 @@ export async function renderInkToString(tree: React.ReactElement, columns: numbe
 	instance.unmount()
 
 	// Ink ends a non-interactive render with an empty write on unmount; the frame is the last one with content.
-	return frames.findLast((frame) => frame.length > 0) ?? ""
+	return frames.findLast((frame) => frame.length) ?? ""
 }

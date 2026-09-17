@@ -125,7 +125,7 @@ function hypothesisStreetSurface(
 
 			return first && last ? trace.text.slice(first.start, last.end).trim() : ""
 		})
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 
 	return parts.join(" ")
 }

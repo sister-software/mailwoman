@@ -310,7 +310,7 @@ async function compareMailwomanArms(
 		isolationSentence(confounds, zeroDifferenceCaveat),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter((sentence) => sentence.length > 0)
+		.filter((sentence) => sentence.length)
 		.join(" ")
 
 	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
@@ -782,7 +782,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		confounds.warnings.join(" "),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter((sentence) => sentence.length > 0)
+		.filter((sentence) => sentence.length)
 		.join(" ")
 
 	const run: StoredRun = {

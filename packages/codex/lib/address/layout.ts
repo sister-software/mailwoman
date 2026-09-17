@@ -201,5 +201,5 @@ export function addr(strings: TemplateStringsArray, ...values: readonly AddressA
 		}
 	}
 
-	return { lines: lines.filter((line) => line.length > 0) }
+	return { lines: lines.filter((line) => line.length) }
 }

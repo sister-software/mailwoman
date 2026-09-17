@@ -35,11 +35,12 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
@@ -150,7 +151,7 @@ const SOURCE_PARENT_TAGS = {
  * what lets a freshness guard notice that exactly one of them changed.
  */
 function splitPathList(value: string | undefined): string[] {
-	return splitList(value)
+	return extractDelimited(value)
 }
 
 /**

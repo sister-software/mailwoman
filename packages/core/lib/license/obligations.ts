@@ -98,7 +98,7 @@ export function licenseIdentifiers(expression: string): string[] {
 		.replaceAll(/[()]/g, " ")
 		.split(/\s+(?:AND|OR)\s+/i)
 		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 }
 
 /**
@@ -158,7 +158,7 @@ export function chooseLicenseBranch(expression: string, options: { commercialAgr
 		.replaceAll(/[()]/g, " ")
 		.split(/\s+OR\s+/i)
 		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+		.filter((part) => part.length)
 
 	if (branches.length < 2) return expression
 

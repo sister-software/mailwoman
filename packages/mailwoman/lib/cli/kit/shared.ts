@@ -10,11 +10,14 @@
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
 
+import { formatAsCountryISO2, type CountryISO2 } from "@mailwoman/codex/country"
+import { formatAsUSStateAbbreviation, type USStateAbbreviation } from "@mailwoman/codex/us"
 // Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
 // each selected command's import graph.
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import type { NeuralAddressClassifier, ScriptRoutedClassifier } from "@mailwoman/neural"
@@ -230,7 +233,7 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 
 	const valid = new Set<string>(PlacetypeRoles)
 
-	const parsed = splitList(raw)
+	const parsed = extractDelimited(raw)
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {
@@ -291,21 +294,21 @@ export function phaseReporter(prefix = "  "): (phase: string, detail?: string) =
 }
 
 /**
- * Split a comma-separated flag into trimmed, non-empty entries. `undefined` and the empty string answer `[]`, and a
- * trailing comma contributes nothing rather than an empty entry.
+ * Parse a comma-separated country-code flag into validated ISO 3166-1 alpha-2 codes.
  */
-export function splitList(raw: string | undefined): string[] {
-	return (raw ?? "")
-		.split(",")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0)
+export function splitCountryCodes(raw: string | undefined): CountryISO2[] {
+	return extractDelimited(raw).map(formatAsCountryISO2)
 }
 
 /**
- * {@linkcode splitList}, upper-cased — country and state-code flags.
+ * Parse a comma-separated state flag into valid USPS state-or-territory abbreviations.
  */
-export function splitUpperList(raw: string | undefined): string[] {
-	return splitList(raw).map((entry) => entry.toUpperCase())
+export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[] {
+	return extractDelimited(raw).flatMap((value) => {
+		const code = formatAsUSStateAbbreviation(value)
+
+		return code ? [code] : []
+	})
 }
 
 /**
@@ -332,11 +335,11 @@ export function countOption(raw: string | undefined, fallback: number): number {
 }
 
 /**
- * {@linkcode splitList} as numbers — resolution and size flags. Blank entries are dropped BEFORE conversion, so a
+ * {@linkcode extractDelimited} as numbers — resolution and size flags. Blank entries are dropped BEFORE conversion, so a
  * trailing comma is not a NaN.
  */
 export function splitNumberList(raw: string | undefined): number[] {
-	return splitList(raw).map(Number)
+	return extractDelimited(raw).map(Number)
 }
 
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")

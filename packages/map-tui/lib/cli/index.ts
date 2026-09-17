@@ -95,9 +95,11 @@ async function main(): Promise<number> {
 
 	try {
 		/**
-		 * `parseCLIArgs` keeps argv and the environment read on this one line, and nowhere else in the package —
-		 * `@mailwoman/core/env`'s typed readers would pull core's data-backed environment schema behind a CLI whose whole
-		 * premise is `npx`, so the bin passes the raw records to the pure parser instead.
+		 * Keep reads of argv and env here and nowhere else in the package.
+		 *
+		 * We intentionally avoid `@mailwoman/core/env`: its typed readers depend on core's data-backed env schema, while
+		 * this CLI is designed to run as a lightweight `npx` entrypoint. So the bin passes raw argv/env records into the
+		 * pure `parseCLIArgs` function instead.
 		 */
 		// oxlint-disable-next-line sister-software/no-process-globals -- see above.
 		args = parseCLIArgs(process.argv.slice(2), process.env)

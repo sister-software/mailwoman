@@ -45,7 +45,7 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", "--untracked-files=no", ...scope])
 
-	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length > 0)
+	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length)
 }
 
 /**
@@ -60,7 +60,7 @@ export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: st
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
 
-	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length > 0)
+	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length)
 }
 
 /**
@@ -71,7 +71,7 @@ export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: st
 export async function changedFiles(repoRoot: PathBuilderLike, base: string, head: string): Promise<string[]> {
 	const output = await git(repoRoot, ["diff", "--name-only", "-z", base, head], 64 * 1024 * 1024)
 
-	return output.split("\0").filter((path) => path.length > 0)
+	return output.split("\0").filter((path) => path.length)
 }
 
 /**
@@ -81,7 +81,7 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
 export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
 	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
 
-	return output.split("\0").filter((path) => path.length > 0)
+	return output.split("\0").filter((path) => path.length)
 }
 
 /**
@@ -103,5 +103,5 @@ export async function movedAwayPaths(repoRoot: PathBuilderLike): Promise<Set<str
 		64 * 1024 * 1024
 	)
 
-	return new Set([...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length > 0))
+	return new Set([...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length))
 }

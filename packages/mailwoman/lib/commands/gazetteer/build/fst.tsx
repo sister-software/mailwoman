@@ -10,9 +10,10 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -37,7 +38,7 @@ const GazetteerBuildFST: CommandComponent<typeof spec> = ({ options }) => {
 		const { buildLocaleFSTs } = await import("#gazetteer/fst")
 
 		const built = await buildLocaleFSTs({
-			locales: options.locales === undefined ? undefined : splitList(options.locales),
+			locales: options.locales === undefined ? undefined : extractDelimited(options.locales),
 			dbPath: options.db,
 			outputDir: options.out,
 			uncurated: options.uncurated,

@@ -183,7 +183,7 @@ function serializeNode(node: AddressNode, indent: string, opts: Required<Seriali
 	}
 
 	const childrenStr = node.children.map((c) => serializeNode(c, childIndent, opts)).join(nl)
-	const inner = [childrenStr, altsBlock].filter((part) => part.length > 0).join(nl)
+	const inner = [childrenStr, altsBlock].filter((part) => part.length).join(nl)
 
 	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }

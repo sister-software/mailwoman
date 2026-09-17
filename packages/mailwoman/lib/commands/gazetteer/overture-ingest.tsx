@@ -33,7 +33,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
 // pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
 // pin — see its docstring for why the two constants stay independent.
@@ -115,7 +115,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = splitUpperList(options.countries)
+		const countries = splitCountryCodes(options.countries)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = join(outRoot, release)

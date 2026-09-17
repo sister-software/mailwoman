@@ -882,7 +882,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 				: "",
 			counterfactualSentence,
 		]
-			.filter((sentence) => sentence.length > 0)
+			.filter((sentence) => sentence.length)
 			.join(" "),
 		n_requested: selected.length,
 		n_evaluated: rows.length,

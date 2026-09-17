@@ -334,7 +334,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 		// A loop header binds a name to a word list; the list is data, and the body follows the next separator.
 		if (!segment || LOOP_HEADER.test(segment)) continue
 
-		let words = segment.split(/\s+/u).filter((word) => word.length > 0)
+		let words = segment.split(/\s+/u).filter((word) => word.length)
 
 		// Leading assignments, a negation, and the words that open a body all precede the command.
 		while (

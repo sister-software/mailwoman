@@ -93,9 +93,10 @@ export function createWOFResolver(backend: ResolverBackend): Resolver {
  * existing coherence passes keep handling it). Returns the alpha-2 or null.
  */
 function explicitCountryScope(roots: readonly AddressNode[]): string | null {
-	const countryNodes = collectNodes(roots, (node) => node.tag === "country" && node.value.trim().length > 0)
+	const countryNodes = collectNodes(roots, (node) => node.tag === "country" && node.value.trim())
 
 	if (countryNodes.length !== 1) return null
+
 	const value = countryNodes[0]!.value.trim()
 	const matched = matchCountry(value)
 

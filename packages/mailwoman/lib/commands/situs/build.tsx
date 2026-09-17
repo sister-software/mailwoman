@@ -49,7 +49,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	positiveInteger,
-	splitUpperList,
+	splitUSStateCodes,
 	stripAnsi,
 	useCommandTask,
 } from "#cli-kit"
@@ -152,7 +152,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
-		const states = options.states ? splitUpperList(options.states) : [...STATES_BY_COVERAGE]
+		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 
 		await makeDirectories(outDir)
 

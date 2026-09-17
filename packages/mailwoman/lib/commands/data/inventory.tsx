@@ -117,7 +117,7 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 			await Promise.all(
 				manifested.map(async (e) => ({ entry: e, gaps: await buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
 			)
-		).filter(({ gaps }) => gaps.length > 0)
+		).filter(({ gaps }) => gaps.length)
 
 		if (broken.length) {
 			lines.push(

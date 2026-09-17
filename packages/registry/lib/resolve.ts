@@ -95,7 +95,7 @@ function codeSetOverlap(a: string, b: string): number {
 		a
 			.toUpperCase()
 			.split(/\s+/)
-			.filter((value) => value.length > 0)
+			.filter((value) => value.length)
 	)
 
 	for (const t of b.toUpperCase().split(/\s+/)) if (t && sa.has(t)) return 1

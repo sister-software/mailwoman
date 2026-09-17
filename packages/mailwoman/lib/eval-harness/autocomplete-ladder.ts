@@ -186,7 +186,7 @@ export function readRow(rungs: readonly RungReading[], inputLength: number): Row
 		firstHitChars: first?.chars ?? null,
 		firstHitFraction: first ? first.chars / inputLength : null,
 		churn,
-		shortRungsAnswered: shortOnes.filter((rung) => rung.answers.length > 0).length,
+		shortRungsAnswered: shortOnes.filter((rung) => rung.answers.length).length,
 		shortRungs: shortOnes.length,
 		fullStringHit: rungs.at(-1)?.hit ?? false,
 	}

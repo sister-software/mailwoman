@@ -419,7 +419,7 @@ export async function findPostcodeCountryScope(
 	// agrees. A pass that re-decided between the two would be the same inference wearing a tie-break, and
 	// this file's own discipline is that a contest it cannot settle abstains. Whether the named country is
 	// SPELLED correctly is a separate question, owned by the walk's own country lookup.
-	if (firstNodeWhere(roots, (n) => n.tag === "country" && n.value.trim().length > 0)) return null
+	if (firstNodeWhere(roots, (n) => n.tag === "country" && n.value.trim())) return null
 
 	const localities = localityValuesInDocumentOrder(roots)
 

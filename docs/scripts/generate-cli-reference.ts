@@ -260,7 +260,7 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 		into.push({
 			path: path.join(" "),
 			synopsis: ["mailwoman", ...path, flags.length ? "[options]" : "", ...placeholders]
-				.filter((word) => word.length > 0)
+				.filter((word) => word.length)
 				.join(" "),
 			description: node.spec.description,
 			args: args.map((argument, index) => ({

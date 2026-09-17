@@ -214,7 +214,7 @@ async function runFailureReport(): Promise<void> {
 
 	const all = [...records.values()]
 	const labels = specs.map((s) => s.label)
-	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length > 0)
+	const anyFail = all.filter((r) => Object.keys(r.failsByModel).length)
 	// "Beyond reach": failed on EVERY graded model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 

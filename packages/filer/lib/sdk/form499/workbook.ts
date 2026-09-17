@@ -185,7 +185,7 @@ function cell(row: WorkbookRow, key: string): string {
 function joinAddress(row: WorkbookRow, keys: readonly string[]): string {
 	return keys
 		.map((key) => cell(row, key))
-		.filter((value) => value.length > 0)
+		.filter((value) => value.length)
 		.join(" ")
 }
 

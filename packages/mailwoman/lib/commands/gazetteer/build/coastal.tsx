@@ -21,6 +21,7 @@
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 
 import {
@@ -28,7 +29,6 @@ import {
 	CommandTaskResult,
 	formatLayerVerification,
 	type CommandComponent,
-	splitList,
 	splitNumberList,
 	useCommandTask,
 } from "#cli-kit"
@@ -97,7 +97,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const scenarioKeys = options.scenarios
-			? splitList(options.scenarios)
+			? extractDelimited(options.scenarios)
 			: NCERM_SCENARIOS.map((scenario) => scenario.key)
 
 		const client = createEANCERMClient()

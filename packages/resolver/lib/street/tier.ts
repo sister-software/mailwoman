@@ -33,7 +33,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * under street), order by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
-	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length > 0)
+	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length)
 
 	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
 	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
@@ -295,7 +295,7 @@ function foldVoieTokens(s: string): string[] {
 		.replaceAll(/[.,'’]/g, "")
 		.replaceAll("-", " ")
 		.split(/\s+/)
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 }
 
 /**
@@ -388,7 +388,7 @@ export function applyStreetCentroid(
 	const rawSegments = raw
 		.split(",")
 		.map((s) => s.trim())
-		.filter((segment) => segment.length > 0)
+		.filter((segment) => segment.length)
 
 	const CAP = 5
 

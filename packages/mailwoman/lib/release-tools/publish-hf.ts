@@ -37,10 +37,11 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { basename } from "path-ts"
 
-import { runProcessOrFail, splitList } from "#cli/kit/shared"
+import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
  * The parseArgs option names of the required per-release artifacts.
@@ -180,7 +181,7 @@ interface ReleaseManifest {
  * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
  */
 async function stageBinaryList(spec: string | undefined, label: string): Promise<string[]> {
-	const paths = splitList(spec)
+	const paths = extractDelimited(spec)
 
 	for (const localPath of paths) {
 		if (!(await pathExists(localPath)) || !(await statPath(localPath)).size) {

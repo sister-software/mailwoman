@@ -9,7 +9,9 @@
  *   weights-package sibling at the model promote that requires it.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -37,8 +39,8 @@ const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof spec> = ({ o
 		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 
 		const built = await buildLocalitySurfaceLexicon({
-			countries: options.countries === undefined ? undefined : splitList(options.countries),
-			placetypes: options.placetypes === undefined ? undefined : splitList(options.placetypes),
+			countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
+			placetypes: options.placetypes === undefined ? undefined : extractDelimited(options.placetypes),
 			dbPath: options.db,
 			output: options.out,
 			onProgress: (line) => console.error(line),

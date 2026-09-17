@@ -363,7 +363,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 		const live: LiveRecord[] = liveStmt
 			.all(country)
 			// A nameless record cannot cover anything, and its empty key would substring-match every name.
-			.filter((r) => String(r["name"] ?? "").trim().length > 0)
+			.filter((r) => String(r["name"] ?? "").trim().length)
 			.map((r) => {
 				const name = String(r["name"] ?? "")
 				const key = fold(name)
@@ -373,14 +373,14 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 					name,
 					placetype: String(r["placetype"] ?? ""),
 					key,
-					words: new Set(key.split(" ").filter((value) => value.length > 0)),
+					words: new Set(key.split(" ").filter((value) => value.length)),
 					lat: Number(r["latitude"]),
 					lon: Number(r["longitude"]),
 				}
 			})
 
 		// Attestation is looked up only for names under review, and only where a dump exists.
-		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length > 0))
+		const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length))
 		const dumpPath = opts.geonamesDir ? resolvePath(opts.geonamesDir, `${country}.txt`) : undefined
 		const attestors = dumpPath && (await pathExists(dumpPath)) ? await loadAttestors(dumpPath, keys) : undefined
 
@@ -401,7 +401,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 			const placetype = String(record["placetype"] ?? "")
 
 			const { verdict, coveredBy } = judgeCoverage(
-				{ key, words: new Set(key.split(" ").filter((value) => value.length > 0)), lat, lon, placetype },
+				{ key, words: new Set(key.split(" ").filter((value) => value.length)), lat, lon, placetype },
 				live
 			)
 

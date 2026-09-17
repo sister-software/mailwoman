@@ -37,7 +37,7 @@ export const ABSENT = "—"
 const FIELD_GAP = "  "
 
 function fields(parts: Array<string | null>): string {
-	return parts.filter((part) => part != null && part.length > 0).join(FIELD_GAP)
+	return parts.filter((part) => part != null && part.length).join(FIELD_GAP)
 }
 
 //#endregion

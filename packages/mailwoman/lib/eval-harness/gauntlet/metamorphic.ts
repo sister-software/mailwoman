@@ -495,7 +495,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			const heldStr = `${t.held}/${t.checks} held`
 
 			const notes = [t.fails ? `${t.fails} FAIL` : "", t.xfail ? `${t.xfail} xfail` : ""]
-				.filter((note) => note.length > 0)
+				.filter((note) => note.length)
 				.join(", ")
 
 			console.log(`  ${set}[${p.name}]`.padEnd(22) + `${heldStr}${notes ? ` (${notes})` : ""}`)

@@ -15,7 +15,9 @@
  *   inference-side parity fix — see the pipeline module docstring.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -46,7 +48,7 @@ const GazetteerBuildAnchorLookup: CommandComponent<typeof spec> = ({ options }) 
 		const stats = await buildAnchorLookup({
 			output: options.out,
 			zcta: options.zcta,
-			include: options.include === undefined ? undefined : splitList(options.include),
+			include: options.include === undefined ? undefined : extractDelimited(options.include),
 			gbOutward: options.gbOutward,
 		})
 

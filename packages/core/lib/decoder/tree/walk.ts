@@ -38,7 +38,7 @@ export function* walkNodes<T extends { children?: readonly T[] }>(roots: readonl
 /**
  * Every node satisfying `predicate`, in {@link walkNodes} order.
  */
-export function collectNodes(roots: readonly AddressNode[], predicate: (node: AddressNode) => boolean): AddressNode[] {
+export function collectNodes(roots: readonly AddressNode[], predicate: (node: AddressNode) => unknown): AddressNode[] {
 	const matches: AddressNode[] = []
 
 	for (const node of walkNodes(roots)) {
@@ -86,11 +86,7 @@ export function slotNodes(roots: readonly AddressNode[]): AddressNode[] {
  */
 export function firstNodeWhere(
 	roots: readonly AddressNode[],
-	predicate: (node: AddressNode) => boolean
+	predicate: (node: AddressNode) => unknown
 ): AddressNode | undefined {
-	for (const node of walkNodes(roots)) {
-		if (predicate(node)) return node
-	}
-
-	return undefined
+	return walkNodes(roots).find(predicate)
 }

@@ -153,7 +153,7 @@ function compareForTransform(
  * row's core address — everything the candidate does afterwards is a gain, not a loss.
  */
 function hasCriticalComponent(components: Record<string, string>): boolean {
-	return CRITICAL_TAGS.some((tag) => (components[tag] ?? "").trim().length > 0)
+	return CRITICAL_TAGS.some((tag) => (components[tag] ?? "").trim().length)
 }
 
 /**

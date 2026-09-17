@@ -37,7 +37,7 @@ const withHouseNumber = await JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH)
 
 const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
 	.map((line) => line.trim())
-	.filter((line) => line.length > 0)
+	.filter((line) => line.length)
 	.toArray()
 
 const queries = [...new Set([...withHouseNumber, ...syntheticInputs])]

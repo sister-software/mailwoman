@@ -31,7 +31,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
@@ -148,7 +148,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = splitUpperList(options.countries ?? DEFAULT_COUNTRIES)
+		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const out = options.out ?? dataRootPath("poi", "poi.db")
 

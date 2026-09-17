@@ -78,6 +78,6 @@ describe("lookupVariantAliases", () => {
 	it("getAllAliases returns non-empty table", () => {
 		const all = getAllAliases()
 		expect(all.length).toBeGreaterThan(20)
-		expect(all.every((a) => a.variant && a.locales.length > 0)).toBe(true)
+		expect(all.every((a) => a.variant && a.locales.length)).toBe(true)
 	})
 })

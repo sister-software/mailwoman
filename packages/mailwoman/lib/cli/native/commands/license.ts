@@ -215,7 +215,7 @@ async function issue(parsed: ParsedCommand): Promise<number> {
 			: scopeRaw
 					.split(",")
 					.map((name) => name.trim())
-					.filter((name) => name.length > 0)
+					.filter((name) => name.length)
 
 	const expires = stringValue(parsed.values, "expires")
 

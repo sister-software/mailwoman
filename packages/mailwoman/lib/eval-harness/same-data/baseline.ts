@@ -108,7 +108,7 @@ const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 
 function adminValues(tree: AddressTree): Map<string, string[]> {
 	const byTag = new Map<string, string[]>()
 
-	for (const node of collectNodes(tree.roots, (candidate) => candidate.value.trim().length > 0)) {
+	for (const node of collectNodes(tree.roots, (candidate) => candidate.value.trim())) {
 		const bucket = byTag.get(node.tag) ?? []
 
 		bucket.push(node.value.trim())

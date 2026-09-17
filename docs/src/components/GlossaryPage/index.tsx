@@ -100,7 +100,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 			if (!lowerSearch) return true
 
 			const haystack = [term.term, term.definition, term.abbreviation, ...(term.aliases ?? [])]
-				.filter((field) => field !== undefined && field.length > 0)
+				.filter((field) => field !== undefined && field.length)
 				.join(" ")
 				.toLowerCase()
 

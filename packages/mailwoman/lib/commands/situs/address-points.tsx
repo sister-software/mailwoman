@@ -39,12 +39,13 @@
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -182,7 +183,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
 		// Empty = no filter (keep everything).
-		const allowedDatasets: Set<string> = new Set(splitList(options.licenseFilter).map((d) => d.toLowerCase()))
+		const allowedDatasets: Set<string> = new Set(extractDelimited(options.licenseFilter).map((d) => d.toLowerCase()))
 
 		await makeDirectories(dirname(finalOut))
 		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
@@ -243,7 +244,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
 		// on-disk SQLite WAL inside a single transaction.
 		const oaCSVList = OA_MODE
-			? splitList(options.oaCSV)
+			? extractDelimited(options.oaCSV)
 					.map((p) => `'${p}'`)
 					.join(", ")
 			: ""

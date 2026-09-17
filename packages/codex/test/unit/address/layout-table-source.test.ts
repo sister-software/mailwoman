@@ -67,7 +67,7 @@ function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): s
 	const inSource = new Set(source.flat())
 	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)
 
-	return layout.lines.map((line) => line.flatMap(nameOf).filter(transcribed)).filter((line) => line.length > 0)
+	return layout.lines.map((line) => line.flatMap(nameOf).filter(transcribed)).filter((line) => line.length)
 }
 
 function nameOf(atom: AddressAtom): string[] {
@@ -87,7 +87,7 @@ function skeletonOfFormat(fmt: string): string[][] {
 	return fmt
 		.split("%n")
 		.map((line) => [...line.matchAll(/%([A-Z])/g)].flatMap(([, code]) => (FIELD[code!] ? [FIELD[code!]!] : [])))
-		.filter((line) => line.length > 0)
+		.filter((line) => line.length)
 }
 
 const specsDirectory = resolvePackagePath("@mailwoman/core", "data", "chromium-i18n", "ssl-address")

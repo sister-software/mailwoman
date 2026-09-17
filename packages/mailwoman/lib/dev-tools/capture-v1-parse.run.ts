@@ -28,7 +28,7 @@ const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
 	.map((line) => line.trim())
 	.toArray()
 
-const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter((line) => line.length > 0)])]
+const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter((line) => line.length)])]
 
 const { engine, preflight } = await createServeEngine()
 

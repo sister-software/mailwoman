@@ -200,7 +200,7 @@ function subsidiariesFromTable(
 	let unparseable = 0
 
 	// An empty <tr></tr> — formatting cruft, not a data row either way, and not a column's worth of evidence.
-	const present = extractedRows.filter((row) => row.length > 0)
+	const present = extractedRows.filter((row) => row.length)
 	const rawWidth = widestRow(present)
 	const rows = padAndDropBlankColumns(present)
 	const mapping = headerColumnMapping(rows, present) ?? carriedMapping
@@ -518,7 +518,7 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 		const wordCount = unmarked
 			.trim()
 			.split(/\s+/)
-			.filter((value) => value.length > 0).length
+			.filter((value) => value.length).length
 
 		if (wordCount > MAX_ENTITY_NAME_WORDS) {
 			unparseable++

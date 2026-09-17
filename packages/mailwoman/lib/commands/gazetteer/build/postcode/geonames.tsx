@@ -22,7 +22,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
@@ -50,7 +50,7 @@ const GazetteerBuildPostcodeGeonames: CommandComponent<typeof spec> = ({ options
 	const state = useCommandTask(async () => {
 		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 
-		const countries = options.countries ? splitUpperList(options.countries) : undefined
+		const countries = options.countries ? splitCountryCodes(options.countries) : undefined
 
 		const result = await buildPostcodeGeonamesTail({
 			countries,

@@ -23,12 +23,13 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { Box, Text } from "ink"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -76,7 +77,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
 
-		const versions = splitList(options.corpusVersion)
+		const versions = extractDelimited(options.corpusVersion)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
 			const available = (await pathExists(corpusRoot))

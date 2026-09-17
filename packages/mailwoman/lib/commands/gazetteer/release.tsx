@@ -20,7 +20,7 @@ import {
 	CommandTaskResult,
 	type CommandComponent,
 	phaseReporter,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
@@ -66,7 +66,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 
-		const countries = options.countries ? splitUpperList(options.countries) : DEFAULT_FOLD_COUNTRIES
+		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		const lines: string[] = []
 

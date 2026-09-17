@@ -297,7 +297,7 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 		.replaceAll("ß", "ss")
 		.replaceAll("-", " ")
 		.split(/\s+/)
-		.filter((value) => value.length > 0)
+		.filter((value) => value.length)
 
 	if (!tokens.length) return "" as StreetKey
 

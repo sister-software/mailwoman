@@ -37,6 +37,7 @@
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 import { TextSpliterator } from "spliterator"
 
@@ -106,12 +107,11 @@ export function isStreetName(value: string): boolean {
  * `Mirpur 10`). A value without a comma is the locality alone.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
-	const parts = value
-		.split(",")
-		.map((part) => part.trim())
-		.filter((part) => part.length > 0)
+	const parts = extractDelimited(value)
 
-	if (parts.length < 2) return { locality: value.trim(), head: null }
+	if (parts.length < 2) {
+		return { locality: value.trim(), head: null }
+	}
 
 	return { locality: parts.at(-1)!, head: parts.slice(0, -1).join(", ") }
 }

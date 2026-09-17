@@ -27,7 +27,7 @@ import {
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
-	splitUpperList,
+	splitCountryCodes,
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
@@ -103,7 +103,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 			return { ok: true }
 		}
 
-		const wanted = options.countries === undefined ? undefined : splitUpperList(options.countries)
+		const wanted = options.countries === undefined ? undefined : splitCountryCodes(options.countries)
 
 		writeRawStdout(render(report, wanted))
 

@@ -22,10 +22,11 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
@@ -63,7 +64,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 
 		const root = options.root ?? String(dataRootPath("wof", "repos"))
 
-		const requested = splitList(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
+		const requested = extractDelimited(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()

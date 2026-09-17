@@ -93,7 +93,7 @@ const FR_STREET_TYPE_WORDS: ReadonlySet<string> = new Set([
  * True when the folded surface contains no token outside {@link FR_STREET_TYPE_WORDS} — i.e. it is pure type/particle.
  */
 export function isPureTypeVocabulary(foldedSurface: string): boolean {
-	const tokens = foldedSurface.split(" ").filter((value) => value.length > 0)
+	const tokens = foldedSurface.split(" ").filter((value) => value.length)
 
 	if (!tokens.length) return true
 

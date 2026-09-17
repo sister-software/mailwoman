@@ -274,7 +274,7 @@ export async function runCensus(registry: EngineRegistryLike, args: Record<strin
 			"L2 (moved an outcome) is NOT measured here — that needs ablation pairs (gauntlet ablation layer). " +
 				"L1 coverage is necessary for relevance, never sufficient.",
 		]
-			.filter((sentence) => sentence.length > 0)
+			.filter((sentence) => sentence.length)
 			.join(" "),
 		n_requested: set.n,
 		n_traced: aggregate.n,

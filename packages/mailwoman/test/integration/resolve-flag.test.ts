@@ -143,7 +143,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		const findAlternatives = (nodes: TreeNode[]): boolean =>
 			nodes.some(
 				(n) =>
-					(Array.isArray(n.alternatives) && n.alternatives.length > 0) ||
+					(Array.isArray(n.alternatives) && n.alternatives.length) ||
 					(Array.isArray(n.children) && findAlternatives(n.children))
 			)
 

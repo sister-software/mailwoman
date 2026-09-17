@@ -10,7 +10,9 @@
  *   per-locale FST dir. See `mailwoman/gazetteer-pipeline/street-morphology.ts` for the rationale.
  */
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
+
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -41,7 +43,7 @@ const GazetteerBuildStreetMorphology: CommandComponent<typeof spec> = ({ options
 
 		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
-			locales: options.locales === undefined ? undefined : splitList(options.locales),
+			locales: options.locales === undefined ? undefined : extractDelimited(options.locales),
 			output: options.out,
 			onProgress: (line) => console.error(line),
 		})

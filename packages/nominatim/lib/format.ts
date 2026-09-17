@@ -111,7 +111,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 	const displayName =
 		r.displayName ??
 		Object.values(r.address)
-			.filter((value) => typeof value === "string" && value.length > 0)
+			.filter((value) => typeof value === "string" && value.length)
 			.join(", ")
 
 	const lat = r.lat != null ? String(r.lat) : ""

@@ -15,10 +15,11 @@
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
 
 /**
@@ -44,7 +45,7 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
 
-		const countries = splitList(options.countries)
+		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
 		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))

@@ -134,7 +134,7 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
  * falsifies every-word predicates like the proper-case check below.
  */
 export function wordsOf(text: string): string[] {
-	return text.split(/[\s,]+/).filter((word) => word.length > 0)
+	return text.split(/[\s,]+/).filter((word) => word.length)
 }
 
 /**

@@ -22,9 +22,10 @@
  *   be promoted — that is the correct failure, not a convenience.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -46,7 +47,7 @@ export const spec = {
 function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []
 
-	return splitList(extractSpec).map((entry) => {
+	return extractDelimited(extractSpec).map((entry) => {
 		const split = entry.indexOf("=")
 
 		return split === -1

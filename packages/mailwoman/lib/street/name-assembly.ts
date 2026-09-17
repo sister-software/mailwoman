@@ -23,7 +23,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041.
  */
 export function assembleStreetName(streetNode: AddressNode): string {
-	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length > 0)
+	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim())
 
 	parts.sort((a, b) => a.start - b.start)
 

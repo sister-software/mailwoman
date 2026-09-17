@@ -6,9 +6,10 @@
  *   Generate a corpus overlay manifest.
  */
 
+import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -40,8 +41,8 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 
-		const parquets = splitList(options.parquet)
-		const sources = splitList(options.source)
+		const parquets = extractDelimited(options.parquet)
+		const sources = extractDelimited(options.source)
 
 		if (parquets.length !== sources.length) {
 			throw new CommandError(

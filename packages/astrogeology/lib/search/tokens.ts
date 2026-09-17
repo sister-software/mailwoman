@@ -45,5 +45,5 @@ export function nomenclatureTokens(name: string): string[] {
 		.toLowerCase()
 		.split(/[\s-]+/u)
 		.map((token) => token.replaceAll(/[^\p{L}\p{N}]/gu, ""))
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 }

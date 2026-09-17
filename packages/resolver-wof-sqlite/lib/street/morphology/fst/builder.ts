@@ -89,7 +89,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 	const parts = trimmed
 		.split("|")
 		.map((s) => s.trim())
-		.filter((s) => s.length > 0)
+		.filter((s) => s.length)
 
 	if (!parts.length) return null
 

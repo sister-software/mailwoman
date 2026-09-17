@@ -93,18 +93,26 @@ export function extractNameVariants(props: Record<string, unknown>): Map<string,
 	for (const [key, value] of Object.entries(props)) {
 		if (!key.startsWith("name:")) continue
 
-		const candidate = Array.isArray(value)
-			? value.find((v): v is string => typeof v === "string" && v.trim().length > 0)
-			: typeof value === "string" && value.trim().length
-				? value
-				: undefined
+		const candidate = firstNonBlankString(value)
 
 		if (candidate) {
-			out.set(key, candidate.trim())
+			out.set(key, candidate)
 		}
 	}
 
 	return out
+}
+
+function firstNonBlankString(value: unknown): string | undefined {
+	for (const candidate of Array.isArray(value) ? value : [value]) {
+		if (typeof candidate !== "string") continue
+
+		const normalized = candidate.trim()
+
+		if (normalized) return normalized
+	}
+
+	return undefined
 }
 
 /**

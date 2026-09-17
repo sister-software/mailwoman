@@ -202,7 +202,7 @@ export function completeSpanRegistryReceipt(
 	const nested = matches
 		.filter((match) => match.startPiece > 0 || match.endPiece < pieceCount)
 		.map((match) => ({ startPiece: match.startPiece, endPiece: match.endPiece, entries: scoredEntries(match.entries) }))
-		.filter((match) => match.entries.length > 0)
+		.filter((match) => match.entries.length)
 
 	const coveringScores = covering.map((entry) => entry.referential)
 	const nestedScores = nested.flatMap((match) => match.entries.map((entry) => entry.referential))
@@ -258,7 +258,7 @@ export function summarizeC6(rows: ReadonlyArray<C6RowReport>): C6CensusSummary {
 	return {
 		rows: rows.length,
 		rowsWithFST: rows.filter((row) => row.fstAvailable).length,
-		rowsFlagged: rows.filter((row) => row.violations.length > 0).length,
+		rowsFlagged: rows.filter((row) => row.violations.length).length,
 		boundariesFlagged: violations.length,
 		truePositive: violations.filter((violation) => violation.grade === "true_positive").length,
 		falsePositive: violations.filter((violation) => violation.grade === "false_positive").length,

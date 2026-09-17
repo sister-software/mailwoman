@@ -61,7 +61,7 @@ function sourceGazetteerReceipt(input: string): C6RowReport["sourceGazetteer"] {
 	const key = normalizeLocalityForKey(input)
 	// Hyphen is a possible decoded boundary (`Tel Aviv-Yafo`). Generate surface subspans, then pass every one through the
 	// candidate table's shared fold; do not infer keys by editing the folded complete key.
-	const surfaceWords = input.split(/[\s-]+/u).filter((word) => word.length > 0)
+	const surfaceWords = input.split(/[\s-]+/u).filter((word) => word.length)
 	const nestedKeys = new Set<string>()
 
 	for (let start = 0; start < surfaceWords.length; start++) {
@@ -88,7 +88,7 @@ function sourceGazetteerReceipt(input: string): C6RowReport["sourceGazetteer"] {
 			key: nestedKey,
 			rows: allRows<CandidateLocalityRow>(candidateLocalities, nestedKey).map(project),
 		}))
-		.filter((receipt) => receipt.rows.length > 0)
+		.filter((receipt) => receipt.rows.length)
 
 	return { databasePath: candidateDBPath, key, exactLocalities, nestedLocalities }
 }
@@ -138,7 +138,7 @@ console.log(
 		`(${summary.truePositive} TP, ${summary.falsePositive} FP, ${summary.unclassified} unclassified).`
 )
 
-for (const report of reports.filter((row) => row.violations.length > 0).slice(0, 20)) {
+for (const report of reports.filter((row) => row.violations.length).slice(0, 20)) {
 	console.log(`${report.id}: ${report.input}`)
 
 	for (const violation of report.violations.slice(0, 3)) {

@@ -40,7 +40,7 @@ import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, splitUpperList, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -196,7 +196,7 @@ const GazetteerPolygons: CommandComponent<typeof spec> = ({ options }) => {
 			throw new CommandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
 
-		const countries = options.countries ? splitUpperList(options.countries) : null
+		const countries = options.countries ? splitCountryCodes(options.countries) : null
 
 		const repos = options.repos
 		const tol = options.tol

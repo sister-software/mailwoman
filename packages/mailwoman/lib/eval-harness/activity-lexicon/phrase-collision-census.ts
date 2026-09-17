@@ -272,7 +272,7 @@ export interface PhraseCollisionCensusOptions {
 function tokenize(value: string): string[] {
 	return normalizeActivityPhrase(value)
 		.split(/[^\p{L}\p{N}]+/u)
-		.filter((token) => token.length > 0)
+		.filter((token) => token.length)
 }
 
 /**
