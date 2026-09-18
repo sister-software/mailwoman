@@ -87,7 +87,8 @@ interface JurisdictionRow {
 	corpusRows: number
 	corpusStreetRows: number
 	/**
-	 * The training config's `country_weights` admits it AND the corpus holds rows for it. Either alone trains nothing.
+	 * True when the training config's `country_weights` admits it and the corpus holds rows for it. Either one alone
+	 * trains nothing.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -130,7 +131,7 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		subJurisdiction,
 		layout: layoutForCountry(joinsTo) !== null,
 		conventions: hasConventions(joinsTo),
-		// A sub-jurisdiction has no register of its own; it reads its parent's numbers, and reporting them
+		// A sub-jurisdiction has no register of its own. It reads its parent's numbers, and reporting them
 		// as the sub-jurisdiction's own would double-count. Zero here says "no separate reading exists",
 		// which is the true statement.
 		corpusRows: subJurisdiction ? 0 : (c?.corpusRows ?? 0),

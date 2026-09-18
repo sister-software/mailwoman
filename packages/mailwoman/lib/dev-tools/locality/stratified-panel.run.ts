@@ -30,6 +30,7 @@ import { matchSubdivisionIn } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
+import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { GEONAMES_POSTAL_COLUMNS } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import {
@@ -38,6 +39,8 @@ import {
 	geonamesPostalPath,
 	readTriplesFromGeonames,
 } from "@mailwoman/corpus/tools/postcode-triples"
+
+import { suffixTail } from "#dev-tools/coord-panel"
 
 const { values } = parseArguments({
 	options: {
@@ -50,6 +53,15 @@ const { values } = parseArguments({
 		 */
 		source: { type: "string" },
 		quota: { type: "string", default: String(DEFAULT_LOCALITY_QUOTA) },
+		/**
+		 * What the even draw is taken across: `region`, `shape` (the locality NAME's shape), or `region-shape`.
+		 *
+		 * Region answers #2311's interior spread. Shape answers a different question, and one the region draw cannot:
+		 * measured on `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS street suffix (`Orland
+		 * Park`, `Saxtons River`), while the default US panel draws that shape at 12.8% and the corpus recipe teaches it at
+		 * 9.7%. A rate measured on a draw that under-samples the shape it fails on reports the easy population (#2329).
+		 */
+		stratify: { type: "string", default: "region" },
 	},
 })
 
@@ -76,11 +88,49 @@ for await (const cells of readUnquotedTSV(source) as AsyncIterable<string[]>) {
 const triples = await readTriplesFromGeonames(country, source, values["country-name"]!)
 const quotaed = applyLocalityQuota(triples, Number(values.quota))
 
+const STRATIFY = new Set(["region", "shape", "region-shape"])
+
+if (!STRATIFY.has(values.stratify!)) {
+	throw new Error(`--stratify ${values.stratify} is not one of: ${[...STRATIFY].join(", ")}`)
+}
+
 /**
- * Keyed by the region form the panel writes. GeoNames publishes `California`, never `CA`, and the surface under test is
- * the code, so folding here keeps the shortfall report and the rows speaking the same vocabulary.
+ * The locality NAME's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts` reports, using the
+ * same {@linkcode suffixTail} so a rate read on this panel and a rate read on that one are about the same populations.
  */
-const byRegion = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
+function shapeOf(locality: string): string {
+	if (suffixTail(locality)) return "suffix-tail"
+
+	return locality.trim().split(/\s+/).length > 1 ? "multi-word" : "single-word"
+}
+
+/**
+ * A deterministic comparator that shuffles a bucket. Seeded so two runs of this tool write the same panel: a panel that
+ * changes between draws cannot be used to compare two models measured a day apart.
+ */
+function seededOrder(size: number): (a: unknown, b: unknown) => number {
+	const next = mulberry32(size)
+	const keys = new Map<unknown, number>()
+
+	return (a, b) => {
+		if (!keys.has(a)) {
+			keys.set(a, next())
+		}
+
+		if (!keys.has(b)) {
+			keys.set(b, next())
+		}
+
+		return keys.get(a)! - keys.get(b)!
+	}
+}
+
+/**
+ * Keyed by the stratum the draw is even across. The region form is the one the panel writes out — GeoNames publishes
+ * `California`, never `CA`, and the surface under test is the code — so folding here keeps the shortfall report and the
+ * rows speaking the same vocabulary.
+ */
+const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 
 let keptSourceForm = 0
 
@@ -96,16 +146,18 @@ for (const triple of quotaed) {
 	}
 
 	const written = subdivision?.code ?? triple.region
-	const bucket = byRegion.get(written)
+	const shape = shapeOf(triple.locality)
+	const key = values.stratify === "shape" ? shape : values.stratify === "region-shape" ? `${written} ${shape}` : written
+	const bucket = byStratum.get(key)
 
 	if (bucket) {
 		bucket.push({ ...triple, written })
 	} else {
-		byRegion.set(written, [{ ...triple, written }])
+		byStratum.set(key, [{ ...triple, written }])
 	}
 }
 
-if (!byRegion.size) {
+if (!byStratum.size) {
 	throw new Error(
 		`${source} yielded no usable rows for ${country}. ` +
 			`\`POSTCODE_CONVENTIONS\` may not name ${country}, or the export may be absent.`
@@ -115,12 +167,19 @@ if (!byRegion.size) {
 const rows = []
 const short: string[] = []
 
-for (const [region, bucket] of [...byRegion].toSorted()) {
+for (const [stratum, bucket] of [...byStratum].toSorted()) {
 	if (bucket.length < perRegion) {
-		short.push(`${region} ${bucket.length}`)
+		short.push(`${stratum} ${bucket.length}`)
 	}
 
-	for (const triple of bucket.slice(0, perRegion)) {
+	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state. For a
+	// REGION stratum that is harmless — the stratum already fixes the state. For a SHAPE stratum it is not: the first
+	// 400 suffix-tail names in US.txt are all Alaskan, so a shape draw taken from the head measures one state per
+	// bucket. A seeded shuffle spreads each shape across the country. The region draw keeps its existing order so the
+	// numbers already published against `us-stratified.jsonl` still describe the panel this writes.
+	const drawn = values.stratify === "region" ? bucket : bucket.toSorted(seededOrder(bucket.length)).slice(0, perRegion)
+
+	for (const triple of drawn.slice(0, perRegion)) {
 		const coordinate = coordinateOf.get(triple.postcode)!
 
 		rows.push({
@@ -145,7 +204,7 @@ await writeLocalJSONLFile(rows, values.out!)
 
 console.log(
 	`${source}: ${triples.length.toLocaleString()} triples, ${quotaed.length.toLocaleString()} after a quota of ` +
-		`${values.quota} per locality, ${byRegion.size} region(s)\n`
+		`${values.quota} per locality, ${byStratum.size} ${values.stratify} stratum(s)\n`
 )
 console.log(`wrote ${rows.length.toLocaleString()} rows to ${values.out}`)
 
@@ -157,7 +216,7 @@ if (keptSourceForm) {
 }
 
 if (short.length) {
-	console.log(`\nregions the source holds fewer than ${perRegion} rows for: ${short.join(", ")}`)
+	console.log(`\nstrata the source holds fewer than ${perRegion} rows for: ${short.join(", ")}`)
 }
 
 console.log(

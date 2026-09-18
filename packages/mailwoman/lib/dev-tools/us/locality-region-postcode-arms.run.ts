@@ -74,16 +74,29 @@ const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
 })
 
 /**
- * One panel locality, with the street the reverse arm stands in place of it. A row whose own input carries no usable
- * street is dropped: that arm would otherwise have to invent one.
+ * One panel locality, with the street the reverse arm stands in place of it where the row's own input carries one.
+ *
+ * The street is optional because only the reverse arm needs it, and a panel drawn from a postcode export has no streets
+ * at all. Requiring one dropped every row of such a panel and reported all four arms as `0/0` with a zero exit — an
+ * empty read that looks exactly like a measured zero. The three forward arms take every row. `street_only` takes the
+ * rows that carry a street and says how many that was.
  */
-type ArmRow = PanelLocality & { street: string }
+type ArmRow = PanelLocality & { street?: string }
 
-const panel: ArmRow[] = localities.flatMap((place) => {
+const panel: ArmRow[] = localities.map((place) => {
 	const street = streetWithoutNumber(place.input)
 
-	return street ? [{ ...place, street }] : []
+	return street ? { ...place, street } : place
 })
+
+const withStreet = panel.filter((row) => row.street).length
+
+if (!panel.length) {
+	throw new Error(
+		`${values.eval} yielded no usable localities. A row needs expected.locality, expected.region, ` +
+			`expected.postcode, lat and lon; a panel of the wrong country is filtered out by --country ${values.country}.`
+	)
+}
 
 /**
  * The four surfaces, and what a correct answer looks like in each.
@@ -150,7 +163,11 @@ for (const arm of ARMS) {
 	let noLocality = 0
 	const examples: string[] = []
 
-	for (const place of panel) {
+	// The reverse arm stands a real street where the locality belongs, so it can only read rows that carry one. The
+	// three forward arms read every row.
+	const rows = arm.name === "street_only" ? panel.filter((row) => row.street) : panel
+
+	for (const place of rows) {
 		const input = arm.render(place)
 		// The same country the arms were WRITTEN in. A run that renders through the FR layout and then resolves under a
 		// hardcoded US scope grades a French surface against American candidates.
@@ -187,11 +204,12 @@ for (const arm of ARMS) {
 		}
 	}
 
-	report[arm.name] = { matched, noLocality, total: panel.length, examples }
+	report[arm.name] = { matched, noLocality, total: rows.length, examples }
 }
 
 console.log(
 	`#2303 arms — ${panel.length} distinct US localities, production path` +
+		`\n${withStreet} of them carry a street in their own input; the reverse arm reads those and no others.` +
 		(qualifiersStripped
 			? `\n${qualifiersStripped} expected string(s) carried a trailing parenthetical qualifier, stripped before grading.`
 			: "") +
