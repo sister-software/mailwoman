@@ -186,7 +186,7 @@ four probes follow the eval triage.
    `scriptsUnreferenced`, ratcheting to zero. Every later PR is graded against it.
 1. **`release-kit` with its registry, and `mwops`.** The release family becomes registered operations;
    `mwops release …` replaces every `node scripts/…` in the six workflows and `.release-it.json`;
-   `release plan` and `release publish` carry the digest contract; `mailwoman release hf` moves in.
+   `release plan` and `release publish` record the digest contract; `mailwoman release hf` moves in.
    Proof before merge: `mwops release preflight` against a staging root, since the publish workflow
    only runs on release day.
 2. **`repo-health` with its registry.** `yarn health` becomes `mwops health all`.

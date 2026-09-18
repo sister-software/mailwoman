@@ -1320,7 +1320,7 @@ Recorded as gaps rather than filled in. Nothing below was completed with a plaus
 - **A national count of components carrying the two national forestry erosion interpretations.** The
   whole-table aggregate exceeded SDA's server-side timeout (HTTP 400, `ServiceExceptionReport`, "Your
   query timed out.", 90.6 s). Five survey areas were measured instead — `IA153`, `TX299`, `CA630`,
-  `AK655`, `FL001` — and every component in each carried the rule. That is evidence of national coverage rather than a national figure.
+  `AK655`, `FL001` — and each measured component in those areas had one of the two interpretations. That is evidence of national coverage rather than a national figure.
 - **The USGS ScienceBase `ptvctcnt` disagreement** — 126,831 declared against 133,113 measured. The
   measured number is reported and the metadata flagged stale; why they differ was not established.
 - **NOAA's per-class C-CAP accuracy statements and its own site-specific-use caveat.** Not retrieved. No

@@ -212,7 +212,7 @@ finding names one:
   verb (blocks, requires, refuses, admits); the artifact by its filename (the corpus recipe output, the
   per-country postcode database, the WOF extract); the boundary by its interface (the package boundary,
   the `PlaceLookup` interface, the call site); and for a release, publish it, for a branch, branch it.
-- `config/vale/styles/ReifiedShorthand.yml` — a hypothesis, constraint or result compressed into a
+- `config/vale/styles/ShellNoun.yml` — a hypothesis, constraint or result compressed into a
   definite noun and then reported on as if it were an experimental object, banned in replies and in every
   committed prose surface, source comments and training configs included. State the proposition with its
   metric and its number: what was measured, the value it took, and what that rules in or out. Do not

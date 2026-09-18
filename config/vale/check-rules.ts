@@ -116,7 +116,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Anthropomorphism",
 			"styles.BannedWords",
 			"styles.EmphasisCapitals",
-			"styles.ReifiedShorthand",
+			"styles.ShellNoun",
 			"styles.Spelling",
 			"styles.StockPhrases",
 			"styles.Terms",
@@ -135,7 +135,7 @@ const LEGS: StyleLeg[] = [
 		ruleChecks: [
 			"styles.AmbiguousShorthandCode",
 			"styles.EmphasisCapitals",
-			"styles.ReifiedShorthand",
+			"styles.ShellNoun",
 			"styles.MedicalMetaphor",
 			"styles.CommentSemicolons",
 			"styles.Negation",
@@ -153,7 +153,7 @@ const LEGS: StyleLeg[] = [
 		ruleChecks: [
 			"styles.AmbiguousShorthand",
 			"styles.EmphasisCapitals",
-			"styles.ReifiedShorthand",
+			"styles.ShellNoun",
 			"styles.AgreementOpeners",
 			"styles.AssertiveFiller",
 			"styles.ChatStockForms",

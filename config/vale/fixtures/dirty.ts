@@ -15,7 +15,7 @@
 // A dosage is not a metric; describe the measured rows.
 // Anchored, not bare.
 
-// `ReifiedShorthand.yml` runs over source comments through the same config, and each
+// `ShellNoun.yml` runs over source comments through the same config, and each
 // clause below must trip it: the probe confirmed the guard, the guard holds, we recover the win
 // and keep the affix win, the cost was carried entirely by one class, 3-digit is the reduce, and
 // we take this to 8k.

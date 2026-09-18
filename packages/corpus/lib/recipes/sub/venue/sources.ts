@@ -236,7 +236,7 @@ export function titleCase(phrase: string): string {
  * Word-boundary containment, script-aware enough for the Latin legs this recipe runs.
  *
  * The boundary matters: without it `gate` matches Briggate and `wing` matches Wingate, which is how a harvest teaches
- * itself that a Yorkshire street is a sub-venue. (The lexicon's own harvest carries the same rule, and it drops the
+ * itself that a Yorkshire street is a sub-venue. (The lexicon's own harvest applies the same rule, and it drops the
  * boundary only for Han/Kana, which has no word boundaries and no leg here.)
  */
 export function containsPhrase(lowerName: string, phrase: string): boolean {

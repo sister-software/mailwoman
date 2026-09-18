@@ -9,7 +9,7 @@
  *   build-local, and private layers share one query surface. Spec:
  *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
  *
- *   Coverage carries the meaning-of-zero rule: a MISSING coverage row means "unmapped/unknown",
+ *   Coverage defines the meaning-of-zero rule: a MISSING coverage row means "unmapped/unknown",
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.
  */
 
