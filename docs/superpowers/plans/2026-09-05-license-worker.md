@@ -2651,7 +2651,7 @@ Match the checkout, node, and yarn steps to what `test.yml` uses (`.nvmrc` may n
 
 - [x] **Step 2: The README**
 
-A page for the operator, in the house voice: what the worker does in three sentences; the two environments; the bindings table from the spec with which are secrets; the first-deploy order (register the worker's key in core and release, `wrangler secret put` ×4 per environment, `migrate`, deploy with issuance off, check `/health` reads `signing: ok`, flip `ISSUANCE_ENABLED`); the kill switch; the reconciliation cron; where the tests run (`yarn test:license-worker`); and the refund and dispute table. Vale it with `docs/.vale-vocab.ini`.
+A page for the operator, in the house voice: what the worker does in three sentences; the two environments; the bindings table from the spec with which are secrets; the first-deploy order (register the worker's key in core and release, `wrangler secret put` ×4 per environment, `migrate`, deploy with issuance off, check `/health` reads `signing: ok`, flip `ISSUANCE_ENABLED`); the kill switch; the reconciliation cron; where the tests run (`yarn test:license-worker`); and the refund and dispute table. Vale it with `config/vale/.vale-vocab.ini`.
 
 - [x] **Step 3: The dry run**
 

@@ -4,9 +4,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture test for `docs/styles/Mailwoman/*.yml` (the published-prose rules) and
- *   `docs/styles/MailwomanChat/*.yml` (the agent-reply rules the Stop hook runs through
- *   `.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale/response/check/index.ts`).
+ *   Fixture test for `config/vale/styles/*.yml` (the published-prose and agent-reply rules) and
+ *   `config/vale/.vale-chat.ini` — see `packages/dev-mcp/lib/hooks/vale/response/check/index.ts`).
  *
  *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
  *   has two fixtures. The dirty one is written to trip every rule file at least once, and also
@@ -32,14 +31,14 @@
  *   The CODE leg exists because that last mechanism does not reach a source comment. Vale's
  *   markdown parser skips inline code; its comment scanner has no markdown parser, so a
  *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
- *   @vvago/vale 3.17.0). `Mailwoman/AmbiguousShorthandCode.yml` therefore protects contract-tied
+ *   @vvago/vale 3.17.0). `AmbiguousShorthandCode.yml` therefore protects contract-tied
  *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the check` MUST
  *   still fire. If it stops, the Code rule has been replaced by the markdown one and every name in
  *   the exceptions list is relying on a mechanism that is not there.
  *
  *   Run from anywhere:
  *
- *       node docs/scripts/check/vale-rules.ts
+ *       node config/vale/check-rules.ts
  *       yarn workspace @mailwoman/docs lint:prose:fixtures
  *
  *   Wired into the docs CI job (`.github/workflows/docs-build.yml`) so a rule regression fails
@@ -103,35 +102,35 @@ interface StyleLeg {
 	cleanCountsEverySeverity: boolean
 }
 
-const DOCS_DIR = repoRootPath("docs")
+const VALE_DIR = repoRootPath("config", "vale")
 
 const LEGS: StyleLeg[] = [
 	{
 		label: "docs",
 		config: ".vale.ini",
-		dirtyFixture: "scripts/vale-fixtures/dirty.md",
-		cleanFixture: "scripts/vale-fixtures/clean.md",
+		dirtyFixture: "fixtures/dirty.md",
+		cleanFixture: "fixtures/clean.md",
 		minDirtyErrors: 67,
 		ruleChecks: [
-			"Mailwoman.AmbiguousShorthand",
-			"Mailwoman.Anthropomorphism",
-			"Mailwoman.BannedWords",
-			"Mailwoman.EmphasisCapitals",
-			"Mailwoman.ReifiedShorthand",
-			"Mailwoman.Spelling",
-			"Mailwoman.StockPhrases",
-			"Mailwoman.Terms",
-			"Mailwoman.Weasel",
+			"styles.AmbiguousShorthand",
+			"styles.Anthropomorphism",
+			"styles.BannedWords",
+			"styles.EmphasisCapitals",
+			"styles.ReifiedShorthand",
+			"styles.Spelling",
+			"styles.StockPhrases",
+			"styles.Terms",
+			"styles.Weasel",
 		],
 		cleanCountsEverySeverity: false,
 	},
 	{
 		label: "code",
 		config: ".vale-code.ini",
-		dirtyFixture: "scripts/vale-fixtures/dirty.ts",
-		cleanFixture: "scripts/vale-fixtures/clean.ts",
+		dirtyFixture: "fixtures/dirty.ts",
+		cleanFixture: "fixtures/clean.ts",
 		minDirtyErrors: 7,
-		ruleChecks: ["Mailwoman.AmbiguousShorthandCode", "Mailwoman.EmphasisCapitals", "Mailwoman.ReifiedShorthand"],
+		ruleChecks: ["styles.AmbiguousShorthandCode", "styles.EmphasisCapitals", "styles.ReifiedShorthand"],
 		// Both rules this config runs are error-severity, so the exit code carries the whole
 		// verdict.
 		cleanCountsEverySeverity: false,
@@ -139,36 +138,36 @@ const LEGS: StyleLeg[] = [
 	{
 		label: "chat",
 		config: ".vale-chat.ini",
-		dirtyFixture: "scripts/vale-fixtures/dirty-chat.md",
-		cleanFixture: "scripts/vale-fixtures/clean-chat.md",
+		dirtyFixture: "fixtures/dirty-chat.md",
+		cleanFixture: "fixtures/clean-chat.md",
 		minDirtyErrors: 100,
 		ruleChecks: [
-			"Mailwoman.AmbiguousShorthand",
-			"Mailwoman.EmphasisCapitals",
-			"Mailwoman.ReifiedShorthand",
-			"MailwomanChat.AgreementOpeners",
-			"MailwomanChat.AssertiveFiller",
-			"MailwomanChat.ChatStockForms",
-			"MailwomanChat.DistanceAsSuccess",
-			"MailwomanChat.DecorativeStatusGlyphs",
-			"MailwomanChat.EconomyMetaphor",
-			"MailwomanChat.EmptyTransitions",
-			"MailwomanChat.JudgmentJargon",
-			"MailwomanChat.MintedMetaphor",
-			"MailwomanChat.OpaqueID",
-			"MailwomanChat.OverlaySense",
-			"MailwomanChat.PresentationPreamble",
-			"MailwomanChat.ProjectShorthand",
-			"MailwomanChat.UnsupportedAttribution",
-			"MailwomanChat.VaguePraise",
-			"MailwomanChat.WindDown",
+			"styles.AmbiguousShorthand",
+			"styles.EmphasisCapitals",
+			"styles.ReifiedShorthand",
+			"styles.AgreementOpeners",
+			"styles.AssertiveFiller",
+			"styles.ChatStockForms",
+			"styles.DistanceAsSuccess",
+			"styles.DecorativeStatusGlyphs",
+			"styles.EconomyMetaphor",
+			"styles.EmptyTransitions",
+			"styles.JudgmentJargon",
+			"styles.MintedMetaphor",
+			"styles.OpaqueID",
+			"styles.OverlaySense",
+			"styles.PresentationPreamble",
+			"styles.ProjectShorthand",
+			"styles.UnsupportedAttribution",
+			"styles.VaguePraise",
+			"styles.WindDown",
 		],
 		cleanCountsEverySeverity: true,
 	},
 ]
 
 const VALE = await valeCommand(import.meta.url)
-const $vale = $({ cwd: DOCS_DIR, nothrow: true })
+const $vale = $({ cwd: VALE_DIR, nothrow: true })
 
 /**
  * A single Vale run: its parsed alerts plus the exit code, which the dirty legs assert on.

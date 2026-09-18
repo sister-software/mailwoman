@@ -50,7 +50,7 @@
 		"lint:oxfmt": "oxfmt --check .",
 		"lint:oxlint": "oxlint",
 		"lint:prose": "run-s lint:prose:vocab lint:prose:code",
-		"lint:prose:code": "vale --config docs/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/**/*.py' 'corpus-python/**/*.yaml' 'corpus-python/**/*.yml')",
+		"lint:prose:code": "vale --config config/vale/.vale-code.ini $(git ls-files '*.ts' '*.tsx' 'corpus-python/**/*.py' 'corpus-python/**/*.yaml' 'corpus-python/**/*.yml')",
 		"lint:prose:vocab": "yarn workspace @mailwoman/docs lint:prose:vocab",
 		"lint:python": "uvx ruff@0.16.5 check corpus-python && uvx ruff@0.16.5 format --check corpus-python && python3 corpus-python/scripts/verify_toolchain.py && yarn python:typecheck && yarn python:security",
 		"mwops": "node packages/ops-cli/lib/cli.ts",

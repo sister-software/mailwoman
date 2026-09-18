@@ -99,7 +99,7 @@ plays different syntactic roles in venue vs street vs locality. E.g.
 street_prefix.
 
 **`kryptonite/disambiguation`** — locality alone (or locality+region)
-that could resolve to many real places. Ground truth matches what was
+that could resolve to a set of real places. Ground truth matches what was
 written, not what is most famous.
 
 **`graceful/typo`** — single-char edits or transpositions on a clean

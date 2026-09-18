@@ -1,7 +1,7 @@
 # Vocabulary enforcement across every committed surface
 
 **Status:** design approved 2026-09-02 (scope and landing strategy chosen by the operator).
-**Supersedes the deferral recorded in** `docs/.vale-vocab.ini`'s header.
+**Supersedes the deferral recorded in** `config/vale/.vale-vocab.ini`'s header.
 
 ## The problem
 

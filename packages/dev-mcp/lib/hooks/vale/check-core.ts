@@ -9,8 +9,8 @@
  *   output JSON; the POLICY (which config, which severities block, how findings read) lives here
  *   so the two hooks cannot drift apart the way parallel copies do.
  *
- *   The rule set is `docs/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
- *   additions, fixture-tested by `docs/scripts/check/vale-rules.ts`. The config path resolves
+ *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
+ *   additions, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
  *   relative to this module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
@@ -42,7 +42,7 @@ export interface ProseVerdict {
 
 export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const vale = await valeCommand(import.meta.url)
-	const configPath = repoRootPath("docs", ".vale-chat.ini")
+	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
 	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —
 	// an unparseable stdout is the failure, and that reads as "no findings" per the silence contract.

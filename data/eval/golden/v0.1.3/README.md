@@ -16,7 +16,7 @@ forward; read `MANIFEST.json`'s `convention` block for the authoritative stateme
 prefix and the type into `street`, which disagreed with the corpus that trains the
 model — and the eval scorer papered over the gap by gluing the model's spans back
 together before comparing. That cost a real verdict: the v9.0.0 candidate failed
-its promotion gate on `us.street` over the convention, not over its parse.
+its promotion check on `us.street` over the convention, not over its parse.
 
 Produced from v0.1.2 by `mailwoman corpus golden-relabel`
 (`corpus/src/tools/golden-relabel-street.ts`), splitting on the USPS Pub-28 table
@@ -28,7 +28,7 @@ A scorer that folds `street_prefix`/`street`/`street_suffix` back together is no
 grading this answer key. `packages/mailwoman/lib/dev-tools/per-locale-f1.run.ts` reads the declaration in
 `MANIFEST.json` and scores split-convention rows unfolded.
 
-Numbers here are NOT comparable with v0.1.2 numbers. The gate spec that grades
+Numbers here are not comparable with v0.1.2 numbers. The evaluation spec that grades
 against this key is `mailwoman/eval-harness/specs/v9.0.0-base.json`.
 
 ## Files
@@ -125,7 +125,7 @@ plays different syntactic roles in venue vs street vs locality. E.g.
 street_prefix.
 
 **`kryptonite/disambiguation`** — locality alone (or locality+region)
-that could resolve to many real places. Ground truth matches what was
+that could resolve to a set of real places. Ground truth matches what was
 written, not what is most famous.
 
 **`graceful/typo`** — single-char edits or transpositions on a clean

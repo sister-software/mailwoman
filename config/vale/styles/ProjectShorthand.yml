@@ -5,12 +5,12 @@
 ## `the cure` were invented for two fine-tune runs — say "the control run
 ## (v5.0.1)" / "the treatment run (v5.0.2)". `three-leg` names a
 ## comparison protocol — say which systems or runs the legs are.
-## The word for a tunable change moved to Mailwoman/AmbiguousShorthand.yml
+## The word for a tunable change moved to AmbiguousShorthand.yml
 ## so both surfaces refuse it.
 ##
 ## This file holds the CHAT-ONLY shorthand: words that appear in replies and
 ## never in published prose. The four words banned on BOTH surfaces —
-## seam, shard, cut, gate — live in Mailwoman/AmbiguousShorthand.yml, which
+## seam, shard, cut, gate — live in AmbiguousShorthand.yml, which
 ## .vale-chat.ini loads through the shared Mailwoman style, so chat coverage
 ## of `shard` is unchanged by its move out of this file.
 ##
@@ -23,7 +23,7 @@
 ##   dose  -> the measured quantity with its unit: reps per row, rows per pass,
 ##            the `source_doses` value, the weight.
 ##
-## They belong in Mailwoman/AmbiguousShorthand.yml beside the other five, and
+## They belong in AmbiguousShorthand.yml beside the other five, and
 ## the move costs 346 rewrites across AGENTS.md, two skills and ten engineering
 ## pages. Chat first; the published-prose migration is its own change.
 ##

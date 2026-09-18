@@ -5,7 +5,7 @@
 ## differs from the right-hand replacement — an already-correct "ZIP Code"
 ## or "geocode" does not self-flag. "postal code" -> "postcode" is the
 ## en-GB house term; it does not touch "ZIP Code" (a distinct US term, kept
-## correct by the accept-list in styles/config/vocabularies/Mailwoman/accept.txt).
+## correct by the accept-list in config/vale/vocabularies/accept.txt).
 ##
 ## The bottom four entries come from the docs-reorg field survey (see
 ## docs/engineering/writing-system.md §Canonical terms): a credential is an

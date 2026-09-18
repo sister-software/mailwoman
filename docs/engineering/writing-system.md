@@ -257,13 +257,13 @@ Vale checks the token-level subset of these rules. Everything structural — rol
 discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts`, not by
 Vale.
 
-| Rule file                        | Enforces                                                                    | Severity |
-| -------------------------------- | --------------------------------------------------------------------------- | -------- |
-| `Mailwoman/Terms.yml`            | Canonical terms table above                                                 | error    |
-| `Mailwoman/BannedWords.yml`      | Filler intensifiers, audit item 4                                           | error    |
-| `Mailwoman/StockPhrases.yml`     | Contrastive negation and consultant-deck constructions, audit items 1 and 5 | error    |
-| `Mailwoman/Anthropomorphism.yml` | House rule 8                                                                | warning  |
-| `Mailwoman/Weasel.yml`           | Unmeasured hedge quantities, per Numbers and measurement                    | warning  |
+| Rule file                     | Enforces                                                                    | Severity |
+| ----------------------------- | --------------------------------------------------------------------------- | -------- |
+| `styles/Terms.yml`            | Canonical terms table above                                                 | error    |
+| `styles/BannedWords.yml`      | Filler intensifiers, audit item 4                                           | error    |
+| `styles/StockPhrases.yml`     | Contrastive negation and consultant-deck constructions, audit items 1 and 5 | error    |
+| `styles/Anthropomorphism.yml` | House rule 8                                                                | warning  |
+| `styles/Weasel.yml`           | Unmeasured hedge quantities, per Numbers and measurement                    | warning  |
 
 Run it two ways:
 
@@ -293,8 +293,8 @@ Inline code spans and fenced code blocks are excluded from linting, so a banned 
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
 stripped before linting, so a `source-of-truth:` key is not read as prose.
 
-Adding a rule means adding a fixture. `docs/scripts/vale-fixtures/dirty.md` carries one hit per token and
-`clean.md` must stay at zero alerts; `docs/scripts/check/vale-rules.ts` asserts both, plus a minimum error
+Adding a rule means adding a fixture. `config/vale/fixtures/dirty.md` carries one hit per token and
+`clean.md` must stay at zero alerts; `config/vale/check-rules.ts` asserts both, plus a minimum error
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
 guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or

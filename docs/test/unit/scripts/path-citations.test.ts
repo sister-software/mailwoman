@@ -93,7 +93,7 @@ describe("isPointInTimeRecord", () => {
 	it("reads a declared record tree as a record", () => {
 		expect(isPointInTimeRecord("docs/records/plan/phases/PHASE_0_foundation.mdx")).toBe(true)
 		expect(isPointInTimeRecord("docs/superpowers/inventory/baseline.md")).toBe(true)
-		expect(isPointInTimeRecord("docs/scripts/vale-fixtures/dirty.md")).toBe(true)
+		expect(isPointInTimeRecord("config/vale/fixtures/dirty.md")).toBe(true)
 	})
 
 	it("holds the living trees in scope", () => {

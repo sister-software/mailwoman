@@ -88,8 +88,8 @@ const RECORD_TREES = new Map([
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
 	// The inventories the same campaign produced, each a snapshot of the tree at its phase.
 	["docs/superpowers/inventory/", "phase inventories of the tree as it stood"],
-	// Deliberately defective prose, kept so `docs/scripts/check/vale-rules.ts` has something to fail on.
-	["docs/scripts/vale-fixtures/", "fixtures for the prose-rule tests"],
+	// Deliberately defective prose, kept so `config/vale/check-rules.ts` has something to fail on.
+	["config/vale/fixtures/", "fixtures for the prose-rule tests"],
 ])
 
 /**

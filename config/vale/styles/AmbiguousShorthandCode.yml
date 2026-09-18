@@ -1,6 +1,6 @@
 ## Mailwoman house style: banned ambiguous shorthand, SOURCE-COMMENT variant.
 ##
-## Same four words and the same reason as Mailwoman/AmbiguousShorthand.yml.
+## Same four words and the same reason as AmbiguousShorthand.yml.
 ## This file exists because the escape hatch that rule depends on is a
 ## property of Vale's MARKDOWN parser, and the comment scanner has none.
 ##
@@ -33,7 +33,8 @@ ignorecase: true
 ## rather than an escape from it. `locale-hintd` is deliberately ABSENT — an inflected verb form
 ## is the ambiguous usage, and "restricted to the locale" is the plain verb it should be.
 ## `exceptions` is empty: #2090 renamed every contract-tied identifier that carried one of these
-## words (`@mailwoman/locale-hint`, `mwdev_promotion_eval`, `promotion-eval.ts`, ...). Add an entry only
+## words (`@mailwoman/locale-hint`, `mwdev_promotion_eval`, `promotion-eval.ts`, ...). Add an entry
+## only
 ## when a new contract must carry one, and say why here.
 exceptions: []
 tokens:

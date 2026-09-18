@@ -219,7 +219,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
 	const vale = await valeCommand(import.meta.url)
-	const config = resolvePath(root, "docs/.vale-code-census.ini")
+	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
 	// Run from the REPO ROOT, because the paths are repo-relative. Run it from anywhere else and Vale
 	// resolves none of them, reports zero alerts, and exits 0 — the reading is identical to a clean tree.
@@ -245,7 +245,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
  * fixture is the right control precisely because it is PERMANENT: every other file carrying these words is scheduled to
  * lose them, and a control the sweep eventually cleans stops proving anything on the day it matters most.
  */
-const POSITIVE_CONTROL = "docs/scripts/vale-fixtures/dirty.ts"
+const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
  * Paths whose hits DO NOT count, and why each is excluded. The set measured is every tracked source minus these — the
@@ -255,14 +255,11 @@ const POSITIVE_CONTROL = "docs/scripts/vale-fixtures/dirty.ts"
  * the repository and the target of zero could never be reached.
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
-	["docs/scripts/vale-fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
+	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
 	["packages/repo-health/lib/checks/vocab-census.ts", "this file — its patterns have to spell the words it classifies"],
 	["packages/repo-health/test/unit/vocab-census.test.ts", "its cases are lines of source quoted verbatim"],
 	["packages/repo-health/lib/checks/debt.ts", "its banned-vocabulary constant has to spell the word it counts"],
-	[
-		"docs/scripts/check/vale-rules.ts",
-		"the rule fixtures' own harness; its docstring quotes the words the rules match",
-	],
+	["config/vale/check-rules.ts", "the rule fixtures' own harness; its docstring quotes the words the rules match"],
 ]
 
 /**

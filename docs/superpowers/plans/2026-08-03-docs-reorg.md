@@ -39,9 +39,9 @@ Raw material note: Task 4 parks the old `articles/` tree at `docs/records/site-2
 
 **Files:**
 
-- Create: `docs/.vale.ini`, `docs/styles/Mailwoman/*.yml` (rule files below), `docs/styles/config/vocabularies/Mailwoman/accept.txt`
+- Create: `config/vale/.vale.ini`, `config/vale/styles/*.yml` (rule files below), `config/vale/vocabularies/accept.txt`
 - Modify: `docs/package.json` (devDependency `@vvago/vale`, script `lint:prose`), `.github/workflows/docs-build.yml` (prose-lint step in the PR job)
-- Test: fixture files under `docs/scripts/vale-fixtures/`
+- Test: fixture files under `config/vale/fixtures/`
 
 **Interfaces:**
 
@@ -63,12 +63,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ````
 
 - [ ] **Step 3: Write the rule files.** Each is a Vale `existence`/`substitution` rule; severities: banned words = error, weasel quantities = warning, anthropomorphism = warning.
-  - `Mailwoman/BannedWords.yml` (error): filler and marketing intensifiers.
-  - `Mailwoman/StockPhrases.yml` (error): contrastive slogans, metaphors, and consultant phrasing (prose only — `source-of-truth:` frontmatter is ignored via TokenIgnores addition `(^source-of-truth:.*)`).
-  - `Mailwoman/Anthropomorphism.yml` (warning): "(parser|model|decoder|resolver|pipeline) (thinks|believes|wants|knows|decides to|tries to|gives up)". Suggested fixes in the rule message ("assigns", "scores", "returns").
-  - `Mailwoman/Weasel.yml` (warning): unmeasured quantities such as "near", "typically", and "frequently" — message: "state the measured quantity or mark the sentence deliberately qualitative."
-  - `Mailwoman/Terms.yml` (substitution, error): `zip code|zipcode → ZIP Code`, `whos on first|Who's on First → Who's On First`, `geo-code → geocode`, `lat/long|lat-long → latitude/longitude`, `postcode → postcode` (en-GB house term; ZIP Code stays for the US pages by vocabulary accept-list).
-- [ ] **Step 4: Fixture test.** `docs/scripts/vale-fixtures/dirty.md` containing one violation per rule; `clean.md` with compliant prose. Run `vale` on both: dirty must report ≥5 errors, clean must exit 0. Wire as `docs/scripts/check-vale-rules.sh` (three lines: run on dirty expecting failure, run on clean expecting success) and call it from the docs CI job.
+  - `styles/BannedWords.yml` (error): filler and marketing intensifiers.
+  - `styles/StockPhrases.yml` (error): contrastive slogans, metaphors, and consultant phrasing (prose only — `source-of-truth:` frontmatter is ignored via TokenIgnores addition `(^source-of-truth:.*)`).
+  - `styles/Anthropomorphism.yml` (warning): "(parser|model|decoder|resolver|pipeline) (thinks|believes|wants|knows|decides to|tries to|gives up)". Suggested fixes in the rule message ("assigns", "scores", "returns").
+  - `styles/Weasel.yml` (warning): unmeasured quantities such as "near", "typically", and "frequently" — message: "state the measured quantity or mark the sentence deliberately qualitative."
+  - `styles/Terms.yml` (substitution, error): `zip code|zipcode → ZIP Code`, `whos on first|Who's on First → Who's On First`, `geo-code → geocode`, `lat/long|lat-long → latitude/longitude`, `postcode → postcode` (en-GB house term; ZIP Code stays for the US pages by vocabulary accept-list).
+- [ ] **Step 4: Fixture test.** `config/vale/fixtures/dirty.md` containing one violation per rule; `clean.md` with compliant prose. Run `vale` on both: dirty must report ≥5 errors, clean must exit 0. Wire as `config/vale/check-rules.ts` and call it from the docs CI job.
 - [ ] **Step 5: CI wiring.** In `docs-build.yml` PR path-filtered job, add step "Prose lint" running `yarn workspace @mailwoman/docs lint:prose` after install, before build. (Corpus is old prose until Phase 3 — scope the step to `git diff --name-only origin/main... -- 'docs/articles/**/*.md*'` changed files until Task 23 flips it to full-corpus.)
 - [ ] **Step 6: Commit** `feat(docs): Vale prose toolchain with Mailwoman style rules`.
 
@@ -93,7 +93,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 **Files:**
 
 - Create: `docs/engineering/writing-system.md` (the binding style source + the comparison record), `docs/engineering/page-templates/{tutorial,how-to,reference,explanation,landing,evidence}.md`
-- Modify: `docs/styles/Mailwoman/*.yml` (rules updated to match the derived system), `scratchpad/writing-standards-draft.md` is INPUT ONLY (never committed — scratchpad is git-ignored)
+- Modify: `config/vale/styles/*.yml` (rules updated to match the derived system), `scratchpad/writing-standards-draft.md` is INPUT ONLY (never committed — scratchpad is git-ignored)
 
 **Interfaces:**
 

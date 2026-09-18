@@ -37,7 +37,7 @@
 - Site: exact-origin CORS on the worker admits `https://mailwoman.ai`, so the claim call is a plain `fetch` from the page; the page never stores the token or the secret anywhere but the DOM.
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
-- Prose follows `docs/.vale-vocab.ini` (README, plan) and the site's `.vale.ini` (pages); acronyms cap as whole components; snake_case wire keys stay.
+- Prose follows `config/vale/.vale-vocab.ini` (README, plan) and the site's `config/vale/.vale.ini` (pages); acronyms cap as whole components; snake_case wire keys stay.
 - Tests sit under `test/unit/` or `test/integration/` and import helpers by the package contract, never relatively (`test-contract` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
 - Every commit ends with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 

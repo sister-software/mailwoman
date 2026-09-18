@@ -7,7 +7,7 @@
 ## is stripped by Vale before linting, and the `(^source-of-truth:.*)` entry in
 ## .vale.ini's TokenIgnores is a defensive backstop for that case.
 ##
-## `\snames the\s` MOVED to MailwomanChat/ChatStockForms.yml. It fires on published prose as a
+## `\snames the\s` MOVED to ChatStockForms.yml. It fires on published prose as a
 ## plain, precise verb — "the key names the reduction rather than the raw column", "every reading
 ## names the one it answered under" — and, worse, it forbade the remedy AmbiguousShorthand's own
 ## message prescribes ("name the concrete thing"). One rule must not ban what another requires.

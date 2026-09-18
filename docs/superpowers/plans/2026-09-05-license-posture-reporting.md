@@ -23,7 +23,7 @@
 - The launcher `packages/mailwoman/lib/cli.ts` keeps one static import. Everything new there arrives by dynamic import after dispatch.
 - The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. none of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
 - Run `yarn compile` before any test that spawns the compiled CLI (`out/cli.js`). The pre-commit hook runs the compiled CLI too.
-- Every prose file (spec, CHANGELOG, docs page) passes `node_modules/@vvago/vale/bin/vale --config docs/.vale-vocab.ini <file>`.
+- Every prose file (spec, CHANGELOG, docs page) passes `node_modules/@vvago/vale/bin/vale --config config/vale/.vale-vocab.ini <file>`.
 - Commit messages end with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 - Work happens on branch `feat/license-posture-reporting` in the worktree `.claude/worktrees/license-posture`. Never `cd` to the main checkout.
 
@@ -1515,7 +1515,7 @@ Replace the contact address with whatever the operator names as the sales contac
 
 - [ ] **Step 2: Vale, then build**
 
-Run: `node_modules/@vvago/vale/bin/vale --config docs/.vale.ini docs/src/pages/license.mdx`
+Run: `node_modules/@vvago/vale/bin/vale --config config/vale/.vale.ini docs/src/pages/license.mdx`
 Expected: 0 errors. Fix any finding by naming the concrete thing.
 
 Run: `yarn workspace @mailwoman/docs build 2>&1 | tail -5` (this takes minutes; see the `run-docs` skill for the faster dev-server check) and confirm `docs/build/license/index.html` exists.

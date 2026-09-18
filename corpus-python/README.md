@@ -158,6 +158,6 @@ SentencePiece is a native binary dep without a maintained Node bindings story fo
 Keeping the Python side standalone:
 
 - Lets the TS pipeline build / test / ship without a Python toolchain on every CI runner.
-- Cleanly factors training (slow, GPU-bound) away from the streaming corpus build (fast, JS).
+- Separates training (slow, GPU-bound) from the streaming corpus build (fast, JS).
 
 See `DECISIONS.md` for the formal rationale on each call.

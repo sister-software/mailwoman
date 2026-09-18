@@ -1,15 +1,15 @@
 # Demo-cascade smoke rows (`demo-cascade-smoke.jsonl`)
 
-The whole-stack smoke eval (#524). Every other gate lens is per-layer; this file
+The whole-stack smoke eval (#524). Every other validation lens is per-layer; this file
 exists because three production bugs (#520 gazetteer-feeds crash, #521 reconcile
 fragmentation subsidy, #522 resolver placetype exclusion) all shipped through
-green per-layer gates on 2026-06-11. Nothing in the battery ran
-parse → reconcile → resolve as ONE pass the way the demo (and any real consumer)
-does — the operator's browser glance found all three in five minutes.
+green per-layer checks on 2026-06-11. Nothing in the battery ran
+parse → reconcile → resolve as one pass the way the demo (and any real consumer)
+does — the operator's browser inspection found all three in five minutes.
 
 Runner: [`scripts/eval/demo-cascade-smoke.ts`](../../../scripts/eval/demo-cascade-smoke.ts)
 (compose `runPipeline` + the demo's `runCascade` over the Node lookup against the
-slim `wof-hot.db` the demo serves). Wired as an env-gated leg of
+slim `wof-hot.db` the demo serves). Wired as a leg enabled by the environment of
 `mailwoman eval promote` (`mailwoman/eval-harness/promotion-eval.ts`) — it runs
 whenever the hot DB is present and skips with a loud note when it isn't.
 
@@ -19,11 +19,11 @@ whenever the hot DB is present and skips with a loud note when it isn't.
   parse components. A row passes only when the entire stack lands on the right
   place. (`expect.name` / `expect.placetype` are human-readable cross-checks,
   not graded.)
-- **Whole-stack**: each `input` goes through the FULL pipeline — neural parse
+- **Whole-stack**: each `input` goes through the full pipeline — neural parse
   with the ship config (gazetteer lexicon, postcode anchor, conventions mask,
   span bridge, FST), joint reconcile, grouper audit, then the demo's cascade
   (postcode → locality-with-region-bbox → raw text) against the slim hot DB.
-- **Additions welcome, but ids MUST be verified against the gazetteer** before a
+- **Additions welcome, but ids must be verified against the gazetteer** before a
   row is committed: query the staged `wof-hot.db` directly (e.g. via
   `WofSqlitePlaceLookup.findPlace`) and confirm the id, name, placetype, and
   rough coordinates identify the place you mean. Never pin an id by copying the
@@ -47,7 +47,7 @@ One JSON object per line (blank lines and `#`/`//` comment lines are skipped):
 ```
 
 - `input` (required): the raw query, verbatim as a user would type it.
-- `expect` (required): exactly ONE of
+- `expect` (required): exactly one of
   - `id` — positive-integer WOF id the top cascade hit must carry, or
   - `anchor_centroid: true` — the cascade must dead-end (no WOF row, e.g. a
     bare US ZIP on the slim DB, which ships **no postalcode rows**) and the
@@ -56,7 +56,7 @@ One JSON object per line (blank lines and `#`/`//` comment lines are skipped):
 
 Schema validation lives in `mailwoman/eval-harness/demo-cascade-rows.ts`
 (unit-tested in `mailwoman/eval-harness/demo-cascade-rows.test.ts`); a malformed
-row fails LOUD naming the row number.
+row fails with a message naming the row number.
 
 ## Provenance of the initial 21 rows (2026-06-11)
 

@@ -1,5 +1,5 @@
 /**
- * @file Clean fixture for `docs/.vale-code.ini` + `Mailwoman/AmbiguousShorthandCode.yml`. Zero alerts, of any severity.
+ * @file Clean fixture for `config/vale/.vale-code.ini` + `AmbiguousShorthandCode.yml`. Zero alerts, of any severity.
  *   Every name below is in the rule's exceptions list because it is a real artifact — a package, a command, or a
  *   tracked filename — and prose that means one of them spells it in full. That is the "name the artifact by its
  *   filename" remedy, not an escape from it. promotion-eval.ts refuses a candidate carrying a known regression and

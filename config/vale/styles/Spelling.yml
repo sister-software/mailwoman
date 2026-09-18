@@ -29,7 +29,7 @@
 ## `` `licence` `` inline, both invisible to the rule by the measurement above.
 ##
 ## One PROSE exception exists and lives in
-## styles/config/vocabularies/Mailwoman/accept.txt, because accept.txt takes no
+## config/vale/vocabularies/accept.txt, because accept.txt takes no
 ## comments: `Licence Ouverte` is the proper name of the French open licence the
 ## BAN ships under, so its spelling is the French government's and not ours. The
 ## accept-list is what exempts it — measured: adding the entry silences the two

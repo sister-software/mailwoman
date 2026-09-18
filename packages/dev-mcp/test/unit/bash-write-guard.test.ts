@@ -189,7 +189,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// refusal named `QUOTED` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
-		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node docs/scripts/check/vale-rules.ts`],
+		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
 		// A quote nested inside another kind of quote. The pair must be read as one span; mis-pairing it leaves a stray
 		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],

@@ -6,17 +6,17 @@ Each row: `{raw, components, class}`. Graded by `scripts/eval/score-punctuation-
 
 Gold conventions, decided once here:
 
-1. **Paired delimiters are EXCLUDED from component values** (`"Big Company HQ"` → venue
+1. **Paired delimiters are excluded from component values** (`"Big Company HQ"` → venue
    `Big Company HQ`) — matching the January Chevrotain experiment's strip behavior and how a
    geocoder would consume the value.
-2. **Parenthetical annotations** (`(rear entrance)`, `(2nd floor)`) are NOT components — gold
-   omits them; the row grades whether NEIGHBORS survive the annotation. When paren content IS a
+2. **Parenthetical annotations** (`(rear entrance)`, `(2nd floor)`) are not components — gold
+   omits them; the row grades whether neighbors survive the annotation. When paren content is a
    component (`(Australia)` → country), it is labeled as that component, delimiters excluded.
 3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits;
    the c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
    poisoning, not c/o extraction (that capability is a separate future change).
 4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
-   EXCLUDED from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
+   excluded from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
    still graded — never omitted. BALANCED quotes that are part of a name as written stay
    (`Joe's "Famous" Deli`, `Office "B"`). The essential read remains parse SURVIVAL + neighbor
    accuracy, captured per-row by the scorer (a thrown parse fails every component in the row).
@@ -24,7 +24,7 @@ Gold conventions, decided once here:
    `Washington D.C.`) — the span-bridge regression lens.
 6. **Half addresses** (`123 1/2`) follow USPS convention: the fraction belongs to house_number.
 7. Locale defaults US; `class` field drives the per-class report. Rows seeded from: the January
-   experiment's tests (commit 10195ea), the v4.4.0 gate's measured classes, arena leftovers
+   experiment's tests (commit 10195ea), the v4.4.0 evaluation's measured classes, arena leftovers
    (Eduard-Sueß), and real-world named places chosen for their punctuation (Coeur d'Alene,
    Winston-Salem, Saint-Louis-du-Ha! Ha!). The 2026-06-11 expansion (62→120) weighted the two
    v0-win quadrants (bracketed, hyphen), the under-5-row classes, and FR/DE/AU/NZ surfaces
