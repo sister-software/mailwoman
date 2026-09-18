@@ -26,6 +26,17 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import { Text } from "ink"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
+import { suffixTail } from "#dev-tools/coord-panel"
+
+/**
+ * The three buckets `--stratify-shape` spends the budget across, from the same {@link suffixTail} the probes over this
+ * recipe's output report by — so a share measured in the tuples and a rate measured on a panel speak about one split.
+ */
+function localityShape(triple: { locality: string }): string {
+	if (suffixTail(triple.locality)) return "suffix-tail"
+
+	return triple.locality.trim().split(/\s+/).length > 1 ? "multi-word" : "single-word"
+}
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -49,6 +60,10 @@ export const spec = {
 		},
 		quota: { type: "number", description: "Postcodes one locality may contribute (default: the tool's)" },
 		budget: { type: "number", description: "Tuples one country may contribute" },
+		"stratify-shape": {
+			type: "boolean",
+			description: "Spend the budget evenly across locality name shapes as well as regions (US suffix tails)",
+		},
 		"postcode-db": { type: "string", description: "postalcode-intl.db path (parent-join)" },
 		"admin-db": { type: "string", description: "Admin gazetteer path" },
 	},
@@ -99,7 +114,7 @@ const CorpusTuples: CommandComponent<typeof spec> = ({ options }) => {
 		let kept = tools.applyLocalityQuota(triples, options.quota)
 
 		if (options.budget !== undefined) {
-			kept = tools.applyCountryBudget(kept, options.budget)
+			kept = tools.applyCountryBudget(kept, options.budget, options.stratifyShape ? localityShape : undefined)
 		}
 
 		await writeLocalTextFile(

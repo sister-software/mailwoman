@@ -194,10 +194,18 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
  * source still reaches every region the source has.
  *
  * Within a region the source order is kept, so the same budget selects the same rows.
+ *
+ * `subKey` adds a second dimension to the round-robin, so the budget spreads across `(region, subKey)` rather than
+ * across the region alone. The US case it was added for: the source pool holds 76.8% single-word localities and 10.5%
+ * whose last word is a USPS street suffix (`Orland Park`), and a region-only round-robin reproduces that mix, so the
+ * recipe teaches the shape the model already reads correctly and barely teaches the one it fails on. Keying the
+ * round-robin by shape as well lifts the suffix-tail share to what the pool can supply rather than to what its
+ * frequency gives it.
  */
 export function applyCountryBudget<T extends { cc: string; region?: string }>(
 	triples: readonly T[],
-	budget: number | ReadonlyMap<string, number>
+	budget: number | ReadonlyMap<string, number>,
+	subKey?: (triple: T) => string
 ): T[] {
 	const byRegion = new Map<string, T[]>()
 	const order: string[] = []
@@ -207,7 +215,7 @@ export function applyCountryBudget<T extends { cc: string; region?: string }>(
 
 		if (cap === undefined) continue
 
-		const key = `${triple.cc} ${triple.region ?? ""}`
+		const key = `${triple.cc} ${triple.region ?? ""}${subKey ? ` ${subKey(triple)}` : ""}`
 		const bucket = byRegion.get(key)
 
 		if (bucket) {
