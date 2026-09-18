@@ -45,7 +45,7 @@ The 0.30 row is the only one that reaches 15%, and it reaches it by merging unre
 
 ## The finding
 
-**The repetition in this repository is architectural, not lexical.**
+**The repetition in this repository is architectural rather than lexical.**
 
 The four authority-layer packages each write their own `sdk/cells.ts`, `sdk/client.ts`, `sdk/ingest/chunk.ts` —
 same responsibilities, same call order, four different types, four different vocabularies, four different table
@@ -115,7 +115,7 @@ with an `OPTION_INITIALISMS` table naming the segments that capitalize a whole a
 that derivation makes `Options` derived.
 
 The runtime table and the type-level table must not drift, and matched constants would not prevent it — this
-repository's own rule is to share the function, not the constants. The action is one declaration: keep
+repository's own rule is to share the function rather than the constants. The action is one declaration: keep
 `OPTION_INITIALISMS` as a single `as const` object, take the type side from `typeof` it and the runtime side from
 `Object.entries` of it.
 
@@ -128,7 +128,7 @@ different finding and may survive.
 **A2. Shared option groups.** 450 of 881 option declarations restate a key another command already declares, at
 ~707 lines. The repetition is broad rather than deep: `out` appears 56 times in 77 lines. Consolidating trades
 per-command legibility for lines, so this lane is taken only where a group is coherent (the engine options
-`locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`), not key by key.
+`locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`) rather than key by key.
 
 A2 also surfaces a naming split worth fixing while the files are open: `out` (56) beside `output` (23), and
 `country` (14) beside `countries` (14). Read afterwards under #2280, only the first was a drift — see the outcome
@@ -192,7 +192,7 @@ Real, small, and a correctness improvement rather than a trade:
 packages document the copy in place: reaching `@mailwoman/spatial` would pull `@mailwoman/core`'s ~11 MB of
 shipped data behind a ray cast. Price the dependency before moving a helper.
 
-## Outcome: the file-clustering number measures parallelism, not duplication
+## Outcome: the file-clustering number measures parallelism rather than duplication
 
 Lane A1 landed and lane B was opened against the four authority-layer packages. Reading them revealed a systematic
 bias in the 22,829 figure, and it changes the campaign's answer.
@@ -221,7 +221,7 @@ other measures parallelism, and parallelism is the correct state for four produc
 
 Lane A1 was not in any of the five censuses. 143 `interface Options` blocks restated their own `spec.options`:
 invisible to `jscpd` (different tokens), to `knip` (all used), to the declaration census (it compares functions
-and constants, not a type against a constant) and to file clustering (the pair sits inside one file). It delivered
+and constants rather than a type against a constant) and to file clustering (the pair sits inside one file). It delivered
 1,182 net lines, more than every cross-package family in the tree combined.
 
 A sixth probe went looking for the rest of that category — a string-literal union restating an `as const` object's
@@ -306,7 +306,7 @@ rule; do not open a separate pull request for a baseline.
   workspace missing from the release list freezes silently at consumer expense. Run the release-list arithmetic
   from `AGENTS.md` if lane B adds a workspace.
 - **A move leaves quoted path literals stale that the compiler never reads.** Sweep for quoted literals whose
-  first segment is a workspace name after any file moves, not only for imports.
+  first segment is a workspace name after any file moves rather than only for imports.
 
 ## Appendix: how the numbers were derived
 
@@ -320,4 +320,4 @@ rule; do not open a separate pull request for a baseline.
   union-find at 0.45. Files under 40 lines excluded. Size banding skips pairs whose shingle counts differ by more
   than 2.5×, which cannot reach the threshold.
 - **Reduction formula.** Keep the largest member whole, charge one line per remaining member for the import (three
-  for a file-level family), return the rest. It is an upper bound, not a promise.
+  for a file-level family), return the rest. It is an upper bound rather than a promise.

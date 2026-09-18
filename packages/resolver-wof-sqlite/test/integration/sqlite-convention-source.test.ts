@@ -111,7 +111,7 @@ describe("convention-asset auto-detect → dispatch", () => {
 		// First query warns about the unknown strategy and falls through to the known one.
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })
-		expect(warn).toHaveBeenCalledTimes(1) // once per name, not once per query
+		expect(warn).toHaveBeenCalledTimes(1) // once per name rather than once per query
 		expect(warn.mock.calls[0]![0]).toContain("does_not_exist")
 		warn.mockRestore()
 	})

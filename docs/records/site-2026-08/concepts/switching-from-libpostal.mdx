@@ -35,14 +35,14 @@ The `ComponentTag` → libpostal label mapping is close to 1:1 (`street` → `ro
 
 ## What's different
 
-- **A neural tagger, not a CRF.** The model is calibrated, so you also get [a confidence you can route on](./confidence-calibration.mdx)
+- **A neural tagger rather than a CRF.** The model is calibrated, so you also get [a confidence you can route on](./confidence-calibration.mdx)
   — and the same engine geocodes, so parse and resolve share one pipeline.
 - **Lowest-dependency drop-in.** `/parse` needs no gazetteer at all; it'sthe model.
 
 ## What's missing
 
-- **`/expand` returns one alternative, not several.** Mailwoman's normalization is deterministic, so it
-  returns the original plus the normalized + abbreviation-expanded form, not libpostal's probabilistic
+- **`/expand` returns one alternative rather than several.** Mailwoman's normalization is deterministic, so it
+  returns the original plus the normalized + abbreviation-expanded form rather than libpostal's probabilistic
   multi-variant expansion. If you depend on the full variant set for fuzzy matching, keep libpostal for
   that step.
 - **In-process latency.** libpostal links into your binary; Mailwoman is a service (or a JS import). For

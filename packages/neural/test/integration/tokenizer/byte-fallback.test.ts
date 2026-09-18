@@ -7,7 +7,7 @@
  *
  *   A byte-fallback piece's placeholder text (`"<0x7B>"`, 6 chars) is not 6 input characters — it represents exactly
  *   one byte of a real character's UTF-8 encoding. An offset walker that advances the cursor by the placeholder's
- *   length desyncs every SUBSEQUENT piece's `[start, end)` offsets for the rest of the input, not just the
+ *   length desyncs every SUBSEQUENT piece's `[start, end)` offsets for the rest of the input rather than just the
  *   byte-fallback piece itself, which is why the assertions here reach well past the fallback run. On the small
  *   fixture tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) byte-fallback fires on curly quotes “”‘’,
  *   guillemets «», and even ASCII braces `{}`/`[]` — not just non-Latin scripts, so this suite reproduces without the
@@ -69,7 +69,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(byteFallbackPiece.start, byteFallbackPiece.end)).toBe("{")
 
 		// "Leeds" is split fine-grained on this small-vocab fixture tokenizer ("▁Le", "e", "d", "s") — reassembling
-		// every piece after the brace run must still spell "Leeds" cleanly, not a garbled offset-shifted string.
+		// every piece after the brace run must still spell "Leeds" cleanly rather than a garbled offset-shifted string.
 		const afterComma = pieces.filter((p) => p.start >= pieces.find((q) => q.piece === ",")!.end)
 
 		const reassembled = afterComma

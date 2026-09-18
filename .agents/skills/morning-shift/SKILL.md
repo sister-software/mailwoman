@@ -19,7 +19,7 @@ autonomous session, then KICKOFF starts the day's collaborative work.
 
 - Operator is mid-collaboration (no prior autonomous session to wrap). Use normal mode.
 - Routine session start with no prior night shift. Skip WRAP, skim KICKOFF, proceed.
-- Operator is signing off (going TO sleep, not waking from it). That's `night-shift`.
+- Operator is signing off (going TO sleep rather than waking from it). That's `night-shift`.
 
 ---
 
@@ -64,7 +64,7 @@ under "needs eyes-on" — don't bury it.**
 
 ### 3. Deliver the morning summary in chat
 
-Order matters. Lead with what the operator must act on, not with what shipped.
+Order matters. Lead with what the operator must act on rather than with what shipped.
 The night-shift `Operator handoff format` is the authoritative spec; the
 shorthand:
 
@@ -89,7 +89,7 @@ shorthand:
 
 Three habits that make this land:
 
-- **Headline result goes in line 1, not paragraph 4.** If the result is region p90
+- **Headline result goes in line 1 rather than paragraph 4.** If the result is region p90
   2763km → 10km, lead with that under the relevant `needs your eyes` item.
 - **Empty rows are fine.** "Production: unchanged" is a complete answer.
 - **No filler.** "Standing by for the next checkpoint" was a night-shift artifact;
@@ -116,7 +116,7 @@ artifact the operator can re-read in a week and understand the call.
 
 If a top-of-MEMORY entry was marked `IN-FLIGHT` or `⏯`, flip it to `STOPPED` /
 `⏸` / `RESOLVED` per the actual outcome. The next session that starts before
-the operator finishes a decision should land in the right state, not a stale
+the operator finishes a decision should land in the right state rather than a stale
 "still training" state.
 
 ```bash
@@ -168,12 +168,12 @@ Before launching today's work, read three things in this order:
 3. **`/home/lab/.claude/projects/-home-lab-Projects-mailwoman/memory/MEMORY.md`** top entries — these are the live constraints (treadmill stops, ship/hold decisions, eval verdicts).
 
 If any of those three contradicts what the operator asked for, **surface
-the contradiction now, not 3 hours into the work.** Example:
+the contradiction now rather than 3 hours into the work.** Example:
 
 > "The postmortem flagged the affix split has a stability ceiling at 29M params.
 > You're asking me to push the affix recipe further — that's exactly the
 > treadmill the night-shift stopped at. Want to confirm we're escalating
-> (option 2: wider model / dedicated head), not iterating?"
+> (option 2: wider model / dedicated head) rather than iterating?"
 
 ### 3. Reset the task list for collaboration mode
 
@@ -201,7 +201,7 @@ Some of them get in the way when the operator is at the keyboard:
 
 If the operator hands the conn again ("I'll be afk for an hour, keep going"),
 flip back to night-shift posture for that window — but the explicit handoff is
-the trigger, not the wall-clock time.
+the trigger rather than the wall-clock time.
 
 ### 5. Carry forward the integrity guardrails
 
@@ -219,7 +219,7 @@ These survive both modes — they're not posture, they're project rules:
 
 ## Edge cases
 
-### Operator returned mid-shift, not at the planned wrap
+### Operator returned mid-shift rather than at the planned wrap
 
 If the operator returns before the planned 15:00 UTC hand-off (or whatever the
 shift end was), do WRAP steps 1, 2, 3, then ask whether to continue the shift

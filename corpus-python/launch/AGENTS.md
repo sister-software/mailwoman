@@ -39,7 +39,7 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
 1. **Build the corpus locally** — for an overlay (base + your new recipe output), assemble the overlay manifest.
 2. **Re-root the manifest paths to `/data`.** The data loader (`data/loader/`) reads each parquet file's
    manifest `path` AS-IS; base parquet files must point at `/data/corpus/versioned/<base>/…` (where the base
-   `sync` lands them), NOT the local `/mnt/playpen` build path. The overlay assembler does this
+   `sync` lands them) rather than the local `/mnt/playpen` build path. The overlay assembler does this
    (`_reroot`). **Verify: `python -c "...; sum('/mnt' in s['path'] for s in manifest_files(data))"` must be 0.**
    _This bit us on v1.6.0: the manifest's 690 base parquet files pointed at `/mnt/playpen`, so on the volume
    the loader would re-root them under the OVERLAY dir (which holds only the new recipe output) and find nothing._
@@ -47,9 +47,9 @@ the token, `stage_v8cjk_regs` does the same container-side write from a local mo
    `rclone copy corpus-python/src/ :s3:mailwoman-assets/corpus-python/src/ --exclude "**/__pycache__/**"`
    (delivers the new config) and `rclone copy <overlay-dir>/ :s3:mailwoman-assets/corpus/<ver>/<corpus>/`.
    R2 intermittently returns **501** — ride it with `--low-level-retries 30 --retries 8` (each op
-   succeeds on a retry). **Pass rclone flags inline, not via a shell variable** — zsh doesn't word-split
+   succeeds on a retry). **Pass rclone flags inline rather than via a shell variable** — zsh doesn't word-split
    unquoted vars, so `$FLAGS` arrives as one bogus flag.
-4. **Add a row to `launch/corpora.py`**, not a function. A row names its transfers with `corpus()`,
+4. **Add a row to `launch/corpora.py`** rather than a function. A row names its transfers with `corpus()`,
    `mirror()` and `file_into()`, the `__pycache__` directories to clear, and the paths that must exist
    afterwards — the config, the MANIFEST, your recipe output, AND a re-rooted base parquet file. The base + tokenizer
    usually persist on the volume from prior runs, so don't re-transfer the ~30 GB base unless it is
@@ -76,7 +76,7 @@ mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps i
 
 8. **Sanity-check the loss in the first ~300 steps — BEFORE walking away.** `modal app logs <app-id>`;
    `train_loss` must be a normal CE scale (O(1–10)) and **decreasing**. An exploded loss (thousands /
-   millions, not falling) means a loss term is `-inf`-ing gold labels. _This bit v1.6.0: the conventions
+   millions rather than falling) means a loss term is `-inf`-ing gold labels. _This bit v1.6.0: the conventions
    loss-mask (rider) forbids FR `street_prefix`, which the boundary recipe's fr-prefix shape TEACHES → loss
    ~7M. Killed at step 2000, disabled the mask, relaunched (loss 5.0→1.6)._ Don't bundle a per-locale
    label/transition mask with a recipe that teaches a label that locale's convention forbids — reconcile

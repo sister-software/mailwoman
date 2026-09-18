@@ -58,8 +58,8 @@ German also carries a check floor of its own, and the West Slavic set (Czech,
 Polish, Slovak, Slovenian) got the same tokenizer-splice treatment as French —
 their wrong-city rates sit in single digits.
 
-One caveat for this tier: resolution is locality-and-postcode grade, not rooftop.
-A Warsaw address lands in the right neighborhood, not on the roof, because no open
+One caveat for this tier: resolution is locality-and-postcode grade rather than rooftop.
+A Warsaw address lands in the right neighborhood rather than on the roof, because no open
 national register is wired in yet.
 
 ## Thin: Norwegian, Swedish, Slovenian
@@ -73,11 +73,11 @@ data is heavy in these locales, try it on your sample before committing.
 
 ## Structured differently: Japanese
 
-Japan resolves by postcode route through a per-country convention engine, not
+Japan resolves by postcode route through a per-country convention engine rather than
 through the neural parser — Japanese addressing is regular enough that rules beat
 a sequence labeler there, and we make no parse-quality claim. It works well for
 what it is (~95% on the convention suite); it is a different mechanism with
-different failure modes. Taiwan and Korea are open work, not claims.
+different failure modes. Taiwan and Korea are open work rather than claims.
 
 ## Known gap: British English
 
@@ -85,7 +85,7 @@ The one evaluators poke at first, so here it is up front. UK addresses parse
 better than you'd expect — a postcode-format prior routes them correctly most of
 the time — but there is no UK training corpus, because the usable open data
 carries a share-alike license that conflicts with how we distribute training
-extracts. The blocker is licensing, not modeling, and the issue tracking it has a
+extracts. The blocker is licensing rather than modeling, and the issue tracking it has a
 check-back owner. Ireland, Hungary, and Romania sit behind the same check.
 
 Non-Latin scripts (Cyrillic, Hangul, Han, Armenian) have synthetic transliteration

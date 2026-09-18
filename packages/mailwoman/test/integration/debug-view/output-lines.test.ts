@@ -82,7 +82,7 @@ describe("outputLines", () => {
 	})
 
 	it("omits the sections whose source produced nothing", () => {
-		// No trace ⇒ no kind verdict and no timing to report. Omitted, not rendered empty: an empty `kind` section
+		// No trace ⇒ no kind verdict and no timing to report. Omitted rather than rendered empty: an empty `kind` section
 		// would read as "the classifier had no opinion", which is a different claim from "nobody asked it".
 		const lines = outputLines({ result: { ...RESULT, hierarchy: [], candidates: [] }, tree: TREE })
 

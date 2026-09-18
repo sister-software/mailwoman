@@ -20,8 +20,8 @@
  *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
  *     one corrective turn.
  *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript
- *     schema is Codex's own, not the JSONL shape the Claude adapter parses. A missing
- *     `last_assistant_message` here is silence, not a parse attempt.
+ *     schema is Codex's own rather than the JSONL shape the Claude adapter parses. A missing
+ *     `last_assistant_message` here is silence rather than a parse attempt.
  *
  *   Register it in `.codex/hooks.json` under `hooks.Stop`; the command path is repo-relative,
  *   matching how `.codex/config.toml` addresses `packages/dev-mcp/lib/cli/index.ts`.

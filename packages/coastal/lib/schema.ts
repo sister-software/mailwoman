@@ -15,7 +15,7 @@
  *   frontages — 835 rows would have collided. So the key is `<scenario key>:<OBJECTID>` and `frontage_id`
  *   rides as an attribute, which is what a reader joins on when it wants the frontage rather than the row.
  *
- *   THE CELL TABLE NAMES POLYGONS, NOT CLASSES, AND THAT IS WHERE THIS LAYER DIFFERS FROM THE FLOOD ONE.
+ *   THE CELL TABLE NAMES POLYGONS rather than CLASSES, AND THAT IS WHERE THIS LAYER DIFFERS FROM THE FLOOD ONE.
  *   A flood answer is a zone code from a two-value domain, so its index accumulates per code. An erosion
  *   answer is a specific frontage polygon carrying its own distance, policy and defence, so the index names
  *   the polygon and the scenario it belongs to. Overlap is real rather than theoretical: 3,727 of the 7,492

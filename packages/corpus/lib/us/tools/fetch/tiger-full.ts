@@ -20,7 +20,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  *   county ZIP to disk (no curl subprocess).
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
@@ -42,7 +42,7 @@ import { readManifest, streamDownload, writeManifest } from "#tools/fetch/downlo
 const HTTP_OK = 200
 
 /**
- * Lowest 3xx status. at or above it the response is a redirect or an error, not a body.
+ * Lowest 3xx status. at or above it the response is a redirect or an error rather than a body.
  */
 const HTTP_REDIRECT = 300
 

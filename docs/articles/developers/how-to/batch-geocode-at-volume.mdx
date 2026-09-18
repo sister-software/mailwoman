@@ -12,7 +12,7 @@ that reaches it.
 
 The short version: inference blocks the JavaScript thread, so running more geocodes concurrently inside
 one process changes nothing. Throughput comes from more processes. This page measures both claims on one
-machine so you can repeat the measurement on yours — the peak worker count is a property of your box, not
+machine so you can repeat the measurement on yours — the peak worker count is a property of your box rather than
 a constant.
 
 ## Prerequisites
@@ -90,7 +90,7 @@ the same box a day later, against `8.7.0` at head, gave 111.0, 111.6 and 113.3. 
 across sessions on one machine with one model and one gazetteer, and none of it is a code change — it
 is what a shared box does. It is also why the table in step 4 is worth more than any single figure in
 it: every row of that table was measured in one sitting, so the ratios hold even where the absolute
-rates drift. Compare your ratios to ours, not your rows per second.
+rates drift. Compare your ratios to ours rather than your rows per second.
 
 ## 2. Confirm that async concurrency does not help
 
@@ -117,7 +117,7 @@ in-flight 16  144.5 rows/s
 ```
 
 Sixteen times the concurrency, 1.04× the throughput. The 3% is loop overhead amortized across the
-`Promise.all`, not parallelism.
+`Promise.all` rather than parallelism.
 
 The mechanism is that `onnxruntime-node`'s `session.run()` blocks the JavaScript thread rather than
 releasing it to the libuv pool, and `node:sqlite` reads are synchronous. An `await` in front of a
@@ -224,13 +224,13 @@ out.end()
 console.log(`${workerCount} workers: ${done} rows in ${s.toFixed(2)} s → ${(done / s).toFixed(1)} rows/s`)
 ```
 
-Two details in there warrant their space. Work is pulled, not pushed: a worker asks for the next batch when
+Two details in there warrant their space. Work is pulled rather than pushed: a worker asks for the next batch when
 it finishes one, so a slow batch never leaves a worker idle behind a fixed share. And the batch size of
 32 amortizes the message round-trip without letting one worker sit on a queue the others could drain.
 
 ## 4. Sweep the worker count
 
-The right number is measured, not chosen. Run the pool at several sizes over the same 5,000 rows:
+The right number is measured rather than chosen. Run the pool at several sizes over the same 5,000 rows:
 
 ```bash
 for n in 1 2 4 6 8; do for r in 1 2 3; do node pool.mjs $n 250; done; done
@@ -300,7 +300,7 @@ jq -c 'select(.query | startswith("1275 Pennsylvania"))' customers.pooled.jsonl 
 {"query":"1275 Pennsylvania Ave NW, Washington, DC, 20004","lat":38.89566505262116,"lon":-77.02925468482408,"resolution_tier":"address_point"}
 ```
 
-The `jq` filter rather than `head -1` is deliberate: records arrive in completion order, not input
+The `jq` filter rather than `head -1` is deliberate: records arrive in completion order rather than input
 order, so the first line of the file is a different row on every run. That is also why each record
 carries its own `query`. If you need the input order back, carry an index through the batch and sort at
 the end.
@@ -326,7 +326,7 @@ you can run today.
 
 ## Limits
 
-- **Memory scales with workers, not rows.** Each worker loads its own copy of the model, so eight
+- **Memory scales with workers rather than rows.** Each worker loads its own copy of the model, so eight
   workers is eight model sessions. The gazetteer is opened read-only and shares the OS page cache
   across workers, so it does not multiply. Watch resident set size before raising the count.
 - **The peak is per-machine and per-dataset.** The module doc for `mailwoman/geocode-stream` records a

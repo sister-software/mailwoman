@@ -6,10 +6,10 @@
 # regression outcome for 40 of 649 board rows (16 regress only under v5.0.0. 24 only under v5.1.0.
 # 16 + 24 = 40). That comparison cannot separate the admission change from training nondeterminism.
 # Comparing v5.0.0 with this seed-43 run holds the config fixed and measures one seed-pair's
-# row-level disagreement. One pair is an estimate, not a general variance floor. report the changed
+# row-level disagreement. One pair is an estimate rather than a general variance floor. report the changed
 # rows and the 649-row denominator without using it to excuse a candidate regression.
 #
-# READ THE RESULT AS A MEASUREMENT, NOT A CANDIDATE. This model is not for promotion. it measures
+# READ THE RESULT AS A MEASUREMENT rather than A CANDIDATE. This model is not for promotion. it measures
 # how much row-level disagreement one fixed-config seed pair produces. The D-rule remains an absolute
 # comparison against the shipped model and this measurement cannot authorize a regression.
 data:

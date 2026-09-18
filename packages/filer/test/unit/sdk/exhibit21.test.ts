@@ -293,7 +293,7 @@ describe("fetchExhibit21", () => {
  * The required invariant this fabrication-audit fix is held to (module docstring): a name is only emitted if it appears
  * in the input as a contiguous string. `normalizedDocument` reproduces the same normalization every parse strategy
  * applies before comparing/emitting text — strip tags, decode entities, collapse whitespace — so "appears in the input"
- * is checked on the same basis the parser itself reasons on, not against the raw (still-tagged) source.
+ * is checked on the same basis the parser itself reasons on rather than against the raw (still-tagged) source.
  */
 function normalizedDocument(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))

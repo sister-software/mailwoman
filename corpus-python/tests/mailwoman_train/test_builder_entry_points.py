@@ -28,7 +28,7 @@ def _module_name(path: Path) -> str:
 
 
 def _invocation_name(path: Path) -> str:
-    """What follows `python -m`. A `__main__.py` is invoked by its PACKAGE name, not its own."""
+    """What follows `python -m`. A `__main__.py` is invoked by its PACKAGE name rather than its own."""
     name = _module_name(path)
     return name.rsplit(".", 1)[0] if name.endswith(".__main__") else name
 

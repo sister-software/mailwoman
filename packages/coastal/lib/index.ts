@@ -575,7 +575,7 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		)
 	}
 
-	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS, NOT DECLARED. The manifest's spine key names the INDEX
+	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS rather than DECLARED. The manifest's spine key names the INDEX
 	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it (the flood
 	// layer's `flood_map_extent` and the soil layer's survey-area rows are where those two put theirs, and NCERM publishes
 	// no footprint at all). Recovering it is exact rather than approximate — a short cell expands to a valid index at

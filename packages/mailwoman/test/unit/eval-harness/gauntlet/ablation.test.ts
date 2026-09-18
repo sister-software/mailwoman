@@ -444,7 +444,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			minLocaleRows: 1,
 		})
 
-		// street was measured in GB and not in FR: the FR column must be the absence marker, not 0/0.
+		// street was measured in GB and not in FR: the FR column must be the absence marker rather than 0/0.
 		expect(md).toContain(`| street | 0/1 | ${ABLATION_ABSENT} |`)
 		expect(md).not.toContain("0/0")
 	})

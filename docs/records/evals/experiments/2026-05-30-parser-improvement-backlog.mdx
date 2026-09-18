@@ -15,7 +15,7 @@ Scoped from the **three-arena capability eval** (libpostal + corpus-perturbation
 | perturbation     | noisy/degraded  | 39% |            64% | neural is the robustness layer               |
 | postal-standards | edge formats    | 26% |     TBD@v0.7.2 | coverage gaps on military/PO-box/rural-route |
 
-The neural model is the **robustness layer**, not a worse v0. The backlog
+The neural model is the **robustness layer** rather than a worse v0. The backlog
 below sharpens that layer where the arenas show it bleeding.
 
 ## The real neural failures (from arena spot-checks)
@@ -73,7 +73,7 @@ both are real work and belong after the cheap repairs land.
   token.
 
 **v0.7.2 measured result.** The arena re-run showed the unit-drop has two
-failure modes, not one:
+failure modes rather than one:
 
 1. **Mislabel-as-locality** — bare designator-led units (`Flat 2  14 Smith St`,
    `APT 2 …`) → the model labels the whole `Designator N` run as `locality`. The
@@ -86,16 +86,16 @@ failure modes, not one:
    (`MAIN ST NW STE 12`) gets swallowed into the `street` span. A regex repair
    **cannot** safely carve a unit out of a confident street span — that's a
    **coverage** gap (units underrepresented in training), the same lesson as
-   intersections. The fix is a unit-containing synth extract (a B-list item), not a
+   intersections. The fix is a unit-containing synth extract (a B-list item) rather than a
    post-decode pass.
 
 Net: the repair patches the locality-mislabel half directly and safely; the
 street-absorption half needs coverage. Address-level pass on those cases doesn't
 flip (they also fail on house_number/street), so unit-repair's value is measured
-on **unit-tag recall**, not address-level pass. Stays opt-in; promote to
+on **unit-tag recall** rather than address-level pass. Stays opt-in; promote to
 default-on once a golden-set unit-tag delta confirms the +N/0 holds there too.
 
-## B2 — country-repair (scoped, not built)
+## B2 — country-repair (scoped rather than built)
 
 Same mould as B1. A closed lexicon of country names/codes (`UK`, `United
 Kingdom`, `USA`, `U.S.A.`, `Canada`, `Australia`, `New Zealand`, `Ireland`,

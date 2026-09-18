@@ -27,9 +27,9 @@ the musings' contribution is a shared vocabulary for the whole ladder, which we 
 
 Every tier answers the same shape — `(street, number, postcode/locality scope)` → flagged
 coordinate — so the resolver walks an ordered list and the first hit wins. Tiers are data
-problems, not architecture problems, from here on.
+problems rather than architecture problems, from here on.
 
-## Stack positions (reaffirmed, not open)
+## Stack positions (reaffirmed rather than open)
 
 The musings recommended OpenSearch/Elasticsearch for search and PostGIS for the spatial layer.
 We decline both, on existing grounds: the stated goal explicitly excludes Elasticsearch

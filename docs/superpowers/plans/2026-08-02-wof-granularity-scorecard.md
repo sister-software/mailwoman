@@ -57,7 +57,7 @@ would break `mailwoman gazetteer census`.
 **Two projection decisions this task makes, both needing reviewer attention.** The prose table says
 `intersection`, `address` → "`intersection`; house_number/street grounding". Neither can be a single
 `ComponentTag`: an intersection is a two-span construct (`intersection_a` + `intersection_b`) and a
-WOF `address` is a whole address record, not a span role. Both therefore map to `null` — measured and
+WOF `address` is a whole address record rather than a span role. Both therefore map to `null` — measured and
 deliberately uncounted — with comments saying why. Do not invent a tag for either.
 
 - [ ] **Step 1: Write the failing completeness test**
@@ -89,7 +89,7 @@ describe("PLACETYPE_PROJECTION", () => {
 	})
 
 	it("distinguishes a deliberately-uncounted placetype from an unmapped one", () => {
-		// Present with a null value: in the vocabulary, not projected.
+		// Present with a null value: in the vocabulary rather than projected.
 		expect("metroarea" in PLACETYPE_PROJECTION).toBe(true)
 		expect(PLACETYPE_PROJECTION.metroarea).toBeNull()
 		// Absent entirely: the builder must report it rather than count it.
@@ -106,7 +106,7 @@ describe("PLACETYPE_PROJECTION", () => {
 	it("leaves the multi-span and record placetypes deliberately unprojected", () => {
 		// `intersection` is a two-span construct (intersection_a + intersection_b) — no single tag fits.
 		expect(PLACETYPE_PROJECTION.intersection).toBeNull()
-		// A WOF `address` is a whole address record, not a span role.
+		// A WOF `address` is a whole address record rather than a span role.
 		expect(PLACETYPE_PROJECTION.address).toBeNull()
 	})
 })
@@ -179,7 +179,7 @@ In `PLACETYPE_PROJECTION`, immediately after the `venue: "venue",` line, insert:
 ```typescript
 	// Venue sub-structure. A WOF `building`/`campus` place carries a venue NAME ("Empire State Building", "MIT
 	// Campus"); the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing"). The
-	// admin build stocks none of these today — that is the ingest allowlist, not the source, and measuring the
+	// admin build stocks none of these today — that is the ingest allowlist rather than the source, and measuring the
 	// difference is what the granularity scorecard exists for.
 	building: "venue",
 	campus: "venue",
@@ -195,7 +195,7 @@ Then, in the context-only block after `planet: null,`, insert:
 ```typescript
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag.
 	// An intersection is a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole
-	// address record consumed by the kind-classifier and the resolver's address-point tiers, not a span role.
+	// address record consumed by the kind-classifier and the resolver's address-point tiers rather than a span role.
 	intersection: null,
 	address: null,
 ```
@@ -210,7 +210,7 @@ macrohood/microhood/venue/building rows that this source does not stock." Replac
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those; the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by BUILD RECIPE, not by WOF's contents — which is COVERAGE, not fact (the
+ *   artifact by BUILD RECIPE rather than by WOF's contents — which is COVERAGE rather than fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
 ```
@@ -285,7 +285,7 @@ vocabulary in both directions."
 **Context the implementer needs.** The ladder is an ordered list because "bottoms out at" needs an
 ordering, but rung _membership_ is derived from `PLACETYPE_PROJECTION` so the scorecard and the
 census can never disagree about what projects where. `postcode` is deliberately excluded: it is an
-orthogonal channel, not a containment rung, and folding it in would make "bottoms out at"
+orthogonal channel rather than a containment rung, and folding it in would make "bottoms out at"
 incoherent. Context-only placetypes project to `null` and are excluded by construction.
 
 - [ ] **Step 1: Write the failing test**
@@ -433,7 +433,7 @@ git commit -m "feat(gazetteer): the granularity rung ladder
 Rung membership derives from PLACETYPE_PROJECTION so the scorecard and the
 placetype census cannot disagree about what projects where. Rung order is
 explicit because bottoms-out-at needs an ordering the map does not carry.
-postcode is excluded: an orthogonal channel, not a containment rung."
+postcode is excluded: an orthogonal channel rather than a containment rung."
 ```
 
 ---
@@ -459,7 +459,7 @@ postcode is excluded: an orthogonal channel, not a containment rung."
 
 1. `spr` carries `id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, …`. Every query filters `is_current != 0 AND is_deprecated = 0`, matching `verifyAdmin`.
 2. `ancestors(id, ancestor_id)` is the transitive closure the freeze phase builds. `buildPlacetypeCensus` joins through it, and so does this.
-3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled, not real WOF. They are counted **separately** and never silently merged, because for the 86-country backfill set the locality rung and above are partly Overture already — those cells are self-comparison and the report must say so.
+3. Rows with `id >= OVERTURE_ID_BASE` (8e12) are Overture-backfilled rather than real WOF. They are counted **separately** and never silently merged, because for the 86-country backfill set the locality rung and above are partly Overture already — those cells are self-comparison and the report must say so.
 
 **Why the projection happens in SQL.** A parent with both a `borough` child and a `neighbourhood`
 child must count **once** toward `dependent_locality` parent-coverage. Counting distinct parents per
@@ -480,7 +480,7 @@ the top of the file (`import { DatabaseSync } from "node:sqlite"`) and extend th
  * `placetype-census.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town). London carries a borough AND a neighbourhood child, which
- * must count as ONE covered parent for dependent_locality, not two. IE has one locality parent and no children at all
+ * must count as ONE covered parent for dependent_locality rather than two. IE has one locality parent and no children at all
  * — a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
 function ladderFixtureDB(): string {
@@ -510,7 +510,7 @@ function ladderFixtureDB(): string {
 		db.prepare(`INSERT INTO spr VALUES (?, ?, ?, ?, ?, ?)`).run(id, name, placetype, country, isCurrent, isDeprecated)
 	}
 
-	// Camden AND Shoreditch both under London — one covered parent, not two.
+	// Camden AND Shoreditch both under London — one covered parent rather than two.
 	const links: Array<[child: number, ancestor: number]> = [
 		[4, 2],
 		[5, 2],
@@ -561,7 +561,7 @@ describe("buildGranularityLadder", () => {
 		expect(ie?.rungs.locality?.overtureBackfilled).toBe(1)
 	})
 
-	it("records a measured-and-empty rung as a present zero, not an absent row", () => {
+	it("records a measured-and-empty rung as a present zero rather than an absent row", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const ie = rows.find((row) => row.country === "IE")
 
@@ -727,7 +727,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 			if (existing) return existing
 
 			// Seed EVERY rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
-			// measurable source at all is dropped by the caller, not left implicit here.
+			// measurable source at all is dropped by the caller rather than left implicit here.
 			const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
 			for (const rung of LADDER) {
@@ -914,7 +914,7 @@ describe("bottomsOutAt", () => {
 		expect(bottomsOutAt(row, 0.005)).toBe("dependent_locality")
 	})
 
-	it("returns the deepest qualifying rung, not the first", () => {
+	it("returns the deepest qualifying rung rather than the first", () => {
 		const row = granularity("JP", {
 			country: { nodes: 1 },
 			locality: { nodes: 43_868 },
@@ -1229,8 +1229,8 @@ child projecting onto that rung).
   surface appears in real addresses. Overture's \`address_levels\` — the obvious instrument — bottoms
   out at municipality in every country measured, so it cannot see this tier.
 - **The locality rung and above are partly self-comparison.** For the Overture-backfilled country
-  set those rows came from Overture, not WOF; the \`ovt\` share in each cell is how much.
-- **An empty rung is coverage, not fact.** \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\` allowlists
+  set those rows came from Overture rather than WOF; the \`ovt\` share in each cell is how much.
+- **An empty rung is coverage rather than fact.** \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\` allowlists
   9 of WOF's 34 placetypes, so for 25 of them the build never asked. Per the **meaning-of-zero**
   rule a measured-and-empty rung renders as \`0\` and a never-measured rung as \`—\`; they are not
   the same claim.
@@ -1420,7 +1420,7 @@ Expected, matching the numbers in the spec exactly:
 - GB `dependent_locality` cell reads `13,177`
 - DE reads `67,162`
 - JP reads `7,759`
-- IE and NZ read `0` — measured and empty, not `—`
+- IE and NZ read `0` — measured and empty rather than `—`
 
 **If any cell reads `—` for these five countries, the meaning-of-zero handling is wrong.** Stop and
 fix before committing.

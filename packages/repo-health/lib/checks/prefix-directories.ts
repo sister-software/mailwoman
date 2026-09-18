@@ -9,7 +9,7 @@
  *   state the same hierarchy.
  *
  *   A group is two or more children sharing their first hyphen-delimited segment, and the sibling named for the prefix
- *   itself joins them: `reliability.ts` beside `reliability-report.ts` is the family's own module, not a bystander.
+ *   itself joins them: `reliability.ts` beside `reliability-report.ts` is the family's own module rather than a bystander.
  *   A file in that position becomes the directory's `index`; a directory in it is already the destination and stays.
  *
  *   Two conditions decide what counts as a child, and both exist because a NAME is sometimes a contract rather than a

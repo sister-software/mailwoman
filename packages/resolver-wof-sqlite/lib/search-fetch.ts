@@ -103,7 +103,7 @@ export function fetchSearchRows<DB>(options: {
 	// promote it — "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New
 	// York. Widen the window for short queries so the exact match is always present to be tiered.
 	// (Cross-country abbrev collisions — "VT" is BOTH Vermont and Viterbo — still need a country/
-	// postcode signal to disambiguate. this only rescues the window-drop class, not genuine ambiguity.
+	// postcode signal to disambiguate. this only rescues the window-drop class rather than genuine ambiguity.
 	// With a `country` hint every abbrev resolves. bare + no-context lifts 7→10/15 US states.)
 	const ftsLimit =
 		query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4

@@ -49,15 +49,15 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * same `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
  * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
  * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed. 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
- * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong. investigate before
- * trusting the artifact.
+ * rebuild means this build's fold diverged from the adjudicated baseline rather than that 19,209 is wrong. investigate
+ * before trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
 /**
  * The raw rung-3 census's pre-fold line count (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) — retained as a named
- * constant for provenance/debugging (e.g. diffing a future source refresh against this cycle's raw count), not the
- * cross-check target. See {@link EXPECTED_GB_PAIR_COUNT}'s doc comment for why the production target is lower.
+ * constant for provenance/debugging (e.g. diffing a future source refresh against this cycle's raw count) rather than
+ * the cross-check target. See {@link EXPECTED_GB_PAIR_COUNT}'s doc comment for why the production target is lower.
  */
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
@@ -73,8 +73,8 @@ const EXPECTED_US_PAIR_COUNT = 47_878
 /**
  * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
  * another country's names against a freshly built index prints reassuring-looking `PROBE MISS` lines that verify
- * nothing (the en-nz first build ran the GB names — caught 2026-07-24). A country without an entry gets a loud skip,
- * not a false verification.
+ * nothing (the en-nz first build ran the GB names — caught 2026-07-24). A country without an entry gets a loud skip
+ * rather than a false verification.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [city: string, district: string]>>> = {
 	gb: [
@@ -116,7 +116,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Nippes", "Köln"],
 		["Schwabing", "München"],
 	],
-	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`), not quartiers —
+	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`) rather than quartiers —
 	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
 	fr: [
 		["Pinsonnac", "Montpeyroux"],
@@ -248,7 +248,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.boroughDB) {
 			const before = builder.distinctCount
 
-			// `pair.parentTag` is the WOF parent ROW's placetype projection, not a per-source constant — a
+			// `pair.parentTag` is the WOF parent ROW's placetype projection rather than a per-source constant — a
 			// locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
 			for (const pair of extractBoroughPairs(options.boroughDB, country.toUpperCase())) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
@@ -328,7 +328,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes no header key at
 		// all — not a null/0. For both, an absent key means the mechanism is off, which is a different statement from
 		// "off because the magnitude happens to be zero", and the reader treats them that way.
-		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned, not builder claims.
+		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned rather than builder claims.
 		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,

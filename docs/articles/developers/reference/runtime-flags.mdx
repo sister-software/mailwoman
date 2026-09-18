@@ -84,7 +84,7 @@ are on [CLI](./cli.mdx); each flag's description gives the variable it falls bac
 The candidate row has one wrinkle the other two do not. Each position is used only if the file it
 names is on disk, so a stale `$MAILWOMAN_CANDIDATE_DB` pointing at a deleted file does not fall
 through to the convention path — it resolves to nothing and you land on the search backend. And
-`none` at either of the first two positions is a pin, not a path: it stops the search there.
+`none` at either of the first two positions is a pin rather than a path: it stops the search there.
 
 A `.env` file in the working directory is read once at startup and the live environment layers on top
 of it, so an exported variable beats a `.env` entry.
@@ -93,7 +93,7 @@ of it, so an exported variable beats a `.env` entry.
 
 Every mechanism below is on by default. Each cleared an evaluation against the shipped model on the
 first-class locales before it was promoted, so the defaults are the measured configuration and turning
-one off is the change that needs a reason. Each is an option, not an environment variable.
+one off is the change that needs a reason. Each is an option rather than an environment variable.
 
 | Mechanism                 | Where                                      | Effect                                                                             | Turn it off when                                                       |
 | ------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -119,7 +119,7 @@ Two mechanisms are off by default and worth knowing about:
 | `addressPoints`, `interpolation` | `ResolveOpts` | The rooftop and interpolation coordinate tiers                 | You have pulled the street databases for your region                         |
 
 The coordinate tiers are conditioned on data rather than on a measurement. They stay off because the databases
-are a 41.3 GB download for the United States, not because they cost accuracy.
+are a 41.3 GB download for the United States rather than because they cost accuracy.
 
 For every boolean option above, `false` is the disable signal and it is not the same as omitting the
 option: omitting means "give me the default", while `false` means "run as though this mechanism did

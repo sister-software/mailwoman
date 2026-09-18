@@ -95,7 +95,7 @@ test("pointToTile: the top-left corner of the world is tile (0, 0)", () => {
 
 test("pointToTile: the exact Mercator clip latitude floors to tile y = −1 (no clamping)", () => {
 	// At precisely +85.0511° the Y fraction is ~ −7.8e-16: a floating-point hair below 0. Because
-	// pointToTile floors without clamping y into [0, z2), the boundary lands on tile −1, not 0.
+	// pointToTile floors without clamping y into [0, z2), the boundary lands on tile −1 rather than 0.
 	// Callers that feed the exact clip latitude must clamp themselves. we pin the behaviour so a
 	// future clamp shows up as a deliberate change here.
 	expect(pointToTileFraction(0, 0, MERCATOR_CLIP_LAT)[2]).toBeLessThan(0)

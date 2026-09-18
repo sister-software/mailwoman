@@ -38,7 +38,7 @@ process.env.NODE_ENV ??= "production"
 // profiling dependency in this deliberately tiny launcher.
 globalThis.__mailwomanCLIStartedAt = performance.now()
 
-// `strict: false` is required, not a relaxation: the launcher cannot enumerate the union of every command's flags, and
+// `strict: false` is required rather than a relaxation: the launcher cannot enumerate the union of every command's flags, and
 // a strict parse rejects the first one it has not heard of — `--json`, `--locale`, `--debug` — before dispatch, which
 // is the whole CLI rather than one command. Unknown options stay in the vector for the command router to interpret.
 const { values, positionals } = parseArguments({

@@ -375,7 +375,7 @@ describe("createBDCClient: the throttle meter", () => {
 			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
 		])
 
-		// One cooldown per budget's worth of requests, and it is a WAIT, not a zero-length rollover marker.
+		// One cooldown per budget's worth of requests, and it is a WAIT rather than a zero-length rollover marker.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
 		// The composed rate lands below the published limit — conservative, which is why the two limits are left

@@ -33,7 +33,7 @@ Consulted DeepSeek (3 turns) + USPS Pub 28 §28C2.040 + DMM 508 §4.1.4/§4.5.4:
 
 1. **PMB shares `po_box` tag.** USPS treats PMB as a PO Box alias in CASS. Downstream code can distinguish via presence of a street line.
 2. **Whole-phrase span** ("PO Box 123" not "123"). Matches existing golden eval convention.
-3. **Strategy A** (replace street, not augment) — PO box and street are mutually exclusive per USPS. Synthesizing fake (street + PMB) tuples would teach the model an invalid pattern.
+3. **Strategy A** (replace street rather than augment) — PO box and street are mutually exclusive per USPS. Synthesizing fake (street + PMB) tuples would teach the model an invalid pattern.
 4. **10% number-format noise** — commas, dashes, embedded spaces. Real OCR/transcription input is lousy; ship with that as native.
 
 ### Stage 3 activation

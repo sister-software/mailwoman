@@ -4,9 +4,9 @@ The counterpart of `@mailwoman/core/data-root` and `@mailwoman/core/paths`. A pa
 string literal encodes one machine's layout. these functions read the roots the environment names,
 so the same code answers correctly on a lab checkout, a Modal container and a fresh clone.
 
-Pick the root by what the file IS, not by where it happens to sit today:
+Pick the root by what the file is rather than by where it happens to sit today:
 
-- `data_root_path` — corpus, gazetteer, model artifacts. Large, downloaded, not reproducible cheaply.
+- `data_root_path` — corpus, gazetteer, model artifacts. Large, downloaded rather than reproducible cheaply.
 - `cache_root_path` — regenerable. Deleting it costs time, never work.
 - `temp_root_path` — a named intermediate a human may want to inspect. For an unnamed scratch file
   that nothing reads afterwards, use `tempfile`, not this.

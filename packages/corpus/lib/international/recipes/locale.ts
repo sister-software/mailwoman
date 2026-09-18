@@ -188,8 +188,8 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  * Cleaned classes:
  *
  * 1. Drop pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
- *    ES rows): any CITY containing a comma or a ≥4-digit run is a land-register aggregate, not a renderable city.
- *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives. IT/NL have zero hits.
+ *    ES rows): any CITY containing a comma or a ≥4-digit run is a land-register aggregate rather than a renderable
+ *    city. Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives. IT/NL have zero hits.
  * 2. STRIP a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
  *    (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows). The analogue of the German Kreis/region-suffix class (#241 names
  *    `Rabenau Sachs` / `Weißwasser /O.L.`): an admin-region gloss glued onto the locality value that dirties locality
@@ -201,7 +201,7 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  *   `de`/`di` makes them full names, unlike the German glued-abbreviation class.
  * - ES bilingual slash names (`Laudio/Llodio`; 2.16%): official co-names — the eval expects them verbatim.
  * - IT ALL-CAPS city casing (98.79% of the source, and the eval's observed form): casing is the #829 case-augmentation
- *   change, not this recipe's.
+ *   change rather than this recipe's.
  */
 export function cleanCityNoise(city: string): string | null {
 	if (/,|\d{4}/.test(city)) return null
@@ -324,7 +324,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 
 					// ES pedanía lesson (2026-07-22): the CNIG `poblacion` column is filled on ~93% of rows but
 					// EQUALS `municipio` on the majority of those (the address point sits in the municipio's own
-					// main town, not a below-municipio pedanía) — only ~32.6% of ES rows carry a genuinely
+					// main town rather than a below-municipio pedanía) — only ~32.6% of ES rows carry a genuinely
 					// DISTINCT poblacion. GB/NZ never hit this (CITY/DISTRICT name the same place only by rare
 					// coincidence), but the guard is general: a dependent_locality equal to its own locality is
 					// never a real sub-locality, so drop it rather than emit a same-value pair (would fail the
@@ -399,7 +399,7 @@ export function applyCountryAppend(
 
 		if (!forms?.length) {
 			// The BR/NZ lesson: a missing table entry must never silently no-op a requested fraction —
-			// it must raise so the gap is caught at build time, not discovered later as a 0% check failure.
+			// it must raise so the gap is caught at build time rather than discovered later as a 0% check failure.
 			throw new Error(
 				`No COUNTRY_SURFACE_FORMS entry for ${country} — add it to codex/country/country.ts before using --country-fraction`
 			)

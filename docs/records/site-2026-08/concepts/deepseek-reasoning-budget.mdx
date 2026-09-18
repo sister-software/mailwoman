@@ -43,7 +43,7 @@ DeepSeek's documentation does state this, in a sentence buried under the reasoni
 
 When writing the next DeepSeek-driven worker:
 
-1. Default `max_tokens` to 3× the natural output ceiling, not 1×.
+1. Default `max_tokens` to 3× the natural output ceiling rather than 1×.
 2. Wire `finish_reason=length` as a retry, never a success.
 3. Surface truncation rate in the per-batch summary line.
 4. Run a 50-row smoke pass first and verify `finish_reason=stop` rate before committing to the full run.

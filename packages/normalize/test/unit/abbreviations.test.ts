@@ -111,7 +111,7 @@ describe("expandAbbreviations — the Av collision across locales", () => {
 	// claim that it "reads Avenue in both" — true of en/fr, false of es/pt, which is how Spanish input
 	// acquires an English street type. It cannot simply be dropped here: the gauntlet row
 	// fr-op3-halles-market-bonneuil is a `pass` that asserts street "Avenue de la Convention" and an
-	// address_point tier, so removing the entry needs a resolver-gauntlet run, not a table edit.
+	// address_point tier, so removing the entry needs a resolver-gauntlet run rather than a table edit.
 	it("still expands Av → the English Avenue under locale 'und'", () => {
 		expect(expandAbbreviations("3499 Av. Los Meros", "und").text).toBe("3499 Avenue Los Meros")
 	})

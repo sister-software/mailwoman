@@ -4,7 +4,7 @@ Night-shift design record, 2026-08-11. Companion to
 [`../plans/2026-08-08-inferential-resolution.md`](../plans/2026-08-08-inferential-resolution.md);
 this note exists because that record's pre-registered falsifiers were RUN tonight, and all three
 runnable ones converged on the same dependency. This is the synthesis and the proposed build item —
-a design record for operator review, not a plan of record.
+a design record for operator review rather than a plan of record.
 
 ## The evidence that converged
 
@@ -39,7 +39,7 @@ The layer contract (`docs/engineering/reference/layer-contract.mdx`) already req
 magnitude never carries its own absence. The contract is right; the FILLINGS are dishonest or
 absent:
 
-- poi.db ships `completeness = 1.0` for every cell (board #26) — the value was defaulted, not
+- poi.db ships `completeness = 1.0` for every cell (board #26) — the value was defaulted rather than
   measured.
 - The address-point DBs (US per-state, 124.9M points) carry no per-locality completeness at all,
   which is why falsifier 1's "held street set" had to be improvised from row counts.
@@ -94,7 +94,7 @@ by absence of candidates.
 
 Three disciplines carried over from the OSM-ingest section of the design record, now generalized:
 
-1. **`surveyed_complete` is earned, not defaulted.** A basis names how the claim is known (an
+1. **`surveyed_complete` is earned rather than defaulted.** A basis names how the claim is known (an
    authority's own completeness statement, a reconciliation against a second source above a
    threshold, a census denominator). No basis → `surveyed_partial`. This is the exact inversion of
    the poi.db defect.
@@ -110,7 +110,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 
 1. **Runtime abstention** (#1585's contract half): a locale-hinted query whose scoped fuzzy probe
    targets a namespace whose `layer_scope_coverage` row is not `surveyed_complete` abstains at that
-   tier with a named reason, instead of falling through to world-fuzzy — the SCOPE row, not a cell,
+   tier with a named reason, instead of falling through to world-fuzzy — the SCOPE row rather than a cell,
    because the query has no coordinate to key a cell with. This alone converts the NZ failure mode
    from silently-wrong to directly-empty before any new data ships. (The transport shipped as the
    #1585 fuzzy-tier country restriction; today it abstains by candidate absence, without a named
@@ -122,7 +122,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
    `surveyed_complete` locality cells; the count of usefully-shrinking candidate sets is the
    register's own acceptance metric.
 4. **Falsifier 3 becomes gradable**: fit the CPT prior only in `surveyed_complete` POI cells; the
-   residual then measures the theory, not the coverage. (The poi.db register rebuild — board #26 —
+   residual then measures the theory rather than the coverage. (The poi.db register rebuild — board #26 —
    is the prerequisite and is a REBUILD of the sealed artifact per the standing rule.)
 5. **Benchmark receipts sharpen**: every discrepancy row can terminate in "coverage change" with a
    cell-level citation instead of an inference.
@@ -143,7 +143,7 @@ before the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
 1. Query NZ locality coverage without a candidate coordinate — the scope row answers where no cell
    key exists.
 2. Distinguish an unsurveyed locality namespace from a surveyed namespace with no match — two
-   different stored states, not one shared absence.
+   different stored states rather than one shared absence.
 3. Keep exact foreign matches available under a locale hint — scope coverage is consulted by the
    fuzzy/derived tiers only; the exact tier never reads it (the #1585 board's Paris row is the
    standing conditional witness).
@@ -155,7 +155,7 @@ before the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
 And the three carried from the night design:
 
 6. Does an direct poi.db register change falsifier 3's grade? Re-fit on `surveyed_complete` cells
-   only; if MARE stays ≥ 60%, the CPT prior dies on theory, not coverage — useful either way.
+   only; if MARE stays ≥ 60%, the CPT prior dies on theory rather than coverage — useful either way.
 7. Do `surveyed_complete` claims survive audit? Sample N cells claimed complete, reconcile against
    a second source; the disagreement rate is the claim's calibration.
 8. Does tier-abstention (#1) regress any currently-correct answer? The guard board + panel-v2,

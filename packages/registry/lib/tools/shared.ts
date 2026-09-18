@@ -141,11 +141,11 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
  * NPPES registry column headers, by the short name the probes read them under.
  *
  * The NPI registry export is a ~330-column TSV with headers this long, so every probe that touches it needs this map,
- * and five of them had grown their own copy. The copies were a NESTED SUPERSET chain, not a disagreement -- each new
- * probe took the previous one's map and appended what it additionally read -- so this is the widest of the five, and no
- * consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this object
- * (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can never
- * change a probe's behavior.
+ * and five of them had grown their own copy. The copies were a NESTED SUPERSET chain rather than a disagreement -- each
+ * new probe took the previous one's map and appended what it additionally read -- so this is the widest of the five,
+ * and no consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this
+ * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can
+ * never change a probe's behavior.
  */
 export const NPPES_COLUMNS = {
 	npi: "NPI",
@@ -201,7 +201,7 @@ export const LR_L2 = 1e-3
 /**
  * L2-regularized logistic regression by batch gradient descent ({@link TRAINING_EPOCHS} epochs) — the probes' linear
  * arm. `w` carries the per-sample class weights (the caller up-weights the rare class). Returns the linear scorer: the
- * logit, not the probability, threshold-comparable across a fixed feature layout.
+ * logit rather than the probability, threshold-comparable across a fixed feature layout.
  */
 export function trainLogisticRegression(
 	X: readonly (readonly number[])[],

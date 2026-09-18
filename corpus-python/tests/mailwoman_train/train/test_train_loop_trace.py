@@ -145,7 +145,7 @@ def test_the_loop_emits_its_events_in_order(tmp_path: Path, capsys: Any) -> None
 
     # The progress line, then the checkpoint, then the eval. The checkpoint and the eval both
     # observe the same weights at a step where their intervals coincide — the eval takes no
-    # gradient — so their relative order is a property of the log, not of the run.
+    # gradient — so their relative order is a property of the log rather than of the run.
     assert events == ["log:2", "save:2", "eval", "log:4", "save:4", "eval"], events
     assert Path(cfg.train.output_dir, "step-000004").is_dir()
 

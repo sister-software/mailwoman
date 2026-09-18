@@ -20,7 +20,7 @@
  *   which is how many features a centre-in-polygon index would have dropped — so both are measured here and
  *   the `partial` share is reported beside them rather than in place of them.
  *
- *   THE ZERO-CELL COUNT IS A MEASUREMENT OF THE ALTERNATIVE, NOT OF THIS INDEX. `classifyFeatureCells` takes
+ *   THE ZERO-CELL COUNT IS A MEASUREMENT OF THE ALTERNATIVE rather than OF THIS INDEX. `classifyFeatureCells` takes
  *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
  *   zero by construction. What the column reports is what `polygonToCells` — the centre-in-polygon polyfill a
  *   builder reaches for first — would have returned nothing for, and every one of those would have read

@@ -6,7 +6,7 @@
  *   Unit tests for the path-citation instrument (`scripts/docs/path-citations.ts`), check 5 of
  *   `check/docs-structure.ts`.
  *
- *   What is worth pinning here is the REFUSAL boundary, not the walk. The check's finding count is only meaningful if
+ *   What is worth pinning here is the REFUSAL boundary rather than the walk. The check's finding count is only meaningful if
  *   the classes it excludes are the ones its docstring names: a refusal that widens silently makes the count fall
  *   without anything being repaired, and one that narrows reports the regex rather than the tree. Pure strings only —
  *   the filesystem walk is exercised by running the check itself.

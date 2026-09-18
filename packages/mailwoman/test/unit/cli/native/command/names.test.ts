@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A command's name is what it declares, not where its file sits.
+ * @file A command's name is what it declares rather than where its file sits.
  */
 
 import { commandPathCandidates, declaredCommandName, isPrefixDirectory } from "mailwoman/cli-native/command-names"

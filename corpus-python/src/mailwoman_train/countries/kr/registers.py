@@ -136,7 +136,7 @@ def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[f
             out.append(None)
             continue
         lon, lat = float(parts[0]), float(parts[1])
-        # Korea's bounding box. a point outside it is a mis-keyed source coordinate, not a location.
+        # Korea's bounding box. a point outside it is a mis-keyed source coordinate rather than a location.
         out.append((lon, lat) if 124.0 <= lon <= 132.0 and 33.0 <= lat <= 39.5 else None)
     if len(out) != len(points):
         raise RuntimeError(f"gdaltransform answered {len(out)} lines for {len(points)} points")

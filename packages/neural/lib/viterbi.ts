@@ -179,7 +179,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 				adjustAt.set(adj.timestep, byLabel)
 			}
 
-			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX, not sum — the
+			// Two adjustments landing on the same (timestep, toLabel) cell compose by MAX rather than sum — the
 			// emission side's `applyWindowBias` uses the same Math.max discipline, and overlapping window-mode
 			// candidates must not stack the bonus.
 			byLabel.set(adj.toLabel, Math.max(byLabel.get(adj.toLabel) ?? NEG_INF, adj.bonus))
@@ -221,7 +221,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 			}
 
 			// The bonus is predecessor-independent, so it distributes over the max — adding it after the
-			// argmax over j is exact, not an approximation.
+			// argmax over j is exact rather than an approximation.
 			cur[k] = bestScore + (tAdjust?.get(k) ?? 0) + emissions[t]![k]!
 			ptr[k] = bestPrev
 		}

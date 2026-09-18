@@ -1,6 +1,6 @@
 """Reading Overture-TW rows, and rendering one in a register.
 
-The 路 / 段 / 巷 / 弄 designators stay inside the street span: they are the street's own name, not a
+The 路 / 段 / 巷 / 弄 designators stay inside the street span: they are the street's own name rather than a
 type suffix beside it. The 號 designator likewise stays inside the house number, so ``298之1號`` is
 one span — which is how the household-registration form writes it.
 """
@@ -20,7 +20,7 @@ from ....corpora.builder import MAX_FIELD_CHARS, RowRenderer
 from ....corpora.builder import verify_record as _verify_record
 from ....text.normalize import ascii_digits, fullwidth_digits, normalize_text
 
-#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: Resolved after parsing rather than here: reading the data root at import would raise for a caller who
 #: passes `--parquet` and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-tw.parquet")
 LABEL_SET_NAME = "stage3-cjk"

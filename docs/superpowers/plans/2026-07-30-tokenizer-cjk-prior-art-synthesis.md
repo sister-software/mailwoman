@@ -17,7 +17,7 @@ required finding. Verdicts first, receipts after.
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
    (our sealed vocab ~24KB vs 40–380MB for every dictionary-based segmenter; TinySegmenter at
    20.6KB is the lone peer and is also a dictionary-free char model).
-3. **The evidence channels are required for char-level NER, not supplementary.** Two
+3. **The evidence channels are required for char-level NER rather than supplementary.** Two
    literatures converge independently: CANINE loses NER by −13.8 F1 vs mBERT (its own authors:
    "NER rewards memorization"), repaired to −1.1 by n-gram/lexicon features; Zhang & Yang (ACL 2018) show char beats word for Chinese NER only with lexicon channels. Mailwoman externalized
    memorization into gazetteer/FST/lexicon channels years ago — that architecture is precisely
@@ -35,7 +35,7 @@ required finding. Verdicts first, receipts after.
    OpenAddresses KR is dead (frozen 2017); Overture does not cover KR at all. Taiwan, by
    contrast: OGDL-Taiwan-1.0 (CC BY 4.0-compatible), current OpenAddresses, 9.7M rows already on
    disk. **Recommendation: re-weight Phase 6 from KR-next to TW-next unless counsel clears juso.**
-6. **CN is out of scope on law, not tech** (private surveying illegal, GCJ-02 obfuscation
+6. **CN is out of scope on law rather than tech** (private surveying illegal, GCJ-02 obfuscation
    mandatory, API ToS bar storage). The one buildable precedent: GeoGLUE itself annotates on OSM
    to route around the mapping-data regime.
 
@@ -54,7 +54,7 @@ required finding. Verdicts first, receipts after.
 - **A residual tag for non-address content** (MGeo's `other`; ABR's `unmatched_address`) —
   delivery notes and building names are not parse failures.
 - **Romanization lexicon for free**: Geolonia v1 carries kana + romaji for 277k town-level rows
-  (CC BY 4.0). abr-geocoder cannot search romaji — a differentiator, not parity.
+  (CC BY 4.0). abr-geocoder cannot search romaji — a differentiator rather than parity.
 - **Historical address conversion is the commercial moat** (ZENRIN sells it; no open equivalent;
   ABR's masters carry effective dates — the raw material is GREEN-licensed and unpackaged).
 - **KR structure notes** (whenever KR unblocks): 지하 is a building-number PREFIX; 행정동 is
@@ -108,7 +108,7 @@ coin-flips in real data) is resolver-side normalization, sourceable from GREEN d
 | JP     | GREEN               | ABR PDL-1.0 (CC BY 4.0-compatible; modification notice required), MLIT PDL-1.0, Geolonia CC BY 4.0, KEN_ALL copyright expressly disclaimed. Parcel-level (地番) is AMBER (a second MoJ grant rides it).                                        |
 | KR     | RED pending counsel | juso ToS + the export pledge; portal metadata saying "no restriction" does not override the statute. VWorld unverifiable from here.                                                                                                            |
 | TW     | GREEN               | OGDL-Taiwan-1.0 with a per-agency attribution manifest (~21 entries) shipped in the package; attribution failure voids ab initio; pin/archive against §5.2 withdrawal. Chunghwa Post 3+3 postcodes are RED (no distribution/adaptation grant). |
-| CN     | RED                 | Law, not licensing.                                                                                                                                                                                                                            |
+| CN     | RED                 | Law rather than licensing.                                                                                                                                                                                                                     |
 | HK     | AMBER               | ALS bulk exists; terms silent on adaptation/sublicense — same counsel posture as osm/.                                                                                                                                                         |
 
 ## Addendum 2026-07-30 — the KR alternative path (operator prompt: WOF + the data-sources vein)
@@ -125,7 +125,7 @@ hold change the Phase-6 picture:
    BUSINESS in Korea under KOGL (attribution, commercial + derivatives OK), each record carrying
    BOTH the road-name and jibun address (the dual-system pairing signal the doc flags). This is a
    DIFFERENT legal object from the juso register: business-permit disclosure data published to be
-   published, not the address DB under the 도로명주소법 pledge. HIRA/NEIS/FSS are the cross-check
+   published rather than the address DB under the 도로명주소법 pledge. HIRA/NEIS/FSS are the cross-check
    registries, per the doc's triangulation principle.
 
 **The assembled KR recipe without juso:** parse corpus = localdata (dual-format, the mess is the

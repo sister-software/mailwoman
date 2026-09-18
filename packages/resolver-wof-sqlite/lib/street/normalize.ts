@@ -173,10 +173,10 @@ export function normalizeStreetForKey(street: string): StreetKey {
 /**
  * Street-name locale for the address-point key. The US path is the full USPS pipeline ({@link normalizeStreetForKey});
  * the international paths fold + apply a SMALL, consistent per-locale type-token canonicalization. Same discipline as
- * the US normalizer: build side and probe side call the identical function, so the key only needs to be CONSISTENT, not
- * linguistically perfect — a folded "rue du chevaleret" keys the same on both sides whether or not we reorder the
- * article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't absorb
- * the false-negatives).
+ * the US normalizer: build side and probe side call the identical function, so the key only needs to be CONSISTENT
+ * rather than linguistically perfect — a folded "rue du chevaleret" keys the same on both sides whether or not we
+ * reorder the article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer
+ * can't absorb the false-negatives).
  */
 export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id" | "zh"
 

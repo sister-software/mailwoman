@@ -9,7 +9,7 @@
  *
  *   Three properties hold by construction, and they are why the file reads the way it does.
  *
- *   **No numeric field exists anywhere in this schema** — not a strength, not a confidence, not a
+ *   **No numeric field exists anywhere in this schema** — not a strength rather than a confidence rather than a
  *   count. {@link Modality} is an ordinal vocabulary of WORDS and this module exports no order over
  *   it, because a number attached to an authored relationship is a ranking weight whatever it is
  *   called, and ranking belongs to `@mailwoman/resolver` and `@mailwoman/neural`.
@@ -182,7 +182,7 @@ export type RelationSemantics = (typeof RelationSemantics)[keyof typeof Relation
  */
 export const ConceptStatus = {
 	/**
-	 * Authored, not yet reviewed. A compiler may refuse to emit it.
+	 * Authored rather than yet reviewed. A compiler may refuse to emit it.
 	 */
 	Draft: "draft",
 	Active: "active",
@@ -233,8 +233,8 @@ export interface SourceProvenance {
 }
 
 /**
- * One relation's definition. Relations are vocabulary, not claims: the record says what the relation means and which
- * concept kinds may stand on either side of it, and asserts nothing about any particular pair.
+ * One relation's definition. Relations are vocabulary rather than claims: the record says what the relation means and
+ * which concept kinds may stand on either side of it, and asserts nothing about any particular pair.
  */
 export interface RelationRecord {
 	id: RelationID
@@ -259,8 +259,8 @@ export interface RelationRecord {
 }
 
 /**
- * One authored claim, attached to the concept it is about. This is curated semantics — what a curator states holds, not
- * what a dataset was observed to contain.
+ * One authored claim, attached to the concept it is about. This is curated semantics — what a curator states holds
+ * rather than what a dataset was observed to contain.
  */
 export interface RelationAssertion {
 	id: RuleID

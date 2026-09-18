@@ -250,10 +250,10 @@ The three HTTP drop-ins — plus the native `/v1/*` surface `mailwoman serve` sh
 | [`@mailwoman/libpostal`](https://www.npmjs.com/package/@mailwoman/libpostal) | `/parse`, `/expand`                                                                                       | [libpostal.json](pathname:///openapi/libpostal.json) |
 | `mailwoman serve` (native `/v1/*` surface)                                   | `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/v1/reload`, `/health`, `/metrics` | [mailwoman.json](pathname:///openapi/mailwoman.json) |
 
-The authoritative record is the route table, not a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
+The authoritative record is the route table rather than a checked-in file. Every surface builds its OpenAPI 3.1 document from the same `@hono/zod-openapi` route definitions that serve the requests. There are two ways to get the document, both derived from that identical route table, and nothing to keep in sync by hand:
 
 - **At runtime**, from a running server — `GET /openapi.json`.
-- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product, not a file to hand-edit.
+- **Ahead of time**, from each surface's own CLI — `mailwoman-photon openapi`, `mailwoman-nominatim openapi`, `mailwoman-libpostal openapi`, `mailwoman openapi` — which prints the document to stdout (or `--out <path>`) without booting the real engine or opening a data root. This is what stamps the four JSON files linked above: the docs site's `prebuild` script runs all four emitters into `static/openapi/` before every build, so those copies are a build product rather than a file to hand-edit.
 
 To lint a running server's document with [Redocly CLI](https://redocly.com/docs/cli), fetch it to a temp file first (Redocly's `lint` doesn't read stdin) — or skip the server and lint the CLI's own output directly:
 

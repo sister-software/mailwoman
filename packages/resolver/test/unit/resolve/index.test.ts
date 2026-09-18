@@ -244,7 +244,7 @@ describe("resolveTree", () => {
 			parentID: 85_688_541,
 		})
 
-		// And the resolved locality is the IL Springfield, not the MA one.
+		// And the resolved locality is the IL Springfield rather than the MA one.
 		expect(result.roots[0]?.children[0]?.placeID).toBe("wof:101727113")
 	})
 
@@ -583,7 +583,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 	})
 
 	test("anchor posterior keeps the EXACT match within the pinned country (#369) — tier-safe", async () => {
-		// The "ME → Maine, not the more-populous Missouri" guard. Three regions all match the query.
+		// The "ME → Maine rather than the more-populous Missouri" guard. Three regions all match the query.
 		// With a confident US posterior the US exact match (Maineland) must win over (a) a higher-score
 		// US partial match (Missouriland — a plain additive boost would promote it, dropping the tier)
 		// and (b) a foreign exact match (Messinaland — the posterior breaks that tie within the exact
@@ -1145,7 +1145,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		// Artifact path: the extract carries the same factor. the caller passes nothing.
 		const viaArtifact = await resolver.resolveTree(addrTree(), { interpolation: artifactInterp })
 
-		// Byte-identical: the full serialized trees match, not just the headline fields.
+		// Byte-identical: the full serialized trees match rather than just the headline fields.
 		expect(stringifyJSON(viaArtifact)).toBe(stringifyJSON(viaCaller))
 		const street = viaArtifact.roots.find((n) => n.tag === "street")
 

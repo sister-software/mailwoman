@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the Gauntlet's RESOLVER-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
- *   configuration, not just a model.
+ *   configuration rather than just a model.
  *
  *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
- *   database set and a loaded ONNX, so a test that ran it would be an integration run, not a check — and the failure mode
+ *   database set and a loaded ONNX, so a test that ran it would be an integration run rather than a check — and the failure mode
  *   this surface exists to prevent is silent. A dropped pin does not throw. it produces a check log identical to the
  *   unpinned one, which reads exactly like "the pin changed nothing". Every hop is therefore pinned here.
  */
@@ -179,7 +179,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
 	// discarded `--gazetteer-prior-off`, so the off arm graded the default configuration while its log said
 	// `gazetteerPrior=OFF` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
-	// line exists to prevent. Caught by running the off arm and reading the board, not by a test.
+	// line exists to prevent. Caught by running the off arm and reading the board rather than by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})

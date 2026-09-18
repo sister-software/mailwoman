@@ -278,7 +278,7 @@ from the same route definitions the servers register:
 [photon.json](/openapi/photon.json), [libpostal.json](/openapi/libpostal.json).
 
 Each document declares `servers[0]` as `http://{host}:{port}` with `host` defaulting to `127.0.0.1`.
-The servers bind `0.0.0.0`; the document states the address a client dials, not the address the
+The servers bind `0.0.0.0`; the document states the address a client dials rather than the address the
 process binds.
 
 ## Rationale
@@ -292,7 +292,7 @@ The native surface carries the `/v1` prefix the drop-ins lack because it is the 
 project controls and therefore the one that has to survive its own revisions.
 
 Absent engine methods answer statuses rather than throwing because a partial deployment is a normal
-state, not a bug. A parser with no gazetteer is a useful service; it should say `503` on `/v1/geocode`
+state rather than a bug. A parser with no gazetteer is a useful service; it should say `503` on `/v1/geocode`
 and keep answering `/v1/parse`.
 
 ## See also

@@ -65,7 +65,7 @@ failure list.
 
 ## Find the cause before proposing the fix
 
-Use Five Whys as an interrogative method. Ask each next question of the evidence, not of the operator.
+Use Five Whys as an interrogative method. Ask each next question of the evidence rather than of the operator.
 Stop when the chain reaches an actionable cause or an unverified assumption.
 
 A useful chain has this form:
@@ -198,7 +198,7 @@ Avoid these stock forms:
 - `Let's dive in.`
 - `This is crucial/pivotal/robust.`
 - `Let me know if...`
-- `That's X, not Y.`
+- `That's X rather than Y.`
 
 Banned reply vocabulary is enforced by four Vale rules, and this file does not repeat their word lists so
 that the words never enter a session through the instructions themselves. Read the rule files when a

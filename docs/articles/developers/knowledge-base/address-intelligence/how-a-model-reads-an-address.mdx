@@ -30,7 +30,7 @@ do it in one pass with the whole line in view, because the reason `dc` is a stat
 `washington` sits to its left and five digits sit to its right — nobody reads `dc` in isolation and
 then moves on. And when they finish, they will glance back over the marking to check it reads: a
 "this continues the town" stroke with no "the town starts here" stroke before it is a slip of the
-pen, not a reading of the line.
+pen rather than a reading of the line.
 
 That is the whole design. Four moves: split the line into pieces, score every possible mark on every
 piece, add what a place list already knows, and pick the marking that reads.
@@ -147,14 +147,14 @@ house_number  = "800"                     23..26   0.891
 postcode      = "20004"                   49..54   0.905
 ```
 
-The offsets point into the string you passed in, not into the case-restored copy the model read. The
+The offsets point into the string you passed in rather than into the case-restored copy the model read. The
 values are the repaired forms — `F ST NW` rather than `f st nw` — which is why keeping your own copy
 of the raw input is worth the line of code.
 
 Run the same string through `createRuntimePipeline`, which is the entry point most consumers use, and
 the tags, the values and the offsets come back identical. The confidences do not: the pipeline runs
 repair passes the bare classifier call does not, and the venue lands at 0.754 rather than 0.897 while
-the house number lands at 0.819 rather than 0.891. Read a confidence as attached to a path, not to a
+the house number lands at 0.819 rather than 0.891. Read a confidence as attached to a path rather than to a
 string.
 
 ## What it costs

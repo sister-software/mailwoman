@@ -30,7 +30,7 @@ direct non-circular signal. 101 rows had a miss from one or both parsers.
 | (B) wrong place           |     13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
 | (C) no locality resolved  |     23 | parser mis-segment, `<Null>` tokens, or WOF coverage gap                    |
 
-> **If bucket (A) were credited, neural locality on these 1500 rows is ≈97.6%, not 94.9%.**
+> **If bucket (A) were credited, neural locality on these 1500 rows is ≈97.6% rather than 94.9%.**
 > And several of (B) are _also_ name-form (`Mt Pleasant`→`Mount Pleasant`, `Mc Laughlin`→
 > `McLaughlin`, `Enosburgh`→`Enosburg Center`), so true locality accuracy is ~97–98%.
 
@@ -41,10 +41,10 @@ The eval has been _underselling_ the resolver. Examples from (A): `Butte`→`But
 ## Recommended next PRs, ranked by ROI
 
 1. **Eval name-match fidelity (HIGH ROI) — ✅ SHIPPED IN THIS PR.** Match OA's expected name
-   against the resolved place's full WOF **`names` altname set** (normalized), not a single
+   against the resolved place's full WOF **`names` altname set** (normalized) rather than a single
    canonical string, plus a tight abbreviation layer (St→Saint, Mt→Mount, Ft→Fort, Mc-despace,
    diacritics/punct). Deliberately **no civic-suffix stripping** — `Barre City` and `Barre Town`
-   are distinct VT municipalities. This is _correctness_, not gaming: WOF records these as the
+   are distinct VT municipalities. This is _correctness_ rather than gaming: WOF records these as the
    same place.
 
    **Result (1500 OA rows, real v0.7.2):**
@@ -66,7 +66,7 @@ The eval has been _underselling_ the resolver. Examples from (A): `Butte`→`But
    ALIGNED with the population/importance ranking used elsewhere — or document why it differs
    here). This is real resolver-depth work, small but clear.
 
-3. **Neural parser robustness (feeds the retrain/MLM track, not the resolver).** Two concrete
+3. **Neural parser robustness (feeds the retrain/MLM track rather than the resolver).** Two concrete
    patterns from (C):
    - **`<Null>` literal tokens** in OA input (`21695 <Null> 210TH STREET, Holland, IA`) →
      neural fails to parse; v0 survives. Input sanitization and/or a corpus augmentation.
@@ -82,7 +82,7 @@ The eval has been _underselling_ the resolver. Examples from (A): `Butte`→`But
 
 VT 39, IA 26, SD 14, MT 11, IL 7, DC 3, CA 1 — concentrated in rural/township-heavy states
 with several small villages and Saint-/Mount-/township name variants. This is consistent with
-(A) dominating: the failures cluster exactly where canonical-name forms diverge most, not
+(A) dominating: the failures cluster exactly where canonical-name forms diverge most rather than
 where the resolver is structurally weak.
 
 ## Where neural already wins (bucket: v0-only failures, 25 rows)

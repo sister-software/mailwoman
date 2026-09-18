@@ -11,8 +11,8 @@
  */
 export const API_CLIENT_DEFAULTS = {
 	/**
-	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure. A STATED CEILING,
-	 * not "until it works".
+	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure. A STATED CEILING
+	 * rather than "until it works".
 	 */
 	maxAttempts: 3,
 	/**

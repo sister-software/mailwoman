@@ -76,8 +76,8 @@ export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 /**
  * Resolve the origin for one WOF repo.
  *
- * DIVERGENCE, NOT EXISTENCE. A GitHub fork does not track its parent, so a fork carrying none of our commits is a
- * point-in-time snapshot that drifts further from upstream every day it sits there. Preferring one would read older
+ * DIVERGENCE rather than EXISTENCE. A GitHub fork does not track its parent, so a fork carrying none of our commits is
+ * a point-in-time snapshot that drifts further from upstream every day it sits there. Preferring one would read older
  * data for no benefit, silently, on every fresh clone — which is why a CLEAN fork resolves upstream and says why.
  * "Prefer our fork" always meant "prefer the remote our corrections are on"; `diverged` is that, stated so a machine
  * can check it.
@@ -118,9 +118,10 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 }
 
 /**
- * The `gh`-backed {@linkcode ForkProbe} the CLI passes — asks GitHub what our fork IS, not merely whether it exists.
- * `compare` answers `ahead_by` — commits the fork holds that upstream does not — and that is the only thing that makes
- * a fork worth preferring, since the fork org holds a fork of every WOF repo whether or not we have corrected it.
+ * The `gh`-backed {@linkcode ForkProbe} the CLI passes — asks GitHub what our fork is rather than merely whether it
+ * exists. `compare` answers `ahead_by` — commits the fork holds that upstream does not — and that is the only thing
+ * that makes a fork worth preferring, since the fork org holds a fork of every WOF repo whether or not we have
+ * corrected it.
  *
  * A THROW is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a failed lookup is recorded as
  * upstream-with-a-caveat rather than upstream-as-established-fact.

@@ -22,7 +22,7 @@
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
@@ -146,7 +146,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
-	// MARK: Write MANIFEST (records the extracted CSV, not the ZIP)
+	// MARK: Write MANIFEST for extracted CSV
 
 	const manifest: SourceManifest = {
 		source_url: zipURL,

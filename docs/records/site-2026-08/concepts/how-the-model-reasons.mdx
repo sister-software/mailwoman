@@ -17,8 +17,8 @@ each label?
 
 This doc lays out the central theory in one place. It exists because the answer
 is interesting and surprisingly hard to pin down. The model is a layered
-transducer with soft-fusion priors — not a context-free grammar, not a
-context-sensitive grammar, not pure pattern matching, and not "the model just
+transducer with soft-fusion priors — not a context-free grammar rather than a
+context-sensitive grammar rather than pure pattern matching, and not "the model just
 figures it out." That distinction has practical consequences for everything from
 training-corpus design to inference performance.
 
@@ -42,7 +42,7 @@ Six stages. Steps 1, 2, 3, and 6 are deterministic transformations. Steps 4
 (the additive priors), 5 (Viterbi), and the encoder itself are where the
 interesting reasoning happens.
 
-## The encoder is a transducer, not a grammar
+## The encoder is a transducer rather than a grammar
 
 The closest formal analogy is a **neural conditional random field**: a
 transformer encoder produces per-token emission distributions, additive priors
@@ -186,7 +186,7 @@ output is what you'd expect.
 
 The model output is per-token BIO labels. A span begins at the first token
 that gets a `B-X` label, and ends at the last token that gets `I-X` before
-something else. The boundary is implicit in the BIO sequence, not produced
+something else. The boundary is implicit in the BIO sequence rather than produced
 by a separate "boundary detection" head.
 
 This has consequences. **The model can't have a strong opinion about

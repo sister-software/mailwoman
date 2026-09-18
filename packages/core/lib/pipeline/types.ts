@@ -233,7 +233,7 @@ export type QueryKind =
 export const QueryIntentCode = {
 	/**
 	 * The query named a place, and the gazetteer's answer for that name is not decisive. Raised at RESOLVE time (the
-	 * margin is a property of the candidate list, not of the string), so the classifier never emits it.
+	 * margin is a property of the candidate list rather than of the string), so the classifier never emits it.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
 	/**
@@ -263,8 +263,8 @@ export const QueryIntentCode = {
 	 * determination there. `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
 	 *
 	 * The code is raised at RESOLVE time and names the verdict's own top kind rather than a kind of its own: the marker
-	 * is about the coordinate an answer reached, not about how the query was read, so there is no intent kind to name. A
-	 * reading the authority does not make raises nothing — outside its footprint there is no coverage row, and an
+	 * is about the coordinate an answer reached rather than about how the query was read, so there is no intent kind to
+	 * name. A reading the authority does not make raises nothing — outside its footprint there is no coverage row, and an
 	 * advisory there would report a determination nobody made.
 	 */
 	AuthorityDesignation: "authority_designation",
@@ -655,8 +655,8 @@ export type PipelineTiming = Record<string, number>
 
 /**
  * The stages whose defensive wrapper degrades instead of aborting the pipeline. One id per `safe*` wrapper in
- * `runtime-pipeline.ts`; the ids are the wrapper's, not the timing map's, because a fault is about the injected stage
- * (`classifier`), not the phase that ran it (`token-classify`).
+ * `runtime-pipeline.ts`; the ids are the wrapper's rather than the timing map's, because a fault is about the injected
+ * stage (`classifier`), not the phase that ran it (`token-classify`).
  */
 export const PipelineFaultStage = {
 	Classifier: "classifier",

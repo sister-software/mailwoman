@@ -13,7 +13,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   home every writer imports the guard from instead.
  *
  *   The export's name and behavior are unchanged from the pre-move implementation — this is a
- *   relocation, not a rewrite.
+ *   relocation rather than a rewrite.
  */
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
@@ -33,7 +33,7 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * crosswalk as empty against a filer.db that actually has the data (reviewer probe, `build-filer.ts`'s final 3a review:
  * a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []`/`primary_frn: null`).
  *
- * Thrown, not coerced: there is no honest way to turn a whole-file vintage label into a per-edge date without
+ * Thrown rather than coerced: there is no honest way to turn a whole-file vintage label into a per-edge date without
  * fabricating one. The caller must supply a real ISO date through a field dedicated to that purpose
  * (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any other)
  * to guess one from a label.

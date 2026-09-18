@@ -125,8 +125,8 @@ export function axiosLikeError(message: string, code: string, config: StubReques
  * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted) and records every dispatch.
  *
  * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error CARRYING the
- * response — because `validateStatus` is applied by the adapter, not by the interceptor chain. A test that resolves
- * with a 4xx instead would exercise a path the real transport never takes.
+ * response — because `validateStatus` is applied by the adapter rather than by the interceptor chain. A test that
+ * resolves with a 4xx instead would exercise a path the real transport never takes.
  */
 export function stubTransport(outcomes: StubOutcome[], options: StubTransportOptions = {}): StubTransport {
 	const { clock, defaultBody = { ok: true } } = options

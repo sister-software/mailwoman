@@ -5,7 +5,7 @@
  *
  *   Build `soil.db` — the sealed polygon layer, from the survey areas NRCS publishes.
  *
- *   THE ACCUMULATION IS IN SQL, NOT IN A MAP. Classification is per delineation and shared with the
+ *   THE ACCUMULATION IS IN SQL rather than IN A MAP. Classification is per delineation and shared with the
  *   resolution measurement, but where the touches GO differs on purpose: the measuring instrument holds
  *   them in memory because it is comparing candidate resolutions in one pass, and the builder streams them
  *   into a temporary table because memory has to stay flat in row count. A polygon layer's touches
@@ -604,12 +604,12 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 /**
  * The coverage rows: one per interior cell of the built footprint that soil mapping actually reaches, and none outside.
  *
- * THE INTERIOR TEST RUNS ONCE OVER THE UNION OF EVERY OUTLINE BUILT, NOT PER SURVEY AREA, and the difference is most of
- * a state. The test is conservative — it keeps only cells lying WHOLLY inside — so applied per area it drops every cell
- * a county border crosses. Measured on Polk County alone at resolution 6: 20 interior cells against the roughly 42 the
- * county spans by area, so more than half of it would read `unknown` while sitting inside a survey the build had
- * ingested. Run over the union, only the OUTER border of the built set is dropped, which is the honest edge: beyond it
- * lies ground this artifact does not hold.
+ * THE INTERIOR TEST RUNS ONCE OVER THE UNION OF EVERY OUTLINE BUILT rather than PER SURVEY AREA, and the difference is
+ * most of a state. The test is conservative — it keeps only cells lying WHOLLY inside — so applied per area it drops
+ * every cell a county border crosses. Measured on Polk County alone at resolution 6: 20 interior cells against the
+ * roughly 42 the county spans by area, so more than half of it would read `unknown` while sitting inside a survey the
+ * build had ingested. Run over the union, only the OUTER border of the built set is dropped, which is the honest edge:
+ * beyond it lies ground this artifact does not hold.
  *
  * The conservatism itself stays. A cell wrongly called interior would state that an authority determined a location it
  * never looked at, and a point in the dropped strip reading `unknown` is the truthful answer for ground the built set
@@ -656,7 +656,7 @@ function buildCoverageCells(
 		}
 
 		// Attributed by the cell's CENTRE, so each row is counted for exactly one survey area even where the cell straddles
-		// two. The count is a per-area receipt, not part of the coverage claim — the claim is the row set itself.
+		// two. The count is a per-area receipt rather than part of the coverage claim — the claim is the row set itself.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 

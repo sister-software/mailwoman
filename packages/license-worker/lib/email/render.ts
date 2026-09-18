@@ -5,7 +5,7 @@
  *
  *   The license message in its two bodies, the same for every provider: the text body for a client that shows no HTML,
  *   and the HTML body from the react-email template. Both render the sections `content.ts` decides. The HTML goes
- *   through React's static renderer for the edge runtime, not react-email's `render`, whose bundle carries prettier
+ *   through React's static renderer for the edge runtime rather than react-email's `render`, whose bundle carries prettier
  *   and html-to-text for options this worker never uses.
  */
 

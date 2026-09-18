@@ -82,7 +82,7 @@ async function fixture() {
 	await runFile("git", ["init", "--quiet"], { cwd: repoRoot, encoding: "utf8" })
 	await runFile("git", ["add", "-A", "--", "packages", "package.json"], { cwd: repoRoot, encoding: "utf8" })
 
-	// A rename is detected against a commit, not against an empty index: with no HEAD, `git mv` still moves the file
+	// A rename is detected against a commit rather than against an empty index: with no HEAD, `git mv` still moves the file
 	// but `git status` reports an addition.
 	await runFile(
 		"git",

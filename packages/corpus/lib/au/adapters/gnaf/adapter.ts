@@ -7,8 +7,7 @@
  *
  *   The model mis-parses Australian addresses in their native postcode-first / house-number-last
  *   order: it tags a leading 4-digit postcode as a house number (its US/EU prior) and swaps street
- *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-ORDER coverage gap,
- *   not capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
+ *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-ORDER coverage gap rather than capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
  *   parse were order-robust). EU survives the same eval because its postcodes are
  *   format-distinctive (a hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only
  *   disambiguates by position.
@@ -127,8 +126,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 				}
 
 				// `raw` here is one of three deliberate word orders, two of which no layout prints — the postcode-leading
-				// forms this adapter exists to teach. So the question is containment against a string this adapter built,
-				// not what a layout would have printed.
+				// forms this adapter exists to teach. So the question is containment against a string this adapter built rather than what a layout would have printed.
 				const aligned = componentsPresentIn(components, raw)
 
 				if (!Object.keys(aligned).length) continue

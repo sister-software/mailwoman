@@ -21,7 +21,7 @@
  *
  *   So this recipe emits the postcode and nothing else, which is the one thing no sibling does.
  *
- *   VERIFIED AGAINST THE PRIOR, NOT MERELY MATCHED TO IT. Every surface is run through
+ *   VERIFIED AGAINST THE PRIOR rather than MERELY MATCHED TO IT. Every surface is run through
  *   `detectKnownFormats` and refused unless the detector calls it a postcode. The recipe's rendering
  *   table and `known-formats.ts`'s patterns have to agree, and matched constants would not prove
  *   they do — the trained surface and the prior that boosts it come from one check.
@@ -323,7 +323,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			}
 		}
 
-		// A surface this table renders and the detector refuses is a contract break, not a data quirk: every
+		// A surface this table renders and the detector refuses is a contract break rather than a data quirk: every
 		// form here is one `known-formats.ts` declares a pattern for, so the count is expected to be zero and
 		// a non-zero one names which side moved.
 		if (unrecognized > 0) {
@@ -333,7 +333,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			)
 		}
 
-		// AN EMPTY BUILD IS A FAILURE, NOT AN EMPTY ANSWER. Required files were preflighted above, so zero
+		// AN EMPTY BUILD IS A FAILURE rather than AN EMPTY ANSWER. Required files were preflighted above, so zero
 		// rows here means their postcode columns or the written-form rules no longer provide usable data.
 		if (emitted === 0) {
 			throw new Error(

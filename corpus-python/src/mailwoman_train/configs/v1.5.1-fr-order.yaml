@@ -7,7 +7,7 @@
 #   - But: v4.5.0 scored only 54.5% on the same diversified golden → net +32.9pp improvement
 #   - All 93 FR house_number misses are "47110 Sainte-Livrade-sur-Lot, XX..." (postcode-first)
 #     — model still predicts the leading 47110 as house_number (BAN canonical-order prior too strong)
-#   - Recipe output is correct (0 oob spans, 199/199 reversed-order span check passed) — signal, not quality
+#   - Recipe output is correct (0 oob spans, 199/199 reversed-order span check passed) — signal rather than quality
 #   - German synth at weight=6.0 fully works. the FR source needs equivalent signal strength
 #   - Bridge retirement held (po_box 90.3), DE order held (native 90.8%), all US/FR floors passed
 #

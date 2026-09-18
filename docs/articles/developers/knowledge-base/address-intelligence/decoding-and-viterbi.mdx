@@ -86,7 +86,7 @@ continuation does not raise, it shortens a town name. The table costs one table 
 a comparison per transition, and in exchange the tree that reaches your code is well-formed on input
 nobody has tried yet. Guarantees are worth most exactly where measurement has nothing to report.
 
-## Why the transition scores are constraints, not weights
+## Why the transition scores are constraints rather than weights
 
 A **conditional random field** is a sequence model whose decode step scores complete label sequences
 using both per-item scores and learned pairwise scores between adjacent labels — the pairwise part
@@ -128,7 +128,7 @@ comes out is always well-formed, and being well-formed is not evidence about the
 **The guarantee stops at the decoder.** Span construction downstream is lenient by design: hand it an
 invalid sequence and it will treat a hanging continuation as the start of a new span rather than
 raising. That tolerance exists so a caller who runs the diagnostic per-piece decode still gets output,
-and it means the structural guarantee is a property of the default decode path, not of the tree
+and it means the structural guarantee is a property of the default decode path rather than of the tree
 builder.
 
 ## Related

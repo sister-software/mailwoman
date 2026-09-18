@@ -26,7 +26,7 @@
  *   postalcode-us.db (US. spr centroids are real post-backfill), postalcode-gb-codepoint.db (GB, OS
  *   Code-Point Open under OGL v3), postalcode-nl-pc6.db (NL, CBS PC6 via PDOK under CC-BY 4.0).
  *
- *   ZCTA caveat: ZCTAs approximate delivery areas, not ZIPs — PO-box-only/unique ZIPs have no ZCTA
+ *   ZCTA caveat: ZCTAs approximate delivery areas rather than ZIPs — PO-box-only/unique ZIPs have no ZCTA
  *   and stay placeholder. Vintage + URL: $MAILWOMAN_DATA_ROOT/census/README.md.
  *
  *   Usage: node scripts/build-pilot-anchor-lookup.ts\
@@ -162,8 +162,8 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
  * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`) — the outward district is everything
- * before it. Structural, not a guess. it is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on the
- * spaced form.
+ * before it. Structural rather than a guess. it is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on
+ * the spaced form.
  */
 const GB_INWARD_LENGTH = 3
 
@@ -378,10 +378,11 @@ export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
  * had a DE/FR/US centroid keeps it verbatim. ES/IT only ever ADD posterior mass and fill placeholders.
  *
  * Not here, and why: **CA** (slot 3) — the built centroids live in `postalcode-ca-overture.db`, an Overture-derived
- * artifact (ODbL) that is build-local, not a redistributable training input. **JP** (slot 5) — `postalcode-jp.db`
- * exists, but a JP code is `\d{3}-\d{4}`, whose key form (`1000001`) collides shape-wise with nothing yet in the set
- * and needs its own confound board before it feeds a channel. **NI (`BT`) GB codes** — Code-Point Open carries zero of
- * them and the only sources that do are LPS-licensed or ODbL (`postalcode-ni-osm.db`, build-local tier).
+ * artifact (ODbL) that is build-local rather than a redistributable training input. **JP** (slot 5) —
+ * `postalcode-jp.db` exists, but a JP code is `\d{3}-\d{4}`, whose key form (`1000001`) collides shape-wise with
+ * nothing yet in the set and needs its own confound board before it feeds a channel. **NI (`BT`) GB codes** —
+ * Code-Point Open carries zero of them and the only sources that do are LPS-licensed or ODbL (`postalcode-ni-osm.db`,
+ * build-local tier).
  */
 export const ANCHOR_V2_COUNTRIES = ["DE", "FR", "US", "GB", "NL", "ES", "IT"] as const
 

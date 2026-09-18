@@ -232,7 +232,7 @@ describe("the inheritance closure", () => {
 		// A diamond: `retailer` is reachable directly and through `pharmacy`, and appears once.
 		expect(ancestorsIn(model, "late_night_pharmacy")).toEqual(["pharmacy", "retailer"])
 
-		// A concept that is a kind of nothing gets an entry stating that, not an absent entry.
+		// A concept that is a kind of nothing gets an entry stating that rather than an absent entry.
 		expect(ancestorsIn(model, "retailer")).toEqual([])
 		expect(ancestorsIn(model, "obtain_medication")).toEqual([])
 	})

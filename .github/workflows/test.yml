@@ -6,16 +6,16 @@
 #
 # STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
 # aggregator checks on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
-# leg is the pure unit/lexicon surface; slow leg is the DB-conditional integration suites (CLI harness,
+# leg is the pure unit/lexicon surface. slow leg is the DB-conditional integration suites (CLI harness,
 # WOF resolver, model-load tests).
 #
 # SIZES, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
 # ~517s. The earlier figures here (317 files / 10s and 86 files / 95s, from 2026-08-02) were off by
 # 1.9x and 5.4x, which is enough to send someone triaging CI cost at the wrong leg. Wall times move
-# with contention and with the machine; the FILE COUNTS are the durable half, so re-read them from
+# with contention and with the machine. the FILE COUNTS are the durable half, so re-read them from
 # `vitest list --filesOnly` rather than trusting a number in a comment.
 #
-# lexicon-full is the sixth leg and the newest (2026-08-02). It exists because ONE test file was
+# lexicon-full is the sixth leg and the newest (2026-08-02). It exists because one test file was
 # unit-slow's entire wall-clock: the full-scale locality-surface build was 236.9s of a 253s leg, and
 # it grew with the gazetteer, so the problem compounded on its own. The four laws now assert against
 # a seeded fixture in unit-fast (505ms, gazetteer-invariant) and the full-scale build is path-conditional
@@ -26,28 +26,28 @@
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
 #
-# WHERE EACH LEG RUNS — jobs ask for a CAPABILITY, not a machine (2026-08-02). Three legs are
+# WHERE EACH LEG RUNS — jobs ask for a CAPABILITY rather than a machine (2026-08-02). Three legs are
 # portable and run on GitHub-hosted runners unconditionally: static (lint + typecheck), unit-fast
 # (no model, no DB by construction) and react (browser mode — hosted even allows the `--with-deps`
 # playwright path the lab runners can't sudo). Two are not portable and carry the label
-# `mailwoman-data`, which the lab runners advertise and which MEANS "$MAILWOMAN_DATA_ROOT is present
+# `mailwoman-data`, which the lab runners advertise and which means "$MAILWOMAN_DATA_ROOT is present
 # and populated": unit-slow reads ~10 GB of WOF/address-point databases, and smoke needs the weights
 # materialized from that same root.
 #
 # The label supplies the variable as well as the data. Each runner exports MAILWOMAN_DATA_ROOT from
 # the runner application's own `.env`, which the listener loads into every job it runs, so no job
-# here declares it. Do NOT reintroduce a job-level `env: MAILWOMAN_DATA_ROOT: ${{ secrets.… }}`: an
+# here declares it. Do not reintroduce a job-level `env: MAILWOMAN_DATA_ROOT: ${{ secrets.… }}`: an
 # `env:` block always wins over the inherited value, and a `secrets` expression expands to the EMPTY
 # STRING on any event whose secrets come from a store that lacks the name. An empty root is not an
 # absent root — it resolves relative to the checkout, so the failure arrives as a missing model file
 # inside `_work/` rather than as a missing secret.
 #
-# The split matters beyond placement: `runs-on` states what a job NEEDS, so a data-dependent test
+# The split matters beyond placement: `runs-on` states what a job needs, so a data-dependent test
 # added to unit-fast fails on a hosted runner immediately instead of silently skipIf-ing to green.
 # It also keeps the lab box carrying two legs rather than five, which is what the fleet's four slots
 # and a shared workstation can actually absorb.
 #
-# `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP; it does not move any
+# `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP. it does not move any
 # job between runners. Releases are unaffected either way: publish.yml stays pinned to the fleet.
 #
 # PATH-BLOCKING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
@@ -97,7 +97,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
-  # Is a data-capable runner online? That is the ONLY question this job answers.
+  # Is a data-capable runner online? That is the only question this job answers.
   #
   # GitHub Actions has no native fallback: a job whose labels match a REGISTERED but OFFLINE runner
   # QUEUES for up to 24h rather than failing. With every leg on `self-hosted`, taking the fleet down
@@ -146,7 +146,7 @@ jobs:
 
           if [ -n "${OVERRIDE:-}" ]; then
             echo "::notice::vars.DATA_FLEET is set — using it verbatim: ${OVERRIDE}"
-            if [ "$OVERRIDE" = "down" ]; then emit false; else emit true; fi
+            if [ "$OVERRIDE" = "down" ]. then emit false. else emit true. fi
             exit 0
           fi
 
@@ -156,7 +156,7 @@ jobs:
             exit 0
           fi
 
-          # The `.runners | type == "array"` test is required, not defensive noise. Every API
+          # The `.runners | type == "array"` test is required rather than defensive noise. Every API
           # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
           # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
           # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
@@ -174,7 +174,7 @@ jobs:
                      end' 2>/dev/null) || online=""
 
           # Anything that is not a plain integer — an empty body, `null`, an API error object — is a
-          # probe that did not answer, not a fleet that is down. Fail closed.
+          # probe that did not answer rather than a fleet that is down. Fail closed.
           if ! [[ "$online" =~ ^[0-9]+$ ]]; then
             echo "::warning::could not read the runners API (got '${online}') — assuming the data fleet is up (failing closed to the full check)"
             emit true
@@ -182,7 +182,7 @@ jobs:
             echo "::notice::${online} mailwoman-data runner(s) online"
             emit true
           else
-            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED, not silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not publish a release off this run."
+            echo "::warning::no mailwoman-data runner is online — unit-slow and smoke will be SKIPPED rather than silently passed. They read ~10 GB of WOF/address-point databases that exist only on the lab host. Do not publish a release off this run."
             emit false
           fi
 
@@ -196,17 +196,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -217,7 +217,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         uses: actions/cache@v6
@@ -242,12 +242,12 @@ jobs:
       - name: Enable Corepack (yarn 4)
         run: corepack enable
 
-      # The ONE job that runs Yarn's hardened mode. `.yarnrc.yml` pins `enableHardenedMode: false`
+      # The one job that runs Yarn's hardened mode. `.yarnrc.yml` pins `enableHardenedMode: false`
       # repo-wide so the other install sites — the self-hosted legs included, where the registry
       # round-trip crosses the lab's degraded uplink — install straight from the global cache. This
       # leg is hosted, is already the lint/typecheck check, and runs on every PR, so it is where the
       # lockfile's resolutions get re-verified against the registry. Yarn's own guidance: enable it
-      # in one CI job, not all of them.
+      # in one CI job rather than all of them.
       - name: Install dependencies
         run: yarn install --immutable
         env:
@@ -258,7 +258,7 @@ jobs:
 
       # Test files are excluded from every build project on purpose — the build emits what it includes,
       # and an included test lands in `out/` and then in the tarball. That `exclude` suppressed the emit
-      # AND the checking, so until this step tests were compiled by vitest's esbuild transform, which
+      # and the checking, so until this step tests were compiled by vitest's esbuild transform, which
       # strips types without looking at them. Each workspace's tsconfig.test.json is the non-emitting
       # half. Runs after Compile for the same .d.ts reason as the step above.
       - name: Typecheck tests
@@ -277,12 +277,12 @@ jobs:
       - name: Setup uv (python lint/type/security checks)
         uses: astral-sh/setup-uv@v7
         with:
-          # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest";
+          # Pinned to the lab host's uv (keep in lockstep — bump deliberately rather than via "latest";
           # silences setup-uv's could-not-determine-version fallback warning).
           version: "0.11.16"
 
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
-      # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is THE complete check:
+      # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is the complete check:
       # the pre-commit hook only lints STAGED files, so repo-wide drift and --no-verify commits are
       # caught here. The first `uv run` syncs corpus-python's venv incl. the [train] extras (mypy
       # must resolve torch), so this step is slower than it looks on a cold runner.
@@ -305,12 +305,12 @@ jobs:
         run: yarn workspace @mailwoman/docs typecheck
 
   # The root Vitest sweep, split into two legs that run concurrently.
-  # unit-fast: every test file that does NOT load the model, hit a WOF DB, or invoke the CLI
+  # unit-fast: every test file that does not load the model, hit a WOF DB, or invoke the CLI
   #   harness — the pure unit/lexicon surface (~313 files). Finishes in ~15s.
   # unit-slow: the DB-conditional integration suites (mailwoman CLI harness, resolver-wof-sqlite WOF
   #   tests, neural/test model-load tests, evidence-lexicons build). ~87 files, ~5 min floor.
   #
-  # The split exploits the fleet slot freed when smoke is path-conditional; without it the unit leg
+  # The split exploits the fleet slot freed when smoke is path-conditional. without it the unit leg
   # is the PR's long pole at ~7 min. Running both in parallel reduces it to max(slow, ~15s) ≈ 5 min.
   unit-fast:
     runs-on: ubuntu-latest
@@ -320,17 +320,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -341,7 +341,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         uses: actions/cache@v6
@@ -372,30 +372,30 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # `@mailwoman/dev-mcp`'s symbol index shells out to ripgrep, which is NOT on the hosted image —
+      # `@mailwoman/dev-mcp`'s symbol index shells out to ripgrep, which is not on the hosted image —
       # `symbol-index`, `symbol-tool` and `symbol-precheck` failed with
       # `ripgrep (rg) is not on PATH, so the declaration search did not run.` on every PR.
       #
       # Installed rather than skipped. That guard exists because an unrunnable searcher returning ""
       # reads as "this symbol has no home", which is the answer the tool is for — so a runner without
-      # ripgrep must not quietly pass the suite that proves the guard works. The lab fleet already has
+      # ripgrep must not quietly pass the suite that exercises the guard. The lab fleet already has
       # it, which is why this only ever failed on the hosted leg.
       - name: Install ripgrep (dev-mcp symbol index)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
 
       # No weights materialization — this leg excludes every suite that loads the model or
       # hits a WOF DB (neural/test/**, mailwoman/test/**, resolver-wof-sqlite/**,
-      # evidence-lexicons, geocode CLI). The 313-file sweep finishes in ~15s; suite-only
+      # evidence-lexicons, geocode CLI). The 313-file sweep finishes in ~15s. suite-only
       # failures surface before the slow leg finishes.
       - name: Test (fast)
         run: yarn ci:test:fast
 
   # The DB-conditional half of the Vitest sweep — everything excluded from unit-fast. Runs in
-  # parallel with unit-fast on a separate runner slot; the aggregator checks on both.
+  # parallel with unit-fast on a separate runner slot. the aggregator checks on both.
   # NOT PORTABLE — requires `mailwoman-data`, and job-skipped when no such runner is online (see the
   # data-fleet header). Its suites read ~10 GB of WOF/address-point databases and are written with
   # `describe.skipIf(!HAS_WOF)`, so on a hosted runner they would skipIf their way to a green tick.
-  # A job that reports `skipped` is legible in the UI; one that reports `success` having tested
+  # A job that reports `skipped` is legible in the UI. one that reports `success` having tested
   # nothing is not.
   unit-slow:
     needs: [data-fleet, conformance-scope]
@@ -409,17 +409,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -430,7 +430,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         uses: actions/cache@v6
@@ -459,16 +459,16 @@ jobs:
       # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
       # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
-      # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
+      # pays the multi-minute build only on a genuine key change. the key hashes the generating CLI
       # modules as well as the config and data, which the retired workflow key did not. See
       # packages/release-kit/lib/weights/derived-weights-key.ts.
-      - name: Materialize weights (derived store; multi-minute build only on a key change)
+      - name: Materialize weights (derived store. multi-minute build only on a key change)
         run: yarn mwops release copy-weights
 
       - name: Symlink base-latn model (en-us already materialized)
         run: |
           mkdir -p packages/neural-weights-base-latn
-          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json. do
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 
@@ -488,7 +488,7 @@ jobs:
   #
   # WHAT THIS DECIDES. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
   # drive the real pipeline over the blocking rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
-  # or 18% of the leg. Unlike `lexicon-full` this is NOT its own job — a fourth data-hungry leg would
+  # or 18% of the leg. Unlike `lexicon-full` this is not its own job — a fourth data-hungry leg would
   # queue against the same scarce slots the `lexicon-check` header complains about — so the decision
   # is threaded into unit-slow as a vitest exclude instead.
   #
@@ -541,7 +541,7 @@ jobs:
           fi
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice title=conformance integration SKIPPED::No parse-path change, so the five LIVE-PIPELINE conformance suites did not run. The same laws WERE asserted against the committed fixture rows by the *-suite.test.ts files in unit-fast. What was NOT exercised is the pipeline claim: that the tokenizer, lexicons, pair indices and resolver agree with Stage 1 on these rows."
+          echo "::notice title=conformance integration SKIPPED::No parse-path change, so the five LIVE-PIPELINE conformance suites did not run. The same laws were asserted against the committed fixture rows by the *-suite.test.ts files in unit-fast. What was not exercised is the pipeline claim: that the tokenizer, lexicons, pair indices and resolver agree with Stage 1 on these rows."
           {
             echo "## conformance integration: skipped (parse path unchanged)"
             echo ""
@@ -596,7 +596,7 @@ jobs:
           fi
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws WERE asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised; lexicon-nightly.yml and the release check carry those."
+          echo "::notice title=lexicon-full SKIPPED::Nothing under mailwoman/gazetteer-pipeline/, data/gazetteer/, core/data/libpostal/ or codex/ changed, so the FULL-SCALE locality-surface build did not run. The four laws were asserted, against the fixture layer in unit-fast. Coverage-scale claims (entries > 10_000, the nonzero skip counters) were not exercised. lexicon-nightly.yml and the release check carry those."
           {
             echo "## lexicon-full: skipped (path-conditional)"
             echo ""
@@ -609,14 +609,14 @@ jobs:
 
   # The FULL-SCALE locality-surface build (`evidence-lexicons.full.test.ts`).
   #
-  # WHY IT IS ITS OWN JOB: it WAS unit-slow's wall-clock. Measured 2026-08-02, two tests building the
+  # WHY IT IS ITS OWN JOB: it was unit-slow's wall-clock. Measured 2026-08-02, two tests building the
   # lexicon over the whole 4.9 GB admin DB were 236.9s of a 253s leg — 93% of the leg's test time —
   # and the cost grows with the gazetteer, so the problem was getting worse on its own. Splitting it
   # out took unit-slow to ~94s locally.
   #
   # WHAT STILL RUNS EVERY PR: the four laws, against a seeded fixture DB
-  # (`evidence-lexicons.fixture.test.ts`, 505ms, in unit-fast). That file drives the REAL builder
-  # through `opts.dbPath` and is invariant to gazetteer size. What is NOT covered when this job is
+  # (`evidence-lexicons.fixture.test.ts`, 505ms, in unit-fast). That file drives the real builder
+  # through `opts.dbPath` and is invariant to gazetteer size. What is not covered when this job is
   # path-conditional off is the COVERAGE-SCALE claim — `entries > 10_000` and the nonzero skip counters —
   # which is a claim about the gazetteer rather than about the laws.
   #
@@ -638,17 +638,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -659,7 +659,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         uses: actions/cache@v6
@@ -689,7 +689,7 @@ jobs:
   # @mailwoman/react's suites are Vitest browser mode (playwright/chromium) and are excluded
   # from the root sweep — importing vitest/browser under the forks pool is a hard error
   # (the failure class that turned Test red from #1215 until this leg existed). This leg is
-  # their only CI coverage; if it's removed, the react package ships untested.
+  # their only CI coverage. if it's removed, the react package ships untested.
 
   react:
     runs-on: ubuntu-latest
@@ -699,17 +699,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -720,7 +720,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         uses: actions/cache@v6
@@ -752,7 +752,7 @@ jobs:
         run: yarn compile
 
       # --with-deps is available again now that this leg is hosted. It sudo-installs the chromium
-      # system libs, which is why it was OFF while the leg ran on the lab (no passwordless sudo
+      # system libs, which is why it was off while the leg ran on the lab (no passwordless sudo
       # there, so the libs were provisioned once by hand). A hosted runner is a fresh image every
       # time and has sudo, so it must install them itself.
       - name: Install Playwright chromium (react browser tests)
@@ -774,7 +774,7 @@ jobs:
           PLANETARY_BODY: mars
 
       # The license worker's tests run under the Workers runtime (Miniflare) through the workspace's own vitest
-      # config; the root sweep excludes them for the same reason it excludes the react browser leg.
+      # config. the root sweep excludes them for the same reason it excludes the react browser leg.
       - name: Test license worker (Workers pool)
         run: yarn test:license-worker
 
@@ -784,7 +784,7 @@ jobs:
   # effect — all invisible in-repo, all fatal to a fresh `npm install`.
   #
   # PATH-CONDITIONAL on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
-  # docs, root *.md, data/, .github/, or any workspace NOT packed by smoke-clean-install.ts
+  # docs, root *.md, data/, .github/, or any workspace not packed by smoke-clean-install.ts
   # (osm, tile-worker, resolver-wof-wasm) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
   # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
@@ -871,17 +871,17 @@ jobs:
 
       # The compiled tree, keyed on the sources it is a function of.
       #
-      # `tsc -b` costs 29-36s in EVERY leg — the same build, six times, on the same commit, and 171s
+      # `tsc -b` costs 29-36s in every leg — the same build, six times, on the same commit, and 171s
       # of the 1049s machine budget measured 2026-08-02. Measured on the lab, same session:
       #
       #   cold compile            47.4s
       #   restore                  0.1s   (3.7 MB zstd — JS + .d.ts compress hard)
       #   compile after restore   15.9s
       #
-      # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
+      # So ~31s a leg. It does not go to zero: `tsc -b` still stats the whole project graph. The
+      # .tsbuildinfo files live inside out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
-      # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
+      # no restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
@@ -892,7 +892,7 @@ jobs:
       # tsc genuinely does have to rebuild then.
       #
       # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
-      # it and does NOT skip node_modules, so running it after install would walk ~74,000 vendored
+      # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
@@ -933,15 +933,15 @@ jobs:
       # fastify declare @mailwoman/neural-weights-en-us as a real dep, so on a version-bumped
       # release branch npm would otherwise chase the not-yet-published registry version (ETARGET —
       # the chicken-and-egg that blocked the v7.6.0 release PR). `yarn pack` quietly packs whatever
-      # subset of the `files` globs exists, so the binaries MUST be present before packing.
+      # subset of the `files` globs exists, so the binaries must be present before packing.
       # Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
       # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
       # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
-      # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
+      # pays the multi-minute build only on a genuine key change. the key hashes the generating CLI
       # modules as well as the config and data, which the retired workflow key did not. See
       # packages/release-kit/lib/weights/derived-weights-key.ts.
-      - name: Materialize weights (derived store; multi-minute build only on a key change)
+      - name: Materialize weights (derived store. multi-minute build only on a key change)
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn mwops release copy-weights
 
@@ -949,7 +949,7 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: |
           mkdir -p packages/neural-weights-base-latn
-          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json. do
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 
@@ -957,7 +957,7 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn ci:smoke
 
-  # Aggregator — the ONLY check the ruleset + release auto-merge look at (context `test`).
+  # Aggregator — the only check the ruleset + release auto-merge look at (context `test`).
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
@@ -986,7 +986,7 @@ jobs:
       - name: Green, but without the data legs
         if: ${{ needs.data-fleet.outputs.up != 'true' }}
         run: |
-          echo "::warning title=PARTIAL CHECK::static, unit-fast and react passed. unit-slow and smoke were SKIPPED — no mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did NOT exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
+          echo "::warning title=PARTIAL CHECK::static, unit-fast and react passed. unit-slow and smoke were SKIPPED — no mailwoman-data runner was online, and they read ~10 GB of databases that exist only on the lab host. This run did not exercise the WOF resolver, the CLI harness, model loading, geocode, or the packaging pipeline. Do not publish a release off it."
           {
             echo "## test: GREEN (partial — no data fleet)"
             echo ""

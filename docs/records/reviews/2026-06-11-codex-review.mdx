@@ -117,7 +117,7 @@ There is also a small size mismatch: the model table says 29.8 MB int8, while th
 section says 28.4 MB. If both are true for different served artifacts, say so; otherwise pick the
 release artifact number.
 
-### 6. The v4.4.0 plan's highest-risk new floor is po_box, not intersection
+### 6. The v4.4.0 plan's highest-risk new floor is po_box rather than intersection
 
 The intersection change looks comparatively clean: #487 now has real rows, the recent commits add
 `intersection-real`/VT watch material, and the config header reports 100/100 probe behavior with
@@ -133,7 +133,7 @@ means the punctuation class needs its own corrective.
 
 The v4.3.0 ship check and 2026-06-11 scorecard characterize the perturb drop well: fused
 region+postcode tokens dominate the regression, with post-directional and unit-junction boundary
-wobbles behind it. #513 captures the right fix direction: data, not a conventions mask.
+wobbles behind it. #513 captures the right fix direction: data rather than a conventions mask.
 
 The v4.4.0 check now floors `arena.perturb` at 71, restoring the v4.2.0 mark. That is exactly the
 right move. If this floor fails, shipping v4.4.0 would convert a documented v4.3.0 tradeoff into a
@@ -142,14 +142,14 @@ known unfixed regression.
 ## Night Shift Watch List
 
 1. Treat `scripts/eval/checks/v4.4.0-boundary.json` as immutable for this candidate. If a floor
-   needs to move, that is a new candidate or a written rebaseline, not an edit during verdict.
+   needs to move, that is a new candidate or a written rebaseline rather than an edit during verdict.
 2. On pass, verify the artifact identity end-to-end: fp32 path, quantized md5, HF label, R2 served
    md5, npm package version.
 3. On fail, classify to row before spending GPU. For tonight, likely classes are po_box
    punctuation truncation, perturb glue rows, and any FR region tail movement.
 4. Do not spend the train-time conventions probe until the v4.4.0 verdict is stable. It is a good
    next change, but it is not part of the current check's proof.
-5. Keep #481/#480 cleanup as issue hygiene after the model decision, not during the ship fork.
+5. Keep #481/#480 cleanup as issue hygiene after the model decision rather than during the ship fork.
 
 ## Suggested Follow-ups
 
@@ -171,7 +171,7 @@ boundary candidate must not be allowed to blur experimental probe results into s
 
 Ship v4.4.0 only on a clean pre-registered check pass. If it passes, it closes the v4.3.0 arena dip
 and brings po_box/cedex/intersections alive. If it fails, the right output is a short, row-classed
-postmortem and one single-variable corrective, not a widened release.
+postmortem and one single-variable corrective rather than a widened release.
 
 ---
 
@@ -199,7 +199,7 @@ The main remaining parser-parity gaps look like this:
 
 5. The arbitration layer is not fully harvested yet
    The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
-   That is why #478 matters: parity may come from learned parsing plus disciplined arbitration, not from forcing the neural model to imitate every v0 trick.
+   That is why #478 matters: parity may come from learned parsing plus disciplined arbitration rather than from forcing the neural model to imitate every v0 trick.
 
 My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary check resolves directly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
 parity.
@@ -211,7 +211,7 @@ I would sequence it like this:
 
 Now: finish v4.4.0 or characterize its failure. Do not start broad geocoder work mid-candidate.
 
-Immediately after v4.4.0: do a short hygiene pass: issue/docs sync, strict reproducibility cleanup, reconcile docs, maybe the remaining #481/#480 pieces. Keep it measured in days, not weeks.
+Immediately after v4.4.0: do a short hygiene pass: issue/docs sync, strict reproducibility cleanup, reconcile docs, maybe the remaining #481/#480 pieces. Keep it measured in days rather than weeks.
 
 Then start geocoder table stakes in parallel with parser tail work. The first serious beyond-parser targets should be:
 
@@ -220,5 +220,5 @@ Then start geocoder table stakes in parallel with parser tail work. The first se
 - Autocomplete as a product: use the FST tier for prefixes, bring the parser in after enough signal exists.
 - Batch/service hardening: needed for peer comparison, benchmarks, and real usage.
 
-In short: finish the current boundary consolidation, then let parser work and geocoder work run in parallel. Parser parity should become a release check for parser claims, not a blocker on building the full geocoder. The model-first bet is
+In short: finish the current boundary consolidation, then let parser work and geocoder work run in parallel. Parser parity should become a release check for parser claims rather than a blocker on building the full geocoder. The model-first bet is
 already validated enough to extend upward into resolution, confidence, interpolation, reverse, and autocomplete.

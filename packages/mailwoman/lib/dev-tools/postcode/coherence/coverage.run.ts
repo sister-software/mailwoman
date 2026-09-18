@@ -9,13 +9,12 @@
  *   Two things are measured, because one without the other misleads:
  *
  *   1. ROWS — `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
- *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound,
- *      not as coverage.
+ *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
  *   2. REACHABILITY — one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
  *      pass itself makes, reporting whether the postcode resolved, whether an exact same-named locality came back, and
  *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
  *
- *   The candidate SET is bounded by codex, not by the gazetteer: `candidateSystemsForPostcode` only knows the systems
+ *   The candidate SET is bounded by codex rather than by the gazetteer: `candidateSystemsForPostcode` only knows the systems
  *   in `SYSTEM_CODES`, so a country with no codex address system can never be proposed however many rows it has. The
  *   probe
  *   therefore walks exactly those systems, one real pair each.

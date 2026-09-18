@@ -21,7 +21,7 @@ license** (see [`LICENSE.md`](./LICENSE.md)). For that dual model to hold, every
 contribution has to reach us under terms that let us offer it under _both_
 licenses. So, by submitting a contribution (a pull request, patch, or any change),
 you agree to the following. **You keep the copyright in your contribution** — this
-is a license grant, not an assignment.
+is a license grant rather than an assignment.
 
 1. **Developer Certificate of Origin.** By submitting a contribution you
    certify the DCO (version 1.1, full text below) for every commit in it —

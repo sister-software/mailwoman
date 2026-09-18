@@ -10,7 +10,7 @@ tags:
 
 # Geocode-first record matching — the thing that imploded, and why it won't again
 
-Mailwoman started as the answer to a record-matching problem, not a parsing one.
+Mailwoman started as the answer to a record-matching problem rather than a parsing one.
 The original job was unglamorous: a pile of clinics receiving federal and state
 funding, arriving as SQLite dumps, CSV exports, and hand-keyed spreadsheets, and
 a question — _which of these registered entities already got money, which are
@@ -80,14 +80,14 @@ hands you matching keys with the _right_ topology:
 - **the coordinate / situs point / H3 cell** — the same building gets the same
   key, regardless of how the street was abbreviated;
 - **the WOF ancestry** — spelling-invariant blocking by locality and region,
-  because you're keying on resolved IDs, not text;
+  because you're keying on resolved IDs rather than text;
 - **structured components with confidence** — you compare field-by-field, and you
   _know which fields to trust_.
 
 You never match on the formatted string. You match on the resolved place, and
 the lossy-template problem disappears with the string it lived in.
 
-## Entity resolution is three problems, not one
+## Entity resolution is three problems rather than one
 
 The reason ER "implodes" is that people treat it as one giant problem. It's
 three, and naming them _is_ the architecture (Binette & Steorts, 2022; Papadakis
@@ -101,7 +101,7 @@ et al., 2021):
 3. **Cluster** — pairwise scores are _not transitive_ (A~B at 0.6 and B~C at 0.6
    does not make A~C a match), so a separate stage closes pairs into canonical
    entities. Skip it and your "entities" without output fracture or fuse (Dedupe; the
-   non-transitivity is essential, not a footnote).
+   non-transitivity is essential rather than a footnote).
 
 Upstream of all three is **canonicalize**: parse the name, sanitize the org name,
 geocode the address, normalize the phone and email. That's mostly salvage — the
@@ -166,8 +166,7 @@ and non-Gaussian, with a hard urban→rural gradient (street-interpolation media
    our situs → interp → admin tier cascade and conformal radii. We have the quality
    class already; the matcherhas to spend it.
 
-Calibrate the thresholds against mailwoman's _own_ measured error distribution,
-not the literature's older-geocoder constants. Our rooftop tier is tighter; the
+Calibrate the thresholds against mailwoman's _own_ measured error distribution rather than the literature's older-geocoder constants. Our rooftop tier is tighter; the
 shape of the lesson holds, the numbers are ours to measure.
 
 ## Where a model warrants its place
@@ -181,7 +180,7 @@ evidence says they pay — never the foundation:
   on noisy, textual fields — not as a blanket replacement (DeepBlocker).
 - **A gradient-boosted matcher** over the comparison vector once labels exist. A
   tree over `{distance, name-sim, street-sim}` already clears ~90% matched-class F1
-  in production (Grab) — a strong, interpretable upgrade from hand-weights, not a
+  in production (Grab) — a strong, interpretable upgrade from hand-weights rather than a
   neural moonshot. **This one is shipped, and on by default**: a pure-Node
   gradient-boosted tree over the agreement pattern plus the over-merge interaction
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
@@ -196,7 +195,7 @@ evidence says they pay — never the foundation:
   discovery is the opposite objective** — that same pattern is the prototypical
   signal of one facility under different operational names across sources — so the
   cross-dataset and reconciliation flows pin the FS core (`learnedScorer: false`),
-  where recall, not over-merge precision, is what matters. Same model, opposite
+  where recall rather than over-merge precision, is what matters. Same model, opposite
   objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
   _clustering_ rather than all-pairs classification, an LLM reduces API calls ~5× and
@@ -204,8 +203,7 @@ evidence says they pay — never the foundation:
   calibrated scorer abstained on.
 - **An LLM for ingest.** The messy-data reality — "it came as a SQLite dump" — is
   where an LLM is cheaply excellent: read a header row plus a few
-  samples, infer the column→field mapping, cache it. One call per _source schema_,
-  not per row. The most painful onboarding step, deleted.
+  samples, infer the column→field mapping, cache it. One call per _source schema_ rather than per row. The most painful onboarding step, deleted.
 
 ## Four rules, carried over
 
@@ -216,10 +214,10 @@ The four rules the geocoder already lives by govern the matcher too:
   of an exhaustive search in under 100 trials (AutoER, 2025). So we build a
   _tunable_ matcher and a small tuner — we do not chase one perfect model.
 - **Calibrate, then abstain.** A link is a probability; the ambiguous middle goes
-  to review, not to a coin flip.
+  to review rather than to a coin flip.
 - **Grade the pipeline against truth, never a stage in isolation.** The reconcile
   regression taught this the hard way. Match quality is measured on linked
-  entities versus reality, not on a scorer's pairwise F1.
+  entities versus reality rather than on a scorer's pairwise F1.
 - **No silent caps.** When blocking drops a region or a tier, say so. A matcher
   that silently never compares two records reads as "no match found" — the most
   dangerous lie an ER system can tell.
@@ -273,5 +271,5 @@ build it and grade it against real clinic data. That's the work.
 
 - [Record-matcher data catalog](./record-matcher-data-catalog.md) — what each source dataset is, where it lives, and how its columns map into the matcher
 - [Record-matcher sources (reference)](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/record-matcher-sources.md) — the machine-readable source registry the catalog narrates
-- [Choosing the dedup yardstick](./dedup-entity-truth.mdx) — why org-name, not NPI, grades the matcher's decision surface
+- [Choosing the dedup yardstick](./dedup-entity-truth.mdx) — why org-name rather than NPI, grades the matcher's decision surface
 - [Case study: cross-registry linking](./cross-registry-linking.mdx) — the same doctor in two federal registries, matched through the geocode

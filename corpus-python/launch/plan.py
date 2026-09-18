@@ -24,7 +24,7 @@ VOL_MOUNT = "/data"
 #: Large corpora: the most parallelism, with progress logged because the transfer outlives a glance.
 WIDE = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
 #: Moderate parallelism, no progress logging. Used where the transfer is a tokenizer or a
-#: checkpoint rather than a corpus — megabytes, not tens of gigabytes.
+#: checkpoint rather than a corpus — megabytes rather than tens of gigabytes.
 STEADY = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
 
 #: Which `__pycache__` directories a sync clears. A container-side write of new `.py` over old

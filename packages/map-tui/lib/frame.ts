@@ -57,8 +57,8 @@ class FrameRasterizer extends AsciifyTerminal {
 /**
  * Converts a 2×4-subpixel RGBA grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
  *
- * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug, not something to
- *   silently clip.
+ * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug rather than something
+ *   to silently clip.
  */
 export function rasterizeToFrame(grid: RGBAGrid, columns: number, rows: number, attribution: string): MapFrame {
 	if (grid.width !== columns * 2 || grid.height !== rows * 4) {

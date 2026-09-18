@@ -21,7 +21,7 @@ export const spec = { name: "list", description: "List registered corpus adapter
 
 /**
  * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id when the host stdout
- * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not pretty.
+ * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly rather than pretty.
  */
 const CorpusList = () => {
 	const state = useCommandTask(async () => {

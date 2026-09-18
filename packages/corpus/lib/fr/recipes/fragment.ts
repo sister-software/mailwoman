@@ -36,7 +36,7 @@
  *   The **admin/street homonym** class (`Rue de Rome`) is deliberately not a separate form. Homonym
  *   streets are already in the register and fall into 1–3 naturally. there is nothing different to
  *   teach about them, because the lesson is identical — the designator makes it a street. The
- *   fragment board scores them separately (they need measuring, not minting), and the recipe would
+ *   fragment board scores them separately (they need measuring rather than minting), and the recipe would
  *   need a second pass over the commune set to label them, buying a `synth_method` string and no
  *   training signal.
  *
@@ -57,11 +57,11 @@
  *
  *   MIX. The recipe output is ~145K rows off a 120K-tuple draw. the intended corpus mix is **5–10%**,
  *   set at assembly time by source weight rather than by row count. Keep the cap: a recipe output that
- *   fixes fragments by degrading full addresses has moved the failure, not fixed it — which is what
+ *   fixes fragments by degrading full addresses has moved the failure rather than fixed it — which is what
  *   `street-housenumber` / `alnum-housenumber` on the fragment board and the global parity floor are
  *   there to catch. `date-name` is ~0.5% of the output because BAN only holds ~1,418 date-name streets
  *   after filtering and the tuple extractor already takes every one. if that class needs more, the
- *   change is source weight, not invented data.
+ *   change is source weight rather than invented data.
  *
  *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
  *   The conventions loss-mask forbids it for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss

@@ -26,7 +26,7 @@ close-out.
   through an en-us-shaped harness cache; production consults `postcode-gb.bin` and the true
   baseline is **55/69, 94.5% tag-correct**. Verified not code drift by identical-artifact reruns.
 
-## Measured, not shipped (morning decisions)
+## Measured rather than shipped (morning decisions)
 
 1. **Transition-level pair evidence — the door is open.** β=5 on the (→ B-dependent_locality)
    transition at pair-hit boundaries recovers **13/17** of the comma-free path-fusion misses

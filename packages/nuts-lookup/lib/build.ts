@@ -34,7 +34,7 @@ export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 
 	// `nutsId` is a string contract with every shipped nuts.db — the acronym-casing convention applies
-	// to TS identifiers, not DB columns (readers alias it: `SELECT nutsId AS nutsID`).
+	// to TS identifiers rather than DB columns (readers alias it: `SELECT nutsId AS nutsID`).
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsId TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
 	)

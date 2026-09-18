@@ -23,7 +23,7 @@ const latencies: number[] = []
 let writeIdx = 0
 
 /**
- * Null-prototype: tier keys are created lazily on first use, not eagerly pre-populated.
+ * Null-prototype: tier keys are created lazily on first use rather than eagerly pre-populated.
  */
 const tierCounts: Record<string, number> = Object.create(null)
 let total = 0
@@ -70,7 +70,7 @@ export interface MetricsSnapshot {
 		errors: number
 		/**
 		 * Per-tier counts. Keys are created lazily on the first `recordTimed` call for that tier — a tier never recorded is
-		 * absent, not zero.
+		 * absent rather than zero.
 		 */
 		tiers: Record<string, number>
 		latency_ms: { p50: number; p90: number; p99: number; max: number } | null

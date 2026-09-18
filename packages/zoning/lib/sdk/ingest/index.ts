@@ -8,7 +8,7 @@
  *   OGR IS BUILD TOOLING, NEVER A SERVE DEPENDENCY (SCOPE invariant 6). It converts the authority's geometry
  *   into the structure the runtime probes, and nothing downstream of this module knows GDAL exists.
  *
- *   THE STREAM IS WKT, NOT GEOJSON, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A TASTE ONE. This service
+ *   THE STREAM IS WKT rather than GEOJSON, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A TASTE ONE. This service
  *   encodes hole roles by ring ORIENTATION — clockwise exterior, the inverse of RFC 7946 — and puts each ring
  *   in its own `MultiPolygon` part on the features that carry holes that way. GDAL's GeoJSON writer enforces
  *   the RFC 7946 winding unconditionally: `-lco RFC7946=NO` is not a GeoJSONSeq option, and
@@ -103,8 +103,8 @@ export interface ZoningIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change, not a variation to
-	 * absorb.
+	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * to absorb.
 	 */
 	expectEPSG?: number
 	/**

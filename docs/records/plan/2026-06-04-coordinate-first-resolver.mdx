@@ -1,6 +1,6 @@
 # Coordinate-first resolver & falsehood-aware reconciliation — direction (2026-06-04)
 
-We spent the PR3 cycle trying to fix German inside the parser — a self-conditioned retrain, then a decoder repair — and both produced correct-er parses that the resolver couldn't cash in. The resolver is the judge, and the judge kept saying the same thing: German is a **resolver** problem, not a parser problem. This is the plan that follows from finally believing it.
+We spent the PR3 cycle trying to fix German inside the parser — a self-conditioned retrain, then a decoder repair — and both produced correct-er parses that the resolver couldn't cash in. The resolver is the judge, and the judge kept saying the same thing: German is a **resolver** problem rather than a parser problem. This is the plan that follows from finally believing it.
 
 DeepSeek-signed across the Pilot-A postmortem consult (`.agents/skills/deepseek-consult/session-notes-2026-06-04-pilot-a-postmortem.md`, `…-resolver-coordinate-first.md`), grounded in how Pelias and Airmail work.
 
@@ -14,11 +14,11 @@ That zero is the whole story. The parse was string-perfect and the resolver stil
 
 Our `oa-resolver-eval` locality-match is name-centric — it compares the resolved WOF _name_ to OA's gold _name string_. It penalises a geographically-correct resolve that returns `Plauen` against gold `Plauen Vogtl`. Meanwhile the resolver already places these German addresses at coord **p50 1.3 km** via the postcode anchor. So a large share of the "25.6% / 77.4% German locality" number was never a geocoding failure — it was a scoreboard that can't read a name variant.
 
-The fix starts with the scoreboard. **The non-gameable metric:** a locality is correctly resolved iff the real OA per-address point lies _inside the polygon_ of the resolver-assigned WOF locality (point-in-polygon containment, not centroid distance — distance is gameable in a dense metro). The circularity guard is absolute: score against the real OA point, **never** the postcode centroid the resolver itself consumed.
+The fix starts with the scoreboard. **The non-gameable metric:** a locality is correctly resolved iff the real OA per-address point lies _inside the polygon_ of the resolver-assigned WOF locality (point-in-polygon containment rather than centroid distance — distance is gameable in a dense metro). The circularity guard is absolute: score against the real OA point, **never** the postcode centroid the resolver itself consumed.
 
 ## How the rest of the field does it
 
-**Pelias** doesn't name-match for admin at all. Its `wof-admin-lookup` _discards_ the source record's city names and regenerates the whole hierarchy from WOF polygons via point-in-polygon on the coordinate, at import — "we ignore all admin hierarchy from individual records and generate it from the polygon data." The `Plauen Vogtl` mismatch can't arise. Its `postal-cities` precomputes a postcode→locality table that aggregates _multiple_ names per postcode (18964 → both "Souderton" and "Franconia"). Its point-in-polygon is an in-memory rbush R-tree + ray-cast, not Elasticsearch and not SpatiaLite.
+**Pelias** doesn't name-match for admin at all. Its `wof-admin-lookup` _discards_ the source record's city names and regenerates the whole hierarchy from WOF polygons via point-in-polygon on the coordinate, at import — "we ignore all admin hierarchy from individual records and generate it from the polygon data." The `Plauen Vogtl` mismatch can't arise. Its `postal-cities` precomputes a postcode→locality table that aggregates _multiple_ names per postcode (18964 → both "Souderton" and "Franconia"). Its point-in-polygon is an in-memory rbush R-tree + ray-cast rather than Elasticsearch and not SpatiaLite.
 
 **Airmail** (and Nominatim, Photon) are retrieval geocoders — BM25 over indexed places. A wrong postcodelowers a document's score; the right city still ranks it up. resilient, but with no explicit "these two fields disagree" signal, so they _silently mislocate_ when a wrong combination scores high (`90210 Los Angeles` → Beverly Hills). That silence is the gap we can fill.
 
@@ -30,7 +30,7 @@ A coordinate-first resolver that scores rather than hard-matches, and flags rath
 
 ### Candidate generation (coordinate-first, in-DB, no ES)
 
-Precompute a `postcode → candidate localities` table **offline**, where the geometry lives. For each postcode, take its centroid, point-in-polygon (or nearest within ~10 km) against WOF locality polygons, and store the containing/adjacent localities with their canonical name and WOF alt-names. This is Pelias's move keyed on postcode; the heavy geometry runs once at build time, and the shipped artifact is a flat SQLite lookup. **No SpatiaLite-for-web** — it's a lookup we precompute, not a spatial engine we ship.
+Precompute a `postcode → candidate localities` table **offline**, where the geometry lives. For each postcode, take its centroid, point-in-polygon (or nearest within ~10 km) against WOF locality polygons, and store the containing/adjacent localities with their canonical name and WOF alt-names. This is Pelias's move keyed on postcode; the heavy geometry runs once at build time, and the shipped artifact is a flat SQLite lookup. **No SpatiaLite-for-web** — it's a lookup we precompute rather than a spatial engine we ship.
 
 At resolve time, the candidate set is the postcode-proximal localities ∪ a few name-matched localities (country-filtered fuzzy), typically ≤5.
 
@@ -59,7 +59,7 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 - **Transposed/alias city names** — _skip the dedicated table._ WOF ships `alt_name`/`name:*`; edit-distance + double-metaphone over a 5-item candidate set catches the rest on the fly (see #189 for splitting alt-names into their own FTS table).
 - **Misappropriated postcode → target** — _don't build a table of user mistakes_ (intent is unsourceable). But fold the _sourceable_ half — WOF/`postal-cities` postcode→multiple-postal-city aliases — into the candidate table. That covers "the postal city differs from the admin city"; the actual mistakes are caught by the conflict flag.
-- **Abutting/adjacent postcodes** — _a radius, not a table._ Candidate generation within ~10 km already captures the neighbour; an optional build-time `is_adjacent` boolean only if the data demands it. The containment metric handles it for free: if the gold point is in the next town, the next town is the right answer.
+- **Abutting/adjacent postcodes** — _a radius rather than a table._ Candidate generation within ~10 km already captures the neighbour; an optional build-time `is_adjacent` boolean only if the data demands it. The containment metric handles it for free: if the gold point is in the next town, the next town is the right answer.
 
 ## Falsehoods: the part Pelias and Airmail skip
 
@@ -67,7 +67,7 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 ## Staged plan (cheapest and most decisive first)
 
-1. **PIP-containment metric + re-measure.** Implement the geometric metric (gold OA point inside resolved WOF locality polygon, using the WOF GeoJSON polygons already on disk) and re-score the _current_ resolver on DE — no build, no retrain. **Check: if DE clears ~85%, the German wall was largely a measurement artifact** and the candidate table is a refinement, not a rescue. If lower, the table is mandatory. (#273)
+1. **PIP-containment metric + re-measure.** Implement the geometric metric (gold OA point inside resolved WOF locality polygon, using the WOF GeoJSON polygons already on disk) and re-score the _current_ resolver on DE — no build, no retrain. **Check: if DE clears ~85%, the German wall was largely a measurement artifact** and the candidate table is a refinement rather than a rescue. If lower, the table is mandatory. (#273)
 2. **Postcode → locality candidate table** (offline precompute, WOF alt-name aliases folded in). Re-measure. (#274)
 3. **Soft-scoring reconciliation + conflict flag** in the resolver. (#275; builds on #227 population tiebreak, #189 alt-names.)
 4. **Conflict-falsehoods eval** — extend the falsehoods doc; check on catching mismatches. (#276)

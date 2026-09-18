@@ -237,8 +237,9 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 /**
  * Resolve a reference into the rows it names.
  *
- * A board subset reports what it excluded, not merely what it kept. That asymmetry is the point: a caller who filters
- * to `country: "gb"` is told which countries just left the measurement, in the same object that carries the result.
+ * A board subset reports what it excluded rather than merely what it kept. That asymmetry is the point: a caller who
+ * filters to `country: "gb"` is told which countries just left the measurement, in the same object that carries the
+ * result.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
 	switch (ref.kind) {
@@ -268,7 +269,7 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
  *
  * The locale hint is part of the input contract: a two-letter prefix carries no country evidence of its own, so every
  * rung runs with the row's country as its route, its fuzzy scope and its default country. A rung measured without the
- * hint would grade the gazetteer's population prior, not autocomplete.
+ * hint would grade the gazetteer's population prior rather than autocomplete.
  */
 async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Promise<ResolvedInputSet> {
 	const board = await resolveBoard({
@@ -330,8 +331,8 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
  *
  * COST, measured 2026-08-16 on this box, because a reservoir draw reads the entire source: **`us` 113 ms over 77,442
  * parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV). The FR draw is therefore a per-call cost
- * on the order of a minute, not a cached one — there is nowhere to cache it that would not defeat the freshness the set
- * exists for.
+ * on the order of a minute rather than a cached one — there is nowhere to cache it that would not defeat the freshness
+ * the set exists for.
  */
 async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): Promise<ResolvedInputSet> {
 	const source = ref.source ?? "fr"

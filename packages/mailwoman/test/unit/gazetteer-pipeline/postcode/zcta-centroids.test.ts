@@ -7,7 +7,7 @@
  *
  *   - ZCTA: placeholder with ZCTA → filled. real coord → untouched. no-ZCTA → placeholder.
  *   - GeoNames: placeholder covered by GeoNames (but not ZCTA) → filled. real coord → untouched.
- *       no-GeoNames → placeholder. no-overwrite: ZCTA-already-filled row stays ZCTA, not geonames.
+ *       no-GeoNames → placeholder. no-overwrite: ZCTA-already-filled row stays ZCTA rather than geonames.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

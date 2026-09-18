@@ -16,7 +16,7 @@
  *   parses the input to find the subject and anchor before it can emit OverpassQL.
  *
  *   **Laziness moves the first failure into a tool call, so `loadCore` owns the friendly-failure messages** that
- *   `photon`/`nominatim`/`mailwoman serve` print at boot. Both are thrown, not printed: `server.ts` catches a handler
+ *   `photon`/`nominatim`/`mailwoman serve` print at boot. Both are thrown rather than printed: `server.ts` catches a handler
  *   throw and returns it as an `isError` tool result, so a thrown message reaches the agent where a `console.error` +
  *   `process.exit(1)` would just kill the transport mid-conversation. See `loadCore` for the two.
  *

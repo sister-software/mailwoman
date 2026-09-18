@@ -14,8 +14,7 @@ Pre-registered shape (2026-07-18-v8-jp-char-encoder-design §d):
 - Postcodes: Overture-JP postcode fill is zero (re-verified on #473), so the 〒 fraction joins the
   representative postcode from KEN_ALL by NFC/space-stripped (pref, muni) kanji — the lowest code
   per municipality (the NNN-0000 catch-all Japan Post lists first). Same join as
-  ``scripts/diagnostic/build-jp-overture-gold.ts``; the pairing's KEN_ALL descent is documented,
-  not pretended away.
+  ``scripts/diagnostic/build-jp-overture-gold.ts``; the pairing's KEN_ALL descent is documented rather than pretended away.
 - Stratified per-prefecture reservoir (47 prefectures, each with its own seeded reservoir), then a
   round-robin draw to the target count — Tokyo cannot drown Tottori.
 - Held-out board: municipalities whose bucket hash lands in the board range never appear in
@@ -55,7 +54,7 @@ import pyarrow.parquet as pq
 from ...paths import data_root_path
 from ...tokenizer.char import build_char_vocab, save_char_vocab
 
-#: Resolved when a default is needed, not at import, so `--help` runs with no data root configured.
+#: Resolved when a default is needed rather than at import, so `--help` runs with no data root configured.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
 KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
 OUT_DIR_PARTS = ("corpus", "versioned", "v8-jp-probe")

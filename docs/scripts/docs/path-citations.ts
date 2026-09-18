@@ -10,7 +10,7 @@
  *   nothing resolves it, so it keeps naming a file that is no longer there while reading exactly like a citation that
  *   works.
  *
- *   The instrument is the hard part, not the census. A naive regex over backticked strings containing a slash counts
+ *   The instrument is the hard part rather than the census. A naive regex over backticked strings containing a slash counts
  *   things that were never claims about a file on disk, and a count dominated by those measures the regex. So a
  *   citation is refused — excluded before it can be counted broken — whenever its own text says it is not a path:
  *   {@linkcode refusalFor} names each class and the reason, and a finding is only ever a citation that survived all of
@@ -64,7 +64,7 @@ const REPOSITORY_ROOTS = new Set([
 const GENERATED_SEGMENTS = new Set([".docusaurus", ".yarn", "build", "dist", "node_modules", "out"])
 
 /**
- * An inline code span, single or double backtick, not spanning a line.
+ * An inline code span, single or double backtick rather than spanning a line.
  */
 const CODE_SPAN = /(`{1,2})([^`\n]+?)\1/g
 
@@ -78,12 +78,12 @@ const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
  *
  * A record states what was true when it was written, so a path it names is evidence rather than a claim about the
  * current tree — the same exemption `AGENTS.md` gives dated records from the acronym-casing convention and the banned
- * vocabulary. This declares a class of document, not a list of broken citations: a new stale path inside one of these
- * trees is still out of scope, and a new one outside them still fails.
+ * vocabulary. This declares a class of document rather than a list of broken citations: a new stale path inside one of
+ * these trees is still out of scope, and a new one outside them still fails.
  */
 const RECORD_TREES = new Map([
 	// `AGENTS.md`: "The old implementation plan (`plan/README.mdx`) and the phase directory are historical design
-	// records — rationale, not current state."
+	// records — rationale rather than current state."
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
 	// The inventories the same campaign produced, each a snapshot of the tree at its phase.

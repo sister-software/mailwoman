@@ -483,8 +483,8 @@ export interface LatLonBounds {
  * Approximate bounds `radiusKM` in each direction around a point.
  *
  * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally, 1° longitude ≈ 111 km × cos(lat).
- * It is a FILTER, not an answer — it over-selects near the poles and along a long east-west span, and a caller is
- * expected to re-check survivors with an exact haversine distance. That is what makes the approximation safe: it may
+ * It is a FILTER rather than an answer — it over-selects near the poles and along a long east-west span, and a caller
+ * is expected to re-check survivors with an exact haversine distance. That is what makes the approximation safe: it may
  * admit a point it should not, and never excludes one it should keep.
  */
 export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {

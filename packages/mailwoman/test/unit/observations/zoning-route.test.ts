@@ -88,7 +88,7 @@ const INSIDE_ZONE = {
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
 /**
- * Inside the zone the authority states as UNZONED — a positive designation, not an absence.
+ * Inside the zone the authority states as UNZONED — a positive designation rather than an absence.
  */
 const INSIDE_UNZONED = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,

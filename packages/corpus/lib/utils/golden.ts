@@ -113,9 +113,9 @@ export function parseGoldenLine(line: string): GoldenEntry {
 /**
  * Check that every component in `entry` appears in `entry.raw`.
  *
- * A golden entry's `raw` is hand-written ground truth, not a render, so the question here really is containment: does
- * this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the right
- * one for a string no layout produced.
+ * A golden entry's `raw` is hand-written ground truth rather than a render, so the question here really is containment:
+ * does this labeled span occur in the string a person typed. That is the weaker of the two reconciliations, and the
+ * right one for a string no layout produced.
  */
 export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 	const present = componentsPresentIn(entry.components, entry.raw)

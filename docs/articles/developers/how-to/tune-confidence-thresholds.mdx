@@ -10,7 +10,7 @@ verified-with: mailwoman 8.7.0
 **Outcome.** You have an accept threshold with a stated basis, applied to calibrated scores, and a rule
 for what happens to the rows that fall below it.
 
-Two facts decide the whole shape of this page. The parser scores each component, not each address —
+Two facts decide the whole shape of this page. The parser scores each component rather than each address —
 there is no whole-parse confidence field. And the raw scores are compressed: on twenty clean addresses
 they spanned 0.828 to 0.938, so a threshold at 0.9 on raw output lands in the middle of the
 good rows. Calibration is what makes a threshold mean something.
@@ -43,7 +43,7 @@ the model's softmax landed there, and this model's raw scores are systematically
 narrow — mean confidence 0.913 against 0.980 accuracy on the held-out split, which is why every
 correction in the next section moves a score upward.
 
-The rows that deserve review look different in kind, not in degree:
+The rows that deserve review look different in kind rather than in degree:
 
 ```
 0.038  extra  Suite 400
@@ -149,7 +149,7 @@ Three caveats about this table, all readable in the file:
   your product.
 - The numbers are **per span**. The next section is about what happens when you apply them per row.
 
-## 4. Route rows, not spans
+## 4. Route rows rather than spans
 
 A row is accepted or rejected whole, which means one score has to stand for the row. Take the
 weakest component: a correct address with one badly-read component is not an address you want to
@@ -227,7 +227,7 @@ failures you have already seen in production before you read the numbers.
 
 ## Limits
 
-- **Confidence is about the parse, not about the place.** A high score means the model read the string
+- **Confidence is about the parse rather than about the place.** A high score means the model read the string
   the way the corpus would have labeled it. It says nothing about whether the address exists — see
   [Validate an address before you use it](./validate-addresses.mdx), and use `resolution_tier` for that
   question.
@@ -235,10 +235,9 @@ failures you have already seen in production before you read the numbers.
   en-US does not transfer to fr-FR.
 - **The shipped table predates the shipped model.** Its `model_version` is `5.3.0` against a `7.0.0`
   model card. Re-fitting is a repo-side job
-  ([`corpus-python/src/mailwoman_train/calibration/isotonic.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/calibration/isotonic.py)),
-  not a consumer-side one.
+  ([`corpus-python/src/mailwoman_train/calibration/isotonic.py`](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/calibration/isotonic.py)) rather than a consumer-side one.
 - **There is no threshold that removes review.** At 0.97 the accepted spans were still right 99.10% of
-  the time, not 100%. Budget for the residual rather than tuning to remove it.
+  the time rather than 100%. Budget for the residual rather than tuning to remove it.
 
 ## Related
 

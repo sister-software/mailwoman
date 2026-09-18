@@ -44,9 +44,9 @@ A parser that classifies `Quebec` as `region` will be wrong when the user means 
 
 ### "A locality is a municipality."
 
-`Brooklyn, NY` is a borough of New York City, not a municipality. USPS accepts it as a "preferred last line" city for several NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
+`Brooklyn, NY` is a borough of New York City rather than a municipality. USPS accepts it as a "preferred last line" city for several NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
 
-`Hollywood, CA` is a neighborhood of Los Angeles, not an independent city. USPS accepts it. `Beverly Hills, CA 90210` is an independent city, but USPS allows "Los Angeles, CA 90210" as an alternate mailing city name. The same ZIP code can map to different municipal cities and different postal cities.
+`Hollywood, CA` is a neighborhood of Los Angeles rather than an independent city. USPS accepts it. `Beverly Hills, CA 90210` is an independent city, but USPS allows "Los Angeles, CA 90210" as an alternate mailing city name. The same ZIP code can map to different municipal cities and different postal cities.
 
 ### "Overseas territories are part of the parent country's postal system."
 
@@ -56,15 +56,15 @@ The Falkland Islands share the postcode `FIQQ 1ZZ`. The British Virgin Islands h
 
 Counties are created, dissolved, and renamed. Cities annex neighboring areas. Postcodes are split and merged. The county of Gwent, UK no longer exists. Lenin Street became something else in post-Soviet countries. A Douglas Perreault condo in Florida changed from Lutz to Tampa after a post office change — same physical location, different city.
 
-Geocoders that maintain their own administrative boundary snapshots go stale. The resolver must be updatable independently of the parser. Mailwoman's architecture supports this — the resolver is a separate stage that consumes a WOF SQLite distribution. Updating the resolver is a data operation, not a code change.
+Geocoders that maintain their own administrative boundary snapshots go stale. The resolver must be updatable independently of the parser. Mailwoman's architecture supports this — the resolver is a separate stage that consumes a WOF SQLite distribution. Updating the resolver is a data operation rather than a code change.
 
 ## How traditional geocoders handled these
 
 **libpostal** handles administrative hierarchy through per-label classification. The CRF learns that a token after a locality and before a postcode is likely a region. The CRF does not know that `IL` is Illinois — it learns the statistical distribution of where region-shaped tokens appear. This works for structural identification but not for disambiguation: libpostal correctly identifies `region=IL` but cannot tell you whether `Springfield, IL` is a valid combination.
 
-**Pelias** uses WOF gazetteer lookup for the `whos_on_first` classifier. Tokens matching known administrative names are classified by placetype (country, region, locality, neighborhood). Pelias also uses the Elasticsearch-backed resolver to find candidate places and score them by name match + population. But Pelias's parser and resolver are separate — the resolver cannot feed back into the parser to correct a misclassification. If the parser tags `Quebec` as `region` when the user meant Quebec City, the resolver searches for regions named Quebec and returns the province, not the city.
+**Pelias** uses WOF gazetteer lookup for the `whos_on_first` classifier. Tokens matching known administrative names are classified by placetype (country, region, locality, neighborhood). Pelias also uses the Elasticsearch-backed resolver to find candidate places and score them by name match + population. But Pelias's parser and resolver are separate — the resolver cannot feed back into the parser to correct a misclassification. If the parser tags `Quebec` as `region` when the user meant Quebec City, the resolver searches for regions named Quebec and returns the province rather than the city.
 
-**Google's API** handles most of these through its integrated model. `Brooklyn, NY` resolves to Kings County, New York City. `Springfield` alone returns the most-popular Springfield (IL) with a structured address that includes the state. But the user cannot inspect how Google disambiguated — the result is a single coordinate, not a candidate set.
+**Google's API** handles most of these through its integrated model. `Brooklyn, NY` resolves to Kings County, New York City. `Springfield` alone returns the most-popular Springfield (IL) with a structured address that includes the state. But the user cannot inspect how Google disambiguated — the result is a single coordinate rather than a candidate set.
 
 ## What the neural approach changes
 

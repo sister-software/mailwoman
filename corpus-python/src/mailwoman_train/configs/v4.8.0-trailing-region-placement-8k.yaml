@@ -68,7 +68,7 @@
 # PRE-REGISTERED CHECK (set before the run):
 #   1. the conditional fraction does not lose a row;
 #   2. FR and DE show no regression anywhere - iron rule 6, the D-rule;
-#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric, not the check;
+#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric rather than the check;
 #   4. WATCH: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
 #      placement change are separable - re-run with the 25-country map to attribute.
 

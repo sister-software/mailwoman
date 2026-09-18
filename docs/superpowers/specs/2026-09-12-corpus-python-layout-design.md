@@ -102,7 +102,7 @@ A new country adds one directory holding only the roles it needs.
 root. Corpus carries 14 country and region directories among 7 role directories today, and at every country the role
 directories stop being findable. One path segment holds the package root at roughly twelve entries permanently.
 
-The key is `countries/`, not `locales/`, because the Python per-country code is keyed by country — register readers,
+The key is `countries/` rather than `locales/`, because the Python per-country code is keyed by country — register readers,
 script-specific text normalization — whereas `locale` in this repository means the `en-US` form that keys the
 weights packages and the `--locale` flag.
 
@@ -245,7 +245,7 @@ against the literal strings extracted from the current file. The collapse lands 
 `training-arc` skills, and the fixture strings in `packages/dev-mcp/test/unit/bash-write-guard.test.ts`. The compiler
 reads none of them, so they are swept as quoted literals per the "Moving a workspace" rule in `AGENTS.md`.
 
-The Bash write guard is unaffected: `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches `head: "modal"`, not
+The Bash write guard is unaffected: `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` matches `head: "modal"` rather than
 a filename.
 
 ### 8.6 `scripts/`
@@ -263,7 +263,7 @@ with no `uv run` and no environment. Folding it into the CLI would make the pre-
   not exported.
 - Widen `[tool.mypy] files` from `["src"]` to include `launch/`, which this arc rewrites anyway.
   `tests/` stays out: `uv run mypy --strict tests` reports 663 errors in 54 of 56 files on this branch, so admitting
-  it is its own arc, not a line in this one.
+  it is its own arc rather than a line in this one.
 - Delete `src/mailwoman_corpus/`: zero importers, a docstring and a `__version__`.
 - Add a Python counterpart of `prefix-directories` to `repo-health`, so section 5 stays satisfied. The Python tree is
   outside every structural check the repository runs, which is why section 3's two defects went unreported.

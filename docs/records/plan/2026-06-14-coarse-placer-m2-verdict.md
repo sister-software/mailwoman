@@ -7,7 +7,7 @@ default-on integration defensible._
 
 ## TL;DR
 
-The fix was **a decision rule, not a new model or a retrain.** The OA-broadened model already carries the
+The fix was **a decision rule rather than a new model or a retrain.** The OA-broadened model already carries the
 open-set signal in its `OTHER` head; the ceiling was _how we read it_. Reading total **in-map mass**
 `1 − P(OTHER)` as the reject score (and routing on the in-map argmax) **decouples "is it in-map?" from
 "which country?"** and clears 90/90 post-hoc. Wired as an opt-in `openSet` rule on `CoarsePlacer`;
@@ -38,7 +38,7 @@ detector. ⇒ **Phase 2 (a retrained binary reject-head) is unnecessary.** (Inde
 DeepSeek, which had pre-registered Mahalanobis/reject-head; it agreed the reasoning is sound and the simpler
 rule is the right call.)
 
-## Phase 3 — the assembled-pipeline check (grade the pipeline, not the component)
+## Phase 3 — the assembled-pipeline check (grade the pipeline rather than the component)
 
 Re-ran the country-disambiguation check (parse → resolve, the real wiring) on the **bundled int8** model with
 the open-set rule. Report: `docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-check.md`.
@@ -57,7 +57,7 @@ The two **new** wins are exactly the cases the rule targets — **Birmingham, AL
 DeepSeek's sharpest point: **90/90 is the wrong objective for a _soft_ prior.** The prior never filters — it
 only re-ranks, tier-safe — so a wrong off-map guess costs ~nothing (the M1 + M2 checks both show off-map
 0→0, 0 regressions), while a false _reject_ of an in-map address forfeits the result. The cost is
-**asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline**, not the
+**asymmetric** → bias toward in-map recall, and set the threshold on the **assembled pipeline** rather than the
 component min.
 
 On the assembled check the threshold is a **flat optimum** in [0.5, 0.9] (identical 9 wins / 0 regressions —

@@ -14,7 +14,7 @@
  *   rather than a gap. A country this table does not name takes the number-first order, which
  *   `@mailwoman/codex/address-layouts`'s generator applies as its default.
  *
- *   REFRESHING IT is deliberate work, not a command: the source is no longer a dependency of this repository. Re-read
+ *   REFRESHING IT is deliberate work rather than a command: the source is no longer a dependency of this repository. Re-read
  *   `address-formatting`'s `templates.json`, take each country's `address_template`, collapse every `{{#first}}`
  *   alternation to the `{{{road}}}` it may contain (an alternation names the road as a FALLBACK for a place name, and
  *   the position inside one is not the street's real position), then compare the offsets of `{{{house_number}}}` and

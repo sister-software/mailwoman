@@ -56,8 +56,8 @@ describe("SUB_LOCALITY_RUNGS", () => {
  * `placetype-census.test.ts` uses.
  *
  * Shape: GB has two locality parents (London, Quiet Town). London carries a borough and a neighbourhood child, which
- * must count as one covered parent for dependent_locality, not two. IE has one locality parent and no children at all —
- * a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
+ * must count as one covered parent for dependent_locality rather than two. IE has one locality parent and no children
+ * at all — a country that bottoms out at locality. One Overture-backfilled locality proves the source split.
  */
 function ladderFixtureDB(): string {
 	const path = `/tmp/granularity-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
@@ -87,7 +87,7 @@ function ladderFixtureDB(): string {
 		db.prepare(`INSERT INTO spr VALUES (?, ?, ?, ?, ?, ?)`).run(id, name, placetype, country, isCurrent, isDeprecated)
 	}
 
-	// Camden AND Shoreditch both under London — one covered parent, not two.
+	// Camden AND Shoreditch both under London — one covered parent rather than two.
 	const links: Array<[child: number, ancestor: number]> = [
 		[4, 2],
 		[5, 2],

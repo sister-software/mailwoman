@@ -46,7 +46,7 @@ function resolved(
 }
 
 function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwomanArmDeps {
-	// Typed throwing stubs, not a cast: the arm under test drives `runOne`, so the gauntlet's own
+	// Typed throwing stubs rather than a cast: the arm under test drives `runOne`, so the gauntlet's own
 	// geocode/diagnoseParse must never be reached — and reaching one should fail the test loudly.
 	const gauntlet: GauntletDeps = {
 		geocode: vi.fn(async () => {

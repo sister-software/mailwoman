@@ -12,7 +12,7 @@ Everything else on this shelf explains how the parser reads an address. This pag
 the inputs where it is wrong, the questions it is not answering, and the cases where the rule-based
 approach you were about to replace is still the better tool.
 
-Every claim below was produced by running the shipped parser. The wrong answers are real output, not
+Every claim below was produced by running the shipped parser. The wrong answers are real output rather than
 constructed examples.
 
 ## The analog
@@ -108,7 +108,7 @@ does cover. Two different limits follow.
 coordinate-graded evaluation exists for it, and trained exposure is not a claim. Reading down the
 tiers tells you how much of a measurement sits behind any given country.
 
-**A script outside the training data produces a confident wrong reading, not an error.** The
+**A script outside the training data produces a confident wrong reading rather than an error.** The
 tokenizer encodes unknown characters byte by byte, so the pipeline never crashes — and the pieces it
 produces carry no learned meaning:
 
@@ -145,7 +145,7 @@ One accent, and the region is gone — the restoration did not run, so `qc` reac
 it has little training signal for, and there was no comma to supply the structure instead. Add the
 comma back and `montréal, qc` recovers the region, in the lowercase form it arrived in.
 
-Lowercase is the register real users type, not degraded input. The bridge covers the ASCII majority
+Lowercase is the register real users type rather than degraded input. The bridge covers the ASCII majority
 of it. Accented lowercase is the gap, and it is largest in exactly the languages that use accents
 most.
 

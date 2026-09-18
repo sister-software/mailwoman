@@ -299,7 +299,7 @@ export default async function ingestBatch({ dbPath, paths }: { dbPath: string; p
 }
 ```
 
-`prepareWofInsertStatements` / `insertWofRows` should target WOF-compatible tables, not a custom `geojson`-only table. If `geojson` is emitted, use an upstream-compatible shape such as `id INTEGER PRIMARY KEY, body TEXT, source TEXT, is_alt INTEGER, alt_label TEXT, lastmodified INTEGER`, or explicitly model alt geometries in the official `geometries` table. Do **not** use `PRIMARY KEY (id, alt_label) WITHOUT ROWID` while inserting `NULL` `alt_label`; `WITHOUT ROWID` primary-key columns are implicitly `NOT NULL`.
+`prepareWofInsertStatements` / `insertWofRows` should target WOF-compatible tables rather than a custom `geojson`-only table. If `geojson` is emitted, use an upstream-compatible shape such as `id INTEGER PRIMARY KEY, body TEXT, source TEXT, is_alt INTEGER, alt_label TEXT, lastmodified INTEGER`, or explicitly model alt geometries in the official `geometries` table. Do **not** use `PRIMARY KEY (id, alt_label) WITHOUT ROWID` while inserting `NULL` `alt_label`; `WITHOUT ROWID` primary-key columns are implicitly `NOT NULL`.
 
 ### Consumer side
 
@@ -325,7 +325,7 @@ const row = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 Mailwoman's resolver expects WOF-style tables (`spr`, `names`, `concordances`, and optional `geojson` / `ancestors` / derived FTS/R\*Tree/population tables). The official WOF SQLite distributions use these table names. Mirror them unless there is a documented reason not to.
 
-### `BEGIN IMMEDIATE` after parsing, not before
+### `BEGIN IMMEDIATE` after parsing rather than before
 
 A plain `BEGIN` starts a deferred transaction. If two workers both try to upgrade to writer, one can get `SQLITE_BUSY` mid-transaction. `BEGIN IMMEDIATE` grabs the writer lock upfront, so other workers wait.
 
@@ -335,7 +335,7 @@ But don't grab that lock while reading files or parsing JSON. The writer lock sh
 
 Use `Promise.allSettled(...)`, then `await pool.destroy()`, then rethrow the first failure. `Promise.all(...)` rejects on the first failure while other tasks may still be running. The freeze phase must not start until every worker task has returned and the pool is destroyed.
 
-### `journal_mode` is per-file, not per-connection
+### `journal_mode` is per-file rather than per-connection
 
 Once WAL is set on the file, every connection from every process sees WAL. Set it once on the main thread before spawning workers. Verify the returned value when switching back to `DELETE`.
 
@@ -407,7 +407,7 @@ For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, stat
 
 **Workers return parsed data to a single main-thread writer.**
 
-This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O, not SQLite writes.
+This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O rather than SQLite writes.
 
 ---
 

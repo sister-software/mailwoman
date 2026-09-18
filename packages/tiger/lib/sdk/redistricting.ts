@@ -155,7 +155,7 @@ export interface FetchRedistrictingResult {
 }
 
 // Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call site stays (the
-// parse indexes by position, not by header). spliterator keeps CRLF's trailing CR where readline stripped
+// parse indexes by position rather than by header). spliterator keeps CRLF's trailing CR where readline stripped
 // it, but every field this parser reads (geo GEOCODE/LOGRECNO ≤ 9, segment-1 LOGRECNO + P2 ≤ 86) sits well
 // before the final column, so the retained CR only ever lands on an unread trailing field.
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {

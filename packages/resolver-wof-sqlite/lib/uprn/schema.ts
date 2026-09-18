@@ -20,7 +20,7 @@
  *   ## Why `h3_cell` exists at all
  *
  *   The layer contract requires every domain row to be addressable by at least one spine key —
- *   `writeLayerManifest` throws on a manifest that declares none — and UPRN is its own id space, not
+ *   `writeLayerManifest` throws on a manifest that declares none — and UPRN is its own id space rather than
  *   H3/WOF/address-id/street. The res-9 short cell (`shortCellToInt`, the same packing as poi.db and
  *   the OSM situs extracts) is the spine that fits a point table, and its index doubles as the
  *   `nearestUPRN` ring probe.

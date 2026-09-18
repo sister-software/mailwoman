@@ -89,8 +89,8 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 	test("pocket tier is conditional against its own certified capabilities", async () => {
 		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero maskOff F1. a
 		// forbid there is equally illegal. Confirms the tier selector actually reads the pocket cell.
-		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78, not the older 80),
-		// so match the message shape, not the number.
+		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78 rather than the older 80),
+		// so match the message shape rather than the number.
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = {
 			...savedFr,
 			forbiddenTags: ["street_prefix"],

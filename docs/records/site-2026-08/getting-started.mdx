@@ -67,9 +67,9 @@ region: "NY" (confidence: 0.93)
 
 `result.tree.roots` isn't a flat list with one entry per component. It's nested by containment — a
 `region` contains its `locality`, which contains its `street` and `postcode`, and so on — so walk
-it with recursion, not a single loop.
+it with recursion rather than a single loop.
 
-The confidence numbers are calibrated probabilities, not vibes: pass the bundled per-locale
+The confidence numbers are calibrated probabilities rather than vibes: pass the bundled per-locale
 calibrator and "0.90" means right-about-90%-of-the-time. See
 [Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it.
 
@@ -113,8 +113,8 @@ distribution.
 
 ## Caveats
 
-- **The resolver you'd reach with `--resolve` here is administrative/postcode-level, not
-  rooftop.** It returns place centroids (locality, region, postcode), not delivery-point
+- **The resolver you'd reach with `--resolve` here is administrative/postcode-level rather than
+  rooftop.** It returns place centroids (locality, region, postcode) rather than delivery-point
   coordinates. Rooftop and interpolated street-level resolution exist, but through the separate,
   richer `mailwoman geocode` command — see [Status](./status.mdx) for what's covered.
 - **Model quality varies by component and locale.** Some tags are strong, some are still

@@ -11,7 +11,7 @@
  *   seven commands were in that state when the table knew only `db` — `eval oa-resolver --out-json` among them.
  *
  *   The check derives each flag's property with the router's own function, so the check and the runtime cannot
- *   disagree, then asks whether any tracked source mentions that identifier. Mention, not declaration: a name that
+ *   disagree, then asks whether any tracked source mentions that identifier. Mention rather than declaration: a name that
  *   appears anywhere is at least read somewhere, and a name that appears nowhere cannot be. That admits a flag whose
  *   property collides with an unrelated identifier, and refuses every flag that is certainly inert.
  *

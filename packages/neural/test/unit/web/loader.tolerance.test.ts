@@ -12,7 +12,7 @@
  *   the demo's `runtime.ready` never fired → the input stayed permanently disabled even though the
  *   model, tokenizer, and the other postcode binaries were all fine.
  *
- *   The postcode anchor is a soft ranking channel, not a required model input. This suite pins the
+ *   The postcode anchor is a soft ranking channel rather than a required model input. This suite pins the
  *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
  *   anchors. all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
  *

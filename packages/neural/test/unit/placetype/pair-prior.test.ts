@@ -172,11 +172,11 @@ describe("buildPlacetypePairPriors — absence cases", () => {
 	})
 })
 
-describe("buildPlacetypePairPriors — window-key fold (space-join, not concatenation)", () => {
+describe("buildPlacetypePairPriors — window-key fold (space-join rather than concatenation)", () => {
 	it('probes a 2-word window as "st helens" (space-joined), never "sthelens"', async () => {
 		// Real fixture tokenizer split for "St Helens Lancashire": ['▁St','▁Hel','ens','▁Lan','ca','shire']
 		// — "Helens" is genuinely two SentencePiece pieces here, so this exercises normalizeFSTToken's
-		// fold-then-join pipeline against a real multi-piece word, not a hand-rolled approximation. A
+		// fold-then-join pipeline against a real multi-piece word rather than a hand-rolled approximation. A
 		// third word ("Lancashire") is needed so the 2-word "St Helens" window has a disjoint partner to
 		// probe against — with only two words total there's no room left for any pairing.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(
@@ -326,22 +326,20 @@ describe("buildPlacetypePairPriors — marker-scope regression (Fix 3, reviewer 
 		// `isMarkerSuppressed` were (incorrectly) also consulted for the Y (parent) role, this pair would
 		// never fire: "Ashworth" would be excluded from the probe loop before `index.probe` ever ran. The
 		// suppression check must only ever check the X (child) window; "Ashworth" is disjoint from "sometown"
-		// and is "sometown"'s child-role partner here, not the other way around, so it's fine for it to sit
+		// and is "sometown"'s child-role partner here rather than the other way around, so it's fine for it to sit
 		// next to "House" in the source text.
 		const index = mockPairIndex({ "sometown|ashworth": "dependent_locality" }, 6)
 		const pieces = makePieces("sometown Ashworth House")
 		const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
 		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
-		// Confirm it was ACTUALLY probed (not merely defaulting to some other match) — "ashworth" alone,
-		// not "ashworth house", is what resolved the tag.
+		// Confirm it was ACTUALLY probed (not merely defaulting to some other match) — "ashworth" alone rather than "ashworth house", is what resolved the tag.
 		expect(index.calls).toContainEqual(["sometown", "ashworth"])
 	})
 
 	it('suppression STILL applies to the CHILD role: "Ashworth" followed by "House" is never probed as a child', () => {
 		// Same index, same words, but now "Ashworth" is asked to play the CHILD role against "sometown" as
-		// parent — this is the class the marker table exists to close ("Ashworth House" reading as a venue,
-		// not the place "Ashworth"). The window must never even be probed.
+		// parent — this is the class the marker table exists to close ("Ashworth House" reading as a venue rather than the place "Ashworth"). The window must never even be probed.
 		const index = mockPairIndex({ "ashworth|sometown": "dependent_locality" }, 6)
 		const pieces = makePieces("Ashworth House sometown")
 		const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
@@ -472,7 +470,7 @@ describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥
 		// The segment default's residual FP class: this is also the shape of a genuine
 		// false positive when a non-venue field (e.g. a street name) happens to equal a bare census child
 		// verbatim ("Moelfre B & B, Moelfre, Abergele, SY20 8LF" — the street field is literally "Moelfre"). The
-		// mechanism is purely textual/segmental, not semantic, so the same shape that defeats the venue-confound
+		// mechanism is purely textual/segmental rather than semantic, so the same shape that defeats the venue-confound
 		// class here is indistinguishable from that residual case — both are "a whole segment folds to an exact
 		// census key."
 		const index = mockPairIndex({ "moelfre|abergele": "dependent_locality" }, 6)
@@ -486,7 +484,7 @@ describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥
 	it("dual-key probe still applies at SEGMENT granularity (hyphen/space cross-form, whole multi-word segment)", () => {
 		// "Stockton on Tees" is a 3-word segment (no internal comma); the index was built from a hyphenated
 		// source ("Stockton-on-Tees" -> concat fold "stocktonontees"). Segment mode must still try the whole
-		// segment's concat form, not just its space-joined form — same dual-key contract as window mode, applied
+		// segment's concat form rather than just its space-joined form — same dual-key contract as window mode, applied
 		// to the segment as a single unit instead of to 1..3-word sub-windows.
 		const index = mockPairIndex({ "fishburn|stocktonontees": "dependent_locality" }, 6)
 		const text = "Fishburn, Stockton on Tees"
@@ -592,7 +590,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
-		// No (plimmerton, 5026) entry → zero matrix; "5026" was probed as itself, not dropped or emptied.
+		// No (plimmerton, 5026) entry → zero matrix; "5026" was probed as itself rather than dropped or emptied.
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
@@ -616,7 +614,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 
 	it("a country with no known codex shape (au) → no strip, byte-stable: the same-field postcode stays in the parent key and the pair does NOT fire", () => {
 		// AU is 4-digit too, but is deliberately not in SEGMENT_PARENT_POSTCODE_SHAPES — the strip checks on the prior's
-		// own country map, not on whether some shape exists. So "Porirua 5026" keeps its postcode-containing fold and misses
+		// own country map rather than on whether some shape exists. So "Porirua 5026" keeps its postcode-containing fold and misses
 		// the bare "porirua" parent, exactly as pre-#1308.
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "au")
 		const text = "Plimmerton, Porirua 5026"
@@ -687,7 +685,7 @@ describe("buildPlacetypePairPriors — paired punctuation (real fixture tokenize
 	// itself is the real place name (occupying its own comma-delimited field, same shape as any other segment-exact
 	// match), the probe key must fold to the clean word text — the wrapping quote/bracket/brace/guillemet chars must
 	// never survive into the index probe key, or a real match silently misses (a false negative the arc's own
-	// "recall, not precision" framing would treat as a genuine gap).
+	// "recall rather than precision" framing would treat as a genuine gap).
 
 	it('a quoted venue segment (\'"The Grange", Fishburn\') probes the CLEAN fold "the grange" — no leftover quote chars', async () => {
 		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6)
@@ -697,7 +695,7 @@ describe("buildPlacetypePairPriors — paired punctuation (real fixture tokenize
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
 		expect(matrix[0]!.some((v) => v > 0) || matrix.some((row) => row[labelCol("B-dependent_locality")]! > 0)).toBe(true)
-		// The probe key is the clean fold, not '"the grange"' / 'the grange"' / any quote-contaminated variant.
+		// The probe key is the clean fold rather than '"the grange"' / 'the grange"' / any quote-contaminated variant.
 		expect(index.calls.some(([child]) => child === "the grange")).toBe(true)
 		expect(index.calls.some(([child]) => child.includes('"'))).toBe(false)
 	})
@@ -835,7 +833,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
 		// The venue's own "Queens Park" (positions 0-1) and "Cafe" stay untouched — that text is never
-		// immediately left of the parent anchor, so it is rejected by construction, not by suppression.
+		// immediately left of the parent anchor, so it is rejected by construction rather than by suppression.
 		for (const i of [0, 1, 2]) {
 			expect(matrix[i]!.every((v) => v === 0)).toBe(true)
 		}
@@ -895,7 +893,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 		expect(index.calls.some(([child]) => child === "church")).toBe(false)
 	})
 
-	it("control: the SAME geometry without a marker successor probes and fires — the marker, not the adjacency, blocked above", () => {
+	it("control: the SAME geometry without a marker successor probes and fires — the marker rather than the adjacency, blocked above", () => {
 		const index = mockPairIndex({ "church|lane end": "dependent_locality" }, 6)
 		const text = "Church Lane End"
 		const pieces = makePieces(text)
@@ -913,7 +911,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 
 		expect(matrix).toHaveLength(4)
 
-		// Strict ===, per the matrixHasBias contract: every cell is the number 0, not merely falsy.
+		// Strict ===, per the matrixHasBias contract: every cell is the number 0 rather than merely falsy.
 		for (const row of matrix) {
 			expect(row.every((v) => v === 0)).toBe(true)
 		}
@@ -1088,7 +1086,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 	it("an anchored-path hit emits the adjustment at the child's first piece — NOT piece 0 when the child sits mid-string", () => {
 		// Anchored geometry: string-final parent "wrexham" (no postcode shape in the text), adjacent child
 		// "caergwrle" — word group 1, piece index 1. The leading "Bryn" proves the pieceIndex is the CHILD's
-		// first piece, not the sequence start.
+		// first piece rather than the sequence start.
 		const index = mockPairIndex({ "caergwrle|wrexham": "dependent_locality" }, 10, 5)
 		const text = "Bryn Caergwrle Wrexham"
 		const pieces = makePieces(text)
@@ -1187,7 +1185,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		expect(transitionAdjustments).toEqual([{ pieceIndex: 2, toLabel: "B-dependent_locality", bonus: 5 }])
 	})
 
-	it('interior place-name preposition ("Knott End on Sea"): unaffected by construction — predecessor check, not membership', () => {
+	it('interior place-name preposition ("Knott End on Sea"): unaffected by construction — predecessor check rather than membership', () => {
 		// The child's own words contain "on"; only the word immediately before the child is consulted (here a
 		// house number — ordinary address syntax), so the multi-word child keeps its adjustment at its first piece.
 		const index = mockPairIndex({ "knott end on sea|poulton": "dependent_locality" }, 10, 5)
@@ -1199,7 +1197,7 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		expect(transitionAdjustments).toEqual([{ pieceIndex: 1, toLabel: "B-dependent_locality", bonus: 5 }])
 	})
 
-	it("window mode: overlapping candidates sharing a first piece dedupe to ONE max'd adjustment, not a stacked pair", () => {
+	it("window mode: overlapping candidates sharing a first piece dedupe to ONE max'd adjustment rather than a stacked pair", () => {
 		// Both "shoreditch east" (2-word window) and "shoreditch" (1-word window) resolve against "london";
 		// both start at piece 0, so both applyWindowBias calls target the same (pieceIndex, toLabel) cell —
 		// which must compose by max (a single entry), mirroring the emission write's own Math.max discipline.
@@ -1337,7 +1335,7 @@ describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
 		expect(matrix[4]![labelCol("B-locality")]).toBe(8)
 	})
 
-	it("the parent bias covers the KEY's span, not the whole segment — a same-field postcode is excluded", () => {
+	it("the parent bias covers the KEY's span rather than the whole segment — a same-field postcode is excluded", () => {
 		// The FR shape: the parent field is "12210 Montpeyroux" and #1308 strips the LEADING postcode from the probe
 		// key. Biasing the whole segment toward `locality` emits `locality = "12210 Montpeyroux"`, postcode included.
 		// Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at parentDelta ≥ 6, child still right on

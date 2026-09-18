@@ -187,7 +187,7 @@ def collect_sample_codepoints(sample_path: Path, *, cap_bytes: int = 4_000_000) 
     """The set of non-ASCII codepoints in a locale sample file (first ``cap_bytes``, utf-8, errors ignored).
 
     Deliberately format-agnostic (CSV/JSONL/plain all work): the #900 check needs a locale's CHARACTER
-    inventory, not its parse — reading raw text keeps the check free of per-format code.
+    inventory rather than its parse — reading raw text keeps the check free of per-format code.
     """
     raw = sample_path.read_bytes()[:cap_bytes].decode("utf-8", errors="ignore")
     return {c for c in raw if ord(c) >= 128}
@@ -209,7 +209,7 @@ def check_codepoint_overlap(
     new pieces and that locale's character inventory, write the per-locale report artifact, and fail
     loud on any overlapping locale that was not explicitly accepted.
 
-    "Accepted" is a commitment, not a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
+    "Accepted" is a commitment rather than a waiver: per CONTRIBUTING_MODEL_WORK.mdx, accepting a locale
     means a per-locale non-inferiority leg for it is pre-registered in the check spec before the
     first measurement (the FR n=3000 leg from v5.1.0 is the template).
     """
@@ -365,7 +365,7 @@ def mean_init_onnx_embeddings(
         # Sanity: the quant inverse must reproduce an existing quantized row from its fp32 source.
         recon = np.clip(np.round(emb[old_vocab - 1] / scale) + zp, 0, 255).astype(q.dtype)
         mism = int((recon != q[old_vocab - 1]).sum())
-        if mism > emb.shape[1] // 20:  # allow a few rounding-boundary ticks, not a wholesale mismatch
+        if mism > emb.shape[1] // 20:  # allow a few rounding-boundary ticks rather than a wholesale mismatch
             raise AssertionError(
                 f"int8 quant-inverse mismatch on row {old_vocab - 1}: {mism}/{emb.shape[1]} — scale/zp wrong?"
             )

@@ -112,7 +112,7 @@ const ABORT_AFTER_CONSECUTIVE_FAILURES = 5
  *
  * The coarsest of the three, and matched to {@link EQUIVALENCE_THRESHOLD_KM} so the graded axis is the one the parity
  * claim is made on. It is also the only defensible default for a set whose truth points are mostly city centroids:
- * grading at one kilometre against a 25 km-tolerance truth row measures the truth's precision, not the arm's.
+ * grading at one kilometre against a 25 km-tolerance truth row measures the truth's precision rather than the arm's.
  */
 const DEFAULT_GRADE_THRESHOLD_KM = EQUIVALENCE_THRESHOLD_KM
 
@@ -463,13 +463,13 @@ function oracleRunner(
 /**
  * A stored run replayed row by row.
  *
- * MATCHED BY INPUT STRING, not by row id. A row id is only meaningful inside the corpus that minted it, and a recorded
- * arm exists to compare across time — the board may have gained rows, or the comparison may be against a different set
- * entirely. The input string is the one key that means the same thing in both runs.
+ * MATCHED BY INPUT STRING rather than by row id. A row id is only meaningful inside the corpus that minted it, and a
+ * recorded arm exists to compare across time — the board may have gained rows, or the comparison may be against a
+ * different set entirely. The input string is the one key that means the same thing in both runs.
  *
  * A row the stored run does not carry is a no-result with that reason rather than a throw, so a set that grew by three
- * rows is still readable on the rest. How many were missing is counted before the run and warned about, not discovered
- * from the miss rate afterwards.
+ * rows is still readable on the rest. How many were missing is counted before the run and warned about rather than
+ * discovered from the miss rate afterwards.
  */
 async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: PathBuilderLike): Promise<ArmRunner> {
 	const run = await getRun(spec.runID, dir)
@@ -672,7 +672,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 	for (const item of set.inputs) {
 		const a = await ask(runnerA, "a", item)
 		const b = await ask(runnerB, "b", item)
-		// The unified field, not `seed.expectLat`: only the board has a SeedCase, and a panel row's truth would
+		// The unified field rather than `seed.expectLat`: only the board has a SeedCase, and a panel row's truth would
 		// otherwise be invisible here. `input-sets.ts` populates it for every corpus that carries one.
 		const truthLat = item.truthLat ?? null
 		const truthLon = item.truthLon ?? null

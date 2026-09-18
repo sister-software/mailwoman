@@ -104,7 +104,7 @@ export function assertNoOGCServiceException(body: string, context: string): void
 
 /**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
- * not understand, not a 2D one with something missing.
+ * not understand rather than a 2D one with something missing.
  */
 const BBOX_ORDINATES = 4
 
@@ -127,7 +127,7 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 /**
  * A reader answering an OGC API Features bbox query around a point.
  *
- * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision
+ * The service answers a BBOX rather than a point, so this returns what it published nearby and the containment decision
  * belongs to the caller, against the returned rings — comparing a verdict against a bare "the service returned
  * something here" would pass on any polygon within the probe's width.
  */
@@ -206,7 +206,7 @@ export async function readWFSFeatureCount(
 
 	assertNoOGCServiceException(data, options.context)
 
-	// The ROOT element's attribute, not the first match anywhere in the body: the count describes the collection,
+	// The ROOT element's attribute rather than the first match anywhere in the body: the count describes the collection,
 	// and a regex cannot tell that apart from the same attribute repeated on a nested member.
 	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`

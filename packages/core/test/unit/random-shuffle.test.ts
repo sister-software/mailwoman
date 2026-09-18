@@ -80,7 +80,7 @@ describe("shuffleWith", () => {
 		shuffleWith(array, random)
 
 		// fr-lieudit shuffles its pool and then draws from the same generator for the country fraction. The next value
-		// must be the 50th-1 draw, not a fresh stream's first.
+		// must be the 50th-1 draw rather than a fresh stream's first.
 		const expected = mulberry32(20_260_913)
 
 		for (let step = 0; step < array.length - 1; step++) {

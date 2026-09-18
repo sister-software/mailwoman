@@ -208,8 +208,8 @@ export function matchLeadingDirectional(
  * Render a directional in the requested surface form, in `reference`'s case pattern:
  *
  * - `"abbr"` → the USPS abbreviation ("N", "NE").
- * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form, not the publication's
- *   spaced "NORTH EAST".
+ * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form rather than the
+ *   publication's spaced "NORTH EAST".
  */
 export function renderDirectional(
 	match: { canonical: DirectionalName; abbreviation: DirectionalAbbreviation },

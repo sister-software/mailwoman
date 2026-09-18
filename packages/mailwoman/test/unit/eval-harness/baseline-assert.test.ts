@@ -86,7 +86,7 @@ describe("assertBaselines", () => {
 	})
 
 	it("is TWO-SIDED — a metric far ABOVE its baseline refuses too", async () => {
-		// The usual cause of a jump is that the number changed meaning, not that the model improved.
+		// The usual cause of a jump is that the number changed meaning rather than that the model improved.
 		const verdict = await assertBaselines([{ id: "parity.street.token_at_1@v264", observed: 0.95 }])
 
 		expect(verdict.ok).toBe(false)
@@ -140,7 +140,7 @@ describe("profiles", () => {
 		// The bug this file shipped with on 2026-07-16: oracle-k's `v301` profile pointed its seg@1
 		// reading at a LEARNED-span-decode row (0.5768) while oracle-k computes the summed-BIO
 		// stand-in (0.449) — two harnesses compared through one id, refusing on a healthy run.
-		// Caught by running it, not by reading it. This test reads it.
+		// Caught by running it rather than by reading it. This test reads it.
 		//
 		// The token@1 row is the one legitimate crossover: every JS harness computes the same BIO
 		// argmax, so `js-ship-config` is shared. Anything else must be single-harness.
@@ -193,7 +193,7 @@ describe("profiles", () => {
 	})
 
 	it("ignores metrics the profile doesn't vouch for", async () => {
-		// A profile declares what it can vouch for, not everything a harness computes.
+		// A profile declares what it can vouch for rather than everything a harness computes.
 		const verdict = await assertProfile("v264", { "street.token_at_1": 0.573, "postcode.something_else": 0.1 })
 
 		expect(verdict.ok).toBe(true)

@@ -28,7 +28,7 @@ what growing the placer would provide (#822); what stays unresolved with a hint 
 - Countries: **54** bare-supported · **36** placer-recoverable (#822) · **97** residual
 - Residual splits: **92** name-not-found (English name matches no in-country record — exonym fix where the record exists under a local name, else coverage-absence) · **5** wrong-place (coverage/disambiguation)
 
-> **How to read this.** Bare resolve-rate is the placer ceiling, not the geocoder's capability — a
+> **How to read this.** Bare resolve-rate is the placer ceiling rather than the geocoder's capability — a
 > bare query carries no country hint. The **+hint** column is the direct #822 prize: countries that
 > resolve once the country is known but not before. The **residual** set fails even with the hint, so
 > the placer can't fix it — that's alt-name (Warsaw/Warszawa) + gazetteer coverage, a parallel change.
@@ -180,7 +180,7 @@ records at all, it's coverage. European exonyms dominate; the per-country split 
 ## Residual B — gazetteer coverage / disambiguation
 
 The hint returns a WRONG place: the country has a same-name match but the target city isn't in the
-candidate gazetteer, or loses disambiguation. Needs more data, not alt-names (Beijing, Rio).
+candidate gazetteer, or loses disambiguation. Needs more data rather than alt-names (Beijing, Rio).
 
 | Country       | ISO2 | Bare | +hint | hint→∅ |
 | ------------- | ---- | ---: | ----: | -----: |

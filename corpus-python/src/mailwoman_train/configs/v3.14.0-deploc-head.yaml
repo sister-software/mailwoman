@@ -12,7 +12,7 @@
 #     enabler): a separate head lets the encoder stay shared while the capability grows apart.
 #   - break PERSISTS                    ⇒ lock-in is ENCODER-DEEP. B alone is insufficient. the axis
 #     is A (representation/evidence), consistent with the P-C verdict (street↔locality is an
-#     evidence gap, not a head-capacity gap).
+#     evidence gap rather than a head-capacity gap).
 #
 # ONE VARIABLE vs v3.13 (everything else verbatim — same feed, same class weights incl. dep-loc 1.0,
 # punct-drop 0.6, same init_from v385): `model.use_deploc_head: true` REPLACES `train.reinit_label_rows`.

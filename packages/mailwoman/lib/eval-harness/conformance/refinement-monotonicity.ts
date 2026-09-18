@@ -14,7 +14,7 @@
  *   this directory states that a rewrite of the same information changes nothing. this one is the only law
  *   about information being added and the axis those four cannot see.
  *
- *   THE BASE IS DERIVED, NOT AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a
+ *   THE BASE IS DERIVED rather than AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a
  *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the FULLEST
  *   query, so it is the `variant`, and each `base` is that row's own text with one named piece removed. A
  *   hand-typed base would let a row quietly become an address nobody geocodes, and the law would then measure
@@ -226,8 +226,8 @@ export interface RefinementCoverage {
 	links: number
 	/**
 	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do not
-	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state, not how the
-	 * rows partition.
+	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state rather than
+	 * how the rows partition.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }

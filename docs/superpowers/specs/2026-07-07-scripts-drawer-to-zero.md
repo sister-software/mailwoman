@@ -64,7 +64,7 @@ These are addressed in `docs/superpowers/specs/2026-07-07-scripts-cleanup-gazett
 | Script(s)                                                                                                                                                                                                                                                                                                                                                                                     | Fate                                                      | Details                                                                                      |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Gazetter builders (build-unified-wof, add-region-abbrevs, add-ancestors, backfill-ancestors-from-hierarchy, augment-admin-_, build-admin-geonames-fold, build-coverage-expansion, backfill-postcode-centroids, fill-zcta-centroids, build-postcode-locality_, build-postalcode-nl-pc6, audit-po-box-cedex-extract, build-supplemental-gazetteer, build-pilot-anchor-lookup, reverse-eu-panel) | **Migrate → `mailwoman/gazetteer-pipeline/`** then delete | Subsumed by `mailwoman gazetteer build [admin\|candidate\|postcode\|polygons]`. See spec §5. |
-| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                     | Becomes auto-appended build log                           | Written by the command, not a recipe store.                                                  |
+| `wof-build-manifest.json`                                                                                                                                                                                                                                                                                                                                                                     | Becomes auto-appended build log                           | Written by the command rather than a recipe store.                                           |
 | `scripts/data/county-population-ranked.json`                                                                                                                                                                                                                                                                                                                                                  | Moves into the pipeline module as a constant or data file |                                                                                              |
 
 ### ▸ Phase 1 — The `lib/` dissolution (low-hanging fruit, highest duplication payoff)
@@ -136,16 +136,16 @@ Three files that extend the TIGER pipeline. They directly depend on `@mailwoman/
 
 ### ▸ Phase 5 — Modal (stays, but not in scripts/ long-term)
 
-| File                    | Fate                                                                    | Rationale                                                                                                                  |
-| ----------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `modal/train_remote.py` | **Move to `corpus-python/`** (the Python corpus package)                | It's a Modal training script for the Python training pipeline. Belongs with the Python code, not in the TS scripts drawer. |
-| `modal/AGENTS.md`       | **Move to `corpus-python/docs/`** (or inline in train_remote.py header) | Runbook for the training flow.                                                                                             |
+| File                    | Fate                                                                    | Rationale                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `modal/train_remote.py` | **Move to `corpus-python/`** (the Python corpus package)                | It's a Modal training script for the Python training pipeline. Belongs with the Python code rather than in the TS scripts drawer. |
+| `modal/AGENTS.md`       | **Move to `corpus-python/docs/`** (or inline in train_remote.py header) | Runbook for the training flow.                                                                                                    |
 
 `scripts/modal/` → zero files. The `corpus-python/` package already exists and is where Python training code lives.
 
 ### ▸ Phase 6 — Codegen & lint (stays for now, candidates for `mailwoman dev`)
 
-These are tooling scripts — not builders, not eval, not release. They belong in `scripts/` until there's a `mailwoman dev` command namespace to absorb them.
+These are tooling scripts — not builders rather than eval rather than release. They belong in `scripts/` until there's a `mailwoman dev` command namespace to absorb them.
 
 | File                             | Fate                                                                | Rationale                                                    |
 | -------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ |
@@ -186,14 +186,14 @@ These are invoked by `.release-it.json` hooks, CI, or the operator at release ti
 | `AGENTS.md`                     | **Stay**                                     | Agent instructions for the scripts directory. Update to reflect the new slimmed-down world. |
 | `CLAUDE.md`                     | **Stay** (symlink to AGENTS.md)              | Already just `@AGENTS.md`.                                                                  |
 | `tsconfig.json`                 | **Stay**                                     | TypeScript config for `yarn typecheck:scripts`.                                             |
-| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/`  | Model card template. Belongs with the model metadata, not scripts.                          |
+| `v062-model-card-template.json` | **Stay** or move to `neural-weights-en-us/`  | Model card template. Belongs with the model metadata rather than scripts.                   |
 | `lint-rules.json`               | **Stay** (moves with lint-corpus-extract.ts) | See Phase 6.                                                                                |
 
 ### ▸ Phase 9 — Eval harness (legitimate permanent resident)
 
 The 166 tracked files in `scripts/eval/` (plus the 2 gitignored), plus the 55 diagnostic scripts in `scripts/diagnostic/` (46 gitignored, 9 tracked). These are the eval/diagnostic harness — the promotion check, the gauntlet, per-tag probes, calibration scripts, golden-set builders, and one-off investigation scripts.
 
-**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has several tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup, not migration.
+**Disposition: stay as-is.** These are by design — ad-hoc evaluation probes and diagnostic investigations that don't belong in a package. The distinction between `eval/` and `diagnostic/` is already fuzzy (diagnostic is gitignored; eval has several tracked probes that read like diagnostics). Consider consolidating: `eval/` for the _checks_ (promotion-eval, gauntlet, checks/) and `diagnostic/` for everything else — but that's cleanup rather than migration.
 
 **One cleanup task:** 2 files in `eval/` are gitignored (residual probes). Ensure the gitignore is correct and nothing tracked should be gitignored or vice versa.
 

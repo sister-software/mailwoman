@@ -10,10 +10,9 @@ The end-to-end resolver eval ceiling was 68.9% Acc@1 with a p90 coordinate error
 of 1090 km. Decomposing the failures pinned the cause precisely:
 
 - Of neural's 749 eval failures, **100% resolved to a place — just the wrong
-  one** (0% were unresolved). So the ceiling is a **resolver-ranking** problem,
-  not a parser-coverage problem.
+  one** (0% were unresolved). So the ceiling is a **resolver-ranking** problem rather than a parser-coverage problem.
 - **77% of the wrong resolutions are >100 km off** (median wrong-error 333 km,
-  p90 2624 km) — distances that mean _wrong state_, not a local near-miss.
+  p90 2624 km) — distances that mean _wrong state_ rather than a local near-miss.
 
 Tracing the wrong-state cases exposed the mechanism. For `Portland, ME` the
 resolver resolved the _region_ "ME" to **Missouri**, then correctly scoped the
@@ -94,12 +93,12 @@ root cause predicted). Every baseline improves; the gains are largest on the
 canonical subset (+10.9pp) where clean two-letter region codes are most common.
 Failure attribution confirms the mechanism: neural's resolver-side errors drop
 from 749 to 544 (−27%) with parser-side errors still at 0 — the fix moved
-wrong-state resolutions into correct ones, not coverage.
+wrong-state resolutions into correct ones rather than coverage.
 
 The 211 km p90 that _remains_ is the actual admin-centroid tail (large rural
 counties / sprawling metros whose centroid is far from the labeled point) plus a
 residual same-state ambiguity — the target for the learned re-ranker and the
-street-level tier, not for this PR.
+street-level tier rather than for this PR.
 
 ## Reproduce
 

@@ -5,7 +5,7 @@ title: The v1 implementation plan (historical)
 
 # The v1 implementation plan — historical
 
-**This is a design record, not the live plan.** The current scope declaration — locale tiers,
+**This is a design record rather than the live plan.** The current scope declaration — locale tiers,
 workstreams, standing invariants, where the roadmap lives — is **[Scope — what mailwoman is
 now](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx)** ([#886](https://github.com/sister-software/mailwoman/issues/886) marked this
 directory historical on 2026-07-02).
@@ -32,7 +32,7 @@ reports in `docs/articles/evals/`.
 
 - The capacity question this plan deferred ("bigger model later?") was answered by measurement:
   a 48M widening reproduced the 29M affix ceiling exactly — the binding constraint was a
-  corpus label contradiction, not parameters
+  corpus label contradiction rather than parameters
   ([#492](https://github.com/sister-software/mailwoman/issues/492) →
   [#511](https://github.com/sister-software/mailwoman/issues/511)).
 - Architecture + per-stage contracts: `reference/ARCHITECTURE.mdx`, `reference/STAGES.mdx`; the
@@ -52,10 +52,10 @@ reports in `docs/articles/evals/`.
 
 - **TypeScript-first.** Inference runtime is `onnxruntime-node`. Training is allowed in Python
   but is not shipped to npm.
-- **Coexistence, not replacement.** The neural classifier is additive. Rule classifiers are not
+- **Coexistence rather than replacement.** The neural classifier is additive. Rule classifiers are not
   deleted until per-component metrics justify retirement.
 - **Locale scope (v1):** US + France. English + French. Japanese is a deliberate Phase 6 stress
-  test of the architecture, not v1. _(Superseded — see [Scope](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) for the real list.)_
+  test of the architecture rather than v1. _(Superseded — see [Scope](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) for the real list.)_
 - **Staged components:** coarse (country/region/locality/postcode) first, street second, venue
   third. Each stage ships.
 - **No new ML in places where rules are already correct.** Postcodes are a regex problem. Don't

@@ -1,12 +1,12 @@
 # === v3.13.0-two-phase — the v3.12 recipe + a TWO-PHASE classifier-LR schedule. 8k ship candidate. ===
 # Proposal: docs/superpowers/plans/2026-07-23-v313-two-phase-recipe.md (operator green-lit 2026-07-23
-# "open to green lighting" -> "begin"; phase boundary = 2000 per the pre-registration, not overridden).
+# "open to green lighting" -> "begin"; phase boundary = 2000 per the pre-registration rather than overridden).
 # One variable vs v3.12.0-comma-robust (everything else verbatim, incl. punct-drop 0.6 + NZ allowlist):
 #   PHASE 1 (steps 0-2000):    classifier_learning_rate 1.0e-3  — the resurrection window, as before.
 #   PHASE 2 (steps 2000-8000): classifier_learning_rate 1.0e-4  — annealed to the base group rate via
 #     config edit + `--resume auto` from the phase-1 step-2000 checkpoint (the restamp fix
 #     62d73672/32b58ed4 makes a resumed run adopt the config LR. RESUME, never init_from — optimizer
-#     state carries the window kinematics). The phase boundary is PART OF THE RECIPE, not an iteration.
+#     state carries the window kinematics). The phase boundary is PART OF THE RECIPE rather than an iteration.
 # Why (the cRT diagnostic, 2026-07-23): with a frozen encoder the Pennsylvania INV[comma-drop] break
 # still appears — but only at 8k (clean through 6k) — so the break is classifier-head DRIFT under the
 # hot LR held ~6k steps past the ~2k window resurrection needs. Cool the head after the window and it
@@ -18,7 +18,7 @@
 #     at probe cost. Gauntlet metamorphic layer at candidate-selection time = 0 violations.
 #   PRIMARY  : a gauntlet-clean checkpoint exists. GB dep-loc board w/ prior @ delta=5.0 >= 69/69 emit /
 #              >=66 tag-correct (FP on gb-golden no-DL rows = 0. venue-confound floor reported separately).
-#              NZ raw-BIO emission > the feed lineage's ~0 (the NZ source finally flows — read, not bar).
+#              NZ raw-BIO emission > the feed lineage's ~0 (the NZ source finally flows — read rather than bar).
 #   GUARDS   : digit bare-street-hn >= 0.755 (v385 baseline, operator-restated); FR-fragment
 #              bare-locality >= 0.90. golden us/fr within ±0.7pp of v385 (87.6/91.1). 6 presets
 #              byte-identical. error-analysis no tag >2pp down vs v385.
@@ -83,7 +83,7 @@
 # ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
 # auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
-# all (silent no-op, not an error). See train.py L433-456.
+# all (silent no-op rather than an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
 # own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —

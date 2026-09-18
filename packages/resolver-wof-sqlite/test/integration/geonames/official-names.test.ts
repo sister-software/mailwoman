@@ -6,7 +6,7 @@
  *   #936 ingest bit — `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the
  *   alternateNamesV2 language tag, `privateuse` ("preferred"), and the `official` bit (language is
  *   CLDR-official for the country. colloquial/historic never qualify). The Turku fixture mirrors
- *   the motivating row: "Åbo" is Turku's official Swedish name, not a mere alias. Without the V2
+ *   the motivating row: "Åbo" is Turku's official Swedish name rather than a mere alias. Without the V2
  *   file the fold is byte-identical to the pre-#936 untagged behavior.
  */
 

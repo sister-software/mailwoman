@@ -10,7 +10,7 @@
  *   — and hands the suggestion layer its per-(component, locale) prior on nudge value
  *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5, which specifies `AblationCell`).
  *
- *   This is a MEASUREMENT layer, not a check. It never joins the combined verdict (`run.ts` lists only
+ *   This is a MEASUREMENT layer rather than a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
  *   INSTRUMENT ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
  *
@@ -352,9 +352,9 @@ export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): P
 }
 
 /**
- * A stable identity for the board a cell was measured on: the corpus's own content, not its file mtime. Two runs over
- * the same rows share a `boardID`; a row added or an input edited changes it, so a stale cell can never be silently
- * compared against a fresh one.
+ * A stable identity for the board a cell was measured on: the corpus's own content rather than its file mtime. Two runs
+ * over the same rows share a `boardID`; a row added or an input edited changes it, so a stale cell can never be
+ * silently compared against a fresh one.
  */
 export function ablationBoardID(cases: readonly { id: string; input: string }[]): string {
 	const fingerprint = cases
@@ -619,7 +619,7 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
 
-	// The instrument, not a check: a map of zero cells means the run measured nothing, and a "PASS" printed
+	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "PASS" printed
 	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir, cells }
 }

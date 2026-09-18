@@ -14,7 +14,7 @@ child projecting onto that rung).
 
 ## Read the `source` column first
 
-**This report measures the shipped artifact, not Who's On First.** WOF publishes 260 per-country
+**This report measures the shipped artifact rather than Who's On First.** WOF publishes 260 per-country
 admin repos; `DEFAULT_WOF_PRIORITY_COUNTRIES` names 12 of
 them. Every other country's rows come from Overture divisions — whose `OVERTURE_DIVISION_SUBTYPES`
 is `country`/`locality`/`region`/`county`/`localadmin`, with no hood-level subtype — or from
@@ -22,10 +22,10 @@ the GeoNames alias fold.
 
 So a `source` of `overture` or `geonames` with an empty `dependent_locality` rung is **not a
 finding about WOF's depth in that country**. It is a country we never asked. The sub-locality tier
-appears in exactly the countries whose repo is ingested, and that correspondence is the recipe, not a
+appears in exactly the countries whose repo is ingested, and that correspondence is the recipe rather than a
 property of the data.
 
-The column is read off the **artifact** (synthetic id ranges), not the recipe. `rebuild pending`
+The column is read off the **artifact** (synthetic id ranges) rather than the recipe. `rebuild pending`
 means the recipe now names a country the shipped gazetteer has not been rebuilt for — its rows are
 still Overture or GeoNames, and its rungs say nothing about WOF yet.
 
@@ -36,8 +36,8 @@ still Overture or GeoNames, and its rungs say nothing about WOF yet.
   surface appears in real addresses. Overture's `address_levels` — the obvious instrument — bottoms
   out at municipality in every country measured, so it cannot see this tier.
 - **The locality rung and above are partly self-comparison.** For the Overture-backfilled country
-  set those rows came from Overture, not WOF; the `ovt` share in each cell is how much.
-- **An empty rung is coverage, not fact.** Two independent filters produce zeroes here: the country
+  set those rows came from Overture rather than WOF; the `ovt` share in each cell is how much.
+- **An empty rung is coverage rather than fact.** Two independent filters produce zeroes here: the country
   recipe above, and `ADMIN_PLACETYPES` in `admin/ingest-wof.ts`, which allowlists 9 of WOF's 34
   placetypes — so even for a cloned country the build never asked for the other 25. Per the
   **meaning-of-zero** rule a measured-and-empty rung renders as `0` and a never-measured rung as

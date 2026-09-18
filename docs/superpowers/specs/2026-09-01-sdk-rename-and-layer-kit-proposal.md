@@ -91,7 +91,7 @@ identity instead.
 
 ## 3. If it is renamed anyway
 
-`acquire/`, not `ingest/`. `soil/lib/sdk/acquire.ts` already picked the word, and `ingest` is taken: seven of
+`acquire/` rather than `ingest/`. `soil/lib/sdk/acquire.ts` already picked the word, and `ingest` is taken: seven of
 the ten packages have an `ingest.ts` INSIDE `sdk/`, so `ingest/ingest.ts` would be the result.
 
 Conditions, all three or none:
@@ -121,15 +121,15 @@ where wave 2 of #2041 had already extracted the common code: the four ogr harnes
 `read*SourceIdentity` readers, nine batched-commit loops, four ingest-chunk runners, four two-phase build
 handles, four manifest blocks, four byte-identical `#readCoverage` methods, the CKAN reader pair and the five
 identical client factories now live in `core/layers`, `core/api`, `spatial` and `sqlite`. So 0.18% is evidence
-that **the extraction worked**, not that these packages were never duplicated. Anyone re-running this after a
+that **the extraction worked** rather than that these packages were never duplicated. Anyone re-running this after a
 future extraction should expect the same shape and draw the same care.
 
 Two limits on the instrument, both of which reduce against over-reading it:
 
 - `--min-lines 20` cannot see the 5–15-line idioms that were the actual duplication class here — a batched
-  commit loop, a manifest block. The number is a floor on duplication, not a measure of it.
-- "same filename, 2.1× size" measures VOLUME, not shared structure. Two files can differ in length and still
-  share a control-flow skeleton; the table below is evidence against a copy, not evidence against a contract.
+  commit loop, a manifest block. The number is a floor on duplication rather than a measure of it.
+- "same filename, 2.1× size" measures VOLUME rather than shared structure. Two files can differ in length and still
+  share a control-flow skeleton; the table below is evidence against a copy rather than evidence against a contract.
 
 And the same-named files are not the same size:
 
@@ -143,7 +143,7 @@ And the same-named files are not the same size:
 
 ### 4.2 What that means
 
-**The four packages share a VOCABULARY, not an implementation.** `ingest.ts` differing by 2.1× between
+**The four packages share a VOCABULARY rather than an implementation.** `ingest.ts` differing by 2.1× between
 `coastal` and `flood` is not two copies of one function that drifted; it is two different ingests that were
 given the same filename because they occupy the same stage. Extracting `layer-kit` would therefore remove
 almost no code. It would instead require inventing an abstraction general enough to cover all four, and the
@@ -164,14 +164,14 @@ over: it would duplicate an existing home as well as failing the de-duplication 
 The unextracted contract pieces are known and few. Three were deferred **with reasons** during #2041, and the
 fourth is tracked:
 
-| piece                                           | why it was left                        | the difference that blocks a naive merge                              |
-| ----------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- |
-| the `measureCellResolutions` driver             | per-product control flow               | coastal measures per scenario; zoning narrows                         |
-| the coastal/zoning `resolveDesignations` bodies | one substantive difference, not a copy | —                                                                     |
-| the verify-driver skeleton                      | tolerance is a product constant        | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
-| the `schema-columns` rewire (#2046)             | adoption shifts stored column order    | four layer `schema.ts` files unrewired                                |
+| piece                                           | why it was left                               | the difference that blocks a naive merge                              |
+| ----------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------------- |
+| the `measureCellResolutions` driver             | per-product control flow                      | coastal measures per scenario; zoning narrows                         |
+| the coastal/zoning `resolveDesignations` bodies | one substantive difference rather than a copy | —                                                                     |
+| the verify-driver skeleton                      | tolerance is a product constant               | agree/disagree tally is shared; soil's tolerance is 1 m against 0.5 m |
+| the `schema-columns` rewire (#2046)             | adoption shifts stored column order           | four layer `schema.ts` files unrewired                                |
 
-**"What does a fifth layer cost?" is therefore a countable question, not a survey**: build the list of stages
+**"What does a fifth layer cost?" is therefore a countable question rather than a survey**: build the list of stages
 a new layer must supply, and count how several of them it must RE-DERIVE rather than inherit — today that is the
 four rows above and nothing else. If that count is judged too high, the work is to extract those four into
 `core/layers`, each behind the difference named in its row (a tolerance parameter, a per-scenario driver
@@ -232,7 +232,7 @@ in the libpostal dictionaries, and dated notes inside committed board rows. Rena
 data to satisfy a style rule.
 
 One open item: those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they are part of the pinned corpus
-content hash. Editing one is a deliberate re-pin, not a sweep.
+content hash. Editing one is a deliberate re-pin rather than a sweep.
 
 ## 7. Reproducing every number here
 

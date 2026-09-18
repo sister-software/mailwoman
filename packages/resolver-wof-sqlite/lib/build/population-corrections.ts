@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Populations the gazetteer records at a fraction of their size, corrected against the record's own concordance.
  *
- *   A REVIEW QUEUE, not a campaign. `same-name-parent-population.run.ts` reports 964 localities whose population is a
+ *   A REVIEW QUEUE rather than a campaign. `same-name-parent-population.run.ts` reports 964 localities whose population is a
  *   fraction of their same-name parent's, and #2269 refuses to rewrite them from that signal: the detector cannot tell
  *   a district's mis-recorded namesake city from a small village sharing the district name, and both ends are real —
  *   three separate `Sultanpur` rows at 226, 235 and 255 people inside Sultanpur district are plausibly three villages.
@@ -14,7 +14,7 @@
  *   `gn:id` concordance, the coordinates agreeing, and the GeoNames record naming the same place — not the ratio that
  *   surfaced it.
  *
- *   THIS CORRECTS THE CANDIDATE ARTIFACT, NOT THE ADMIN GAZETTEER. `place_population` in
+ *   THIS CORRECTS THE CANDIDATE ARTIFACT rather than THE ADMIN GAZETTEER. `place_population` in
  *   `admin-global-priority.db` still carries the WOF figure, so a reader going there sees what WOF says and a reader
  *   going to `candidate.db` sees the corroborated number. That split is deliberate: the admin database is a
  *   transcription of its source and correcting it there would make the transcription disagree with what it transcribes.

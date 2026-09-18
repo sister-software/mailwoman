@@ -50,8 +50,8 @@
  *   LOCALE SCOPE IS THE PHRASE'S AND BINDS TO THE CALLER. COUNTRY SCOPE IS THE ASSERTION'S AND BINDS TO
  *   THE PLACE. A phrase's locale scope says who uses that wording, so it is read here against the caller's
  *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
- *   judged against the country of the resolved ANCHOR, not the caller's locale — the locale is the lens the
- *   phrase is read through, not a definition of where the claim holds. This route therefore returns every
+ *   judged against the country of the resolved ANCHOR rather than the caller's locale — the locale is the lens the
+ *   phrase is read through rather than a definition of where the claim holds. This route therefore returns every
  *   kind the activity reaches and stamps each match with the assertion's `countryScope`;
  *   `createPOIIntentStage` drops the members whose scope excludes the anchor's country once the anchor
  *   has resolved, and records what it dropped on the intent's `countryBinding`. An anchor that did not
@@ -126,7 +126,7 @@ export interface SemanticObservation {
 	/**
 	 * What attests the surface form itself — the class of record and the record. A category chosen from a phrase nobody
 	 * can trace is the failure this program exists to avoid, and the assertion's provenance does not cover it: that one
-	 * says why a pharmacy affords the activity, not why this string names it.
+	 * says why a pharmacy affords the activity rather than why this string names it.
 	 */
 	phraseAttestation: {
 		kind: string
@@ -448,7 +448,7 @@ export async function createSemanticObservationRoute(
 				// only the language agrees. It selects a query KIND. it orders no candidate, and no number here was chosen to
 				// make one win. Every member of a set carries the same value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
-				// These matches are one afforded set, not a preference list: the POI branch searches their union.
+				// These matches are one afforded set rather than a preference list: the POI branch searches their union.
 				searchAsSet: true,
 				// The assertion's claim rides with the match for the intent stage to bind against the anchor's country. It
 				// is not applied here: the anchor has not been parsed yet when this runs.

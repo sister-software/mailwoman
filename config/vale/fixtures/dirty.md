@@ -10,7 +10,7 @@ import ObviouslyBrokenComponent from "@site/src/components/ObviouslyBrokenCompon
 This file exists to trip every Mailwoman Vale rule on purpose. It also carries an
 import line, a JSX tag, a code fence, and a `<details>` block that each contain
 banned words — none of those four should be flagged, because they are ignored by
-`.vale.ini`'s TokenIgnores/BlockIgnores, not because the words themselves are safe.
+`.vale.ini`'s TokenIgnores/BlockIgnores rather than because the words themselves are safe.
 
 <BadgeObviouslyRobust label="basically fine, ignored" />
 
@@ -95,3 +95,7 @@ backticked, so the markdown parser hands neither to the rule.
 ```
 
 The dosage is not a measured quantity. Name the rows and the unit.
+
+This is a test rather than a production system.
+
+This is a test, not a production system.

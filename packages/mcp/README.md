@@ -16,7 +16,7 @@ An **MCP server** exposing [Mailwoman](https://mailwoman.ai)'s parse/geocode/POI
 | `mailwoman_filer_lookup`         | Reads the FCC filer identity crosswalk from a `filer.db` layer               | No                            |
 | `mailwoman_filer_family`         | Reads a corporate family's membership from a `filer.db` layer                | No                            |
 
-The four model-backed tools load the `en-US` weights and open a resolver on the first call that needs them, not at
+The four model-backed tools load the `en-US` weights and open a resolver on the first call that needs them rather than at
 startup. With neither `$MAILWOMAN_CANDIDATE_DB` nor a WOF distribution on the data root, that first call answers with
 the `mailwoman data pull candidate` fix instead of an internal resolver error.
 

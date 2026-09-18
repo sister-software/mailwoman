@@ -60,7 +60,7 @@ describe("localeToCountry", () => {
 
 	test("ignores script subtags and language-only tags (no guessing)", () => {
 		expect(localeToCountry("en")).toBeUndefined()
-		expect(localeToCountry("zh-Hant")).toBeUndefined() // 4-letter script subtag, not a region
+		expect(localeToCountry("zh-Hant")).toBeUndefined() // 4-letter script subtag rather than a region
 		expect(localeToCountry(undefined)).toBeUndefined()
 	})
 

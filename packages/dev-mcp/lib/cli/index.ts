@@ -58,7 +58,7 @@ const { values } = parseArguments({
 const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : String(repoRootPath())
 
 const host = new WorkerHost({
-	// Anchored at the PACKAGE, not at this file's directory: `shimDir` is a statement about where the shim sits, and
+	// Anchored at the PACKAGE rather than at this file's directory: `shimDir` is a statement about where the shim sits, and
 	// moving the shim one level down silently pointed it at a worker that was never there.
 	workerPath: String(resolvePackagePath("@mailwoman/dev-mcp", "lib", "worker", "index.ts")),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],

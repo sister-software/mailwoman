@@ -112,7 +112,7 @@ describe("fetchGeonamesDumps", () => {
 		expect(summary.fetched).toBe(2)
 		expect(summary.failedCodes).toEqual(["XX"])
 
-		// The zip is extracted and removed — the directory holds the txt, not the archive.
+		// The zip is extracted and removed — the directory holds the txt rather than the archive.
 		const aa = await readLocalTextFile(join(outRoot, "AA.txt"))
 
 		expect(aa).toContain("Aa City")

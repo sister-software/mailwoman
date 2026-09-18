@@ -18,7 +18,7 @@ tags:
 
 Users do not type addresses the way gazetteers store them. They type what they know, in the order they think of it, with the spellings their keyboard supports, trusting autocomplete suggestions they didn't verify. A parser that only handles well-formed addresses fails on real input.
 
-This article catalogs the failure modes by root cause, not by symptom. **None of these are user errors.** They are system-design failures. The human provided enough information for a knowledgeable local to find the right place. The parser couldn't because it was designed for addresses, not for people.
+This article catalogs the failure modes by root cause rather than by symptom. **None of these are user errors.** They are system-design failures. The human provided enough information for a knowledgeable local to find the right place. The parser couldn't because it was designed for addresses rather than for people.
 
 ## I. They use the wrong name for places
 
@@ -31,7 +31,7 @@ This article catalogs the failure modes by root cause, not by symptom. **None of
 | `SoHo, NY`       | New York City                |
 | `Shibuya, Japan` | Tokyo (with Shibuya as ward) |
 
-USPS accepts borough names as "preferred last line" cities for several New York City ZIP codes. Brooklyn, Queens, Bronx, and Staten Island are all valid mailing cities. But administratively, Brooklyn is a borough of New York City, not an independent municipality. Some systems normalize `Brooklyn, NY → New York, NY`. Others preserve the postal locality exactly. Both choices are valid. Neither is universally correct. The parser has to handle the ambiguity, not resolve it.
+USPS accepts borough names as "preferred last line" cities for several New York City ZIP codes. Brooklyn, Queens, Bronx, and Staten Island are all valid mailing cities. But administratively, Brooklyn is a borough of New York City rather than an independent municipality. Some systems normalize `Brooklyn, NY → New York, NY`. Others preserve the postal locality exactly. Both choices are valid. Neither is universally correct. The parser has to handle the ambiguity rather than resolve it.
 
 ### Independent city assumed part of larger metro
 
@@ -66,7 +66,7 @@ USPS uses delivery names that frequently differ from municipal boundaries:
 | Miami, FL 33122       | Doral               |
 | Miami, FL 33134       | Coral Gables        |
 
-USPS assigns mailing city names for carrier-route efficiency, not for geographic correctness. The same physical building can have a mailing address in "Los Angeles" and a legal address in "Beverly Hills." Both are legitimate. The parser's job is to recognize the distinction, not to pick one.
+USPS assigns mailing city names for carrier-route efficiency rather than for geographic correctness. The same physical building can have a mailing address in "Los Angeles" and a legal address in "Beverly Hills." Both are legitimate. The parser's job is to recognize the distinction rather than to pick one.
 
 ## II. They put things in the wrong order
 
@@ -77,7 +77,7 @@ USPS assigns mailing city names for carrier-route efficiency, not for geographic
 Paris 75008               ← Anglophone format (locality first)
 ```
 
-Both describe the same place. A parser trained exclusively on US-formatted addresses (number → street → city → state → postcode) will mislabel the postcode as a house number and fail on the locality entirely. The ordering assumption is a training-data bias, not a structural requirement of addresses.
+Both describe the same place. A parser trained exclusively on US-formatted addresses (number → street → city → state → postcode) will mislabel the postcode as a house number and fail on the locality entirely. The ordering assumption is a training-data bias rather than a structural requirement of addresses.
 
 ### Building number after street (non-Anglophone)
 
@@ -107,7 +107,7 @@ Aggregators and government databases sometimes emit administrative hierarchy in 
 | Boulevard  | Boulvard  |
 | Pittsburgh | Pittsburg |
 
-Adjacent-character swaps are the most common typing error for English-language addresses. They are especially damaging for gazetteer lookups because the misspelling produces no match, not a near match — the string differs by edit distance 1 but shares no substring index entry.
+Adjacent-character swaps are the most common typing error for English-language addresses. They are especially damaging for gazetteer lookups because the misspelling produces no match rather than a near match — the string differs by edit distance 1 but shares no substring index entry.
 
 ### Phonetic substitution
 
@@ -150,7 +150,7 @@ The mixed-script case is the hardest: the human typed the city in the script the
 | `Quebec`       | Province of Quebec   | Quebec City?                                    |
 | `Mexico`       | Mexico (the country) | Mexico City?                                    |
 
-The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, not the state, not the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
+The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital rather than the state rather than the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
 
 ### Crossing metro areas / border cities
 
@@ -183,9 +183,9 @@ The building at 123 Main Street contains 20 apartments. The human omitted the un
 
 ### ZIP code centroid as exact address
 
-A ZIP code is a delivery route, not a point. But several mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
+A ZIP code is a delivery route rather than a point. But several mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
 
-This is an input-quality problem, not a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
+This is an input-quality problem rather than a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
 
 ### Autocomplete contamination
 
@@ -197,9 +197,9 @@ This failure class is outside the parser's reach. It lives in the UI layer: auto
 
 The failure taxonomy converges on one principle: **the parser should surface ambiguity instead of guessing through it.** Every failure above is a case where the human provided enough information for a knowledgeable local to find the right place, but the parser returned a single confident answer that was wrong.
 
-The correct design response is to make the parser report what it cannot decide, not to make it smarter:
+The correct design response is to make the parser report what it cannot decide rather than to make it smarter:
 
-- Return candidates, not a single answer.
+- Return candidates rather than a single answer.
 - Surface ambiguity when multiple equally-valid interpretations exist.
 - Distinguish "I'm confident this is a locality" from "I'm confident this locality resolves to this WOF ID."
 - Let the downstream system decide how much ambiguity it can tolerate.

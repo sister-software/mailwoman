@@ -22,7 +22,7 @@ avoid re-implementation in tracks 2b/2c/C5/C6/B.
 - **C6 eyeball-carrier DB**: zero BGP/PeeringDB/ASN/RouteViews code anywhere in Nexus.
 - **Subsidy data** (CAF/RDOF), **ECFS/ULS**: zero hits — matches the 2a spec's "in fact new work" note.
 - **SMS / "1-800-INTERNET"**: never implemented in Nexus; the concept has no code.
-- **Fabric ingestion**: `sync/fcc/fabric/data-source.ts` is a commented-out TypeORM stub, not a head start — and Fabric ingestion is forbidden anyway (2a spec §2.2).
+- **Fabric ingestion**: `sync/fcc/fabric/data-source.ts` is a commented-out TypeORM stub rather than a head start — and Fabric ingestion is forbidden anyway (2a spec §2.2).
 
 ## ⚠️ Stale-twin hazard — do not "sync from Nexus"
 

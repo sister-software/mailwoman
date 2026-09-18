@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `postcode_locality` database contract: the shipped column shape (names, order, types, NOT NULL),
+ *   The `postcode_locality` database contract: the shipped column shape (names, order, types rather than NULL),
  *   the `(postcode, country)` probe index, and the one thing the shared schema exists to prevent —
  *   the builders' positional INSERT drifting out of the DDL's column order.
  *
  *   Every database the resolver attaches — the polygon build and the three CJK builds — must present
- *   this exact shape, so these assertions are pinned to the values, not derived from the module
+ *   this exact shape, so these assertions are pinned to the values rather than derived from the module
  *   under test.
  */
 

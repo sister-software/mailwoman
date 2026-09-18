@@ -36,7 +36,7 @@
  *       `structured_address`, the plausibility guard catches 4, leaving a residual of **3 of 321
  *       (0.9%)** — the #727 in-country boundary class that stage-2 (k-best span decode) then erases.
  *       The doc frames this as an order-of-magnitude result: "the tail is bounded to low single
- *       digits, not that it is exactly three."
+ *       digits rather than that it is exactly three."
  *     - **Zero false fallbacks** — none of the 81 coordinate-safe structured fixtures trip the guard.
  *
  *   ## What this test asserts (each threshold traces to a measured receipt)

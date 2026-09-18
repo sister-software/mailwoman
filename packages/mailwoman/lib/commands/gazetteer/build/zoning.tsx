@@ -14,7 +14,7 @@
  *
  *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   per candidate and produces a table, not an artifact. What it reports is not the `partial` share: 95.7% of
+ *   per candidate and produces a table rather than an artifact. What it reports is not the `partial` share: 95.7% of
  *   these polygons are smaller than a res-9 cell, so that statistic sits near 100% everywhere. The two
  *   columns that decide are candidates-per-cell and the count of features a centre-in-polygon polyfill would
  *   have returned nothing for.

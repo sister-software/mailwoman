@@ -109,7 +109,7 @@ export const noRootScriptsCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					file,
 					line: index,
-					message: "Builds a path into the root scripts/ directory, which does not exist.",
+					message: "Builds a path into the absent root scripts/ directory.",
 				})
 			}
 		}

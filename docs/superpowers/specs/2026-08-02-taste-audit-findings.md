@@ -36,7 +36,7 @@ and B14's test fixtures.
 
 - **A1** — the nine `link-dev-weights.ts`. Blocked on a decision only the operator can make (below).
 - **B7** — the docs↔react component forks. Needs a call on whether react's components take a
-  className/theme prop so Docusaurus styling survives; that is a design decision, not a dedupe.
+  className/theme prop so Docusaurus styling survives; that is a design decision rather than a dedupe.
 - **B12, B14** — byte formatters and test-fixture builders. Real, cheap, lowest payoff; left for
   whoever is next in those files.
 
@@ -65,7 +65,7 @@ grep-plus-read pass never did.
 | A — home exists, bypassed |        8 |   ~95 | the owning module is already written and already imported |
 | B — orphan duplication    |       14 |  ~110 | no home yet; each cluster below names one                 |
 | C — idiom drift           |        1 |   ~30 | acronym casing only; the other four conventions hold      |
-| D — altitude              |        1 |     1 | observation, not a verdict                                |
+| D — altitude              |        1 |     1 | observation rather than a verdict                         |
 | rejected on reading       |       10 |   ~20 | see the appendix — do not re-propose these                |
 
 **Shortlist — do these first.** A1 (nine forked `link-dev-weights.ts`, already diverged, already
@@ -109,7 +109,7 @@ Shared units the clone scan matched across them: `linkForce` (×5), `peekPairInd
 > `model.onnx` + `tokenizer.model`); the other seven declare
 > `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and are OVERLAYS whose `files` ship only
 > locale artifacts. So the four ~117-line scripts linking nothing but `pair-index-<cc>.bin` are
-> correct for what those packages are, not evidence of drift. The audit read nine different files as
+> correct for what those packages are rather than evidence of drift. The audit read nine different files as
 > nine forks of one thing; they are two bases and seven overlays.
 >
 > **A real question survives, and it is narrower.** Among the seven overlays, three (`en-gb`, `en-nz`,
@@ -130,7 +130,7 @@ per-package, but the implementation that does the linking is not.
 **Cost of fixing it: high**, and the shape is now clearer. The refactor is: one shared linker
 holding the implementation, plus a per-package manifest declaring which artifacts that package links —
 base or overlay. The manifest content is exactly the question above, which is why the split has to
-be decided before the module is written, not during.
+be decided before the module is written rather than during.
 
 **Proposed home:** a `neural-weights-kit` (or `scripts/link-dev-weights.ts`) holding `linkForce`,
 `peekPairIndexHeaderFields`, `md5FileWithSidecar` and `removeIfPresent`, with each workspace's script
@@ -164,7 +164,7 @@ Still outside it:
 
 **Complication, and why this is not one mechanical sweep.** The two `percentile`s take different
 units: core's takes percent (`p` in `[0,100]`), `conformal-calibrate.ts`'s takes a fraction
-(`0.9` → 90th). A find-and-replace produces a silently wrong number, not a compile error. Core's
+(`0.9` → 90th). A find-and-replace produces a silently wrong number rather than a compile error. Core's
 docstring also warns that check parity depends on its exact nearest-rank semantics.
 
 **Cost of leaving it: medium.** Silent divergence in check numbers.
@@ -181,7 +181,7 @@ docstring also warns that check parity depends on its exact nearest-rank semanti
 `core/utils/python-random.ts` exports `SeededRandom`, and its docstring says it is "Backed by
 mulberry32". One caller uses it: `scripts/eval/build-oa-coord-golden.ts:149`.
 
-**Diagnosis — the home's shape is the problem, not its absence.** `SeededRandom` is a class you call
+**Diagnosis — the home's shape is the problem rather than its absence.** `SeededRandom` is a class you call
 `.random()` on. Every call site above wants `() => number`, because that is what the synthesizers and
 samplers take as an injected `random` option. The copies are not ignorance of the home; they are the
 cheapest way to get the shape the call site needs.
@@ -199,7 +199,7 @@ result" false across files that look like they agree).
 
 `AGENTS.md` states the rule and then closes with a claim of completion:
 
-> **HTTP clients extend or instantiate `APIClient`** (`@mailwoman/core/api`), not raw `fetch`. […]
+> **HTTP clients extend or instantiate `APIClient`** (`@mailwoman/core/api`) rather than raw `fetch`. […]
 > No raw-`fetch` client remains.
 
 **The claim is false.** 28 `fetch(` call sites across 19 files, outside browser and test code. The ones that
@@ -257,7 +257,7 @@ Nine files import `readJSONL`/`writeJSONL`/`iterateJSONL` correctly. Ten do not:
 `mailwoman/dev-tools/failure-report.run.ts`, `poi-taxonomy/scripts/generate-taxonomy.ts`,
 `scripts/eval/postcode-anchor-accuracy.ts`, and five `corpus/src/**/*.test.ts` files.
 
-This is drift against a known home, not an unknown one — the adoption split is roughly even.
+This is drift against a known home rather than an unknown one — the adoption split is roughly even.
 
 **Cost of leaving it: low** (until a file needs the streaming `iterateJSONL` and grows a second
 hand-rolled reader). **Cost of fixing it: low, mechanical.**
@@ -266,7 +266,7 @@ hand-rolled reader). **Cost of fixing it: low, mechanical.**
 
 `AGENTS.md`: "The lab `/mnt/playpen/mailwoman-data` default lives in **exactly one place**
 (`data-root.ts`); never re-hardcode it in shipped code or scripts. In docs/comments/help-text
-reference `$MAILWOMAN_DATA_ROOT`, not the literal."
+reference `$MAILWOMAN_DATA_ROOT` rather than the literal."
 
 121 files use `dataRootPath`/`mailwomanDataRoot` — the discipline mostly holds. The leaks:
 
@@ -295,7 +295,7 @@ registry/tools/nppes-dedup-benchmark.ts:186  orgJaccard
 ```
 
 Cloned alongside them, same file pairs: `norm` (×2), `orgTokens` (×2), `addr` (×2), `sigmoid` (×2).
-`registry` already depends on `match` — this is a missing export, not a missing dependency.
+`registry` already depends on `match` — this is a missing export rather than a missing dependency.
 
 **Cost of leaving it: medium** — `registry` is the record-matching app; a comparator that disagrees
 with the matcher's own comparators is a correctness surface.
@@ -484,7 +484,7 @@ all three packages already depend on it.
 Beyond A2/A8: `buildSpecs` ×3 (`coverage-reconciliation:95`, `cross-dataset-correlation:117`,
 `cross-source-threshold-sweep:95`), `boundary` ×2, `mappingFor` ×2, `addr` ×2, four variants of `norm`.
 Twenty-four tool scripts, no `registry/tools/shared.ts`.
-**Cost of leaving it: low** (tools, not shipped runtime) **but it is where new copies keep landing.**
+**Cost of leaving it: low** (tools rather than shipped runtime) **but it is where new copies keep landing.**
 
 ### B12. Byte formatting ×4
 
@@ -561,7 +561,7 @@ occurrences of the opposite form in the same repo.
 `@mailwoman/annotations`) — those are breaking renames and belong in a major, per the precedent
 `AGENTS.md` records for the v5.0.0 batch.
 
-## D — altitude (observation, not a verdict)
+## D — altitude (observation rather than a verdict)
 
 I did not do the per-file read that calling a boundary problem requires. What the size ranking shows,
 with the shape of each file characterized cheaply:
@@ -578,7 +578,7 @@ with the shape of each file characterized cheaply:
 
 `geocode-core.ts` is the outlier: seventeen exported symbols against eleven functions, in a thousand
 lines. Breadth of exported surface is the signal that a module is answering to several callers for
-several reasons. **This is a flag for a reader, not a finding** — confirming it needs the read I did
+several reasons. **This is a flag for a reader rather than a finding** — confirming it needs the read I did
 not do.
 
 ## Appendix — rejected candidates
@@ -598,7 +598,7 @@ them.
 
 3. **`resolver-wof-sqlite/street-centroid.ts:67 extentRadiusM`** — contains haversine-shaped
    trigonometry but is a bbox half-diagonal, and uses `cos(midLat)²` where great-circle distance uses
-   `cos(lat₁)·cos(lat₂)`. A deliberate variant for a different quantity, not a copy.
+   `cos(lat₁)·cos(lat₂)`. A deliberate variant for a different quantity rather than a copy.
 
 4. **`api-kit/metrics.ts:52 percentile`** — a different function despite the name: takes a
    **pre-sorted** array, returns `0` (not `null`) on empty, rounds to two decimals. Written for a hot
@@ -635,7 +635,7 @@ them.
     would have to take a dependency whose published weight is three orders of magnitude larger than
     the code it deduplicates (`@mailwoman/spatial` → `@mailwoman/core` → ~11 MB of data;
     `@mailwoman/match` has no core dependency at all today). Recorded in each file so the next sweep
-    finds the reasoning instead of the copy. **A duplicate with a priced reason is a decision, not a
+    finds the reasoning instead of the copy. **A duplicate with a priced reason is a decision rather than a
     defect** — this is the category the audit's own B-axis was missing.
 
 ## What this audit did not cover
@@ -649,7 +649,7 @@ them.
   collapse whitespace, replace the declared name with a placeholder so renamed copies still collide,
   then hash. It finds **identical** normalized bodies across files — 83 cross-file groups over 3,123
   units in 1,570 files. Near-duplicates that drifted by a line are invisible to it, so every count in
-  this document is a floor, not a ceiling. Bodies under four lines or 120 normalized characters were
+  this document is a floor rather than a ceiling. Bodies under four lines or 120 normalized characters were
   skipped, so trivial one-liner repeats are also under-counted.
 
 ## Appendix: the embedded-newline census (2026-08-03)
@@ -673,9 +673,9 @@ Two findings worth keeping.
 
 **FR has exactly one such record** — `14ter,"Route de la Foret⏎route de la Foret",Biard,86580`, at
 physical lines 22,849,586–87. Neither is `≡ 3 (mod 211)`, so `readFrTuples`' stride steps over both
-halves and the extract is unchanged. That is luck, not design, and the reason the pre-filter hazard is
+halves and the extract is unchanged. That is luck rather than design, and the reason the pre-filter hazard is
 documented in place at `po-box-cedex.ts` rather than fixed: a halved record fails the field checks
-and drops, so the failure mode is a lost row, not a corrupt one.
+and drops, so the failure mode is a lost row rather than a corrupt one.
 
 **ES carries the only real cluster, and it costs nothing.** 52 odd-quote lines = 26 records, all the
 same Catastro shape — a quoted field holding nothing but a newline, between the house number and the

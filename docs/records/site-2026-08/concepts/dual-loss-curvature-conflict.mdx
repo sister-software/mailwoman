@@ -88,7 +88,7 @@ The pattern: knobs that _scale_ loss values don't fix asymmetric _curvature_. Be
 
 Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder, with its frozen transition mask + Viterbi.
 
-The structural benefits the CRF was supposed to provide — no orphan I-tags, no `Saint → Petersburg` clipping bugs from BIO-invalid spans — come from the **transition mask**, not from training the transition matrix via NLL. The mask is hand-encoded in `crf.py`: it forbids `O → I-locality` and every other BIO-invalid transition by setting those entries to `-inf` at initialisation. The training-side NLL was layered on top as a learned refinement; it's that learned refinement that fights with CE.
+The structural benefits the CRF was supposed to provide — no orphan I-tags, no `Saint → Petersburg` clipping bugs from BIO-invalid spans — come from the **transition mask** rather than from training the transition matrix via NLL. The mask is hand-encoded in `crf.py`: it forbids `O → I-locality` and every other BIO-invalid transition by setting those entries to `-inf` at initialisation. The training-side NLL was layered on top as a learned refinement; it's that learned refinement that fights with CE.
 
 ```python
 # Before — the v0.4.0 train loop
@@ -157,7 +157,7 @@ Voice B pulled the model away from the basin Voice A was guiding it toward. Voic
 
 **Silence Voice B during training.** Keep it for inference (when the trained model parses addresses), where its structural rules — "no orphan tags, no invalid BIO sequences" — are enforced by the frozen CRF mask. But during training, let Voice A guide the model alone.
 
-This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask, not from training the transition matrix. Training the transition matrix is what was fighting with Voice A.
+This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask rather than from training the transition matrix. Training the transition matrix is what was fighting with Voice A.
 
 ### Three lessons that generalise
 

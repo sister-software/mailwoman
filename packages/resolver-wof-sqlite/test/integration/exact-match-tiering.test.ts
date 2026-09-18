@@ -154,7 +154,7 @@ describe("findPlace — exact-match tiering", () => {
 
 		expect(results[0]?.name).toBe("Capitalia")
 		expect(results[1]?.name).toBe("Capitalia Township")
-		// Both still stamp exactMatch — the sub-tier reorders within the tier, not across the flag.
+		// Both still stamp exactMatch — the sub-tier reorders within the tier rather than across the flag.
 		expect(results[0]?.exactMatch).toBe(true)
 		expect(results[1]?.exactMatch).toBe(true)
 	})

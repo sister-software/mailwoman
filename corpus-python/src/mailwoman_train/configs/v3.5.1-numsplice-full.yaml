@@ -27,7 +27,7 @@
 # fr-fragment source's +1.7pp); the PL defect row `aleja Wojska Polskiego 178` is fixed (postcode ->
 # house_number); US 5-digit postcodes and all 6 demo presets did not regress. The only regression was
 # the board-3 Norwegian contextful classes (city-first/pc-first/street-led, -5..-8.5pp) — US contextful
-# held, so it is under-convergence of the fresh tokenizer, not a trade. This 8k gives the model time to
+# held, so it is under-convergence of the fresh tokenizer rather than a trade. This 8k gives the model time to
 # re-learn contextful number handling with the new vocab while keeping bare-street-hn at its +13pp.
 #   SHIP CHECK: bare-street-hn holds its +13pp and the contextful classes recover to ~ceiling and
 #   US/5-digit/demo presets + FR fragment board + parity hold -> v6.5.0 candidate (first real

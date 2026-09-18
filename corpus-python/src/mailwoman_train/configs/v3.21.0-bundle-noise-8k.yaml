@@ -28,7 +28,7 @@
 # G1/G2/G5/G6. G3 new-class ⇒ STOP, operator decides. No knob iteration inside the run.
 # If G5/G6 STILL fail with the noise leg: STOP — the register-conditional feeding design question
 # (fragment-shaped queries feed the channels, full addresses do not) goes to the operator. that
-# is a decode-surface decision the anti-hellscape doctrine taxes, not a change to slip in.
+# is a decode-surface decision the anti-hellscape doctrine taxes rather than a change to slip in.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.21.0-bundle-noise-8k.yaml --resume none
 #

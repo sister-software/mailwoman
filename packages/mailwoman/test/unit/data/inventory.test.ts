@@ -113,7 +113,7 @@ describe("takeInventory — the four states stay distinct", () => {
 		const link = report.entries.find((e) => e.path === "wof/candidate.db")
 
 		expect(link?.linkTarget).toBe("wof/candidate-2026-08-15.db")
-		// And it still reports the size of what it points at, not the size of the link.
+		// And it still reports the size of what it points at rather than the size of the link.
 		expect(link?.bytes).toBeGreaterThan(0)
 	})
 
@@ -161,7 +161,7 @@ describe("the reported rate", () => {
 
 		const sentence = inventorySentence(await takeInventory({ dataRoot: root }))
 
-		// 1 of 2, not 1 of 3: an artifact nobody can open is not a provenance gap someone can close.
+		// 1 of 2 rather than 1 of 3: an artifact nobody can open is not a provenance gap someone can close.
 		expect(sentence).toContain("1 of 2")
 		expect(sentence).toContain("could not be opened")
 	})

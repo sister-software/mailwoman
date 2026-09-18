@@ -89,7 +89,7 @@ export interface DuplicateTagClass {
 	tag: ComponentTag
 	topology: DuplicateTagTopology
 	/**
-	 * Rows, not node pairs. One pathological tree contributes at most once to this class.
+	 * Rows rather than node pairs. One pathological tree contributes at most once to this class.
 	 */
 	n: number
 	examples: { id: string; input: string; values: string[] }[]

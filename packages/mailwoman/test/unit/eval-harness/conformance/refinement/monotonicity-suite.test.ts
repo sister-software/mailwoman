@@ -13,7 +13,7 @@
  *   self-consistent and unattested — a sequence of invented strings that agree with each other, which is
  *   precisely the thing the fixture discipline exists to refuse.
  *
- *   THE COVERAGE IS ASSERTED AS A RATIO, NOT A NUMBER. The eligible count moves whenever a comma-carrying row
+ *   THE COVERAGE IS ASSERTED AS A RATIO rather than A NUMBER. The eligible count moves whenever a comma-carrying row
  *   is committed, so pinning it would fail on other people's work. what must hold is that the suite states
  *   strictly less than the population it draws from and says so, and that every chain it does state is
  *   counted once however many links it carries.

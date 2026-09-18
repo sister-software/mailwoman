@@ -71,8 +71,8 @@ export interface FloodIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change, not a variation to
-	 * absorb.
+	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * to absorb.
 	 */
 	expectEPSG?: number
 	/**

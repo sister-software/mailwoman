@@ -30,7 +30,7 @@
  *   2. **A separate conformal novelty detector** whose job is to ABSTAIN when no known shape fits.
  *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
  *      Standard Mondrian CP assumes the taxonomy already exists. open-set conformal can flag that an observation
- *      belongs to no known class, and what to do about that is our architecture, not the method's.
+ *      belongs to no known class, and what to do about that is our architecture rather than the method's.
  *
  *   Two measured obstacles stand between v1 and that v2, both visible in this tool's own census and neither solved by
  *   more code:
@@ -43,7 +43,7 @@
  *     worse.
  *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
  *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
- *     full label set, or something else — and that choice is a modelling decision, not a detail.
+ *     full label set, or something else — and that choice is a modelling decision rather than a detail.
  *
  *   Exchangeability is the third question and the least comfortable one: calibration rows drawn from the tracked board
  *   are actively drained by the fixes this tool motivates (five promoted in one night), so yesterday's diagnosed

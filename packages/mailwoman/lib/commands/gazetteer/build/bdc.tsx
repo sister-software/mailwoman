@@ -9,7 +9,7 @@
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   First version wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
- *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
+ *   broadband/voice subcategories are a future flag rather than a scope gap in this command's shape.
  *
  *   `--provider-list-path` (decision 6) opts into populating `bdc_provider` —
  *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
@@ -23,7 +23,7 @@
  *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
  *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
- *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op:
+ *   `--filer-db-path` given without `--provider-list-path` is a loud error rather than a silent no-op:
  *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
  *   list to resolve FRNs FOR.
  */

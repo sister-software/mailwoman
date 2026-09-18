@@ -20,7 +20,7 @@ This module defines:
 Why mirror the TS taxonomy here instead of importing? The classifier trains in Python
 on parquet files that don't carry the TS-side ``PhraseProposal`` value type. The corpus
 build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors.
-its bridge to the TS-side phrase grouper lives there, not here. This file is just the
+its bridge to the TS-side phrase grouper lives there rather than here. This file is just the
 shared vocabulary.
 
 Drift check: if a new ``PhraseKind`` branch lands in ``core/pipeline/types.ts`` (or vice

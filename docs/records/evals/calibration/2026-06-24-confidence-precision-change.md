@@ -30,7 +30,7 @@ A confidence story a judge can break is worse than none. Split the rows at the d
 | confidence < 0.900 (low)  |  68 |             72.1% |
 | confidence ≥ 0.900 (high) |  92 |             85.9% |
 
-The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-of-sample. The discrimination is a property of the shipped model, not of the subset the curve was fit on.
+The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-of-sample. The discrimination is a property of the shipped model rather than of the subset the curve was fit on.
 
 ## Where the confidence comes from (per-locale, τ=0)
 
@@ -47,7 +47,7 @@ The discrimination is the model flagging its own coverage. Where mailwoman has g
 
 ## What this report does not claim
 
-The plan opened as a head-to-head against Nominatim on the same messy set. That comparison is **withheld**: the Nominatim fetch hit rate-limiting during crash-restarted runs (AU returned nothing for all 63 valid AU addresses, FR 45% null, PT 38% null), so the competitor's recall and precision are unreliable here and any "mailwoman wins" read would be a rate-limit artifact. Use the 2026-06-23 benchmark (US right-place @25km, mailwoman 99% vs Nominatim 84%, #775) as supporting context, not as tonight's measurement. A spaced, policy-respecting re-fetch is the next step if the head-to-head on mess is wanted.
+The plan opened as a head-to-head against Nominatim on the same messy set. That comparison is **withheld**: the Nominatim fetch hit rate-limiting during crash-restarted runs (AU returned nothing for all 63 valid AU addresses, FR 45% null, PT 38% null), so the competitor's recall and precision are unreliable here and any "mailwoman wins" read would be a rate-limit artifact. Use the 2026-06-23 benchmark (US right-place @25km, mailwoman 99% vs Nominatim 84%, #775) as supporting context rather than as tonight's measurement. A spaced, policy-respecting re-fetch is the next step if the head-to-head on mess is wanted.
 
 ## Reproduce
 

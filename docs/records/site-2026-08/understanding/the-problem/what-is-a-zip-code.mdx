@@ -52,12 +52,12 @@ The full 11-digit code uniquely identifies a delivery point. The USPS calls this
 
 Not all ZIP codes are geographic:
 
-| Type            | Description                                    | Example               | Geocoding implication                                            |
-| --------------- | ---------------------------------------------- | --------------------- | ---------------------------------------------------------------- |
-| **Standard**    | Street addresses                               | 90210 (Beverly Hills) | Resolves to a post office delivery area — approximate, not exact |
-| **PO Box only** | Serves only PO boxes at a specific post office | 10001 (part of NYC)   | Centroid at the post office, not at residents' locations         |
-| **Unique**      | Single high-volume mailer                      | 20260 (USPS HQ)       | Point location, correct                                          |
-| **Military**    | APO/FPO addresses                              | 09012 (APO AE)        | Not geographic — routing to military postal hub                  |
+| Type            | Description                                    | Example               | Geocoding implication                                                   |
+| --------------- | ---------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
+| **Standard**    | Street addresses                               | 90210 (Beverly Hills) | Resolves to a post office delivery area — approximate rather than exact |
+| **PO Box only** | Serves only PO boxes at a specific post office | 10001 (part of NYC)   | Centroid at the post office rather than at residents' locations         |
+| **Unique**      | Single high-volume mailer                      | 20260 (USPS HQ)       | Point location, correct                                                 |
+| **Military**    | APO/FPO addresses                              | 09012 (APO AE)        | Not geographic — routing to military postal hub                         |
 
 A geocoder that treats a PO Box ZIP the same as a standard ZIP will place a pin on the post office building for every resident who uses a PO box. In small towns where the post office is the center of town, this is approximately correct. In cities where thousands of people use PO boxes at one facility, it is catastrophically wrong.
 

@@ -5,7 +5,7 @@
  *
  *   The synthetic-corpus RECIPE registry. Each recipe ({@link CorpusRecipe}) is what one root-level
  *   build script used to be. the `mailwoman corpus slice <recipe>` command dispatches to them. A new
- *   recipe is a new entry here, not a new script.
+ *   recipe is a new entry here rather than a new script.
  */
 
 import { cnOrganizationalUnitsRecipe } from "#cn/recipes/organizational-units"

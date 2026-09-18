@@ -1,7 +1,7 @@
 # DECISIVE ROUND (v0.8.1): the v0.8.0 40k/5e-5 fine-tune UNDER-TRAINED both arms (resolver ~50%
 # vs shipped v0.7.2's 96%). Per DeepSeek turn-4: re-run at the v0.7.2-PROVEN recipe (1.5e-4
 # constant / 100k / 1k warmup) — known to reach ~96% resolver — so pretraining is judged at the
-# task CEILING, not the basement. ls 0.1 + CRF off retained. Only encoder init differs across arms.
+# task CEILING rather than the basement. ls 0.1 + CRF off retained. Only encoder init differs across arms.
 # v0.8.1 — supervised fine-tune from the MLM-pretrained encoder (arm A of the decisive A/B).
 #
 # Phase 2 of pretrain -> fine-tune. Loads the MLM-pretrained encoder

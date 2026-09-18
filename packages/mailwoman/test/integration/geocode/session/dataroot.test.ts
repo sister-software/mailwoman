@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1732 reach pin: a session's `dataRoot` must govern WEIGHTS resolution, not only the gazetteer paths.
+ *   The #1732 reach pin: a session's `dataRoot` must govern WEIGHTS resolution rather than only the gazetteer paths.
  *
  *   The gap this closes: `createGeocodeSession` resolved gazetteer artifacts under `options.dataRoot` but called
  *   `loadFromWeights({ locale })` bare, so weights (and the per-locale FST inside them) resolved from the process
@@ -38,7 +38,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		// ladder answers, it must never be a path inside the PROCESS ENV data root's weights overlay when the
 		// session was given a different root. Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
-			// The production defaults factory, not a hand-built literal — the same lockstep factory the dev-mcp
+			// The production defaults factory rather than a hand-built literal — the same lockstep factory the dev-mcp
 			// registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",

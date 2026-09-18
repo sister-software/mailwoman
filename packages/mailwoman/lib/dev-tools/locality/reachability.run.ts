@@ -229,7 +229,7 @@ console.log(`| --- | --: | --: |`)
 for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_asked", "gold_not_found"] as const) {
 	const n = tally.get(verdict) ?? 0
 
-	// Denominated on GRADED rows, not on the panel: an unrenderable row was never asked and counting it would move
+	// Denominated on GRADED rows rather than on the panel: an unrenderable row was never asked and counting it would move
 	// every share below by an amount the table does not explain.
 	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
 }

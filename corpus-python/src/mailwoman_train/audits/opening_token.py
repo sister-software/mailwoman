@@ -52,7 +52,7 @@ def _digits(token: str) -> bool:
 
 
 def _opening_counts(tokens: list[str], labels: list[str]) -> list[str]:
-    """Name every opening the row matches. A row can match more than one — they are nested, not rival."""
+    """Name every opening the row matches. A row can match more than one — they are nested rather than rival."""
     if not tokens or not labels:
         return []
 

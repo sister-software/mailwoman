@@ -83,7 +83,7 @@ def component_sequence(labels: list[str]) -> list[str]:
     """Collapse BIO token labels to their ordered component-span sequence.
 
     A malformed or orphan label RAISES rather than being skipped: a receipt counted over labels the
-    reader could not parse reports a shortfall that is the reader's, not the corpus's.
+    reader could not parse reports a shortfall that is the reader's rather than the corpus's.
     """
     sequence: list[str] = []
     active: str | None = None

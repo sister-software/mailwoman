@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a MEASUREMENT this layer takes, not a number argued to — and for this subject the
+ *   The index resolution is a MEASUREMENT this layer takes rather than a number argued to — and for this subject the
  *   inherited size contract's own statistic is not the one that decides it.
  *
  *   The `partial` share carries no signal here, and that was measured. Computed over all 85,330 Irish

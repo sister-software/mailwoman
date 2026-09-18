@@ -43,9 +43,9 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
 
 ## Design
 
-- **Self-contained** on `h3-js`, not `@mailwoman/spatial` (which wasn't
+- **Self-contained** on `h3-js` rather than `@mailwoman/spatial` (which wasn't
   published when `address-id` shipped). Small, focused dependency footprint.
-- **Content-addressed, not assigned.** The key derives from the data itself
+- **Content-addressed rather than assigned.** The key derives from the data itself
   — no central registry, no sequence numbers.
 - **Jitter-stable.** The H3 cell at resolution 9 (~0.03 km²) absorbs the
   small coordinate differences that come from geocoding the same address
@@ -61,7 +61,7 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
 
 ## Related
 
-- [`@mailwoman/match`](../match) — the fuzzy matcher (complementary, not competing)
+- [`@mailwoman/match`](../match) — the fuzzy matcher (complementary rather than competing)
 - [`@mailwoman/normalize`](../normalize) — canonicalization used by the content hash
 - [`@mailwoman/codex`](../codex) — ZIP → state prefix resolution
 - [`@mailwoman/formatter`](../formatter) — `canonicalKey` (also deterministic, used for blocking)

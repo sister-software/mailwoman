@@ -104,13 +104,13 @@ const HEX_RADIX = 16
  * Map each Overture GERS id to a synthetic integer id, derived from the GERS id itself.
  *
  * Consumers store these ids — gold rows, cached results, cross-artifact joins — so an id has to be a function of the
- * PLACE, not of the build that emitted it. GERS ids are stable by design. parquet scan order is not, and DuckDB's is a
- * threaded read over a LEFT JOIN.
+ * PLACE rather than of the build that emitted it. GERS ids are stable by design. parquet scan order is not, and
+ * DuckDB's is a threaded read over a LEFT JOIN.
  *
  * Assignment is `idBase + (hash(gers) mod span)`. Two GERS ids can land on the same slot — at ~1.6 M rows in a 1e12
  * span the birthday expectation is about one collision per build — so the loser probes forward. Probing is order-
  * dependent, which is exactly what this function exists to avoid, so the input is SORTED first: a given GERS id's
- * outcome then depends only on the set of ids that hash near it, not on how the query happened to return them.
+ * outcome then depends only on the set of ids that hash near it rather than on how the query happened to return them.
  *
  * Re-ingesting a division already present recomputes the same id, so an incremental augment is idempotent.
  */

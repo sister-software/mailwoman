@@ -62,7 +62,7 @@ data:
     # (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey rendered both as country and US region/locality) +
     # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (no affix).
     # Class-weight B/I-country stays at 2.0 below — the shipped model already had 2.0 and country was
-    # still 0%, so the gap was data, not weighting. Bump to 3-4 + add the soft anchor only if the check
+    # still 0%, so the gap was data rather than weighting. Bump to 3-4 + add the soft anchor only if the check
     # shows long-tail recall lagging. See docs/engineering/reference/closed-vocab-fields-model-first.mdx.
     synth-country: 2.0
   train_rows_per_epoch: 1000000

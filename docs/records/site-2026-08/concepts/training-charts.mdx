@@ -31,7 +31,7 @@ overconfidence drift on v0.6.2; the
 [v0.6.2 confidence probe](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) walked that
 back — the per-token confidence distributions on the two runs are essentially
 identical (81.2% vs 81.8% of wrong predictions land at ≥0.9 confidence). The
-val_loss bouncing is per-batch sample variance, not a model-level signal.
+val_loss bouncing is per-batch sample variance rather than a model-level signal.
 
 **val macro_f1 over training steps:**
 
@@ -88,7 +88,7 @@ switching between `chart.svg` and its `chart-log.svg` counterpart.
   back to **linear** when checking spike magnitudes against the axis range.
 - **macro_f1** — the steady-state quality signal. v0.6.x runs land around
   0.40–0.42 by step 20K and don't move much from there. A meaningful
-  improvement looks like sustained higher band, not a single high reading.
+  improvement looks like sustained higher band rather than a single high reading.
 - **train_loss** — diagnostic only. Always drops monotonically (with
   small wiggle); a NaN or step-function shows up here first. **Log scale**
   reveals the asymptotic tail the result shows.
@@ -99,7 +99,7 @@ train-loss points.
 
 ## Limitations
 
-- Charts are SVG, not JavaScript-interactive. The Linear/Log toggle is the
+- Charts are SVG rather than JavaScript-interactive. The Linear/Log toggle is the
   only runtime control. For interactive exploration of a single run, open the
   CSV directly in your tool of choice.
 - Multi-run charts only work for runs whose CSVs have been pulled to local

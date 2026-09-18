@@ -20,7 +20,7 @@ and reaches into `@mailwoman/core` internals (`ResourceError`,
 `ConsoleLogger`). Rather than patch in place, the API is redesigned from
 scratch as a standalone package, and mailwoman migrates onto it.
 
-**Type ergonomics are a first-order requirement**, not a nice-to-have: full
+**Type ergonomics are a first-order requirement** rather than a nice-to-have: full
 inference at every call site, no `any` in the public surface, no runtime
 behavior the types fail to describe.
 
@@ -106,8 +106,7 @@ A lazy, awaitable, disposable wrapper. `Service<T>` implements
 
 **Semantics — each fixes a flaw in the old module:**
 
-- **Promise-memoized resolution.** `resolve()` stores the in-flight promise,
-  not the instance — concurrent awaits share one resolution (the old code
+- **Promise-memoized resolution.** `resolve()` stores the in-flight promise rather than the instance — concurrent awaits share one resolution (the old code
   raced and could construct duplicate instances, leaking one). A _failed_
   resolution clears the memo so a later await may retry.
 - **Every resolver form runs `[asyncInit]`** and receives the
@@ -164,7 +163,7 @@ ServiceRegistry()`. The old static-singleton-that-`extends Service` with
   `defaultRegistry`.
 - **Backed by `AsyncDisposableStack`** — native LIFO ordering and
   `SuppressedError` aggregation replace the hand-rolled reverse loop.
-- **Registration recorded at `register` time**, not first-await — a
+- **Registration recorded at `register` time** rather than first-await — a
   resolved-but-never-awaited service can no longer escape disposal (old code
   populated its map inside `then()`).
 - **Double-register on one token throws** `E_DUPLICATE_TOKEN` (the old map

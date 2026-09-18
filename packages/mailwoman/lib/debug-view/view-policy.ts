@@ -7,7 +7,7 @@
  *   combinations are a usage error, and how small a frame is too small to render. Both the static capture
  *   (`command.tsx`) and the interactive session (`DebugSessionApp.tsx`) enforce all three, and they enforce them
  *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small TERMINAL to a note —
- *   so the shared part is the verdict, not the reaction to it.
+ *   so the shared part is the verdict rather than the reaction to it.
  *
  *   Their own module because the alternative is a cycle: the session is imported BY the command module and would have
  *   to import these back OUT of it, which `import/no-cycle` refuses. Pure and JSX-free, so it type-strips under bare
@@ -77,7 +77,7 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
  *
  * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the smallest legible pane: input area 9 +
  * footer 1 + MapPane's own 4 = 14, so 20. (It was 14 while the input area was 4 rows and there was no footer — the
- * evidence rows and the key hints moved the floor, not a change of mind about how small a map may be.)
+ * evidence rows and the key hints moved the floor rather than a change of mind about how small a map may be.)
  */
 const MIN_DEBUG_COLUMNS = 60
 const MIN_DEBUG_ROWS = 20

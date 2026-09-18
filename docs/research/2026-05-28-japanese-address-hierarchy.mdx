@@ -51,13 +51,13 @@ To synthesize a JP address you concatenate the parent chain top-to-bottom: `東�
 
 Western addresses identify locations by street + number. "1600 Pennsylvania Avenue NW" picks a specific building because Pennsylvania Avenue is a known line and 1600 is a known offset along that line.
 
-Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on; the grid is the addressing primitive, not the line.
+Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on; the grid is the addressing primitive rather than the line.
 
 Implications for the parser:
 
 - `street_prefix` and `street_suffix` don't apply (no street).
 - `house_number` becomes a hyphenated triple: `4-2-8`.
-- The "丁目" suffix is a categorical marker, not a street type.
+- The "丁目" suffix is a categorical marker rather than a street type.
 
 For now we map chome to `dependent_locality` since it's the closest existing tag. A proper JP locale would introduce `block` and `sub_block` tags per the schema in `core/types/component.ts` (declared but unused until JP ships).
 

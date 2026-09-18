@@ -62,7 +62,7 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		const post = seen[0]?.anchorPosterior
 		expect(post, "default-on should inject a country posterior for a clear in-map address").toBeDefined()
 		const entries = Object.entries(post ?? {})
-		// Residual upgrade: a full per-in-map-country DISTRIBUTION, not the one-hot argmax.
+		// Residual upgrade: a full per-in-map-country DISTRIBUTION rather than the one-hot argmax.
 		expect(entries.length).toBeGreaterThan(1)
 
 		for (const [c, p] of entries) {
@@ -193,7 +193,7 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 	})
 
 	// The other half of the contract, unchanged and worth pinning: an AGREEING bearer still gets the
-	// soft posterior. Withholding on agreement would retire the placer, not narrow it.
+	// soft posterior. Withholding on agreement would retire the placer rather than narrow it.
 	test("an AGREEING dominant bearer still gets the soft posterior", async () => {
 		const { resolver, seen } = guardResolver({ country: "FR", exactMatch: true })
 

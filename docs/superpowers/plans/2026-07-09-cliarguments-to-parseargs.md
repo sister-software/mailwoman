@@ -48,7 +48,7 @@
 
 - [ ] **Step 1: Write a failing smoke fixture**
 
-Write `/tmp/claude-scratch-runscript-fixture.ts` (scratchpad, not the repo):
+Write `/tmp/claude-scratch-runscript-fixture.ts` (scratchpad rather than the repo):
 
 ```ts
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -333,11 +333,11 @@ git commit -m "refactor(corpus): audit.ts parses argv with node:util parseArgs"
 
 - Modify: `corpus/scripts/ingest-csv.ts:14-28,37-66`, main (`cliArgs` reads)
 
-The header claims `DELIBERATE hand-parse: dynamic --key value pairs` — but main() reads a fixed set: `input, table, output, sample, separator, skip, no-header, dry-run`. The dynamic part is the inferred SQL schema, not the CLI. Migrate.
+The header claims `DELIBERATE hand-parse: dynamic --key value pairs` — but main() reads a fixed set: `input, table, output, sample, separator, skip, no-header, dry-run`. The dynamic part is the inferred SQL schema rather than the CLI. Migrate.
 
 - [ ] **Step 1: Edit**
 
-Docstring: usage block `npx tsx packages/corpus/scripts/ingest-csv.ts` → `node corpus/scripts/ingest-csv.ts`; delete the `DELIBERATE hand-parse…` line. Keep the `splitCSVLine` hand-roll comment (that one is true and about CSV, not argv).
+Docstring: usage block `npx tsx packages/corpus/scripts/ingest-csv.ts` → `node corpus/scripts/ingest-csv.ts`; delete the `DELIBERATE hand-parse…` line. Keep the `splitCSVLine` hand-roll comment (that one is true and about CSV rather than argv).
 
 Imports: drop `cliArguments`; add `import { parseArgs } from "node:util"`.
 
@@ -407,7 +407,7 @@ Expected: printed `CREATE TABLE` with columns `a` (INTEGER-ish) + `b` (TEXT), no
 
 ```bash
 git add corpus/scripts/ingest-csv.ts
-git commit -m "refactor(corpus): ingest-csv parses argv with node:util parseArgs (flag set was fixed, not dynamic)"
+git commit -m "refactor(corpus): ingest-csv parses argv with node:util parseArgs (flag set was fixed rather than dynamic)"
 ```
 
 ---

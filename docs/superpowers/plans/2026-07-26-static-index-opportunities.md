@@ -16,7 +16,7 @@ cascade, AddrKG-LLM's prompt rulebook).
   constant with the gazetteer's own structure** — runtime is an O(1) membership lookup
   (`resolver-wof-sqlite/coincident-roles.ts:6-30`). The template sentence for this whole doc.
 - `pair-index-gb/nz.bin`: per-country δ + `transitionBeta` calibrations live in the **artifact
-  header**, not code (`neural/pair-index-resolver.ts:59-81`).
+  header** rather than code (`neural/pair-index-resolver.ts:59-81`).
 - `calibration.json` / `calibration-per-locale.json` in the weights packages; postcode anchor
   binaries; anchor/country/street-type lexicons; `postal-city-alias` tables.
 - In flight: degenerate-surface exclusion at FST build time (stopwords + street-type surfaces).
@@ -60,9 +60,9 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 - **Artifact home already exists:** `layer_manifest` / `layer_coverage`
   (`core/layers/manifest.ts:69,135`) — the layer contract's coverage implementation, plus the candidate
   gazetteer's own manifest. Bake at gazetteer build/eval time: per-country `hard_resolve_rate` (the
-  ≥95% bar becomes a manifest query, honoring meaning-of-zero: absence = unmeasured, not
+  ≥95% bar becomes a manifest query, honoring meaning-of-zero: absence = unmeasured rather than
   ineligible) and per-country bbox rows.
-- **Win:** the safelist updates when the gazetteer improves — at **rebuild**, not at a hand-edited
+- **Win:** the safelist updates when the gazetteer improves — at **rebuild** rather than at a hand-edited
   code PR after someone remembers; plausibility boxes stop drifting from the data. Effort S for
   bbox, M for wiring the resolve-rate measurement into the build/eval loop.
 
@@ -106,7 +106,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 ### 5. Move caller-supplied calibrations into artifact headers (S)
 
 - **Receipt:** `core/resolver/types.ts:353-360` documents the interpolation radius multiplier as "a
-  property of the **calibration set**, not the geometry" — yet the CALLER passes it
+  property of the **calibration set** rather than the geometry" — yet the CALLER passes it
   (`mailwoman/geocode-core.ts:640-650` resolves 1.70/per-region tables from `deps` and forwards it
   per call). The artifact whose property it is (the TIGER interpolation DB) says nothing.
 - **Artifact:** calibration rows in the interpolation/situs DB manifest (the layer contract already
@@ -128,7 +128,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   `neural/classifier.ts:432-453`) is already static-in-code and small — moving it provides little
   today. It becomes an artifact the day the locality-conditional-hierarchy direction lands
   (per-country emission masks derived from WOF ancestry statistics — the memory's "admin FST →
-  per-country emission mask"). Flagged so the eventual home is planned, not accreted.
+  per-country emission mask"). Flagged so the eventual home is planned rather than accreted.
 
 ---
 

@@ -292,7 +292,7 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 		entry.rows++
 
 		if (values["with-geocode"]) {
-			// `defaultCountry` here, not `caseCountry`: this call is the resolver's, and the country it takes is the scope
+			// `defaultCountry` here rather than `caseCountry`: this call is the resolver's, and the country it takes is the scope
 			// prior the answer is produced under.
 			const answered = (await deps.geocode(input, { defaultCountry: place.country })).locality ?? null
 

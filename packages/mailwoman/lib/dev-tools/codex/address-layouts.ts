@@ -184,7 +184,7 @@ function layoutSource(
 		}
 	}
 
-	// The country line is AUTHORED, not transcribed: libaddressinput leaves `%R` out of nearly every `fmt` because its
+	// The country line is AUTHORED rather than transcribed: libaddressinput leaves `%R` out of nearly every `fmt` because its
 	// consumers add the destination country themselves. It closes a small-first address and opens a large-first one,
 	// and it renders only when a caller supplies the name — an intra-country row carries none and prints none.
 	if (!named.has("country")) {

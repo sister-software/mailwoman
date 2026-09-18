@@ -111,7 +111,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 **Files:**
 
-- Move (git mv, content untouched — these are internal, not part of the rewrite): `docs/articles/plan/SCOPE.mdx`, `docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`, all of `docs/articles/plan/reference/`, the two active design notes listed in the `reference` sidebar → `docs/engineering/` (flatten: `docs/engineering/SCOPE.mdx`, `docs/engineering/reference/…`)
+- Move (git mv, content untouched — these are internal rather than part of the rewrite): `docs/articles/plan/SCOPE.mdx`, `docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`, all of `docs/articles/plan/reference/`, the two active design notes listed in the `reference` sidebar → `docs/engineering/` (flatten: `docs/engineering/SCOPE.mdx`, `docs/engineering/reference/…`)
 - Modify: `AGENTS.md` (five path references), `docs/scripts/check-docs-structure.ts` sidebar references if any, every in-repo referrer found by grep
 
 **Interfaces:**
@@ -150,7 +150,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: the six-door frame every Phase 3 task hangs pages on. Sidebar ids: `product`, `solutions`, `resources`, `developers`, `about`, `pricing` — Phase 3 tasks add doc ids to these lists.
 
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
-- [ ] **Step 2:** Write the nine seed pages (real content, not stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per contract; every claim checked against `mailwoman/` source or `package.json` versions.
+- [ ] **Step 2:** Write the nine seed pages (real content rather than stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per contract; every claim checked against `mailwoman/` source or `package.json` versions.
 - [ ] **Step 3:** Rebuild nav: sidebars + sections + navbar + footer + front page. Front page fork: "Build with it" → Get started · "Make the case for it" → Solutions · "See the proof" → Benchmarks. Demo button prominent.
 - [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green; structure check `--strict` green; `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill; eyeball nav and front page.
 - [ ] **Step 5: Commit** `feat(docs)!: six-door site skeleton; old tree parked under records`.
@@ -246,7 +246,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `developers/how-to/{batch-geocoding,validate-addresses,handle-messy-input,autocomplete,reverse-geocode,use-annotations,tune-confidence}.mdx`.
 
-- Briefs: batch (CPU note from the batch-path memory: session.run blocks the JS thread — worker pool pattern shown); validate (parse-confidence + codex checks, not deliverability claims); messy-input (normalize stage, lowercase register note); autocomplete (`autocomplete` command + library path); reverse (`reverse` + the WOFReverseGeocoder); annotations (`toOpenCage()`/`toNative()`); confidence (calibration story, thresholds by use).
+- Briefs: batch (CPU note from the batch-path memory: session.run blocks the JS thread — worker pool pattern shown); validate (parse-confidence + codex checks rather than deliverability claims); messy-input (normalize stage, lowercase register note); autocomplete (`autocomplete` command + library path); reverse (`reverse` + the WOFReverseGeocoder); annotations (`toOpenCage()`/`toNative()`); confidence (calibration story, thresholds by use).
 - [ ] Every snippet executed against compiled CLI/library. Vale + de-slop. **Commit** `docs(how-to): integration wave`.
 
 ### Task 14: How-to wave 2 (operations surface)
@@ -334,5 +334,5 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 ## Self-review
 
 - **Spec coverage:** decisions 1–7 → Tasks 5 (shape), 3–5 (publicness), 6–8 (CLI), 9–22 (content), 1–2+23 (style enforcement), 24 (PR). Acceptance bullets each map: cold trial (9, 23), executed builds (12), build/check/Vale (23), publicness (4, 23), doors-from-front-page (5), drop-ins cold (7, 23).
-- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements, not placeholders — the steps that gather them are explicit.
+- **Placeholder scan:** the R2 artifact inventory (Task 6 step 1) and measured numbers (12, 15) are deliberately gathered-at-execution measurements rather than placeholders — the steps that gather them are explicit.
 - **Type consistency:** `validatePage` (Task 2) used only in-check; `DataBundle`/`resolveBundleArtifacts`/`needsDownload` names consistent across Task 6 steps; sidebar ids from Task 5 used verbatim in Phase 3 tasks.

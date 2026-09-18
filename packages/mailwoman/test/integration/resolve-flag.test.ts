@@ -128,7 +128,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			{ env: childEnv({ MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 		)
 
-		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
+		// JSON with --candidates dumps the full AddressTree rather than the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
 		// in containment-nesting trees like region → locality).
 		const tree = parseJSONStrict<Record<string, unknown>>(stripAnsiSpinner(result.stdout))

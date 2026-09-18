@@ -5,7 +5,7 @@
  *
  *   Unit coverage for the #1717 stage-1 admin-coherence verdicts: all four verdicts per component,
  *   the shared-fold matching behavior (case + diacritics — asserted against what
- *   `normalizeLocalityForKey` actually does, not what one might assume), the stated v1 bound
+ *   `normalizeLocalityForKey` actually does rather than what one might assume), the stated v1 bound
  *   (variant forms read `contradicted`), and the additive threading through `toGauntletResult`.
  */
 

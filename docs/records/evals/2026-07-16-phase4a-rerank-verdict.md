@@ -67,11 +67,11 @@ something else.
 ## The direction this points (not chased here — that would be signal #3 on a losing streak)
 
 The resolver answers _"where is this?"_ The useful question for reranking a bare fragment is
-_"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index**, not
+_"is this a street name at all?"_ — an **existence check against the gazetteer/BAN name index** rather than
 a geocode. `ban/street-centroids-fr.db` contains every FR street name; asking whether
 `Rue de Rome` appears in it needs no locality and no house number.
 
-That is a lexicon lookup, not resolution — a different signal with a different failure surface, and
+That is a lexicon lookup rather than resolution — a different signal with a different failure surface, and
 it interacts directly with #1142 (the `matched` vs `importance` split: "is this a known name" is
 _exactly_ the `matched` bit that today's multiply destroys). It warrants a probe only with the same bar
 the others got: a pre-registered check and a measured win.
@@ -88,7 +88,7 @@ to a branch.
 - **4b (isotonic ambiguity check)** — still valuable, and now _more_ so: if evidence cannot pick the
   winner, calibrated confidence is what lets a caller know the answer is uncertain. Unblocked.
 - **4c (option C: kind-posterior + recall-weighted loss)** — now the **primary** change for the
-  bare-fragment class, not a follow-up. It attacks the parse where evidence cannot.
+  bare-fragment class rather than a follow-up. It attacks the parse where evidence cannot.
 
 **And the standing fact this does not change:** the v7 street floor is **0.90**. seg@1 is 0.577,
 oracle@5 is 0.723. Even a perfect reranker would have landed short. The floors need 4c and/or more

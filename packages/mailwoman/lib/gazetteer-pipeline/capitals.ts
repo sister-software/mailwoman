@@ -76,8 +76,8 @@ export interface CapitalsReference {
 		 */
 		missing_national: string[]
 		/**
-		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country — worth a read,
-		 * not a failure: multi-capital countries and spelling drift land here.
+		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country — worth a read
+		 * rather than a failure: multi-capital countries and spelling drift land here.
 		 */
 		capital_name_mismatches: string[]
 	}
@@ -263,7 +263,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 	}
 
 	// One entry per line: the header reads like JSON, the entry block diffs like a table.
-	// `false`: the head is SPLICED, not written — the regex below reopens its closing brace so the entries can be
+	// `false`: the head is SPLICED rather than written — the regex below reopens its closing brace so the entries can be
 	// printed one per line. A trailing newline puts a character after that brace and the match silently fails.
 	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
 	const body = reference.entries.map((e) => "\t\t" + stringifyJSON(e)).join(",\n")

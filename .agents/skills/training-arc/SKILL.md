@@ -64,8 +64,8 @@ base costs those rows before the new data is read.
 
 Consequences, both required:
 
-- **A candidate's regressions are `candidate − placebo`, not `candidate − shipped`.** Eighteen regressions
-  where the placebo has ten is eight attributable, not eighteen.
+- **A candidate's regressions are `candidate − placebo` rather than `candidate − shipped`.** Eighteen regressions
+  where the placebo has ten is eight attributable rather than eighteen.
 - **A fine-tune must first recover the placebo's net loss.** If the placebo nets −5, a candidate at −5 has
   achieved nothing and a candidate at −3 is an improvement.
 
@@ -130,7 +130,7 @@ measurement in this protocol.
 - **Artifact resolution sorts by mtime and prints the artifact chosen** — enforced in
   `packages/dev-mcp/lib/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
   lexically.
-- **A smoke run proves the config loads, not that the new rows are reached.** Read the file through
+- **A smoke run proves the config loads rather than that the new rows are reached.** Read the file through
   the loader's own check (`country_weights.get(cc)`) first.
 - **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
   regardless of the row count. Check with `mwdev_coverage` before assuming a locale is taught.
@@ -151,10 +151,10 @@ not run, say so — an unattributed regression count is not a finding.
 - Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count carries its
   denominator.
 - A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
-  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place, not in a
+  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place rather than in a
   footnote.
 - Define each project term at first use or link the doc that does. Name the corpus recipe file, config
   key, or weight — the words the `AmbiguousShorthand` and `ProjectShorthand` Vale rules refuse are banned in reports.
 - Denominate spend: "$29 of the $40 Modal budget for this experiment", never a bare dollar figure.
 - State the next action and stop. No scheduling (`tomorrow`), no wind-down narration — the operator sets
-  cadence, and completion is acceptance criteria, not elapsed turns.
+  cadence, and completion is acceptance criteria rather than elapsed turns.

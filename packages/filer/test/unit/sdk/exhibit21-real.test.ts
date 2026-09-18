@@ -43,7 +43,7 @@ interface ExpectedFixtures {
 
 const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
 
-// parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
+// parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
 // degrade to a fallback, since it is the contract every assertion below is measured against.
 const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
 
@@ -63,7 +63,7 @@ function normalized(html: string): string {
 /**
  * `alti-global-2025.htm` separates its entries with nothing but a double space, so no name/jurisdiction boundary exists
  * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every other vendored
- * document states a subsidiary list a reader can follow, so zero is a parser failure there, not an abstention.
+ * document states a subsidiary list a reader can follow, so zero is a parser failure there rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 

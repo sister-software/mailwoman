@@ -23,7 +23,7 @@
  *   applies rather than a preference:
  *
  *   1. **Ranking policy.** No weights, boosts, penalties, or candidate-ordering API — not as a
- *      function, not as a type. Candidate ordering belongs to `@mailwoman/resolver`, and the decode
+ *      function rather than as a type. Candidate ordering belongs to `@mailwoman/resolver`, and the decode
  *      objective to `@mailwoman/neural` plus `@mailwoman/core/decoder`. Knowledge here creates
  *      observations. it never overrides learned interpretation.
  *   2. **A second POI vocabulary.** External and curated POI categories, their containment
@@ -38,7 +38,7 @@
  *   `@mailwoman/core` must not depend on this package. Core ships the pipeline contract and roughly
  *   9 MB of reference data to every consumer, so a world-semantics dependency there is one every
  *   drop-in API inherits without asking for it. Reversing that direction is an explicit amendment to
- *   the boundary record, not a convenience during implementation.
+ *   the boundary record rather than a convenience during implementation.
  *
  *   Boundary record: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` (#1917).
  *   Program parent: #1916.

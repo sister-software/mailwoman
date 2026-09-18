@@ -6,7 +6,7 @@
  *   one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and it refuses far more
  *   often than it admits.
  *
- *   FOLD PARITY IS A PRECONDITION, not a detail. A key that "exists nowhere" may exist under a surface we did not
+ *   FOLD PARITY IS A PRECONDITION rather than a detail. A key that "exists nowhere" may exist under a surface we did not
  *   probe. The board's coverage-miss decomposition found this class directly — `Tel Aviv-Yafo`, `São Paulo - SP`,
  *   `Co. Westmeath` are real places reported as coverage misses — and it is indistinguishable from a true absence at
  *   the decision point. So the probe must name the fold it used and the layer must name the fold its builder wrote,

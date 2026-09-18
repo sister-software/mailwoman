@@ -5,7 +5,7 @@
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
 #
 # THE VARIABLE vs v3.7.0 (knob 3): --long-number-boost 4->6 AND --long-number-min-digits 3->1, so EVERY
-# street+number length is oversampled, not just >=3-digit. Why these values: v371's miss breakdown by
+# street+number length is oversampled rather than just >=3-digit. Why these values: v371's miss breakdown by
 # number length (scratchpad/v371-miss-by-digits.run.ts) showed the 8k residual is not just long numbers —
 # 1-digit misses are ABSORPTION (21, unboosted at >=3), 2-digit are digit->postcode (28, unboosted), and
 # 3-digit is still 0.661-fail even at 4x boost (37, the length prior winning uphill). Boosting all lengths
@@ -15,7 +15,7 @@
 # CONFOUND, stated: the 6x-all boost triples the recipe output's volume (11,609 -> 33,203 rows) at the same weight
 # 12.0, so this changes signal volume and composition. The FR guard is the detector — if FR re-drifts like
 # knob 1, the volume over-diluted and the weight needs dropping. if FR holds, volume was fine. Reading FR
-# is therefore required this run, not just do-no-harm.
+# is therefore required this run rather than just do-no-harm.
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)

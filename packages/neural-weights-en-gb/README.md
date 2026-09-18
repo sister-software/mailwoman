@@ -48,13 +48,13 @@ microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the GB-facing half of the retrieval side: the
 en-us encoder's soft gazetteer + placetype-pair channels, fed with UK-specific
 data so the model never has to memorize GB place names — that knowledge
-arrives at inference as a retrieval, not a weight.
+arrives at inference as a retrieval rather than a weight.
 
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
 - **Postcode anchor:** not shipped, deliberately — see the note above and
   `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
   the gazetteer resolver still handle full unit-postcode text; what is absent
-  is the soft anchor feature, not postcode support.
+  is the soft anchor feature rather than postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
   child of "Stockton-on-Tees") — a soft decode-time bias, restricted to GB
@@ -65,7 +65,7 @@ arrives at inference as a retrieval, not a weight.
 Parsing free-text UK postal addresses into structured components (country,
 region, locality, dependent_locality, postcode, street, house_number, …) for
 **geocoding** — resolving a parsed address to coordinates via a
-gazetteer/resolver. The model is the parsing front-end of that pipeline, not a
+gazetteer/resolver. The model is the parsing front-end of that pipeline rather than a
 standalone geocoder.
 
 ## Ship-config requirement (read before using)
@@ -96,19 +96,19 @@ subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
 board (69 rows carrying the tag), prior on at the calibrated δ=5.0: **69/69
 emission, 67/69 tag-correct (97.1%)**. The two misses are pre-existing,
-independently characterized parser-level cases, not prior artifacts. A
+independently characterized parser-level cases rather than prior artifacts. A
 three-way ablation shows this recall is carried almost entirely by the
-**prior**, not the fine-tuned checkpoint's own classifier row — see
+**prior** rather than the fine-tuned checkpoint's own classifier row — see
 `model-card.json`'s `notes` and `eval` blocks for the full breakdown,
 including the δ-calibration sweep, the venue-confound false-positive rate
 (0.738% at δ=5.0), and the comma-stripped-input trade (fully inert by design
 in the current probe mode).
 
-**The base encoder itself is a STAGED candidate, not yet promoted** — see
+**The base encoder itself is a STAGED candidate rather than yet promoted** — see
 `@mailwoman/neural-weights-en-us`'s `model-card.json` `phase` field for the
 open ship blocker (a Gauntlet metamorphic-layer regression, unrelated to GB).
 Until that resolves, treat the numbers above as graded-but-unshipped: real
-measurements against the actual candidate artifact, not yet the production
+measurements against the actual candidate artifact rather than yet the production
 default. [`docs/articles/evals/`](https://mailwoman.ai) carries
 the full scorecard once promoted.
 
@@ -128,7 +128,7 @@ output is byte-stable when calibration is omitted.
 - **Placetype-pair prior is comma-segment-scoped** — it matches whole
   comma-delimited input segments only (the "segment" probe mode, default
   since d2a1242f), so comma-stripped GB input gets no boost from this channel
-  (fully inert, not degraded — a documented v1 trade, not a bug). It is also
+  (fully inert rather than degraded — a documented v1 trade rather than a bug). It is also
   restricted to GB: it structurally cannot fire on non-GB input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.

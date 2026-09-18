@@ -52,7 +52,7 @@ export interface POICategorySubject extends POISubjectBase {
 
 /**
  * A resolved POI subject that names a chain BRAND (`chevron`, `applebee's`). Brands carry a Wikidata QID and are
- * searched by that QID, NOT by category k-ring — see `@mailwoman/poi-taxonomy`'s brand table + the layer's
+ * searched by that QID rather than by category k-ring — see `@mailwoman/poi-taxonomy`'s brand table + the layer's
  * `brand_wikidata` index.
  */
 export interface POIBrandSubject extends POISubjectBase {
@@ -119,7 +119,7 @@ export type POILiveSearch = (params: {
 	overtureCategoryIDs: string[]
 	anchor: string
 	/**
-	 * Present when the subject is a chain brand — the probe fetches by this QID, not a category k-ring.
+	 * Present when the subject is a chain brand — the probe fetches by this QID rather than a category k-ring.
 	 */
 	brandWikidata?: string
 }) => Promise<POILiveSearchResult>

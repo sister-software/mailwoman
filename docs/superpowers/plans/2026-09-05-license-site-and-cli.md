@@ -148,7 +148,7 @@ Run: `yarn vitest run packages/core/test/unit/license/key-file.test.ts`. Expecte
  *   The two files under `$MAILWOMAN_CONFIG_ROOT/license/` a self-service license leaves on a machine: the key, which
  *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`, so a refreshed token applies without an
  *   environment change; and the refresh credentials, the lid and per-license secret `mailwoman license refresh`
- *   presents, created 0600 because the secret is what fetches the current token. The key is a signed assertion, not a
+ *   presents, created 0600 because the secret is what fetches the current token. The key is a signed assertion rather than a
  *   secret, and is written with the ordinary writer.
  */
 
@@ -410,7 +410,7 @@ Run: `yarn vitest run packages/core/test/unit/license/status.test.ts`. Expected:
  *
  *   The client for the license worker's two customer routes: the per-license status a lid answers, and the refresh that
  *   trades a lid and its secret for the current token. Kept outside the `license` barrel like `publication.ts`, because
- *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer, not a
+ *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
  *   verdict: offline verification stands, and every caller says so.
  */
 
@@ -493,7 +493,7 @@ export async function refreshLicenseKey(
 }
 ```
 
-Read `packages/core/lib/api/APIClient.ts` for the exact request-options shape (`fetch<T>(options)`; `method`, `data`, `cache: false` are what `bdc/lib/sdk/client.ts` uses), the error class (`ResourceError`, `isResourceError` or the `status` field name), and whether `POST` needs `data` or `body`. Match what exists; the cast on `status` is a narrowing of a validated set member, not an `as unknown as`. Register the subpath in `packages/core/package.json` next to `./license/publication` with the same three conditions.
+Read `packages/core/lib/api/APIClient.ts` for the exact request-options shape (`fetch<T>(options)`; `method`, `data`, `cache: false` are what `bdc/lib/sdk/client.ts` uses), the error class (`ResourceError`, `isResourceError` or the `status` field name), and whether `POST` needs `data` or `body`. Match what exists; the cast on `status` is a narrowing of a validated set member rather than an `as unknown as`. Register the subpath in `packages/core/package.json` next to `./license/publication` with the same three conditions.
 
 - [x] **Step 4: Run and commit**
 

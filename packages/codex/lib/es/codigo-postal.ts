@@ -27,7 +27,7 @@ export type CodigoPostal = Tagged<string, "CodigoPostal">
 
 /**
  * Shape of a Spanish código postal — five digits. Identical in shape to a French code postal, a German PLZ and a US
- * ZIP. disambiguation is the parser's job, not the pattern's.
+ * ZIP. disambiguation is the parser's job rather than the pattern's.
  */
 export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
 

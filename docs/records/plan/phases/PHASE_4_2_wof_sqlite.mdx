@@ -143,7 +143,7 @@ FTS5 BM25 default, with manual post-scoring:
 - **Parent match boost.** When the query specifies `parentId`, candidates that are direct children get +0.5, transitive descendants get +0.2.
 - **Length penalty.** Candidates whose name is much longer than the query get a small penalty (`-0.1 * max(0, candidateLen - queryLen - 3) / 10`) — favors `Paris` over `Paris-l'Hôpital` when querying "paris".
 
-Returned `score` is the post-boost number, **not** the raw BM25 — callers shouldn't depend on a specific scale, just relative ordering.
+Returned `score` is the post-boost number rather than the raw BM25 — callers shouldn't depend on a specific scale, just relative ordering.
 
 ## Tests
 
@@ -162,7 +162,7 @@ Integration tests against a real WOF distribution will be added in a follow-up o
 
 - **Sync vs async driver.** `node:sqlite` is sync-only. For the resolver use case the entire `findPlace` is a single SQL query + post-scoring; sync is fine. If we ever need to query in a hot inference loop, revisit by moving the driver into a `Worker`.
 - **FTS5 build cost.** Building the FTS5 index on first open is expensive against the planet-scale WOF distro (millions of rows). Mitigation in this PR: build is opt-in via `WofSqlitePlaceLookupOpts.buildFts: true` (default false). The README documents a one-shot CLI to build it ahead of time; the resolver assumes it exists.
-- **Concurrency.** Kysely's `node:sqlite` driver (from `core/kysley/`) uses a single connection with a mutex. The resolver doesn't open multiple connections — one resolver instance = one DB connection = serialized queries. For multi-request servers, instantiate one resolver per request handler, not one shared.
+- **Concurrency.** Kysely's `node:sqlite` driver (from `core/kysley/`) uses a single connection with a mutex. The resolver doesn't open multiple connections — one resolver instance = one DB connection = serialized queries. For multi-request servers, instantiate one resolver per request handler rather than one shared.
 
 ## Changelog
 

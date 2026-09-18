@@ -22,7 +22,7 @@ import {
 /**
  * The resolved-place info in a forward `/api` result: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names, the
  * coordinate, the resolved country, and the postcode. {@link photonForwardProperties} projects it onto Photon's schema.
- * #1014 — decorate from the resolved place, not the parsed input span.
+ * #1014 — decorate from the resolved place rather than the parsed input span.
  */
 export interface PhotonForwardInput {
 	lat: number
@@ -38,12 +38,13 @@ export interface PhotonForwardInput {
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
 	 * A HOUSE-GRADE result (#1041): set only when the resolver produced a specific building coordinate — the
-	 * `address_point` (rooftop) or `interpolated` tier fired, not an admin centroid. {@link photonForwardProperties} then
-	 * re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and surfaces the parsed `housenumber` +
-	 * `street`, matching upstream komoot/photon's own bare-address-point shape (verified against `photon.komoot.io`: a
-	 * residential rooftop returns `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no
-	 * `name`). Absent → the result keeps its admin-ancestry schema. Without it a rooftop reads as `type: city` and a
-	 * client zooms to city scale (or paints a city marker) on a doorstep match — the #1041 regression.
+	 * `address_point` (rooftop) or `interpolated` tier fired rather than an admin centroid.
+	 * {@link photonForwardProperties} then re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and
+	 * surfaces the parsed `housenumber` + `street`, matching upstream komoot/photon's own bare-address-point shape
+	 * (verified against `photon.komoot.io`: a residential rooftop returns `{osm_key:"place", osm_value:"house",
+	 * type:"house", housenumber, street}` with no `name`). Absent → the result keeps its admin-ancestry schema. Without
+	 * it a rooftop reads as `type: city` and a client zooms to city scale (or paints a city marker) on a doorstep match —
+	 * the #1041 regression.
 	 */
 	house?: { number?: string | null; street?: string | null } | null
 	/**
@@ -141,7 +142,7 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 		props.countrycode = input.country.code.toLowerCase()
 	}
 
-	// #1041: house-grade override. A rooftop / interpolated coordinate is a BUILDING, not the admin locality the
+	// #1041: house-grade override. A rooftop / interpolated coordinate is a BUILDING rather than the admin locality the
 	// ancestry above would label it — re-tag the schema so a Photon client renders (and zooms to) a house, and surface
 	// the parsed housenumber + street. Matches upstream komoot/photon's bare address point (osm_key:place, osm_value:
 	// house, type:house, with housenumber + street and no name). Drop the admin-derived `name` — else the QGIS FLF label

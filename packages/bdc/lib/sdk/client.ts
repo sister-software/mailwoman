@@ -56,13 +56,13 @@ export const BDC_API_BASE_URL = "https://broadbandmap.fcc.gov/api/public"
  *
  * SOURCING, stated precisely because it could not be verified from here: this figure comes from the operator's reading
  * of the FCC's own API documentation. It was not confirmed against a fetchable source — the API spec is a Box-hosted
- * PDF, and `broadbandmap.fcc.gov/api-documentation` does not resolve. Treat it as the published limit as reported, not
- * as something this repo checked.
+ * PDF, and `broadbandmap.fcc.gov/api-documentation` does not resolve. Treat it as the published limit as reported
+ * rather than as something this repo checked.
  *
- * This is the DEFAULT, not a clamp. `createSECClient` clamps because SEC's limit is verifiable, actively policed, and
- * published in fetchable HTML. none of that holds here, so pinning an unverified number as law would be false
- * precision. {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either direction, and the throttle meter
- * (see {@linkcode BDCClient.throttleStats}) is how a real run reports what the setting actually cost.
+ * This is the DEFAULT rather than a clamp. `createSECClient` clamps because SEC's limit is verifiable, actively
+ * policed, and published in fetchable HTML. none of that holds here, so pinning an unverified number as law would be
+ * false precision. {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either direction, and the throttle
+ * meter (see {@linkcode BDCClient.throttleStats}) is how a real run reports what the setting actually cost.
  *
  * If FCC ever answers with a 429, drop this to 9 before anything else: pacing exactly AT a published rate leaves no
  * headroom for event-loop jitter, and a grant that lands a millisecond late shifts into the following window. See
@@ -111,8 +111,8 @@ const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const DEFAULT_DOWNLOAD_TIMEOUT_MS = 300_000
 
 /**
- * The status {@linkcode toArrayBuffer} reports a non-binary body under — a client misconfiguration, not an upstream
- * failure, and mapped as a `payload` kind so `isTransientResourceError` reads it as terminal.
+ * The status {@linkcode toArrayBuffer} reports a non-binary body under — a client misconfiguration rather than an
+ * upstream failure, and mapped as a `payload` kind so `isTransientResourceError` reads it as terminal.
  */
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
@@ -148,7 +148,7 @@ export interface CreateBDCClientOptions {
 	clock?: ClockLike
 	/**
 	 * On-disk cache root. Defaults to `dataRootPath("bdc", "cache", "http")`, resolved once at construction — construct
-	 * the client after setting `$MAILWOMAN_DATA_ROOT`, not before.
+	 * the client after setting `$MAILWOMAN_DATA_ROOT` rather than before.
 	 */
 	cacheDir?: string
 	/**
@@ -156,8 +156,8 @@ export interface CreateBDCClientOptions {
 	 */
 	cacheTTLMs?: number
 	/**
-	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure. A STATED CEILING,
-	 * not "until it works". Never applies to a 401/403/404.
+	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure. A STATED CEILING
+	 * rather than "until it works". Never applies to a 401/403/404.
 	 */
 	maxAttempts?: number
 	/**
@@ -219,11 +219,11 @@ export interface BDCThrottleStats {
 	waits: number
 	/**
 	 * How many times the per-minute BUDGET limit opened a cooldown, counted off `APIClient`'s `cooldown_start` event.
-	 * With the interval limit also configured this is one per budget's worth of requests, and each is a real wait, not a
-	 * zero-length window-rollover marker: the budget's cooldown runs to the end of the minute the window opened in
+	 * With the interval limit also configured this is one per budget's worth of requests, and each is a real wait rather
+	 * than a zero-length window-rollover marker: the budget's cooldown runs to the end of the minute the window opened in
 	 * (`APIClient.#reserveCooldownSlot`), and the interval limit has by then spent only `(N-1) * 60000/N` ms of it. At
 	 * 10/minute that is a 6 s cooldown per 10 requests. Some of {@linkcode BDCThrottleStats.waitingMs} is therefore
-	 * cooldown, not pacing. See {@linkcode createBDCClient} for the full arrival trace.
+	 * cooldown rather than pacing. See {@linkcode createBDCClient} for the full arrival trace.
 	 */
 	cooldowns: number
 }
@@ -340,7 +340,7 @@ function toArrayBuffer(data: unknown): ArrayBuffer {
 	throw ResourceError.from(
 		HTTP_INTERNAL_SERVER_ERROR,
 		`FCC BDC download returned a ${typeof data} body where binary bytes were expected. This is a client ` +
-			'misconfiguration (the request must carry `responseType: "arraybuffer"`), not an upstream failure.',
+			'misconfiguration (the request must carry `responseType: "arraybuffer"`) rather than an upstream failure.',
 		"axios",
 		"payload",
 		"not-binary"
@@ -454,12 +454,12 @@ function formatDuration(ms: number): string {
  * the cooldown timer sleeps on it, and the retry backoff sleeps on it — so wrapping it is how the waiting becomes
  * visible without touching `core/api`.
  *
- * WAITS ARE UNIONED, NOT SUMMED, and that is the whole subtlety here. Under a concurrent fan-out every caller sleeps at
- * once, and each one's wait is longer than the last: 40 concurrent requests at a 6 s interval sleep 6 s, 12 s, … 234 s,
- * which SUMS to 78 minutes of "waiting" inside a run that took 3m54s — measured, and reported as `2000%` by the first
- * version of this meter. Tracking the depth of in-flight sleeps and charging only the wall-clock span during which at
- * least one was outstanding answers the question actually being asked: how much of the elapsed time went to the
- * throttle rather than to transferring. For the serial ingest `gazetteer build bdc` actually performs the two are
+ * WAITS ARE UNIONED rather than SUMMED, and that is the whole subtlety here. Under a concurrent fan-out every caller
+ * sleeps at once, and each one's wait is longer than the last: 40 concurrent requests at a 6 s interval sleep 6 s, 12
+ * s, … 234 s, which SUMS to 78 minutes of "waiting" inside a run that took 3m54s — measured, and reported as `2000%` by
+ * the first version of this meter. Tracking the depth of in-flight sleeps and charging only the wall-clock span during
+ * which at least one was outstanding answers the question actually being asked: how much of the elapsed time went to
+ * the throttle rather than to transferring. For the serial ingest `gazetteer build bdc` actually performs the two are
  * identical.
  */
 function createMeteredClock(base: ClockLike): {
@@ -476,7 +476,7 @@ function createMeteredClock(base: ClockLike): {
 		clock: {
 			now: () => base.now(),
 			sleep: async (ms: number) => {
-				// A zero-length sleep is a scheduling yield, not a wait — `setCooldown` issues one on every
+				// A zero-length sleep is a scheduling yield rather than a wait — `setCooldown` issues one on every
 				// budget rollover, and counting those would report a wait per ten requests that never happened.
 				if (ms <= 0) return base.sleep(ms)
 
@@ -591,7 +591,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		},
 		axios: {
 			headers: {
-				// Not bearer, not basic — the BDC API takes the credential pair as two plain headers.
+				// Not bearer rather than basic — the BDC API takes the credential pair as two plain headers.
 				username,
 				hash_value: apiKey,
 			},

@@ -64,7 +64,7 @@ not yet wired.
 review's Track 3 imagined a decision sitting; what worked was presenting each decision
 as a pre-framed fork at the moment its evidence completed (the SLO overage, the ledger's fate,
 the re-score cadence, the v220 promote). Every fork resolved within hours of being posed. The
-open queue is now in fact externally-blocked-or-owned items, not re-triage fodder.
+open queue is now in fact externally-blocked-or-owned items rather than re-triage fodder.
 
 **R5 — the record of record is stale: CLOSED, and now self-correcting.** releases.mdx is current
 through 5.3.0; SCOPE.mdx exists (locale tiers, two workstreams, five invariants); the
@@ -91,7 +91,7 @@ repaired on contact, reinforcing the ship-whole-or-wait rule.
 | 5 — scope re-declaration  | half a day     | SCOPE.mdx + the flag register (which found two default split-brains, #895) + plan/README marked historical.                                                                                                                                                                   |
 
 The review's "what not to do" held on all four counts: no resolver micro-changes past the frontier
-(the residual went to a _typed floor_, not a change), no breaking sweeps, no new locales before
+(the residual went to a _typed floor_ rather than a change), no breaking sweeps, no new locales before
 the coordinated bump (the freeze lifted exactly when designed), no new workstreams before 1–3.
 
 ---
@@ -109,7 +109,7 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    replaced a training run: the tokenizer probe replaced the #825 retrain class entirely, and
    the v220 re-check replaced a same-shape rerun. Both were pre-registered _before_ measurement,
    with explicit falsified-by-copy branches. "No GPU while an archived artifact dominates the
-   target class" is now a demonstrated rule, not a slogan.
+   target class" is now a demonstrated rule rather than a slogan.
 
 3. **The checks catch real things at both ends of the lifecycle.** Pre-ship: the v2.2.0 wall
    held under the old calculus and the SI bar failed as-registered under the new one (then went
@@ -167,7 +167,7 @@ byte-level verification buys.
 
 ## The direct caveats
 
-Three days is a sprint, not a trend; the four-releases-in-four-days cadence is sustainable only
+Three days is a sprint rather than a trend; the four-releases-in-four-days cadence is sustainable only
 because three of the four shipped pre-existing artifacts. The SI trade shipped today is real
 (−1.5pp resolve, +2.7pp wrong-city at the model level) and its floor is a resolver behavior —
 if #942 ever regresses, SI regresses with it, which is why the insurance leg belongs in the
@@ -177,7 +177,7 @@ dependency retires.
 
 ---
 
-_The 2026-07-01 review closed by defining "back on rails" as pointed where it is going, not
+_The 2026-07-01 review closed by defining "back on rails" as pointed where it is going rather than
 faster. Three days later the direct summary is: both — and the speed came from the rails._
 
 ---

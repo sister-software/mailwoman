@@ -32,7 +32,7 @@ The RECs handle roughly **200 million pieces per year**. That is 200 million pie
 
 The 5-digit ZIP code gets the letter to the right post office. The **+4 extension** gets it to the right carrier route or building. The full 11-digit delivery point code gets it to the right mailbox.
 
-ZIP codes are not polygons. They are **carrier routes** — the sequence a postal carrier walks or drives. A ZIP code boundary follows streets, not census blocks. It can change when a carrier retires and routes get redrawn. The US Census Bureau publishes ZIP Code Tabulation Areas (ZCTAs) as an approximation, but ZCTAs are not USPS ground truth and USPS explicitly disclaims them. If you are geocoding by ZIP centroid and calling it "the address," you are off by anywhere from a few hundred feet to several miles, and the error is systematic for rural areas.
+ZIP codes are not polygons. They are **carrier routes** — the sequence a postal carrier walks or drives. A ZIP code boundary follows streets rather than census blocks. It can change when a carrier retires and routes get redrawn. The US Census Bureau publishes ZIP Code Tabulation Areas (ZCTAs) as an approximation, but ZCTAs are not USPS ground truth and USPS explicitly disclaims them. If you are geocoding by ZIP centroid and calling it "the address," you are off by anywhere from a few hundred feet to several miles, and the error is systematic for rural areas.
 
 The +4 extension narrows this: it maps to a block face (one side of one street between two cross streets), a single large building, or a PO box section. The delivery point code narrows further: the specific mailbox.
 

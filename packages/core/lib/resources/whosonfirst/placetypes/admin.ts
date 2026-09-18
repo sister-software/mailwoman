@@ -45,8 +45,8 @@ export interface WOFBaseProperties {
 	"lbl:latitude"?: number
 	"lbl:longitude"?: number
 	/**
-	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string, not an array. Read by the gazetteer
-	 * ingest for the resolver's point-in-box proximity.
+	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string rather than an array. Read by the
+	 * gazetteer ingest for the resolver's point-in-box proximity.
 	 */
 	"geom:bbox"?: string
 	"gn:population"?: number

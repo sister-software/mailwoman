@@ -56,7 +56,7 @@ incumbents.
    gap (88 → 80) is AU. The failure mode is same-named towns scattered across states, which the
    country-level postcode-consistency check can't disambiguate. EU-only is the legitimate headline for a
    Europe comparison _because_ AU is its own, named, unsolved problem — not because hiding it flatters us.
-4. **Centroids, not rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
+4. **Centroids rather than rooftops.** mailwoman is 26% @1km vs Nominatim 77 / Pelias 71. The @25km parity is
    right-_area_ parity; the incumbents are far more precise when they hit. State it, don't bury it.
 5. **Two changes, partly substitutes.** On `-20h` (no PL/CZ postcodes) the #370 rescore change lifted EU
    ~+16pp by _recovering the fragmented town_. On `-20i` the postcode resolves the address directly, so
@@ -91,7 +91,7 @@ candidate gazetteer noted.
 
 With both changes, mailwoman leads both incumbents on the @25km right-area metric — EU 94.2 and all-panel
 90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
-stands; this is right-AREA, not rooftop.
+stands; this is right-AREA rather than rooftop.
 
 Residuals after A+B (the next changes): AU's remaining misses are mostly a PARSE issue — the model emits a
 house number as a second postcode ("Grantson Street 51" → postcode=51), and the anchor picks the first

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the SQLite-backed postcode lookup (#240). Seeds throwaway `spr` extracts in tmp dirs (the
- *   real `postalcode-*.db` artifacts live on the data volume, not in CI), then asserts exact-match,
+ *   real `postalcode-*.db` artifacts live on the data volume rather than in CI), then asserts exact-match,
  *   the `is_current` filter, coordinate-less membership, and the cross-extract union.
  */
 

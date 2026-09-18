@@ -74,7 +74,7 @@ describe("isStreetSuffix / isStreetSuffixToken", () => {
 	it("isStreetSuffix is true only for canonical uppercase words", () => {
 		expect(isStreetSuffix("STREET")).toBe(true)
 		expect(isStreetSuffix("street")).toBe(false) // canonical is uppercase
-		expect(isStreetSuffix("ST")).toBe(false) // an abbreviation, not the canonical
+		expect(isStreetSuffix("ST")).toBe(false) // an abbreviation rather than the canonical
 	})
 
 	it("isStreetSuffixToken is true for any case-insensitive variant or abbreviation", () => {

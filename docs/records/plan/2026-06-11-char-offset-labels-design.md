@@ -31,7 +31,7 @@ What this cost, concretely:
 - **The dotted-designator class** (v4.4.0 check, battery 1): `P.O. Box` decodes as
   period-truncated fragments — 98% miss on dotted po_box leaders while the model labeled every
   letter piece correctly at 0.93+. Ten times more data moved it +2.9pp. Now contained by the
-  span bridge (decode-side merge), which is containment, not fix: the bridge must GUESS which
+  span bridge (decode-side merge), which is containment rather than fix: the bridge must GUESS which
   punctuation is intra-span (periods, hyphens) vs separator (commas) — a global heuristic where
   the data could have been the authority, per surface, per locale.
 - **The comma over-merge** (battery 2): the bridge's guess was wrong for commas; six FR golden
@@ -58,7 +58,7 @@ Properties:
 - `tokens[]` stays derivable for any consumer that wants it (whitespace split + span lookup);
   the reverse derivation (today's direction) is the lossy one.
 - The alignment step gets SIMPLER: `alignRow` already finds components by char offset and then
-  quantizes to tokens — the quantization step is deleted, not added to.
+  quantizes to tokens — the quantization step is deleted rather than added to.
 - The January Chevrotain experiment's output contract (typed char-offset spans) and Stage 2.7's
   `PhraseProposal` both become directly storable as supervision if ever wanted.
 
@@ -75,7 +75,7 @@ Properties:
 4. **Eval golds**: unchanged (`{raw, components}` is already char-level by construction).
 5. **The 673M-row base corpus**: needs a one-time conversion (token labels → char spans is
    LOSSLESS upward — every existing label maps to the chars its token occupies). A converter +
-   spot-audit, not a re-alignment.
+   spot-audit rather than a re-alignment.
 6. **Training invariance check**: a converted corpus must produce a BIT-IDENTICAL piece-label
    stream for rows with no intra-span punctuation (the overwhelming majority) — that is the
    regression check for the migration itself.
@@ -85,7 +85,7 @@ Properties:
    mismatch corrupts offsets silently, and "silently" is the operative word.
 8. **The per-piece channels** (consult keeper): `realign_anchor_to_pieces` and the gazetteer
    clue painting both key off `whitespace_spans` — the migration touches their foundation, so
-   each needs its own invariance assertion (identical channel tensors on converted rows), not
+   each needs its own invariance assertion (identical channel tensors on converted rows) rather than
    just the label-stream check.
 
 ## Open questions (→ consult, then operator)

@@ -36,7 +36,7 @@ export interface DiscoveredRepo {
 /**
  * A repository NAME, as opposed to a path that happens to contain one.
  *
- * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into, not a repository.
+ * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into rather than a repository.
  */
 const REPO_NAME_PATTERN = /^whosonfirst(?:-data)?-[a-z0-9-]+$/
 

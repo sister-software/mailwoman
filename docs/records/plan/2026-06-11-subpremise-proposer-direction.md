@@ -1,4 +1,4 @@
-# The sub-premise nexus — pre-tagging as information, not decision (direction note)
+# The sub-premise nexus — pre-tagging as information rather than decision (direction note)
 
 Operator instinct, 2026-06-11: "if there's any utility in pre-tagging PO Box as a pre-model
 stage, so be it… there's some nexus of secondary address pieces — apartments, suites, units,
@@ -30,7 +30,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
    dimension** that fires on any codex designator (unit, level, po_box-class, all locales) —
    one bit + the designator's tag-class, the same multi-hot pattern. The model conditions; it
    never obeys. Cost: a lexicon rebuild + a channel-dim bump (retrain-coupled — rides a
-   scheduled run, not its own).
+   scheduled run rather than its own).
 2. **Stage 2.7 phrase proposal (the operator's instinct, structurally).** The phrase grouper
    already carries a "unit check"; the generalization is a **sub-premise proposer**: one rule
    layer over all codex designator tables emitting typed span proposals

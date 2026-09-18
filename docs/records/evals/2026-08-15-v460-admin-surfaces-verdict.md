@@ -10,7 +10,7 @@ shipped model; nothing in `release.config.json`, the weights cards or the demo m
 
 This document is the evidence behind that call. The artifacts are retained — fp32
 `f2dbf4a85f845068234a1a565c323682`, int8 `afb8ca11bc1e2952b049d437bba611ef`, both on the Modal
-volume — because the next attempt is a re-weight and rebuild of the same recipe, not a fresh design, and
+volume — because the next attempt is a re-weight and rebuild of the same recipe rather than a fresh design, and
 the comparison arm is worth keeping.
 
 ## What a retry needs before it is worth GPU time
@@ -29,7 +29,7 @@ And a discipline this run did without: **pre-register a watch on the adjacent cl
 records that relabelling one boundary loosens its neighbours, and bare-country/bare-locality are as
 adjacent as two classes get. The bare-toponym board rows — `bz-cs-belize-city`, `kh-cs-phnom-penh`,
 `tt-cs-port-of-spain`, `bn-cs-bandar-seri-begawan`, `il-cs-tel-aviv-yafo`, `my-cs-petaling-jaya` and
-the `*-street-name-*` family — go on the watch list before the run, not after.
+the `*-street-name-*` family — go on the watch list before the run rather than after.
 
 ## What shipped instead, on the same day
 
@@ -39,7 +39,7 @@ surfaces across 280 regions from the runtime's own ICU; folding them into the ca
 布基纳法索 — at **zero** board regressions and no training at all.
 
 That is the retrieval-over-memorisation principle with a receipt: a fact the atlas can hold should be
-retrieved, not memorised into weights.
+retrieved rather than memorised into weights.
 
 Promote was the operator's call. This document is the evidence.
 
@@ -79,7 +79,7 @@ Everything else passes: `us.postcode` 96.7/94.9, `us.micro` 90.9/85.1, `us.local
 
 **Quantization is clean.** Every int8-vs-fp32 delta is 0.0 except `fr.region` at 0.2 pp.
 
-### `arena.perturb` is a check-maintenance defect, not a model regression
+### `arena.perturb` is a check-maintenance defect rather than a model regression
 
 The shipped model reads **65** on this floor too and **fails it identically**. The floor of 78 no
 longer describes the model it was reduce from.
@@ -150,7 +150,7 @@ badly negative.
 ### The likely cause is the extract that produced the result
 
 `synth-bare-country-v23` is 277 rows at weight 1.0, and the sampler allocates draw share **by weight
-normalized over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
+normalized over sources rather than by rows × weight** — so those 277 surfaces repeat roughly twenty times
 an epoch. The extract teaches exactly one lesson: _a bare capitalized name is a `country`._
 
 US `country` +11.0 pp and the collapse of the bare-locality and bare-street classes are the same
@@ -206,7 +206,7 @@ a failure. The extract taught the tail without teaching the boundary. v4.6.0 add
 
 The cause is already filed as **#1673**: the ES extract teaches **English exonyms**. It contains 461
 `Balearic Islands` rows and **4** containing `Illes`, and zero `Portopetro`. The model was asked to
-recognise a region surface it had effectively never seen. This is a fixable extraction defect, not a
+recognise a region surface it had effectively never seen. This is a fixable extraction defect rather than a
 failed hypothesis about the trailing-region extract.
 
 ## Recommendation

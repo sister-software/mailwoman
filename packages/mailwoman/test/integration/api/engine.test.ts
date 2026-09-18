@@ -16,7 +16,7 @@
  *   The generic timing-metrics algorithm (percentiles, tier partition, reservoir) also does not
  *   re-port here — `api-kit/metrics.test.ts` already exhaustively covers the identical
  *   `recordTimed`/`metricsSnapshot` logic this engine delegates to. This file only exercises the
- *   `/metrics` HTTP surface reflecting a real wired call (the integration behavior, not the algorithm).
+ *   `/metrics` HTTP surface reflecting a real wired call (the integration behavior rather than the algorithm).
  *
  *   The engine is built once (`beforeAll`) and reused across every test in this file — unlike
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
@@ -123,7 +123,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 
 	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
-	// resolver itself, not just the observable: the third candidate is a CWD-relative dev-tree path
+	// resolver itself rather than just the observable: the third candidate is a CWD-relative dev-tree path
 	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
 	// /health assertion below would survive a broken resolution. This one would not.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
@@ -145,7 +145,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// /v1/parse — native neural output. needs only the model weights, not the gazetteer, so
+// /v1/parse — native neural output. needs only the model weights rather than the gazetteer, so
 // it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
@@ -217,7 +217,7 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 
-		// #485 4a handoff: per-ROW metrics land in the engine, not just the route's whole-call "batch" tier.
+		// #485 4a handoff: per-ROW metrics land in the engine rather than just the route's whole-call "batch" tier.
 		const snapshot = metricsSnapshot()
 
 		const perRowTotal = Object.entries(snapshot.timings.tiers)

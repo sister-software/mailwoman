@@ -14,7 +14,7 @@
  *   The fix: the model-card declares its required channels (`requires` block — see
  *   `readRequiredChannels`), and `createScorer` FAILS CLOSED when a declared channel isn't actually
  *   fed. Deliberate ablations are still legal — pass an explicit `override` and the scorer warns
- *   loudly instead of throwing (silent OOD is the bug, not the ablation).
+ *   loudly instead of throwing (silent OOD is the bug rather than the ablation).
  *
  *   **Node-only.** Reads the model card, anchor lookup, and gazetteer lexicon from disk and
  *   constructs the `ONNXRunner` (onnxruntime-node). Subpath `./scorer`; never import from the
@@ -46,9 +46,9 @@ import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
  * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask
- * does not provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA, not an absolute floor: a
- * tag the model emits at 0.80 is guarded if the mask drops it to 0.0, but a tag the mask leaves intact (small/zero
- * delta) is legal regardless of its absolute F1.
+ * does not provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA rather than an absolute
+ * floor: a tag the model emits at 0.80 is guarded if the mask drops it to 0.0, but a tag the mask leaves intact
+ * (small/zero delta) is legal regardless of its absolute F1.
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 

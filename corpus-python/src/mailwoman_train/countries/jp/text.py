@@ -41,7 +41,7 @@ def normalize_name(text: str) -> str:
     """Normalize a NAME field (prefecture / municipality / street): NFC + kana fold + de-space.
 
     All whitespace is removed, interior included. 135 street values carry an ideographic space
-    (``西与賀町　字今津乙``) which is a rendering artifact of the source, not part of the name — the
+    (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
     written form closes it up, and leaving it in put a U+3000 inside a ``district`` span (found by
     counting labelled chars against significant chars on the first full build: coverage read
     1.000001, which is how a six-row defect announces itself).

@@ -9,7 +9,7 @@
  *   held out so the model cannot memorize them at training time. Rationale (per the plan's "Common
  *   pitfalls" section): random splits leak by neighborhood — a model fed "13 Main St, Springfield,
  *   IL" in train and "15 Main St, Springfield, IL" in test generalizes via region/locality
- *   memorization, not by learning the underlying schema.
+ *   memorization rather than by learning the underlying schema.
  *
  *   Phase 1 holdouts (chosen for low data density + administrative isolation):
  *
@@ -18,7 +18,7 @@
  *
  *   Held-out rows are deterministically split 50/50 between val and test by hashing the row's
  *   `source_id`. Non-held-out rows go to train. The 90/5/5 ratio is approximate — what matters is
- *   the locality boundary, not the exact split percentages.
+ *   the locality boundary rather than the exact split percentages.
  *
  *   The output is a `SplitManifest`: three `string[]` arrays of `source_id`. Manifests live in git
  *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
@@ -74,8 +74,8 @@ export interface SplitManifest {
  * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the training cost is low while
  *   the holdout clears the honest-eval 1000-row trust floor. DE has had no trustable honest-eval holdout since the
  *   harness shipped (flagged 2026-06-08); this takes effect at the next base corpus rebuild — existing versioned
- *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering, not a
- *   holdout).
+ *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering rather
+ *   than a holdout).
  */
 export function defaultHoldouts(): Record<string, readonly string[]> {
 	return {

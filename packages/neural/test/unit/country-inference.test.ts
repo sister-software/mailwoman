@@ -75,7 +75,7 @@ describe("country matcher parity", () => {
 		expect(w["States"]).toBe(S)
 		expect(w["of"]).toBe(S)
 		expect(w["America"]).toBe(S) // inside the phrase → NOT the standalone ambiguous "america"
-		expect(w["Wyoming"]).toBe(0) // a US region, not a country surface
+		expect(w["Wyoming"]).toBe(0) // a US region rather than a country surface
 		expect(w["Cheyenne"]).toBe(0)
 	})
 

@@ -30,7 +30,7 @@
  *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely no prior at all: `opts` is
  *     `undefined` all the way down.
  *   - **A config default is auto-wired** (`loadFromWeights` for an en-gb-shaped cache) and the
- *     caller passes nothing per-call — the prior is on, not off. omitting the per-call field does not
+ *     caller passes nothing per-call — the prior is on rather than off. omitting the per-call field does not
  *     recover the no-prior path in this case (see `ParseOpts.placetypePair`'s own doc comment for
  *     the exact resolution order).
  *   - **A config default is auto-wired and the caller wants it off for this call** — pass an explicit
@@ -75,7 +75,7 @@
  *   catch ("… Stores Ltd", "… Academy", "… Charcoal Grill"). Hence the arc's pre-registered fallback:
  *   **segment mode is the v1 default**, and window mode sits behind this opt-in flag.
  *   Re-enabling window mode as a default requires both (a) a venue-aware suppression mechanism (a
- *   venue/POI-name detector ahead of the prior, not just a fixed successor-word table) and (b) a
+ *   venue/POI-name detector ahead of the prior rather than just a fixed successor-word table) and (b) a
  *   re-measured venue-confound FP of 0 on this same board (or its successor) with that mechanism engaged.
  *
  *   **Segment mode.** A candidate is an entire comma-delimited segment of the input — not a sliding
@@ -136,7 +136,7 @@
  *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
  *   board's synthetic `street` field) happens to equal a bare census child verbatim as its own segment (e.g.
  *   `"Moelfre B & B, Moelfre, Abergele, …"` — the street segment is literally "Moelfre"), segment mode still
- *   fires, because the mechanism is purely textual/segmental, not semantic. this is not a bug in the segment
+ *   fires, because the mechanism is purely textual/segmental rather than semantic. this is not a bug in the segment
  *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
  *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
  *   internal split — which is what the `"auto"` chain's anchored path exists to cover. Window mode remains
@@ -180,7 +180,7 @@
  *
  *   p50=1, p90=2, **p99=3**, max=5. Going to the observed max (5) provides negligible additional recall
  *   against real over-matching risk on short common words — 3 is the frozen scale. widening it is a
- *   future tunable, not a free lunch.
+ *   future tunable rather than a free lunch.
  *
  *   **The folded window key is a SPACE-JOIN of each word's own fold**, not a joint fold of the
  *   concatenated text: `normalizeFSTToken("St")` + `" "` + `normalizeFSTToken("Helens")` → `"st helens"`.
@@ -218,7 +218,7 @@
  *
  *   **Marker suppression** (the DeepSeek venue-confound filter) — **active in both probe modes,
  *   unchanged by the segment-mode default**. A candidate immediately followed by a structural-marker word
- *   (or a house-number-shaped token) is a street/venue HEAD, not a standalone place reference, and is
+ *   (or a house-number-shaped token) is a street/venue HEAD rather than a standalone place reference, and is
  *   skipped outright — no probe, no bias — regardless of whether it would otherwise have matched.
  *   Rationale per marker, see {@link STRUCTURAL_MARKER_WORDS}: without this, a pair-index entry like
  *   `("church", "some-locality")` would fire on "Church" in "Church House" / "Church Road" / "Church
@@ -333,7 +333,7 @@ import type { TokenLike } from "#query-shape-prior"
  *   (byte-identical to explicit `"segment"` there, by construction), else the anchored-adjacent path.
  * - `"segment"` — a candidate is a whole comma-delimited segment, folded as one unit. Requires `inputText` to find
  *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
- *   segment (matches the documented comma-free-input degradation, not a distinct failure mode).
+ *   segment (matches the documented comma-free-input degradation rather than a distinct failure mode).
  * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
  *   value for harness use. the chain reaches it only on comma-free input.
  * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only. re-enabling as a default requires a
@@ -344,8 +344,8 @@ type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
 /**
  * Out-record for trace support, mutated in place by {@link buildPlacetypePairPriors} when the caller supplies it via
  * {@link PlacetypePairPriorOpts.probeTrace}. `firedPath` is set only when at least one bias was actually written —
- * EFFECT, not configuration, matching the classifier's applied-flag pattern — and names the candidate-construction path
- * that produced it (under `"auto"`, which leg of the chain engaged).
+ * EFFECT rather than configuration, matching the classifier's applied-flag pattern — and names the
+ * candidate-construction path that produced it (under `"auto"`, which leg of the chain engaged).
  */
 export interface PlacetypeCensusObservation {
 	/**
@@ -694,10 +694,10 @@ function probeAnchoredAdjacentPair(
  *
  * `groupSegments`, when supplied (segment mode only — see the call site), conditions this on the successor sharing
  * `x`'s own segment. Without that condition, a candidate at the tail of one comma-delimited segment reads the first
- * word of the next segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of
- * this candidate. Worked case: `"Fishburn, 5 Fishburn Road"` — unrestricted, "Fishburn" (segment 0) is suppressed
- * because "5" (segment 1's first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma
- * between them means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted),
+ * word of the next segment as its "successor" — a false cross-segment reading rather than a real street/venue-head
+ * suffix of this candidate. Worked case: `"Fishburn, 5 Fishburn Road"` — unrestricted, "Fishburn" (segment 0) is
+ * suppressed because "5" (segment 1's first word, a house-number shape) sits next in `nonEmptyGroups`, even though the
+ * comma between them means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted),
  * suppression ignores comma placement entirely, by design (see `buildWindows`).
  */
 function isMarkerSuppressed(
@@ -781,7 +781,7 @@ function applyParentTagBias(
 	parentTag: ComponentTag,
 	parentDelta: number
 ): void {
-	// The KEY's span, not the whole segment — see `CandidateWindow.keyPieceIndices` for the FR measurement that forced
+	// The KEY's span rather than the whole segment — see `CandidateWindow.keyPieceIndices` for the FR measurement that forced
 	// the distinction. The child write keeps the whole segment. only the parent needs the narrower one, because only
 	// the parent's segment carries a same-field postcode.
 	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)
@@ -851,7 +851,7 @@ export function buildPlacetypePairPriors(
 	// Explicit opt wins over the header — that ordering is what lets `MAILWOMAN_PAIR_PARENT_DELTA` sweep δ against a
 	// shipped artifact without rebuilding it. Both absent = child-only, the pre-#46 behavior. Read once here so every
 	// emitting path shares one resolution. (`delta` resolves the other way round on purpose: its `opts.biasScale` is a
-	// FALLBACK for a hand-built double, not an override.)
+	// FALLBACK for a hand-built double rather than an override.)
 	const parentDelta = opts.parentDelta ?? index.parentDelta
 
 	// Observability rung (PCN1): `undefined` on the production path, and then not one census lookup runs. It is built
@@ -890,7 +890,7 @@ export function buildPlacetypePairPriors(
 	// The "auto" probe-chain dispatch (v1.1 — module docstring, "Probe mode"): with <2 comma segments the segment path
 	// is structurally inert (one giant candidate cannot pair with itself), so the anchored-adjacent path takes over.
 	// With ≥2 segments the chain falls through to the segment loop below unchanged — comma'd inputs are byte-identical
-	// to explicit `"segment"` mode by construction, not by measurement.
+	// to explicit `"segment"` mode by construction rather than by measurement.
 	if (probeMode === "anchored" || (probeMode === "auto" && segmentWindows!.length < 2)) {
 		const parentEnd = resolveAnchorParentEnd(nonEmptyGroups, pieces, opts.inputText)
 
@@ -929,7 +929,7 @@ export function buildPlacetypePairPriors(
 
 	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
 	// second, disjoint candidate to pair against. Bail before the O(n²) loop below. this is the
-	// documented comma-free-input degradation, not a bug.
+	// documented comma-free-input degradation rather than a bug.
 	if (windows.length < 2) return { matrix, transitionAdjustments }
 
 	let anyApplied = false

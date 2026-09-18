@@ -15,7 +15,7 @@
  *   now with a fourth `mailwoman` module for the native `/v1/*` surface), and the Rust crate pattern
  *   (progenitor `generate_api!` per vendored spec + thin `*_local()`/`*_hosted()` constructors in
  *   `src/lib.rs`). What's new here: specs come from the emitters (`mailwoman openapi`,
- *   `mailwoman-{photon,nominatim,libpostal} openapi`), not a checked-in `openapi.yaml`; the Rust
+ *   `mailwoman-{photon,nominatim,libpostal} openapi`) rather than a checked-in `openapi.yaml`; the Rust
  *   vendor step reads the emitter's own `--flavor 3.0` diet instead of the old `downgrade-spec.py`
  *   down-convert (openapiv3, which progenitor depends on, only understands 3.0.x); and the client
  *   version syncs to `mailwoman/package.json` (the salvaged `PUBLISHING.md` versioned the clients
@@ -67,12 +67,12 @@ const FLAVORS = ["3.1", "3.0"] as const
 /**
  * Every surface's compiled CLI entry point — the emitters this pipeline shells out to.
  *
- * Read from the workspace's own `bin`, not assembled from a literal emit path. The literal was `out/cli.js` and went
- * stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass moved
- * `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three kept
- * the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed inside
- * a release run. `bin` is the manifest's declaration of where the entry point is. the emit layout underneath it is free
- * to move.
+ * Read from the workspace's own `bin` rather than assembled from a literal emit path. The literal was `out/cli.js` and
+ * went stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass
+ * moved `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three
+ * kept the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed
+ * inside a release run. `bin` is the manifest's declaration of where the entry point is. the emit layout underneath it
+ * is free to move.
  *
  * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment — that was the first
  * failure's shape.
@@ -168,8 +168,8 @@ function run(cmd: string, args: string[], options: { cwd?: string } = {}): void 
 }
 
 /**
- * Verify each emitter's compiled CLI exists — the emitters run compiled (route-table introspection over a stub engine),
- * not from source.
+ * Verify each emitter's compiled CLI exists — the emitters run compiled (route-table introspection over a stub engine)
+ * rather than from source.
  */
 async function checkCompiled(): Promise<void> {
 	const missing: string[] = []
@@ -182,7 +182,7 @@ async function checkCompiled(): Promise<void> {
 
 	if (missing.length) {
 		fail(
-			`compiled emitter missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters, not source)`
+			`compiled emitter missing for: ${missing.join(", ")} — run \`yarn compile\` first (client generation reads the compiled openapi emitters rather than source)`
 		)
 	}
 }
@@ -253,11 +253,10 @@ name = "mailwoman-client"
 version = "${version}"
 description = "Typed Python clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs and native /v1/* surface, generated from their OpenAPI specs."
 readme = "README.md"
-# A plain SPDX expression string, not the { text = "…" } table — setuptools >= 77 deprecates the
+# A plain SPDX expression string rather than the { text = "…" } table — setuptools >= 77 deprecates the
 # table form (a build-time warning that would otherwise show up in every receipt).
 license = "AGPL-3.0-only OR LicenseRef-Commercial"
-# Explicit PEP 639 \`license-files\` (setuptools' default \`LICEN[CS]E*\` glob only catches LICENSE.md,
-# not COMMERCIAL-LICENSE.md — the "LicenseRef-Commercial" half of the SPDX expression above would ship
+# Explicit PEP 639 \`license-files\` (setuptools' default \`LICEN[CS]E*\` glob only catches LICENSE.md rather than COMMERCIAL-LICENSE.md — the "LicenseRef-Commercial" half of the SPDX expression above would ship
 # unreferenced without this). Both files are copied into this package root by copyLicenseFiles() during
 # assembly; setuptools stages them under the wheel's dist-info/licenses/ and the sdist root.
 license-files = ["LICENSE.md", "COMMERCIAL-LICENSE.md"]
@@ -526,8 +525,7 @@ async function assemblePythonPackage(
 	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
 	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
 	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
-	// AGPL conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root,
-	// not the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
+	// AGPL conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root rather than the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
 	await copyLicenseFiles(pythonDir)
 }
 

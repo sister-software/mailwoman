@@ -168,7 +168,7 @@ npx mw data pull --area gb --detail address
 ```
 
 Profiles provide progressive disclosure. `starter`, `standard`, `local`, and `complete` are named
-catalog queries, not frozen bundles with bespoke loaders.
+catalog queries rather than frozen bundles with bespoke loaders.
 
 ## Area selection and physical extracts
 

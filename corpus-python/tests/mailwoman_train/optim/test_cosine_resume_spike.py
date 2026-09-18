@@ -66,7 +66,7 @@ def _resume(tmp_path, live_lr: float) -> tuple[torch.optim.AdamW, object, float]
 
 def test_unchanged_config_resumes_at_the_checkpoint_tail_lr(tmp_path) -> None:
     """Same config on both sides: the first resumed optimizer step must run at the LR an
-    uninterrupted run would use — the checkpoint's tail value, not the peak."""
+    uninterrupted run would use — the checkpoint's tail value rather than the peak."""
     optim2, _sched2, checkpoint_lr = _resume(tmp_path, live_lr=PEAK_LR)
 
     assert checkpoint_lr < PEAK_LR / 10  # sanity: we really are deep in the tail

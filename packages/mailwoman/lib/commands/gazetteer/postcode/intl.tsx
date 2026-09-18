@@ -8,7 +8,7 @@
  *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a COORDINATE source keyed by
  *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
  *   (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap, WOF has zero postcode
- *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too, not just
+ *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too rather than just
  *   the coordinate.
  *
  *   This emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass

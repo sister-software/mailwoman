@@ -9,7 +9,7 @@
  *
  *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
  *   where an `await` is already legal on the same line. The rule fires only in that position — a sync call inside a
- *   sync function is a cascade, not a defect, and the rule stays silent there.
+ *   sync function is a cascade rather than a defect, and the rule stays silent there.
  *
  *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location. the package's
  *   `imports` map names it once.
@@ -855,7 +855,7 @@ const preferHomeRule: Rule = {
  * which package owns a type. The declaring package is the only public home: a consumer imports `Resolver` from
  * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`. `node:*` and third-party re-exports are not in scope
  * — `@mailwoman/core/fs` re-exporting `node:stream` is the funnel that keeps the builtin out of every other package —
- * and a package's own `#` map is the module naming its siblings, not a foreign name.
+ * and a package's own `#` map is the module naming its siblings rather than a foreign name.
  */
 const noCrossPackageReexportRule: Rule = {
 	meta: {

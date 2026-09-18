@@ -14,7 +14,7 @@
  *
  *   Fix (DeepSeek-Pro consult `contested-frag`, 2026-06-19): a SentencePiece word — a `▁`-started
  *   piece + its non-`▁` continuations — must carry one tag. The tag is chosen by a
- *   confidence-weighted vote, not first-piece-wins: sum each piece's softmax mass per tag type
+ *   confidence-weighted vote rather than first-piece-wins: sum each piece's softmax mass per tag type
  *   (B-X
  *
  *   - I-X collapsed; `O` included) across the word, argmax the type, and force `B-<type>` then
@@ -87,8 +87,8 @@ const BYTE_FALLBACK = /^<0x[0-9A-Fa-f]{2}>$/
 /**
  * Interpret the `MAILWOMAN_WORD_CONSISTENCY` env string as a heal setting. `"1"` = the original unconditional vote.
  *
- * THE OTHER TWO VALUES ARE SPELLED HERE BECAUSE THEY ARE THE WIRE CONTRACT, not prose: the string an operator sets has
- * to appear verbatim or this docstring stops describing the parser below it. Renaming the value is a separate,
+ * THE OTHER TWO VALUES ARE SPELLED HERE BECAUSE THEY ARE THE WIRE CONTRACT rather than prose: the string an operator
+ * sets has to appear verbatim or this docstring stops describing the parser below it. Renaming the value is a separate,
  * operator-approved change (#2077). `"conditional"` = the #727 thresholded preset (slash grouping + byte-fallback skip,
  * no confidence floor); `"conditional:<floor>"` adds a `minMeanConfidence` floor (e.g. `"conditional:0.5"`). Anything
  * else (unset included) = off.
@@ -225,7 +225,7 @@ export function enforceWordConsistency(
 	for (const w of words) {
 		// The heal arbitrates INTRA-WORD DISAGREEMENT only. A word whose pieces already share one type
 		// (a single-piece word trivially does) is the decoder's global decision — re-deciding it from
-		// local type-mass is a re-decode, not a consistency repair, and is exactly what regressed
+		// local type-mass is a re-decode rather than a consistency repair, and is exactly what regressed
 		// golden street (`▁Broadway` B-street→O, consistent `Gamle` street→locality, 2026-07-15).
 		const currentTypes = new Set(w.map((pi) => idxType[labelIndices[pi]!] ?? "O"))
 

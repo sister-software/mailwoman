@@ -25,7 +25,7 @@ This is the minimum viable geocoder: city-level accuracy from a gazetteer lookup
 ## When it works
 
 - **Statistical aggregation.** Customer distribution by city. Sales by metropolitan area. Disease incidence by municipality. City-level accuracy is the unit of analysis for most public health, marketing, and demographic applications.
-- **Regional routing.** "Route this delivery to the Los Angeles warehouse" — you need to know it's in Los Angeles, not which building. The street address is for the last mile; the locality is for the regional sort.
+- **Regional routing.** "Route this delivery to the Los Angeles warehouse" — you need to know it's in Los Angeles rather than which building. The street address is for the last mile; the locality is for the regional sort.
 - **Market analysis.** "How several customers do we have in the Bay Area?" — city-level geocoding places customers in San Francisco, Oakland, San Jose, etc. Street-level accuracy adds detail but doesn't change the regional answer.
 - **Gazetteer coverage is good for localities.** WOF has ~200,000 locality records globally. OSM has millions of place nodes. GeoNames has ~12 million populated places. For most of the world's population, the locality they live in is in a gazetteer.
 - **You serve countries without street-level addressing.** Japan uses block-based addressing without named streets. Rural India, sub-Saharan Africa, and informal settlements use descriptive addresses without standard street names. Locality-only geocoding works where street-level geocoding has nothing to work with.

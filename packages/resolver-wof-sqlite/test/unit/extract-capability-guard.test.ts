@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file #1791 — a extract that cannot serve a lookup should say so at construction, not by going quiet.
+ * @file #1791 — a extract that cannot serve a lookup should say so at construction rather than by going quiet.
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
  *   from "this country has no places": a extract reaches routing only through the name `deriveSchemaName` derives from

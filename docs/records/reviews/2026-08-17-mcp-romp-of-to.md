@@ -7,7 +7,7 @@ look.
 ## Read this first: what state these findings describe
 
 **Everything below is measured against artifacts that may reflect PARTIAL WORK.** Several of the arcs that
-produced them are mid-flight, and a finding here is a description of one build, not a verdict on a design.
+produced them are mid-flight, and a finding here is a description of one build rather than a verdict on a design.
 Specifically:
 
 | Artifact                       | Identity                                       | Note                                                                                                  |
@@ -66,7 +66,7 @@ Both candidate rows carry **identical population (44,212)** and therefore identi
 | Of   | locality  | 8114738869649 | 44,212     |
 | Of   | county    | 8837168432019 | 44,212     |
 
-The locality's `parent_id` **is** the county, so this is a seat/district pair — a duplicate, not two
+The locality's `parent_id` **is** the county, so this is a seat/district pair — a duplicate rather than two
 competing places. With `neg_rank` equal to the bit, their order fell out of the SQL scan: which one a bare
 `Of` query resolved to was decided by storage layout rather than by data.
 
@@ -87,18 +87,18 @@ WOF's own `Of` is **[890463199](https://spelunker.whosonfirst.org/id/890463199)*
 | Parent     | 85679383 (Trabzon) | 8474473525031             |
 
 **This is the clearest "partial work" signal in the document.** The discrepancy exists because TR was never
-pulled from WOF. It is an acquisition gap, not a modelling error, and it closes the moment
+pulled from WOF. It is an acquisition gap rather than a modelling error, and it closes the moment
 `whosonfirst-data-admin-tr` is synced.
 
 ### What shipped, and what is still unverified
 
 A **seat preference** now breaks the tie: on an exact `neg_rank` tie, a `locality` carrying a _real_
-population outranks other placetypes. Both checks are required and were measured, not reasoned:
+population outranks other placetypes. Both checks are required and were measured rather than reasoned:
 
 - A plain "finer placetype wins" moved the top slot on **11,377** keys, of which only **722** were the
   seat/district duplicate. The rest were contests between distinct places — 2,885 `locality → neighbourhood`
   (a bare city name losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality`.
-- **7,179 of the 11,377** sat at population 0, where a tie means _no evidence_, not equal evidence.
+- **7,179 of the 11,377** sat at population 0, where a tie means _no evidence_ rather than equal evidence.
 - Narrowed, the term moves **3,896** top slots, every one promoting a populated place over a same-population
   duplicate.
 
@@ -128,8 +128,8 @@ is the tail.
 
 **19 rows** under key `to`, across 19 distinct places. The tool's own note flags the shape:
 
-> Top row's stored name is `"Toledo"`, not the surface queried. Top row is `is_primary=0` — an
-> alias/abbreviation row, not the place's canonical name.
+> Top row's stored name is `"Toledo"` rather than the surface queried. Top row is `is_primary=0` — an
+> alias/abbreviation row rather than the place's canonical name.
 
 | Row                                     | Why it is under key `to`                                        | Verdict     |
 | --------------------------------------- | --------------------------------------------------------------- | ----------- |
@@ -141,7 +141,7 @@ is the tail.
 
 **Observation.** Lake County carries **364 `names` rows**, which are the translated common noun _lake_ in
 every language WOF has: `Meer` (afr), `بحيرة` (ara), `Laco` (arg), `Quta` (aym), `Göl` (aze), `Sø` (dan),
-`See` (deu), `Lac` (fra), `adagun`, `aintzira`, `Tó` (hun). These are dictionary entries for the word, not
+`See` (deu), `Lac` (fra), `adagun`, `aintzira`, `Tó` (hun). These are dictionary entries for the word rather than
 names of a county in Minnesota.
 
 The candidate build indexes every alt-name as a `name_key`, so the place becomes reachable under **134
@@ -180,7 +180,7 @@ Splitting the 4,000 on that basis:
 | **non-admin placetype with population < 50,000** | **3,233** |
 | total ≥50 keys                                   | 4,000     |
 
-**Inference, not observation:** the 3,233 are _predominantly_ this defect class. I sampled the head, not the
+**Inference rather than observation:** the 3,233 are _predominantly_ this defect class. I sampled the head rather than the
 whole set, and some will be actual (a small but historically measured town can carry several exonyms).
 
 ### A discriminator I proposed and falsified
@@ -196,9 +196,9 @@ near-unique. **Wrong, and measurably so:**
 
 The actual exonym is shared across _more_ places than the offending noun. Sharing does not separate them.
 
-**What does look separable** — and this is a hypothesis, not a finding — is the mismatch between key count
+**What does look separable** — and this is a hypothesis rather than a finding — is the mismatch between key count
 and prominence. 221 keys on a 63-person neighborhood is anomalous in a way 428 keys on the United States
-is not. That is a change with a board, not a change to make from one example.
+is not. That is a change with a board rather than a change to make from one example.
 
 ### Why this survived
 

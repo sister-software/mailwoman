@@ -64,7 +64,7 @@ export interface DataBundle {
 /**
  * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey — the source table
  * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no TIGER interpolation
- * database hosted for the territory — a real, confirmed gap, not a table-entry someone forgot).
+ * database hosted for the territory — a real, confirmed gap rather than a table-entry someone forgot).
  */
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
@@ -209,8 +209,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 /**
  * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
  * bucket; `data pull --host` passes a mirror or private registry serving the same object keys (the catalog schema is
- * host-independent — an air-gapped install mirrors the key space, not a rewritten layout). A missing trailing slash is
- * repaired rather than concatenated into a mangled key.
+ * host-independent — an air-gapped install mirrors the key space rather than a rewritten layout). A missing trailing
+ * slash is repaired rather than concatenated into a mangled key.
  */
 export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_BUCKET_BASE_URL): string {
 	const base = baseURL.endsWith("/") ? baseURL : `${baseURL}/`
@@ -229,7 +229,7 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
  *
  * Pure: no filesystem access. This computes the intended DESTINATION path. whether something already exists there (or
  * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
- * `resolveDatabasePath` check, not this function's.
+ * `resolveDatabasePath` check rather than this function's.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -288,7 +288,7 @@ export interface RemoteArtifactState {
  * authoritative signal once local exists — mismatch → yes, match → no, checked before content-length so a bundle that
  * publishes a sidecar can't be short-circuited by a coincidentally-matching size. With no md5 to compare, fall back to
  * a `Content-Length` size comparison. With neither signal available, the artifact is treated as up to date (the caller
- * is expected to surface a "couldn't verify" warning in that case, not force a redundant multi-GB re-fetch).
+ * is expected to surface a "couldn't verify" warning in that case rather than force a redundant multi-GB re-fetch).
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true

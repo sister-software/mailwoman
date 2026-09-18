@@ -67,7 +67,7 @@ dcAgentEmailAddress · dcAgentAddress`
 
 Three findings that change the design:
 
-1. **There are two family fields, not one** — `holdingCompany` _and_ `managementCompany`. They differ
+1. **There are two family fields rather than one** — `holdingCompany` _and_ `managementCompany`. They differ
    in kind (ownership vs operational control) and both deserve typed edges rather than being collapsed.
 2. **`principalCommType` is a free classification signal** — the Nexus code maps it to
    Incumbent LEC / CLEC / Interexchange / Toll Reseller. Port the mapping; it tells you what _kind_ of
@@ -101,9 +101,9 @@ edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintag
   carrying parent CIK + subsidiary name).
 - **Inferred** edges come from `@mailwoman/match` over normalized org name + registered address +
   contact, with FRN/SPIN/ASN as `exactDiscriminator`s when present and name/address as scored
-  comparators. This is the existing Fellegi-Sunter path, not a new subsystem.
+  comparators. This is the existing Fellegi-Sunter path rather than a new subsystem.
 
-**Edges are time-scoped — this is required, not bookkeeping.** Ownership changes faster than
+**Edges are time-scoped — this is required rather than bookkeeping.** Ownership changes faster than
 filing vintages update (worked example: a filer acquired ~7 months before the BDC vintage under
 inspection still files under its pre-acquisition identity — see
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1). Every family rollup query therefore takes a date,
@@ -140,7 +140,7 @@ The query the operator wants — _point at a structure, get the picture_ — com
 
 `competition(area)` returns filer count **and** family count, side by side, with the collapse
 explained edge by edge ("filers A, B, C report holding company H per 499 vintage X"). The direct
-headline is a ratio, not a verdict: _this block shows five filers and two families._ Where a family
+headline is a ratio rather than a verdict: _this block shows five filers and two families._ Where a family
 edge is inferred rather than documented, it is reported separately and never folded into the primary
 count.
 
@@ -182,7 +182,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 - **D1 — Fold 2c into 3a.** Operator. See §7.
 - **D2 — ULS: Part 101 only.** Operator. Part 101 point-to-point microwave is the right scope for a
   further reason worth recording: a Part 101 license describes a _path_ — both endpoint coordinates
-  plus the licensee FRN — so it is physical backhaul evidence, not merely an area authority. A fixed
+  plus the licensee FRN — so it is physical backhaul evidence rather than merely an area authority. A fixed
   wireless operator with licensed backhaul leaves a two-ended geometric trace. Doctrine §2.3 still
   binds: unlicensed backhaul is lawful, so a missing path is never disproof. Part 27/90 area licenses
   and CBRS/SAS are deferred; revisit only if 3d's competition view demonstrably needs them.
@@ -205,9 +205,9 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 - **D7 — v1 sources are licensing-clean.** CORES, Form 499, ASR, ULS, and EDGAR are all US federal
   public domain, so **Phase 3 is not blocked on counsel** — unlike the Fabric question hanging over 2a.
   PeeringDB (API terms) is a 3c/C6-time check; LERG/OCN and OpenCorporates are out of scope by D4.
-  Recorded in the counsel dossier as informational, not blocking.
+  Recorded in the counsel dossier as informational rather than blocking.
 
-## 9. Open questions (deferred, not blocking)
+## 9. Open questions (deferred rather than blocking)
 
 1. Does 3d's competition view need Part 27/90 area licenses after all? (Revisit at 3d exit — D2.)
 2. Is a 990-based EIN/co-op pass worth its own increment once rural operators are a named segment? (D6.)
@@ -225,7 +225,7 @@ its own provider registry, so the registry is built once. Track C's C3 row now p
 That was wrong, and the distinction matters for 3b.
 
 `https://data.fcc.gov/api/frn/getInfo?frn=…` returns **HTTP 302 → `www.fcc.gov/what-can-we-help-you-find`**
-— the FCC's generic retired-URL landing page. The endpoint appears **decommissioned**, not blocked. The
+— the FCC's generic retired-URL landing page. The endpoint appears **decommissioned** rather than blocked. The
 403 originally observed was the _redirect target_ (`www.fcc.gov`) refusing this host, so a dead endpoint
 was misread as a network block. Documentation pages for retired APIs linger, which is why the search
 evidence looked encouraging.
@@ -265,9 +265,9 @@ migrated — modern FCC developer documentation no longer references it. The Com
 for FRN→entity today is ULS, CORES/registration search, and License View. **Consequence for 3b:** there
 is no supported programmatic CORES wrapper, so the family-edge story rests on Form 499's
 `holdingCompany`/`managementCompany` (already parsed in 3a) plus SEC EDGAR Exhibit 21. Plan 3b on those
-two and treat any CORES access as a bonus, not a dependency.
+two and treat any CORES access as a bonus rather than a dependency.
 
-**ASR bulk: found, reachable, and current.** It lives inside the ULS transaction downloads, not a
+**ASR bulk: found, reachable, and current.** It lives inside the ULS transaction downloads rather than a
 separate ASR tree. Verified present at `data.fcc.gov/download/pub/uls/complete/` — a host that answers
 from here:
 
@@ -284,7 +284,7 @@ Daily deltas follow `r_tow_<day>.zip` / `a_tow_<day>.zip` / `d_tow_<day>.zip`. A
 **The ArcGIS FeatureServer is not the right source for us — do not adopt it.** It was suggested as an
 easier alternative to the fixed-width archives, and it is easier, but two verified facts disqualify it:
 
-1. **It is a state subset, not national.** `asr_asr_OR` returns **351 features**; the national register
+1. **It is a state subset rather than national.** `asr_asr_OR` returns **351 features**; the national register
    holds well over a hundred thousand structures. The sample confirms Oregon-area geometry.
 2. **It has no FRN field.** All 29 fields are: `OBJECTID, RegNum, UniqSysID, Entity, ContAdd, ContPO,
 ContCity, ContState, ContZip, ContName, LatDeg…LonDir, CoordsType, StatusCode, LocAdd, LocCity,
@@ -295,6 +295,6 @@ LocState, Strucht, FAAstudy, FAAcirc, latdec, londec, url`. Owner appears only a
    wrong one.
 
 **3c decision, pre-registered here:** ingest `r_tower.zip` (fixed-width) and key structures on the
-registrant **FRN**, not on `Entity`. Confirm during 3c recon that the fixed-width layout does carry FRN
+registrant **FRN** rather than on `Entity`. Confirm during 3c recon that the fixed-width layout does carry FRN
 — if it does not, ASR cannot join to the crosswalk authoritatively and the phase needs rethinking
 before any code is written.

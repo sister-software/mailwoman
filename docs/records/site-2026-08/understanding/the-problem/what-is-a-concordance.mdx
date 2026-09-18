@@ -28,7 +28,7 @@ Traditional address parsers validate their output structurally: the parse must h
 | `locality=Springfield, region=IL`      | Yes                 | Yes — Springfield, IL exists              |
 | `locality=Springfield, region=MA`      | Yes                 | Yes — Springfield, MA ALSO exists         |
 
-The last two rows are the hard case: both parses are structurally valid and geographically valid. The parser cannot tell them apart from the text alone — "Springfield" without a state is ambiguous, and "Springfield, IL" vs "Springfield, MA" with a state is unambiguous but requires knowing which states contain a Springfield. That knowledge lives in the gazetteer, not the parser.
+The last two rows are the hard case: both parses are structurally valid and geographically valid. The parser cannot tell them apart from the text alone — "Springfield" without a state is ambiguous, and "Springfield, IL" vs "Springfield, MA" with a state is unambiguous but requires knowing which states contain a Springfield. That knowledge lives in the gazetteer rather than the parser.
 
 Concordance is the mechanism that brings gazetteer knowledge into the parsing decision.
 
@@ -63,7 +63,7 @@ When the parser emits `locality=Springfield, region=TX`, the resolver finds no S
 
 ## The joint decoding loop
 
-Concordance is part of the parsing decision itself, not a separate check applied afterward. Mailwoman's **reconciler** (Stage 5) performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
+Concordance is part of the parsing decision itself rather than a separate check applied afterward. Mailwoman's **reconciler** (Stage 5) performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
 
 ```
 score = phrase_conf × classifier_score × resolver_score × concordance_bonus

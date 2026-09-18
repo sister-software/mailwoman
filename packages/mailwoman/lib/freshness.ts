@@ -28,7 +28,7 @@ import { probeManifest } from "#data/inventory"
 /**
  * Whether an artifact could state its own provenance.
  *
- * Three states, not two, for the reason `data-inventory.ts` keeps four: "we could not open it" is not "it has no
+ * Three states rather than two, for the reason `data-inventory.ts` keeps four: "we could not open it" is not "it has no
  * manifest", and collapsing them would report a locked or truncated database as a plain provenance gap.
  */
 export const ManifestState = {

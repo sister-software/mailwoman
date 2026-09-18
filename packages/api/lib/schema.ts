@@ -52,7 +52,7 @@ export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string(
 /**
  * `POST /v1/parse` response — mirrors {@linkcode ParseOutcome} (`engine.ts`): the ordered components plus the full
  * decoded tree. `tree` is the same loose-tree idiom {@link ResolveResponseSchema} uses (`api/schema.ts:134-146`) — the
- * decoder's `AddressTree` is the engine's contract, not this wire schema's.
+ * decoder's `AddressTree` is the engine's contract rather than this wire schema's.
  */
 export const ParseOutcomeSchema = z
 	.object({
@@ -383,7 +383,7 @@ export type GeocodeOutcome = z.infer<typeof GeocodeOutcomeSchema>
  */
 export const BatchRequestSchema = z
 	.object({
-		// Per-ROW, not just per-request: the row cap (`batchMax`, default 500) bounds how many addresses arrive,
+		// Per-ROW rather than just per-request: the row cap (`batchMax`, default 500) bounds how many addresses arrive,
 		// and this bounds how large each may be. Without both, one request is 500 unbounded bodies.
 		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
@@ -439,8 +439,8 @@ export const ResolveResponseSchema = z
 const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
 
 /**
- * `POST /v1/format` request body. `components` accepts `string | string[]` per key on the wire — a handler-side
- * concern, not this schema's: `@mailwoman/formatter`'s `ComponentDict` (`format.ts`) is `Partial<Record<ComponentTag,
+ * `POST /v1/format` request body. `components` accepts `string | string[]` per key on the wire — a handler-side concern
+ * rather than this schema's: `@mailwoman/formatter`'s `ComponentDict` (`format.ts`) is `Partial<Record<ComponentTag,
  * string>>`, single-string only, so a route handler must join array values before calling
  * `formatAddress`/`canonicalKey`.
  */

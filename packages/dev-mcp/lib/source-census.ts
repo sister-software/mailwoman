@@ -21,7 +21,7 @@
  *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
  *     identical to "this country has no data" from a row count.
  *
- *   ABSENCE IS REPORTED, NOT OMITTED. A country asked for and not found gets a row saying so, because "the query
+ *   ABSENCE IS REPORTED rather than OMITTED. A country asked for and not found gets a row saying so, because "the query
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
@@ -76,7 +76,7 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 }
 
 /**
- * Census one SQLite artifact. Never throws — an unreadable file is a finding, not an error.
+ * Census one SQLite artifact. Never throws — an unreadable file is a finding rather than an error.
  */
 export async function censusArtifact(path: string, countries?: readonly string[]): Promise<SourceCensusRow> {
 	const artifact = path.split("/").pop() ?? path

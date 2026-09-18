@@ -22,7 +22,7 @@
  *       35% ranges).
  *   - {@link isVenueSlotName} / {@link isSignIdentifier} — the filters that keep bus-stop codes, route
  *       descriptions and street names out of the slots they would mislabel. Both were written from
- *       smoke output, not predicted. the docstrings name the strings that produced them.
+ *       smoke output rather than predicted. the docstrings name the strings that produced them.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -52,7 +52,7 @@ export function defaultLexiconPath(): string {
 }
 
 /**
- * Read and parse the lexicon. Strict: a corrupt lexicon is a build failure, not a fallback.
+ * Read and parse the lexicon. Strict: a corrupt lexicon is a build failure rather than a fallback.
  */
 export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
 	return await readLocalJSONFile<SubVenueLexiconTable>(path)
@@ -70,8 +70,8 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 const MAX_VENUE_NAME_LENGTH = 44
 
 /**
- * Shortest kept name. Below four characters a "name" is an airport code or a platform letter, not something that can
- * stand in a venue slot.
+ * Shortest kept name. Below four characters a "name" is an airport code or a platform letter rather than something that
+ * can stand in a venue slot.
  */
 const MIN_NAME_LENGTH = 4
 
@@ -83,13 +83,13 @@ const MAX_ATTESTED_TOKENS = 4
 
 /**
  * Reject a name that is a route description, a junction, or a code rather than a name: embedded `/`, `;`, `,`, `:`,
- * parentheses, no letters, or a bare source code. Measured motivation, not taste — the GB extract's `platform` tier
- * contributes 7,549 `other`-shaped names like `kntgwdgj` and `SPEKE HALL ROAD/HILLFOOT AVE`.
+ * parentheses, no letters, or a bare source code. Measured motivation rather than taste — the GB extract's `platform`
+ * tier contributes 7,549 `other`-shaped names like `kntgwdgj` and `SPEKE HALL ROAD/HILLFOOT AVE`.
  */
 export function isCleanName(name: string): boolean {
 	if (name.length < MIN_NAME_LENGTH || name.length > MAX_VENUE_NAME_LENGTH) return false
 
-	// A colon in a name is a qualifier, not part of it — "Porte 4 : Ferrys", "Derby College: Ilkeston Campus".
+	// A colon in a name is a qualifier rather than part of it — "Porte 4 : Ferrys", "Derby College: Ilkeston Campus".
 	if (/[/;,:()[\]<>|]/.test(name)) return false
 
 	if (!/\p{L}/u.test(name)) return false
@@ -111,7 +111,7 @@ export function isCleanName(name: string): boolean {
  * - **Stop qualifiers.** British stop names carry a position prefix (`OPPOSITE BRICKLEHAMPTON HALL`, `ADJ THE GREEN`)
  *   that names a relationship rather than a place.
  *
- * Per-language and short on purpose: this is a head-token filter over four Latin languages, not a street-type
+ * Per-language and short on purpose: this is a head-token filter over four Latin languages rather than a street-type
  * gazetteer. `@mailwoman/corpus` cannot reach the shipped street-type lexicon (it lives behind the gazetteer build),
  * and a longer list here would be a second, drifting copy of it.
  */

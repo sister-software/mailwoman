@@ -414,7 +414,7 @@ describe("findPostcodeCountryScope", () => {
 
 		tree.roots.push(node({ tag: "country", value: "Portugal" }))
 
-		// A hard abstention on the PRESENCE of the token, not a test of whether it agrees. Re-deciding
+		// A hard abstention on the PRESENCE of the token rather than a test of whether it agrees. Re-deciding
 		// between the token and the pair would be the same inference wearing a tie-break, and whether the
 		// named country is spelled correctly is the walk's own country lookup to answer.
 		expect(await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })).toBeNull()

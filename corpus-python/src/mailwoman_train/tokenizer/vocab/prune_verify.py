@@ -142,7 +142,7 @@ def check_logit_parity(
 ) -> int:
     """B2 — how many of `texts` the two graphs answer differently, bit for bit.
 
-    BITWISE, not close: the kept embedding rows are byte-identical and the rest of the graph is
+    BITWISE rather than close: the kept embedding rows are byte-identical and the rest of the graph is
     untouched, so any difference at all is the surgery having changed something it should not have.
     """
     input_metas = orig_session.get_inputs()

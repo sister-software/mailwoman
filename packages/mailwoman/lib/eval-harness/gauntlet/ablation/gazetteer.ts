@@ -154,7 +154,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
 	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
 	 *
-	 * The availability check lives here, not in the constructor: it reads the filesystem, and a constructor cannot await.
+	 * The availability check lives here rather than in the constructor: it reads the filesystem, and a constructor cannot
+	 * await.
 	 */
 	static async create(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}

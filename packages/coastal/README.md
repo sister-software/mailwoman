@@ -102,9 +102,9 @@ single layer throws on the day another layer carries its ninth value:
 | `published`                 |        2 | `2024` on 89,124 rows, `0` on 87                                                                                                                                                        |
 
 Membership for `def_type` is tested **case-folded** and the value is stored **verbatim**: the fold
-exists for the source's own inconsistent capitalization, not to absorb a new defence type.
+exists for the source's own inconsistent capitalization rather than to absorb a new defence type.
 
-**Blank is a single space, not an empty string** — `" "` on the same 87 rows that carry
+**Blank is a single space rather than an empty string** — `" "` on the same 87 rows that carry
 `published = 0`, all of them on SMP layers (13 to 16 per layer; the NFI layers have none). A reader
 testing `=== ""` finds nothing and reports the anomalous rows as ordinary ones. The Environment
 Agency documents no meaning for them, so they are carried as published rather than dropped or
@@ -323,7 +323,7 @@ Dynamic Coast carries an explicit prohibition on property-level assessment, and 
 publishes 122 line segments carrying one attribute — none of them interchangeable with England's. A
 positive-only check would pass on an artifact that reported the entire country as designated.
 
-Distances are measured to the **edge**, not to the nearest vertex: a point a centimeter from a long
+Distances are measured to the **edge** rather than to the nearest vertex: a point a centimeter from a long
 edge can be meters from every vertex of it, and measuring vertices makes the boundary tolerance far
 stricter than it reads.
 
@@ -344,7 +344,7 @@ overwrite an English one.
 
 OGL v3.0, with the published attribution string
 `© Environment Agency copyright and/or database right 2025. All rights reserved.` — which OGL makes a
-**condition**, not decoration. Both services report `<Fees>NONE</Fees>`; no registration and no key.
+**condition** rather than decoration. Both services report `<Fees>NONE</Fees>`; no registration and no key.
 `tier: shipped`.
 
 The workspace publishes with every release from `.release-it.json`'s workspace list.

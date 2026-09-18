@@ -2,8 +2,8 @@
  * @file Clean fixture for `config/vale/.vale-code.ini` + `AmbiguousShorthandCode.yml`. Zero alerts, of any severity.
  *   Every name below is in the rule's exceptions list because it is a real artifact — a package, a command, or a
  *   tracked filename — and prose that means one of them spells it in full. That is the "name the artifact by its
- *   filename" rule, not an escape from it. promotion-eval.ts refuses a candidate carrying a known regression and prints
- *   the ledger command on a pass. @mailwoman/locale-hint derives the hint the pipeline reads. v1-parse-eval,
+ *   filename" rule. This documents an artifact name. promotion-eval.ts refuses a candidate carrying a known regression
+ *   and prints the ledger command on a pass. @mailwoman/locale-hint derives the hint the pipeline reads. v1-parse-eval,
  *   boundary-stress-eval and fr-admin-split-eval each grade a different board. mwdev_promotion_eval answers from the
  *   warm engine. The prose examples read naturally: the promotion eval refuses a regression, the parser is restricted
  *   to one locale, a release is published, a branch comes from origin/main, and the boundary between two packages is

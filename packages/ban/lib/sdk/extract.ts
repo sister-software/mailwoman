@@ -6,7 +6,7 @@
  *   Stream rooftop address records out of a BAN `adresses-<dept>.csv` dump (adresse.data.gouv.fr). The
  *   dump is a `;`-delimited, header-first CSV in which every row already carries the full tuple —
  *   `numero`, `rep`, `nom_voie`, `code_postal`, `nom_commune`, `lon`/`lat` — so there is no OSM-style
- *   "association gap" (a point with no street): BAN is a structured government register, not a
+ *   "association gap" (a point with no street): BAN is a structured government register rather than a
  *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
  *   `.csv.gz` inputs are transparently gunzipped.
  *

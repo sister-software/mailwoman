@@ -13,7 +13,7 @@ That zero was the tell. The parse was right and the resolver still missed, becau
 
 ## The metric: point-in-polygon containment
 
-A name-match metric is the thing that misled us, so we replaced it with one that can't. A locality is resolved correctly if the real OpenAddresses per-address point lies **inside the polygon** of the WOF locality the resolver picked — `ST_Within(gold_point, resolved_polygon)`. Containment, not centroid distance (distance is gameable in a dense metro), and scored against the actual OA point, never the postcode centroid the resolver itself consumed.
+A name-match metric is the thing that misled us, so we replaced it with one that can't. A locality is resolved correctly if the real OpenAddresses per-address point lies **inside the polygon** of the WOF locality the resolver picked — `ST_Within(gold_point, resolved_polygon)`. Containment rather than centroid distance (distance is gameable in a dense metro), and scored against the actual OA point, never the postcode centroid the resolver itself consumed.
 
 Running that metric on the _existing_ resolver first was the cheap move that paid off twice: it confirmed German was a real gap (77.1% containment agreed with the 77.4% name-match, killing the comfortable "it'sa name artifact" hypothesis), and it became the direct yardstick for everything that followed.
 
@@ -48,7 +48,7 @@ The Netherlands is the result that proves the thesis. **94.9% — and the model 
 
 Pelias, Nominatim, Airmail — the retrieval geocoders — absorb a wrong field by ranking. Hand them `10 Main St, 90210, Los Angeles` and BM25 returns Beverly Hills if a Main Street exists there. They have no signal that says "these two fields disagree." A parse-then-resolve pipeline does: the postcode-derived locality and the name-derived locality are independent, and when they point to places far apart, that's a transposed or wrong-for-the-city postcode, caught instead of laundered.
 
-We surface it as `postcode_city_mismatch` on the resolved node when the chosen city sits more than 50 km from the postcode's anchor locality — generous enough to ignore city-state Ortsteile (~15 km) and abutting border towns (a few km), tight enough to catch a wrong city. Across DE + FR + GB + NL the conflict eval runs **92% recall (12/13), 100% specificity (10/10)**: every wrong-for-the-city postcode flags, no correct or abutting address false-flags. `80331 Berlin`, `75001 Lyon`, `1026 Rotterdam`, `SW1A 1AA Edinburgh` — all raised. The lone miss is a GB postcode that only isn't in the table, not a logic failure. That conflict signal is the concrete differentiator over a retrieval system: we don'tresolve the address, we tell you when it can't be trusted.
+We surface it as `postcode_city_mismatch` on the resolved node when the chosen city sits more than 50 km from the postcode's anchor locality — generous enough to ignore city-state Ortsteile (~15 km) and abutting border towns (a few km), tight enough to catch a wrong city. Across DE + FR + GB + NL the conflict eval runs **92% recall (12/13), 100% specificity (10/10)**: every wrong-for-the-city postcode flags, no correct or abutting address false-flags. `80331 Berlin`, `75001 Lyon`, `1026 Rotterdam`, `SW1A 1AA Edinburgh` — all raised. The lone miss is a GB postcode that only isn't in the table rather than a logic failure. That conflict signal is the concrete differentiator over a retrieval system: we don'tresolve the address, we tell you when it can't be trusted.
 
 ## One asset, read-only, from source
 

@@ -23,7 +23,7 @@
  *   - `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string).
  *   - Nexus's row type carries `holdingCompany` and `managementCompany` as two separate string
  *     fields. this port keeps both (spec §3.1 finding 1 — ownership and operational control are
- *     different assertions, not synonyms to collapse into one).
+ *     different assertions rather than synonyms to collapse into one).
  *
  *   On the DC agent: the 499 "DC agent" is the registered agent for service of process, a role
  *   dominated by a handful of firms (CT Corporation, CSC, Cogency Global) serving tens of thousands
@@ -31,7 +31,7 @@
  *   attributes only — nothing in this file, or anywhere downstream, may treat a shared DC agent as
  *   evidence that two filers are related. That inference is the single most likely false-positive
  *   generator in the whole crosswalk design (spec §3.1 finding 3) and is out of scope here by
- *   design, not by oversight.
+ *   design rather than by oversight.
  */
 
 import { TSVSpliterator } from "spliterator"
@@ -105,7 +105,7 @@ export interface Form499Row {
 	 */
 	holdingCompany: string
 	/**
-	 * The filer's management company — an OPERATIONAL CONTROL assertion, not a synonym for
+	 * The filer's management company — an OPERATIONAL CONTROL assertion rather than a synonym for
 	 * {@link Form499Row.holdingCompany}.
 	 */
 	managementCompany: string
@@ -126,7 +126,7 @@ export interface Form499Row {
 	 * The filer's lifecycle, parsed from the workbook's `note1`/`note2`/`note3` columns — a cessation date, a successor
 	 * filer, and the FCC's own reasons. See `form499-notes.ts`.
 	 *
-	 * **Optional because the SOURCE decides whether it exists, not the filer.** The 17-column TSV
+	 * **Optional because the SOURCE decides whether it exists rather than the filer.** The 17-column TSV
 	 * ({@linkcode FORM_499_COLUMNS}) has no note columns at all, so {@linkcode parseForm499} can never populate this;
 	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is not the same as
 	 * the `{notes: [], …}` an XLSX row with blank notes produces — that one means "the FCC said nothing about this

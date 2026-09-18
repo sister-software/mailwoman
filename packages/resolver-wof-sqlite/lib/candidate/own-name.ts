@@ -18,7 +18,7 @@
  *   - OUT: `lievin`/`levin` 0.833 (Liévin FR vs Levin NZ — different places with near-identical
  *       names. the panel's `41 Weraroa Road, Levin` row needs this side) · `chanchun`/`cancun` 0.75 ·
  *       `augsburg`/`augusta` 0.375 · `west bay`/`west end` 0.625 · `derry`/`londonderry` 0.455
- *       (Derry/Londonderry is a DUAL NAME, not a variant — its own follow-up on #1882)
+ *       (Derry/Londonderry is a DUAL NAME rather than a variant — its own follow-up on #1882)
  *
  *   An unhandled script (Arabic, Hebrew, CJK — the romanizer covers Cyrillic only) answers NULL,
  *   never "different name": absence of a verdict must not stamp anything (the meaning-of-zero rule).
@@ -105,7 +105,7 @@ export function expandNameAbbreviations(key: string): string {
 
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet. `null` when characters outside the covered scripts remain —
- * an unhandled script is NO VERDICT, not a mismatch.
+ * an unhandled script is NO VERDICT rather than a mismatch.
  */
 export function romanizeNameKey(key: string): string | null {
 	let out = ""

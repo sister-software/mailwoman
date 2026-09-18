@@ -20,7 +20,7 @@
  *   THE BASE DIRECTORY IS PER KEY, and that is the trap this module exists to hold in one place. The model
  *   and tokenizer resolve against the DATA ROOT. three of the four lexicons resolve against the REPO
  *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the DATA ROOT because
- *   it is built, not committed. and the postcode databases resolve against the data root's `wof/`. Nothing
+ *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. Nothing
  *   in the JSON marks which is which, so a reader that guessed one rule would silently resolve four of
  *   seven artifact classes to paths that do not exist — and every one of them degrades to `undefined`
  *   rather than failing.
@@ -42,7 +42,7 @@ export interface LinkableArtifact {
 }
 
 /**
- * An artifact the recipe names that must be BUILT, not copied — the source entry is a build INPUT.
+ * An artifact the recipe names that must be BUILT rather than copied — the source entry is a build INPUT.
  *
  * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode EXTRACT
  * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
@@ -72,7 +72,7 @@ export interface WeightsRecipe {
 	softFeed: SoftFeedRecipe
 	/**
 	 * Files this recipe names for a locale. Absent entries are simply omitted — a release that ships without a channel is
-	 * a supported lean install, not an error.
+	 * a supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
@@ -159,7 +159,7 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// PRESENCE, not a path. The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only a
+		// PRESENCE rather than a path. The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only a
 		// `boroughDB`, and every country carries its own `delta` / `transitionBeta` / `parentDelta` tuning — and the
 		// build that reads them is `buildPairIndexOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`,
 		// which each overlay's link script already calls with its own measured parameters. Modelling one input path

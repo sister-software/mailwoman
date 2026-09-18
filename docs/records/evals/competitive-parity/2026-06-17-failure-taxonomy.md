@@ -1,7 +1,7 @@
 # Failure taxonomy — where Mailwoman is wrong, and by how much (#375)
 
 A standing map of the parser + geocoder's failure modes, each grounded in a **measured** number from a
-named eval — not anecdotes, not vibes. The point is to make "where do we lose?" a table you can sort by
+named eval — not anecdotes rather than vibes. The point is to make "where do we lose?" a table you can sort by
 impact, so the roadmap is driven by measured gaps instead of the last thing someone noticed. Every row
 cites the eval it came from; re-run that eval to refresh the number.
 
@@ -11,7 +11,7 @@ carry their eval's date so staleness is visible.
 
 ## How to read a row
 
-`status` is the verdict of the source eval, not a wish:
+`status` is the verdict of the source eval rather than a wish:
 
 - **fixed** — a shipped change moved the number and an eval confirms it.
 - **open** — measured, unfixed, no committed fix.
@@ -37,15 +37,14 @@ artifact (#694) — see §4.
 
 ## 2. Locale / script failures
 
-| class                                    | measured                              | engine | status   | change / root cause                                                                                                                                                      | source                                        |
-| ---------------------------------------- | ------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
-| fr.house_number (postcode-first reorder) | 87.4% vs a 91% pre-registered floor   | neural | deferred | positional shortcut learned on canonical data; the floor was mis-calibrated for the reordered case (SOTA ~90–91); weight falsified — needs real data, not another weight | 2026-06-13-fr-house-number-threshold-research |
-| fr.region (golden dev)                   | 16.2% → 25.6% (v4.4.0)                | neural | open     | unfloored; FR has no real reordered data to train on                                                                                                                     | parity-scorecard-2026-06-11                   |
-| non-Latin / thin-coverage locales        | in-map right-country ~26–35% (NL, KR) | neural | open     | en-US-centric training; no locale-native eval set for non-Latin script                                                                                                   | 2026-06-14-coarse-placer-arc-postmortem       |
+| class                                    | measured                              | engine | status   | change / root cause                                                                                                                                                             | source                                        |
+| ---------------------------------------- | ------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| fr.house_number (postcode-first reorder) | 87.4% vs a 91% pre-registered floor   | neural | deferred | positional shortcut learned on canonical data; the floor was mis-calibrated for the reordered case (SOTA ~90–91); weight falsified — needs real data rather than another weight | 2026-06-13-fr-house-number-threshold-research |
+| fr.region (golden dev)                   | 16.2% → 25.6% (v4.4.0)                | neural | open     | unfloored; FR has no real reordered data to train on                                                                                                                            | parity-scorecard-2026-06-11                   |
+| non-Latin / thin-coverage locales        | in-map right-country ~26–35% (NL, KR) | neural | open     | en-US-centric training; no locale-native eval set for non-Latin script                                                                                                          | 2026-06-14-coarse-placer-arc-postmortem       |
 
 Locale is the deepest open frontier and the one least amenable to a code change: the recurring finding
-(fr.house_number) is that **weight tuning is exhausted** — the next move is real reordered/native data,
-not another loss-mask or weight bump.
+(fr.house_number) is that **weight tuning is exhausted** — the next move is real reordered/native data rather than another loss-mask or weight bump.
 
 ## 3. Format failures (po_box, intersection, unit, delimiters)
 
@@ -63,17 +62,17 @@ useful negative result — the eval check stopped a plausible-but-wrong revival.
 
 ## 4. Geocoder coverage / accuracy
 
-| class                        | measured                                                                              | engine   | status         | change / root cause                                                              | source                                  |
-| ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | -------------------------------------------------------------------------------- | --------------------------------------- |
-| admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage**, not precision — no rooftop/interp extract hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
-| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a extract has the point       | 2026-06-17-geocoder-vs-provided-coords  |
-| interpolation (street) tier  | fires 12.5%; **0.1 km** p50; raw radius covered only 72% → ×1.70 for a true 90% bound | resolver | fixed (radius) | a radius is decoration unless calibrated (#374)                                  | 2026-06-14-interp-radius-calibration    |
-| off-map country routing      | 88→ clears 90/90 (decision rule, no retrain)                                          | resolver | fixed          | `1 − P(OTHER)` in-map mass beats softmax argmax                                  | 2026-06-14-coarse-placer-arc-postmortem |
-| in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                               | 2026-06-14-coarse-placer-arc-postmortem |
+| class                        | measured                                                                              | engine   | status         | change / root cause                                                                     | source                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------- | -------- | -------------- | --------------------------------------------------------------------------------------- | --------------------------------------- |
+| admin-centroid fallback      | ~40% of TX facilities fall back (p50 3.4 km, p99 catastrophic)                        | resolver | open           | **coverage** rather than precision — no rooftop/interp extract hit on the parsed street | 2026-06-17-geocoder-vs-provided-coords  |
+| rooftop (address_point) tier | fires 47%; **0.7 km** p50 where it fires                                              | resolver | open           | coverage is the frontier — accuracy is solved when a extract has the point              | 2026-06-17-geocoder-vs-provided-coords  |
+| interpolation (street) tier  | fires 12.5%; **0.1 km** p50; raw radius covered only 72% → ×1.70 for a true 90% bound | resolver | fixed (radius) | a radius is decoration unless calibrated (#374)                                         | 2026-06-14-interp-radius-calibration    |
+| off-map country routing      | 88→ clears 90/90 (decision rule, no retrain)                                          | resolver | fixed          | `1 − P(OTHER)` in-map mass beats softmax argmax                                         | 2026-06-14-coarse-placer-arc-postmortem |
+| in-map wrong-region misroute | **0 / 2000** across 10 countries                                                      | resolver | fixed          | the soft prior re-rank never misroutes (tier-safe)                                      | 2026-06-14-coarse-placer-arc-postmortem |
 
 The headline: where the finer tiers fire, the geocoder is rooftop-accurate (0.1–0.7 km, calibrated). The
 open problem is **coverage** — ~40% fall back to a city centroid for lack of a extract. That's a data change
-(more situs/interpolation extracts), not a model one. See the companion concept note on coordinate
+(more situs/interpolation extracts) rather than a model one. See the companion concept note on coordinate
 sufficiency ("How close is close enough?") for what these tiers are _worth_ per use-case.
 
 ## 5. Parity gaps & boundary instability
@@ -114,8 +113,8 @@ gap.
 ## What the table says about the roadmap
 
 1. **Boundary instability is the highest-changeage parser change** — it's one family (§1 dotted, §5 street/glue, §6 within-token) under several names; a boundary-aware decode would move several rows at once.
-2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem, not a model one (§4).
-3. **Locale is a data problem, not a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
-4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output, not label-F1 (the #566 discipline).
+2. **Geocoder accuracy is solved; coverage is the frontier** — the ~40% admin fallback is a extract-data problem rather than a model one (§4).
+3. **Locale is a data problem rather than a weight problem** — fr.house_number falsified weight tuning; real reordered/native data is the only remaining change (§2).
+4. **The eval check warrants its keep** — the rejected paired-delimiter proposer (§3) and the deferred geocoder wiring (§4, #694) are both cases where a plausible change was stopped by a measured regression. Keep grading the assembled output rather than label-F1 (the #566 discipline).
 
 _Sources: all rows cite a dated eval under `docs/articles/evals/`. Re-run the named eval to refresh._

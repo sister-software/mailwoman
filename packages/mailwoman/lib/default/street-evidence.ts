@@ -12,7 +12,7 @@
  *   Loaded LAZILY + cached once per process. `@mailwoman/resolver-wof-sqlite` is an OPTIONAL peer dep, so
  *   the import is dynamic — a stripped install that lacks it (or the database) yields `null` and the pipeline
  *   runs rerank-OFF (byte-stable) instead of throwing. The SQLite handle is `readOnly` + memory-mapped, so
- *   "loading" is a cheap file-open + prepared statements, not a 563 MB read.
+ *   "loading" is a cheap file-open + prepared statements rather than a 563 MB read.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

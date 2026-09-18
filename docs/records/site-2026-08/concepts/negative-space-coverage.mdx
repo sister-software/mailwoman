@@ -15,7 +15,7 @@ affixes, and more), the model gets better at the components we already handle �
 notthe new ones. The reason is that a sequence labeller learns a tag by its
 **boundaries**, so teaching it what a token _isn't_ is how it learns what the
 neighbours _are_. (One caveat that the campaign earned the hard way: this logic
-applies to tags the model must learn from context, not to every starved tag —
+applies to tags the model must learn from context rather than to every starved tag —
 see [Two kinds of starved tag](#two-kinds-of-starved-tag--and-why-the-model-handles-both)
 at the end.)
 
@@ -27,7 +27,7 @@ This has names at four altitudes:
   only _value through difference_. "Street" means street partly because it isn't
   "unit" or "locality."
 - **Machine learning** calls it **discriminative learning** — the model fits the
-  _decision boundary_ between classes, not a description of each class in isolation.
+  _decision boundary_ between classes rather than a description of each class in isolation.
 
 ## The catch-all failure it fixes
 
@@ -57,11 +57,11 @@ when the old label was wrongly swallowing a distinct category (our case). It
 can backfire when two categories are inherently ambiguous (you trade one confusion
 for another), or through capacity and label-noise effects — Mailwoman has scar
 tissue here, where adding a locale _interfered_ with an existing one on some
-retrains. So negative space is a strong **hypothesis**, not a theorem.
+retrains. So negative space is a strong **hypothesis** rather than a theorem.
 
 Which is exactly why coverage work is blocked on **measurability first**. Before
 generating corpus rows for a starved tag, the eval set must carry enough held-out
-examples of it that its F1 is signal, not noise from a handful of rows (see
+examples of it that its F1 is signal rather than noise from a handful of rows (see
 [eval discipline](./eval-discipline.mdx) and the val-set stratification work). The
 coverage eval is the apparatus that lets the numbers say whether negative space
 held for our model — whether covering `unit` lifted `street`/`locality` precision,
@@ -90,7 +90,7 @@ precision). A flat lookup scored 100 — but **only on an eval with no homograph
 The homograph case ("Atlanta, Georgia" → region vs "Tbilisi, Georgia" → country) is
 exactly where a lookup can't win without a hand-coded guard, and resolving it from
 context is the model's whole reason to exist. So the over-firing was a _training-
-distribution artifact_, not a model limitation, and "deterministic wins" was a
+distribution artifact_ rather than a model limitation, and "deterministic wins" was a
 mirage measured on the easy cases.
 
 The corrected rule: **cover every starved tag by training; let the lexicon _inform_
@@ -99,6 +99,6 @@ the model, never _override_ it.** Open-vocab and closed-vocab-without-homographs
 large set and homographs (`country`) additionally gets the gazetteer as a **soft
 anchor feature** — a match flag plus a "known-homograph" bit — fed into the model
 the same way the postcode anchor is, so the model decides with the lexicon as
-evidence. The matcher becomes a feature-source, not a post-parse verdict. Full
+evidence. The matcher becomes a feature-source rather than a post-parse verdict. Full
 rationale, data recipe, and the eval-first plan:
 [Closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).

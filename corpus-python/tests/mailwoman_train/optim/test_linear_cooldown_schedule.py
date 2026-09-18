@@ -98,7 +98,7 @@ def test_branch_resume_continues_the_parent_tail_exactly(tmp_path) -> None:
 
 
 def test_strict_config_accepts_cooldown_start_step(tmp_path) -> None:
-    """#1248 strict config: the new key must be a declared TrainConfig field, not an unknown."""
+    """#1248 strict config: the new key must be a declared TrainConfig field rather than an unknown."""
     from mailwoman_train.config import TrainConfig
 
     assert hasattr(TrainConfig(), "cooldown_start_step")

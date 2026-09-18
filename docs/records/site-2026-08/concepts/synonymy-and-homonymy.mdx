@@ -28,11 +28,11 @@ contradiction dissolves — they are orthogonal, and each has its own operation.
 
 ## Synonymy → canonicalization
 
-Synonymy is handled by mapping every span to a **canonical value**, not by trying to
+Synonymy is handled by mapping every span to a **canonical value** rather than by trying to
 guess which spelling is "right". "St" and "Street" both canonicalize to the USPS
 suffix `ST`; "USA", "U.S.A.", and "United States" all canonicalize to the ISO-3166
 code `US`. The canonical value comes from [`@mailwoman/codex`](./rule-based-classifiers.mdx)
-(the provenance-tracked reference data), not from a hand-grown alias list that grows
+(the provenance-tracked reference data) rather than from a hand-grown alias list that grows
 forever (see [corpus poisoning](./corpus-poisoning-vulnerability.mdx) for why the
 ever-growing exception list is a smell).
 
@@ -92,7 +92,7 @@ front-end cannot give you that; a structured, lossless parser can. This is why t
 parser does address-understanding work of its own, rather than only feeding the
 resolver.
 
-## Soft priors, not hard masks
+## Soft priors rather than hard masks
 
 Traditional parsers lean on **positional masks** (a field may only appear in slot N)
 and **user hints** (the query's origin country) as **hard filters**. They have to —
@@ -103,7 +103,7 @@ useful_ — as **soft priors**, fed in as features the model or resolver can ove
 when the string says otherwise. A focus-country becomes a feature for the parser's
 [gazetteer anchor](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx); a focus-point
 becomes a term in the resolver's ranking. Same information as the mask, but as a
-preference the model can override, not a constraint it can't.
+preference the model can override rather than a constraint it can't.
 
 ## Two paradigms: parse-time vs index-time
 

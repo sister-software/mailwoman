@@ -102,7 +102,7 @@ describe("repairPostcodeLabels", () => {
 		const gb = "Birmingham B12 8QX"
 		const gbTokens = [tok("Birmingham", 0, 10, "B-locality"), tok("B12", 11, 14, "O"), tok("8QX", 15, 18, "O")]
 		const { tokens: gbOut } = repairPostcodeLabels(gb, gbTokens)
-		expect(postcodeValue(gb, gbOut)).toBe("B12 8QX") // via the GB pattern, not IE
+		expect(postcodeValue(gb, gbOut)).toBe("B12 8QX") // via the GB pattern rather than IE
 	})
 
 	it("SNAPs a truncated postcode to the full shape (CA M5V 2T6)", () => {

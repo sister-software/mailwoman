@@ -18,11 +18,11 @@
  *   under test, and {@linkcode HardCase.popBias} / {@linkcode HardCase.impBias} are that
  *   surface's MEASURED max-importance under each FST arm (see `dev-tools/probe-fst-bias.run.ts`). A row
  *   whose two biases are EQUAL is a negative control — it must not move — and one whose biases differ
- *   sharply but ties anyway is a finding about the FST's reach, not a reason to add rows.
+ *   sharply but ties anyway is a finding about the FST's reach rather than a reason to add rows.
  *
  *   THE REACH FIELD IS required, AND IT IS NOT ABOUT WHETHER BIAS APPLIES. `fst-<locale>.bin` is
  *   country-scoped (`FST_LOCALES` in `gazetteer-pipeline/fst.ts`: en-us→US, fr-fr→FR, en-gb→GB,
- *   de-de→DE), and the arm loads a binary by LOCALE, not by the answer's country. So
+ *   de-de→DE), and the arm loads a binary by LOCALE rather than by the answer's country. So
  *   {@linkcode HardCase.fstReach} says whether the row's EXPECTED PLACE is inside the loaded
  *   gazetteer's scope:
  *
@@ -41,11 +41,11 @@
  *   either carries `expectLat` + `expectLon` + `expectToleranceM` together, or asserts no coordinate at
  *   all. {@linkcode HardCaseSchema} refuses every partial combination. A silently-defaulted
  *   tolerance is a number nobody chose, and a row with a coordinate but no tolerance would inherit a bar
- *   it was never graded against — the absence of a coordinate is ABSENCE, not zero, and not a
+ *   it was never graded against — the absence of a coordinate is ABSENCE rather than zero, and not a
  *   permissive default.
  *
  *   Conventions follow `gauntlet/cases/seed-case.ts` (interface as source of truth, strict zod shadow,
- *   `satisfies` bridges, canonical key order) — but this is a SEPARATE board, not gauntlet cases: it is
+ *   `satisfies` bridges, canonical key order) — but this is a SEPARATE board rather than gauntlet cases: it is
  *   graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
 
@@ -232,14 +232,14 @@ export const HardCaseSchema = zod
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
 /**
- * The third leg: {@linkcode HARD_CASE_KEY_ORDER} must list every key, not merely valid ones.
+ * The third leg: {@linkcode HARD_CASE_KEY_ORDER} must list every key rather than merely valid ones.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof HARD_CASE_KEY_ORDER)[number],
 	keyof HardCase
 >
 
-// Probe the DIRECTORY, not the board file: the builder that writes the board resolves this constant
+// Probe the DIRECTORY rather than the board file: the builder that writes the board resolves this constant
 // before the file exists, and a file-existence probe would send the first build to the compiled-tree
 // fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
 // discriminator between source and compiled trees.
@@ -256,7 +256,7 @@ export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 
 /**
  * Re-key a case into {@linkcode HARD_CASE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's
- * content hash is a function of CONTENT, not of literal ordering.
+ * content hash is a function of CONTENT rather than of literal ordering.
  */
 export function canonicalizeHardCase(c: HardCase): HardCase {
 	const out: Partial<HardCase> = {}

@@ -23,7 +23,7 @@ So we built a harness that asks the second question, and pointed it at the one s
 
 The subset you measure on matters as much as the metric you measure with. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has never met.
 
-In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate falls inside the resolved place's polygon). None of those can be fooled by a matching string.
+In our current data that's Vermont: 1,428 addresses the model trained around rather than on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate falls inside the resolved place's polygon). None of those can be fooled by a matching string.
 
 Here is what the held-out set said, next to the number we'd been quoting:
 

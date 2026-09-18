@@ -66,7 +66,7 @@ describe("checkConfounds", () => {
 
 describe("assertComparableField", () => {
 	it("refuses the cross-backend score fields", () => {
-		// Refusal, not a warning: within either backend the wrong answers' range sits inside the correct answers' range
+		// Refusal rather than a warning: within either backend the wrong answers' range sits inside the correct answers' range
 		// with a higher mean, so no threshold on it means anything.
 		expect(() => assertComparableField("resolver_score")).toThrow(/not comparable/)
 		expect(() => assertComparableField("prominence")).toThrow(/not comparable/)

@@ -205,7 +205,7 @@ describe("the committed lexicon against the committed artifact", () => {
 describe("the phrase rule", () => {
 	// No locale, and the US-scoped drugstore assertion is returned anyway, carrying its scope: the route reads the
 	// phrase, and where the claim holds is the intent stage's question once the anchor has resolved. `searchAsSet` says
-	// what the array means, not how long it happens to be.
+	// what the array means rather than how long it happens to be.
 	it("claims a candidate that ends in a declared phrase", () => {
 		expect(committedRoute.lookup("where can i pick up a prescription")).toEqual([
 			{
@@ -445,7 +445,7 @@ describe("a plural affordance", () => {
 	})
 
 	// The committed route driven through the surface that used to narrow, at both locales. Both reach two: the
-	// drugstore assertion is scoped to the US, and that scope is a fact about where drugstores are, not about who is
+	// drugstore assertion is scoped to the US, and that scope is a fact about where drugstores are rather than about who is
 	// asking — so a French CALLER is not what narrows the set. A French ANCHOR is (`poi/intent.test.ts`), and the scope
 	// rides on the match so the stage can read it.
 	it("reaches the query surface as the same two categories under a French caller and a US caller", () => {

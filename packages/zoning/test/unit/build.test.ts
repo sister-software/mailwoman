@@ -219,7 +219,7 @@ describe("the vocabulary decision", () => {
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
 		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		// The domain is the publisher's statement of what a value may be, not a census of what it is. `SDZ` is the real
+		// The domain is the publisher's statement of what a value may be rather than a census of what it is. `SDZ` is the real
 		// product's example: declared as a plan level and used on no row.
 		const row = database
 			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
@@ -280,7 +280,7 @@ describe("the vocabulary decision", () => {
 			)
 		).toThrow(/take more than one generic type/u)
 
-		// No edges, no refusal — the guard is about writing them, not about the mapping being a function.
+		// No edges, no refusal — the guard is about writing them rather than about the mapping being a function.
 		expect(() => assertCrosswalkIsNotATable([["CO", "Special Policy Area", ["C2.1", "M1"]]], 0)).not.toThrow()
 	})
 })

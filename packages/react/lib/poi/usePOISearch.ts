@@ -140,7 +140,7 @@ export function usePOISearch({
 
 	// Classify the debounced query and derive the subject + OverpassQL (async, so it lives in an effect).
 	// Every state write below happens after an await — invalidation on query change is handled by the
-	// key derivation above, not by a synchronous reset here.
+	// key derivation above rather than by a synchronous reset here.
 	useEffect(() => {
 		if (!runtime) return
 
@@ -165,7 +165,7 @@ export function usePOISearch({
 			}
 
 			// Brand subject: the lexicon carries the brand's canonical name as `categoryID` + its Wikidata QID. No category
-			// record, no OverpassQL (brands are searched by QID against the layer's `brand_wikidata` index, not OSM tags).
+			// record, no OverpassQL (brands are searched by QID against the layer's `brand_wikidata` index rather than OSM tags).
 			if ((matched.match.kind ?? "category") === "brand") {
 				setStoredResult({
 					query: trimmed,

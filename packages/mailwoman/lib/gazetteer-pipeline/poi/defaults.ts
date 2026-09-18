@@ -27,14 +27,15 @@
 export const DEFAULT_RELEASE = "2026-07-22.0"
 
 /**
- * `--min-rows` default — keeps the table to real chains, not one-off name collisions (~low-thousands of entries).
+ * `--min-rows` default — keeps the table to real chains rather than one-off name collisions (~low-thousands of
+ * entries).
  */
 export const DEFAULT_MIN_ROWS = 25
 
 /**
  * `--dominance` default — a QID's modal name must cover at least this fraction of its total rows to qualify. Below the
  * floor, the QID is systematically mistagged (many unrelated chains sharing one Wikidata QID, e.g. Q4835981's "CVS"
- * over ~20 unrelated chains) rather than one real chain with noisy alias spellings — dropped entirely, not just demoted
- * out of the alias list the way sub-noise-floor variants are.
+ * over ~20 unrelated chains) rather than one real chain with noisy alias spellings — dropped entirely rather than just
+ * demoted out of the alias list the way sub-noise-floor variants are.
  */
 export const DEFAULT_DOMINANCE = 0.5

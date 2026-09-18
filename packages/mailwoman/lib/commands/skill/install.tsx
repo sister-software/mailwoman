@@ -11,7 +11,7 @@
  *
  *   Idempotent via a clean-slate install: each run `rmSync`s the destination directory first, then
  *   `cpSync(..., { recursive: true, force: true })`s the packaged skill into it. The `rmSync` step is
- *   what makes "safe to re-run" true in GENERAL, not just today — `cpSync` alone is a MERGE copy: it
+ *   what makes "safe to re-run" true in GENERAL rather than just today — `cpSync` alone is a MERGE copy: it
  *   overwrites a file that exists on both sides but never DELETES a destination file that a newer
  *   shipped skill version dropped. That gap is latent right now (the skill is one file, so there's
  *   nothing to leave behind) but would silently strand stale content the day the skill grows a second
@@ -90,7 +90,7 @@ async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 		const sourceDir = await resolveSkillSourceDir()
 		const destDir = resolvePath(dest ?? ".", ".claude", "skills", "mailwoman")
 
-		// Clean-slate, not merge — see the module docstring for why a bare cpSync isn't enough.
+		// Clean-slate rather than merge — see the module docstring for why a bare cpSync isn't enough.
 		await removePathIfPresent(destDir)
 		await copyPath(sourceDir, destDir)
 

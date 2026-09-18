@@ -227,16 +227,16 @@ export function hasResolvedPlace(
 /**
  * Char ranges of confident street / house_number / postcode constituents, including the street affixes (`street_prefix`
  * / `street_suffix`) — a locality span must not overlap them. The affixes matter: a confident "Ave" in "350 5th Ave,
- * NY" is a street suffix, not a locality, and without this guard the recovery exact-matches it against a same-named
- * place ("Ave", France) and injects a bogus locality.
+ * NY" is a street suffix rather than a locality, and without this guard the recovery exact-matches it against a
+ * same-named place ("Ave", France) and injects a bogus locality.
  */
 /**
  * Ranges of MULTI-TOKEN `country` / `region` spans, used to block their INTERIOR tokens from being re-read as
  * standalone places. The whole span itself stays probeable — only proper sub-spans are refused.
  *
  * The parse grouping is the claim: when the model binds `Papua`, `New` and `Guinea` into one country span, `New` is a
- * modifier inside a name, not a name. Probing it anyway matches a real US place (`New`, wof:1276997945) and pins the
- * address to Kentucky — an answer strictly worse than none, because it is confident and wrong.
+ * modifier inside a name rather than a name. Probing it anyway matches a real US place (`New`, wof:1276997945) and pins
+ * the address to Kentucky — an answer strictly worse than none, because it is confident and wrong.
  *
  * Deliberately not confidence-conditioned, unlike {@link confidentRanges}. The country node has score 0.68 in that case,
  * under the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way,
@@ -445,7 +445,7 @@ export async function findRescoreCandidate(
 
 	spans.sort((a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start)
 
-	// #17 bare-toponym soft country. The caller's `country` is a LOCALE DEFAULT, not knowledge — the #961
+	// #17 bare-toponym soft country. The caller's `country` is a LOCALE DEFAULT rather than knowledge — the #961
 	// block below already says so, and for a bare city name it is the only country signal there is, which
 	// makes hard-filtering on it the worst possible use of it. Measured through the compiled CLI on
 	// 2026-08-10: `--locale en-US 'Zürich'` returned Zurich, Kansas (population 81) 8,043 km off, and
@@ -471,8 +471,8 @@ export async function findRescoreCandidate(
 	 * artifact: `Irvington` alone ranks Irvington NY (population 6,417) over Irvington NJ (61,323) on the fame prior, and
 	 * `Irvington` with `regionQualifier: "NJ"` stamps the New Jersey row contained and lifts it to rank 1.
 	 *
-	 * A remainder is admitted on SHAPE, not by a country table: one token of 2 or 3 uppercase ASCII letters, which is
-	 * what a subdivision code written on an address line looks like in every register that uses one. Admitting more is
+	 * A remainder is admitted on SHAPE rather than by a country table: one token of 2 or 3 uppercase ASCII letters, which
+	 * is what a subdivision code written on an address line looks like in every register that uses one. Admitting more is
 	 * unsafe rather than merely noisy — a bare `de`, the commonest function word in FR/ES/PT/IT addresses, matches a
 	 * region-class row and REORDERS the pool, while `16`, `Ave`, `Street` and `1382` leave it untouched.
 	 */
@@ -494,9 +494,10 @@ export async function findRescoreCandidate(
 	 * — `WA Sammamish` → `Sammamish`, `16 Sillod` → `Sillod`. A word of the name does not: `Fort Worth` → `Worth` answers
 	 * Worth, Illinois, population 10,494, 1,304 km away.
 	 *
-	 * The test is on what the remainder is, not on the span being proper. Refusing every proper sub-span of a multi-token
-	 * locality was measured on the frozen fixture and rejected: it also refuses `NV Sparks`, `SCT Cumbernauld`, `IN Fort
-	 * Wayne`, `CA National City` and `IA Council Bluffs`, each correct, and each leaving a subdivision code behind.
+	 * The test is on what the remainder is rather than on the span being proper. Refusing every proper sub-span of a
+	 * multi-token locality was measured on the frozen fixture and rejected: it also refuses `NV Sparks`, `SCT
+	 * Cumbernauld`, `IN Fort Wayne`, `CA National City` and `IA Council Bluffs`, each correct, and each leaving a
+	 * subdivision code behind.
 	 *
 	 * A street the parse read as its own component is context too — see {@link streetRanges} for why only a
 	 * NON-OVERLAPPING one is.
@@ -534,7 +535,7 @@ export async function findRescoreCandidate(
 		// 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 
-		// A sub-span that drops a word of the name is a corruption, not a recovery. Opt-in until measured. see
+		// A sub-span that drops a word of the name is a corruption rather than a recovery. Opt-in until measured. see
 		// `remainderIsContext`.
 		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
 
@@ -568,7 +569,7 @@ export async function findRescoreCandidate(
 		// equals it. Re-comparing only the PRIMARY name folded to [a-z0-9 ] excluded exactly the
 		// non-Latin-primary class: Москва folds to "" and could never equal "moscow", so Moscow RU never
 		// entered the list and Moscow, Idaho won by default among the Latin-named bearers — population-
-		// first ranking starved, not violated. The alias surface is the recall. ranking then does its job.
+		// first ranking starved rather than violated. The alias surface is the recall. ranking then does its job.
 		// The postcode check below still applies to every admitted candidate, Moscow RU included.
 		//
 		// #17: importance-first within the admitted set. The key is the #28 blended fame prior
@@ -616,7 +617,7 @@ export async function findRescoreCandidate(
 		}
 	}
 
-	// #961 joint country recovery: the caller's `country` is a LOCALE DEFAULT, not knowledge — the
+	// #961 joint country recovery: the caller's `country` is a LOCALE DEFAULT rather than knowledge — the
 	// CLI's en-US default scoped both the anchor and the village probe to US, so the SI floor never
 	// fired through geocode-core while the same rows resolved 25/25 on the resolver harness. When the
 	// scoped pass finds nothing and a postcode is present, re-probe the spans UNSCOPED (the admin

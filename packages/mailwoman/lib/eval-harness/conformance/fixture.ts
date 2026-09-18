@@ -22,7 +22,7 @@
  *   message — never skipped, never defaulted. A skipped row reports as an absence, and an absence is what a
  *   law suite is measuring.
  *
- *   ONE CONTEXT, NOT TWO. A law varies the QUERY and holds the configuration fixed. Two contexts would let
+ *   ONE CONTEXT rather than two. A law varies the QUERY and holds the configuration fixed. Two contexts would let
  *   a row vary the country prior and the surface form at once, and the comparator could not say which one
  *   moved the answer.
  *

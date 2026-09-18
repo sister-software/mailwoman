@@ -20,7 +20,7 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["gb", "en"],
 	["nz", "en"],
-	// AU's extract is G-NAF-sourced (CC-BY, not OSM), but lives in this provider's home and keys with
+	// AU's extract is G-NAF-sourced (CC-BY rather than OSM), but lives in this provider's home and keys with
 	// the same `en` rules — G-NAF stores street types as full words ("STREET", "CLOSE"), which is
 	// exactly the surface the `en` normalizer folds.
 	["au", "en"],

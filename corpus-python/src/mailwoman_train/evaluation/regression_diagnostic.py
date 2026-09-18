@@ -52,7 +52,7 @@ For calibration when reading future runs' outputs:
 The v0.4.0 ship's postcode regression was dominated by FN ``empty_pred`` (789
 of 1217 FNs = 65%) — the model is silent on mid-position postcodes (e.g.
 ``"Paris 75008"``, ``"64 Industrial Park Rd, Alburgh, VT 05440, Alburg Health
-Center"``). v0.4.1's source-weight tweak proposal needs to address this, not
+Center"``). v0.4.1's source-weight tweak proposal needs to address this rather than
 just the smaller ``num_confused`` subset.
 
 The country regression decomposes very differently: ``non_latin`` 92% of FN

@@ -10,7 +10,7 @@
  *
  *   `writeBrandTable`'s plain `JSON.stringify` doesn't collapse short primitive arrays onto one line the
  *   way `oxfmt` does (e.g. `"aliases": ["Foo"]` vs a 3-line array) — the process-y bit (shelling out, like
- *   `poi.tsx`'s own `git rev-parse`) belongs at the command layer, not in the pure/testable builder. Runs
+ *   `poi.tsx`'s own `git rev-parse`) belongs at the command layer rather than in the pure/testable builder. Runs
  *   `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 

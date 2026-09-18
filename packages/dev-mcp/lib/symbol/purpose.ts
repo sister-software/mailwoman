@@ -238,7 +238,7 @@ export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]
 	const status = (await workingTreeStatus(repoRoot, ["packages"])).toSorted()
 	const cached = await readLocalJSONFile<Partial<PurposeCache>>(cachePath()).catch(() => null)
 
-	// A cache written by an earlier shape of this module is a MISS, not a crash: the fields are checked rather than
+	// A cache written by an earlier shape of this module is a MISS rather than a crash: the fields are checked rather than
 	// assumed, so a renamed key rebuilds instead of throwing inside a tool call.
 	if (
 		cached?.head === head &&

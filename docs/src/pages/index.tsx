@@ -26,7 +26,7 @@ function HomepageHeader(): ReactNode {
 						Try the geocoder
 					</Link>
 				</div>
-				{/* Measured, not decorative. `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`
+				{/* Measured rather than decorative. `mailwoman geocode "1600 Pennsylvania Avenue NW, Washington, DC"`
 				    returns lat 38.89767510742324, lon -77.03654697024702, resolution_tier "address_point",
 				    uncertainty_m 1 — so the 4-dp rounding below is exact and "rooftop" is the house gloss for
 				    an address_point hit at 1 m (mailwoman/geocode-core.ts:56: "`address_point` — rooftop /

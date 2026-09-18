@@ -13,7 +13,7 @@
  *   a single writer). Each state is an isolated child process (its own DuckDB + SQLite heap), so N
  *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's
  *   DuckDB scan is capped at `--threads` (default: cores / concurrency), so concurrency × threads ≈
- *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop, not the
+ *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop rather than the
  *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
  *
  *   Each per-state CHILD owns its own DB's atomic write. this driver only spawns children (skipping

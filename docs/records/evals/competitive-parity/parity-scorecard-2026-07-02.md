@@ -65,7 +65,7 @@ last full baseline).
 | de.native_locality | de-order (anchor on)    |   83.8 |   90.1 |   91.0 |   **91.1** |   +0.1 | PASS                |
 | arena.perturb      | perturb arena           |     71 |     64 |     72 |     **78** |     +6 | PASS                |
 
-† The two documented v4.15.0 check revisions — the drop is the priced-in #723 trade, not new
+† The two documented v4.15.0 check revisions — the drop is the priced-in #723 trade rather than new
 drift. Note both now sit **exactly at their revised floors** (us.postcode 95.005/95.0,
 fr.postcode 99.341/99.3): the floors have zero slack left, which is the correct design (the floor
 is the shipped level) but means any future hair of postcode loss fails the check loudly.
@@ -73,8 +73,8 @@ is the shipped level) but means any future hair of postcode loss fails the check
 ⚠ `fr.cedex_real` 96.1 → 89.4 is the one >2pp real-OOD move with no written justification in any
 promotion doc between v4.4.0 and v4.15.0 — the exact pattern #885 exists to catch. It remains
 19.4pp above its floor, so nothing checks on it today; it is now on the record as accumulated
-drift, not silently absorbed. (Plausible source: the multi-locale/AU/anchor retrains between
-06-11 and 06-25 rebalancing FR postal-format mass; diagnosing is a follow-up, not this doc's job.)
+drift rather than silently absorbed. (Plausible source: the multi-locale/AU/anchor retrains between
+06-11 and 06-25 rebalancing FR postal-format mass; diagnosing is a follow-up rather than this doc's job.)
 
 fp32 ↔ int8: max per-tag delta 0.8pp, on fr.region (cap 1.5) — quantization is not distorting
 any floor.
@@ -97,7 +97,7 @@ if a future release wants to check it, this is the baseline to floor.
 
 ## The assembled coordinate (the guide, for anchor)
 
-Label-F1 above is the drift backstop, not the verdict. The shipped line's coordinate record,
+Label-F1 above is the drift backstop rather than the verdict. The shipped line's coordinate record,
 measured this week on the same artifact (see `#884` and the [day eval](https://github.com/sister-software/mailwoman/blob/feat/825-v196-slavic-anchor/docs/articles/evals/2026-07-01-day-825-tokenizer-fix.md)):
 US-2k coord p50 3.31 km / resolve 1.000 / region 0.999; CZ-1k resolved-p50 3.29 km / resolve
 0.968; PL-1k 2.07 km / 0.985 (the CZ/PL wrong-city defect is #884's fix, promote-pending).

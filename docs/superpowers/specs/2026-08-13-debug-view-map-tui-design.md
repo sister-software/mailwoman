@@ -89,7 +89,7 @@ Dependencies: `@sister.software/asciify` (`./tui` entry), `pmtiles`, `@mapbox/ve
 
 Rendering note: solid fills pass through asciify's Bayer ordered dither, so a fill color's
 luminance sets its stipple density — water reads as dim texture, roads as solid bright dots.
-This is a style-table tuning knob, not a design risk.
+This is a style-table tuning knob rather than a design risk.
 
 Attribution: `MapFrame.attribution` carries the tile archive's attribution string (the dump is
 OSM-derived; display attribution is required). Consumers render it — the debug pane shows it

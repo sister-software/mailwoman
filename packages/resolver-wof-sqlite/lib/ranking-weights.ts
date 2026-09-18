@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The locality-ranking weights and their shipped defaults. Its own module because every value here is
- *   a measured tuning decision with its rationale attached — the block reads as a reference table, not
+ *   a measured tuning decision with its rationale attached — the block reads as a reference table rather than
  *   as part of the lookup's control flow, and the tests import it directly to pin one change at a time.
  */
 
@@ -134,13 +134,13 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// RankingWeights override.
 	//
 	// Note: this resolver uses `place_population` directly. The separate `place_importance` table
-	// (Wikipedia-derived) is consumed by the FST layer, not here. See
+	// (Wikipedia-derived) is consumed by the FST layer rather than here. See
 	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
 	populationBoost: 4,
 	populationScaleLog10: 6,
 	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is
-	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
-	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
+	// consulted — keeps population as an intra-tier prominence tiebreaker rather than a cross-tier promoter.
+	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine rather than the more-populous Missouri).
 	exactMatchTiering: true,
 	// #936 option 3 — promoted to on by default 2026-07-03, the eval battery passing. see the RankingWeights docstring.
 	officialNameExact: true,

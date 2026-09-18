@@ -41,7 +41,7 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 }
 
 /**
- * `spr` only, and every `parent_id` is the -1 sentinel — countable, not joinable, not walkable.
+ * `spr` only, and every `parent_id` is the -1 sentinel — countable rather than joinable rather than walkable.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

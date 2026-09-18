@@ -6,7 +6,7 @@
  *   `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
  *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
- *   This exists because the swap is a DATA-SOURCE change, not a refresh. The two sources disagree on
+ *   This exists because the swap is a DATA-SOURCE change rather than a refresh. The two sources disagree on
  *   which postcodes exist and on where each one is, and both kinds of disagreement have to be looked at
  *   before the shipped database moves. What this tool does not do is decide: a large coordinate delta is a
  *   finding, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
@@ -64,7 +64,7 @@ export interface DeltaDistribution {
 	 */
 	over1km: number
 	/**
-	 * Share further apart than 10 km. At this distance the two sources are naming different places, not rounding
+	 * Share further apart than 10 km. At this distance the two sources are naming different places rather than rounding
 	 * differently.
 	 */
 	over10km: number
@@ -101,8 +101,8 @@ export interface IncumbentOnlyBreakdown {
 	/**
 	 * Everything else: postcodes the incumbent has and the current OS register does not. These are TERMINATED postcodes —
 	 * the incumbent snapshot never dropped them. Diffuse across every area (top: B, W, M, GU, SW…), which is the shape of
-	 * churn rather than of a coverage hole. Losing them is a currency IMPROVEMENT, not a regression, though a consumer
-	 * geocoding historical addresses would feel it.
+	 * churn rather than of a coverage hole. Losing them is a currency IMPROVEMENT rather than a regression, though a
+	 * consumer geocoding historical addresses would feel it.
 	 */
 	terminated: number
 }
@@ -159,7 +159,8 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * reported absent from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
  * the Senedd's postcode changed from `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current
  * one, and the incumbent GeoNames snapshot still carries the retired one 114 m away. That single row is the whole
- * 33,761-postcode "only in incumbent" residual in miniature — those are TERMINATED postcodes, not missing coverage.
+ * 33,761-postcode "only in incumbent" residual in miniature — those are TERMINATED postcodes rather than missing
+ * coverage.
  */
 export const CODEPOINT_PROBES = [
 	{ postcode: "SW1A 1AA", landmark: "Buckingham Palace, London", latitude: 51.5014, longitude: -0.1419 },

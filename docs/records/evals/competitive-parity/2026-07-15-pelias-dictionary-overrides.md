@@ -58,7 +58,7 @@ in millions of queries. Deleting `art` is the right call _given a dictionary_. N
 
 **It becomes scar tissue in one specific sense: it is irreversible and context-free.** The deletion has
 no locale check, no confidence, no conditions to revisit. It is a global `if false`, and the reason it
-can never be anything else is architectural, not intellectual.
+can never be anything else is architectural rather than intellectual.
 
 ## The receipts, ours
 

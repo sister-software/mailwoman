@@ -26,7 +26,7 @@ each assignment how it was reached.
 
 Two consequences follow, and both narrow the design.
 
-**The prior is a build-time product, not a runtime scorer.** The assignment is computed once from
+**The prior is a build-time product rather than a runtime scorer.** The assignment is computed once from
 sealed inputs into a sealed artifact, `postcode-unit-assignment-gb.db`, with a `layer_manifest` and
 per-row provenance. At runtime the resolver reads it as a lookup: a unit postcode resolves to the set
 of points assigned to it, or to their bound. No runtime component reasons about buildings. This is
@@ -41,7 +41,7 @@ four attribution lines (section 8). Falsifier F1 is therefore answered, and it r
 prototype:
 
 - For GB, the open UPRN → unit postcode register exists. The shippable artifact is a sealed build of
-  NSUL joined to Open UPRN's coordinates, not a generative reconstruction of it.
+  NSUL joined to Open UPRN's coordinates rather than a generative reconstruction of it.
 - The generative method is graded against NSUL as a measurement of how much of the register
   physical inputs alone recover. That number is what Northern Ireland needs, where neither Open UPRN
   nor NSUL exists, and it is the only place the method's error can be measured.
@@ -162,7 +162,7 @@ needs the licensed register.
 | OSM buildings (NI only)       | ODbL-1.0               | attribution, share-alike | `build-local`; the same posture `packages/osm` holds         |
 
 The doctor summarizes each of these from the artifact's own `layer_manifest` once built, so the
-posture is data in the artifact, not prose here.
+posture is data in the artifact rather than prose here.
 
 ## 9. Falsifiers, in order
 

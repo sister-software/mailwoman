@@ -59,7 +59,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// It is a session option, not a change: the answer is byte-identical whether it is on, so declaring it as the
+		// It is a session option rather than a change: the answer is byte-identical whether it is on, so declaring it as the
 		// variable of a comparison would declare a variable that cannot move an outcome. The tools that read misses
 		// force it on themselves. If someone "fixes" the asymmetry by adding it to the schema, this is the alarm.
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")

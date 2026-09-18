@@ -136,7 +136,7 @@ describe("gazetteerCheck (optional)", () => {
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		// That the size is rendered at all, not how: a literal would pin the runner's locale rather than this check.
+		// That the size is rendered at all rather than how: a literal would pin the runner's locale rather than this check.
 		expect(c.detail).toContain(ByteFormatter.formatSI(1_400_000_000))
 	})
 

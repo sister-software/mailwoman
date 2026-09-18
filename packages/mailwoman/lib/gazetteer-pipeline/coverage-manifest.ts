@@ -13,7 +13,7 @@
  *   - The guard-B plausibility boxes behind `COUNTRY_BBOX` (`resolver/plausibility.ts`).
  *
  *   Doctrine (operator-ratified 2026-07-26): facts ABOUT an artifact live in the artifact's
- *   manifest, read at load — so they update at gazetteer REBUILD, not at a code PR. This module is
+ *   manifest, read at load — so they update at gazetteer REBUILD rather than at a code PR. This module is
  *   the drawer: it owns the reviewed measurement record ({@link MEASURED_COUNTRY_COVERAGE},
  *   {@link MEASURED_COUNTRY_BBOXES} — grow these at promotes, like `defaults.ts` owns the build
  *   recipe) and the emission step `buildCandidate` runs before sealing. The schema + canonical
@@ -69,7 +69,7 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	// language placer conflated both with US), and the OSM-panel checks passed with the hard filter ON.
 	// Rates here are the panels' RESOLVE rates (1 − unresolved/n): GB 293/300 (271 ok, 7 unresolved),
 	// CA 269/300 (200 ok, 31 unresolved) — CA cleared on the format-prior rationale despite the sub-95%
-	// panel number, which is exactly why `hardFilterSafe` is a stored VERDICT, not a rate threshold.
+	// panel number, which is exactly why `hardFilterSafe` is a stored VERDICT rather than a rate threshold.
 	{
 		country: "GB",
 		hardFilterSafe: true,
@@ -110,7 +110,7 @@ const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/co
  * membership, and both tables were missing the same four shipping locales. Membership is checked in
  * `plausibility.test.ts` against `release.config.json` instead.
  *
- * `source` is stamped here: provenance belongs to the artifact record, not to the fallback constant.
+ * `source` is stamped here: provenance belongs to the artifact record rather than to the fallback constant.
  */
 export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = Object.entries(COUNTRY_BBOX).map(
 	([country, [latMin, latMax, lonMin, lonMax]]): CountryBBoxFact => ({

@@ -25,7 +25,7 @@ first two files as rows and runs from `yarn health`. Tasks 2 through 6 are uncha
 - `node:*` imports are permitted only under `packages/core/lib/fs/`; `oxlint.config.ts` refuses them elsewhere. No task adds one.
 - A test imports the package under test through its public exports; never through a `#` specifier; a relative import names only a helper under `test/`.
 - `process.env` and `process.argv` are never read directly.
-- Comments state invariants, not history: no dates, issue numbers or "moved from" narration in code.
+- Comments state invariants rather than history: no dates, issue numbers or "moved from" narration in code.
 - Every commit passes the pre-commit hook (oxlint + oxfmt on staged files). Run `yarn compile` before any test that resolves `default` exports, because those resolve to `out/`.
 - Branch from `origin/main`: `git fetch origin main && git checkout -b feat/browser-export-conditions origin/main`.
 
@@ -203,7 +203,7 @@ async function bundleForBrowser(specifier: string): Promise<Metafile> {
 	return result.metafile
 }
 
-/** A file the walk reached is always in the metafile; a miss is an esbuild contract change, not an empty import list. */
+/** A file the walk reached is always in the metafile; a miss is an esbuild contract change rather than an empty import list. */
 function inputOf(metafile: Metafile, file: string): Metafile["inputs"][string] {
 	const input = metafile.inputs[file]
 	if (!input) throw new Error(`metafile has no input for ${file}`)
@@ -602,7 +602,7 @@ yarn compile
 cd docs && yarn build > /tmp/docs-build.log 2>&1; echo "EXIT=$?" >> /tmp/docs-build.log; tail -5 /tmp/docs-build.log; grep -n "Module not found\|Can't resolve\|node:" /tmp/docs-build.log | head
 ```
 
-Expected: `EXIT=0` and no `Can't resolve` line. Read the log's `EXIT` line, not the exit of the pipe. If the build fails on a `node:` request, the failing module is a new inventory row: fix it in its package under one of the spec's three shapes and add a row to the bundle test. Do not reintroduce a fallback.
+Expected: `EXIT=0` and no `Can't resolve` line. Read the log's `EXIT` line rather than the exit of the pipe. If the build fails on a `node:` request, the failing module is a new inventory row: fix it in its package under one of the spec's three shapes and add a row to the bundle test. Do not reintroduce a fallback.
 
 - [ ] **Step 5: Run the geocoder page's browser suite**
 
@@ -727,4 +727,4 @@ EOF
 )
 ```
 
-The PR is the receipt the spec's first done bullet asks for; the inventory table goes in its description, not in a comment in code.
+The PR is the receipt the spec's first done bullet asks for; the inventory table goes in its description rather than in a comment in code.

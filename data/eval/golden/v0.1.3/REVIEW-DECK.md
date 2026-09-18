@@ -6,12 +6,12 @@
 > suffix `Road`; `Sutton Hollow` -> street `Sutton` + suffix `Hollow` (Hollow is terminal there); `Stevens Hill W`
 > -> street `Stevens` + suffix `Hill` + post-directional `W`. The arrival of a later suffix reverts the earlier
 > ambiguous token to the name. Semantically odd remainders (`High Manor`, `East`) stand: the parse reflects
-> authoritative segmentation (Pub-28/TIGER), not human intuition, and the formatter is lossless. The model's
+> authoritative segmentation (Pub-28/TIGER) rather than human intuition, and the formatter is lossless. The model's
 > 125-row over-greed is therefore a SUFFIX-BOUNDARY error (recognition is fine; the span extends too far) —
 > tracked with its training change in the next-run notes.
 
 Rows are deduped to the top-level files (`dev/` and `test/` carry the same rows).
-A flag is a REVIEW TRIGGER, not an adjudication: the split below is already applied.
+A flag is a REVIEW TRIGGER rather than an adjudication: the split below is already applied.
 
 ## Flagged (70) — needs a ruling
 

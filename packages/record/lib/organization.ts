@@ -124,8 +124,8 @@ const BASE_DESIGNATIONS = new Set([
 /**
  * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is known. This is
  * where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs` (French/Belgian/Luxembourg commandite forms).
- * Stripping these is correct only when we know the org's country — never in the universal base. Grounded seeds, not
- * exhaustive. extend per ISO 20275.
+ * Stripping these is correct only when we know the org's country — never in the universal base. Grounded seeds rather
+ * than exhaustive. extend per ISO 20275.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang

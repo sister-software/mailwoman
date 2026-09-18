@@ -18,7 +18,7 @@
  *
  *   Postcodes are real codes drawn from the panel, but a crossed pairing denotes no place. No coordinate is claimed
  *   for it, and the grade is only whether the locality the row was given came back. The result is therefore about what
- *   the decode conditions on, not about the world.
+ *   the decode conditions on rather than about the world.
  *
  *   The arms geocode in place rather than through a written panel. `readCoordPanel` keys on (country, region,
  *   locality), and the grid's arms differ only in the postcode, so routing them through a panel file collapses each

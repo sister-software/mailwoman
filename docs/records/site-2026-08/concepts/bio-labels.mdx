@@ -108,7 +108,7 @@ Neither is what the data wants: `B-locality, I-locality`.
 
 ## How Mailwoman fixes this
 
-The fix is decode-time, not learned. A fixed **BIO-validity table** pins the impossible transitions — `O → I-X`, `B-X → I-Y` where `X ≠ Y` — to negative infinity, and the **Viterbi algorithm** searches for the highest-scoring label sequence that respects the table, rather than picking each token's label independently. The orphan-I is structurally excluded: there's no valid path through it.
+The fix is decode-time rather than learned. A fixed **BIO-validity table** pins the impossible transitions — `O → I-X`, `B-X → I-Y` where `X ≠ Y` — to negative infinity, and the **Viterbi algorithm** searches for the highest-scoring label sequence that respects the table, rather than picking each token's label independently. The orphan-I is structurally excluded: there's no valid path through it.
 
 The result: a model that is uncertain about "Saint" between `O` and `B-locality` will still produce a structurally valid sequence at decode time. "Saint Petersburg" comes out as one locality span. See [CRF decoder](./crf-decoder.mdx) for why this is narrower than a full learned CRF, and what that page's name still refers to.
 

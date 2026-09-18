@@ -62,7 +62,7 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 }
 
 /**
- * The script families a component value can be written in, for the dual-script comparison below. Grouped, not
+ * The script families a component value can be written in, for the dual-script comparison below. Grouped rather than
  * per-Unicode-script: Han, the two kana and Hangul are one family, because a single Japanese rendering routinely mixes
  * Han and kana within one word (`表参道ヒルズ`) and splitting on that boundary would shred one rendering into three.
  * Latin/Cyrillic — the pair the Mongolian rows are written in — is the case this exists for.
@@ -130,7 +130,7 @@ export function scriptRenderings(value: string): string[] {
 		}
 
 		if (charFamily === family) {
-			// Same family across the gap — the neutrals were interior, not a joiner. Keep them.
+			// Same family across the gap — the neutrals were interior rather than a joiner. Keep them.
 			chars.push(...pending, char)
 		} else {
 			if (chars.length) {
@@ -218,7 +218,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	// The ABSTAIN contract (#1585): the row's expected outcome is no coordinate, so the grade inverts —
 	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate. a row carrying both
-	// is an authoring bug that must be loud, not a precedence question.
+	// is an authoring bug that must be loud rather than a precedence question.
 	if (c.expect_abstain) {
 		if (c.expect_lat != null || c.expect_lon != null) {
 			throw new Error(`case ${c.id}: expect_abstain and expect_lat/expect_lon are mutually exclusive`)

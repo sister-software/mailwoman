@@ -94,7 +94,7 @@ export function documentWindow(html: string): string {
 
 - [ ] **Step 3: Strip list markers before splitting a candidate line**
 
-A leading bullet or list marker is markup, not part of a name. Strip `/^[•●▪◦∙·*–—-]+\s*/` from a candidate line before the name/jurisdiction split runs, so `"•  Bandwidth.com CLEC, LLC (Delaware, United States)"` becomes `"Bandwidth.com CLEC, LLC (Delaware, United States)"` and the existing trailing-parenthetical rule yields `{name: "Bandwidth.com CLEC, LLC", jurisdiction: "Delaware, United States"}` rather than `{name: "•", jurisdiction: …}`. A line consisting only of markers is blank after stripping and is skipped, not counted.
+A leading bullet or list marker is markup rather than part of a name. Strip `/^[•●▪◦∙·*–—-]+\s*/` from a candidate line before the name/jurisdiction split runs, so `"•  Bandwidth.com CLEC, LLC (Delaware, United States)"` becomes `"Bandwidth.com CLEC, LLC (Delaware, United States)"` and the existing trailing-parenthetical rule yields `{name: "Bandwidth.com CLEC, LLC", jurisdiction: "Delaware, United States"}` rather than `{name: "•", jurisdiction: …}`. A line consisting only of markers is blank after stripping and is skipped rather than counted.
 
 - [ ] **Step 4: Recognize document titles and section headings as non-entities**
 
@@ -121,7 +121,7 @@ const MAX_ENTITY_NAME_WORDS = 12
 
 A candidate whose whitespace-separated token count exceeds this is counted in `unparseable` and dropped. Two real cases: Shenandoah's preamble sentence ("The following are all measured subsidiaries of Shenandoah Telecommunications Company, and are organized in the Commonwealth of Virginia.", 20 tokens) and `alti-global-2025.htm`, whose markup separates entries with nothing but a double space — its five text runs are 20-to-90-token concatenations of several entity names, and no split rule can recover the boundaries without inventing them. The longest legitimate name in the corpus is `"Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"` at 8 tokens.
 
-`alti-global-2025.htm` is therefore expected to yield zero subsidiaries and a non-zero `unparseable`. That is the correct answer for that document, not a gap.
+`alti-global-2025.htm` is therefore expected to yield zero subsidiaries and a non-zero `unparseable`. That is the correct answer for that document rather than a gap.
 
 - [ ] **Step 6: Run the suites**
 
@@ -132,7 +132,7 @@ Expected: `exhibit21.test.ts` fully green (no existing assertion may be changed)
 
 ```bash
 git add filer/sdk/exhibit21.ts
-git commit -m "fix(filer): parse the exhibit, not EDGAR's SGML envelope around it"
+git commit -m "fix(filer): parse the exhibit rather than EDGAR's SGML envelope around it"
 ```
 
 ---
@@ -159,7 +159,7 @@ git commit -m "fix(filer): parse the exhibit, not EDGAR's SGML envelope around i
 | A real third column makes the row abstain                                      | `att-2025.htm` (adds "Conducts Business Under"), `atn-international-2025.htm` (adds "Other name(s) under which entity does business"), `echostar-2025.htm` (adds "% of Ownership" and "Name Doing Business As").                                                 |
 | Footnote tables read as subsidiary rows                                        | `widepoint-2025.htm` table 2 is `[(1), "In January 2019, WidePoint Solutions Corp. was merged into…"]`; `echostar-2025.htm` has four such tables.                                                                                                                |
 
-- [ ] **Step 1: Read all top-level tables, not the outermost one**
+- [ ] **Step 1: Read all top-level tables rather than the outermost one**
 
 Replace `extractOutermostTableHTML` with a function returning every depth-0 `<table>…</table>` block in document order. Nesting handling is unchanged: a table nested inside a cell belongs to its parent and is not returned separately, and an unclosed final table still yields everything after its opening tag. Rows are then classified per table, and the results concatenated.
 
@@ -196,7 +196,7 @@ The mapping CARRIES FORWARD to subsequent sibling top-level tables until another
 Two rules govern what happens when the mapped name column is blank on a row:
 
 1. **Indented corporate tree.** If the mapped name column is blank, take the first non-blank column strictly BETWEEN the name column and the jurisdiction column. Telephone and Data Systems indents each subsidiary one column right of its parent — `["", "ADI FINANCIAL, LLC", "", "ILLINOIS"]` under a header of `["SUBSIDIARY COMPANIES", "", "STATE OF ORGANIZATION"]` — and 132 of its 183 subsidiaries sit on such rows. The nesting depth is discarded (an Exhibit 21 row becomes a registrant→subsidiary edge either way); the name itself is not in doubt, because the header says the jurisdiction is to its right. A row like `["", "Delaware", ""]` under a mapping whose jurisdiction column is index 1 has no column between 0 and 1 and still abstains.
-2. **Otherwise fall through**, not abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately — a ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
+2. **Otherwise fall through** rather than abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately — a ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
 
 Add a hand-written indented-tree case to `exhibit21.test.ts` covering rule 1 — a 4-row table with a two-column header, one top-level row and two indented rows — plus the `["", "Delaware", ""]` counter-case that must still abstain. TDS itself is 176 KB and is not vendored.
 
@@ -306,7 +306,7 @@ it("finds exactly one EX-21 among the filing's 162 documents, with an absolute U
 	])
 })
 
-it("reads every document in the manifest, not only the exhibits", () => {
+it("reads every document in the manifest rather than only the exhibits", () => {
 	const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
 	expect(documents.length).toBe(162)
@@ -340,7 +340,7 @@ it("skips a block missing a FILENAME rather than emitting a URL ending in a slas
 })
 ```
 
-Note the last three. A filing with no Exhibit 21 is ordinary, not exceptional — in the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession carries none. This differs from `parseCompanyTickers`/`parseTenKFilings`, which throw on a malformed payload because those are SEC's own documented API shapes; an absent exhibit is the filer's choice, not an upstream contract break. Say so in the docstring.
+Note the last three. A filing with no Exhibit 21 is ordinary rather than exceptional — in the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession carries none. This differs from `parseCompanyTickers`/`parseTenKFilings`, which throw on a malformed payload because those are SEC's own documented API shapes; an absent exhibit is the filer's choice rather than an upstream contract break. Say so in the docstring.
 
 - [ ] **Step 2: Run them to verify they fail**
 
@@ -364,7 +364,7 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 
 - [ ] **Step 4: Add the fetching pair**
 
-`fetchExhibit21Documents(client, filing)` fetches `${accessionArchiveURL(filing.cik, filing.accessionNumber)}/${filing.accessionNumber}-index-headers.html` through `client.getDocument` and returns `findExhibit21Documents(...)` over the body. Take `SECDocumentClient` (the one-method structural type), not the concrete client — same rationale as everywhere else in this file, and a test then needs no axios harness.
+`fetchExhibit21Documents(client, filing)` fetches `${accessionArchiveURL(filing.cik, filing.accessionNumber)}/${filing.accessionNumber}-index-headers.html` through `client.getDocument` and returns `findExhibit21Documents(...)` over the body. Take `SECDocumentClient` (the one-method structural type) rather than the concrete client — same rationale as everywhere else in this file, and a test then needs no axios harness.
 
 - [ ] **Step 5: Run the suites**
 
@@ -440,7 +440,7 @@ The second test is the one that matters: it is the 3a false-identity-link lesson
 - [ ] **Step 2: Run them to verify the first and third fail**
 
 Run: `yarn vitest run filer/sdk/edgar-filings.test.ts`
-Expected: the share-class tests fail (3 candidates, not 1); the actual-tie test passes already.
+Expected: the share-class tests fail (3 candidates rather than 1); the actual-tie test passes already.
 
 - [ ] **Step 3: Implement**
 

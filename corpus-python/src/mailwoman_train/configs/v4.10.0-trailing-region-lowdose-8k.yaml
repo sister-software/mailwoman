@@ -6,7 +6,7 @@
 #   v4.8.0  32,125 rows,  9.4% share   7 improved / 25 regressed — 12 venue-led
 #   v4.9.0  31,815 rows,  9.4% share   11 improved / 31 regressed — 15 venue-led, +7 bare-street
 #
-# v4.9.0 fixed a real data defect (GeoNames column 3 is a street, not the city) and its target country
+# v4.9.0 fixed a real data defect (GeoNames column 3 is a street rather than the city) and its target country
 # moved — IN went 2 improved / 0 regressed. It still graded WORSE overall, and the way it got worse is
 # the finding: adding a dependent locality moved the "first named segment" binding from `locality` to
 # `dependent_locality`, so bare-street rows started reading as dependent localities (`Calle de Alcala`,
@@ -23,7 +23,7 @@
 # WHAT THIS RUN CAN CONCLUDE. If the regressions scale down and IN's two improvements survive, the
 # recipe output is shippable at low reps. If the regressions persist at a third the exposure, exposure is not the
 # change and the recipe needs venue/street rows before it can ship at all — which is a corpus-authoring
-# task, not an exposure sweep, and the right place to stop.
+# task rather than an exposure sweep, and the right place to stop.
 #
 # Why v4.8.0 failed, measured rather than guessed. It graded 7 improved / 25 regressed on the 649-row
 # board, and 11 of the 25 were VENUE-LED rows across seven countries:
@@ -58,7 +58,7 @@
 #   1. the 11 venue-led rows v4.8.0 regressed must all hold — that is the defect this run exists to fix;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the full board;
-#   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric, not the check.
+#   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric rather than the check.
 #
 # What v4.7.0 got wrong, and it was not the exposure. Its recipe emitted the postcode only at the HEAD
 # (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
@@ -128,7 +128,7 @@
 # PRE-REGISTERED CHECK (set before the run):
 #   1. the conditional fraction does not lose a row;
 #   2. FR and DE show no regression anywhere - iron rule 6, the D-rule;
-#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric, not the check;
+#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric rather than the check;
 #   4. WATCH: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
 #      placement change are separable - re-run with the 25-country map to attribute.
 

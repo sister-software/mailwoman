@@ -262,7 +262,7 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
    that prompt is gone. The script now inherits stdio so the npm CLI runs its own auth
    handshake (printing an approval URL for a hardware security key, or prompting for a
    code itself). Should another interactive prompt appear, the reasoning still holds:
-   spliterator is a byte-range splitter, not a line-editor, and such a site would be
+   spliterator is a byte-range splitter rather than a line-editor, and such a site would be
    excluded from the migration.
 
 4. **`split.ts` write path.** `corpus/src/split.ts:219` uses `createInterface` for
@@ -282,7 +282,7 @@ For each phase, verify:
 ## Execution notes (2026-07-08)
 
 Executed by five parallel agents over disjoint file sets, against a pre-flight API audit of the
-installed spliterator v3.1.0 (live probes, not docs). Everything above marked "corrected" or
+installed spliterator v3.1.0 (live probes rather than docs). Everything above marked "corrected" or
 "superseded" came out of that audit. The deltas that mattered:
 
 ### API facts the plan missed (probed)
@@ -310,9 +310,9 @@ installed spliterator v3.1.0 (live probes, not docs). Everything above marked "c
 
 ### Inventory corrections
 
-- `corpus/src/adapters/gnaf/adapter.ts` is a JSONL reader, not pipe-delimited — the PSV reader is
+- `corpus/src/adapters/gnaf/adapter.ts` is a JSONL reader rather than pipe-delimited — the PSV reader is
   `assemble.ts`, which already used `PSVSpliterator` before this migration.
-- `scripts/eval/gauntlet/holdout.ts` is semicolon-delimited CSV, not JSONL.
+- `scripts/eval/gauntlet/holdout.ts` is semicolon-delimited CSV rather than JSONL.
 
 ### The doc's stated risks, resolved
 
@@ -329,7 +329,7 @@ warm cache, Node 26.2.0): spliterator v2 measured **0.45×** readline; v3.1.0 me
 **0.91–0.92×** (readline 0.52–0.53M rows/s, spliterator 0.48M rows/s, checksums identical). The
 rewrite roughly doubled v2's throughput; the residual ~8% deficit is the price of the fd-lifecycle
 
-- dependency-surface wins, not a blocker.
+- dependency-surface wins rather than a blocker.
 
 ### Upstream spliterator issues to file
 

@@ -40,7 +40,7 @@ The model learns the frequency-dominant pattern (Washington = region) because th
 
 ## BIO boundaries are correct
 
-The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This is structurally correct — they are separate entities separated by comma+space (O-tokens). The CRF transition mask is working. The problem is tag assignment on the first entity, not boundary detection.
+The model emits `B-region` for "Washington" and a separate `B-region` for "DC" (not `I-region`). This is structurally correct — they are separate entities separated by comma+space (O-tokens). The CRF transition mask is working. The problem is tag assignment on the first entity rather than boundary detection.
 
 ## Fix plan (priority order)
 
@@ -113,7 +113,7 @@ regionAbbreviations?: Array<{ start: number; span: string }>
 
 Detected at Stage 2.5 alongside format-hit scorers (regex: `/,\s*[A-Z]{2}\b/` for en-us). In `buildEmissionPriors`, for each detected abbreviation, bias preceding WOF-verified locality tokens toward `B-locality` / `I-locality`.
 
-This fits the bitter-lesson framing test: the regex is locale-bounded (one pattern per locale's abbreviation convention), not a gazetteer lookup. The WOF verification is a safety rail, not the primary signal.
+This fits the bitter-lesson framing test: the regex is locale-bounded (one pattern per locale's abbreviation convention) rather than a gazetteer lookup. The WOF verification is a safety rail rather than the primary signal.
 
 ## See also
 

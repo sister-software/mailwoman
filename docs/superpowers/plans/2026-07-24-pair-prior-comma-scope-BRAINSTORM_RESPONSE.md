@@ -3,7 +3,7 @@
 **Date:** 2026-07-24 · **Re:** `2026-07-24-pair-prior-comma-scope-KIMI_HANDOFF.md` · **From:** pi
 (claude), brainstorming in-repo against `task-8-report.md` receipts and the shipped
 `neural/placetype-pair-prior.ts` / `pair-index-resolver.ts` sources. Every mechanism claim below
-was verified against the code, not the docstrings alone.
+was verified against the code rather than the docstrings alone.
 
 ## The one structural finding that reshapes the answer set
 
@@ -35,7 +35,7 @@ that engages only where segment mode is structurally inert:
 ```
 probeChain (per parse, en-gb-conditional as today):
   1. SEGMENT path — current code, untouched. Engages when ≥2 comma segments exist.
-     Byte-stability on all comma'd inputs: identical by construction, not by measurement.
+     Byte-stability on all comma'd inputs: identical by construction rather than by measurement.
   2. ANCHORED-ADJACENT path — only when step 1 produced <2 windows (comma-free input,
      i.e. today's deterministic zero-matrix population; any bias here is strictly additive
      against a zero baseline, so byte-stability outside the target population is trivial).
@@ -63,11 +63,11 @@ dual-key forms, and `applyWindowBias` verbatim — the delta is candidate SELECT
 Probe cost: ≤3 parent windows × ≤3 child windows × ≤4 key forms ≈ ≤36 index probes, only on
 comma-free en-gb inputs. Per-parse milliseconds constraint untouched.
 
-**Why this should land near segment mode's FP profile, not window mode's:** enumerate the
+**Why this should land near segment mode's FP profile rather than window mode's:** enumerate the
 confound anatomy. (a) Venue-embedded child at string start (`Queens Park Cafe, …`): the child text
 is never immediately left of the post-town anchor — street text intervenes — so the adjacency rule
 removes the entire dominant FP class by construction. (b) Street-embedded child mid-string
-(`… Queens Park Academy Chestnut Avenue …`): same, not adjacent to the anchor. (c) The residual
+(`… Queens Park Academy Chestnut Avenue …`): same rather than adjacent to the anchor. (c) The residual
 class — street field verbatim-equal to a census child, sitting immediately before the locality
 (`…, Queens Park, Chester`): fires, exactly as segment mode already does as-written (the 217/6500
 = 3.338% documented floor). Expected venue-FP: ≈ segment's floor, 3–5%, versus window mode's
@@ -98,7 +98,7 @@ anchor for the same adjacent-pair probe (veto-free, anchor-only). That uses the 
 position, never for boundaries, and keeps fail-silent semantics (no confident locality → zero
 matrix → today's behavior).
 
-## Q2 — positional asymmetry: yes, and it is the primary mechanism, not a refinement
+## Q2 — positional asymmetry: yes, and it is the primary mechanism rather than a refinement
 
 Exploit it exactly as the anchored mode does: probe only pairs where the parent occupies the
 post-town position (pre-postcode or string-final) and the child immediately precedes it. The
@@ -113,7 +113,7 @@ conditional, separately measured tier — do not loosen the default.
 
 ## Q3 — per-pair δ by child-name specificity: real, but second-order; bucket, don't fit
 
-The FP problem is positional, not magnitude-driven (δ=8 window still 53.5% FP; δ changes recall
+The FP problem is positional rather than magnitude-driven (δ=8 window still 53.5% FP; δ changes recall
 AND FP together — the curves don't separate under δ alone), so specificity weighting cannot
 substitute for the anchor check. As a COMPLEMENT it's worth building, with the cheapest defensible
 estimator:
@@ -122,7 +122,7 @@ estimator:
   CITY occurrences (already on disk, 9M rows, same source as the index) and `df_venue` = FSA
   establishment-name token occurrences + OSM/Overture street+poi name occurrences (both on disk —
   the task-6 fetch script and `mailwoman-data/{osm,overture,poi}`).
-- **Three tiers, not a continuous formula:** place-only (multiplier 1.0) / mixed (0.7) /
+- **Three tiers rather than a continuous formula:** place-only (multiplier 1.0) / mixed (0.7) /
   venue-heavy (0.4). Coarse buckets resist overfitting, each boundary is one pre-registerable
   knob, and the artifact header already carries `delta` — per-pair δ is a PIX1 schemaVersion-2
   record extension (u8 tier per pair, reader maps tier→multiplier), fully backward-compatible.
@@ -160,7 +160,7 @@ positional uses of the lexicon — evidence about where compounds end — not sh
 the candidate itself. Build only on measured need, one lexicon entry-class at a time, each with
 its own rationale line, per the module's own widening discipline.
 
-## Q6 — ASR contextual biasing: the transplantable piece is the trie, not the subtraction
+## Q6 — ASR contextual biasing: the transplantable piece is the trie rather than the subtraction
 
 The subtractive-cost trick has no clean analogue here for a required reason: it exists to
 charge back boosts granted to PREFIXES of a hypothesis that later leaves the trie. Our flat

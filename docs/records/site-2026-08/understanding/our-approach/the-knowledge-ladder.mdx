@@ -79,7 +79,7 @@ The classifier then conditions on these proposals. Instead of discovering bounda
 
 The information at this layer is **purely structural**: token proximity, punctuation, capitalization, hyphenation, format-shape repetition. The same set of cues v1's rule-based parser used. A rule-based phrase grouper would be a port of v1's section/sub-section logic; a learned phrase grouper would be a small (1-2M param) span proposer trained on segment boundaries from corpus.
 
-This is a separate concern from "is this span a postcode?" The grouper's question is "do these tokens belong together?" — boundary-finding, not typing.
+This is a separate concern from "is this span a postcode?" The grouper's question is "do these tokens belong together?" — boundary-finding rather than typing.
 
 ### Token classify — per-token semantic type
 
@@ -105,7 +105,7 @@ Three properties make this the right home for "the model should know place names
 
 - **It is not overfitting — the knowledge lives outside the weights.** Add a place to
   the gazetteer tomorrow and the clue fires with no retrain. The model learns to _use_
-  the clue, not to memorize the list. (The same instinct aimed at the tokenizer — put
+  the clue rather than to memorize the list. (The same instinct aimed at the tokenizer — put
   every country and city in the token vocabulary — fights the tokenizer's job: it
   balloons the embedding table, destroys subword generalization on unseen places, and
   a single vocab id still carries no disambiguating context. Keep the subword
@@ -113,11 +113,11 @@ Three properties make this the right home for "the model should know place names
 - **The multi-hot encoding gives homograph awareness for free.** A token whose
   candidate set has more than one entry ("Georgia" → `[country, region]`) is _flagged as
   ambiguous by construction_ — the model learns "context decides here."
-- **The over-reliance risk is handled by training, not architecture.** The measured
+- **The over-reliance risk is handled by training rather than architecture.** The measured
   failure mode of closed-vocab tags is a model that echoes a cheap correlation (the
   country retrain that learned "trailing token ⇒ country"). Homograph-contrast
   training rows — the same surface labeled `country` in one context and `region` in
-  another, clue firing both times — teach the model the clue is a hint, not a verdict.
+  another, clue firing both times — teach the model the clue is a hint rather than a verdict.
   Measured on the country change: balanced contrast data alone took country from 0 to
   alive at **perfect precision and zero over-fire**; the anchor's remaining job is
   long-tail recall (the model can't recognize "Eswatini" from three training
@@ -212,7 +212,7 @@ freely when the decoder owns sequence structure.
 One later episode completes the story: when affix recall hit a hard ceiling at 29M params,
 the capacity hypothesis was probe-laddered and falsified (a 48M model landed at the
 identical equilibrium) — the cause was a 1,000:1 label contradiction in the corpus, fixed
-by relabeling, not architecture ([#492](https://github.com/sister-software/mailwoman/issues/492) →
+by relabeling rather than architecture ([#492](https://github.com/sister-software/mailwoman/issues/492) →
 [#511](https://github.com/sister-software/mailwoman/issues/511)). The ladder lesson
 generalizes: when a rung underperforms, audit what the data teaches it before resizing it.
 

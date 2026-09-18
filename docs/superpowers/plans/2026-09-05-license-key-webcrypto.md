@@ -40,7 +40,7 @@
 | `packages/core/lib/license/trusted-keys.ts` (delete)                                    | replaced by the register                                                                                                                      |
 | `packages/core/lib/license/configured.ts` (modify)                                      | async; reads the register                                                                                                                     |
 | `packages/core/lib/license/publication.ts` (modify)                                     | imports `PublishedLicenseKeys` from the register                                                                                              |
-| `packages/core/lib/license/index.ts` (modify)                                           | exports the register, not trusted-keys                                                                                                        |
+| `packages/core/lib/license/index.ts` (modify)                                           | exports the register rather than trusted-keys                                                                                                 |
 | `packages/core/package.json` (modify)                                                   | `./license/key`, `./license/register` exports; `esbuild` devDependency                                                                        |
 | `packages/core/test/unit/crypto/ed25519.test.ts`, `base64url.test.ts` (create)          | the primitives                                                                                                                                |
 | `packages/core/test/unit/license/key.test.ts`, `register.test.ts` (modify/create)       | async key tests, the legacy fixture, the register derivations                                                                                 |
@@ -240,7 +240,7 @@ describe("Ed25519 on WebCrypto", () => {
 		expect(await verifyEd25519(new Uint8Array([1]), pair.publicKeyPEM, signature)).toBe(false)
 	})
 
-	it("answers false, not a throw, for a signature of the wrong length", async () => {
+	it("answers false rather than a throw, for a signature of the wrong length", async () => {
 		expect(await verifyEd25519(bytes, fixture.publicKeyPEM, new Uint8Array(3))).toBe(false)
 	})
 
@@ -915,7 +915,7 @@ export interface PublishedLicenseKeys {
 }
 
 const WELL_KNOWN_COMMENT =
-	"The public halves of the commercial license signing keys, by key id, with each key's status. `mailwoman doctor --online` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. This file is derived from packages/core/lib/license/register.ts by `mailwoman license register --write`; edit the register, not this file."
+	"The public halves of the commercial license signing keys, by key id, with each key's status. `mailwoman doctor --online` and `mailwoman license verify --online` read this to confirm a configured key's id is still active; offline verification uses the same keys shipped in @mailwoman/core/license. This file is derived from packages/core/lib/license/register.ts by `mailwoman license register --write`; edit the register rather than this file."
 
 export function publishedLicenseKeys(): PublishedLicenseKeys {
 	return {

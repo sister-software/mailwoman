@@ -30,7 +30,7 @@ French postcodes are particularly dangerous: `06130` (Grasse, département 06) a
 
 ### "A postcode maps to a single city."
 
-ZIP code 33334 covers three cities: Oakland Park, Wilton Manors, and Fort Lauderdale — all in Florida. USPS assigns ZIP codes to delivery routes, not municipal boundaries. A postcode-to-city lookup table that returns one city per postcode will be wrong for a measured fraction of US addresses.
+ZIP code 33334 covers three cities: Oakland Park, Wilton Manors, and Fort Lauderdale — all in Florida. USPS assigns ZIP codes to delivery routes rather than municipal boundaries. A postcode-to-city lookup table that returns one city per postcode will be wrong for a measured fraction of US addresses.
 
 The reverse is also true: a single city can have dozens of postcodes. New York City has about 170 ZIP codes. London has hundreds of postcode districts. "New York, NY" without a ZIP is specific to the city but not to any delivery point within it.
 
@@ -38,7 +38,7 @@ The reverse is also true: a single city can have dozens of postcodes. New York C
 
 The Empire State Building has its own ZIP code: `10118`. In the UK, alphanumeric postcodes typically cover ~15 addresses — effectively point-level resolution. The DVLA in Swansea uses `SA99 1BA` for V5C processing and `SA99 1AB` for driving licenses — different postcodes for different departments in the same building. The London Borough of Enfield uses five postcodes for five departments.
 
-Conversely, some postcodes cover large populations: UK postcode `CV4 7AL` serves the entire University of Warwick — 6,000 students living on campus plus staff. French postcode `75015` covers the XVth arrondissement of Paris with over 230,000 people. The granularity of a postcode tells you about the postal service's delivery structure, not about the density of the area.
+Conversely, some postcodes cover large populations: UK postcode `CV4 7AL` serves the entire University of Warwick — 6,000 students living on campus plus staff. French postcode `75015` covers the XVth arrondissement of Paris with over 230,000 people. The granularity of a postcode tells you about the postal service's delivery structure rather than about the density of the area.
 
 ### "The user knows their postcode."
 
@@ -48,7 +48,7 @@ Misreading handwritten postcodes is a common failure mode. A human writes `SW1A 
 
 ### "Every address has a postcode."
 
-Ireland did not have postcodes until Eircode launched in 2015. Hong Kong does not use postcodes for domestic mail. Rural addresses in several countries use descriptive directions instead of postcodes. Military addresses use APO/FPO codes that route through military postal hubs, not geographic locations.
+Ireland did not have postcodes until Eircode launched in 2015. Hong Kong does not use postcodes for domestic mail. Rural addresses in several countries use descriptive directions instead of postcodes. Military addresses use APO/FPO codes that route through military postal hubs rather than geographic locations.
 
 Some countries have postcodes for parts of the country but not others. Some have postcodes that are assigned to delivery routes rather than geographic areas and are not published.
 
@@ -62,7 +62,7 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 **libpostal** uses a regex-based `postcode` classifier with per-country patterns. `\d{5}` for US, `\d{5}` for France (same pattern, different semantics), `[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}` for UK. The classifier is deterministic and correct for the formats it covers — but adding a new country requires adding a new regex. The project has stalled since ~2018, so postcode formats introduced after 2018 (Eircode) are not covered.
 
-**Pelias** uses a similarly regex-based approach with per-country postcode patterns in its `postalcode` classifier. Pelias also uses the postcode to bias the resolver: if the postcode matches a known administrative area, the resolver weights candidates within that area higher. This is the right approach — the postcode is supplementary evidence, not a primary locator — but it requires maintaining a postcode-to-place mapping that drifts with postal service updates.
+**Pelias** uses a similarly regex-based approach with per-country postcode patterns in its `postalcode` classifier. Pelias also uses the postcode to bias the resolver: if the postcode matches a known administrative area, the resolver weights candidates within that area higher. This is the right approach — the postcode is supplementary evidence rather than a primary locator — but it requires maintaining a postcode-to-place mapping that drifts with postal service updates.
 
 **Google's API** handles postcodes as part of its integrated geocoding model. The API returns address components including postcode and uses the postcode as a search-space constraint. Google's coverage of international postcode formats is complete, but the user cannot inspect or correct the postcode-to-place mapping.
 
@@ -70,9 +70,9 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 **The locale check (Stage 2)** detects the address's country or script family before classification. A UK-formatted address routes to a UK postcode pattern expectation. A Canadian address routes to a Canadian pattern. The classifier does not need to try every global postcode regex on every input — the locale check narrows the format space.
 
-**The classifier (Stage 3)** learns postcode patterns from corpus co-occurrence. A 5-digit number after a US state abbreviation and before the end of the address is a ZIP code. A 5-digit number before a French locality name is also a postcode — just in a different position. The model learns the positional distribution, not the regex. This means it can handle new postcode formats that appear in training data without new regexes.
+**The classifier (Stage 3)** learns postcode patterns from corpus co-occurrence. A 5-digit number after a US state abbreviation and before the end of the address is a ZIP code. A 5-digit number before a French locality name is also a postcode — just in a different position. The model learns the positional distribution rather than the regex. This means it can handle new postcode formats that appear in training data without new regexes.
 
-**The resolver (Stage 6)** treats the postcode as a search-space constraint, not a primary locator. When the postcode is present, the resolver limits gazetteer lookups to the postcode's rough administrative area. When the postcode is absent, the resolver searches the full gazetteer and returns lower-confidence candidates. The postcode is supplementary evidence — the resolver does not drop to postcode-only geocoding unless nothing else is available.
+**The resolver (Stage 6)** treats the postcode as a search-space constraint rather than a primary locator. When the postcode is present, the resolver limits gazetteer lookups to the postcode's rough administrative area. When the postcode is absent, the resolver searches the full gazetteer and returns lower-confidence candidates. The postcode is supplementary evidence — the resolver does not drop to postcode-only geocoding unless nothing else is available.
 
 **The reconciler (Stage 5)** catches the leading-zero problem indirectly: if a postcode is stripped of its leading zero (e.g., `06130` → `6130`), the WOF resolver's concordance check will fail because the parent chain for département 61 does not contain Grasse. The reconciler surfaces the ambiguity rather than silently accepting the wrong postcode.
 
@@ -86,6 +86,6 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 - [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.mdx)
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
-- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions, not geographic areas
+- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions rather than geographic areas
 - [What is a ZIP Code and how is it structured?](../../the-problem/what-is-a-zip-code.mdx) — the US 11-digit system in detail
 - [The database fallacy](../the-database-fallacy.mdx) — why postcode-to-place mappings are never complete

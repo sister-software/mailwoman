@@ -62,7 +62,7 @@ export const SyncAction = {
 	 */
 	RefuseLocalCommits: "refuse-local-commits",
 	/**
-	 * A directory exists but is not a git checkout — an extracted archive, not something to fetch into.
+	 * A directory exists but is not a git checkout — an extracted archive rather than something to fetch into.
 	 */
 	RefuseNotAClone: "refuse-not-a-clone",
 } as const
@@ -198,7 +198,7 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 		}
 	}
 
-	// Compared against ORIGIN's branch, not `@{u}`. `git remote rename origin upstream` rewrites `branch.<name>.remote`,
+	// Compared against ORIGIN's branch rather than `@{u}`. `git remote rename origin upstream` rewrites `branch.<name>.remote`,
 	// so after a re-point the tracked upstream is the remote we moved AWAY from — and a clone sitting exactly level with
 	// its fork reports as carrying unpushed commits, which the planner then refuses to touch. Measured on the GB
 	// checkout the moment the re-point landed: `HEAD...@{u}` answered `35 0` while `HEAD` and `origin/master` were the

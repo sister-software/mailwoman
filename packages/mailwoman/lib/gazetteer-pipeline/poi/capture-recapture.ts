@@ -15,9 +15,9 @@
  *   Two disciplines are wired in rather than left to the caller, because both control the direction the
  *   number is wrong in:
  *
- *   1. **The recorded value is a lower confidence bound, not a point estimate.** `N̂` sits in the
+ *   1. **The recorded value is a lower confidence bound rather than a point estimate.** `N̂` sits in the
  *      denominator, so the conservative completeness comes from the UPPER end of `N̂`'s interval.
- *   2. **The protocol is a grid, not a threshold.** A single match rule makes the completeness an artifact
+ *   2. **The protocol is a grid rather than a threshold.** A single match rule makes the completeness an artifact
  *      of one threshold choice; {@link completenessAcrossProtocols} runs a pre-registered grid and reports
  *      the weakest bound any of them supports.
  *
@@ -26,7 +26,7 @@
  *   high street against a single pharmacy on a village lane — then `m` runs high, `N̂` runs low, and
  *   completeness runs HIGH. That is the direction that turns a data gap into confident negative evidence,
  *   so the estimate bounds sampling error only. Breadth past a pilot needs a third source or an
- *   authoritative register, not a wider run of this.
+ *   authoritative register rather than a wider run of this.
  */
 
 import { foldName } from "@mailwoman/codex/normalize"
@@ -140,13 +140,13 @@ export interface CapturePair {
 /**
  * One-to-one greedy assignment over the accepted pairs, best first (highest similarity, then closest).
  *
- * One-to-one is required, not tidiness: `m` is a count of AGREEMENTS between two inventories, so letting one row of the
- * first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and inflates
- * completeness — again in the direction that turns a gap into negative evidence.
+ * One-to-one is required rather than tidiness: `m` is a count of AGREEMENTS between two inventories, so letting one row
+ * of the first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and
+ * inflates completeness — again in the direction that turns a gap into negative evidence.
  *
  * The candidate scan is quadratic in the two inputs. That is deliberate at pilot scale (a few thousand rows a side, a
  * few seconds) and is the wrong shape for a region an order of magnitude larger. the spatial pre-bucket that fixes it
- * belongs with the breadth work, not ahead of the basis review.
+ * belongs with the breadth work rather than ahead of the basis review.
  */
 export function matchInventories(
 	first: readonly CaptureRow[],

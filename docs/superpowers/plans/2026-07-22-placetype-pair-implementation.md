@@ -1,6 +1,6 @@
 # Placetype-pair prior — implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Design authority: `2026-07-22-placetype-census-bias.md` (rev 2) + Kimi feedback. Every contract below was recon-verified against HEAD (`.superpowers/sdd/` recon report) — line refs are verified, not Kimi's estimates.
+> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Design authority: `2026-07-22-placetype-census-bias.md` (rev 2) + Kimi feedback. Every contract below was recon-verified against HEAD (`.superpowers/sdd/` recon report) — line refs are verified rather than Kimi's estimates.
 
 **Goal:** Ship the placetype-pair emission prior end to end: PIX1 pair-index artifact (GB) → sixth emission prior in `classifier.ts#decode` → falsifier boards → calibrated δ + full battery → `@mailwoman/neural-weights-en-gb` ship train.
 
@@ -92,7 +92,7 @@ Note: the runtime country context = the locale the weights resolved for (en-gb �
 
 ### Task 7: δ calibration + full battery + checkpoint matrix
 
-- δ_gb calibrated on held-out register rows (sweep at the calibrated candidate ±; the rung-3 δ=6.0 is the prior expectation, not the answer); frozen-scale header written with date + numbers; builder re-run with the final δ.
+- δ_gb calibrated on held-out register rows (sweep at the calibrated candidate ±; the rung-3 δ=6.0 is the prior expectation rather than the answer); frozen-scale header written with date + numbers; builder re-run with the final δ.
 - Checkpoint matrix: feed-2k vs feed-8k (peer options) × prior ON — full battery each: golden us/fr ±0.7pp, bare-locality ≥0.90, digit adjudication, 4 dep-loc boards (full pipeline), presets byte-identical for non-GB, val ±1.0pp, 2pp error-analysis, gauntlet. **cRT probe (v3.12.0, running) folds in here** — if its 8k held emission, it joins the matrix as a third checkpoint candidate.
 - `runtime-flags.mdx` row + the surface-audit paragraph (which public surfaces ride Viterbi; `parseWithLogits` raw contract).
 
@@ -104,7 +104,7 @@ Note: the runtime country context = the locale the weights resolved for (en-gb �
 
 ## Pre-registered acceptance
 
-As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout numbers; plus: Task 5's en-gb parse smoke green; trace snapshot test green with the new kind; non-GB byte-identity proven by test, not assertion.
+As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout numbers; plus: Task 5's en-gb parse smoke green; trace snapshot test green with the new kind; non-GB byte-identity proven by test rather than assertion.
 
 ### Task 9: Paired-punctuation audit — quotes, brackets, braces, parens (final task)
 
@@ -112,7 +112,7 @@ As rev-2 design §acceptance, with bars re-anchored to Task 6.3's holdout number
 
 **Explicit cases (table-driven, fixture tier + skipIf-production tier per the Task-4 pattern):** `"The Grange", Fishburn, Stockton-on-Tees` (quoted venue); `12 High St (rear entrance), Leeds` (parenthetical aside); `Unit 4 [Block B]` (bracketed designator); braces; curly vs straight quotes (what does NFKC map?); guillemets «»; UNBALANCED pairs (fail-open, never crash, never drop).
 
-**Checks:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed, not documented.
+**Checks:** zero crashes on any case; zero silent WORD DROPS (the Task-4 class — assert group recovery); span edges don't capture stray paired chars (characterize; fix if local to span trimming, else document-with-rationale). Same adjudication discipline: any "accepted behavior" verdict carries evidence, and anything in the drop/mangle class gets fixed rather than documented.
 
 **Sequencing:** final task — runs after Task 8, before the arc's whole-branch review, so it audits the shipped configuration.
 

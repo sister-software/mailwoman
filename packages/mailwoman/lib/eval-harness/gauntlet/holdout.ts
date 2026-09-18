@@ -59,8 +59,9 @@ export interface HoldoutLayerOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Resolver-side pin pins, applied to both arms. A resolver pin is a property of the configuration, not of the model
-	 * under test, so pinning it on one side would confound the z-test with the very thing the layer holds constant.
+	 * Resolver-side pin pins, applied to both arms. A resolver pin is a property of the configuration rather than of the
+	 * model under test, so pinning it on one side would confound the z-test with the very thing the layer holds
+	 * constant.
 	 */
 	pins?: GauntletResolverPins
 }
@@ -84,10 +85,10 @@ export interface Sample {
 }
 
 /**
- * Held-out truth sources — fresh-draw, not in mailwoman's training corpus, so they measure generalization. Each parses
- * a semicolon row of its staging file into a BARE-form query (no postcode — the hard case the tail exercises) + truth
- * coord. FR/BAN streams the 5 GB file. the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by dropping a
- * staging file + a parser here.
+ * Held-out truth sources — fresh-draw rather than in mailwoman's training corpus, so they measure generalization. Each
+ * parses a semicolon row of its staging file into a BARE-form query (no postcode — the hard case the tail exercises) +
+ * truth coord. FR/BAN streams the 5 GB file. the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by
+ * dropping a staging file + a parser here.
  */
 export interface SourceDef {
 	file: string

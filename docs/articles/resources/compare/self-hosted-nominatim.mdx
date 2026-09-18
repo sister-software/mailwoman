@@ -76,7 +76,7 @@ record is a step short of it.
   any property of a different engine.
 - **You are already operating PostgreSQL well.** The database is the operational burden, and a team
   that runs Postgres competently has already paid most of it.
-- **You need a country outside the measured tiers.** OSM coverage is a property of the map, not of a
+- **You need a country outside the measured tiers.** OSM coverage is a property of the map rather than of a
   locale tier. Where our coverage is unverified,
   [What ships today](../../developers/status.mdx) says so, and an engine with global OSM coverage is
   the more predictable choice.
@@ -87,7 +87,7 @@ record is a step short of it.
 
 - **Your input is postal.** Rows from a form, a CRM export, a delivery manifest — strings that are
   addresses, where the parse is the useful part.
-- **You need the decomposition.** Spans with offsets, not a matched record you post-process into
+- **You need the decomposition.** Spans with offsets rather than a matched record you post-process into
   fields.
 - **You want a smaller resident footprint.** The gazetteer is read from disk rather than held in
   memory, which is what the constrained-probe design buys.

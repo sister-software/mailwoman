@@ -18,7 +18,7 @@
  *   route dropped on the way in and a route that changed nothing produce the same numbers.
  *
  *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
- *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
+ *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"

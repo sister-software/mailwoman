@@ -5,7 +5,7 @@
  *
  *   Promotion eval runner (#479) — ONE command that runs the standard eval battery against a
  *   candidate model, checks every number against an eval spec CONTRACT, and emits a single
- *   machine-readable verdict. Exists so promotion evals are ENFORCED, not night-shift discipline,
+ *   machine-readable verdict. Exists so promotion evals are ENFORCED rather than night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
  *   Usage: mailwoman eval promote\
@@ -285,7 +285,7 @@ async function runLoreGuards(env: {
 	// DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
 	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
 	//
-	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts MATCHING LINES, not occurrences, and
+	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts MATCHING LINES rather than occurrences, and
 	// an ONNX file has no meaningful lines — so the number was only ever read as zero-vs-nonzero, and the
 	// scan below reproduces that reading (it counts newline-delimited chunks carrying the needle, over the
 	// raw bytes, exactly as `grep -a` treated the binary as text). Kept as a STRING because it is
@@ -499,7 +499,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
 	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
 	//
-	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function, not a
+	// The cache layout comes from `weightsCachePackageDir` — the resolver's own function rather than a
 	// re-typed `node_modules/@mailwoman/neural-weights-en-us` literal (2026-08-06 triage). The three
 	// artifacts are then named as siblings of that directory, which is what `resolveFromPackageDir`
 	// does one layer down.
@@ -606,7 +606,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		// anchor + gazetteer + country — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
 		// model when package-shaped. `wc` is the PER-BATTERY cache root so a paired int8 arm (#47)
-		// loads its own package, not the fp32 arm's.
+		// loads its own package rather than the fp32 arm's.
 		const plOptions = wc
 			? { weightsCache: wc }
 			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
@@ -850,7 +850,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						model: shipModel,
 						tokenizer: EFF_TOK,
 						modelCard: EFF_CARD,
-						// The leg's anchor + lexicon siblings must come from the arm being graded, not from whatever the
+						// The leg's anchor + lexicon siblings must come from the arm being graded rather than from whatever the
 						// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
 						// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
 						...(WC ? { weightsCache: WC } : {}),
@@ -884,7 +884,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// Re-runs the ship artifact mask-off vs the declared conventions mode and fails if any tag's unfolded
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
-	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
+	// on the release path here rather than Test CI (#582). Only meaningful when the spec declares a conventions
 	// mask. skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
 	// eval-harness migration. the report lines land in mask-regression.md as the child capture did, and a
 	// throw is recorded there like the old child's stderr stack.

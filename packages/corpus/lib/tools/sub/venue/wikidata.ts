@@ -10,7 +10,7 @@
  *   `fetch/wikidata-subvenue.ts`, and keeping the conversion a pure function of parsed input is what
  *   lets the builder stay deterministic and testable with no network and no fixture on disk.
  *
- *   Wikidata gives a CONCEPT NAME per language, not a designator as addressed. Q849706's Spanish label
+ *   Wikidata gives a CONCEPT NAME per language rather than a designator as addressed. Q849706's Spanish label
  *   is `terminal aeroportuaria`; the addressed form is `Terminal`. So every surface produced here lands
  *   `curated: false`, and the head-noun derivation is what proposes the addressed form from it.
  */

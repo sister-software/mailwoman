@@ -28,7 +28,7 @@ v2 refinement once a real engagement asks for it.
 - `export`: the artifact converts to **fp16 (~58 MB)** for distribution. Precision receipt: EWC
   penalties use Fisher _relative_ magnitudes; fp16's 3 decimal digits are ample. If 58 MB is
   unwelcome in the npm tarball, ship it **HF/R2-only** (the wof-polygons precedent — fetched by
-  the training/fine-tune tooling, not the runtime; the runtime never reads Fisher).
+  the training/fine-tune tooling rather than the runtime; the runtime never reads Fisher).
 
 ## Consumption (the fine-tune recipe template)
 
@@ -42,7 +42,7 @@ v2 refinement once a real engagement asks for it.
   base capability within the noise-direct margins on the packaged battery. Base capabilities =
   the golden floors + the P0 fragment bars + the gauntlet; the customer's own canaries ride
   alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
-  before delivery — which is the product working, not failing.
+  before delivery — which is the product working rather than failing.
 
 ## Contract + provenance
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The Stripe secret keys `mwops shop` reads on the operator's machine. These are process environment, not worker
+ * The Stripe secret keys `mwops shop` reads on the operator's machine. These are process environment rather than worker
  *   bindings: the deployed worker reads `STRIPE_SECRET_KEY` from Wrangler (`#env`).
  */
 

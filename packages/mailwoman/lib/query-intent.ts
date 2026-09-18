@@ -11,10 +11,10 @@
  *
  *   The three other intent markers are raised by the kind classifier, from the string alone
  *   (`@mailwoman/kind-classifier`'s `intent-markers.ts`). This one cannot be: its trigger is a
- *   property of the RESOLVED candidate list, which does not exist until after Stage 6. So it lives
+ *   property of the RESOLVED candidate list, which appears after Stage 6. So it lives
  *   here, on the geocode path, and `geocodeAddressOnce` appends it to the classifier's markers.
  *
- *   ## Reuse, not re-derivation
+ *   ## Reuse rather than re-derivation
  *
  *   {@linkcode DECISIVE_MARGIN_LOG10} (0.5) and {@linkcode COINCIDENT_PLACE_KM} (10) are imported
  *   from the ablation-expectation model rather than restated. Both are MEASURED numbers with a table
@@ -28,7 +28,7 @@
  *   deliberate. The alternative was moving the constants into `@mailwoman/core` (a shipped-package
  *   change for two numbers, with the eval harness then importing them back) or copying them (a
  *   silent-drift generator). The module imports nothing but `@mailwoman/spatial`, so the cost is a
- *   type-strip, not a dependency.
+ *   type-strip rather than a dependency.
  *
  *   ## The collapse is required
  *
@@ -104,7 +104,7 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 		country: place.country ?? "",
 		lat: place.lat,
 		lon: place.lon,
-		// ABSENT, not an extent of zero — this model never reads a bbox for the margin, and inventing one would be a
+		// absent rather than an extent of zero — this model never reads a bbox for the margin, and inventing one would be a
 		// number nobody measured.
 		bbox: null,
 		negRank: -prominence,

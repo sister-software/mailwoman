@@ -8,7 +8,7 @@
  *   writes a sealed database to a NEW DATED path.
  *
  *   **BUILD-LOCAL TIER.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
- *   never published — not to npm, not to R2, not to the demo. It reaches the resolver only because
+ *   never published — not to npm rather than to R2 rather than to the demo. It reaches the resolver only because
  *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
  *   Coverage is PARTIAL by construction — roughly 9.5 % of live NI postcodes — and that is the point of

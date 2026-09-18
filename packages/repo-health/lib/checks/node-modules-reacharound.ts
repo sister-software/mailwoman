@@ -16,7 +16,7 @@
  *
  *   Scoped to `join`/`resolve` ARGUMENTS via the TypeScript AST rather than a grep, because `node_modules` appears
  *   legitimately (and constantly) in vitest exclude globs, `.gitignore`-shaped arrays, and prose. Files are prefiltered
- *   on the substring first, so the AST cost is paid on ~30 files, not ~2,700.
+ *   on the substring first, so the AST cost is paid on ~30 files rather than ~2,700.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -74,11 +74,11 @@ const ALLOWED: Record<string, string> = {
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
 	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
-	// needs the project context there, and the link target is the checkout root's own directory, not another
+	// needs the project context there, and the link target is the checkout root's own directory rather than another
 	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
-	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution, not a substitute for one: the directory
+	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one: the directory
 	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
 	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every
 	// other site in the tree now calls this.
@@ -86,9 +86,9 @@ const ALLOWED: Record<string, string> = {
 }
 
 /**
- * Every tracked source that mentions `node_modules` at all — the AST cost is paid on ~30 files, not ~2,700. "Ours" is
- * the set git TRACKS: see `tracked-sources.ts` for why enumeration reads the index rather than the disk (scratchpad
- * probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
+ * Every tracked source that mentions `node_modules` at all — the AST cost is paid on ~30 files rather than ~2,700.
+ * "Ours" is the set git TRACKS: see `tracked-sources.ts` for why enumeration reads the index rather than the disk
+ * (scratchpad probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
@@ -136,7 +136,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 
 			// A `PathBuilder` is invoked as a bare function (`dir("node_modules", pkg)`), so a descent through
 			// `node_modules` has no callee name to match — the leading segment is the tell there. Property calls
-			// are left out: `.includes("node_modules")` is a string test, not a path.
+			// are left out: `.includes("node_modules")` is a string test rather than a path.
 			const firstArgument = node.arguments[0]
 
 			const descendsIntoNodeModules =
@@ -150,7 +150,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				for (const argument of node.arguments) {
 					const text = argumentText(argument)
 
-					// A `node_modules` PATH SEGMENT, not the bare word — this must not fire on an exclude glob
+					// A `node_modules` PATH SEGMENT rather than the bare word — this must not fire on an exclude glob
 					// like `**/node_modules/**` that happens to sit inside a `join`.
 					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
 						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
@@ -181,7 +181,7 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 		const sources = await listCandidateSources(context)
 
 		// A guard that silently stops looking is worse than no guard: if the prefilter ever finds nothing, the walk
-		// is broken, not the tree clean.
+		// is broken rather than the tree clean.
 		if (!sources.length) {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,

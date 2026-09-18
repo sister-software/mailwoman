@@ -5,7 +5,7 @@
  *
  *   Capstone: the whole matcher, block → score → cluster, on a tiny synthetic set. The point it
  *   proves is the thesis — two records with different address strings but the same location and
- *   name resolve to one entity, because blocking is geographic, not textual.
+ *   name resolve to one entity, because blocking is geographic rather than textual.
  */
 
 import { type LatLon, block, geoCellKey } from "@mailwoman/match/blocking"

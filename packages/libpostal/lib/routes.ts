@@ -163,11 +163,12 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
 }
 
 /**
- * Coalesce candidate params by raw presence, not truthiness — an empty-but-present string must survive coalescing so it
- * wins precedence over a lower-priority param (legacy wire parity: the old handler trimmed after coalescing).
+ * Coalesce candidate params by raw presence rather than truthiness — an empty-but-present string must survive
+ * coalescing so it wins precedence over a lower-priority param (legacy wire parity: the old handler trimmed after
+ * coalescing).
  *
  * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already guarantees (only string-typed
- * contract fields survive) — deliberate defense in depth, not a redundancy to simplify away.
+ * contract fields survive) — deliberate defense in depth rather than a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 

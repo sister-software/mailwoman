@@ -100,7 +100,7 @@ export interface OracleAdmission {
 
 /**
  * Per-daemon-lifetime spend meter. Deliberately not persisted: a cap that survives a restart is a budget, and a budget
- * is the operator's to keep, not this process's to guess at.
+ * is the operator's to keep rather than this process's to guess at.
  */
 export class OracleMeter {
 	#googleCalls = 0

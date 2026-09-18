@@ -14,7 +14,7 @@ converged on the same answers. Sources are listed at the end._
    hard reordered/international case, the nearest published SOTA — Chinese flexible-order
    address parsing — reports house-number F1 of **~90–91%**, and neural parsers _collapse_ on reorder
    (deepparse: 100% → 28%; libpostal overall 0.992 → 0.781). **87.4% is respectable-to-SOTA for this
-   stratum, not a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
+   stratum rather than a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
    this regime.
 2. **The plateau-and-backfire is well-explained:** a _positional shortcut_ (the model learned
    "house*number = the leading number" because real FR data is canonical-order) + a \_synthetic-realism
@@ -31,12 +31,12 @@ converged on the same answers. Sources are listed at the end._
 
 ## Question 1 — why it plateaus and backfires
 
-The shipped model reads by **position, not meaning**: it labels the first number-shaped token as the
+The shipped model reads by **position rather than meaning**: it labels the first number-shaped token as the
 house number because in French BAN (canonical, street-first) the house number almost always leads.
 This is a textbook **shortcut** (Geirhos et al. 2020): a cue that aces the training distribution and
 fails under shift. The mechanistic match is Yu et al. (NeurIPS 2025): **low positional diversity →
 the transformer learns a positional shortcut rather than a content-based rule, and it's data
-_diversity_, not _volume_, that flips it.** Our synthetic extract adds diversity, which is why it
+_diversity_ rather than _volume_, that flips it.** Our synthetic extract adds diversity, which is why it
 helped (+32.9pp) — but synthetic diversity has a ceiling.
 
 Why more weight made it _worse_, with a new failure (postcode fragmentation):
@@ -45,7 +45,7 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
   et al., TACL 2023); past an optimal ratio, an overweighted augmentation _shifts the training
   distribution away from real data and decreases performance_ (Wu et al. 2022, "On-the-fly Denoising").
   At weight 6.0 the synthetic extract overwhelms real BAN and the model fits the generator's caricature
-  of reordered French, not the real eval distribution.
+  of reordered French rather than the real eval distribution.
 - **Simplicity-bias fallback (the fragmentation mechanism).** When weight 6.0 corrupts the dominant
   "leading-token = house*number" shortcut \_without* installing a resilient discriminator, the model falls
   to the next-simplest spurious feature rather than the intended one (Shah et al., "Pitfalls of
@@ -77,7 +77,7 @@ teaching discrimination.
 The 91% floor was set against an easier (pre-#563, near-single-town) FR eval where the canonical-order
 regime made house*number near-trivial. On the diversified golden (#563, 56 localities, both orders),
 **v4.5.0 itself scores only 54.5%** — proof the eval got materially harder. Against the only published
-hard-case analog (~90–91%), **87.4% is at the frontier, not below a reasonable bar.** Both the
+hard-case analog (~90–91%), **87.4% is at the frontier rather than below a reasonable bar.** Both the
 literature and the independent DeepSeek consult judged the 91% floor mis-calibrated and 87.4%
 respectable for this stratum; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
 order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
@@ -97,7 +97,7 @@ The research shifts my earlier "hold" lean. The direct reading:
   ~88–90% (stated + reasoned in the check config + ledger), and ship v1.5.0** — _while_ opening the
   targeted-change work below as the real fix. This is the operator's call to make explicitly; the
   research removes the ambiguity that made it a coin-flip.
-- **Next improvement is cheap and targeted, not another weight tweak:** (1) postcode-anchor span
+- **Next improvement is cheap and targeted rather than another weight tweak:** (1) postcode-anchor span
   protection (we already compute the signal — add a consistency term / CRF penalty so postcode-anchored
   tokens can't be relabeled house_number), (2) gazetteer-conditional numeric disambiguation (a number before
   a known locality is a postcode), (3) curriculum/denoising of the synthetic weight, (4) real reordered
@@ -123,7 +123,7 @@ The research shifts my earlier "hold" lean. The direct reading:
 
 **Address-parsing benchmarks / SOTA**
 
-- libpostal — 99.45% full-parse (whole-sequence, not per-component); OSM + format-template ordering.
+- libpostal — 99.45% full-parse (whole-sequence rather than per-component); OSM + format-template ordering.
   https://github.com/openvenues/libpostal
 - Yassine, Beauchemin, et al., "Changeaging Subword Embeddings for Multinational Address Parsing"
   (deepparse), 2020. Reorder-collapse + inverse-order zero-shot. https://arxiv.org/abs/2006.16152 ·
@@ -160,6 +160,6 @@ The research shifts my earlier "hold" lean. The direct reading:
   https://arxiv.org/abs/2010.11683
 
 _Independent DeepSeek-v4-pro consult (2026-06-13) reached the same two top-line conclusions (91% floor
-mis-calibrated; changes are anchor-protection + curriculum + real data, not weight) and contributed the
+mis-calibrated; changes are anchor-protection + curriculum + real data rather than weight) and contributed the
 simplicity-bias-fallback explanation and the gazetteer-blocking change. Transcript distilled into this
 note; raw at `~/.cache/ds-consult/sessions/`._

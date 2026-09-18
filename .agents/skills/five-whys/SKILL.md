@@ -1,6 +1,6 @@
 ---
 name: five-whys
-description: Root-cause diagnosis by successive why questions, with judgment jargon stripped to its facts. Ask each why of the evidence, not the operator; tag every claim observation, inference, decision, or unknown; stop at an actionable cause or an unverified assumption; give numbers their denominator and IDs their names. Use before proposing a fix, or whenever a diagnosis leans on words like decisive, mis-constructed, or "warrants its place".
+description: Root-cause diagnosis by successive why questions, with judgment jargon stripped to its facts. Ask each why of the evidence rather than the operator; tag every claim observation, inference, decision, or unknown; stop at an actionable cause or an unverified assumption; give numbers their denominator and IDs their names. Use before proposing a fix, or whenever a diagnosis leans on words like decisive, mis-constructed, or "warrants its place".
 ---
 
 # Five Whys Skill
@@ -24,7 +24,7 @@ chain is only as strong as its weakest word — a link written as a judgment can
 
 This skill operationalizes the house style's "Find the cause before proposing the fix" section, whose
 contract lives at `.claude/output-styles/mailwoman-development.md` — the output style the harness loads,
-and the one authority for agent prose. It is a reasoning discipline, not a
+and the one authority for agent prose. It is a reasoning discipline rather than a
 writing style: published docs pages are governed by `docs/engineering/writing-system.md` and its Vale
 rules, and this skill governs diagnostic prose Vale never sees — chat messages, status reports, handoffs,
 PR descriptions. Where the lists overlap (filler intensifiers, weasel quantities, anthropomorphism), this
@@ -44,12 +44,12 @@ skill inherits the same words rather than redefining them.
 
 - Routine status narration with no failure at stake.
 - A cause that is already direct and verified — do not force five levels.
-- Prose for published docs pages — that is the writing system's register, not a diagnosis.
+- Prose for published docs pages — that is the writing system's register rather than a diagnosis.
 - Small talk. Warmth is allowed; agreement must carry information, per the house style.
 
 ## The method
 
-Reproduce first, then ask why of the evidence, not of the operator. The canonical chain and the evidence
+Reproduce first, then ask why of the evidence rather than of the operator. The canonical chain and the evidence
 categories come from `.claude/output-styles/mailwoman-development.md` § Find the cause before proposing
 the fix:
 
@@ -72,7 +72,7 @@ Tag every link as one of:
 - **decision** — the team chooses a tradeoff or product behavior; name the tradeoff
 - **unknown** — the current evidence cannot answer it; the chain stops here
 
-A correlation is not a cause. Same antecedent plus same failure is a lead, not a link; the link names the
+A correlation is not a cause. Same antecedent plus same failure is a lead rather than a link; the link names the
 mechanism by which the antecedent produces the failure. When the repository can answer the next why with a
 focused diagnostic, run it before asking anyone anything.
 
@@ -104,8 +104,8 @@ below convert each into its fact. Every row is a sentence that shipped, with its
 | "The refutation is decisive and belongs on the issue."                                                                                                                                                           | The evidence that makes it decisive.                                                                                   | "Posting the refutation to the issue: it shows <observation>, which the issue's premise <quote> rules out."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | "A refusal is already distinguishable — `intent_markers` carries `kind: poi_query` with a full message. The issue's framing is stale at HEAD. The real remaining gap is that the successful parse is discarded." | What is distinguishable from what; what changed at HEAD; why the gap is "real".                                        | "The trace records `intent_markers.kind = poi_query` with the full message, so a refusal is recoverable from the parse output. The issue's example no longer matches HEAD (<the one thing that changed>). The remaining gap: the successful parse is discarded at <stage> instead of being carried forward."                                                                                                                                                                                                                                                                                          |
 | "...under the harness's fr-FR overlay the street span swallows the commune (`street "Allée Pierre Barthas, Sète"`). The two production parse paths diverge (#1669), and the harness is the one that grades."     | What an overlay does; what the divergence implies for the probe's result.                                              | "Under the harness's per-row country config for fr-FR, the street span's boundary includes the commune text: `street "Allée Pierre Barthas, Sète"`. The CLI probe and the board run different parse paths (#1669); the board's path is the graded one, so the probe's clean run does not transfer."                                                                                                                                                                                                                                                                                                   |
-| "The eval reads 383/384 — the new row passes, and the only failure is the standing es-op3-southeast-portopetro."                                                                                                 | What the eval keeps, what the new row asserts, why the standing row stands.                                            | "The eval reads 383/384. The new row (<address>) passes. The one failure is the standing es-op3 row for `07691 Portopetro, Illes Balears, Spain` — open as <issue link>, not caused by this change. I checked whether other gauntlet rows share its failure shape (<n> do / none do)."                                                                                                                                                                                                                                                                                                                |
-| "wof-hot.db does not exist on this host, so that test has never run here and cannot validate the deletion."                                                                                                      | Where the agent looked; absence is presumed, not shown.                                                                | "I checked <the paths the test resolves> and found no wof-hot.db on this host, so that test has never run here. To verify the deletion I read <file:line> instead: does an unresolvable parent ever set query.parentID?" If the file is later found to exist, triage why this check missed it. The one-call check is `mwdev_provenance` — see §Artifact absence claims.                                                                                                                                                                                                                               |
+| "The eval reads 383/384 — the new row passes, and the only failure is the standing es-op3-southeast-portopetro."                                                                                                 | What the eval keeps, what the new row asserts, why the standing row stands.                                            | "The eval reads 383/384. The new row (<address>) passes. The one failure is the standing es-op3 row for `07691 Portopetro, Illes Balears, Spain` — open as <issue link> rather than caused by this change. I checked whether other gauntlet rows share its failure shape (<n> do / none do)."                                                                                                                                                                                                                                                                                                         |
+| "wof-hot.db does not exist on this host, so that test has never run here and cannot validate the deletion."                                                                                                      | Where the agent looked; absence is presumed rather than shown.                                                         | "I checked <the paths the test resolves> and found no wof-hot.db on this host, so that test has never run here. To verify the deletion I read <file:line> instead: does an unresolvable parent ever set query.parentID?" If the file is later found to exist, triage why this check missed it. The one-call check is `mwdev_provenance` — see §Artifact absence claims.                                                                                                                                                                                                                               |
 | "Census reproduces exactly: 196 firings, 196 resolved nothing, 0 conversions."                                                                                                                                   | Which tool; against what baseline; whose vocabulary "firing" is.                                                       | "`mwdev_census` over the board matches the pre-fix run: `parent_fallback_retry` fired 196 times and every firing resolved nothing — the constraint is inert on this set."                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | "A5 works: the firing lookup now records query.parentID=9000000119609."                                                                                                                                          | The entity behind the ID; what A5 is.                                                                                  | "A5 works: the firing lookup now records the parent for Five Star Island (WOF 9000000119609). A5 = <issue link>; its task list asserts this completion."                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | "The soft posterior is assigned at line 1129, before the dominant probe that already exists at 1156 — so the hardening declines but the re-rank still flips."                                                    | What each term is: a country-guess probability, an existing country check, a new constraint, a ranking change.         | "The country-guess probability (`soft posterior`) is assigned at line 1129, before the existing country check (`dominant probe`, line 1156) runs. The new constraint declines the guess, but the ranking has already used it and still flips. Hoist the check above line 1129 so both constraints read the same value."                                                                                                                                                                                                                                                                               |
@@ -124,7 +124,7 @@ The rules the rows encode:
 3. **A number states its denominator, threshold, artifact, and arm.** "41/58" must answer what the other
    17 have in common, or say they are not one class. A delta is never unattributed: name the rows that
    moved.
-4. **An entity is a name, not an ID.** WOF IDs, row names, and test names get the address or place name
+4. **An entity is a name rather than an ID.** WOF IDs, row names, and test names get the address or place name
    beside them.
 5. **A technical term in prose is defined in one sentence at first use, or replaced by its mechanism.**
    Code comments may use the identifier; prose may not lean on it alone.
@@ -139,11 +139,11 @@ The rules the rows encode:
 9. **Distance is not a success metric unless the task grades on distance.** Parsing and geocoding are
    graded on identifying the right place: conformance, span coherence to gazetteer ancestry, currency,
    provenance. State distance only when the eval uses it, and say why it matters for this task.
-10. **A conclusion word appears after its evidence, not instead of it.** "Decisive" survives only in its
+10. **A conclusion word appears after its evidence rather than instead of it.** "Decisive" survives only in its
     defined gauntlet sense (see `packages/mailwoman/lib/eval-harness/gauntlet/ablation-expectation.md`); as
     praise it is deleted and the evidence stands alone.
 11. **A decision is specified.** "One judgment call needs your eyes" → the contract being changed, both
-    options, and what each costs. "Needs your eyes" is a handoff heading, not a description: the item
+    options, and what each costs. "Needs your eyes" is a handoff heading rather than a description: the item
     under it states the decision.
 12. **Stock forms are banned.** The full list lives in `.claude/output-styles/mailwoman-development.md`
     § Keep the conversation human. The docs-page subset is enforced by Vale

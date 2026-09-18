@@ -83,12 +83,12 @@ shipped — the artifact is the regional mean masquerading as a constant.
    `geocode-core` would load the factor by parsed region instead of the hardcoded 1.70. Cheap; the full
    50-state table is a turn-key follow-up (the tooling is committed — ~2 min/state).
 2. **Per-segment-length bucket (the principled refinement).** The real driver is segment length /
-   local density, not the state line — a state like CA holds both dense LA and rural North State. A Q̂
+   local density rather than the state line — a state like CA holds both dense LA and rural North State. A Q̂
    indexed on the claimed radius (segment-length bucket) would generalize within a state and to
    unmeasured states. More work; the better long-term answer. Recommended as the follow-up to the seed
    table.
 
-**Flagged, not auto-wired.** Loading a per-region factor changes the shipped `uncertainty_m` on every
+**Flagged rather than auto-wired.** Loading a per-region factor changes the shipped `uncertainty_m` on every
 interpolated geocode — a behavior change. Per the merge-wall discipline this is PR-and-flag: the seed
 table + this evidence land; the operator decides whether to wire per-region now (table) or hold for the
 per-segment-length version. The single 1.70 stays the default until then — with this report on record

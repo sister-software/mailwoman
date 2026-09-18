@@ -299,7 +299,7 @@ describe("the candidate ancestors sidecar", () => {
 		// The interval verdict is "contained along the CANONICAL hierarchy": true under Texas, false
 		// under Louisiana even though the closure rows attest the Louisiana edge. A consumer needing
 		// the non-canonical hierarchy consults the closure rows — that is the recorded division of
-		// labor, not a defect.
+		// labor rather than a defect.
 		expect(intervalContains(texas, ambiville)).toBe(true)
 		expect(intervalContains(louisiana, ambiville)).toBe(false)
 

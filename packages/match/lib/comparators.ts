@@ -14,7 +14,7 @@
  *   implemented in {@link nameSimilarity}.
  *
  *   These are pure similarity primitives in [0, 1]. The mapping of a similarity onto discrete
- *   Fellegi-Sunter agreement levels (and the m/u weights) is the scorer's job, not theirs.
+ *   Fellegi-Sunter agreement levels (and the m/u weights) is the scorer's job rather than theirs.
  */
 
 import { distance as levenshteinDistance } from "fastest-levenshtein"

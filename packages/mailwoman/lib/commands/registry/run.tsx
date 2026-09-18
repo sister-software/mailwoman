@@ -15,7 +15,7 @@
  *
  *   The thesis it grades: two rows reading `123 Main St` and `123 Main Street Apt 2` — different
  *   strings — collapse to one entity because they resolve to the same place. Blocking is
- *   geographic, not textual. Needs the weights + databases in hand, so the real run is
+ *   geographic rather than textual. Needs the weights + databases in hand, so the real run is
  *   operator-verifiable (not CI).
  */
 

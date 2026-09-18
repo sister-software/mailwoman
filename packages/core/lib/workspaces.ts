@@ -26,7 +26,7 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
 	 * Skip a literal entry whose directory carries no manifest instead of failing. A checkout at an older ref may predate
-	 * a workspace the field names. a reader that resolves that ref's own tree wants absence, not an error.
+	 * a workspace the field names. a reader that resolves that ref's own tree wants absence rather than an error.
 	 *
 	 * @default false
 	 */

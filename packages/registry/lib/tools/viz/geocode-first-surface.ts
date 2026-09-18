@@ -27,7 +27,7 @@ export interface GeocodeFirstSurfaceOptions {
 	outHTML?: string
 }
 
-// ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
+// ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment rather than import,
 //    so this generator is self-contained / independent of the match package's build state). ───────────
 
 interface Level {

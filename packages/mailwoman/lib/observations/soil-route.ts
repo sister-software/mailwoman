@@ -29,7 +29,7 @@
  *   product's own caveats ride on every observation, because a caller cannot see from a class code that the
  *   survey declines to speak about a specific site.
  *
- *   THE PROVENANCE CARRIES THE SURVEY VINTAGE, NOT ONLY THE REFRESH. A polygon republished in the 2025
+ *   the PROVENANCE CARRIES the SURVEY VINTAGE rather than only the REFRESH. A polygon republished in the 2025
  *   Annual Soils Refresh can rest on a field survey published in 1960 — that is `IA153`, measured — and the
  *   dataset's own time-period-of-content ends at the refresh, so a consumer reading that as survey currency
  *   reads it wrong by sixty-five years. Both dates reach the caller, apart, with the source title the older

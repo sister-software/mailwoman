@@ -100,7 +100,7 @@ npx @mailwoman/photon serve --port 2323
 Four of those lines are the deployment describing itself, and they are the ones to read in a log when
 two hosts disagree. `resolver:` names the gazetteer that will answer. `wof:` is the reverse-geocoding
 database from the prerequisites, absent here — and the variable that line suggests is read by
-`mailwoman serve`, not by this server, which looks only at `<data-root>/wof/`. Permissive CORS is on
+`mailwoman serve` rather than by this server, which looks only at `<data-root>/wof/`. Permissive CORS is on
 by default because browser geocoder widgets call these endpoints cross-origin; `--no-cors` turns it
 off when a reverse proxy already sets the headers.
 
@@ -136,7 +136,7 @@ curl -s "http://127.0.0.1:2323/api?q=1600+pennsylvania+ave+nw+washington+dc+2050
 ```
 
 `osm_key`, `osm_value` and `type` are always present, because Photon clients dereference them without
-checking. They are derived from the resolved place's type, not read from OpenStreetMap — see the
+checking. They are derived from the resolved place's type rather than read from OpenStreetMap — see the
 table in step 7.
 
 The `lat`/`lon` parameters are a proximity bias, and an ambiguous query is where you can watch them
@@ -167,7 +167,7 @@ curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
 { "type": "FeatureCollection", "features": [] }
 ```
 
-An empty collection, not an error. That is the `wof: (none found)` line from step 2 showing through:
+An empty collection rather than an error. That is the `wof: (none found)` line from step 2 showing through:
 with no full WOF distribution on disk the reverse geocoder is never constructed, and the route answers
 the empty shape rather than a 500. Put `admin-global-priority.db` in `<data-root>/wof/` and restart
 to change that answer.
@@ -200,7 +200,7 @@ Washington, 20500, Washington, District of Columbia, United States
 
 Same object your code already handles, from a server you run. Every Photon client has this pair of
 knobs under some name — a base URL, a host, an endpoint override — because the hosted instance is a
-default, not a hard-coded constant.
+default rather than a hard-coded constant.
 
 ## 5. The Nominatim shape
 
@@ -294,7 +294,7 @@ curl -s "http://127.0.0.1:8088/search?q=springfield&countrycodes=de" | jq -c
 ```
 
 An empty array: the restriction held, and nothing in Germany matched. A hard filter returning nothing
-is the parameter working, not a lookup failure, and it is exactly what step 3's soft bias will never
+is the parameter working rather than a lookup failure, and it is exactly what step 3's soft bias will never
 do to you.
 
 geopy's `Nominatim` geocoder takes the same two arguments as its `Photon` one, plus the `user_agent`
@@ -359,7 +359,7 @@ deterministic, so the result is one canonical alternative rather than the multi-
 set libpostal's probabilistic expander produces. A caller that indexes every expansion gets fewer
 keys per address here; a caller that takes `expansions[0]` or the last element sees no difference.
 
-A missing parameter is a status code and a one-key object, not a stack trace:
+A missing parameter is a status code and a one-key object rather than a stack trace:
 
 ```bash
 curl -s -i "http://127.0.0.1:8081/parse" | head -1
@@ -396,7 +396,7 @@ means in the third column.
 | `lang`                                     | Accepted, no effect | Names come back as the gazetteer stores them. `?q=cologne&lang=en` still answers `Köln`              |
 | `osm_tag`                                  | Accepted, no effect | No category filter. A request for `amenity:cafe` returns the same places as one without it           |
 | `layer`                                    | Accepted, no effect | No layer filter                                                                                      |
-| `radius` on `/reverse`                     | Accepted, no effect | The reverse geocoder returns the containing place, not a radius search                               |
+| `radius` on `/reverse`                     | Accepted, no effect | The reverse geocoder returns the containing place rather than a radius search                        |
 | `bbox`                                     | Not read            | The handler parses no bounding box. Use `lat`/`lon` for viewport influence                           |
 | `osm_key`/`osm_value`/`type`               | Always present      | Derived from the resolved place's type so clients can dereference them. Not OpenStreetMap tag values |
 | `osm_id` / `osm_type`                      | Never set           | Nothing here is keyed to an OpenStreetMap object. A client that stores them stores `undefined`       |
@@ -416,7 +416,7 @@ means in the third column.
 | `accept-language`                                            | Accepted, no effect | Same gazetteer-name behavior as Photon's `lang`                                                                                                            |
 | `zoom` on `/reverse`                                         | Accepted, no effect | The detail level is whatever the containing hierarchy gives                                                                                                |
 | `viewbox`, `extratags`, `namedetails`, `polygon_*`, `dedupe` | Not read            | The handlers parse none of them                                                                                                                            |
-| `place_id`                                                   | Substituted         | Forward results carry a deterministic hash of coordinate plus display name, not a Nominatim id. Reverse results carry the gazetteer's own place id         |
+| `place_id`                                                   | Substituted         | Forward results carry a deterministic hash of coordinate plus display name rather than a Nominatim id. Reverse results carry the gazetteer's own place id  |
 | `osm_id` / `osm_type`                                        | Never set           | As with Photon                                                                                                                                             |
 | `licence`                                                    | Substituted         | `Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER` — the sources these answers come from                                               |
 | `annotations`                                                | Addition            | The OpenCage-style block from step 5                                                                                                                       |
@@ -429,7 +429,7 @@ means in the third column.
 | ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `query`, `address` | Honored          | On `/parse`, either name works, over `GET` or `POST`. `/expand` takes `address`                                                                                                                                                                                     |
 | Component labels   | Mapped           | Mailwoman's tags project onto libpostal's names — `street` to `road`, `locality` to `city`, `region` to `state`, `dependent_locality` and `neighbourhood` both to `suburb`, and so on through twenty entries. A tag with no entry passes through under its own name |
-| `/expand` output   | Deduplicated set | The input, its normalized form and its abbreviation-expanded form, with duplicates dropped — one to three strings, not a hypothesis set. See step 6                                                                                                                 |
+| `/expand` output   | Deduplicated set | The input, its normalized form and its abbreviation-expanded form, with duplicates dropped — one to three strings rather than a hypothesis set. See step 6                                                                                                          |
 | Language options   | Not read         | One weights bundle (`en-us`) is loaded at startup, and there is no per-request language parameter                                                                                                                                                                   |
 
 ## 8. Stop them

@@ -7,7 +7,7 @@
  *   assert the geocoder responds — the result panel fills in (hard: it's plain DOM in the control panel,
  *   independent of WebGL) and the map drops a resolved-place marker (best-effort: react-map-gl mounts the
  *   `<Marker>` only once the map instance exists, which needs SwiftShader WebGL — its absence means no
- *   software GL in this Chromium, not a component fault, exactly like `MapCanvas.test.tsx`). No network, no
+ *   software GL in this Chromium rather than a component fault, exactly like `MapCanvas.test.tsx`). No network, no
  *   ONNX, no gazetteer, no tiles.
  */
 

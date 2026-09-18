@@ -45,7 +45,7 @@ export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 
 /**
  * A decoded input event. Pan and zoom carry direction and magnitude only — how far a step moves the map is the
- * browser's decision, not the decoder's.
+ * browser's decision rather than the decoder's.
  */
 export type MapTUIInput =
 	| { kind: "quit" }
@@ -125,7 +125,7 @@ const LEFT_BUTTON = 0
 
 /**
  * The longest fragment worth holding for the next chunk (64 KB). See the drop site: this bounds an unterminated string
- * sequence, not a real key.
+ * sequence rather than a real key.
  */
 const MAX_PENDING_LENGTH = 65_536
 

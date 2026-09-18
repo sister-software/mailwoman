@@ -9,7 +9,7 @@
  *
  *   WHY THIS AND NOT MORE. An agent that does not know a package exists cannot ask `mwdev_symbol` about it, and the map
  *   from a concern to a workspace is the part AGENTS.md spends a table on and a session forgets first. The listing is
- *   the workspace NAMES and their export subpaths — an index of where to look, not what is there. The signatures were
+ *   the workspace NAMES and their export subpaths — an index of where to look rather than what is there. The signatures were
  *   measured at roughly 88,000 tokens for this repository, which would displace the work it is meant to serve and
  *   would not survive a compaction. the names cost a fraction of that and point at a tool that answers the rest.
  *

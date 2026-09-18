@@ -122,7 +122,7 @@ function deriveState(address: string): string | null {
  * Build a stable {@link PostalAddressID} from a geocoded, canonicalizable address. Deterministic: the same
  * (coordinate-cell, canonical address, state) always yields the same key. Two records that resolve to the same place
  * and share a canonical address get the same id — a join/dedup key that needs no matcher. (Distinct canonical address
- * strings → distinct keys. semantic equivalence that isn't string-identical is the fuzzy matcher's job, not this
+ * strings → distinct keys. semantic equivalence that isn't string-identical is the fuzzy matcher's job rather than this
  * one's.)
  */
 export function createPostalAddressID(input: CreatePostalAddressIDInput): PostalAddressID {

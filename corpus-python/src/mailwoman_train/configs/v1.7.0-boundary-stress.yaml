@@ -48,7 +48,7 @@
 #     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
 #   WATCH (DeepSeek): street_suffix OVER-fire (its check target vs the floor — a boundary recipe output can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
-#     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
+#     bug presents as boundary noise rather than dilution. If slash/comma-less land short at 1.0, sweep the
 #     weight up (1.5) — one variable, do not stack other changes.
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     recipe output's alignment before any weight surgery.
@@ -58,7 +58,7 @@
 #     recipe output teaches. see the header). No check row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
-#   - FREE-RIDER MEASURES (the recipe output trains these — grade as wins, not just floors): fr.house_number holds
+#   - FREE-RIDER MEASURES (the recipe output trains these — grade as wins rather than just floors): fr.house_number holds
 #     ≥87 AND targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
 #     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win. a DROP
 #     means the recipe output's FR/DE shapes are fighting the native-order sources — STOP and re-audit.
@@ -202,7 +202,7 @@ train:
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/../train_log.csv"
-  # v1.7.0 hygiene co-change (STATED, not a change): was `constant`. v1.6.0's constant LR let the spine
+  # v1.7.0 hygiene co-change (STATED rather than a change): was `constant`. v1.6.0's constant LR let the spine
   # drift PAST its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
   # warmup → ~0 over max_steps) makes the final checkpoint the best, so the check needn't checkpoint-select.
   lr_schedule: cosine

@@ -9,7 +9,7 @@
  *   written. these are CITATIONS. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
  *   and the builder copies that row's input, coordinate and tolerance verbatim, so the board and the
  *   corpus cannot disagree about a row they share. The only things curated here are the CLASS the row
- *   belongs to and the surface worth probing. changing an input means changing the corpus row, not this
+ *   belongs to and the surface worth probing. changing an input means changing the corpus row rather than this
  *   file.
  *
  *   Two classes live here, and both are outside the four FST countries:

@@ -9,7 +9,7 @@
  *   isotonic fitter (`fit-isotonic-calibration.py`) consumes.
  *
  *   Calibration is over PREDICTIONS (spans the model emitted), conditioning on "the model said tag T
- *   at confidence C — how often is it right?". So we iterate the decoded tree's spans, not the
+ *   at confidence C — how often is it right?". So we iterate the decoded tree's spans rather than the
  *   gold.
  *
  *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of

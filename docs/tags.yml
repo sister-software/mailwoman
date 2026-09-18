@@ -2,7 +2,7 @@
 # the docs plugin, the blog (research/), and the glossary plugin.
 # Each tag listed here can be used in frontmatter as `tags: [key]` and in
 # glossary entries as `"tags": ["key"]` (first tag = primary category).
-# Tags NOT listed here FAIL THE BUILD: docs + blog via `onInlineTags: "throw"`
+# Tags not listed here FAIL THE BUILD: docs + blog via `onInlineTags: "throw"`
 # (docusaurus.config.ts), glossary via plugins/glossary/plugin.ts.
 
 #region Category

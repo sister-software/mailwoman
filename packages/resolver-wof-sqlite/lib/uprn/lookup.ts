@@ -9,7 +9,7 @@
  *   - **`nearestUPRN(lat, lon, radiusM)`**: bounded nearest-point search over the res-9 `h3_cell`
  *     index — ring-by-ring `gridDisk` expansion with chunked `IN` probes and haversine ranking.
  *     Rings stop as soon as geometry proves no unprobed cell could beat the best hit — a distance
- *     bound, not POILookup's row-count accumulation, so the early exit can never strand a nearer
+ *     bound rather than POILookup's row-count accumulation, so the early exit can never strand a nearer
  *     point in an unprobed ring.
  *
  *   ## `null` is a claim, scoped by coverage

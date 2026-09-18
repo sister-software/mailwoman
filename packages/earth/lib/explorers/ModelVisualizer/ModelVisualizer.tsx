@@ -8,7 +8,7 @@
  *
  *   1. Token ribbon — the SentencePiece pieces with char offsets.
  *   2. Channel band — anchor/gazetteer confidence as fed ("not fed" when a channel is absent —
- *      an unfed channel is a diagnostic fact, the #566/#685 OOD class, not an empty one).
+ *      an unfed channel is a diagnostic fact, the #566/#685 OOD class rather than an empty one).
  *   3. Emissions heatmap — labels × pieces. toggle raw logits vs post-prior emissions (the delta
  *      is the priors' influence). conventions-masked cells hatched. viterbi path outlined. Label
  *      rows are trimmed to the model's emission width (the Stage-prefix rule — a narrower model

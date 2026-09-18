@@ -146,7 +146,7 @@ than one parse**, and a partial-first-token completion **costs about as much as 
 statements are the design input: the index is nearly free to query except at the root, where it is a
 model-sized cost.
 
-Two consequences for the front end follow from the ratio, not from the microseconds. Debounce input
+Two consequences for the front end follow from the ratio rather than from the microseconds. Debounce input
 rather than querying on every keydown, since the root-scan keystrokes are the ones a fast typist
 generates most of. And keep the query off the main thread of a browser tab: on this host 8.4 ms is
 more than a frame at 60 Hz, and on a slower one the margin only widens.
@@ -203,8 +203,8 @@ the dropdown on this index rather than on repeated geocodes.
 - **Resident set is a few hundred megabytes after load** — 241 MB to 293 MB across the runs above — and
   the file is memory-resident rather than memory-mapped. One process per locale is the budget to plan
   against.
-- **Ranking is importance, not proximity.** There is no `near` parameter. A user in Boston typing
-  `brookl` gets Brooklyn first because Brooklyn is more important, not because it is closer. Re-rank on
+- **Ranking is importance rather than proximity.** There is no `near` parameter. A user in Boston typing
+  `brookl` gets Brooklyn first because Brooklyn is more important rather than because it is closer. Re-rank on
   your side with the coordinates the `wofID` resolves to.
 - **The CLI's default FST path is a staging directory.** Set `$MAILWOMAN_FST_BIN` in any environment
   where you rely on the command.

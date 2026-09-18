@@ -8,7 +8,7 @@
  *
  *   It is plain data: parser components + the formatter's match key + an optional resolved geocode,
  *   composed into one object. No ORM, no decorators, no schema-generation implementation — if we need a
- *   database we reach for Kysely at the call site, not a model layer here.
+ *   database we reach for Kysely at the call site rather than a model layer here.
  *
  *   The geocode fields mirror mailwoman's `GeocodeResult` (tier + calibrated uncertainty + hierarchy)
  *   on purpose: that is the location signal the Fellegi-Sunter scorer weights its distance evidence
@@ -60,7 +60,7 @@ export interface AddressGeocode {
 	 */
 	hierarchy?: HierarchyNode[]
 	/**
-	 * A delivery point, not a building — weakens location agreement even at a precise coordinate.
+	 * A delivery point rather than a building — weakens location agreement even at a precise coordinate.
 	 */
 	poBox?: boolean
 	/**

@@ -17,7 +17,7 @@
  *   The aggregation runs inside DuckDB and only the grouped counts cross into JS. The train split is 681,901,687 rows
  *   over 718 parquet files and 40 GB, which the grouped query reads in 45,519 ms at six threads.
  *
- *   This measures the POOL, not the exposure. A training run draws from each source under `source_weights` and
+ *   This measures the POOL rather than the exposure. A training run draws from each source under `source_weights` and
  *   `source_reps` in its config, so a source's region spread bounds what the run can see and does not state it. Read
  *   this table beside the config's weights.
  *

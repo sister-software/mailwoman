@@ -23,7 +23,7 @@ fails every component, which is exactly what the unbalanced-delimiter rows exist
 - **neural** — the shipped int8 model (`model-v140-step-40000-int8`, package v4.6.0; tokenizer `v0.6.0-a0`),
   full ship config (anchor + gazetteer + convention auto + punctuation-gap bridge). Graded on the **folded
   gold view** (affixes joined into `street`) for an apples-to-apples head-to-head with v0.
-- **neural + span proposer** — the Stage 2.7 paired-delimiter proposer (`--span-proposer`, default-off, NOT
+- **neural + span proposer** — the Stage 2.7 paired-delimiter proposer (`--span-proposer`, default-off rather than
   ship config), at three bias settings.
 
 ## Results
@@ -61,9 +61,9 @@ classes it was built for:
   of stripping it.
 
 So the abandoned Chevrotain-style proposer isn't a drop-in win waiting to be switched on. Its annotation
-semantics need a **fix** (the bias has the wrong sign — it should suppress, not absorb), not a parameter
+semantics need a **fix** (the bias has the wrong sign — it should suppress rather than absorb) rather than a parameter
 sweep. Reviving it as-is would regress the very class it targets. **Recommendation: do not revive on these
-numbers; if pursued, treat it as new design work, not a flag flip.** (Caveat: three bias configs are not an
+numbers; if pursued, treat it as new design work rather than a flag flip.** (Caveat: three bias configs are not an
 exhaustive sweep — but a feature that's a no-op at default and net-negative at the two non-trivial settings
 has not cleared the bar #518 set.)
 
@@ -109,5 +109,5 @@ node scripts/eval/score-punctuation-stress.ts \
   view of identical gold (stated in the scorer header).
 - Neural numbers are the shipped int8 v140 / `v0.6.0-a0` tokenizer. Don't compare these absolute figures
   across tokenizer versions — the head-to-head and the span-proposer deltas are what matter here.
-- Three span-proposer bias configs, not an exhaustive sweep. The verdict is "doesn't clear the #518 bar as
+- Three span-proposer bias configs rather than an exhaustive sweep. The verdict is "doesn't clear the #518 bar as
   implemented," not "no parameterization could ever help."

@@ -30,7 +30,7 @@ Stage 1 normalizes the bytes. Nothing interesting happens here for our input —
 
 Stage 2 is the locale check. For Latin-only input like this, the default is `en-US` with a moderate confidence. The downstream resolver weights will tilt toward US gazetteer hits.
 
-Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalization, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode, not a single locality. The full pipeline runs.
+Stage 2.5 is the kind classifier. It looks at the shape of the string (commas, capitalization, the trailing two-letter token after a final comma) and decides this is a `structured_address` — not a bare postcode rather than a single locality. The full pipeline runs.
 
 These three stages are not the interesting part for this example. Skip ahead.
 
@@ -123,7 +123,7 @@ score = phrase_confidence × classifier_confidence × resolver_score × concorda
 
 The `concordance_bonus` is the new piece. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.mdx)) and asks: does the chain agree? Concretely:
 
-- Interpretation X says `region: NY` and `locality: Houston`. WOF says `Houston → Texas`, not `Houston → New York`. The chain disagrees. The bonus drops to ~0 (a near-fatal penalty).
+- Interpretation X says `region: NY` and `locality: Houston`. WOF says `Houston → Texas` rather than `Houston → New York`. The chain disagrees. The bonus drops to ~0 (a near-fatal penalty).
 - Interpretation Y says `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact. Bonus is ~1.0.
 
 The product favours Y by a wide margin, even though individual span scores are lower. The internal-consistency check dominates because incoherent parses are useless to downstream consumers.

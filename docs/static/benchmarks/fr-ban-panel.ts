@@ -310,7 +310,7 @@ function summarize(records: GradedRecord[]) {
 	const distances = records.flatMap((r) => (r.km === null ? [] : [r.km]))
 	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
 	// Bucketed on the tier that ANSWERED, which is `none` for a row that returned no coordinate:
-	// `resolution_tier` reports where the cascade ended, not whether it produced anything, so it still
+	// `resolution_tier` reports where the cascade ended rather than whether it produced anything, so it still
 	// reads "admin" on a row that answered nothing. Every row on this panel resolved, so the two
 	// bucketings agree here — the guard is in place so they cannot silently disagree on a future run.
 	const tiers: Record<string, number> = {}
@@ -379,7 +379,7 @@ async function run() {
 				continue
 			}
 
-			// Capture the coordinates, not the object: narrowing `result` does not narrow `result.lat`.
+			// Capture the coordinates rather than the object: narrowing `result` does not narrow `result.lat`.
 			const answer =
 				typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
 

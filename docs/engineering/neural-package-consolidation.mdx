@@ -21,7 +21,7 @@ The boundary should be a resolution contract instead.
 
 The important thing: `NeuralRunner` (`classifier.ts`) is already a **structural interface**, and
 `ONNXRunner` and `WebONNXRunner` both implement it. Nothing about the classifier knows which runtime
-it has. The split is packaging, not architecture — which is why merging is a repackaging job rather
+it has. The split is packaging rather than architecture — which is why merging is a repackaging job rather
 than a rewrite.
 
 ## Why merging was previously wrong, and why it is not now
@@ -112,7 +112,7 @@ Two things that cost four wrong diagnoses, worth carrying forward:
 
 - **A stale resolve cache.** `docs/node_modules/.cache/webpack` is not evicted when
   plugin-contributed `resolve` config changes: `buildDependencies.config` covers
-  `docusaurus.config.ts` and the theme, not the plugin files, and `ResolverCachePlugin` keys on
+  `docusaurus.config.ts` and the theme rather than the plugin files, and `ResolverCachePlugin` keys on
   pre-merge options encoding neither aliases nor `conditionNames`. It had reached 1.4 GB. **Clear it
   before any resolve-affecting build**, or the build reports the previous run's resolution.
 - **The webpack aliases are not the boundary.** Removing `aliases["@mailwoman/neural/browser"]`

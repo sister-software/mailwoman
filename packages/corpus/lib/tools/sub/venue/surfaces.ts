@@ -62,10 +62,10 @@ export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): Surface
 /**
  * Every known phrase found in `name`, as whole-token runs for spacing scripts and as substrings for non-spacing ones.
  *
- * Token-boundary matching for Latin script, not substring: `Nordterminal` is a real German compound in which `terminal`
- * is a suffix, and a substring test would also fire on `Terminalstraße`. The compound case is a genuine miss and it is
- * the right miss — admitting suffix matches would fire on every `-hall`/`-gate` compound in Germanic and Nordic street
- * naming, which is exactly the confound class `Briggate`/`Kirkgate` represents.
+ * Token-boundary matching for Latin script rather than substring: `Nordterminal` is a real German compound in which
+ * `terminal` is a suffix, and a substring test would also fire on `Terminalstraße`. The compound case is a genuine miss
+ * and it is the right miss — admitting suffix matches would fire on every `-hall`/`-gate` compound in Germanic and
+ * Nordic street naming, which is exactly the confound class `Briggate`/`Kirkgate` represents.
  *
  * For Han/Kana names that rule finds nothing at all, because the script has no word boundaries: `第1ターミナル` splits into
  * one token that matches no surface. There the LONGEST known substring is the correct operator, and the compound

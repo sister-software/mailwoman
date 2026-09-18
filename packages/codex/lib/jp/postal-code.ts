@@ -66,10 +66,10 @@ export function isJpPostalCode(input: unknown): input is PostalCode {
 /**
  * First digit of the postcode → a coarse region label. Japan Post's numbering grows roughly outward from Tokyo (`1xx`)
  * and is **approximate** at this granularity — a single leading digit spans large, irregular areas and the boundaries
- * are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment. the full code is
- * what actually anchors the address.
+ * are postal-routing rather than administrative. Use it as a weak prior, never as a hard region assignment. the full
+ * code is what actually anchors the address.
  *
- * Approximate — the labels below are illustrative routing regions, not precise prefecture sets.
+ * Approximate — the labels below are illustrative routing regions rather than precise prefecture sets.
  */
 export const JP_FIRST_DIGIT_REGION: Record<string, string> = {
 	"0": "Hokkaido & northern Tōhoku",

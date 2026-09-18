@@ -63,7 +63,7 @@
  *
  *   ## Where a consumer lives
  *
- *   Mechanism 3's first consumer is the RESOLVER, which does not depend on `@mailwoman/neural`. It
+ *   Mechanism 3's first consumer is the RESOLVER, independent of `@mailwoman/neural`. It
  *   should reach this artifact through {@link PostcodePrefixIndexLike} — a structural interface, the
  *   same `…Like` convention `PairIndexLike` and `PlacetypeCensusLike` use — rather than a package
  *   dependency. The format lives here because PFX1 is the fourth member of the PCB1/PIX1/PCN1 family
@@ -124,9 +124,9 @@ export interface PostcodePrefixNode {
 	 */
 	prefix: string
 	/**
-	 * Admin ancestry the prefix asserts, COARSEST-FIRST. Empty when the prefix asserts none — which is a real answer, not
-	 * a build failure: a GB outward code in one of the two documented border-straddling postcode areas asserts the United
-	 * Kingdom and nothing finer.
+	 * Admin ancestry the prefix asserts, COARSEST-FIRST. Empty when the prefix asserts none — which is a real answer
+	 * rather than a build failure: a GB outward code in one of the two documented border-straddling postcode areas
+	 * asserts the United Kingdom and nothing finer.
 	 */
 	ancestors: readonly PostcodePrefixAncestor[]
 	/**
@@ -173,9 +173,10 @@ export interface PostcodePrefixHeader {
 	 */
 	levels: readonly string[]
 	/**
-	 * The numbering authority the prefixes came from, not the gazetteer they were joined to. M-3 is the receipt: 7.9% of
-	 * US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's mail
-	 * processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution in.
+	 * The numbering authority the prefixes came from rather than the gazetteer they were joined to. M-3 is the receipt:
+	 * 7.9% of US ZIPs disagree with their own gazetteer parent's state because a firm/unique ZIP names an organization's
+	 * mail processor rather than the code's range, so an index derived from `spr.parent_id` bakes that misattribution
+	 * in.
 	 */
 	source: string
 	/**

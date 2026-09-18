@@ -189,7 +189,7 @@ describe("the committed artifact", () => {
 		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants — and the only
 		// ancestor either of them has that could assert (`establishment`) asserts nothing, deliberately: a claim
 		// authored there would be inherited by every later establishment class. So `isA` inheritance has nothing to
-		// materialize. An empty table here is the truthful answer, not an unread one — `compile.test.ts` exercises
+		// materialize. An empty table here is the truthful answer rather than an unread one — `compile.test.ts` exercises
 		// the derivation itself.
 		const model = await readCompiledGeographicModel()
 		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors.map(String)))
@@ -296,7 +296,7 @@ describe("reading the record set through the runtime lookups", () => {
 	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout` returning `[]` reads
 	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
 	// carries the concept and states what it affords, its external identifier does translate into it since W1-3
-	// landed, and nothing has been derived about it — which is an empty derivation, not an unmapped class.
+	// landed, and nothing has been derived about it — which is an empty derivation rather than an unmapped class.
 	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 

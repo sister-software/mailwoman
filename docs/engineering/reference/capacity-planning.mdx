@@ -18,7 +18,7 @@ table — an uncited number in this file is a defect.
 
 ## Why the numbers come out small
 
-Rooftop fidelity is a data problem, not a model problem. The parser is a 38 MB int8 ONNX
+Rooftop fidelity is a data problem rather than a model problem. The parser is a 38 MB int8 ONNX
 model shared world-wide (every locale overlay ships the same bytes); adding a country never
 grows it. Fidelity grows by adding **layers** — sealed, read-only, memory-mapped SQLite
 artifacts probed by parse-derived keys (see
@@ -42,7 +42,7 @@ cache holds whatever the query traffic touches.
 | International postcode DB                                       | 144 MB        | —                            |
 | poi.db (13.68M Overture rows)                                   | 3.7 GB        | ~270 B/row                   |
 
-The GB postcode pair is required evidence, not trivia: **the same dataset costs 40× less
+The GB postcode pair is required evidence rather than trivia: **the same dataset costs 40× less
 when packed for its one probe shape** than in general-purpose SQLite form. See the
 cost-reduction roadmap below.
 
@@ -83,7 +83,7 @@ A locale is a fixed kit. Adding one never touches the model:
 
 Worked examples: en-us (all pieces), fr-fr (overlay + BAN points), en-gb (overlay +
 Code-Point postcodes; rooftop layer is the open acquisition). Coverage status per country
-belongs to the coverage register, not this file.
+belongs to the coverage register rather than this file.
 
 ## Cost-reduction roadmap
 

@@ -8,7 +8,7 @@
  *   TIGER segment length) and the exact address-point tier stamps no radius — it is a real situs
  *   point, assigned a fixed 10 m floor (building-centroid precision).
  *
- *   The heuristic radius is a PRIOR, not a guarantee. This script turns it into a provably-calibrated
+ *   The heuristic radius is a PRIOR rather than a guarantee. This script turns it into a provably-calibrated
  *   interval: the conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now
  *   have a 90% coverage guarantee on held-out data."
  *
@@ -368,7 +368,7 @@ async function main(): Promise<void> {
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
+		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
 		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
 		// computed on the correct splits. only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN

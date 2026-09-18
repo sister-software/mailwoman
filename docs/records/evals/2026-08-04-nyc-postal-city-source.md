@@ -54,7 +54,7 @@ Database). New York state splits:
 
 The missing set is exactly the NYC municipality — 967,870 rows, all with
 `address_levels[2] = 'New York'`, no remainder. Per-state `postal_city` coverage (IL 100%, TX 85.3%,
-NY 85.0%, CA 2.2%, FL 0%, MA 0%) measures **which states Overture sourced from NAD**, not postal-city
+NY 85.0%, CA 2.2%, FL 0%, MA 0%) measures **which states Overture sourced from NAD** rather than postal-city
 availability. FL and MA are not postal deserts.
 
 ## How the first reading went wrong

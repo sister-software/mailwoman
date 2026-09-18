@@ -59,7 +59,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const repoRoot = String(repoRootPath())
 		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
 
-		// By MTIME, not filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
+		// By MTIME rather than filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
 		// `v4.8.0-...` both ways, and picking it reports every country as dropped, which reads as a catastrophic
 		// finding rather than as the wrong file. The report always names the config it used.
 		let newest: string | undefined
@@ -79,7 +79,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const versioned = String(dataRootPath("corpus", "versioned"))
 		const manifests: Array<{ path: string; at: number }> = []
 
-		// By MTIME, not directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
+		// By MTIME rather than directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
 		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
 		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
 		if (await pathExists(versioned)) {

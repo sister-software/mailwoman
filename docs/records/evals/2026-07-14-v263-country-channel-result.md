@@ -32,7 +32,7 @@ The region regression concentrates on **trailing-country tails**: v263 drops the
 `Cider Mill Rd VT 05161, US`, `STATE RTE 100, VT 05350, USA`, and FR `Manailly Creuse FRANCE` — 11 rows
 that shipped labels correctly, region → `""`. Mechanism: the dedicated country channel (immune to
 `suppress_gazetteer_near_postcode`) fires on the trailing country surface and out-competes the adjacent
-region tag on that boundary. It is an actual v263 behavior, not a near-miss.
+region tag on that boundary. It is an actual v263 behavior rather than a near-miss.
 
 **But it does not move the assembled coordinate.** The #566-correct measure — the held-out coordinate
 z-test on 300 fresh real US/FDIC and 300 fresh real FR/BAN addresses — is flat in both locales (z −0.16 /
@@ -68,11 +68,10 @@ retrain targeted country recovery). So — exactly as v261 shipped only because 
 with the documented exception" — the promote-to-default call for v263 is the operator's, with this trade
 on the table.
 
-**Recommendation: promote.** v263 recovers the #1104 country target with the real fix (the atlas channel,
-not a cosmetic exception), holds the real-postal guard, and is coordinate-flat on both locales. The region
+**Recommendation: promote.** v263 recovers the #1104 country target with the real fix (the atlas channel rather than a cosmetic exception), holds the real-postal guard, and is coordinate-flat on both locales. The region
 cost is coordinate-invisible and on a low-prevalence format. If instead the region per-tag delta is judged
 unacceptable, the channel is validated and the next iteration is a targeted region-preservation tune (a
-lower country-channel confidence near a region-abbrev, or a region class-weight bump), not a rebuild —
+lower country-channel confidence near a region-abbrev, or a region class-weight bump) rather than a rebuild —
 the channel code is already merged (default-OFF) on main.
 
 ## Reproduce

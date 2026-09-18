@@ -36,7 +36,7 @@
  *   the largest cities — the places a parser most needs to have seen. A quota keeps every locality and bounds how many
  *   of its postcodes ride along, which is the balance the cap was reaching for without the deletion.
  *
- *   ## Placement is data, not a formatting choice
+ *   ## Placement is data rather than a formatting choice
  *
  *   Each tuple is stamped with its country's {@link PostcodePlacement}. The same digits change tag with position, so a
  *   tuple that does not carry its placement teaches whichever convention the recipe happens to default to — see the
@@ -300,8 +300,8 @@ const PROVINCE_GENERIC = /^prov[ií]ncia (?:de |d')/iu
 
 /**
  * The surface a LOCALITY is written as: the official-language preferred name that is `spr.name` with its diacritics
- * restored (`Cordoba` → `Córdoba`), else the first official-language preferred name, else `spr.name`. One surface, not
- * a fan-out: the region carries the multiplicity and the locality would multiply it.
+ * restored (`Cordoba` → `Córdoba`), else the first official-language preferred name, else `spr.name`. One surface
+ * rather than a fan-out: the region carries the multiplicity and the locality would multiply it.
  */
 export function localityWrittenForm(sprName: string, names: PreferredNames): string {
 	const folded = foldName(sprName)
@@ -591,7 +591,7 @@ export async function createKnownLocalityCheck(country: string, adminDB?: string
  *
  * A country whose row above reads `NO` yields zero from this reader, and that is the correct outcome rather than a gap
  * to route around: taking column 3 as the locality is what made the v4.8.0 recipe output train `Mahatma Gandhi Road` as
- * a city. If one of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
+ * a city. If one of them is wanted, it needs a city column from somewhere else rather than a relaxed mapping.
  *
  * NOT PUBLISHED AT ALL by GeoNames, checked the same day: VE, VN, NP, MM, KH. Those are acquisition questions, and for
  * VE specifically OpenAddresses 404s too — see the arc retrospective.
@@ -630,13 +630,13 @@ export async function readTriplesFromGeonames(
 
 		if (!postcode || !locality || !region) continue
 
-		// The check applies to the LOCALITY, not to the other column — which for PT/MX/IN is expected to be a street or a
+		// The check applies to the LOCALITY rather than to the other column — which for PT/MX/IN is expected to be a street or a
 		// colonia and is emitted as the dependent locality rather than dropped. A US county is not emitted as a dependent
 		// locality: it is an administrative tier the address line does not write, and teaching it as one would attest a
 		// segment nobody types.
 		if (!isKnownLocality(locality)) continue
 
-		// A dependent locality that merely repeats its parent teaches a doubled segment, not a boundary.
+		// A dependent locality that merely repeats its parent teaches a doubled segment rather than a boundary.
 		const dep = dependentLocality && dependentLocality !== locality ? dependentLocality : ""
 
 		// The bare twin of a punctuated code carries no new fact, and keeping both doubles the country's weight.

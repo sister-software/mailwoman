@@ -1,7 +1,7 @@
 """The `--smoke-mode` flag, shared by the two commands that train.
 
 `train` takes it as an override and `smoke` defaults it to `constant`, so it lives beside them
-rather than inside either. It is CLI policy, not config: `constant` overrides whatever schedule the
+rather than inside either. It is CLI policy rather than config: `constant` overrides whatever schedule the
 recipe named, and `long-tail` changes nothing but warns.
 """
 

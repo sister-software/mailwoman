@@ -122,7 +122,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 
 		await writeLocalFile(bytes, outPath)
 
-		// Self-verifying readback over the bytes just written, not the in-memory nodes.
+		// Self-verifying readback over the bytes just written rather than the in-memory nodes.
 		const resolver = new PlacetypeCensusResolver(bytes)
 		const probeParents = PROBE_PARENTS_BY_COUNTRY[country]
 

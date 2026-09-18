@@ -57,7 +57,7 @@ postcode-country coherence fired on 0/116 cases
 The two runs were otherwise byte-identical. That is the 2026-08-04 oa-resolver trap wearing a different hat — an
 unchanged verdict from a mechanism that never ran is not evidence of anything.
 
-The cause is structural, not incidental. The pass is inert without a `defaultCountry`, and the curated corpus carried
+The cause is structural rather than incidental. The pass is inert without a `defaultCountry`, and the curated corpus carried
 **exactly one** case with one (`fr-lyonnais-3-bare-country-bias`, an FR address under `FR`, where the pass exits at
 step 1 by design). The corpus had no case in which a country prior is in tension with the address it is applied to —
 which is precisely the defect #42 exists to fix, so the check could not have seen the change no matter how it was pinned.
@@ -154,7 +154,7 @@ of a freshly-rebuilt corpus on today's `main`, and it is stated first so the res
   against the stale artifact). Standing watch item.
 - `de-r9-nippes-koeln` and `us-subvenue-googleplex-building` are cases that had **never been graded**: they live in the
   seed but not in the built artifact, and rebuilding surfaced them. Both are one-token street-span mismatches
-  (`Neusser Str` vs `Neusser Str.`, `Amphitheatre Parkway` vs `Amphitheatre`), not resolution failures.
+  (`Neusser Str` vs `Neusser Str.`, `Amphitheatre Parkway` vs `Amphitheatre`) rather than resolution failures.
 
 ### The case-level diff, in full
 
@@ -248,7 +248,7 @@ Where can default-on matter at all? Two numbers per country, because either alon
 REACHABLE through the lookups the pass itself makes. Measured with
 `mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`.
 
-The candidate set is bounded by codex, not by the gazetteer — `candidateSystemsForPostcode` knows eight systems, so a
+The candidate set is bounded by codex rather than by the gazetteer — `candidateSystemsForPostcode` knows eight systems, so a
 country with no codex module can never be proposed however several rows it holds. These eight are therefore the whole
 universe:
 
@@ -308,7 +308,7 @@ build-stamp comparison at layer start would do it).
 **The D-rule evidence now supports default-on.** Both named gaps are closed, and neither closed with a surprise.
 
 The D-rule asks one question — does this default-on mechanism carry a known regression against the shipped model on
-any tier-1 locale? The answer is measured, not argued:
+any tier-1 locale? The answer is measured rather than argued:
 
 - **Gauntlet, the standard instrument, both ways: zero newly-failing cases.** 65/68 counted cases pass with the change
   pinned and with it unpinned; the three failures are identical, pre-date this work, and are unrelated. The full diff
@@ -321,7 +321,7 @@ any tier-1 locale? The answer is measured, not argued:
   rows fell past the cheap exit and had every alternative country tried; every one was refuted.
 - **The backend dependence is measured and small.** FTS is stricter on FR/GB and looser on US; it moves the RESCUE rate
   by 0.7–1.1 points and the false-positive count by nothing. The `exactMatch` disagreement the landing record flagged
-  is real and it costs recall, not precision.
+  is real and it costs recall rather than precision.
 
 Three conditions attach, none of them blocking:
 
@@ -333,7 +333,7 @@ Three conditions attach, none of them blocking:
    a tracked note.
 3. **Read the result rate correctly.** The rescue leg simulates a UNIFORMLY mis-scoped default — the demo/CLI reality
    (locale `en-US` → `US` on every query) but not traffic that already carries a correct country. The claim the
-   numbers support is "when the default is wrong, this fixes ~9 in 10 of them and breaks none", not "this improves
+   numbers support is "when the default is wrong, this fixes ~9 in 10 of them and breaks none" rather than "this improves
    9 in 10 addresses".
 
 What default-on does not fix, so the flip is not oversold: `gb-downing-us-scoped` stays broken because the en-GB
@@ -449,7 +449,7 @@ four-line firing report. The metamorphic layer is byte-identical — it passes n
 inert there by construction.
 
 **The verdict is fail on both legs, on the same three cases, for reasons unrelated to this change** — §1.4 named all
-three, and the promotion moves none of them. Read the counted count, not the verdict word: 67/70 at the new default
+three, and the promotion moves none of them. Read the counted count rather than the verdict word: 67/70 at the new default
 against 65/70 at the old, with the identical failure set. **Newly-failing counted cases: zero.**
 
 `us-subvenue-northwestern-pavilion` also reports "now passes — promote to status=pass" in both legs. It is a #1471
@@ -471,7 +471,7 @@ rows where the coherence pass overrode the country (default-ON leg): 0
 Garbage does not produce a coherent (postcode, locality) pair, so the pass abstains on all 105 and the two legs are
 identical row for row. That is the expected shape, and it is worth having measured rather than assumed: the pass
 runs before the walk on every query that carries a default country and a postcode, so "it costs two lookups and
-changes nothing on malformed input" was a claim, not a fact, until this ran.
+changes nothing on malformed input" was a claim rather than a fact, until this ran.
 
 ### 7.5 Tests changed, and why
 
@@ -490,7 +490,7 @@ No other test pinned this default. Full repo suite and the resolver suite both c
 ### 7.6 What is still not fixed
 
 Unchanged from §5, restated so the flip is not read as more than it is: `gb-downing-us-scoped` still fails (the GB
-postcode parse under the en-GB overlay, not the resolver); JP and NZ have a codex module with no postcode data; CA and
+postcode parse under the en-GB overlay rather than the resolver); JP and NZ have a codex module with no postcode data; CA and
 AU need the candidate table; the coarse placer still cannot override `defaultCountry`; and the built regression corpus
 still drifts from its seed with no warning. These are recorded as D6 in the
 [runtime-flag register](../../engineering/reference/runtime-flags.mdx).

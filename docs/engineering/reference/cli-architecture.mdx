@@ -48,13 +48,13 @@ Ink is reserved for interactive interfaces and must sit behind a dynamic route s
 
 ## Runtime schema policy
 
-Use runtime schemas at external data boundaries, not as a general-purpose source of TypeScript types:
+Use runtime schemas at external data boundaries rather than as a general-purpose source of TypeScript types:
 
 - Keep `@hono/zod-openapi` where schemas both validate HTTP requests and generate OpenAPI.
 - Validate environment variables before deriving typed configuration.
 - Keep MCP tool input schemas while the SDK consumes Zod contracts.
 - Validate decoded eval and corpus records when malformed persisted data would otherwise enter the runtime.
 - Validate structured values embedded in CLI arguments after `CommandSpec` has parsed the argument itself.
-- Test native command validation through `CLIUsageError`, not through a schema library's error class.
+- Test native command validation through `CLIUsageError` rather than through a schema library's error class.
 
 Do not use Zod merely to coerce a CLI number, enumerate flag choices, or infer a command component's props.

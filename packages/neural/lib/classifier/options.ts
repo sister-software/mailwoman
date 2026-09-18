@@ -253,10 +253,10 @@ export interface ParseOpts {
 	/**
 	 * The input register (operator Decision A, 2026-07-28. canonical docs on `@mailwoman/core/pipeline`'s `InputMode`).
 	 * `formatted` runs the evidence-bundle channels (street_type/locality_surface) deliberately off — the trained absence
-	 * identity, a declared ablation, not a missing feed — because the bundle lifts fragments and damages full-address
-	 * parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the production
-	 * pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one). Typed
-	 * structurally — no runtime dependency on `@mailwoman/core`.
+	 * identity, a declared ablation rather than a missing feed — because the bundle lifts fragments and damages
+	 * full-address parses. Default `"fragmented"` for bare library calls (today's feed-when-configured semantics); the
+	 * production pipeline always passes the mode explicitly (kind-classifier-derived when the caller didn't set one).
+	 * Typed structurally — no runtime dependency on `@mailwoman/core`.
 	 */
 	inputMode?: "fragmented" | "formatted"
 	/**
@@ -267,7 +267,7 @@ export interface ParseOpts {
 	 * Bias magnitude for FST gazetteer matches. Default 1.0.
 	 *
 	 * @internal Instrument knob (D3, ROAD_TO_MAILWOMAN_V8_1_0 §5.3) — exists so the eval harnesses can decompose the
-	 *   FST channel, not consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
+	 *   FST channel rather than consumer configuration. The shipped calibration is the default; `createRuntimePipeline`
 	 *   consumers never set this.
 	 */
 	fstBiasScale?: number

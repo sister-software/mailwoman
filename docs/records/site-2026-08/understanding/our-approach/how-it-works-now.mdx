@@ -12,7 +12,7 @@ tags:
 
 # How it works now — the staged pipeline
 
-Mailwoman runs addresses through a **staged pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Two models are involved, not one: a small **coarse-placer** that guesses the country up front (Stage 1.5), and the main **neural classifier** that labels the tokens (Stage 3). Rule classifiers run alongside the neural classifier, and a **policy registry** decides whose vote wins for each address component. Outside knowledge — postcodes, the gazetteer — reaches the model as soft hints called **anchors**, which inform a decision but never override it.
+Mailwoman runs addresses through a **staged pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Two models are involved rather than one: a small **coarse-placer** that guesses the country up front (Stage 1.5), and the main **neural classifier** that labels the tokens (Stage 3). Rule classifiers run alongside the neural classifier, and a **policy registry** decides whose vote wins for each address component. Outside knowledge — postcodes, the gazetteer — reaches the model as soft hints called **anchors**, which inform a decision but never override it.
 
 This article assumes you have read [How it used to work](./how-it-used-to-work.mdx). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.mdx).
 
@@ -148,10 +148,10 @@ import { PipelineExplorer } from "@site/src/components/PipelineExplorer/Pipeline
 
 ## Where it stands today (May 2026)
 
-- **CE-only training resolved the divergence problem.** The v0.5.2 model ships from a stable 100K-step CE-only training run on an A100. The dual-loss CRF-NLL + CE divergence that blocked v0.4.0 and v0.5.0 was resolved by setting `crf_loss_weight: 0.0` — CRF is used at inference only, not training. v0.5.3 diagnostic training is in progress with per-tag F1 visibility.
+- **CE-only training resolved the divergence problem.** The v0.5.2 model ships from a stable 100K-step CE-only training run on an A100. The dual-loss CRF-NLL + CE divergence that blocked v0.4.0 and v0.5.0 was resolved by setting `crf_loss_weight: 0.0` — CRF is used at inference only rather than training. v0.5.3 diagnostic training is in progress with per-tag F1 visibility.
 - **The FST gazetteer prior is shipped but not yet in the browser.** The FST builder, Wikipedia importance scoring, and emission prior compose with the QueryShape soft prior in the Node.js pipeline. The browser `/demo` page runs the neural classifier directly without the FST — it would need a browser-compatible FST loader (Phase 4).
-- **Joint decode is retired as the default (2026-06-14).** It stays behind `forceJointReconcile`; the default is argmax. Reconcile broke the street + house_number precondition on most clean US addresses while the label-level evals showed it improving — which is the whole reason we now grade the assembled parse, not the raw labels. See Stage 5 above.
-- **Locality/region confusion persists on some inputs.** "New York, NY" is fixed (region-aware guard). "Washington, DC" is partially fixed (FST correctly biases locality) but the model's high B-street confidence for "Washington" after a street phrase resists the prior. Fix is in training data, not more priors.
+- **Joint decode is retired as the default (2026-06-14).** It stays behind `forceJointReconcile`; the default is argmax. Reconcile broke the street + house_number precondition on most clean US addresses while the label-level evals showed it improving — which is the whole reason we now grade the assembled parse rather than the raw labels. See Stage 5 above.
+- **Locality/region confusion persists on some inputs.** "New York, NY" is fixed (region-aware guard). "Washington, DC" is partially fixed (FST correctly biases locality) but the model's high B-street confidence for "Washington" after a street phrase resists the prior. Fix is in training data rather than more priors.
 - **The model is small.** 29M parameters (h384, 6 layers, 6 heads). Runs in ~10ms per address on CPU via ONNX Runtime. The int8 quantized model is 17 MB.
 
 Continue with [How it will work](./how-it-will-work.mdx) for the near-future roadmap.

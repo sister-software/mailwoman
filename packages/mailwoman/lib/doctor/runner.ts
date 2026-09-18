@@ -361,10 +361,10 @@ async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCh
  * node version, then the ONNX binding, then the model weights, then the optional data layers, then the informational
  * locale overlays.
  *
- * The order is a reading order, not an importance ranking. A stale node or an unloadable native binding explains every
- * other symptom in the report — a reader who sees "weights ok" first and stops has learned nothing, because ok weights
- * on a runtime that cannot run them still parse nothing. Pure verdict logic lives in {@link ./checks.ts}; this only
- * gathers the facts through the injected {@link DoctorDeps}.
+ * The order is a reading order rather than an importance ranking. A stale node or an unloadable native binding explains
+ * every other symptom in the report — a reader who sees "weights ok" first and stops has learned nothing, because ok
+ * weights on a runtime that cannot run them still parse nothing. Pure verdict logic lives in {@link ./checks.ts}; this
+ * only gathers the facts through the injected {@link DoctorDeps}.
  */
 export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<DoctorReport> {
 	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }

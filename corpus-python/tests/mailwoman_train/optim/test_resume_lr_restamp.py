@@ -55,7 +55,7 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
 
-    # The trap: post-load, the group is back at the CHECKPOINT's old LR, not the live config's.
+    # The trap: post-load, the group is back at the CHECKPOINT's old LR rather than the live config's.
     # Both groups have 2 params (weight+bias) — disambiguate by numel (classifier: 33*4+33).
     classifier_group = next(g for g in optim2.param_groups if sum(p.numel() for p in g["params"]) == 33 * 4 + 33)
     assert classifier_group["lr"] == 1e-3  # old value won — silently
@@ -64,7 +64,7 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
 def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     """With the fix applied: after `_restamp_resume_lrs`, param groups and scheduler.base_lrs
-    reflect the live config's (changed) classifier LR, not the checkpoint's."""
+    reflect the live config's (changed) classifier LR rather than the checkpoint's."""
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
@@ -79,7 +79,7 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
     torch.save(sched1.state_dict(), sched_state_path)
 
     m2 = TinyModel()
-    # `labels` is build_optimizer's own return, not a hand-typed parallel list — the point of
+    # `labels` is build_optimizer's own return rather than a hand-typed parallel list — the point of
     # this fix. See `test_restamp_resume_lrs_labels_are_not_a_hand_built_list` below for the
     # reorder-proofing assertion this buys.
     optim2, labels = build_optimizer(m2, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-4)
@@ -155,7 +155,7 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
 
 def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_path, capsys):
     """span_head_learning_rate and classifier_learning_rate both set — 3 groups. Labels must
-    attribute to the group that actually carries that override's LR, not just be the right
+    attribute to the group that actually carries that override's LR rather than just be the right
     length/set of strings (the original bug: the caller's hand-built if-chain could get the
     STRINGS right while attributing them to the wrong `optim.param_groups` index after a
     build_optimizer reorder). Then runs the full resume round trip through `_restamp_resume_lrs`
@@ -172,7 +172,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     assert len(optim1.param_groups) == 3
     assert labels1 == ["base", "span_head_learning_rate", "classifier_learning_rate"]
 
-    # Attribution check: each label's group must hold that override's PARAMS, not just its LR
+    # Attribution check: each label's group must hold that override's PARAMS rather than just its LR
     # (a positional-only check could pass by coincidence if two overrides shared an LR value).
     expected_params_by_label = {
         "base": {id(p) for n, p in m1.named_parameters() if n.startswith("encoder.")},

@@ -9,10 +9,10 @@ is the channel being switched off for that country while the config still says `
 true``.
 
 Run it before a launch, once per recipe output whose country you expect the anchor to serve. A zero on a
-recipe output you expected to paint is a STOP, not a warning: either the lookup lacks that country's keys or
+recipe output you expected to paint is a STOP rather than a warning: either the lookup lacks that country's keys or
 the key normalization diverged.
 
-WHAT IT EXERCISES. The real train-side code, not a re-implementation:
+WHAT IT EXERCISES. The real train-side code rather than a re-implementation:
 ``mailwoman_train.features.postcode_shapes.collect_matches`` for the spans (``anchor_paint_mode: shaped``) and
 ``mailwoman_train.tokenizer._paint_anchor_chars`` for the lookup + normalization. The only thing
 skipped is the char->piece projection, which cannot turn a painted row into an unpainted one (it

@@ -17,7 +17,7 @@
  *      surveyed basis is the storable form of "surveyed, and there is none here" — the whole reason
  *      exclusion-grade coverage exists. A cell left OUT of the table means unknown, and the two must never
  *      collapse into each other.
- *   2. **Cells outside the region are never written.** Not at completeness 0, not at all: the region is
+ *   2. **Cells outside the region are never written.** Not at completeness 0 rather than at all: the region is
  *      what was measured, and the measurement says nothing about its outside.
  *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
  *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator.

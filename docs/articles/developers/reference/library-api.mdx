@@ -55,7 +55,7 @@ function createRuntimePipeline(
 
 The factory is synchronous and the returned function is async. Every lazy load — the coarse country
 placer, the gazetteer index, the street-morphology matcher, the street-evidence index — happens on
-the first call to the returned function, not in the factory.
+the first call to the returned function rather than in the factory.
 
 ### Options
 
@@ -235,7 +235,7 @@ classifier's weights package on its first call and passes it to every parse, whi
 call directly receives no index at all. `geocodeAddress` does not wire it either, and `GeocodeDeps`
 has no field for it.
 
-The parse still succeeds without it. It is a prior, not a stage, so most inputs are unaffected and
+The parse still succeeds without it. It is a prior rather than a stage, so most inputs are unaffected and
 the failure is silent — which is why this section exists rather than a note on the table row.
 
 Wire it from the path the classifier already resolved. `fstPath` is optional, because a locale
@@ -318,7 +318,7 @@ row.
 ### Resolution tiers
 
 The tier states which artifact produced the coordinate, best first. Condition any house-grade rendering on
-the tier, not on the presence of `house_number`: the parsed span is populated whatever tier answered.
+the tier rather than on the presence of `house_number`: the parsed span is populated whatever tier answered.
 
 | Tier            | Coordinate source                    | `uncertainty_m`                          |
 | --------------- | ------------------------------------ | ---------------------------------------- |
@@ -449,7 +449,7 @@ function geocodeStream(
 ```
 
 `geocodeStream` runs a worker pool over a record stream and yields enriched records in completion
-order, not input order. It parses once per row and shares the tree between the returned components
+order rather than input order. It parses once per row and shares the tree between the returned components
 and the geocode.
 
 | Option        | Type                  | Default                               | Effect                                       |
@@ -526,11 +526,11 @@ softmax confidences, which is the byte-stable default.
 | --------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------ |
 | The weights package for a locale is absent                | `loadFromWeights` throws one actionable error naming the package   | `npm install @mailwoman/neural-weights-<locale>`                         |
 | The weights package resolves but the model fails to load  | `loadFromWeights` throws with the underlying error preserved       | Reinstall the package. A partial or truncated bundle is the usual cause  |
-| A model card declares a channel the package does not ship | The classifier warns once and runs that channel off                | Reinstall. A soft-fed channel changes accuracy, not correctness          |
+| A model card declares a channel the package does not ship | The classifier warns once and runs that channel off                | Reinstall. A soft-fed channel changes accuracy rather than correctness   |
 | `createRuntimePipeline` has no `classifier`               | The pipeline runs the structural stages only; `tree` may be empty  | Pass a classifier                                                        |
 | `createRuntimePipeline` has no `resolver`                 | The tree carries no coordinates                                    | Pass a `createWOFResolver` instance                                      |
 | The gazetteer index fails to deserialize                  | A warning on `stderr`, and the parse runs without gazetteer priors | Reinstall the weights package                                            |
-| `createCalibrator` gets an empty table                    | Throws `createCalibrator: empty calibration table`                 | Pass the parsed `calibration.json`, not an empty array                   |
+| `createCalibrator` gets an empty table                    | Throws `createCalibrator: empty calibration table`                 | Pass the parsed `calibration.json` rather than an empty array            |
 | `geocodeAddress` hits a fatal parse or resolve error      | Throws                                                             | Catch per row. Every non-fatal case returns a result on the `admin` tier |
 
 ## Rationale

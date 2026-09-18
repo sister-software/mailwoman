@@ -77,8 +77,8 @@ export interface FSTPlaceEntryLike {
 	 * user means").
 	 *
 	 * The structural type deliberately does not name `encyclopedic`. The FST entries the matcher hands over carry it, and
-	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced, not a
-	 * comment.
+	 * a bias that could see it would eventually use it — so the type boundary is where the policy is enforced rather than
+	 * a comment.
 	 */
 	referential: number
 }
@@ -137,7 +137,8 @@ const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neig
  * generic+directional ("King Street East" is a Hamilton, Ontario neighbourhood), 442 hard-generic-final, 235
  * square-final ("Madison Square") — 756 surfaces, 0.27% of the mapped class. The covering-surface classes the mapping
  * exists for are untouched: `hill`-final alone is 866 surfaces ("Biggin Hill") and no other generic (`green`, `park`,
- * `common`, …) is in the list. Tokens arrive FST-normalized (lowercase), so the match is exact, not case-folded here.
+ * `common`, …) is in the list. Tokens arrive FST-normalized (lowercase), so the match is exact rather than case-folded
+ * here.
  */
 export function isStreetShapedSurface(tokens: readonly string[]): boolean {
 	if (!tokens.length) return false
@@ -469,7 +470,7 @@ export function buildFSTEmissionPriors(
  *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
  *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
  *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
- *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required, not a nicety**: restrict
+ *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required rather than a nicety**: restrict
  *      word-opening to `▁`-prefixed pieces (or `i === 0`) and a pending word whose first piece happens to lack its own `▁`
  *      vanishes silently — that is the exact shape a SentencePiece vocab produces for a short/common word never learned as
  *      a merged `"▁word"` token (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on
@@ -554,8 +555,8 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
  *
  * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
  * forms. it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
- * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
- * specific form (indexed and query surfaces agree on diacritics).
+ * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee rather than
+ * the specific form (indexed and query surfaces agree on diacritics).
  *
  * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
  * (U+0020) is Unicode category Zs (separator), not matched by `\p{P}` or `\p{S}`. So this function preserves spaces
@@ -636,8 +637,8 @@ function streetContextScale(
 
 /**
  * The per-run bias knobs — fixed for the whole of one `buildFSTEmissionPriors` call, so they travel as one bundle
- * rather than five positional arguments. `seenWOFIDs` is deliberately shared, not copied: it is the run-wide dedupe set
- * that keeps one WOF place from biasing the matrix twice.
+ * rather than five positional arguments. `seenWOFIDs` is deliberately shared rather than copied: it is the run-wide
+ * dedupe set that keeps one WOF place from biasing the matrix twice.
  */
 interface BiasTuning {
 	biasScale: number

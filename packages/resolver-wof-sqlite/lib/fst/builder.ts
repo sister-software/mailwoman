@@ -300,7 +300,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned: a place with no Wikipedia article must carry no field, not a
+			// Spread rather than assigned: a place with no Wikipedia article must carry no field rather than a
 			// zero. The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,

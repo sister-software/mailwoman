@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   CLI integration tests for the `mailwoman data` command GROUP itself (#1577) — the `index.tsx`
- *   landing page, not `pull`/`status`. Runs the compiled CLI (`out/cli.js`, the standing "use the
+ *   landing page rather than `pull`/`status`. Runs the compiled CLI (`out/cli.js`, the standing "use the
  *   compiled CLI" rule) with an isolated empty data root so nothing here depends on which layers this
  *   machine happens to have downloaded, and touches no network: both code paths are pure registry
  *   reads.

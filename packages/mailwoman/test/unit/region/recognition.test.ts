@@ -38,7 +38,7 @@ describe("usStateSlug", () => {
 
 	it("rejects non-states and multi-token values", () => {
 		expect(usStateSlug("Dublin")).toBeNull()
-		expect(usStateSlug("Dublin, TX")).toBeNull() // whole value, not a bare state
+		expect(usStateSlug("Dublin, TX")).toBeNull() // whole value rather than a bare state
 		expect(usStateSlug("XZ")).toBeNull()
 	})
 })

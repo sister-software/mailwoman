@@ -26,7 +26,7 @@
  *   distribution and has no single map unit to compare. That makes this a check on the CONVERSION, which is
  *   what it is for. the reduction is checked by the fixtures and by the share-sum invariant.
  *
- *   IT REACHES IT THROUGH THE CELL INDEX, NOT THROUGH A BOUNDING-BOX SCAN. A `WHERE min_lat <= ? AND …` over
+ *   IT REACHES IT THROUGH THE CELL INDEX rather than THROUGH A BOUNDING-BOX SCAN. A `WHERE min_lat <= ? AND …` over
  *   the geometry table reads like a prefilter and is a full table scan: none of those columns is indexed and
  *   every row carries a ring blob, so at the pilot's 2.7 million delineations it reads gigabytes per point.
  *   Naming the point's cell is a primary-key range scan over a `WITHOUT ROWID` table, which is the whole
@@ -97,8 +97,8 @@ export interface VerifySoilResult {
 }
 
 /**
- * Points outside the pilot region, named. Each is a place, not a bare pair of numbers: a coordinate a reader cannot
- * name is a coordinate nobody can check.
+ * Points outside the pilot region, named. Each is a place rather than a bare pair of numbers: a coordinate a reader
+ * cannot name is a coordinate nobody can check.
  *
  * Every neighbouring state is included, because the failure this half catches is a footprint that leaked past the
  * survey-area outlines — and a footprint accidentally clipped to "the Midwest" would pass a one-state check. Two of
@@ -205,9 +205,9 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
  * read per point. The cell index exists to make exactly this question cheap — `soil_map_unit_cell` is `WITHOUT ROWID`
  * keyed `(h3_cell, area_id)`, so naming the point's cell is a primary-key range scan.
  *
- * EVERY STORED RESOLUTION IS PROBED, not just the index one. The whole tier is compacted parent-ward, so a delineation
- * that fills a run of cells is stored at a coarser resolution and a probe at the index resolution alone would read it
- * as an absence — the same ancestor walk the reader does, and the same false negative it avoids.
+ * EVERY STORED RESOLUTION IS PROBED rather than just the index one. The whole tier is compacted parent-ward, so a
+ * delineation that fills a run of cells is stored at a coarser resolution and a probe at the index resolution alone
+ * would read it as an absence — the same ancestor walk the reader does, and the same false negative it avoids.
  */
 function candidateDelineations(
 	database: DatabaseClient<SoilDatabase>,
@@ -286,7 +286,7 @@ function localDelineationAt(
 /**
  * Metres from a point to the nearest edge of an encoded ring set.
  *
- * Decoding here rather than walking the blob directly: this runs a few hundred times in a verification, not per
+ * Decoding here rather than walking the blob directly: this runs a few hundred times in a verification rather than per
  * geocode, and the decoded form is what makes the segment walk readable.
  */
 function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number {
@@ -317,8 +317,8 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
 /**
  * Draw a reproducible sample of points from the artifact.
  *
- * The draw is a deterministic stride over the primary key, not a random one, so a re-run compares the same points and a
- * disagreement can be looked at rather than re-rolled.
+ * The draw is a deterministic stride over the primary key rather than a random one, so a re-run compares the same
+ * points and a disagreement can be looked at rather than re-rolled.
  *
  * ONE ROW IS READ PER SAMPLE POINT AND NO MORE. A `WHERE rowid % stride = 0` scan looks like the same thing and is not:
  * it walks the table itself, which means reading every ring blob to keep a few dozen. `ORDER BY area_id LIMIT 1 OFFSET

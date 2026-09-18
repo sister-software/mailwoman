@@ -19,7 +19,7 @@ If you've ever tried to answer "what city is this address in?" programmatically,
 
 ## What Who's On First is
 
-WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
+WOF is a gazetteer — a structured database of places. Not addresses rather than roads rather than buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
 It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totalling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
@@ -75,7 +75,7 @@ There are a few things to notice:
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity.
+WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential rather than geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity.
 
 ### Supersession chains
 
@@ -149,7 +149,7 @@ We built it, marked it `@internal`, and haven't exercised it at scale because th
 
 Three things, in priority order:
 
-1. **Finish the SQLite migration.** The worker targets Redis; it should target `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing, not design.
+1. **Finish the SQLite migration.** The worker targets Redis; it should target `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing rather than design.
 2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs, which carry the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
 3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the fallback. Whether it's needed at all depends on whether step 1 is fast enough without it.
 

@@ -117,7 +117,7 @@ test("geomBounds collapses a single-vertex (degenerate) polygon to a zero-area b
 })
 
 test("geomBounds does NOT normalize an antimeridian-crossing polygon (documents the naive min/max)", () => {
-	// A ring spanning 179°E → -179°E: the naive bounds report the full -179..179 span, not the ~2° real one.
+	// A ring spanning 179°E → -179°E: the naive bounds report the full -179..179 span rather than the ~2° real one.
 	const geom: PlaceGeometry = {
 		type: "Polygon",
 		coordinates: [

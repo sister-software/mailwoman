@@ -270,7 +270,7 @@ def _report_resume_drift(cfg: Config, saved_cfg: dict[str, Any]) -> None:
     """Print every config field that differs from the checkpoint's stamped state (#480).
 
     Deliberate resume-with-changes is the campaign's setting pattern (Run A/C); UNNOTICED drift is
-    the Run-B-class confound. Visibility, not prohibition.
+    the Run-B-class confound. Visibility rather than prohibition.
     """
     live_cfg = {"data": asdict(cfg.data), "model": asdict(cfg.model), "train": asdict(cfg.train)}
     drift: list[str] = []

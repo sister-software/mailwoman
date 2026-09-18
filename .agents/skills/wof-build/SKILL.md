@@ -42,7 +42,7 @@ See #1142.
 
 ### 3. Build the per-locale FST gazetteers (~4 min, mostly the shared ambiguity scan)
 
-Use the CLI, not a hand-rolled `node -e`. It applies the degenerate-surface curation, runs the
+Use the CLI rather than a hand-rolled `node -e`. It applies the degenerate-surface curation, runs the
 surface-ambiguity scan once across all locales, and stamps the source DB's md5 into each artifact's
 provenance trailer (see step 5).
 
@@ -53,7 +53,7 @@ node packages/mailwoman/out/cli/index.js gazetteer build fst \
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
 the swap into `fst-per-locale/` is operator-approved: an FST changes decoder behaviour, so it moves
-after the battery, not as a side effect of a build.
+after the battery rather than as a side effect of a build.
 
 **Every per-locale FST has a builder; `fst-global-priority.bin` is retired.** The CJK three
 (`fst-{ja-jp,zh-cn,ko-kr}.bin`) are `FST_LOCALES` entries like the Latin six and build with the same
@@ -104,7 +104,7 @@ for (const p of r.accepting.slice(0, 3)) console.log(' ', p.placetype, p.name, '
 
 **Watch `importanceMatches` in the stamp.** The builder falls back to `place_population` when the DB
 has no `place_importance` table, and no admin DB has ever carried one (#1142) — so the FST's
-`importance` field is population-scaled, not Wikipedia importance, and the provenance field counts
+`importance` field is population-scaled rather than Wikipedia importance, and the provenance field counts
 population rows rather than importance matches. Step 2 exists to fix that; until it runs against the
 live DB, that is what the number means.
 

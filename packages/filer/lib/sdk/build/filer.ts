@@ -12,7 +12,7 @@
  *   `sealDatabase` → rename existing `out` to `.prev` → rename `.building` into place. `filer.db` is not a
  *   layer-contract artifact (decision 2), so there is no `@mailwoman/core/layers` call here and no
  *   `asContractDB`-style invariance cast is needed — the manifest is a plain `filer_manifest` insert via
- *   Kysely, not `writeLayerManifest`.
+ *   Kysely rather than `writeLayerManifest`.
  *
  *   **Node/edge/family dedup — no staging table needed.** `filer_node` (PK `node_id`), `filer_edge` (PK
  *   `(from_node_id, to_node_id, source, valid_from)`), and `filer_family` (PK `(node_id, family_id,
@@ -20,7 +20,7 @@
  *   spellings that canonicalize to one `family_id` stay two rows instead of colliding. see
  *   `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is required) already
  *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are
- *   written directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. The composite PK, not
+ *   written directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. The composite PK rather than
  *   a separate staging pass, is the dedup mechanism, and the family-membership writes reuse it rather than
  *   growing a second staging table the PK already makes unnecessary.
  *
@@ -68,7 +68,7 @@
  *     is a free-text human label (`"2026-Q2"`) that is not guaranteed ISO-sortable, and `valid_from`
  *     participates in every downstream `asOf` predicate as a plain string comparison.
  *
- *   The direction convention (documented, not semantically required — `filer_edge` asserts symmetric
+ *   The direction convention (documented rather than semantically required — `filer_edge` asserts symmetric
  *   sameness, and the `to_node_id` index makes either traversal direction cheap): FRN is `from` for
  *   499-derived edges (it is the identifier hub — spec §3), `bdcProviderID` is `from` for provider-list
  *   edges (the row's own natural anchor).
@@ -119,7 +119,7 @@
  *      this builder can also work out which registrant, if any, it corresponds to. `subsidiaryNameNode` is
  *      minted the same "global name-node" way as `mintHoldingCompanyNodeID` — the raw string, unnormalized.
  *      see {@link FilerIdentifierType.SubsidiaryName}'s own docstring in `schema.ts`.
- *   2. **The corroboration edge — INFERENCE, not authority, and only when unambiguous.** Which FRN (if any) a
+ *   2. **The corroboration edge — INFERENCE rather than authority, and only when unambiguous.** Which FRN (if any) a
  *      disclosed subsidiary name actually denotes is not itself in Exhibit 21 — this builder infers it by an exact
  *      canonicalized-name match against the `legalNameOfCarrier` this same build call's `form499Rows` already
  *      gave it (cluster-filers.ts's own inferred pass makes the identical simplification, for the identical
@@ -157,7 +157,7 @@
  *   this name-match guess reaches `familyRollup`/`filerLookup.families` shape-identical to a Form 499
  *   holding-company membership the filer itself filed.
  *
- *   **`filer.db` is a single-vintage SNAPSHOT, not a multi-vintage archive.** The build-then-seal-then-swap
+ *   **`filer.db` is a single-vintage SNAPSHOT rather than a multi-vintage archive.** The build-then-seal-then-swap
  *   discipline (`${out}.building` → `sealDatabase` → rename existing `out` to `.prev` → rename into place)
  *   means a second `buildFilerDatabase` call against the same `out` with a later `sourceVintage` replaces the
  *   whole artifact — the earlier vintage's rows do not survive alongside the new ones as additional
@@ -295,7 +295,7 @@ export interface BuildFilerOptions {
 	 */
 	validFrom?: string
 	/**
-	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
+	 * `git rev-parse --short HEAD` — passed in by the command rather than read from the repo here.
 	 */
 	buildSHA: string
 	onProgress?: (message: string) => void
@@ -322,7 +322,7 @@ export interface BuildFilerResult {
 	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK plus the naming provenance. One row per
 	 * `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized to something non-empty (see
 	 * {@linkcode mintFamilyID}), so two different spellings of one family under one source at one instant count as two
-	 * rows here, not one.
+	 * rows here rather than one.
 	 */
 	families: number
 	/**

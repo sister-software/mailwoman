@@ -66,15 +66,16 @@ export interface CandidateTable {
 	/**
 	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name class is decided on (#28). NULL
 	 * means the score source had no row for this place: UNMEASURED, never "an importance of zero" (meaning-of-zero).
-	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the PLACE,
-	 * not of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the alias row.
+	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the PLACE
+	 * rather than of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the
+	 * alias row.
 	 *
 	 * **THIS IS THE PRE-SPLIT CONFLATION, AND THE NAME SAYS SO.** It is `place_importance.importance` copied verbatim
 	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
 	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
 	 * DEPRECATED. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
 	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key inert on three of the
-	 * four rows it exists to fix. The reason is coverage, not principle — the encyclopedia-concordance join in
+	 * four rows it exists to fix. The reason is coverage rather than principle — the encyclopedia-concordance join in
 	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
 	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
 	 * AU carry the population fallback and nothing else. Under the strict split those three become unmeasured, the

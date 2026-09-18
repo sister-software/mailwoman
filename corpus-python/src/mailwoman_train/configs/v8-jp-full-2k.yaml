@@ -24,7 +24,7 @@
 #   * cosine over `max_steps: 2000` fully anneals the LR inside the probe. The full run is only 8%
 #     through its cosine at step 2,000, so the probe's final loss is optimistic relative to it.
 #   * `eval_every_steps: 250` — eight eval points instead of one, because the point is the SHAPE of
-#     the curve, not the endpoint.
+#     the curve rather than the endpoint.
 # Everything else is byte-identical to v8-jp-full.yaml. If you change that file, change this one.
 #
 # The optional second leg (only if question 2's change is in doubt): copy this file with

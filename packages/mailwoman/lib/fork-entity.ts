@@ -174,7 +174,7 @@ function applyForkEntityAnswer(
 /**
  * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters. Wide on
  * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the check exists
- * to separate the local bearer from same-named entities in other cities, not to assert rooftop precision.
+ * to separate the local bearer from same-named entities in other cities rather than to assert rooftop precision.
  */
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 

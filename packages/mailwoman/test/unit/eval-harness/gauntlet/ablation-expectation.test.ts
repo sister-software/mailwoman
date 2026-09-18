@@ -450,7 +450,7 @@ describe("gradeAgainstLadder", () => {
 		})
 
 		expect(graded.grade).toBe("substituted")
-		// The geometry stays readable — the row is a hazard, not a mystery.
+		// The geometry stays readable — the row is a hazard rather than a mystery.
 		expect(graded.achievedRungDepth).toBe(0)
 	})
 

@@ -50,7 +50,7 @@ Three findings, all the same direction:
 1. **The région tag is decisive.** Collision communes drop 172 → 67 km (p50 132 → 0). Without
    the région, the resolver picks the wrong same-named commune about half the time — exactly the
    disambiguation the split restores.
-2. **The merge failure is catastrophic, not cosmetic.** `locality = "Villeneuve Creuse"` resolves to
+2. **The merge failure is catastrophic rather than cosmetic.** `locality = "Villeneuve Creuse"` resolves to
    **nothing** (0% across both strata). The AU-style locality+admin fuse doesn't mis-resolve — it
    fails to resolve at all. Fixing it is pure upside.
 3. **Even unique communes benefit.** Adding the département lifts resolve-rate 65 → 87%: a bare

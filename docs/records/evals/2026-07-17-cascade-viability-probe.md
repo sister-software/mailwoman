@@ -57,7 +57,7 @@ the shape is ambiguous, and the ambiguous cases are the ones that matter.**
   resolver; the model + atlas channel already perform that arbitration with learned weighting (M1 priced
   the channel at +10.4). Building it as a bypass provides ~0.5 ms and a second code path to keep direct.
 - The scoped doubleton bias (PR #1148, four-line guard on a soft prior) remains the template for where
-  shape knowledge helps: small, priced, scoped — inside the model's decode, not in front of it.
+  shape knowledge helps: small, priced, scoped — inside the model's decode rather than in front of it.
 
 ## Verdict
 

@@ -109,8 +109,8 @@ export interface BuildCandidateOptions {
 	/**
 	 * Optional WOF admin database carrying a `place_importance` table — the source of the `importance` column (#28), the
 	 * toponym-fame prior that decides the bare-city-name class. Joined by `(name_key, country, placetype)` + nearest
-	 * centroid, not by id. see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
-	 * prior exists to demote.
+	 * centroid rather than by id. see `candidate-importance.ts` for why the id join silently drops the foreign homonyms
+	 * the prior exists to demote.
 	 *
 	 * Omit it and every row's `importance` is NULL — unmeasured, which is what the consumer's positive-evidence-only rule
 	 * already treats as "do not participate", so the artifact is byte-identical to a pre-#28 build except for the empty
@@ -157,16 +157,16 @@ export interface BuildCandidateResult {
 	aliases: number
 	/**
 	 * Region aliases refused because another same-country region holds the name as its official name (three pairs in the
-	 * admin artifact: `新竹市`, `嘉義市`, `충청남도`). Zero on a source without a `names` table means the rule had nothing to read,
-	 * not that no pair exists.
+	 * admin artifact: `新竹市`, `嘉義市`, `충청남도`). Zero on a source without a `names` table means the rule had nothing to read
+	 * rather than that no pair exists.
 	 */
 	regionOfficialRefused: number
 	abbrevs: number
 	postcodes: number
 	/**
 	 * Delivery-city (and other `names`-table) aliases folded onto postcode rows — #1495. Zero here means the extracts
-	 * carried no alias names, not that the pass was skipped: a extract with no `names` table reports that separately
-	 * through `onProgress`.
+	 * carried no alias names rather than that the pass was skipped: a extract with no `names` table reports that
+	 * separately through `onProgress`.
 	 */
 	postcodeAliases: number
 	/**

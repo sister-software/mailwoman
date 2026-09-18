@@ -26,7 +26,7 @@ import { describe, expect, it } from "vitest"
 describe("referentialFromPopulation", () => {
 	it("reproduces the FST builder's population fallback exactly", () => {
 		// The formula the shipped fst-per-locale binaries were built with. Any drift here changes every
-		// decode bias in the gazetteer, so it is pinned against the literal expression, not a constant.
+		// decode bias in the gazetteer, so it is pinned against the literal expression rather than a constant.
 		for (const pop of [1, 418, 1000, 96_128, 171_589, 472_465, 8_336_817]) {
 			expect(referentialFromPopulation(pop)).toBe(Math.min(1, Math.log2(1 + pop / 1000) / 14))
 		}
@@ -187,7 +187,7 @@ describe("loadImportanceSplit", () => {
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.splitColumns)
 		expect(split.referential.get(1)).toBe(0.25)
 		expect(split.encyclopedic.get(1)).toBe(0.1173)
-		// A NULL encyclopedic score is absent from the map, not a 0 entry.
+		// A NULL encyclopedic score is absent from the map rather than a 0 entry.
 		expect(split.encyclopedic.has(2)).toBe(false)
 	})
 

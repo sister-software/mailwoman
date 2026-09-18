@@ -1,6 +1,6 @@
 # === v3.2.0-fragment-span — #1143. One variable vs v310: the span head. THE DECIDING RUN. ===
 #
-# WHY THIS RUN EXISTS. The span-head arc's ship case died on a measurement, not an opinion. Paris
+# WHY THIS RUN EXISTS. The span-head arc's ship case died on a measurement rather than an opinion. Paris
 # target class (n=63, production config, int8):
 #     v264 token@1 (shipped)              33/63 = 0.524
 #     v301 seg@1   (the flag's whole case) 48/63 = 0.762   <- "+23.8pp", the reason to ship a flag
@@ -10,7 +10,7 @@
 # (2026-07-16-span-head-arc-review-follow-up.md) said "ship behind a flag" on the belief that the
 # span decode owned that class. T1c + T2 falsified the belief.
 #
-# BUT THE COMPARISON IS BETWEEN ARTIFACTS, NOT DECODES. v301's span head was trained on the old, thin
+# BUT THE COMPARISON IS BETWEEN ARTIFACTS rather than DECODES. v301's span head was trained on the old, thin
 # corpus — the exact distribution T1c named as the cause and T2 replaced. T1a diagnosed the span
 # decode as MISCALIBRATED (over-eager to emit/extend a street segment: 19/54 street-free rows got a
 # street vs the shipped 12/54); T1c showed the BIO head carried the same miscalibration from the
@@ -30,7 +30,7 @@
 #      class, the span head has no case at any weight and the arc closes.
 #   2. HALLUCINATION: parity.street.hallucination_rate on the 54 street-free rows must fall from
 #      v301-span's 0.352 toward v264's 0.222. T1a's falsifier. Note the rate was never ESTABLISHED
-#      (McNemar p=0.12, n=54) — direction is the read, not significance.
+#      (McNemar p=0.12, n=54) — direction is the read rather than significance.
 #   3. WITHIN-MODEL MARGIN: seg@1 must beat this model's own token@1 by more than v301's honest
 #      +0.38pp (1 fixture, production config). That is the decode's real marginal value.
 #   4. GUARD: the fragment board's 7 cells vs V310 (not v264) — bare-street 0.715, particle 0.855,

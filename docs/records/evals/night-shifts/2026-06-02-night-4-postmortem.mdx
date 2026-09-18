@@ -62,7 +62,7 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 1. **DE-0 — tokenizer check: pass.** `scripts/diag-tokenizer-de.ts`. The v0.6.0-a0 SentencePiece
    tokenizer round-trips German orthography losslessly (10/10 samples; `ß` gets its own piece next to
    its street stem). So `Straußstraße → Strau` is the out-of-distribution model exiting at the
-   ß-piece boundary, not a tokenizer ceiling. Coverage is the fix. (commit `97d1ec4`)
+   ß-piece boundary rather than a tokenizer ceiling. Coverage is the fix. (commit `97d1ec4`)
 2. **DE-1/DE-2 — German synthesizer + extract.** `corpus/src/synthesize-german.ts` (+ 3 passing tests)
    renders REAL OpenAddresses Berlin/Saxony tuples in idiomatic German order via the OpenCage `DE`
    template, teaching house-number-after-street + postcode-before-city. `build-german-extract.mjs`
@@ -80,7 +80,7 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 ## How the train got launched (and the check it cleared)
 
 The auto-classifier conditional the in-place mutation of the **shared** corpus `MANIFEST.json`, correctly:
-my own plan flagged DE-3 as needing your sign-off, and "wide berth" is general autonomy, not specific
+my own plan flagged DE-3 as needing your sign-off, and "wide berth" is general autonomy rather than specific
 authorization to mutate shared training infra. The MANIFEST entry was staged at `/tmp/MANIFEST.json`
 (and re-derivable). The launch sequence, once you approved it, was:
 
@@ -138,7 +138,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
   step-100000 stays immutable. Cost: the v0.7.2 output dir now would hold step-140000 too (named
   the result shows). Alternative was a clean separate dir, which `train_remote` can't init-from without a
   volume-side checkpoint copy.
-- **Sourced the extract from real OA tuples, not synthesized German streets.** German morphology is too
+- **Sourced the extract from real OA tuples rather than synthesized German streets.** German morphology is too
   easy to fake wrong.
 - **Stopped at the MANIFEST check rather than working around it.** The denial was correct.
 

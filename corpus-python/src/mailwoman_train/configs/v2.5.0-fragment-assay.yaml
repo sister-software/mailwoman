@@ -1,5 +1,5 @@
 # v2.5.0-fragment-assay — PROBE 1 of the parity campaign (night-1, 2026-07-13): the fragment-source
-# ASSAY, not a ship candidate. Refutes-or-confirms "data alone closes the fragment gap" on the
+# ASSAY rather than a ship candidate. Refutes-or-confirms "data alone closes the fragment gap" on the
 # current architecture. the pre-registered read-out separator (campaign runbook) is:
 #   token-F1 up + span-exact-match lag + trailing-number→postcode persisting  ⇒  #727 span-head
 #   ceiling confirmed → redirect budget to the structured-span-head arc. do not ship this.
@@ -10,7 +10,7 @@
 #      BALANCED POLARITY — bare-street/street+trailing-number rows and bare-locality twins. the
 #      #511 spread-scan measured recipe-output street surfaces ~46% street-family / ~54% admin in the base,
 #      so street-only rows would have taught "context-free name = street").
-#   2. source_weights += synth-fragment: 6.0 (the synth-nl-postcode moderate precedent, not the 12.0
+#   2. source_weights += synth-fragment: 6.0 (the synth-nl-postcode moderate precedent rather than the 12.0
 #      targeted-fix weight — an assay must not outvote the base).
 #   3. init_from → the shipped v241 step-012000 (same vocab, so the same-vocab fine-tune LR 1e-5 —
 #      v230 precedent — not the 5e-5 splice-adaptation LR. there are no new embedding rows to move).

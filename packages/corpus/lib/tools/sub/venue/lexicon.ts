@@ -86,7 +86,7 @@ export * from "#tools/sub/venue/wikidata"
  * designator does not stop at a border.
  *
  * Rejections mark nothing themselves. They exist in `promotions[]` as the record of a decision taken, so the next
- * reader meets en-GB `hall`'s 3,204 bus stops before re-proposing it, not after.
+ * reader meets en-GB `hall`'s 3,204 bus stops before re-proposing it rather than after.
  */
 export function applyPromotions(
 	surfaces: readonly SubVenueSurface[],

@@ -78,7 +78,7 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 **Files:** Modify `.github/workflows/test.yml` (or a new `templates-smoke.yml`, path-filtered on `templates/**`, `create*/**`, plus the packages the kits install).
 
 - [ ] Job: compile → pack the involved workspaces → render → scaffold each kit → run its smoke. Four kits, one matrix.
-- [ ] Prove it bites: a deliberate broken-template branch run locally (act or a temp commit reverted) — evidence in the report, not in history.
+- [ ] Prove it bites: a deliberate broken-template branch run locally (act or a temp commit reverted) — evidence in the report rather than in history.
 - [ ] Commit `ci(templates): cold-scaffold smoke matrix`.
 
 ### Task 6: repo sync + npm-reality canary

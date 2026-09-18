@@ -9,7 +9,7 @@ tags:
 
 # Tokenization
 
-Tokenization is the step that turns an input string into a list of small pieces called **tokens**. Every downstream component — rule classifiers, the neural classifier, the solver, the resolver — works with tokens, not with raw strings.
+Tokenization is the step that turns an input string into a list of small pieces called **tokens**. Every downstream component — rule classifiers, the neural classifier, the solver, the resolver — works with tokens rather than with raw strings.
 
 Mailwoman uses **two tokenizers** for two different jobs.
 
@@ -80,7 +80,7 @@ The character offsets:
 'Ave'  → chars 8..11
 ```
 
-If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know the combined span covers all of characters 4..7 of the original string, not either piece on its own.
+If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know the combined span covers all of characters 4..7 of the original string rather than either piece on its own.
 
 Mailwoman's tokenizer wrapper handles this with `EncodeAsImmutableProto` (a SentencePiece API that returns piece-by-piece spans), then walks the pieces in order to compute the character range each label covers. The result is the consumer sees character spans, never has to know subword pieces exist.
 
@@ -101,7 +101,7 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 - **Word tokenizer (rules):** the v1 core, around `core/tokenization/`
 - **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `neural-weights-en-us/tokenizer.model`
-- **Training:** `corpus-python/src/mailwoman_train/tokenizer/splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab, not a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
+- **Training:** `corpus-python/src/mailwoman_train/tokenizer/splice.py` (the shipping tokenizer is built by splicing new diacritic coverage into the existing vocab rather than a full retrain); output lives under `$MAILWOMAN_DATA_ROOT/models/tokenizer/v0.9.0-multisplice/`
 
 ## See it in action
 

@@ -53,10 +53,10 @@ export interface FilingLandscapeQuery {
  * queried blocks carrying this exact combination, never a raw row count. A block can carry multiple `bdc_availability`
  * rows for the same (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`) build mode:
  * `build-bdc.ts`'s materialize-time collapse merges to one row per distinct (geoid, provider_id, technology_code,
- * speeds, low_latency, business_residential_code) tuple, not one row per (geoid, provider_id, technology_code) triple —
- * so Broadband Serviceable Locations at the same triple with differing speeds/flags survive as separate rows and can
- * land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s DISTINCT is exactly what
- * keeps that from double-counting the block itself when it does.
+ * speeds, low_latency, business_residential_code) tuple rather than one row per (geoid, provider_id, technology_code)
+ * triple — so Broadband Serviceable Locations at the same triple with differing speeds/flags survive as separate rows
+ * and can land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s DISTINCT is exactly
+ * what keeps that from double-counting the block itself when it does.
  */
 export interface ProviderFilingSummary {
 	provider_id: number

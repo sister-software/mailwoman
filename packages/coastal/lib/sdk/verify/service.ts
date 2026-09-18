@@ -49,8 +49,8 @@ export type ServiceFeatureReader = (
  * The reader the live check uses: an OGC API Features bbox query against the EA's own service, in the collection named
  * by the scenario asked about.
  *
- * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision is
- * made in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the
+ * The service answers a BBOX rather than a point, so this returns what it published nearby and the containment decision
+ * is made in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the
  * service returned something here" would pass on any polygon within eleven metres.
  */
 export function createEAServiceReader(client: Pick<EANCERMClient, "fetch">): ServiceFeatureReader {

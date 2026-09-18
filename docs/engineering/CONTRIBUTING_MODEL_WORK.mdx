@@ -21,7 +21,7 @@ hands.
    aren't ready to train.
 2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
    (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
-3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
+3. **Compare fp32-to-fp32.** Int8 is a release artifact rather than an experiment lens.
 4. **One variable per run.** Prove one change solo, then consolidate. Stacking corpus recipes in one 20k run
    dilutes every tag (measured, twice — see the cumulative-dilution note in the
    [parity scorecard](../records/evals/competitive-parity/parity-scorecard-2026-06-09.md)).
@@ -33,14 +33,14 @@ hands.
    bar revision can defer a _target_, never license a default-on _regression_: the compliant routes are
    fix it, switch it on per-locale so the regressing locale is unaffected, or ship it opt-in. (The rule
    was adopted because #1318 shipped default-on carrying −6.8pp FR admin-street-homonym behind a
-   bar revision — grandfathered as a named violation with a standing remediation obligation, not a
+   bar revision — grandfathered as a named violation with a standing remediation obligation rather than a
    precedent.)
 
    **The opt-in half: a default-OFF path must ship with tests that turn it ON.** "Ship it opt-in" is
    one of the three compliant routes above, which makes default-OFF the most common landing place for
    new mechanisms — and an untested one rots in place. Nothing exercises it, so nothing tells you
    when a refactor breaks it, and the flag's first real use is also its first execution. A mechanism
-   parked behind a flag is still shipped code; the flag decides who runs it, not whether it works.
+   parked behind a flag is still shipped code; the flag decides who runs it rather than whether it works.
    Every `ResolveOpts` / config flag therefore needs at least one test that sets it true and asserts
    the mechanism's own behavior — not merely that the default path stays byte-stable, which is the
    OTHER half and is separately required.
@@ -69,7 +69,7 @@ hands.
 - **Format quirks both systems miss** (rare edge shapes): consider a [query-shape route](./reference/QUERY_SHAPE.mdx) before a
   corpus recipe — some formats are structurally different enough that routing beats tagging.
 - **Cross-locale grammar leakage** (a convention from one address system firing in another —
-  USPS suffix logic on French streets): **a conventions row + the decode-time mask**, not a
+  USPS suffix logic on French streets): **a conventions row + the decode-time mask** rather than a
   corpus recipe. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
   applies without retrain. Shipped v4.3.0 (#478 increment 1).
 
@@ -79,13 +79,13 @@ recipe's rows cannot outvote a contradicting base corpus. The affix source spent
 every weight and architecture change failed because the equilibrium was the mixing ratio. Audit what
 the base corpus says about your tag's surfaces first (`packages/mailwoman/lib/dev-tools/audit-affix-misses.run.ts` is the
 template — per-row miss classification + absorption check). If the base contradicts the recipe output,
-the fix is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
+the fix is a relabel pass (make the mix agree) rather than a bigger weight. Corollary, measured on
 v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
 classes (#513).
 
 ## The standard eval battery
 
-:::danger[Grade against `v9.0.0-base`, not an earlier spec]
+:::danger[Grade against `v9.0.0-base` rather than an earlier spec]
 **The current spec is
 [`v9.0.0-base.json`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/eval-harness/specs/v9.0.0-base.json)**
 — `mailwoman eval promote --weights-cache <dir> --check v9.0.0-base` (or the `mwdev_promotion_eval` tool with
@@ -151,7 +151,7 @@ report in `docs/records/evals/`.
 
 A promote's battery only checks the floors the spec names; label metrics can erode indefinitely in
 small, individually-justified "coordinate-invisible" steps with nothing forcing a periodic look.
-So, as a **requirement, not a virtue**:
+So, as a **requirement rather than a virtue**:
 
 - **Every 5 promotes, or any promote that lowers a spec floor, triggers a full per-tag re-score**
   of the shipped line — the whole `promotion-eval.ts` battery against the current eval spec,
@@ -172,7 +172,7 @@ The complement to the cadence rule, decided _before_ a promote needed it rather 
 promotion pressure:
 
 1. **Between re-scores, floors are immutable contracts.** Measured == floor is a `PASS` — a
-   knife-edge is legal, not a defect. A promote that dips below a floor fails; shipping it anyway
+   knife-edge is legal rather than a defect. A promote that dips below a floor fails; shipping it anyway
    is a spec _revision_ under the existing no-silent-drift rules (written reason, attribution,
    operator sign-off) **plus a note in that version's ledger row**, so margin erosion is visible
    in the same record as the score.
@@ -185,13 +185,13 @@ promotion pressure:
 3. **Why not a standing tolerance:** pre-widening floors by a fixed tolerance licenses exactly the
    slow-erosion pattern the [#885](https://github.com/sister-software/mailwoman/issues/885)
    re-anchor exists to prevent. The buffer against measurement noise is the revision protocol's
-   human in the loop, not a constant.
+   human in the loop rather than a constant.
 
 **Standing disposition (2026-07-02):** the two zero-margin postcode floors — `us.postcode` 95.0
 and `fr.postcode` 99.3 — are **knife-edge accepted**. Both were set to measured values at the
 operator-approved v4.15.0 revision (the #723 anchor-pollution trade), and both held byte-exact
 across the v5.1.0 tokenizer swap; the anchor-fed postcode channel is structurally stable, so the
-zero margin is by construction, not fragility. Any dip triggers rule 1, and the
+zero margin is by construction rather than fragility. Any dip triggers rule 1, and the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign acceptance bar must name both
 postcode floors explicitly.
 
@@ -231,14 +231,14 @@ So, when a golden version changes a convention:
    the tool declined to touch, plus a flagged subset for the operator to adjudicate. A mechanical
    relabel of an answer key is a claim about ground truth; it gets reviewed like one.
 
-### Splice safety check — codepoint overlap is pre-registered, not post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
+### Splice safety check — codepoint overlap is pre-registered rather than post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
 
 Any tokenizer vocab splice must run the overlap check **before grading begins**
 (`tokenizer_splice.py build-tokenizer --trained-samples <locale=sample,…>`): it computes the
 non-ASCII codepoints shared between the new pieces and every trained locale's character
 inventory, writes the per-locale report artifact next to the spliced tokenizer, and fails loud
 on any overlapping locale that was not explicitly accepted. Accepting a locale
-(`--accept-overlap fr,de`) is a commitment, not a waiver: a per-locale non-inferiority leg for
+(`--accept-overlap fr,de`) is a commitment rather than a waiver: a per-locale non-inferiority leg for
 each accepted locale must be pre-registered in the eval spec before the first measurement — the
 FR n=3000 coordinate leg from v5.1.0 is the template.
 
@@ -251,7 +251,7 @@ re-tokenized, measured only after the fact. Net-positive that time; the check re
 1. The recipe lives in `packages/corpus/lib/recipes/` and its row generator under
    `packages/corpus/lib/synthesizers/`; every row carries `synth: {method, base_source_id}` ancestry.
 2. Audit format diversity against the real eval's observed forms _before_ generating — thin
-   diversity teaches lexical pattern-matching, not the boundary.
+   diversity teaches lexical pattern-matching rather than the boundary.
 3. Overlay manifests declare lineage against a base corpus version
    (`mailwoman corpus overlay-manifest` writes one); never hand-edit a manifest.
 4. Train via `modal run -d corpus-python/launch/train_remote.py --config <yaml> --resume auto`
@@ -332,7 +332,7 @@ Three more receipts from the same run:
 2. **The over-trust decay was a fine-tune artifact.** Every bundle-era fine-tune peaked ~4-6k and
    decayed by 8k (constant LR). The base run's G1 grid stays flat from 40k→60k under the cosine
    anneal — the decay never appears. Grading every save remains cheap insurance, but the
-   pathology belonged to the recipe class, not the bundle.
+   pathology belonged to the recipe class rather than the bundle.
 3. **Floor-support calibration.** The v6.0.0 spec's margin rule falls back to 2.0pp "where a
    scorer's support is not exposed" — us.street_prefix's floor (96.0) was derived with that fallback
    on a metric whose true support is n=25 (2σ ≈ ±12pp). A 3-row recall dip then reads as a floor
@@ -343,7 +343,7 @@ Three more receipts from the same run:
 scheduler + step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
 completed identically-in-kind). What does not exist is "just continue" past the end of a cosine
 schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a new
-schedule — which is a new training process with new dynamics, not a continuation. And a fine-tune
+schedule — which is a new training process with new dynamics rather than a continuation. And a fine-tune
 is not a resume at all: it is a new process initialized from old weights, with the plasticity dial
 turned down ~50x. The three regimes — resume, extend, fine-tune — are distinct objects; naming
 which one you mean is half the recipe.

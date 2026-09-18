@@ -49,7 +49,7 @@ the shipped CLI (`mailwoman parse --resolve`) rather than the eval script.
 
 A second eval-script bug is worth recording because it produced a number that briefly went into this
 report. The 1 MB run was watched with a shell loop whose own command line contained the string
-`mailfail-e2e`, so `pgrep -f mailfail-e2e` matched **the watcher, not the job** — and
+`mailfail-e2e`, so `pgrep -f mailfail-e2e` matched **the watcher rather than the job** — and
 `ps -o etimes` was reporting the watcher's age as if it were the measurement. That is how ">5.5
 minutes, still running" got written down for a job that had in fact been killed. The real figure
 was recovered from the log file's mtime and the job's own wall-clock cap. Any process-liveness
@@ -124,7 +124,7 @@ because a long query "would exceed the model's input window." The cap is roughly
   reach the parser through here.
 - The four Hono servers each install `app.onError` (`nominatim/app.ts:72`, `photon/app.ts:73`,
   `libpostal/app.ts:78`, `api/app.ts:110`), so over the wire this is an HTTP **500 "internal
-  error"**, not a process crash. Contained, but a 500 on a valid address is a product defect.
+  error"** rather than a process crash. Contained, but a 500 on a valid address is a product defect.
 - Library and CLI consumers of `geocodeAddress` get an uncaught `TypeError`.
 - `runPipeline` **does** catch, at `core/pipeline/runtime-pipeline.ts:648` (`safeClassify`) — see
   Finding 4, because the catch is not the mercy it looks like.
@@ -136,7 +136,7 @@ throw sites and stops `query-shape-prior.ts` / `span-proposal-prior.ts` allocati
 also makes the truncation _visible_ — today a 400-character address is silently parsed from its
 first ~320 characters with no signal to the caller, which is its own reportable defect. Tightening
 `MAX_QUERY_LEN` to ~300 would bound the worst case on two of the four servers but is a
-mitigation, not the fix.
+mitigation rather than the fix.
 
 ---
 
@@ -191,7 +191,7 @@ a cheaper partial mitigation but stays quadratic when the abbreviation repeats.
 
 `phrase-grouper/rules.ts:718-780` runs an outer loop over tokens with an inner unbounded walk to
 the end of the capitalized run, and explicitly declines to skip past the run
-(`rules.ts:812-814`). The 6-proposal cap at `rules.ts:780` bounds _emission_, not the walk — so the
+(`rules.ts:812-814`). The 6-proposal cap at `rules.ts:780` bounds _emission_ rather than the walk — so the
 adjacent comment claiming "O(n) per segment" is wrong. `rules.ts:613-627` has the same shape for
 street suffixes.
 
@@ -242,7 +242,7 @@ The single highest-value mitigation is a `.max()` on the API `address` field. It
 quadratics on the most exposed surface without touching the parser.
 
 I did **not** stand up a server and issue HTTP requests. The timings above are of the parse the
-endpoint performs, measured in-process. The exposure column is read from the code, not observed
+endpoint performs, measured in-process. The exposure column is read from the code rather than observed
 over the wire.
 
 ---
@@ -283,7 +283,7 @@ field, or a `path` marker) would cost nothing and make this class self-reporting
 
 ## Finding 5 — garbage resolves to real coordinates
 
-**Severity: medium.** Silent wrongness, not availability. Inherent to gazetteer breadth, but
+**Severity: medium.** Silent wrongness rather than availability. Inherent to gazetteer breadth, but
 currently unmitigated.
 
 35 of 110 probes produced at least one coordinate on the `--resolve` path. The mechanism is
@@ -347,8 +347,7 @@ following threw, hung, or emitted anything:
   defensible for a single-token query; only `a` resolves.
 - **Emoji.** Single emoji, ten building emoji, ZWJ family sequences, skin-tone modifiers,
   regional-indicator flags — all emit nothing. Keycap sequences (`1️⃣2️⃣3️⃣`) emit
-  `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read,
-  not an emoji failure.
+  `{"locality":"3","street":"2","house_number":"1"}`, which is the digits inside them being read rather than an emoji failure.
 - **Encoding stress.** Unpaired high and low surrogates, embedded NUL, BOM, zero-width spaces
   inside tokens, RTL override wrapping, NFD-decomposed accents, fullwidth Latin, non-breaking
   spaces, U+2028/U+2029 — no throw anywhere. The BOM and line-separator cases still parse and
@@ -378,10 +377,10 @@ the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobo
 - **No HTTP-level testing.** No server was started, no request issued. Timings are of the parse the
   endpoint performs. The exposure map is read from source.
 - **No concurrency or sustained-load testing.** Every measurement is a single call on an idle
-  process. Event-loop blocking is inferred from wall time on a single-threaded runtime, not
+  process. Event-loop blocking is inferred from wall time on a single-threaded runtime rather than
   observed under load.
 - **No memory-pressure measurement.** RSS and GC behaviour were not instrumented. The
-  `pieces.length × labels.length` allocations noted in Finding 1 are read from source, not measured.
+  `pieces.length × labels.length` allocations noted in Finding 1 are read from source rather than measured.
 - **No locale coverage beyond en-US.** The classifier is `loadFromWeights({ locale: "en-US" })`
   throughout. The two quadratics are locale-independent (both are in pre-model stages), but the
   crash boundary is a tokenizer property and the piece-per-character ratio will differ for
@@ -396,7 +395,7 @@ the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobo
 - **Not a security review.** SQL-injection- and FTS-syntax-shaped strings were probed for _parser_
   behaviour. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
-- **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated, not
+- **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated rather than
   committed — a 1 MB JSONL line is a hostile artifact for a test suite. The generator lives in
   `scripts/diagnostic/mailfail-probes.ts` (gitignored).
 
@@ -413,7 +412,7 @@ the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobo
 Classes: `degenerate` 18, `numeric` 16, `symbolic` 14, `script` 21, `size` 3, `structured` 15,
 `adversarial` 18. Bars: 35 `no-throw`, 35 `no-component`, 35 `no-resolve`.
 
-`expect` records the bar the row _should_ meet, not today's behaviour — 19 rows currently violate
+`expect` records the bar the row _should_ meet rather than today's behaviour — 19 rows currently violate
 it, and those are exactly Findings 4 and 5. Control characters, NUL and lone surrogates are
 JSON-escaped; the file was verified to round-trip line-by-line through `JSON.parse` with every
 `raw` byte-identical to its source.

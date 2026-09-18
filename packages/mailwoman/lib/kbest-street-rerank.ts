@@ -21,7 +21,7 @@
  *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best
  *      Rd, VT" → a US street reranks against the FR index). Skipping anchored inputs is the primary
  *      cross-locale + collateral fix (full-pipeline golden, scored: net 0 exact, |Δ| < 0.3pp/tag).
- *   2. STREET-SPLICE, not tree-replace. The span head is a street-boundary specialist — its full
+ *   2. STREET-SPLICE rather than tree-replace. The span head is a street-boundary specialist — its full
  *      segmentation decodes locality/region/postcode far worse than the BIO argmax head (replacing
  *      the whole tree cost golden fr −35pp). So the winning segmentation's street tokens are spliced
  *      into the ARGMAX tree. argmax owns every other tag.

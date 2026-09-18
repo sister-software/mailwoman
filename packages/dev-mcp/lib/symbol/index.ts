@@ -73,7 +73,7 @@ export interface FindDeclarationsOptions {
 }
 
 /**
- * `rg` exits 1 to mean "searched fine, matched nothing" — the common case here, not a failure.
+ * `rg` exits 1 to mean "searched fine, matched nothing" — the common case here rather than a failure.
  */
 const RIPGREP_NO_MATCH = 1
 
@@ -322,8 +322,8 @@ export interface SelectReportableOptions {
  * because none of them is importable, while a name with a real home always survives.
  *
  * A name with no exported declaration is not necessarily fine. It may be a utility that deserves a home and does not
- * have one yet. Reporting those belongs to a census, not to a write-time hint, because there is nothing here for the
- * author to import.
+ * have one yet. Reporting those belongs to a census rather than to a write-time hint, because there is nothing here for
+ * the author to import.
  */
 export function selectReportable(
 	found: Map<string, DeclarationSite[]>,

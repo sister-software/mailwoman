@@ -135,8 +135,8 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
  * Deposit a freshly-built `filename` into the derived store under this checkout's key.
  *
  * Best-effort by design: a store write that fails must never fail a release. The build already succeeded and the
- * workspace already has the artifact — the store is an optimization, not a source of truth, so a failure here costs the
- * next run five minutes and nothing else.
+ * workspace already has the artifact — the store is an optimization rather than a source of truth, so a failure here
+ * costs the next run five minutes and nothing else.
  */
 async function stashDerived(context: MaterializationContext, dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact every future run

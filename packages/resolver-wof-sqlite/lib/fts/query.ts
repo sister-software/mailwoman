@@ -5,7 +5,7 @@
  *
  *   Query shaping for the FTS5 lookup: placetype normalization and the MATCH-expression sanitizer.
  *   Both turn a caller's loose input into something SQLite's FTS5 parser accepts without throwing —
- *   an unescaped quote or a bare `*` is a syntax error, not an empty result.
+ *   an unescaped quote or a bare `*` is a syntax error rather than an empty result.
  */
 
 import type { FindPlaceQuery, WOFPlacetype } from "#types"

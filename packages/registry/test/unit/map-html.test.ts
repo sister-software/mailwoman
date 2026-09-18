@@ -9,7 +9,7 @@ import type { EntityGeoData } from "@mailwoman/registry/types"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
-// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData, not an open record —
+// The collection shape `toMapHTML` consumes. Its properties are EntityGeoData rather than an open record —
 // typing them loosely meant every call site in this file was passing something toMapHTML rejects.
 // Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there); repointed to the
 // real @mailwoman/spatial type as part of the #875 casing sweep.
@@ -31,7 +31,7 @@ describe("toMapHTML", () => {
 
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
-		// MapLibre GL, not Leaflet, pinned with SRI.
+		// MapLibre GL rather than Leaflet, pinned with SRI.
 		expect(html).toContain("maplibre-gl@5.24.0/dist/maplibre-gl.js")
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)

@@ -35,7 +35,7 @@
  *       shipped δ=6.0 is only ~0.211 logits — any future recalibration of that delta flips the assertion
  *       for reasons having nothing to do with wiring correctness. So the block runs in three tiers: (a)
  *       WIRING assertions (pairIndexPath resolves; `applied` true/false) stay on the knife-edge address and
- *       are margin-independent by construction — `applied` reports whether the prior fired, not whether it
+ *       are margin-independent by construction — `applied` reports whether the prior fired rather than whether it
  *       won; (b) a bias-DELTA assertion compares the biased trace against a same-input trace with the
  *       prior forced off (a no-match `PairIndexLike` stub passed via `opts.placetypePair`), so the measured
  *       delta at the child token isolates the prior's own contribution — margin-independent, and provable
@@ -129,7 +129,7 @@ const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
 // costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV — several minutes. en-us
 // verifies its pair-index against the 5.2 GB admin-global-priority.db, and with no `.md5` sidecar
 // yet that is a full hash of the file. Both are FIRST-run costs (each script has a skip-if-current
-// fast path), and both are far past vitest's 15s global default. Generous, not a perf target.
+// fast path), and both are far past vitest's 15s global default. Generous rather than a perf target.
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
 /**
@@ -165,9 +165,9 @@ const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, 
  * | —    | Sedgefield / Stockton-on-Tees     | −1.128 | B-locality (no flip) |
  *
  * "Holland" alone is a country-name confound ("Holland" = Netherlands) — the runner-up label at rank 1/2/6 above is
- * `B-country`/`I-country`, not `B-locality`; the comma-LESS form scored higher than the comma form for both Holland
- * pairs, so this const drops the comma deliberately. A margin of ~3.5 survives a δ recalibration down to ~3 before the
- * flip could invert (post-bias margin at a lower δ' is `margin_at_6.0 − (6.0 − δ')`).
+ * `B-country`/`I-country` rather than `B-locality`; the comma-LESS form scored higher than the comma form for both
+ * Holland pairs, so this const drops the comma deliberately. A margin of ~3.5 survives a δ recalibration down to ~3
+ * before the flip could invert (post-bias margin at a lower δ' is `margin_at_6.0 − (6.0 − δ')`).
  */
 const GB_WIDE_MARGIN_ADDRESS = "Holland Fen Lincoln"
 
@@ -236,7 +236,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us")
 
 			const r = await resolveWeights({ locale: "en-us" })
-			// WHICH RUNG answered is an environment fact, not the contract. The dev linkers materialize into
+			// WHICH RUNG answered is an environment fact rather than the contract. The dev linkers materialize into
 			// $MAILWOMAN_DATA_ROOT/weights/<locale>/, so a checkout resolves `overlay:`; a consumer with the npm
 			// package installed resolves `package:`; a `--download-weights` install resolves `cache:`. Pinning one
 			// of them asserts how this machine happens to be set up.
@@ -260,7 +260,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// pushed every GB parse along an untrained input direction. Measured: exact postcode 294/318 with the
 	// binary present vs 318/318 with it absent, on the gb-golden board across three registers.
 	//
-	// So this assertion is a regression check, not a description: the failure it exists to catch is someone
+	// So this assertion is a regression check rather than a description: the failure it exists to catch is someone
 	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
 	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
 	// slot 4. That change produces no error and no warning on its own. it just quietly makes GB worse.
@@ -342,7 +342,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
 			// The documented gap, pinned: no postcode-nz.bin ships, so the anchor sibling must not
 			// resolve (loadFromWeights then warns once and runs with the anchor channel off — the
-			// tolerant-loader contract, not a crash).
+			// tolerant-loader contract rather than a crash).
 			expect(r.anchorLookupPath).toBeUndefined()
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
@@ -367,14 +367,14 @@ describe("resolveWeights — package auto-resolve", () => {
 // placetype-pair-prior arc: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
 // `loadFromWeights` constructs a country-restricted `PairIndexResolver` default from it, and a real GB
 // dependent_locality address decodes with the tag applied. The en-us companion proves the same input
-// produces no bias when the package ships no sibling index — the prior degrades to byte-stable, not to
+// produces no bias when the package ships no sibling index — the prior degrades to byte-stable rather than to
 // a crash or a silent wrong-country apply.
 //
 // Margin discipline (see the module docstring's MARGIN DISCIPLINE bullet): the wiring assertions
 // below never depend on the model's own margin — `applied` reports whether the prior fired, and the
 // bias-DELTA assertion measures the prior's own contribution against a same-input, prior-forced-off trace.
 // Only the last test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin
-// ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
+// ~3.5) rather than the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: pairIndexPath resolves and the country-restricted default fires (WIRING — margin-independent)",
@@ -394,7 +394,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
-			// `applied` reports EFFECT (a nonzero bias was composed), not argmax victory — true regardless
+			// `applied` reports EFFECT (a nonzero bias was composed) rather than argmax victory — true regardless
 			// of whether the base model's own preference was thin enough for the bias to flip the decode.
 			expect(placetypePairRecord?.applied).toBe(true)
 		},
@@ -439,8 +439,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// default off for one call" mechanism, and distinct from the `NO_MATCH_PAIR_INDEX` stub above in
 	// that it is a disable signal type-checkable as one. See
 	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case contract this
-	// pins the middle case of: a config default is auto-wired here (en-gb), so `false` is doing real work,
-	// not just matching an already-inert default.
+	// pins the middle case of: a config default is auto-wired here (en-gb), so `false` is doing real work rather than just matching an already-inert default.
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
@@ -449,7 +448,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
 			// Baseline: no per-call override — the config default fires (confirms this address/build genuinely
-			// has something to disable, not just asserting on an already-inert prior).
+			// has something to disable rather than just asserting on an already-inert prior).
 			const wiredTrace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			expect(wiredTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 
@@ -462,7 +461,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			})
 
 			// Not just "applied: false" — the emissions themselves must be byte-identical to a genuinely
-			// prior-absent decode, not merely a zero-effect bias composed in.
+			// prior-absent decode rather than merely a zero-effect bias composed in.
 			const bDepLocCol = disabledTrace.labels.indexOf("B-dependent_locality")
 			const pieceIdx = findChildPieceIndex(disabledTrace.pieces, "Fish")
 			expect(disabledTrace.emissions[pieceIdx]![bDepLocCol]).toBe(disabledTrace.logits[pieceIdx]![bDepLocCol])
@@ -479,7 +478,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			// Setup precondition: confirm the pair is genuinely PROBE OK in this build before
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
-			// SPACE-preserved token ("holland fen"), not concatenated — see pair-index-resolver.ts's header
+			// SPACE-preserved token ("holland fen") rather than concatenated — see pair-index-resolver.ts's header
 			// doc on how normalizeFSTToken folds interior whitespace.
 			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
 
@@ -508,7 +507,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// STALENESS TRAP, and it has bitten this test before: the pin is graded against a LOCALLY BUILT index,
 	// so a stale artifact keeps the test green while the row it names has quietly started self-recovering
 	// beta-less ("Upton"/"Bude" did exactly that). `link-dev-weights.ts`'s freshness guard therefore
-	// compares every entry of `sourceMD5s`, not just `[0]` — checking the CSV alone leaves it blind to a
+	// compares every entry of `sourceMD5s` rather than just `[0]` — checking the CSV alone leaves it blind to a
 	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
 	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//

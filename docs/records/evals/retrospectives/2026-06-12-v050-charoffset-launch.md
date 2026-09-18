@@ -22,9 +22,8 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 - **One real miss — and bigger than the floor implies:** `fr.house_number` 89.6. The check FAILs the
   floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 measured 97.7**, so the
   true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so an actual
-  char-offset-format regression isolated to FR house_number, not a bridge-off cost. Anchoring to the
-  floor first understated it — the actual-vs-actual read is what matters. Model held experimental,
-  NOT promoted; **hold promotion** until the FR house_number cause is understood (#560). The
+  char-offset-format regression isolated to FR house_number rather than a bridge-off cost. Anchoring to the
+  floor first understated it — the actual-vs-actual read is what matters. Model held experimental rather than promoted; **hold promotion** until the FR house_number cause is understood (#560). The
   bridge-retirement win is real and independent of this.
 
 ## What shipped
@@ -51,7 +50,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   they were packed into mixed tail extracts, present and training, same as v4.4.0. Both checks took
   minutes and prevented wrong conclusions.
 - **The R2 reroute used the architecture's own grain.** Once CLI `volume put` proved container-blind,
-  the fix was `sync_corpus`'s existing pattern (R2 → container-side rclone), not a bespoke hack.
+  the fix was `sync_corpus`'s existing pattern (R2 → container-side rclone) rather than a bespoke hack.
 - **Held the GPU.** Zero A100 spend until a fresh container provably saw the corpus + config. The
   launcher's own `config not found` caught the volume issue before any training money burned.
 
@@ -61,7 +60,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   v0.4.x overlay extracts re-emitted natively"; the prior session did the from-source half, validated
   it, and reported "train-ready" without the overlays. A base-only corpus would have regressed every
   parity tag and made the bridge-retirement check untestable. The validation report graded the build
-  in isolation, not against the training config's `source_weights` — that cross-check is the fix.
+  in isolation rather than against the training config's `source_weights` — that cross-check is the fix.
 - **A long Modal-infra detour ate most of the shift.** Two retries + a marker test + an env-mismatch
   hypothesis + a container-write test before the cause was nailed. Faster path: the marker test (CLI
   put → fresh container can't see it) is the 2-minute decisive probe; reach for it first next time.
@@ -77,7 +76,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   the gap to the operator; proceeded under "start training now" + extended trust once corrected.
 - **R2 reroute over volume recreation.** Recreating the volume would be faster but destroys the
   container-visible model history (every `output-*` checkpoint). The R2 path is non-destructive and
-  reusable. Chose it without waiting on the operator since it risks only bandwidth, not data.
+  reusable. Chose it without waiting on the operator since it risks only bandwidth rather than data.
 - **Bridge-retirement check: inherit v4.4.0 floors verbatim, flag the unpinned thresholds.** Rather
   than fabricate numbers for "over-merge precision" + "#518 lens", encoded what's contractually
   pinned and flagged the rest for the operator/DeepSeek. No silent check drift.
@@ -94,8 +93,8 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
    numeric floors before the check is authoritative. Operator/DeepSeek to pin.
 3. ~~Will char-offset hold v4.4.0 parity?~~ **MOSTLY: 15/17 tags flat-or-better actual-vs-actual**,
    bridge retired at zero cost (po_box intrinsic 90 > v4.4.0 bridged 89.1). The one real casualty is
-   **fr.house_number −8.1pp** (97.7 → 89.6, #560) — an actual char-offset regression, not noise and
-   NOT the bridge. Lesson re-learned: grade actual-vs-actual, not vs the conservative floor (which
+   **fr.house_number −8.1pp** (97.7 → 89.6, #560) — an actual char-offset regression rather than noise and
+   NOT the bridge. Lesson re-learned: grade actual-vs-actual rather than vs the conservative floor (which
    said −1.4pp and nearly let an 8pp regression read as trivial).
 4. **Trackio Space** needs waking if a live dashboard is wanted for this and future runs.
 

@@ -17,7 +17,7 @@
 # (directionals + USPS suffixes), prefixes partly injected. Held-out VT golden measures affix
 # recognition on held-out addresses. the REAL-in-the-wild check is data/eval/external/
 # street-affix-real.jsonl (30 curated real addresses, naturally-occurring affixes — the TRUSTWORTHY
-# lens, mirroring the unit-real-designators eval). Read the real-affix eval at the check, not the VT #.
+# lens, mirroring the unit-real-designators eval). Read the real-affix eval at the check rather than the VT #.
 #
 # PRE-REGISTERED CHECK (stop at 20k):
 #   - street_suffix F1 >= 70% AND street_prefix F1 >= 60% on the real-affix eval (both were ~0%).

@@ -23,11 +23,11 @@ And the metric we ship on — **harness pass rate** — didn't move. 14.6% → 1
 
 ## Following the evidence
 
-A well-calibrated model that's no better at the job is a clue, not a victory. So instead of tuning the smoothing knob again, we asked a blunter question: **of everything the harness gets wrong, what kind of wrong is it?**
+A well-calibrated model that's no better at the job is a clue rather than a victory. So instead of tuning the smoothing knob again, we asked a blunter question: **of everything the harness gets wrong, what kind of wrong is it?**
 
 We categorized every failure. The answer reframed the whole project:
 
-- **55% of the gap was missing labels** — the model emitted _no tag at all_ where one belonged. Not a wrong value, not a fuzzy boundary. Silence.
+- **55% of the gap was missing labels** — the model emitted _no tag at all_ where one belonged. Not a wrong value rather than a fuzzy boundary. Silence.
 - The most-missed tags were `street` (×197) and `house_number` (×100).
 - One cluster stood out: **intersections** — addresses like `Broadway & W 42nd St`. They're 17% of our harness, and the model scored **0%** on them.
 

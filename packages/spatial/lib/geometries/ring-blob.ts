@@ -264,7 +264,7 @@ const EARTH_RADIUS_M = 6_371_008.8
  * has read the holes at all — the failure mode is silent, because a hole read as an exterior ring produces a perfectly
  * well-formed polygon that simply covers more ground than the authority mapped.
  *
- * WHICH WINDING IS POSITIVE IS A CONTRACT, NOT A DETAIL, because a builder whose source encodes hole roles by
+ * WHICH WINDING IS POSITIVE IS A CONTRACT rather than A DETAIL, because a builder whose source encodes hole roles by
  * ORIENTATION reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
  * lonⱼ)` against the shoelace's `(xⱼ − xᵢ)`, so a ring `@mailwoman/spatial`'s own {@link rectangleRing} builds
  * counter-clockwise answers NEGATIVE here. `@mailwoman/zoning` is the caller that depends on it, and
@@ -299,7 +299,7 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 	let allExterior = 0
 
 	for (const rings of polygons) {
-		// Per POLYGON, not pooled: two disjoint polygons of one feature can wind opposite ways without either being a
+		// Per POLYGON rather than pooled: two disjoint polygons of one feature can wind opposite ways without either being a
 		// hole, and a pooled sum would silently cancel them against each other.
 		let signedTotal = 0
 

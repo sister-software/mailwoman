@@ -95,7 +95,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # endregion
 
-# region Stage 4: secondary-address family (#1100 / #456) — DEFINED, NOT YET ACTIVE
+# region Stage 4: secondary-address family (#1100 / #456) — DEFINED rather than YET ACTIVE
 
 #
 # The secondary-address vertical axis: designator/id pairs for units, levels (floors), and buildings,
@@ -110,7 +110,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # The existing STAGE3 ``unit`` tag is deliberately KEPT as the bare unit-id role rather than renamed to
 # ``unit_id`` — a rename would rewrite every ``unit``-labeled corpus row. A ``unit`` → ``unit_id``
 # rename, plus reconciling the JP ``building_number``/``building_name`` declarations against
-# ``building_designator``/``building_id``, is a version-conditional batch for the activation bump, not
+# ``building_designator``/``building_id``, is a version-conditional batch for the activation bump rather than
 # piecemeal here (same discipline as the #875 casing batch).
 #
 # ACTIVATION (coupled, deliberately deferred — rides the v7-adjacent label-stage bump): bumping
@@ -344,7 +344,7 @@ def active_components_present(components_keys: list[str]) -> bool:
     v0.2.0 relaxed the check to "at least one coarse tag". v0.3.0 broadens further: "at
     least one ACTIVE tag" — rows with only fine tags (e.g. BAN's house_number + street,
     TIGER's street-only ADDRFEAT segments) now contribute. The check's purpose is to drop
-    rows with no usable supervision at all, not to enforce a particular schema shape.
+    rows with no usable supervision at all rather than to enforce a particular schema shape.
     """
     return bool(set(components_keys) & set(ACTIVE_TAGS))
 

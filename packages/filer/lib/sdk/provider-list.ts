@@ -45,13 +45,13 @@ const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"]
 /**
  * One parsed row of the BDC provider list CSV. See the module docstring for decision 6 (why
  * {@linkcode parseProviderList} yields every row rather than folding by `provider_id`) and decision 3 (why `frn` is the
- * zero-padded branded string, not a bare number).
+ * zero-padded branded string rather than a bare number).
  */
 export interface ProviderListRow {
 	/**
 	 * The FCC's numeric provider identifier. Not branded — the task brief specifies a plain `number`, and unlike
-	 * {@link ProviderListRow.frn} there is no leading-zero concern (BDC provider IDs are ordinary small integers, not
-	 * zero-padded strings).
+	 * {@link ProviderListRow.frn} there is no leading-zero concern (BDC provider IDs are ordinary small integers rather
+	 * than zero-padded strings).
 	 */
 	providerID: number
 	/**
@@ -69,7 +69,7 @@ export interface ProviderListRow {
 /**
  * Confirms `header` names every column {@linkcode REQUIRED_PROVIDER_LIST_COLUMNS} needs, throwing a descriptive error
  * naming `csvPath` and the missing column otherwise — decision 8's "malformed input must be loud" discipline applied to
- * the header row, not just data rows.
+ * the header row rather than just data rows.
  */
 function assertRequiredProviderListColumns(header: readonly string[], csvPath: string): void {
 	for (const column of REQUIRED_PROVIDER_LIST_COLUMNS) {
@@ -140,7 +140,8 @@ function toProviderListRow(
  *
  * Decision 6 (repeated from the module docstring because it is the entire point of this function): a `provider_id`
  * appearing on multiple rows is yielded once PER ROW, exactly as it appears in the file. No dedup, no last-wins, no
- * folding into a `Map` keyed by `provider_id` — the crosswalk graph is where that cardinality belongs, not here.
+ * folding into a `Map` keyed by `provider_id` — the crosswalk graph is where that cardinality belongs rather than
+ * here.
  */
 export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
 	let lineNumber = 0

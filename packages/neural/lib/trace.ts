@@ -23,14 +23,14 @@ import type { SoftFeatureChannel } from "#soft-features"
 /**
  * The emission priors the decode path may compose, in application order. The ORDERED constant is the single source for
  * "every kind" — the decode path's push sites and the empty-input return both produce records in exactly this order,
- * and the trace test asserts against it, so adding a prior without its participation record is a test failure, not a
- * silent omission.
+ * and the trace test asserts against it, so adding a prior without its participation record is a test failure rather
+ * than a silent omission.
  *
  * `"placetypeCensus"` is the one member that is not an emission prior. It is the PCN1 census observability rung: it
  * rides the placetype-pair prior's parent-candidate probes, records what the census knows about each parent, and
  * composes nothing — its `applied` is `false` by construction (see {@link TracePrior.applied}). It sits directly after
- * `"placetypePair"` because that is where in the decode path it is produced, and the ordering here is production order,
- * not a claim about composition.
+ * `"placetypePair"` because that is where in the decode path it is produced, and the ordering here is production order
+ * rather than a claim about composition.
  */
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
@@ -45,9 +45,9 @@ export const TRACE_PRIOR_KINDS = [
 export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
 /**
- * One prior's participation record: present for every kind. `applied` reports EFFECT, not configuration — true only
- * when the composed prior actually carried a nonzero bias (or the mask removed at least one label). A configured source
- * that matched nothing reports `false`, so "why didn't my prior move the emissions" is answerable from the trace
+ * One prior's participation record: present for every kind. `applied` reports EFFECT rather than configuration — true
+ * only when the composed prior actually carried a nonzero bias (or the mask removed at least one label). A configured
+ * source that matched nothing reports `false`, so "why didn't my prior move the emissions" is answerable from the trace
  * alone.
  */
 export interface TracePrior {
@@ -75,7 +75,7 @@ export interface TracePrior {
 	 * `placetypeCensus` only: how many DISTINCT parent surfaces were probed against the census, hit or miss — the
 	 * denominator for {@link census}. `0` with a census loaded means the probe chain never reached a parent candidate
 	 * (e.g. a single-token input); a positive count with an empty {@link census} means the census genuinely knew none of
-	 * them, which is coverage, not a claim that those parents have no children.
+	 * them, which is coverage rather than a claim that those parents have no children.
 	 */
 	censusProbedParents?: number
 }
@@ -181,7 +181,7 @@ export interface NeuralParseTrace {
 	/**
 	 * The decoder's label indices per piece — the raw viterbi/argmax output, captured before the word-consistency healing
 	 * vote and before every token-repair pass (all of which appear in `repairs`; final labels live on `tokens`). This is
-	 * what the heatmap's path outline means: the cell the decode chose, not the healed result.
+	 * what the heatmap's path outline means: the cell the decode chose rather than the healed result.
 	 */
 	path: number[]
 	decode: "viterbi" | "argmax"

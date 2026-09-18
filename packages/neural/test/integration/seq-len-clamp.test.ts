@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An input that tokenizes past the model's fixed sequence length must PARSE, not throw.
+ *   An input that tokenizes past the model's fixed sequence length must PARSE rather than throw.
  *
  *   `ONNXRunner.infer` truncates to `fixedSeqLen` and trims `logits` to what it ran; `pieces` must
  *   follow, or every lockstep consumer (`logits[i]` in the token build, `emissions[pi]` in

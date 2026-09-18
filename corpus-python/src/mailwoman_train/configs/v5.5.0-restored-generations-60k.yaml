@@ -36,7 +36,7 @@
 #
 #   1. The held-out spaced-postcode sweep — 32 CZ/SK `NNN NN` and 24 NL `NNNN LL` codes, none on the
 #      board. v5.3.0 reads 31/32 and 24/24. v5.4.0 reads 0/32 and 15/24. This arm must recover CZ/SK
-#      without losing NL, and a partial recovery is a partial result, not a pass.
+#      without losing NL, and a partial recovery is a partial result rather than a pass.
 #   2. `fr.bare_street_intact` in the promotion battery, which reads 95 against a floor of 75 while
 #      64,122 of its rows sit out. FR is tier 1, so a drop here disqualifies the arm outright even
 #      though the rows being added are the ones the check exists for.
@@ -227,7 +227,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
+  # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 =
   # 417,339 draws, 5.4% of the run. The big register sources take one pass each because they carry
   # their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the

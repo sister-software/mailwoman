@@ -6,7 +6,7 @@ consumed yet. This shift wired it into the geocoder as a **soft country prior**,
 step, flipped it **on by default**, and shipped the whole thing to npm as **v4.9.0**. Five PRs in a clean
 stack (#606, #608, #609, #610, #611), each conditional and merged on green; one DeepSeek consult; the broken-then-
 fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout — every merge and
-the default-on flip were authorized, not self-granted._
+the default-on flip were authorized rather than self-granted._
 
 ## What shipped
 
@@ -32,9 +32,9 @@ the default-on flip were authorized, not self-granted._
   re-rank — it _boosts_ the right-country candidate, never filters. Reuses the postcode-anchor implementation
   whole; defers to a postcode posterior; no-op on abstain/OTHER; byte-stable when the stage is absent. Wired
   into `core/pipeline`, `geocode-core`, and a `geocode --place-country` CLI flag. **Promotion check (the
-  assembled pipeline, not the component): in-map right-country 64.7 → 85.3 %, 7 wins, 0 regressions.**
+  assembled pipeline rather than the component): in-map right-country 64.7 → 85.3 %, 7 wins, 0 regressions.**
 - **M2 — the open-set rule (#608).** The headline finding of the shift, and it wasn't what anyone predicted:
-  the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule, not the model.** The
+  the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule rather than the model.** The
   OA-broadened `OTHER` head already carried the open-set signal; the old rule (softmax max-prob) just
   conflated "which country?" with "is it in-map at all?". Reading total in-map **mass** `1 − P(OTHER)` and
   routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (direct dev→test 91.3, vs the 89.1
@@ -58,7 +58,7 @@ the default-on flip were authorized, not self-granted._
 
 ## What went well
 
-- **"Grade the pipeline, not the component" held at every check.** The reconcile-retirement lesson is now
+- **"Grade the pipeline rather than the component" held at every check.** The reconcile-retirement lesson is now
   reflex: M1 and the misroute check both measure the geocoder's right-country rate against truth, never the
   placer's intrinsic F1. M2's component probe picked the _method_; the assembled check validated it. They
   agreed, but the discipline is what makes that meaningful.
@@ -70,7 +70,7 @@ the default-on flip were authorized, not self-granted._
   independent check on the contradiction mattered — and it returned the sharpest insight of the shift: 90/90
   is the wrong objective for a _soft_ prior. A false-reject forfeits a disambiguation win; a false-accept
   costs ~nothing (tier-safe re-rank). The asymmetry is why the threshold stays permissive and why the
-  misroute check, not a symmetric metric, was the right default-on bar.
+  misroute check rather than a symmetric metric, was the right default-on bar.
 - **`ci:smoke` did its job.** Born from the v4.8.0 break, it conditional default-on (which added a lazy
   `@mailwoman/core/coarse-placer` import to the `parse` path) and the v4.9.0 reduce. The release was verified
   three ways: dry-run, registry-direct, and a clean install of the published artifact.
@@ -81,7 +81,7 @@ the default-on flip were authorized, not self-granted._
 
 - **v4.8.0 shipped broken to npm before the guard existed.** The clean-install class of bug is invisible to
   the in-repo test suite by construction (hoisting hides it), and the static dep-audit missed the eager
-  side-effect + the files-glob gap. We caught it on the _next_ install attempt, not before publish. `ci:smoke`
+  side-effect + the files-glob gap. We caught it on the _next_ install attempt rather than before publish. `ci:smoke`
   closes the window now, but the lesson cost a bad version on the registry.
 - **The misroute eval is conservative and can't fully validate thin-coverage locales.** Absolute right-country
   rates were depressed (NL 35 %, KR 26 %) by the en-US model being OOD on non-US addresses + thin WOF coverage
@@ -100,7 +100,7 @@ the default-on flip were authorized, not self-granted._
 
 - **Promote the OA-broadened model as the placer default** — a strict Pareto improvement over M3 (trained
   families → 100 %, unseen +13pp), operator-approved.
-- **Open-set via `p_inmap`, not the pre-registered Mahalanobis/reject-head** — evidence-driven; the simpler
+- **Open-set via `p_inmap` rather than the pre-registered Mahalanobis/reject-head** — evidence-driven; the simpler
   rule dominated and made Phase 2 (a retrain) unnecessary.
 - **Threshold stays 0.9.** On the assembled check the operating point is a flat optimum in [0.5, 0.9]
   (identical wins/regressions). The asymmetry favors recall, but a lower threshold adds nothing here while

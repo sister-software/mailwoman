@@ -174,9 +174,9 @@ export function fillPolygon(
 }
 
 /**
- * Draws a circle's outline (ring, not a filled disc) with the midpoint circle algorithm, plotting all eight symmetric
- * octant points per step. `centerX`/`centerY`/`radius` are floored on entry. every plotted point routes through
- * `setPixel`, so a circle that runs off the grid clips rather than throwing.
+ * Draws a circle's outline (ring rather than a filled disc) with the midpoint circle algorithm, plotting all eight
+ * symmetric octant points per step. `centerX`/`centerY`/`radius` are floored on entry. every plotted point routes
+ * through `setPixel`, so a circle that runs off the grid clips rather than throwing.
  */
 export function drawCircle(grid: RGBAGrid, centerX: number, centerY: number, radius: number, color: RGB): void {
 	const cx = Math.floor(centerX)

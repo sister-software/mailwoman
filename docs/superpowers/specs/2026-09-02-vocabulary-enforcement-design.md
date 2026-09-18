@@ -29,7 +29,7 @@ Two consequences, both measured at `9996e8f60`:
    `repo-health`'s `bannedVocabulary` counter, which covers the retired word alone.
 
 Vale reads comment prose in all three languages correctly — it extracts comments and ignores code —
-so the gap is a missing config section, not a missing tool.
+so the gap is a missing config section rather than a missing tool.
 
 ## Decisions taken
 
@@ -52,7 +52,7 @@ rather than a per-site guess. `AGENTS.md` records that as the working precedent.
 
 A per-site rewrite with no census is how a docstring loses its meaning, and this repository's
 comments carry invariants and measured numbers that a careless reword destroys. The census is
-therefore the first deliverable, not documentation of one.
+therefore the first deliverable rather than documentation of one.
 
 Censusing by the word that modifies `check` finds 519 distinct constructions, most appearing once.
 `scripts/vocab-census.ts` classifies every hit by the ACTION it needs, and the three actions differ
@@ -81,7 +81,7 @@ order below keeps every intermediate state shippable and every diff reviewable.
 1. **Census, committed.** `scripts/vocab-census.ts` classifies every hit by sense and prints the
    table above. It is the measuring instrument; it must exist before any edit, so progress is read
    from a number rather than asserted.
-2. **Config, not yet enforcing.** Add `[*.{ts,tsx}]` and `[*.py]` sections to a code config and
+2. **Config rather than yet enforcing.** Add `[*.{ts,tsx}]` and `[*.py]` sections to a code config and
    widen the vocab config's path list. Run in report mode. This proves the config sees what the
    census sees — two independent readings of the same surface, which is how a false negative in the
    measuring tool gets caught.

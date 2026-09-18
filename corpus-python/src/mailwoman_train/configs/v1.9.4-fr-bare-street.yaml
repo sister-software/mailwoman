@@ -1,6 +1,6 @@
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary without a postcode anchor) ===
 # FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
-# Paris" fixed, US 4/4 tag-identical → imbalance confirmed, not modeling deficit). Continue from the probe's
+# Paris" fixed, US 4/4 tag-identical → imbalance confirmed rather than modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
 # and ship the FR-up/US-held sweet spot. Same single variable (the fr-bare-street source) — clean attribution.
 # v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and one new

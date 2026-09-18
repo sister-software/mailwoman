@@ -95,7 +95,9 @@ cost, and it provides you a clean board.
 That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.
 
-That's corpus authoring, not another config toggle.
+That's corpus authoring rather than another config toggle.
+
+This is a test, not a production system.
 
 The blast-radius reaches every package.
 
@@ -104,13 +106,13 @@ The blast-radius reaches every package.
 Each is checked only by producing no alert; a leak shows up as clean-chat.md
 failing, or as a hit on one of these lines in this file's JSON.
 
-The candidate was graded on the real panel against the real input, not a
+The candidate was graded on the real panel against the real input rather than a
 synthetic draw, as distance from the real address point. (JudgmentJargon's
 rhetorical-noun scope: "the real input" and "the real address point" are
-real-versus-synthetic house usage, not rhetoric.)
+real-versus-synthetic house usage rather than rhetoric.)
 
 Mailwoman measures 86.4% at the 1km tier on the board. (DistanceAsSuccess:
-the tier vocabulary is the pre-registered metric, not a recovery claim.)
+the tier vocabulary is the pre-registered metric rather than a recovery claim.)
 
 The parent is Five Star Island (WOF 9000000119609). (OpaqueID: the
 name-beside-ID form is the recommended usage and must not match.)
@@ -135,7 +137,7 @@ figure with its budget named is not a metaphor.)
 
 The cost of the rebuild was 40 minutes and a 16 GB heap; the cost per row is
 two lookups. (EconomyMetaphor: `cost` WITH ITS UNIT is what the rule asks for,
-so the noun must stay quiet — it is the remedy, not the offence.)
+so the noun must stay quiet — it is the remedy rather than the offence.)
 
 The worker allowlists two Price ids and the shop provisions both Prices.
 (EconomyMetaphor: `Price` is a Stripe API object, a third-party contract like
@@ -151,7 +153,7 @@ artifact names are exempt — that is the replacement both rules ask for.)
 
 The promotion eval ran from `promotion-eval.ts` after `mailwoman eval promote`
 printed the append command. (AmbiguousShorthand: a backticked script name and a
-backticked CLI command are contracts, not prose, so neither may match.)
+backticked CLI command are contracts rather than prose, so neither may match.)
 
 This paragraph names the thing you already read, which is filler in a reply.
 

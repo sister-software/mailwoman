@@ -9,7 +9,7 @@ tags:
 
 # Synthetic corpus — alignment validation is essential
 
-Both v0.5.0 corpus threads (B kryptonite and B2 transliteration) used an LLM ([DeepSeek](./deepseek-reasoning-budget.mdx)) to generate annotated training rows. Both surfaced the same lesson: **the substring-match alignment check is structural infrastructure, not a quality filter you can drop later.** This article explains why.
+Both v0.5.0 corpus threads (B kryptonite and B2 transliteration) used an LLM ([DeepSeek](./deepseek-reasoning-budget.mdx)) to generate annotated training rows. Both surfaced the same lesson: **the substring-match alignment check is structural infrastructure rather than a quality filter you can drop later.** This article explains why.
 
 ## What alignment validation does
 
@@ -73,7 +73,7 @@ The validator is the first line of defence. Audit and eval are the second and th
 Any future synthetic-corpus pipeline should ship with:
 
 1. **A substring-match validator** that runs per-row before the row reaches the corpus. Reject reasons logged with structured tags so the reject-rate breakdown is greppable (`reject:not-in-raw:street` etc., the shape B and B2 use).
-2. **A reject-rate floor expectation** in the pipeline's README. If you see reject rate drop to zero, that is a bug in the validator, not a quality breakthrough.
+2. **A reject-rate floor expectation** in the pipeline's README. If you see reject rate drop to zero, that is a bug in the validator rather than a quality breakthrough.
 3. **A `corpus-audit` pass before declaring done** — the validator is necessary but not sufficient.
 
 The cost is low (a few hundred lines of Python); the value is high (you can trust that the corpus matches its own annotations).

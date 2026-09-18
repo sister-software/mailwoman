@@ -239,7 +239,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
-		// Strict, not tolerant: a corrupt model card must abort the splice rather than read as
+		// Strict rather than tolerant: a corrupt model card must abort the splice rather than read as
 		// "no capabilities block" and append a second one.
 		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
@@ -249,7 +249,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			)
 		}
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above rather than reading anything.
 		const block = prettyJSON(capabilities)
 			.split("\n")
 			.map((line) => "\t" + line)

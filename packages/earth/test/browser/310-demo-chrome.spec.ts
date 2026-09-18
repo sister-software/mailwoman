@@ -143,7 +143,7 @@ test.describe("Chrome — the floating controls", () => {
 
 		const popover = page.locator(".mw-map-footer__popover")
 
-		// REACHABLE, not merely visible. The popover shipped in the DOM carrying the right credits while the footer
+		// REACHABLE rather than merely visible. The popover shipped in the DOM carrying the right credits while the footer
 		// strip's own `overflow-x` clipped it away, and both a `textContent` read and a `toBeVisible` assertion passed
 		// over that — a clipped element keeps its box. Only hit-testing tells the difference.
 		await expectReachable(page, ".mw-map-footer__popover")

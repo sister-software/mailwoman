@@ -28,7 +28,7 @@ test.each([
  */
 test.each([
 	// [diameterKm, maxTerrainZoom, expected]
-	[85.29, 5, 6], // Tycho on a zoom-5 archive: one level of over-zoom, not two
+	[85.29, 5, 6], // Tycho on a zoom-5 archive: one level of over-zoom rather than two
 	[85.29, 6, 7], // the same feature on a deeper archive keeps its earned zoom
 	[1.2, 5, 6], // a small crater cannot ask for 9
 	[1.2, 6, 7],

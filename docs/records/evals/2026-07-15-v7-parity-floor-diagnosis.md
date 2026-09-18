@@ -38,9 +38,9 @@ Two structural findings under this:
 **1. The tokenizer covers the diacritics but over-fragments the words.** Probing the SP v0.9.0
 tokenizer: `á ã ó ß Å` are all single covered pieces (only RO `ț` byte-falls-back). But diacritic
 words shatter — `Kájovská` → `▁K á j ovská`, `Magalhães` → `▁Mag al h ã es`. The heavy sub-word
-fragmentation, not byte-fallback, is what corrupts the span surface when the model tags some pieces
+fragmentation rather than byte-fallback, is what corrupts the span surface when the model tags some pieces
 and drops others. This is a tokenizer _granularity_ gap for CZ/PT/PL/RO (the FR/Nordic splices didn't
-reach them), not a coverage gap.
+reach them) rather than a coverage gap.
 
 **2. Context fixes the coverage class but not the boundary class.** Re-parsing the failing bare
 forms with full address context:
@@ -56,7 +56,7 @@ forms with full address context:
 The "empty/coverage" class (40%) is a **bare-fragment distribution** effect: with full context the
 model parses it correctly, and the rules parser was purpose-built for the bare-autocomplete
 distribution. The "boundary" class (39%) is **#727**. It persists with full context because it is a
-decode-segmentation error at the street↔house_number boundary, not a missing-context error.
+decode-segmentation error at the street↔house_number boundary rather than a missing-context error.
 
 ## Why "more extract" is unlikely to break the plateau
 
@@ -112,7 +112,7 @@ The signal is two-sided:
 A **pure** coordinate re-check does not hold: it ships that tail. The tail lands on input classes the
 pipeline can already detect, which is what the recommended path below exploits.
 
-Caveats: this measures neural-vs-rules divergence, not accuracy against ground truth (the corpus has
+Caveats: this measures neural-vs-rules divergence rather than accuracy against ground truth (the corpus has
 no gold coords, and the rules parser is sometimes the wrong one); and the corpus is deliberately
 fragment/edge-case-heavy, so the >25 km tail is smaller on real drop-in traffic than the 21% here.
 
@@ -128,7 +128,7 @@ components bound it, in priority order:
 2. **Plausibility guard on the resolution.** Fall back when the neural resolution is implausible for
    the input's country signal — a country-centroid hit, or a cross-country jump like `California` →
    Maryland. A cheap post-resolve check, no model change.
-3. **Ship v7 on this hybrid check**, not the 0.90 parse-tag floor. The swap is neural-primary; the
+3. **Ship v7 on this hybrid check** rather than the 0.90 parse-tag floor. The swap is neural-primary; the
    fallback shrinks as the model improves and is deleted when it stops firing.
 
 **Measured** (`scratchpad/coord-parity.mjs`, extended with the kind-classifier + both guards). The
@@ -138,7 +138,7 @@ fallback), and of the 7 that classify as `structured_address`, the plausibility 
 live fixtures (0.9%)**, at a cost of **zero false-positive fallbacks** — none of the 81 coordinate-safe
 structured fixtures trip either guard. The surviving 3 are structured, in-country, wrong-locality
 neural resolutions, and their archetype is the #727 boundary class (`Korunní 810, Praha` → wrong
-Czech city). So the hybrid check ships **paired with** #727 stage-2, which erases that residual, not as
+Czech city). So the hybrid check ships **paired with** #727 stage-2, which erases that residual rather than as
 a permanent substitute for the model work.
 
 This unblocks v7 without a model campaign that re-plateaus and without shipping the tail a pure
@@ -155,5 +155,5 @@ lead**: the plateau evidence says it re-plateaus.
 - v257 recipe: `corpus-python/src/mailwoman_train/configs/v2.5.7-fragment-v5-gentle-full.yaml`
 
 The guard measurement's tail (n=18) is small, so the 11/7 and 4/3 splits are noisy; and it grades
-neural-vs-rules divergence, not ground-truth accuracy. Treat the 0.9% residual as an order-of-magnitude
-result — the tail is bounded to low single digits, not that it is exactly three.
+neural-vs-rules divergence rather than ground-truth accuracy. Treat the 0.9% residual as an order-of-magnitude
+result — the tail is bounded to low single digits rather than that it is exactly three.

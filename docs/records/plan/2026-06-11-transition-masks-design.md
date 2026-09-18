@@ -1,4 +1,4 @@
-# Per-system transition masks — design note (#478 increment 3, not yet built)
+# Per-system transition masks — design note (#478 increment 3 rather than yet built)
 
 Status: DESIGN ONLY (night-11). Increment 1 (emission mask, v4.3.0) and the span bridge (v4.4.0
 corrective) shipped; the train-time loss-mask pairing is implemented and banked

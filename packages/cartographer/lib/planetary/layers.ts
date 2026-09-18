@@ -71,9 +71,9 @@ export type PlanetaryStyleBody = keyof typeof PALETTES
 const PLANETARY_NAMESPACE = "planetary"
 
 /**
- * The body's surface tone, under the relief. Under globe projection a background layer paints the SPHERE, not the
- * viewport, so this is the ground the hillshade shades and not the field around the globe. the app's stylesheet paints
- * that behind a transparent canvas.
+ * The body's surface tone, under the relief. Under globe projection a background layer paints the SPHERE rather than
+ * the viewport, so this is the ground the hillshade shades and not the field around the globe. the app's stylesheet
+ * paints that behind a transparent canvas.
  */
 export const PlanetarySpaceLayerID = LayerID(PLANETARY_NAMESPACE, "space")
 

@@ -16,7 +16,7 @@ Run inside the mailwoman-llm container, after a checkpoint exists at
             /data/models/checkpoints/stage1-coarse/step-005000
 
 The CUDA_VISIBLE_DEVICES= + HSA_OVERRIDE_GFX_VERSION= prefix prevents
-torch.cuda from probing the GPU; the running training process retains
+torch.cuda from probing the GPU. the running training process retains
 exclusive ROCm access.
 """
 
@@ -34,7 +34,7 @@ from mailwoman_train.tokenizer import Tokenizer
 
 # Ten hand-crafted addresses spanning the bitter-lesson kryptonite cases
 # (Buffalo Buffalo, Saint Petersburg, NY-NY-Steakhouse) plus the easy ones.
-# Format: (raw_address, expected_components) — expected is informational only;
+# Format: (raw_address, expected_components) — expected is informational only.
 # the smoke test does not assert it.
 SMOKE_ADDRESSES: list[tuple[str, dict[str, str]]] = [
 	(

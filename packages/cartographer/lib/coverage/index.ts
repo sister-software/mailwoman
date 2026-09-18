@@ -29,7 +29,7 @@ import { TileSetSourceID } from "#styles/sources"
 /**
  * The MapLibre source id the address-coverage overlay is registered under.
  *
- * The `-v5` suffix is part of the id, not a version to bump casually: a style and the PMTiles archive
+ * The `-v5` suffix is part of the id rather than a version to bump casually: a style and the PMTiles archive
  * it points at agree by this string, so changing it orphans every layer that names the old one.
  */
 export const CoverageTileSetID = TileSetSourceID("coverage-v5")

@@ -5,7 +5,7 @@
  *
  *   The surfaces this module exists to supply are the ones that failed a live 35-address bare-toponym probe on
  *   2026-08-15: every non-Latin country query returned nothing, and every one of them was a gazetteer miss rather than
- *   a tagging miss. These cases pin the specific strings, not just the mechanism.
+ *   a tagging miss. These cases pin the specific strings rather than just the mechanism.
  */
 
 import { countryDisplayNames, enumerateCountryDisplayNames } from "@mailwoman/codex/country"
@@ -69,7 +69,7 @@ describe("enumerateCountryDisplayNames", () => {
 		const rows = [...enumerateCountryDisplayNames()]
 		const countries = new Set(rows.map((r) => r.iso2))
 
-		// Measured 280 regions / 5,244 surfaces at time of writing. Floors, not equalities — an ICU upgrade may add
+		// Measured 280 regions / 5,244 surfaces at time of writing. Floors rather than equalities — an ICU upgrade may add
 		// names, and pinning exact counts would fail on a Node bump for no reason.
 		expect(countries.size).toBeGreaterThanOrEqual(240)
 		expect(rows.length).toBeGreaterThanOrEqual(3000)

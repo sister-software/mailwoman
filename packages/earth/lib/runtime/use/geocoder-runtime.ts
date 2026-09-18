@@ -146,8 +146,8 @@ export interface GeocoderRuntimeOptions {
  */
 
 /**
- * Give a superseded bundle's native memory back. Module scope, not a `useCallback`: it closes over nothing, so a stable
- * identity costs nothing and it cannot churn the hook's effect.
+ * Give a superseded bundle's native memory back. Module scope rather than a `useCallback`: it closes over nothing, so a
+ * stable identity costs nothing and it cannot churn the hook's effect.
  */
 function disposeAssets(assets: ReleaseAssets): Promise<void> {
 	return assets.release()
@@ -279,7 +279,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary, not `ComponentTag`s,
+			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary rather than `ComponentTag`s,
 			// so the `|| n.tag === "…"` arms that used to sit on these four finds could never match. They compiled
 			// only while the flattener returned `{ tag: string }`; against the real tag union they are type errors.
 			const localityNode = nodes.find((n) => n.tag === "locality")

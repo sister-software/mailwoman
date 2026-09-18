@@ -1,4 +1,4 @@
-# T1c — the FR fragment board: the house number is a license, not a hint
+# T1c — the FR fragment board: the house number is a license rather than a hint
 
 **Deliverable (2026-07-16 review, Tier 1c):** replace the n=63 Paris anecdote with a BAN-sampled board
 carrying confidence intervals per phenomenon class, and make it the grading set for the T2 extract.
@@ -65,7 +65,7 @@ number** and fragments the street around the hole. 5.5% correct, the worst class
 ## 3. One mechanism explains every cell
 
 > **The house number is not a hint. It is the license.** The model has learned "digits ⇒ this is a
-> street address"; the street reading is conditioned on that license, not on the designator.
+> street address"; the street reading is conditioned on that license rather than on the designator.
 
 | class                | license?          | consequence                                   | rate  |
 | -------------------- | ----------------- | --------------------------------------------- | ----- |
@@ -98,7 +98,7 @@ The board is the grading set. Registered as baselines; the extract is graded aga
 **Must not regress** (the guards):
 
 - `street-housenumber` 0.925 and `alnum-housenumber` 0.925 — the contextful guard. A extract that fixes
-  fragments by degrading normal addresses has moved the failure, not fixed it.
+  fragments by degrading normal addresses has moved the failure rather than fixed it.
 - `bare-locality` 0.980 — **the one to watch**, per §3. If it falls while the bare classes rise, the
   extract traded one default for another rather than teaching the distinction.
 - The global parity floor (`eval parity`) must hold. Board 2 moving is not a verdict alone.

@@ -14,7 +14,7 @@ Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a
 
 MCE (bins n≥20) 0.2231 → 0.0579 · Brier 0.0213 → 0.0156 · n_fit=28480 n_eval=7120 spans.
 
-> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise, not a calibration failure. ECE (sample-weighted) is the headline; it weights each bin by its mass.
+> MCE is reported over bins with ≥20 samples. The model is confident — ~94% of held-out spans sit in [0.93, 1.0] — so equal-width bins below ~0.7 hold a handful of samples each and their all-bins max gap is single-sample noise rather than a calibration failure. ECE (sample-weighted) is the headline; it weights each bin by its mass.
 
 ## Reliability (held-out eval, raw confidence)
 

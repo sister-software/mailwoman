@@ -19,7 +19,7 @@ describe("isUkCountryCode", () => {
 	it("accepts ISO 3166-2:GB codes, case-insensitively", () => {
 		expect(isUkCountryCode("ENG")).toBe(true)
 		expect(isUkCountryCode("sct")).toBe(true)
-		expect(isUkCountryCode("BY")).toBe(false) // a German state, not a UK country
+		expect(isUkCountryCode("BY")).toBe(false) // a German state rather than a UK country
 	})
 })
 
@@ -34,7 +34,7 @@ describe("lookupUkCountry", () => {
 	})
 
 	it("returns null for an unknown country", () => {
-		expect(lookupUkCountry("Ireland")).toBeNull() // the Republic, not a UK country
+		expect(lookupUkCountry("Ireland")).toBeNull() // the Republic rather than a UK country
 		expect(lookupUkCountry("Bavaria")).toBeNull()
 		expect(lookupUkCountry(null)).toBeNull()
 	})

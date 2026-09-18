@@ -16,7 +16,7 @@ from the shipped 25 countries to 134.
 | tokenizer         | `5c01cdcd4ae25849c5cb26b69fd3dde9` — byte-identical to shipped |
 | shipped comparand | `98a49b5ca2948cdbe1dd981d60ef637d` (v4.4.0 step-60000 int8)    |
 
-The tokenizer identity was checked, not assumed. A from-scratch run is exactly where a tokenizer
+The tokenizer identity was checked rather than assumed. A from-scratch run is exactly where a tokenizer
 change hides, and F1 is not comparable across tokenizer versions — had these differed, both the
 staging and the comparison would have been invalid while still producing numbers.
 
@@ -55,7 +55,7 @@ Selected floors, all cleared, several by wide margins:
 **A check-only promotion would have shipped this model.** `us.street` reads 73.8 — an improvement —
 while `Unter den Linden` splits in half. Per-tag F1 over a golden set aggregates away seven specific
 addresses in three tier-1 countries. That is the argument for the board being part of the promotion
-path, not an adjunct to it.
+path rather than an adjunct to it.
 
 ## The failure has one shape
 
@@ -107,7 +107,7 @@ What is measured: four newly-admitted countries carry rows with **zero street ro
 JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool by ROW
 COUNT; the US row share moves 73.13% → 71.50%. The config's 34-source `source_weights` reweighting
 shifts effective sampler shares, so the row arithmetic is approximate — the falsification below
-rests on the config diff, not on these share numbers. A ~2% share is small for the damage observed,
+rests on the config diff rather than on these share numbers. A ~2% share is small for the damage observed,
 so this was a hypothesis and not a finding.
 
 ## The isolation run
@@ -201,7 +201,7 @@ Three findings:
 
 1. **The fine-tune tax on this base is ~zero.** The null grades net +4 vs shipped where the v5.0.0
    base graded +2 — continuing the base's own recipe for 1,000 steps costs nothing measurable, unlike
-   the v4.4.0 base's measured 10-row tax. A tax is a property of the base and its recipe, not a
+   the v4.4.0 base's measured 10-row tax. A tax is a property of the base and its recipe rather than a
    universal constant.
 2. **The fix worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
@@ -237,7 +237,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 **What is superseded:**
 
 - Every absolute net/regressed count. Grades apply to the **372 of 649 rows carrying coordinate
-  truth**, not to 649; and foreign-row grades from the unrouted path are not production behavior.
+  truth** rather than to 649; and foreign-row grades from the unrouted path are not production behavior.
 - The D-rule row identities. Under production routing the blocking set is **FR 2 of 45 graded rows
   (`COMER parís.méxico` in its two board contracts, `fr-fork-entity-comer` and
   `venue-toponym-comer-bare`) + GB 2 of 51 (`Biggin Hill, United Kingdom` and
@@ -261,7 +261,7 @@ reviewed VE postcode-tail treatment        87543df0…      13             9    
 
 Attribution vs the matched placebo: −3 regressions, +10 net. Five of the 13 improvements are the
 reviewed Venezuela target class. hold stands on two separate grounds the handoff keeps apart: the
-D-rule (4 blocking rows, shared with the placebo — inherited, not treatment-caused), and
+D-rule (4 blocking rows, shared with the placebo — inherited rather than treatment-caused), and
 measurement power (296 vs 292 of 372 at 25 km, p = 0.7187 — no global-accuracy claim).
 
 The lesson worth keeping beside the D-rule itself: **a per-country breakdown of a score is not

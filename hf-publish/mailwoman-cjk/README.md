@@ -87,7 +87,7 @@ road or street name is `street`, the building or house number `house_number`, a 
 | Korean permit-register board, 3,522 typed rows: dependent_locality / house_number / venue       |         0.999 / 0.999 / 0.973 |
 | Chinese board, 14 rows: `locality_unit` span exact-match                                        |                         13/14 |
 
-The Chinese side is a supply-limited overlay (126 labeled rows in total); the number is reported, not claimed. The
+The Chinese side is a supply-limited overlay (126 labeled rows in total); the number is reported rather than claimed. The
 receipts are in the repository under `docs/records/evals/`.
 
 ## Files

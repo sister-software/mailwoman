@@ -159,7 +159,7 @@ describe("readBoardCoverage", () => {
 })
 
 /**
- * The corpus is a build artifact, not a fixture, so this leg runs only where one exists.
+ * The corpus is a build artifact rather than a fixture, so this leg runs only where one exists.
  */
 const CORPUS = String(
 	dataRootPath(

@@ -150,7 +150,8 @@ function tagBreakdown(entry: TokenCensus): string {
 
 /**
  * A token whose commonest tag holds less than this share teaches more than one reading at a rate the decode has to
- * resolve. Set where a rounding artifact stops and a real second reading starts, not against a measured separation.
+ * resolve. Set where a rounding artifact stops and a real second reading starts rather than against a measured
+ * separation.
  */
 const CONTESTED_DOMINANCE = 0.95
 

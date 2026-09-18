@@ -5,7 +5,7 @@
  *
  *   Typed schema + read/write helpers for the candidate gazetteer's COVERAGE MANIFEST — the two
  *   country-keyed tables through which the artifact declares facts about ITSELF, so those facts are
- *   updated at gazetteer REBUILD, not by a hand-edited code PR after someone remembers:
+ *   updated at gazetteer REBUILD rather than by a hand-edited code PR after someone remembers:
  *
  *   - `country_coverage`: the hard-country-filter coverage record (#743/#194) — per-country
  *     promotion-eval verdicts + the measured hard-resolve rates that used to live in a code comment on
@@ -44,7 +44,8 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promotion-eval verdict (a verdict column, not re-derived from the rate. see the fact type's docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column rather than re-derived from the rate. see the fact type's
+	 * docstring).
 	 */
 	hard_filter_safe: number
 	/**

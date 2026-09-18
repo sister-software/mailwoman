@@ -22,7 +22,7 @@ export interface MapControlButtonProps {
 	 */
 	children: ReactNode
 	/**
-	 * The control's accessible name. Required: the visible content is a mark, not a word.
+	 * The control's accessible name. Required: the visible content is a mark rather than a word.
 	 */
 	label: string
 	onPress: () => void

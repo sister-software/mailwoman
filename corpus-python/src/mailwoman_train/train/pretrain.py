@@ -84,7 +84,7 @@ def load_pretrain_model(cfg: Config, tokenizer: Tokenizer, device: torch.device,
     model.to(device)
     amp_dtype = precision_to_dtype(cfg.train.precision, device)
     if amp_dtype is not None and device.type == "cuda":
-        model.to(dtype=amp_dtype)  # explicit cast, not autocast (gfx1103 hang — see train.py)
+        model.to(dtype=amp_dtype)  # explicit cast rather than autocast (gfx1103 hang — see train.py)
     return model
 
 

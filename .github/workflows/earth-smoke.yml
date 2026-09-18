@@ -5,7 +5,7 @@
 # the `@smoke` browser spec against the DEPLOYED app (`MAILWOMAN_EARTH_URL`) and grades the RESULTS (the
 # address_point tier, the WOF cascade, the markers), so a functional regression is visible the day it ships.
 #
-# The same spec also runs against the local preview on every app change; this workflow is the SCHEDULED
+# The same spec also runs against the local preview on every app change. this workflow is the SCHEDULED
 # production half.
 name: Earth smoke
 
@@ -35,7 +35,7 @@ jobs:
       - X64
     timeout-minutes: 15
     env:
-      # workflow_dispatch override wins; the scheduled run uses production.
+      # workflow_dispatch override wins. the scheduled run uses production.
       MAILWOMAN_EARTH_URL: ${{ inputs.earth_url || 'https://earth.mailwoman.ai' }}
     steps:
       - uses: actions/checkout@v7
@@ -55,7 +55,7 @@ jobs:
 
       # Remote mode (MAILWOMAN_EARTH_URL set) skips the local build and preview, so only the browser is
       # needed. No --with-deps: it sudo-installs apt packages, and the lab runners have no passwordless
-      # sudo; system libs are provisioned on the host once (`playwright install-deps chromium`, operator sudo).
+      # sudo. system libs are provisioned on the host once (`playwright install-deps chromium`, operator sudo).
       - name: Install Playwright chromium
         working-directory: packages/earth
         run: yarn playwright install chromium

@@ -13,7 +13,7 @@
  *   databases and the web platform emit composed. `Köln` and `Köln` are the same city and different bytes,
  *   and a pipeline that resolves one and not the other has failed an input its own users cannot see.
  *
- *   CANONICAL, NOT COMPATIBILITY. {@linkcode canonicalFormKey} is `NFD`, which is UAX #15's own definition of
+ *   CANONICAL rather than COMPATIBILITY. {@linkcode canonicalFormKey} is `NFD`, which is UAX #15's own definition of
  *   canonical equivalence: two strings are canonically equivalent exactly when their decompositions match. So
  *   the key refuses, by construction, every relation this law is not — `ﬁ` against `fi` and `Ⅻ` against `XII`
  *   are COMPATIBILITY pairs and move the key, an accent removed moves the key, and a case change moves it too.

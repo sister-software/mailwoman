@@ -60,8 +60,8 @@ export interface SubVenuePromotion {
 	 * confound. `identifier-required` means the phrase is promoted solely in `<phrase> <identifier>` position (Halle 8);
 	 * bare occurrences stay unpromoted. A consumer that reads promotions must honour this field: the de-DE `halle` board
 	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the CITY Halle (Saale), and the
-	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-containing shape, not of the
-	 * phrase. Absent = the promotion holds in any shape.
+	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-containing shape rather than
+	 * of the phrase. Absent = the promotion holds in any shape.
 	 */
 	shape?: "identifier-required"
 	/**

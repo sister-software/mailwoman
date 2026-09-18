@@ -6,7 +6,7 @@
  *   Build the COUNTRY-SURFACE LEXICON for the country-lexicon soft-feed channel (#1104). This is the
  *   third atlas channel, a sibling of the postcode anchor (#239/#240) and the gazetteer anchor
  *   (#464): a per-token multi-hot clue the neural GRAMMAR conditions on but never obeys. Country is a
- *   CLOSED, ENUMERABLE class (~250 surfaces) — atlas, not grammar — so a dictionary phrase-lookup
+ *   CLOSED, ENUMERABLE class (~250 surfaces) — atlas rather than grammar — so a dictionary phrase-lookup
  *   recovers the WOF-admin / resolver hierarchy case ("United States of America, Wyoming, <locality>")
  *   the learned tagger reads as a leading STREET. Pelias handled the same class the same way
  *   (`WhosOnFirstClassifier extends PhraseClassifier`); this is the model-first analogue.

@@ -64,7 +64,7 @@
  *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
  *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-OFF column. the old
  *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the check. Distinct from
- *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
+ *   `--postcode-anchor`, which swaps the resolved COORDINATE rather than the model input.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -199,7 +199,7 @@ export async function oaResolverEval(
 	const collectResolvedDump = !!(options.outResolved || "")
 	const resolvedRows: Record<string, unknown>[] = []
 
-	// `--out-rows <path>`: per-row neural-vs-v0 outcome dump (every row, not just misses), for the
+	// `--out-rows <path>`: per-row neural-vs-v0 outcome dump (every row rather than just misses), for the
 	// per-address-type head-to-head (scripts/eval/per-type-report.ts buckets by input shape offline).
 	// Reuses the same row score the aggregates use — no extra inference, no scoring duplication.
 	const collectRows = !!(options.outRows || "")
@@ -302,7 +302,7 @@ export async function oaResolverEval(
 			// In diagnostic mode, separate interpolation misses by cause.
 			// The interp tier only runs in resolveTree when the exact tier did not stamp. So:
 			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
-			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap, not parse, not check).
+			//   ⟹ a genuine StreetInterpolator.find() miss (database/normalization gap rather than parse rather than check).
 			if (diagInterp && nDecorated) {
 				const { street: s, houseNumber: hn, postcode: pc } = findInterpolationSpans(nDecorated)
 				const precond = !!(s && hn && pc)

@@ -62,7 +62,7 @@ export function observation(source: string, vintage: string | null, value: unkno
 
 /**
  * A relation stated by a source is authoritative and carries no score. one we concluded is inferred and may. A score on
- * an authoritative relation is refused, because it means the link was concluded, not stated.
+ * an authoritative relation is refused, because it means the link was concluded rather than stated.
  */
 export function relation(input: RelationInput): Relation {
 	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {

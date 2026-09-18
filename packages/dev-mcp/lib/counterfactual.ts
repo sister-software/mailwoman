@@ -121,9 +121,9 @@ export interface SettingSkip {
  * The single-setting flips available for one row.
  *
  * `effective` is the RESOLVED session options — the production defaults already filled in — because the flip has to be
- * stated against what the engine will actually do, not against what the caller happened to type. An unset setting in a
- * caller's `EngineConfig` means the production default, so reading the caller's object would report every unset setting
- * as absent and flip it in the wrong direction.
+ * stated against what the engine will actually do rather than against what the caller happened to type. An unset
+ * setting in a caller's `EngineConfig` means the production default, so reading the caller's object would report every
+ * unset setting as absent and flip it in the wrong direction.
  */
 export async function enumerateFlips(
 	effective: GeocodeSessionOptions,

@@ -47,7 +47,7 @@ import type { CanonicalRow } from "#types"
 //#region Types
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -115,8 +115,8 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 
 /**
  * Adversarial venue names — businesses whose names contain street-typing tokens (Avenue, Street, Highway, Lane, Drive,
- * Court, Plaza, Park, ...) but are themselves venues, not streets. The model must learn that these are venues despite
- * the street-typing tokens.
+ * Court, Plaza, Park, ...) but are themselves venues rather than streets. The model must learn that these are venues
+ * despite the street-typing tokens.
  *
  * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2 2026-05-29 step-20K
  * eval showed that synthesized rows starting with `<digits><ordinal>` confused the model about house_number recognition

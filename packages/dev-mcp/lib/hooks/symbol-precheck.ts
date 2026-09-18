@@ -8,7 +8,7 @@
  *
  *   It exists because the alternative does not work. The shared homes an author is supposed to reach for are listed in
  *   prose in `AGENTS.md`, and that list names a few dozen of the several thousand exported symbols in the tree — so
- *   the miss rate is structural, not a matter of attention. `jscpd` and `knip` (`yarn health:duplicates`,
+ *   the miss rate is structural rather than a matter of attention. `jscpd` and `knip` (`yarn health:duplicates`,
  *   `yarn health:knip`) already find duplication, but only after it is written and committed. This is the same
  *   question asked at the moment it can still be answered cheaply.
  *

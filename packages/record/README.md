@@ -53,7 +53,7 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 - **Plain data, no classes.** Records are plain TypeScript objects with
   branded types where needed.
 - **Address-first.** The `PostalAddress` is the canonical record — the geocode-first
-  matcher resolves places, not strings.
+  matcher resolves places rather than strings.
 - **Domain-scoped.** Organization canonicalization supports jurisdiction and
   domain context (e.g., `{jurisdiction: "ID"}` for Indonesian legal designations,
   `{domain: "healthcare"}` to guard PT/SCA from collision with medical

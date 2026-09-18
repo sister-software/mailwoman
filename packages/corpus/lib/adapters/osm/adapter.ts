@@ -171,7 +171,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.locality = split.locality
 	}
 
-	// The first candidate that is a name of its own: not a comma-joined pair, not the street or the locality again.
+	// The first candidate that is a name of its own: not a comma-joined pair rather than the street or the locality again.
 	const dependent = [row.suburb, row.subdistrict, row.district, row.place, split?.head]
 		.map((value) => clean(value ?? undefined))
 		.find(

@@ -19,7 +19,7 @@
  *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
  *   holds.
  *
- *   THE COVERAGE READING IS PINNED, not merely printed. `eligibleByState.nfd` is zero because every committed
+ *   THE COVERAGE READING IS PINNED rather than merely printed. `eligibleByState.nfd` is zero because every committed
  *   board row is composed, which is the measured reason this suite states the decompose arm and no other. The
  *   day a decomposed row is committed that number moves, this test fails, and the failure says which arm just
  *   became stateable — which is the whole of what the pin is for.

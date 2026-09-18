@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Confidence banding shared by every component that colours a span by confidence.
  *
- *   It is a presentation choice, not a model one: the parser emits a continuous confidence and these
+ *   It is a presentation choice rather than a model one: the parser emits a continuous confidence and these
  *   bounds only decide which colour a span is drawn in, so they live here rather than anywhere the
  *   pipeline can see them.
  */

@@ -14,7 +14,7 @@
  *       ctrl+C, so its insert branch typed the `w`: `hello world` → `hello worldw`. That is the reported
  *       "alt+backspace inserts a w".
  *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`, and was treated as a plain
- *       backspace — one character deleted, not one word.
+ *       backspace — one character deleted rather than one word.
  *
  *   Both sequences must now delete the word before the cursor, and neither may leave a letter behind.
  *
@@ -121,7 +121,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 			const samples = valueSamples(output)
 
 			expect(samples).toContain("VALUE=[hello world]")
-			// Meta+backspace: the word, not the character (`hello worl` was ink-text-input's answer).
+			// Meta+backspace: the word rather than the character (`hello worl` was ink-text-input's answer).
 			expect(samples).toContain("VALUE=[hello ]")
 			expect(samples).toContain("VALUE=[hello there]")
 			// Ctrl+W landed as a word delete, and the letter Ink resolved it to never reached the value.

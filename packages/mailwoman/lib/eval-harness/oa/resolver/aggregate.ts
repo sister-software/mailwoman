@@ -74,8 +74,8 @@ export function bump(a: Agg, locMatch: boolean, regMatch: boolean, resolved: boo
  * The per-state bucket label a row is tallied under.
  *
  * Shared rather than repeated because the two views of one row must agree on it: an empty state is as unknown as a
- * missing one, so `||` is the operator, not `??`. The error dump read `?? "??"` and therefore filed an empty-state row
- * under `""` while every aggregate filed the same row under `"??"`.
+ * missing one, so `||` is the operator rather than `??`. The error dump read `?? "??"` and therefore filed an
+ * empty-state row under `""` while every aggregate filed the same row under `"??"`.
  */
 export function stateBucket(state: string | undefined): string {
 	return state || "??"
@@ -97,8 +97,8 @@ export function recordInto(pair: AggPair, state: string | undefined, outcome: Ar
 }
 
 /**
- * The `--out-json` shape for one arm. `errs` is replaced by its length: the raw list is the eval's working set, not a
- * figure anyone reads, and a full run's would dwarf the rest of the dump.
+ * The `--out-json` shape for one arm. `errs` is replaced by its length: the raw list is the eval's working set rather
+ * than a figure anyone reads, and a full run's would dwarf the rest of the dump.
  */
 export function dumpAggPair(g: AggPair): Record<string, unknown> {
 	return {

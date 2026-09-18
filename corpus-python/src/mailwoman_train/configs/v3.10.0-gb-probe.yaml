@@ -3,10 +3,10 @@
 # deltas below — one-variable discipline, everything else verbatim.
 #
 # 2026-07-22 RUN B (this launch): run A (`output-v3100-gb-probe-s42`) was a VERIFIED INSTRUMENT
-# FAILURE, not a result — the volume-side `config.py` predated commit 78adb380
+# FAILURE rather than a result — the volume-side `config.py` predated commit 78adb380
 # (`reinit_label_rows` + `classifier_learning_rate`), so its `_merge` hasattr check silently
 # dropped both keys and the probe ran as a plain fine-tune (adjudicated from classifier rows 7/8
-# reading ~unchanged vs v385, not from the loss curve). The corpus overlay + this YAML DID reach
+# reading ~unchanged vs v385 rather than from the loss curve). The corpus overlay + this YAML DID reach
 # the volume correctly in run A. Run B re-syncs `corpus-python/src/` (`sync_src_gb`, verified both
 # `train.py` and `config.py` on the volume now contain `reinit_label_rows`) and launches the
 # identical recipe into a fresh output dir — same recipe, sources fixed, one variable (the
@@ -27,7 +27,7 @@
 # ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
 # auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
-# all (silent no-op, not an error). See train.py L433-456.
+# all (silent no-op rather than an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
 # own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —
@@ -219,7 +219,7 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 2000 # DELTA (8000 -> 2000) — 2k PROBE, not the 8k ship escalation.
+  max_steps: 2000 # DELTA (8000 -> 2000) — 2k PROBE rather than the 8k ship escalation.
   eval_every_steps: 1000
   save_every_steps: 1000
   log_every_steps: 50

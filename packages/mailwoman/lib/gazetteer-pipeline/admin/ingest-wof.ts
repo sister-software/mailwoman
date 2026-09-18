@@ -267,7 +267,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		cwd: opts.dataDir,
 		absolute: true,
 		exclude,
-		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias, not a
+		// The repos root can expose one checkout through both layouts. Treat a symlink as an alias rather than a
 		// second source tree: the direct checkout supplies its records once.
 		followSymlinks: false,
 	}).toArray()

@@ -32,7 +32,7 @@ export async function buildParseRig(
 	// Full ship-config via the canonical ProductionScorer (#722): createScorer reads the model-card's
 	// `requires` block and feeds every declared channel — anchor + gazetteer + conventions(=auto) +
 	// suppress-gaz-near-postcode — and fails closed (strict) if a declared channel can't be fed. This
-	// grades the parse the library + server actually ship, not the hand-built anchor-only classifier
+	// grades the parse the library + server actually ship rather than the hand-built anchor-only classifier
 	// this eval used before. `--model-anchor-lookup` still pins the anchor source (else createScorer's
 	// default /mnt pilot + the repo gazetteer lexicon). `--ablate-to-anchor` drops back to anchor-only
 	// (gazetteer + conventions off) for the #722 before/after comparison.
@@ -40,7 +40,7 @@ export async function buildParseRig(
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
 	// `--anchor-off` (#887): the sanctioned anchor ablation — `overrides.anchor=false` through
-	// createScorer (a loud warning, not a throw). Replaces the pre-#718 empty-anchor.json idiom,
+	// createScorer (a loud warning rather than a throw). Replaces the pre-#718 empty-anchor.json idiom,
 	// which the fail-closed check now refuses (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
@@ -132,7 +132,7 @@ export async function buildParseRig(
 
 							if (!lookupMemo) return value.apply(target, args)
 
-							// The in-flight promise is memoized, not its result: two rows can ask the same question before
+							// The in-flight promise is memoized rather than its result: two rows can ask the same question before
 							// either answer lands, and caching the promise collapses those into one query.
 							let pending = lookupMemo.get(key)
 

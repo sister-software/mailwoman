@@ -14,7 +14,7 @@ house number. Building the `geocode` CLI, the situs tier silently fell through t
 addresses it should have nailed. The cause was the runtime pipeline's reconcile stage merging the
 house number and street into one node. We bypassed it in the CLI (raw `classifier.parse` +
 `resolveTree`) and then ran an audit to see how widespread the damage was — because our per-tag evals
-grade **raw neural** (`classifier.parse`), not the assembled pipeline, so a pipeline-stage regression
+grade **raw neural** (`classifier.parse`) rather than the assembled pipeline, so a pipeline-stage regression
 is invisible to every scorecard we publish.
 
 ## What we measured
@@ -54,7 +54,7 @@ For `3075 Hill Street, Round Rock, TX 78664`:
   Either way the number and street name fuse; there is no separate `street`.
 - **Raw neural** parses it correctly: nested `street = "Hill Street"` containing `house_number = "3075"`.
 
-This is structural, not data-dependent: it fires on every "number + street name" pattern, i.e. nearly
+This is structural rather than data-dependent: it fires on every "number + street name" pattern, i.e. nearly
 every US street address.
 
 ## Why #427 didn't catch it
@@ -66,7 +66,7 @@ string intact (`"Müllerstraße 12"`). That lifts a **loose street-string-recall
 path separates the house number on those inputs — neither produces a geocodable parse — and the re-check
 never measured the **geocode precondition** (clean street + separated house number) on standard US
 addresses. Our evals grade raw neural, so nothing downstream of the classifier was ever scored against
-truth. The blind spot was the eval target, not the math.
+truth. The blind spot was the eval target rather than the math.
 
 ## The decision
 
@@ -82,7 +82,7 @@ change (`core/pipeline/runtime-pipeline.ts`). This:
 
 The flag and the `reconcileSpans` code stay; the A/B harnesses still drive it with `jointReconcile: true`.
 This is the geocoder-sprint-correct default (US street-level is the DoD; multi-locale may degrade this
-sprint), not a deletion.
+sprint) rather than a deletion.
 
 ## Residual
 

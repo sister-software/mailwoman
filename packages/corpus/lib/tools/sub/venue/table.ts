@@ -143,10 +143,10 @@ export interface SubVenueSurface {
 /**
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
- * Derived from OSM `ref` values, not from names, and that is why the artifact has a section for it at all. Every one of
- * Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`: `13`, `6`, `0/1`, `14/15`, `16-18`. So `Gate
- * A12` is a RENDERING (`<designator> <ref>`) rather than a string anyone has written down, and a recipe that wants to
- * generate the designator+identifier form needs the identifier DISTRIBUTION, not a list of phrases.
+ * Derived from OSM `ref` values rather than from names, and that is why the artifact has a section for it at all. Every
+ * one of Berlin's 26 `aeroway=gate` features is unnamed and carries only a `ref`: `13`, `6`, `0/1`, `14/15`, `16-18`.
+ * So `Gate A12` is a RENDERING (`<designator> <ref>`) rather than a string anyone has written down, and a recipe that
+ * wants to generate the designator+identifier form needs the identifier DISTRIBUTION rather than a list of phrases.
  */
 export interface IdentifierShape {
 	designatorID: string

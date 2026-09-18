@@ -139,9 +139,9 @@ export interface Form499FRNContext {
 	form499RowIndex: number
 	lastFiledAt: string
 	/**
-	 * `valid_to` for this row's RELATIONSHIP edges, or `null` — see {@linkcode closeableCessationDate}. Deliberately not
-	 * applied to the `FRN↔form499ID` identity edge below: that edge asserts the two identifiers denote the same filer,
-	 * which does not stop being true when the company does. Only assertions that can expire get closed.
+	 * `valid_to` for this row's expiring RELATIONSHIP edges, or `null` — see {@linkcode closeableCessationDate}. The
+	 * `FRN↔form499ID` identity edge remains valid for the company's lifetime because the identifiers denote one filer.
+	 * Only assertions that can expire get closed.
 	 */
 	relationshipValidTo: string | null
 }

@@ -20,10 +20,10 @@
  * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
  * (~23ms measured) — far above the cross-thread cost. for light normalization, stop after normalizeCSV.
  *
- * **Concurrency is low on purpose.** Geocoding is latency/memory-bound, not CPU-bound: each row makes
+ * **Concurrency is low on purpose.** Geocoding is latency/memory-bound rather than CPU-bound: each row makes
  * random reads into the multi-GB WOF SQLite, and the classifier already uses several cores per inference.
  * A measured NPPES sweep (single 4 GB DB, 16-core box) peaked at **2 workers (~1.4×)** and *degraded* from
- * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling, not
+ * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling rather than
  * the core count. So the default is small, and more is usually worse. Sweep it for your data/box rather
  * than reaching for `availableParallelism()`.
  *
@@ -32,7 +32,7 @@
  * so concurrency *within* one runtime measures 1.00× flat from 1 to 16 (`plan/reference/performance.mdx`).
  * A separate runtime per row is the only thing that provides anything, which is what a worker is. That also
  * bounds what a richer pool implementation could be worth here: the scarce resource is DB and memory
- * bandwidth at a concurrency of ~2, not task-dispatch implementation.
+ * bandwidth at a concurrency of ~2 rather than task-dispatch implementation.
  */
 
 import { availableParallelism } from "@mailwoman/core/utils/system"

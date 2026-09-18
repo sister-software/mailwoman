@@ -39,7 +39,7 @@ finest-resolved tier across the 267 parity fixtures (admin + postcode DBs only):
 situs, no interpolation, no BAN/OSM rooftop. It cannot distinguish a correct street parse from a
 wrong one because **it never resolves streets at all**.
 
-Both results are explained by the confound, not by the thesis:
+Both results are explained by the confound rather than by the thesis:
 
 - **The guard was inert** because country-centroid garbage is rare on this corpus — the fixtures land
   on a _locality_ centroid whether the street parse is right or wrong. Identical evidence for both.
@@ -50,7 +50,7 @@ Both results are explained by the confound, not by the thesis:
 
 The extracts exist locally and I only did not wire them: `/mnt/playpen/mailwoman-data/interpolation/`
 (per-state US), `/ban/` (FR rooftop), `/osm/`. A valid test runs the **geocode cascade**
-(`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`), not the bare WOF admin resolver.
+(`geocodeAddress` / `parseForGeocode` + a `RegionDatabaseResolver`) rather than the bare WOF admin resolver.
 
 ## What is supported
 
@@ -62,7 +62,7 @@ The extracts exist locally and I only did not wire them: `/mnt/playpen/mailwoman
   country-centroid rank-1 (the arc's whole claim); **all-implausible falls back to rank-1** (evidence
   that everything is bad is not grounds to invent a different answer); **a resolver exception does not
   veto** (an outage is not evidence).
-- `maxResolve` defaults to 5, not 10 — oracle@5 (0.723) captures nearly all of oracle@10's (0.775)
+- `maxResolve` defaults to 5 rather than 10 — oracle@5 (0.723) captures nearly all of oracle@10's (0.775)
   ceiling for half the resolver round-trips.
 
 ## What Phase 4a still owes
@@ -73,7 +73,7 @@ The extracts exist locally and I only did not wire them: `/mnt/playpen/mailwoman
 2. Expect the answer to be **locale-split**: the US has situs/TIGER street coverage, so the resolver
    can adjudicate there; CZ/FR/PT bare fragments resolve to a locality centroid regardless, so the
    evidence may in fact not exist for them. A rerank that helps US and is inert intl would be a
-   perfectly good result — but it has to be measured, per-locale, not assumed.
+   perfectly good result — but it has to be measured, per-locale rather than assumed.
 3. Only then: the isotonic ambiguity check (4b) and option C (4c).
 
 ## The lesson, which is the same one twice in two days

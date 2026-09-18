@@ -101,11 +101,12 @@ const BASE_DATA = {
 }
 
 /**
- * Ink's raw write ends with a trailing "\n" (an empty final split element, not an extra row). The string being split is
- * one already-rendered terminal frame — small, bounded, and never re-split or grown — so a spliterator adds nothing.
+ * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row). The string being
+ * split is one already-rendered terminal frame — small, bounded, and never re-split or grown — so a spliterator adds
+ * nothing.
  */
 function frameLines(text: string): string[] {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame, not a stream
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame rather than a stream
 	return text.endsWith("\n") ? text.slice(0, -1).split("\n") : text.split("\n")
 }
 
@@ -135,7 +136,7 @@ describe("DebugFrame", () => {
 		const segments = ribbonSegments(TREE)
 
 		// #493 round trip: concatenating every segment's value reproduces the raw input exactly — the ", " between
-		// the street and the locality must survive as an `unknown` segment, not vanish.
+		// the street and the locality must survive as an `unknown` segment rather than vanish.
 		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
 		expect(segments.some((segment) => segment.tag == null && segment.value.includes(","))).toBe(true)
 	})

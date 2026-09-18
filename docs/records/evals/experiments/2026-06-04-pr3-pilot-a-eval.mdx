@@ -72,7 +72,7 @@ US resolver eval, n=2000, `--default-country US`:
 | Pilot A    |      **96.1%** |        99.8% |   100.0% |
 | v0 (rules) |          95.8% |        99.5% |    99.7% |
 
-The pilot is within 1.6pp of v0.7.2 on US locality **and still beats the rules parser** — at 20k from-scratch steps against v0.7.2's 100k. The US street parse-F1 regression (−18pp) doesn't reach the resolver because US locality is position-resilient. So the conditioning architecture didn't poison the dominant locale; the damage is confined to German order. That localizes the problem directly: this is the boundary bug, not a training blow-up.
+The pilot is within 1.6pp of v0.7.2 on US locality **and still beats the rules parser** — at 20k from-scratch steps against v0.7.2's 100k. The US street parse-F1 regression (−18pp) doesn't reach the resolver because US locality is position-resilient. So the conditioning architecture didn't poison the dominant locale; the damage is confined to German order. That localizes the problem directly: this is the boundary bug rather than a training blow-up.
 
 ## The corpus is correct — this is not garbage-in
 
@@ -90,7 +90,7 @@ The model was shown the right answer 200K times and still learned to drop it. Th
 
 Two blind spots let training look healthy to the dashboard while German was breaking:
 
-1. **`cross_pollution` measured the wrong failure.** It counts gold city/region-start tokens predicted as _postcode_ (B/I-postcode). The actual collapse is city → **O** (dropped), not city → postcode. So the metric read 0.00% the whole run while locality recall cratered. A live DE-locality-recall (or city→O) regression check would have fired.
+1. **`cross_pollution` measured the wrong failure.** It counts gold city/region-start tokens predicted as _postcode_ (B/I-postcode). The actual collapse is city → **O** (dropped) rather than city → postcode. So the metric read 0.00% the whole run while locality recall cratered. A live DE-locality-recall (or city→O) regression check would have fired.
 2. **Aggregate val F1 hid it.** The headline val locality F1 was 0.829 — but that's US-dominated (US is ~82% of the mix). The German-specific locality was never in the headline. Per-locale val F1, streamed live, is the fix.
 
 ## Shipped from this run regardless
@@ -103,7 +103,7 @@ Two blind spots let training look healthy to the dashboard while German was brea
 - **Did not launch the 100k follow-up.** That was conditional on the check passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k would not cross the bar. Not justified by this data.
 - **Did not launch another from-scratch German pilot autonomously.** This is the 2nd reproduction of the same end-of-string locality collapse via a _new_ mechanism (v0.8.0 continue-train was the 1st), on correct data. The evidence now points away from recipe/conditioning tweaks. The next direction is the operator's call.
 
-## The slope: flat, not rising — the recipe is not salvageable by more steps
+## The slope: flat rather than rising — the recipe is not salvageable by more steps
 
 Exported step-10000 and re-ran the same DE evals to test whether German locality is climbing across steps. It is not:
 
@@ -114,7 +114,7 @@ Exported step-10000 and re-ran the same DE evals to test whether German locality
 | Berlin locality            |      34.2% |      34.2% |  0.0 |
 | Sachsen locality           |      16.8% |      16.9% | +0.1 |
 
-Doubling the training moved German locality essentially zero — Berlin is pinned at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model settled into by step-10000 and stays in, not an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
+Doubling the training moved German locality essentially zero — Berlin is pinned at 34.2% at _both_ checkpoints. The collapse is a **converged failure mode** the model settled into by step-10000 and stays in rather than an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
 
 ## Open questions for the operator
 

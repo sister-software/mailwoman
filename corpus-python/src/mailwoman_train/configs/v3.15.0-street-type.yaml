@@ -15,7 +15,7 @@
 # THE READ = an ON/OFF contrast on the same retrained model (fully controls for the feed + the retrain):
 #   grade the fragment board (ban-fragments-fr) feeding street_type_features, then again feeding zeros.
 #   - street↔locality discrimination improves with the feature on ⇒ the P-C labeling gap is literal
-#     evidence absence. Option A is the axis (input-side evidence, not head capacity). Signal for the
+#     evidence absence. Option A is the axis (input-side evidence rather than head capacity). Signal for the
 #     next-major: build the evidence-bundle channel (street-type + locality) + the ablation check.
 #   - No improvement ⇒ street-type input evidence alone is insufficient. the gap is deeper (the model
 #     already infers street-type from context) — re-scope Option A toward the locality (open-vocab) leg.

@@ -9,7 +9,7 @@
  *   License: CC0. Wikidata's data is public-domain dedicated, so nothing rides on a derived recipe output.
  *            Tier A.
  *
- *   ## The pull is CLASS labels, not instance names — and that inversion is the whole design
+ *   ## The pull is CLASS labels rather than instance names — and that inversion is the whole design
  *
  *   The obvious read of "Wikidata for localized designators" is: fetch every airport terminal entity
  *   and read its name in each language. That turned out to be the wrong query. Wikidata
@@ -27,11 +27,11 @@
  *
  *   Instance labels are fetched too ({@link buildTerminalInstanceQuery}), for a different job: they
  *   are ATTESTED USAGE — evidence of how a designator combines with a modifier or an identifier in
- *   running text. 775 rows is small, and it is a validation set, not a vocabulary.
+ *   running text. 775 rows is small, and it is a validation set rather than a vocabulary.
  *
  *   ## What a caller must not do with the output
  *
- *   A class label is a CONCEPT NAME, not a designator as written in an address. Q849706's Spanish
+ *   A class label is a CONCEPT NAME rather than a designator as written in an address. Q849706's Spanish
  *   label is `terminal aeroportuaria` and its French is `terminal d'aéroport`; nobody writes either on
  *   an envelope, they write `Terminal`. Q247739's Spanish is `puerta de embarque` where the addressed
  *   form is `Puerta`. So this fetch produces CANDIDATE SURFACES that need a head-noun/curation pass
@@ -121,11 +121,11 @@ const WDQS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
  * against the entity's English description (recorded below) on 2026-08-04 — a QID picked by search alone is how you end
  * up pulling the labels of a Bronx neighbourhood called Concourse.
  *
- * `wing` is absent and that is a finding, not an oversight: Wikidata has no clean concept for "wing of a building".
- * `wbsearchentities` for "wing" returns a surname, two English villages, a rugby position and a drone company. Since
- * `wing` is the single most valuable designator in the arc — `West Wing` is the one modifier case that already parses,
- * and `East Wing` is the one that does not — its localized surfaces have to come from somewhere else. See the wave-1
- * report.
+ * `wing` is absent and that is a finding rather than an oversight: Wikidata has no clean concept for "wing of a
+ * building". `wbsearchentities` for "wing" returns a surname, two English villages, a rugby position and a drone
+ * company. Since `wing` is the single most valuable designator in the arc — `West Wing` is the one modifier case that
+ * already parses, and `East Wing` is the one that does not — its localized surfaces have to come from somewhere else.
+ * See the wave-1 report.
  */
 export interface SubVenueConcept {
 	designatorID: string

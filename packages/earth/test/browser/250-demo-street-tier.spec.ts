@@ -75,6 +75,6 @@ test.describe("Demo — street tier (#377)", () => {
 		await demo.readResult()
 
 		expect(rangeReads).toBeGreaterThan(0)
-		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // a few MB of ranged reads, not the whole 114 MB
+		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // a few MB of ranged reads rather than the whole 114 MB
 	})
 })

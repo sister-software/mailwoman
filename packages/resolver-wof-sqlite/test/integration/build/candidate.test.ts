@@ -498,7 +498,7 @@ describe("buildCandidateTable", () => {
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
 		expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
-		// `is_primary = 0` — the rank/demotion contest must treat it as an alias, not a canonical
+		// `is_primary = 0` — the rank/demotion contest must treat it as an alias rather than a canonical
 		// postcode name.
 		expect(brooklyn!.is_primary).toBe(0)
 
@@ -619,7 +619,7 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
-			// refuses it, and the refusal is recorded as ABSENCE, not as a zero a consumer could rank on.
+			// refuses it, and the refusal is recorded as ABSENCE rather than as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.
 			expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])

@@ -141,5 +141,5 @@ Any other country value is rejected with a clear error.
 `fixtures/tiger/fixture.sql` — 7 hand-crafted street segments + 4
 places across Oregon, Vermont, Wyoming (held out for val/test under
 the default split policy), and California. All public-knowledge place
-names; LINEARID + GEOID values are illustrative, not real TIGER
+names; LINEARID + GEOID values are illustrative rather than real TIGER
 records.

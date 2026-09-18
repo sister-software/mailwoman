@@ -133,7 +133,7 @@ export async function buildOutlierLatin(
 				`SELECT number, street, postcode, postal_city, address_levels FROM read_parquet('${f}') LIMIT ${PER}`
 			)
 		} catch (error) {
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message rather than a file.
 			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []

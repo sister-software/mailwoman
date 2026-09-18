@@ -11,7 +11,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *     - needsK   : gold is in the gazetteer and the model emitted no locality -> only a K-best decode
  *                  that surfaces the gold token could recover it (harder).
  *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve -> a resolver
- *                  ranking/country-filter issue, not a rescore opportunity.
+ *                  ranking/country-filter issue rather than a rescore opportunity.
  *     - covGap   : gold not in the gazetteer -> rescoring can't help. it's a coverage gap.
  *   recoverable = swap + needsK = #370's CEILING. Same resolver for baseline + gold-check (consistent).
  *

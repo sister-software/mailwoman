@@ -82,8 +82,8 @@ export function isAllCapsInput(text: string): boolean {
  * Title-case each Latin alphabetic run ≥3 letters (`PALESTINE` → `Palestine`, `HONORÉ` → `Honoré`), PRESERVING runs of
  * ≤2 letters. The preserve is the #690→#252 fix (the Gauntlet's casing-invariance catch): an all-caps input title-cased
  * BLINDLY turns a 2-letter region code into a non-region form the model mis-parses — `NY`→`Ny`, `DC`→`Dc` land as a
- * _locality_, not a region, so `350 5TH AVE, NEW YORK, NY` lost its state. Every ≤2-letter all-caps token in a US
- * address is an abbreviation the model already reads correctly all-caps (state codes NY/DC, directionals N/NW/SE,
+ * _locality_ rather than a region, so `350 5TH AVE, NEW YORK, NY` lost its state. Every ≤2-letter all-caps token in a
+ * US address is an abbreviation the model already reads correctly all-caps (state codes NY/DC, directionals N/NW/SE,
  * suffixes ST/RD), so keeping them shouting restores the model's correct input — `1600 PENNSYLVANIA AVE NW, WASHINGTON
  * DC` now title-cases to exactly the mixed-case form that parses `region:DC`.
  *

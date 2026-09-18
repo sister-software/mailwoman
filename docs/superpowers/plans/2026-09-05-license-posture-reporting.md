@@ -19,7 +19,7 @@
 - `node:*` imports are refused outside `@mailwoman/core` by `oxlint.config.ts`. File reads go through `@mailwoman/core/fs/readers`; process spawns through `@mailwoman/core/process`.
 - Relative imports carry `.ts`; sibling modules inside a package go through the `#` imports map (`#license/key`), never `../`.
 - No `enum`; `const X = {…} as const`.
-- Comments state invariants, not history. No dates, PR numbers, or "added for" in a comment.
+- Comments state invariants rather than history. No dates, PR numbers, or "added for" in a comment.
 - The launcher `packages/mailwoman/lib/cli.ts` keeps one static import. Everything new there arrives by dynamic import after dispatch.
 - The `mailwoman` package may depend on `@mailwoman/api`, `@mailwoman/api-kit`, and the drop-ins. none of those may depend on `mailwoman`. The stamp crosses that boundary as an option value, never as an import.
 - Run `yarn compile` before any test that spawns the compiled CLI (`out/cli.js`). The pre-commit hook runs the compiled CLI too.
@@ -56,7 +56,7 @@
 Three decisions recorded here that refine the spec:
 
 1. `mailwoman parse --format json` gets no body stamp. Its default projection (`decodeAsJSON`) is a flat `tag → value` map that consumers iterate as tags, so a foreign key would read as a tag. The stderr notice covers the command. The spec's placement table listed parse; this plan overrides that row.
-2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`), not by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
+2. The server-start notice is printed by each server's own `onListen` callback (the four `cli.ts` entry points and `mailwoman serve`) rather than by `serveNode`. `serveNode` stays a listener wrapper with no knowledge of the stamp, and the code that prints is the same `printLicenseNotice` the launcher uses.
 3. The stamp is offline. The spec says a `retired` key reads as the open-source branch; a retired reading needs the well-known register, which the stamp never consults. A retired key whose signature still verifies stamps `LicenseRef-Commercial` until the release that removes its public key; the doctor's `--online` check is where retirement is reported. This is the asymmetry `packages/core/lib/license/trusted-keys.ts` already documents.
 
 ---
@@ -242,7 +242,7 @@ Expected: FAIL — `buildEngineStamp` is not exported from `@mailwoman/core/lice
  *
  *   The stamp carries no licensee and no key id. A deployment serving the public must not carry its operator's
  *   commercial relationship in every response; the doctor prints those two locally. It is offline: the well-known
- *   register is the doctor's freshness check, not a per-process network call.
+ *   register is the doctor's freshness check rather than a per-process network call.
  */
 
 import type { LicenseKeyVerification } from "#license/key"
@@ -1006,7 +1006,7 @@ test("engine option: every /v1 body carries `engine` and every response carries 
 	expect((await health.json()) as object).not.toHaveProperty("engine")
 })
 
-test("engine option: /v1/batch stamps the envelope once, not the rows", async () => {
+test("engine option: /v1/batch stamps the envelope once rather than the rows", async () => {
 	const app = createMailwomanAPI(fullEngine, { engine: stamp })
 	const res = await app.request("/v1/batch", {
 		method: "POST",

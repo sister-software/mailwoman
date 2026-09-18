@@ -22,7 +22,7 @@ fetch the current one. This design builds the part Stripe cannot and leans on St
 
 ## Decisions taken
 
-**A yearly or monthly subscription, not a one-time payment.** Stripe's Customer Portal does renewal payment methods
+**A yearly or monthly subscription rather than a one-time payment.** Stripe's Customer Portal does renewal payment methods
 and cancellation only for a subscription, and both published prices are recurring.
 
 **The token follows the billing period.** Every `invoice.paid` mints a new token whose `expires` is the period end
@@ -30,7 +30,7 @@ plus a 14-day grace window. An offline credential is what a customer keeps after
 what was paid for by more than the grace. A monthly customer therefore holds a new token each month, delivered by email
 and fetchable with `mailwoman license refresh`.
 
-**Stripe Payment Links, not a session-creation endpoint.** A Payment Link supports the licensee-name custom field,
+**Stripe Payment Links rather than a session-creation endpoint.** A Payment Link supports the licensee-name custom field,
 required terms acceptance, tax ID collection, a success URL with `{CHECKOUT_SESSION_ID}`, and `client_reference_id`.
 That removes the endpoint, its rate limit, its CORS rule, and the pre-allocated order; Stripe's own IDs carry
 idempotency instead.
@@ -113,7 +113,7 @@ every current browser, so there is one implementation and no condition is needed
 Signing and verifying become `async`, because WebCrypto is. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
 and `buildEngineStamp`'s input, `resolveEngineStamp`, `runtimeLicenseCheck`'s observation, the `license
 keygen|issue|verify` command, and the tests. `resolveEngineStamp` already answers a promise and the doctor's runner is
-already async, so the change is in signatures, not in control flow.
+already async, so the change is in signatures rather than in control flow.
 
 **Export conditions.** The worker bundles with Wrangler's esbuild, which resolves `exports` under the `workerd`,
 `worker`, and `browser` conditions before `default`. Every core subpath the worker imports must resolve to a module
@@ -192,7 +192,7 @@ register's `active` entries. The worker's own bundle is what the bundle test abo
 
 ### Plan catalog
 
-Code, not Stripe metadata and not client input:
+Code rather than Stripe metadata and not client input:
 
 ```ts
 interface CommercialPlan {

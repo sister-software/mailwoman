@@ -310,7 +310,7 @@ function aggregateArm(
 	for (const shapeClass of PREMISE_LINKAGE_SHAPE_CLASSES) {
 		const classRows = rows.filter((row) => row.inputShapeClass === shapeClass)
 
-		// An absent class is absent, not zero: a class nobody supplied rows for has no rate to report.
+		// An absent class is absent rather than zero: a class nobody supplied rows for has no rate to report.
 		if (!classRows.length) continue
 
 		perClass[shapeClass] = ratesFor(classRows, policy)

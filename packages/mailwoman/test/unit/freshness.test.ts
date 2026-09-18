@@ -6,7 +6,7 @@
  *   The freshness reader, against fixtures written by the real manifest writer.
  *
  *   The property under test throughout is that an artifact which cannot state its provenance says so. Every
- *   failure this reader can meet — not on disk, no manifest, not a database, an undatable stamp — has to
+ *   failure this reader can meet — not on disk, no manifest rather than a database, an undatable stamp — has to
  *   arrive as its own entry, because on the wire a dropped entry and a guessed epoch are both
  *   indistinguishable from a measured answer, and whether a measured answer exists is the question.
  */
@@ -92,7 +92,7 @@ describe("readFreshness — a stamped artifact", () => {
 			{ name: "reverse-admin", path: older },
 		])
 
-		// Verbatim, not re-serialized: the date the artifact states is the date the wire carries.
+		// Verbatim rather than re-serialized: the date the artifact states is the date the wire carries.
 		expect(report.dataUpdated).toBe("2026-08-17T19:21:17.000Z")
 		expect(report.artifacts).toHaveLength(2)
 	})
@@ -130,7 +130,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
-		// A fault to chase, not a rebuild to schedule. Collapsing the two would file a corrupt artifact under
+		// A fault to chase rather than a rebuild to schedule. Collapsing the two would file a corrupt artifact under
 		// the same heading as one that is merely old.
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
 		expect(entry?.reason).toBeDefined()

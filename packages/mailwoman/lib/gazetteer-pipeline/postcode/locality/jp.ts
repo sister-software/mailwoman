@@ -21,7 +21,7 @@
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
  *   Build-from-source: the authoritative names come from the national postal file (JP = KEN_ALL,
  *   Japan Post), points from GeoNames (already an in-project source for DE/ES/IT/NL); both are
- *   source material, not prebuilt dumps.
+ *   source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
@@ -99,7 +99,7 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
-	// `cp932` through iconv, not `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's WHATWG `shift_jis` reads
+	// `cp932` through iconv rather than `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's WHATWG `shift_jis` reads
 	// 801 of CP932's 20,296 two-byte sequences differently — silently, since most yield a different character rather than
 	// a replacement. Measured on the 2026 edition: the file contains zero of those 801, in any column, so this changes no
 	// value today. It is here because the file is reissued monthly and the next edition is not measured.

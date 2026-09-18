@@ -17,7 +17,7 @@
  *   eval measures designator recognition on held-out addresses.
  *
  *   NOTE: this is a `generate`-mode recipe but it still reads real tuples off disk (`unzip` of the
- *   cached OA zips) — `--count` bounds the output, not the input. The passed `random` (the
+ *   cached OA zips) — `--count` bounds the output rather than the input. The passed `random` (the
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
 
@@ -305,7 +305,7 @@ export const unitRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
-			// The RENDERED component, not the designator form handed in: `full-comma-bare` writes the identifier alone,
+			// The RENDERED component rather than the designator form handed in: `full-comma-bare` writes the identifier alone,
 			// so checking the pre-render string would refuse every row of that layout.
 			const rendered = components.unit
 

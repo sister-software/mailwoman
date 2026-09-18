@@ -161,7 +161,7 @@ export class AdminLocator {
 
 	/**
 	 * The place containing this point, or `null` when no loaded polygon does. Ties go to the first shape loaded —
-	 * overlapping admin polygons of one placetype are a source defect, not something to arbitrate here.
+	 * overlapping admin polygons of one placetype are a source defect rather than something to arbitrate here.
 	 */
 	locate(lon: number, lat: number): LocatedAdmin | null {
 		const candidates = this.#grid.get(`${Math.floor(lon / CELL_DEGREES)}:${Math.floor(lat / CELL_DEGREES)}`)

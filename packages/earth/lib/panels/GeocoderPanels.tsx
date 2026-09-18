@@ -72,7 +72,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	const loading = runtime.loading
 	const loadStatus = runtime.ready || !loading ? null : describeLoad(loading)
 
-	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
+	/* oxlint-disable react/no-unstable-nested-components -- render props rather than components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
 			// The sheet's own title and its capsule button are the disclosure. a second one inside would repeat them.
@@ -85,7 +85,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			// The two display toggles read on the MODEL, not on an address, so they live behind the Developer capsule
+			// The two display toggles read on the MODEL rather than on an address, so they live behind the Developer capsule
 			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
 			// and on a phone they pushed the answer below the fold.
 			developerExtras: (

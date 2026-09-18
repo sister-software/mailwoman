@@ -21,7 +21,7 @@ browser table factory, but nothing consumed them — every query still only ever
    QID's total rows — notdemotes the minority spellings out of the alias list the way the
    pre-existing noise floor does. Motivating case: `Q4835981` aggregated ~20 unrelated US
    chains (CVS 23.8%, Walgreens 11.8%, 7-Eleven 6.2%, …) under one Wikidata QID — a systematic
-   mistagging upstream in Overture's data, not a chain with noisy alt-spellings. **Regenerated
+   mistagging upstream in Overture's data rather than a chain with noisy alt-spellings. **Regenerated
    `brands.json` against the same `poi-full.db`: 315 QIDs clear `--min-rows` alone; the
    dominance floor drops 111 of those (systematic mistagging) to a final 204-brand table, with
    `Q4835981` confirmed absent.** A second run against the same db produced a byte-identical
@@ -40,7 +40,7 @@ browser table factory, but nothing consumed them — every query still only ever
    phrase that matches both a category and a brand, **category wins** — the early return never
    even consults the brand table. No live collision exists in the shipped tables (checked: zero
    overlap between `taxonomy.json`'s synonym phrases/category ids and `brands.json`'s
-   names/aliases), so this precedence is exercised structurally in tests, not against real data.
+   names/aliases), so this precedence is exercised structurally in tests rather than against real data.
    `mailwoman` now depends on `@mailwoman/variant-aliases` (new workspace dependency).
 
 The executor (`poi-executor.ts`) and the reader's brand k-ring search
@@ -108,7 +108,7 @@ This is an actual execution-layer finding, the same class as v1's `supermarket`/
 category misses: **brand rows are sparser per unit area than category rows** (one Applebee's
 per few km² of a metro vs a "restaurant"/"cafe" hit almost anywhere), so a k-ring radius tuned
 for category density under-reaches for a specific brand even in a market where the brand has
-real, findable coverage. Left failing, not tuned away — worth a follow-up look at whether brand
+real, findable coverage. Left failing rather than tuned away — worth a follow-up look at whether brand
 queries should get a wider `maxRings` default (or the board's own grading tolerance should split
 brand vs category, since 25 km papers over what a 4 km search radius can't reach).
 

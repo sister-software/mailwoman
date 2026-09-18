@@ -123,7 +123,7 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
  * Move the files and rewrite the specifiers `plan` names.
  *
  * A plan carrying an unresolved specifier is refused outright: it describes a tree that would not resolve, and applying
- * the part of it that does resolve leaves the remainder harder to find, not easier.
+ * the part of it that does resolve leaves the remainder harder to find rather than easier.
  */
 export async function applyModuleMoves(
 	context: RepoContext,

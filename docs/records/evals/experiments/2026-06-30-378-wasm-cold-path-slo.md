@@ -10,7 +10,7 @@ tells us which features are even shippable to a mid-range phone. This sets a pro
 the cold path from measured artifact sizes + a node-side compute floor. **What's measured vs estimated is
 marked** — the in-browser P95 still wants a real device/headless trace (see _Open_).
 
-## Two budgets, not one
+## Two budgets rather than one
 
 The browser geocoder has two distinct latency surfaces, and conflating them hides the real costs:
 
@@ -45,7 +45,7 @@ suspected per-keystroke bottleneck (DeepSeek S45).
 
 ## The bottleneck the numbers already name
 
-**Cold load is network-bound on the 29 MB model**, not compute. The session-init (126 ms node → ~0.5 s WASM)
+**Cold load is network-bound on the 29 MB model** rather than compute. The session-init (126 ms node → ~0.5 s WASM)
 and the ~12 candidate-table byte-range fetches are small beside a 29 MB sequential download. So the cold-load
 SLO is won or lost on **model transfer size**, which points the changes at: a smaller model (distillation /
 structured pruning past int8), HTTP streaming + compile-while-download, and CDN edge-caching — not at the
@@ -54,7 +54,7 @@ SQLite path.
 **Per-keystroke is the opposite** — transfer is done, so it's WASM inference (estimated in-budget) + the
 candidate SQLite probe (unmeasured, suspected bottleneck). This is exactly where the **#372 flatbush
 pre-filter** would help — pruning candidates by bbox before the name search. Per the diagnostic-before-fix
-discipline, #372 should be blocked on the per-keystroke trace below, not built ahead of it.
+discipline, #372 should be blocked on the per-keystroke trace below rather than built ahead of it.
 
 ## Open — the empirical trace
 

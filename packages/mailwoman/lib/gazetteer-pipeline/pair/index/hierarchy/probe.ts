@@ -21,7 +21,7 @@
  *      nothing (the calibration task owns any real value).
  *   2. The filename (`pair-index-locality-region-<cc>.bin`) does not match the loader's auto-wire
  *      pattern (`pair-index-<cc>.bin` as a weights-package sibling).
- *   3. The output lives under the data root, not in any `neural-weights-*` workspace.
+ *   3. The output lives under the data root rather than in any `neural-weights-*` workspace.
  *
  *   Format: PIX1 verbatim (`serializePairIndex` / `PairIndexResolver` — zero changes to `neural/`).
  *   The header rides the absence-tolerant JSON extension precedent set by `transitionBeta`

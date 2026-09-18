@@ -123,7 +123,7 @@ export async function probeFrontier(
 	options: ProbeFrontierOptions = {},
 	report?: (line: string) => void
 ): Promise<ProbeFrontierResult> {
-	// Deliberately the shipped bundle, not defaultModelDir(): the probe grades what the runtime loads.
+	// Deliberately the shipped bundle rather than defaultModelDir(): the probe grades what the runtime loads.
 	const modelDir = (options.model ?? shippedModelDir()).toString()
 	const maxN = options.n ?? 2000
 

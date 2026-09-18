@@ -48,7 +48,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				const without = await plain.geocode(ADDRESS)
 
 				// The answer is the answer, traced or not. The one field a trace adds is the derivation projected from the
-				// records the sink received. it is absent, not empty, on the untraced path.
+				// records the sink received. it is absent rather than empty, on the untraced path.
 				const { derivation, ...tracedResult } = withTrace.result
 
 				expect(derivation).toBeDefined()
@@ -56,7 +56,7 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(tracedResult).toEqual(without.result)
 				expect(withTrace.tree).toEqual(without.tree)
 
-				// An untraced session records no trace — absent, not an empty one.
+				// An untraced session records no trace — absent rather than an empty one.
 				expect(without.trace).toBeUndefined()
 
 				const trace = withTrace.trace

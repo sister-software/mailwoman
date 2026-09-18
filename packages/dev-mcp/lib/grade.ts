@@ -131,7 +131,7 @@ export interface SignificanceReading {
  * magnitude tighter than any decision taken on it here.
  *
  * Exported for `geo-grade.ts`'s equivalence test rather than copied into it: two tests that must agree about what a
- * p-value means should be reading the same function, not two transcriptions of the same polynomial.
+ * p-value means should be reading the same function rather than two transcriptions of the same polynomial.
  */
 export function normalCDF(z: number): number {
 	const sign = z < 0 ? -1 : 1

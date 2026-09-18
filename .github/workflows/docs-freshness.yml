@@ -1,7 +1,7 @@
 # Quarterly docs freshness sweep (docs-architecture cleanup, Phase 4).
 #
 # Runs docs/scripts/list-stale-docs.ts — pages whose `review-by:` frontmatter date has
-# passed — and files the result as ONE issue titled "Docs freshness sweep", updating the
+# passed — and files the result as one issue titled "Docs freshness sweep", updating the
 # existing open issue in place rather than filing duplicates. Pages without `review-by:`
 # are skipped by design: the field is the opt-in that marks a page as maintained, so
 # archival evidence (eval reports, phase plans, retrospectives) is never churned.

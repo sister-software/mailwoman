@@ -27,7 +27,7 @@ const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJ
  * prints these on every place card, and in sparse-addressing countries they are the address (the Nicaraguan board
  * rows). A full code decodes directly. a short code recovers against the coordinate the rest of the address resolved to
  * (the locality/admin answer — which is why this runs last, after every resolve tier). The parse typically mislabels
- * the code (`street: "VFQ6+92P"`), which does not matter here: the override replaces the coordinate claim, tier
+ * the code (`street: "VFQ6+92P"`), which is irrelevant here: the override replaces the coordinate claim, tier
  * `plus_code`, uncertainty priced at the decoded cell's half-diagonal. A short code with no resolved reference stays an
  * abstention — a cell modulo 20° is not an answer.
  */

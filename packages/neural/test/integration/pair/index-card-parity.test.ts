@@ -33,7 +33,7 @@ import { describe, expect, test } from "vitest"
  * The card key is spelled out per package rather than discovered, because the naming is genuinely inconsistent across
  * the four (`us_artifacts` / `fr_artifacts` / `gb_artifacts` / `nz_artifacts`, each with its own `pair_index_<cc>_bin`
  * child). A guard that GUESSED the key would silently pass on a card whose block had been renamed or dropped — the
- * exact failure it exists to catch — so the mapping is explicit and a missing block is a failure, not a skip.
+ * exact failure it exists to catch — so the mapping is explicit and a missing block is a failure rather than a skip.
  */
 const PACKAGES = [
 	{ pkg: "neural-weights-en-us", country: "us", cardKeys: ["us_artifacts", "pair_index_us_bin"] },
@@ -113,7 +113,7 @@ describe("pair-index ↔ model-card parity", () => {
 			)
 
 			// The calibrated magnitudes ride the header. a card claiming a delta the binary does not carry would
-			// misdescribe the shipped behaviour, not just the shipped size.
+			// misdescribe the shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(

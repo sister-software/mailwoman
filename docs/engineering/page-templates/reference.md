@@ -62,7 +62,7 @@ curl -sS localhost:3000/v1/parse -H 'content-type: application/json' \
 - Every example was generated or executed. Nothing on this page was typed from memory.
 - Request and response appear together, both complete.
 - On HTTP surfaces, curl comes first, then language tabs, every tab hitting the identical endpoint.
-- On library surfaces, examples are full files with their output, not fragments.
+- On library surfaces, examples are full files with their output rather than fragments.
 - Placeholders use `<CAPS_PLACEHOLDER>` with an inline replace-me comment.
 - Facts precede rationale, and `source-of-truth:` lists the files a reader can check against.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

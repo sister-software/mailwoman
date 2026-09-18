@@ -2,7 +2,7 @@
 # Proposal: docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md (operator green-lit "run step 0
 # and go", 2026-07-23). Step-0 verdict: Fix B — augment_punct_drop_prob 0.3 -> 0.6 (p/(1+p) = 0.377,
 # matching the base corpus's measured comma-free share. new dep-loc recipe outputs measured at 23.8-25.0%).
-# COMPANION BUG FIX bundled (declared-intent restoration, not a variable): country_weights gains NZ: 1.0
+# COMPANION BUG FIX bundled (declared-intent restoration rather than a variable): country_weights gains NZ: 1.0
 # — the whole v3.11.x lineage silently drew 0 synth-nz rows (allowlist trap, step-0 measured), so its
 # "4-locale" mass was 3. Full record: .superpowers/sdd/v312-step0-report.md.
 #
@@ -12,7 +12,7 @@
 #     at probe cost. Gauntlet metamorphic layer at candidate-selection time = 0 violations.
 #   PRIMARY  : a gauntlet-clean checkpoint exists. GB dep-loc board w/ prior @ delta=5.0 >= 69/69 emit /
 #              >=66 tag-correct (FP on gb-golden no-DL rows = 0. venue-confound floor reported separately).
-#              NZ raw-BIO emission > the feed lineage's ~0 (the NZ source finally flows — read, not bar).
+#              NZ raw-BIO emission > the feed lineage's ~0 (the NZ source finally flows — read rather than bar).
 #   GUARDS   : digit bare-street-hn >= 0.755 (v385 baseline, operator-restated); FR-fragment
 #              bare-locality >= 0.90. golden us/fr within ±0.7pp of v385 (87.6/91.1). 6 presets
 #              byte-identical. error-analysis no tag >2pp down vs v385.
@@ -76,7 +76,7 @@
 # ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
 # auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
-# all (silent no-op, not an error). See train.py L433-456.
+# all (silent no-op rather than an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
 # own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —

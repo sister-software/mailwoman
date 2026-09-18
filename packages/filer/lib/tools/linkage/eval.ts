@@ -56,12 +56,12 @@ const EVAL_AS_OF = "2026-06-01"
 const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
- * What a built artifact actually contains that bears on ownership — counted, not asserted. The withheld artifact is not
- * family-row-free: two `filer_family` rows reach it from the corpus's management-company disclosures, so the one page
- * whose credibility rests on the withholding being real has to measure the artifact rather than describe it.
+ * What a built artifact actually contains that bears on ownership — counted rather than asserted. The withheld artifact
+ * is not family-row-free: two `filer_family` rows reach it from the corpus's management-company disclosures, so the one
+ * page whose credibility rests on the withholding being real has to measure the artifact rather than describe it.
  *
- * **Every count here is scoped to what the PREDICTION scores, not to `holding_company` alone.** The prediction accepts
- * any `filer_family` membership whose relationship asserts OWNERSHIP — `holding_company` today,
+ * **Every count here is scoped to what the PREDICTION scores rather than to `holding_company` alone.** The prediction
+ * accepts any `filer_family` membership whose relationship asserts OWNERSHIP — `holding_company` today,
  * `parent_company`/`subsidiary` the moment a writer emits one. Counting only `holding_company` leaves the census silent
  * about exactly the rows a future evidence channel will add: three injected `subsidiary` family rows move recall from
  * 0.000 to 0.500 while a `holding_company`-only census still reads `0`, under a heading promising the numbers were
@@ -93,7 +93,7 @@ export interface LeakageCensus {
 	 * `filer_family` rows whose relationship is not a {@linkcode FilerRelationship} value at all — impossible from any
 	 * shipped writer, so a non-zero count means a row this build did not write. Counted separately rather than folded
 	 * into either bucket, and the check refuses on it: an assertion the eval cannot classify is exactly what a leakage
-	 * check should stop on, not something to file under "not ownership" and pass.
+	 * check should stop on rather than something to file under "not ownership" and pass.
 	 */
 	unrecognizedFamilyRows: number
 	/**
@@ -129,7 +129,7 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.HoldingCompany]: true,
 	[FilerRelationship.ParentCompany]: true,
 	[FilerRelationship.Subsidiary]: true,
-	// Identity continuity over time, not control. A supersession chain says one registration became
+	// Identity continuity over time rather than control. A supersession chain says one registration became
 	// another. scoring it as ownership would let a withheld-parent run credit itself for recovering a
 	// family fact it never saw. Operator ruling, 2026-08-07 — see FilerRelationship.SupersededBy.
 	[FilerRelationship.SupersededBy]: false,
@@ -143,12 +143,13 @@ const OWNERSHIP_BY_RELATIONSHIP = {
  * `filer_family`/`filer_edge` row this build did not write, and silently scoring an unknown assertion as ownership is
  * the failure this exists to stop.
  *
- * **The {@linkcode isRecognizedRelationship} guard is required, not belt-and-braces.** `OWNERSHIP_BY_RELATIONSHIP` is a
- * plain object literal, so a bare index lookup inherits `Object.prototype`: `relationship === "constructor"` (or
- * `"toString"`, or `"__proto__"`) resolves to a FUNCTION, which is truthy and never nullish, so `??` does not fire and
- * the lookup answers `true` for a string it does not classify — the precise failure the paragraph above says it exists
- * to stop. Measured through the real builder: three injected `constructor` family rows score as ownership and land in
- * the unrecognized bucket, so the three census splits sum to 8 against a published total of 5.
+ * **The {@linkcode isRecognizedRelationship} guard is required rather than belt-and-braces.**
+ * `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare index lookup inherits `Object.prototype`:
+ * `relationship === "constructor"` (or `"toString"`, or `"__proto__"`) resolves to a FUNCTION, which is truthy and
+ * never nullish, so `??` does not fire and the lookup answers `true` for a string it does not classify — the precise
+ * failure the paragraph above says it exists to stop. Measured through the real builder: three injected `constructor`
+ * family rows score as ownership and land in the unrecognized bucket, so the three census splits sum to 8 against a
+ * published total of 5.
  */
 function assertsOwnership(relationship: string): boolean {
 	return isRecognizedRelationship(relationship) && OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship]
@@ -372,7 +373,7 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 
 	using db = new DatabaseClient<FilerDatabase>(out)
 
-	// Run the full shipped pipeline, not just the builder — the entity-resolution pass is part of what produces a
+	// Run the full shipped pipeline rather than just the builder — the entity-resolution pass is part of what produces a
 	// real filer.db, and its counters belong in the report even though this eval scores a different table.
 	const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
 

@@ -36,7 +36,7 @@
  *
  *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders within a tier. it never
  *      promotes a partial match over an exact one.
- *   2. **Positive evidence only.** An absent score is unmeasured, not zero (the meaning-of-zero rule), so an
+ *   2. **Positive evidence only.** An absent score is unmeasured rather than zero (the meaning-of-zero rule), so an
  *      unscored candidate is never moved BY the signal and never penalized FOR lacking it — it keeps the
  *      rank population gave it while the scored rows reorder among themselves. On a candidate.db built
  *      before the #28 `importance` column, nothing is scored, so {@link rankByImportance} is
@@ -44,7 +44,7 @@
  *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath. That order
  *      carries decisions only the backend can make — the candidate backend's seat tiebreak
  *      (`resolver-wof-sqlite/primary-preference.ts`) reaches an end-to-end answer solely through this stability
- *      (#1729), so equal-key stability here is required, not cosmetic.
+ *      (#1729), so equal-key stability here is required rather than cosmetic.
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
@@ -73,7 +73,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * the live chain is IL 0.612605 → MA 0.611142 → MO 0.596195 (adjacent gaps 0.0015 and 0.0149, full span 0.0164), so the
  * band must cover at least the 0.0149 adjacent gap for the trio to chain into one cluster.
  *
- * The band never compares across countries, and that scope is forced by decided rows, not preference: Windsor's
+ * The band never compares across countries, and that scope is forced by decided rows rather than preference: Windsor's
  * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside any band that covers Springfield. The two
  * decisions are only co-satisfiable if the band binds same-country pairs alone. That is also what the §2 referential
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially. the blended prior's job is the
@@ -371,7 +371,7 @@ export type CapitalLevelFn = (place: Pick<ResolvedPlace, "name" | "country" | "l
 
 /**
  * The level a candidate must hold to be PROMOTED: national capitals only. Admin-1 seats stay un-promoted, and that
- * scope is forced by decided rows, not caution — a seat margin of even 1 log10 unit flips bare `Springfield` to
+ * scope is forced by decided rows rather than caution — a seat margin of even 1 log10 unit flips bare `Springfield` to
  * Springfield, Illinois against the ratified 2026-08-11 referential decision
  * ({@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}), and sends bare `Hamilton` to the Waikato seat (Hamilton NZ, 2.8x smaller
  * than Hamilton, Ontario), both measured on the shipped `candidate.db`. The reference still records seats. no consumer

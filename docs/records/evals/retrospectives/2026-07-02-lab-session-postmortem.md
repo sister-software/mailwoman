@@ -56,7 +56,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   gave ~1 municipality per bucket (CZ file head: 2 cities in 4k rows), which under-disperses the
   exact metric (wrong-city%) the sets exist to power. Default path proven byte-identical.
 - Graded the shipped int8 as the #885 artifact (with fp32 delta legs) and md5-verified it against
-  the published npm tarball first — treating "the shipped line" as bytes, not a version label.
+  the published npm tarball first — treating "the shipped line" as bytes rather than a version label.
 - Framed the browser-SLO breach, ledger fate, and re-score cadence as operator decisions
   (review addendum Track 3) — evidence supplied, no bar moved.
 
@@ -74,7 +74,7 @@ as briefed; one Modal call (int8 quantize, ~seconds); no training, no promotion.
   release-prep PR (model-card: new `tokenizer_version`, OA CZ/PL attribution) → `mailwoman-release`.
 - #887 is a bounded night-shift chore (wire `overrides.anchor=false` through `oa-resolver-eval`).
 - #296-residual: CZ 14.8%/PL 7.9% wrong-city is decode-boundary/namesake + coverage now — name-key
-  or span changes, not vocab.
+  or span changes rather than vocab.
 
 ## Ledger
 

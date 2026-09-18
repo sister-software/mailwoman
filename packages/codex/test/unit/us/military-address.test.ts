@@ -116,7 +116,7 @@ describe("matchMilitaryCityLine", () => {
 
 	it("rejects invalid region codes", () => {
 		expect(matchMilitaryCityLine("APO AB 09165")).toBeNull() // AB is not a valid region
-		expect(matchMilitaryCityLine("APO CA 09165")).toBeNull() // CA is a state code, not armed forces
+		expect(matchMilitaryCityLine("APO CA 09165")).toBeNull() // CA is a state code rather than armed forces
 	})
 
 	it("rejects non-military strings", () => {

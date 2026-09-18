@@ -18,7 +18,7 @@
  *       and transliteration are not handled here — a documented follow-up.
  *   - Nickname → canonical-root mapping is intentionally not done at parse time: it is lossy and
  *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
- *       agreement level, not a destructive rewrite. We only _extract_ a parenthetical/quoted
+ *       agreement level rather than a destructive rewrite. We only _extract_ a parenthetical/quoted
  *       nickname.
  *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port. this
  *       positional parser covers the documented hard cases (inversion, particles, generational +

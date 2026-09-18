@@ -27,8 +27,8 @@ export function isCIK(value: unknown): value is CIK {
 /**
  * Zero-pads a numeric or string CIK candidate to the canonical 10-digit form and validates it. Returns `null` (never
  * throws) for anything that isn't a non-negative integer fitting in 10 digits — mirrors {@linkcode toFRN}'s (`frn.ts`)
- * "malformed input is common, not exceptional" posture for a value drawn from third-party data (`company_tickers.json`
- * ships CIKs as bare numbers, e.g. `320193`, never pre-padded).
+ * "malformed input is common rather than exceptional" posture for a value drawn from third-party data
+ * (`company_tickers.json` ships CIKs as bare numbers, e.g. `320193`, never pre-padded).
  */
 export function toCIK(value: string | number): CIK | null {
 	const raw = typeof value === "number" ? String(value) : value.trim()
@@ -54,7 +54,7 @@ const COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 
 /**
  * One `company_tickers.json` row, exactly as `parseCompanyTickers` reads it off the wire — every value optional/
- * `unknown`-typed here because this is untrusted third-party JSON, not yet validated.
+ * `unknown`-typed here because this is untrusted third-party JSON rather than yet validated.
  */
 interface RawCompanyTickerEntry {
 	cik_str?: unknown
@@ -73,10 +73,10 @@ export interface CompanyTickerEntry {
 
 /**
  * Validates + types the raw `company_tickers.json` payload (an object keyed by row index, e.g. `{"0": {...}, "1":
- * {...}}` — SEC's own shape, not an array). Throws a descriptive error naming the offending row key on a structural
- * mismatch (decision 8's "malformed input must be loud" discipline, carried from `form499.ts`/`provider-list.ts`) —
- * this is SEC's own canonical reference file, so a row that doesn't fit the documented shape is a real signal something
- * changed upstream, not a case worth silently skipping.
+ * {...}}` — SEC's own shape rather than an array). Throws a descriptive error naming the offending row key on a
+ * structural mismatch (decision 8's "malformed input must be loud" discipline, carried from
+ * `form499.ts`/`provider-list.ts`) — this is SEC's own canonical reference file, so a row that doesn't fit the
+ * documented shape is a real signal something changed upstream rather than a case worth silently skipping.
  */
 export function parseCompanyTickers(raw: unknown): CompanyTickerEntry[] {
 	if (!raw || typeof raw !== "object") {
@@ -125,9 +125,9 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB. read the file
  * once and keep the result rather than reparsing it per query.
  *
- * An entry whose CIK won't parse is skipped without throwing — this is a flat file, not SEC's documented API shape, and
- * a malformed line is the rule rather than the exception. A CIK that rounds to zero (EDGAR pads to 10 digits) is also
- * skipped.
+ * An entry whose CIK won't parse is skipped without throwing — this is a flat file rather than SEC's documented API
+ * shape, and a malformed line is the rule rather than the exception. A CIK that rounds to zero (EDGAR pads to 10
+ * digits) is also skipped.
  *
  * **1,054,085 entries → one `resolveCIKCandidates` call scores all of them.** The function does a single O(n) pass with
  * a cheap `nameSimilarity` call per entry, which is fast enough for a tool that runs once per vintage. A caller running
@@ -202,7 +202,7 @@ export interface ResolveCIKOptions {
 	 * `company_tickers.json` carries 10,000+ rows, and reporting the whole tail below a real match is noise.
 	 *
 	 * Never narrows a genuine tie at the top score below this cap (see the function's own docstring) — `limit` trims the
-	 * long low-scoring tail, not a collision the caller needs to see.
+	 * long low-scoring tail rather than a collision the caller needs to see.
 	 */
 	limit?: number
 }
@@ -219,13 +219,13 @@ function canonicalOf(name: string): string {
  * {@linkcode canonicalizeOrganizationName} before comparison) and return every candidate at or above `minScore`,
  * highest score first — NEVER a single pick. See the module docstring for the false-identity-link rationale.
  *
- * **The tie rule is the actual enforcement mechanism, not the docstring alone.** Sorting by score and reporting `score`
- * per candidate is necessary but not sufficient — a caller that also passes `limit: 1` (the natural thing to do when it
- * wants "the" answer) would otherwise see the ambiguity vanish behind a plain `.slice(0, limit)`. So a genuine tie for
- * the TOP score is reported in full regardless of `limit`: querying `"American Broadband"` against a ticker file naming
- * both `"American Broadband LLC"` and `"American Broadband, Inc."` (disjoint CIKs, identical canonical form) with
- * `limit: 1` still returns both, each at score `1` — the exact 3a lesson this module exists to not repeat. `limit` only
- * ever trims the tail STRICTLY BELOW the top score.
+ * **The tie rule is the actual enforcement mechanism rather than the docstring alone.** Sorting by score and reporting
+ * `score` per candidate is necessary but not sufficient — a caller that also passes `limit: 1` (the natural thing to do
+ * when it wants "the" answer) would otherwise see the ambiguity vanish behind a plain `.slice(0, limit)`. So a genuine
+ * tie for the TOP score is reported in full regardless of `limit`: querying `"American Broadband"` against a ticker
+ * file naming both `"American Broadband LLC"` and `"American Broadband, Inc."` (disjoint CIKs, identical canonical
+ * form) with `limit: 1` still returns both, each at score `1` — the exact 3a lesson this module exists to not repeat.
+ * `limit` only ever trims the tail STRICTLY BELOW the top score.
  *
  * **Candidates are collapsed to one row per CIK before any of that runs, and the tie rule depends on it.**
  * `company_tickers.json` carries one row per TICKER, so a registrant filed under several share classes appears several
@@ -246,7 +246,7 @@ export function resolveCIKCandidates(
 	const limit = options.limit ?? DEFAULT_CANDIDATE_LIMIT
 	const queryCanonical = canonicalOf(companyName)
 
-	// Keyed by CIK, not pushed to a list: this is the share-class collapse the docstring describes, and it has to
+	// Keyed by CIK rather than pushed to a list: this is the share-class collapse the docstring describes, and it has to
 	// happen before the sort so the tie rule below only ever sees distinct registrants.
 	const bestByCIK = new Map<CIK, CIKCandidate>()
 

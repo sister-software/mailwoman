@@ -68,7 +68,7 @@ describe("parsePersonName", () => {
 	})
 
 	it("does not treat a trailing particle-looking token as a particle", () => {
-		// "Di" with nothing after it is a surname, not a particle.
+		// "Di" with nothing after it is a surname rather than a particle.
 		expect(parsePersonName("Robert Di")).toEqual({ given: "Robert", family: "Di" })
 	})
 })

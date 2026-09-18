@@ -58,14 +58,14 @@ except ImportError:
 # (Cloudflare edge-caches the byte ranges sql.js-httpvfs reads).
 CACHE_CONTROL = "public, max-age=604800, immutable"
 # EXCEPTION: releases.json is the MUTABLE version pointer the demo reads to pick
-# defaultVersion. It must NOT be immutable — otherwise a `defaultVersion` flip never
+# defaultVersion. It must not be immutable — otherwise a `defaultVersion` flip never
 # reaches returning visitors (they stay pinned to the old version's assets for up to a
 # week, which on mobile Safari surfaces as a stale/torn cached DB → "database disk image
 # is malformed"). Short max-age + must-revalidate so flips propagate within ~a minute.
 MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
 # Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
 MUTABLE_FILES = {"releases.json"}
-# Top-level dirs whose objects MUST sit under a generation segment
+# Top-level dirs whose objects must sit under a generation segment
 # (`<dir>/<generation>/<file>`), never directly at the dir root.
 #
 # `pair-index` earned this the hard way: the binaries were uploaded flat at
@@ -116,7 +116,7 @@ def main() -> None:
     if not files:
         sys.exit(f"no files under {src}")
 
-    # Layout guard BEFORE the credential read, so a mis-staged tree fails the same
+    # Layout guard before the credential read, so a mis-staged tree fails the same
     # way with or without the .env sourced (and under --dry-run).
     unversioned = [
         r

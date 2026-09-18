@@ -33,7 +33,7 @@
  *   carries the exceptions: a pin is a named, auditable decision about one registrant, where a widened
  *   range is an unnamed decision about thousands.
  *
- *   **A rejection is an abstention, not a denial.** `corroborated: false` means no second source agreed,
+ *   **A rejection is an abstention rather than a denial.** `corroborated: false` means no second source agreed,
  *   which is not evidence the match is wrong — absence is not impossibility. Callers count these. they do
  *   not record them as negative facts.
  */

@@ -1,7 +1,7 @@
 """Token-level scores read during a run, and the CSV row they are logged as.
 
 Both metrics here take the same position on absent evidence: a tag the validation sample does not
-contain has an UNDEFINED score, not a zero. `token_f1` excludes it from the macro average and
+contain has an UNDEFINED score rather than a zero. `token_f1` excludes it from the macro average and
 `eval_csv_row` writes an empty cell, so a chart draws a gap. A flat zero would read as a model that
 cannot label the tag rather than a sample that never asked it to.
 """

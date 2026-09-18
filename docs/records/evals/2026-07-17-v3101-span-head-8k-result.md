@@ -51,7 +51,7 @@ times). More steps didn't help; the augment does not teach all-caps robustness a
 #690 title-case shim stays (worth +12.4pp raw-case today). A separate higher-rate probe is the only
 open path, and it's the operator's call — this augment, as configured, is a measured negative.
 
-## Status — substrate, not a ship
+## Status — substrate rather than a ship
 
 This model **ships nowhere on its own.** The span head is dormant until phase-4c wires the k-best
 decode + the name-evidence rerank (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`).
@@ -94,4 +94,4 @@ phase-4c will decode — corrects the headline:
   its keep (+6.0pp, 32:1), but the value has moved: bare-street is nearly solved by the model itself
   (0.905), and **date-name is now the primary beneficiary** (+16.7pp — the class the model still finds
   hardest). The proxy's "+18.5pp bare-street" was a weak-model artifact; verify on the substrate you'll
-  ship. Phase-4c is still worth building, but its pitch is date-name + the long tail, not bare-street.
+  ship. Phase-4c is still worth building, but its pitch is date-name + the long tail rather than bare-street.

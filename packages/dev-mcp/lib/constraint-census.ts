@@ -16,7 +16,7 @@
  *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
  *
  *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.checks` records mechanism
- *   events in execution order, and `picked: null` is — in that type's own words — "a claim, not an omission". The
+ *   events in execution order, and `picked: null` is — in that type's own words — "a claim rather than an omission". The
  *   first run over the board found `parent_fallback_retry` firing 194 times and converting zero, because it relaxes
  *   the PARENT while the BAND is what blocks (#1756).
  *

@@ -10,7 +10,7 @@
  *   `@mailwoman/codex`'s `foldName` (`packages/codex/lib/normalize.ts`) is a near twin and is also
  *   correct. it differs in collapsing every non-alphanumeric RUN, whitespace included. The two are
  *   equivalent on the inputs either sees today. They are kept apart because this one answers to a
- *   comparison contract the resolver owns, not because the codex copy is wrong.
+ *   comparison contract the resolver owns rather than because the codex copy is wrong.
  */
 
 /**
@@ -22,8 +22,8 @@
  * halves of one comparison on different keys. Order is required: after the class filter the strip is a no-op.
  *
  * Not fixed here, and worth knowing before trusting the fold on a non-Latin-1 name: a letter with no decomposition is
- * dropped rather than folded (`Łódź` → `odz`, `Đà Nẵng` → `a nang`). That needs a transliteration table, not a regex,
- * and it is shared with every other fold in the repo.
+ * dropped rather than folded (`Łódź` → `odz`, `Đà Nẵng` → `a nang`). That needs a transliteration table rather than a
+ * regex, and it is shared with every other fold in the repo.
  */
 export function foldName(s: string): string {
 	return s

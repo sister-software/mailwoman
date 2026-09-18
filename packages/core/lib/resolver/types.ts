@@ -234,9 +234,9 @@ export interface ResolverBackend {
 		/**
 		 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — set by the bare-toponym side races with
 		 * `abbr`/`gloss`. A lone bare token matching only an abbreviation row ("Tó" folded onto Toledo's "TO") or a
-		 * translation-gloss row is a weak re-reading, not a naming. role-NULL alias rows (the exonym tier, the country
-		 * display names) stay fully open, which is what `primaryOnly` could never express. Backends without a role column
-		 * ignore it — an older artifact degrades to today's behavior.
+		 * translation-gloss row is a weak re-reading rather than a naming. role-NULL alias rows (the exonym tier, the
+		 * country display names) stay fully open, which is what `primaryOnly` could never express. Backends without a role
+		 * column ignore it — an older artifact degrades to today's behavior.
 		 */
 		excludeNameRoles?: readonly string[]
 		/**
@@ -622,8 +622,8 @@ export interface ResolveOpts {
 	 * {@linkcode
 	 * WeakResolutionReading} carries what each one reads and what the regression board measured for it.
 	 *
-	 * **Default UNSET**, which is the shipped brake. Promoting `score` needs the promotion battery, not the board alone:
-	 * one changed row out of 586 is inside the range a hand-authored panel can produce by construction.
+	 * **Default UNSET**, which is the shipped brake. Promoting `score` needs the promotion battery rather than the board
+	 * alone: one changed row out of 586 is inside the range a hand-authored panel can produce by construction.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -807,7 +807,7 @@ export interface ResolveOpts {
 	 * (name + population) chose a foreign namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
 	 * "Portland" then finds nothing beneath it and falls back to the region centroid) — re-pick the (region, locality)
 	 * pair jointly against the gazetteer's containment graph: the best same-named locality that descends from one of the
-	 * region's same-named candidates. "Portland" descends from Maine, not Messina, so the pair resolves to (Maine,
+	 * region's same-named candidates. "Portland" descends from Maine rather than Messina, so the pair resolves to (Maine,
 	 * Portland-Maine). Generalizes to every country with no country prior and no list. Costs one unscoped locality lookup
 	 * per triggering admin pair. only fires where a locality fell through, so the well-resolved path is byte-identical.
 	 * Needs {@link ResolverBackend.ancestors}; no-op without it. **Default-ON** (#895 settled drift D1 — the geocode path
@@ -928,8 +928,8 @@ export interface ResolveCandidateTrace {
  * records mechanism events in execution order, in the resolver's own vocabulary (`parent_fallback_retry`,
  * `region_scope_miss`, `backend_error`, `postcode_format_probe`, `postcode_prefix_prior`, `bare_race`,
  * `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`, `placetype_fallback`). `picked:
- * null` states the lookup resolved nothing — a claim, not an omission. The candidate table is capped
- * ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record, not a dump.
+ * null` states the lookup resolved nothing — a claim rather than an omission. The candidate table is capped
+ * ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record rather than a dump.
  */
 export interface ResolveNodeTrace {
 	tag: string

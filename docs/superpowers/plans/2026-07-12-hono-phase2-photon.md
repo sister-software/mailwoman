@@ -558,7 +558,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 
 (If `app.openapi`'s handler typing rejects the union of response shapes — jsonld returns an array — use a local cast per the phase-1 note; never change wire behavior to satisfy types. The jsonld 200 body being a `SchemaOrgPlace[]` rather than the documented FeatureCollection matches the legacy yaml's own treatment — verify what the yaml documents for `format=jsonld` during Task 4 and adjudicate there.)
 
-- [ ] **Step 5: Implement `photon/app.ts`** — mirrors phase 1's `libpostal/app.ts` shape exactly: `OpenAPIHono` + `cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 })` when `options.cors !== false` (NOTE: no POST in the methods list — photon is GET-only), `app.onError((_e, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))` (photon's envelope, NOT `{error}`), `registerPhotonRoutes(app, engine)`, `attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })` with the self-referencing `import packageJson from "@mailwoman/photon/package.json" with { type: "json" }`. Doc comment for `PhotonAppOptions.cors` carries the full #1017 rationale from the old `PhotonRouterOptions.cors`.
+- [ ] **Step 5: Implement `photon/app.ts`** — mirrors phase 1's `libpostal/app.ts` shape exactly: `OpenAPIHono` + `cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 })` when `options.cors !== false` (NOTE: no POST in the methods list — photon is GET-only), `app.onError((_e, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))` (photon's envelope rather than `{error}`), `registerPhotonRoutes(app, engine)`, `attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })` with the self-referencing `import packageJson from "@mailwoman/photon/package.json" with { type: "json" }`. Doc comment for `PhotonAppOptions.cors` carries the full #1017 rationale from the old `PhotonRouterOptions.cors`.
 
 - [ ] **Step 6: Gut `photon/index.ts`** — header docstring updated (`createPhotonApp` replaces `createPhotonRouter`; Hono app; engine contract in `engine.ts`, projection in `projection.ts`), then four re-exports: `./app.ts`, `./engine.ts`, `./projection.ts`, `./schema.ts`.
 
@@ -749,7 +749,7 @@ git commit -m "feat(photon): serve via api-kit serveNode; emitted OpenAPI at /op
 
 - [ ] **Step 1: Clean-tree rebuild:** `rm -rf api-kit/out photon/out && yarn compile` — clean.
 - [ ] **Step 2: Suites:** `yarn vitest run --dir ./photon` and `yarn vitest run --dir ./api-kit` (separate invocations — vitest rejects two `--dir` flags); `yarn test:integration`.
-- [ ] **Step 3: Publish-safety receipt:** `node scripts/smoke-clean-install.ts` — photon is already in the smoke closure; this catches any dependency-graph regression (phase-1 lesson: this receipt, not lint, guards installability).
+- [ ] **Step 3: Publish-safety receipt:** `node scripts/smoke-clean-install.ts` — photon is already in the smoke closure; this catches any dependency-graph regression (phase-1 lesson: this receipt rather than lint, guards installability).
 - [ ] **Step 4: Lint:** `yarn lint:oxlint`; `yarn oxfmt --check api-kit photon`.
 - [ ] **Step 5: Express references:** `grep -rn "express" photon --include="*.ts" --include="*.json" | grep -v out/` — no hits (historical test-description prose exempt, as phase 1).
 - [ ] **Step 6: Push + PR** (branch `feat/hono-photon` — create it off main at phase start if Task 1 hasn't already; all tasks commit to it):
@@ -759,7 +759,7 @@ git push -u origin feat/hono-photon
 gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + photon migration" --body "<spec/plan links; geo atoms; legacyQuery adapter rationale (why photon does NOT get phase 1's canonicalizers — repeatable params and duplicate-param 400s are contract here); parity-check adjudications; smoke receipts; breaking note (createPhotonRouter removed, no shim); next-major-train constraint. End with the Claude Code attribution line.>"
 ```
 
-⚠ Do not merge the PR — operator's call. NOTE for the controller, not the implementer: the hosted `mailwoman-photon.service` systemd unit runs the old express CLI; redeploy is a post-merge operator step (standing plan: drop-in servers redeploy post-POSAIS).
+⚠ Do not merge the PR — operator's call. NOTE for the controller rather than the implementer: the hosted `mailwoman-photon.service` systemd unit runs the old express CLI; redeploy is a post-merge operator step (standing plan: drop-in servers redeploy post-POSAIS).
 
 ---
 

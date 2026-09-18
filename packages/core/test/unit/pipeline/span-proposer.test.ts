@@ -234,7 +234,7 @@ describe("venue-structure provenance", () => {
 	})
 
 	it("does not fire on a confound: the designator needs a SHORT identifier after it", () => {
-		// "Gate House" / "Terminal Industrial Estate" — the next token is a word, not an identifier.
+		// "Gate House" / "Terminal Industrial Estate" — the next token is a word rather than an identifier.
 		expect(proposeSpans("Gate House, 1 Farringdon Street, London, EC4M 7LG", withVenueStructure)).toEqual([])
 		expect(proposeSpans("Terminal Industrial Estate, Portsmouth, PO3 5PA", withVenueStructure)).toEqual([])
 	})
@@ -246,7 +246,7 @@ describe("modifier + venue-interior designator", () => {
 		unitDesignators: new Set([...LEXICON.unitDesignators, "wing", "concourse", "terminal", "gate"]),
 		venueStructureDesignators: new Set(["wing", "concourse", "terminal", "gate"]),
 		venueStructureModifiers: new Set(["north", "south", "east", "west", "upper", "main"]),
-		// `gate` is deliberately absent: "East Gate" is a street, not a sub-venue.
+		// `gate` is deliberately absent: "East Gate" is a street rather than a sub-venue.
 		modifierEligibleStructureDesignators: new Set(["wing", "concourse", "terminal"]),
 	}
 

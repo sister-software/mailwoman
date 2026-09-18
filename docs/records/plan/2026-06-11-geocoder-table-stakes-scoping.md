@@ -1,10 +1,10 @@
 # Geocoder table stakes — scoping notes (#483 interpolation, #484 reverse)
 
 Scoping per the post-parity agenda (the Codex review's sequencing concurs: start these in
-parallel with parser tail work, don't block on perfect parity). These are NOTES, not designs —
+parallel with parser tail work, don't block on perfect parity). These are NOTES rather than designs —
 each gets its own design doc when picked up.
 
-## #484 Reverse geocoding — assembly, not research
+## #484 Reverse geocoding — assembly rather than research
 
 **Shape:** lat/lon → containing hierarchy. The pieces exist: `wof-polygons.db` (22,104
 DP-simplified admin polygons), the R\*Tree bbox index (`place_bbox` in the hot DB), the

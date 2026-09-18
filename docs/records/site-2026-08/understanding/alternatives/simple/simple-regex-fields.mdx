@@ -27,7 +27,7 @@ This is not address parsing in the Mailwoman sense. It is field extraction with 
 
 - **You work with structured, predictable address formats.** US addresses. USPS-standardized addresses from a database. Addresses from a form with separate fields that got concatenated. The format is predictable enough that positional regexes work.
 - **You need a small number of fields.** Postcode and state cover regional analysis. Street number and street name cover address validation. You don't need the locality because the postcode implies it. You don't need the venue because your addresses don't have venues.
-- **You're in a single country.** Positional regexes are per-country. A US regex expects `[number] [street] [city] [state] [zip]`. A French regex expects `[number] [street type] [street name] [postcode] [city]`. A Japanese regex expects `[postcode] [prefecture] [city] [ward] [district] [block] [lot]`. The regex set is small and per-locale, not learned.
+- **You're in a single country.** Positional regexes are per-country. A US regex expects `[number] [street] [city] [state] [zip]`. A French regex expects `[number] [street type] [street name] [postcode] [city]`. A Japanese regex expects `[postcode] [prefecture] [city] [ward] [district] [block] [lot]`. The regex set is small and per-locale rather than learned.
 - **You can tolerate regex maintenance.** When a new state joins (unlikely), add one dictionary entry. When the postcode format changes (very unlikely in the US — it's been `\d{5}` since 1963), update one regex. The maintenance surface is small and well-defined.
 - **You need to ship today.** A few regexes, a state dictionary, a positional heuristic. A few hundred lines of code. Ship in an afternoon.
 

@@ -7,7 +7,7 @@
  *
  *   It models `normalizeLocalityForKey` (`@mailwoman/resolver-wof-sqlite/street-normalize`) rather
  *   than importing it: `@mailwoman/resolver` is backend-agnostic by design and must not take a
- *   dependency on a query backend, not even in tests.
+ *   dependency on a query backend rather than even in tests.
  *
  *   Three fake gazetteers had grown their own copy of this, and two of them had it WRONG in the same
  *   way the production fold did (#1764) — replacing a combining mark with a space instead of

@@ -5,11 +5,11 @@
  *
  *   The #1649 FIRST-REFUSAL check: a lexicon-aware kind classifier, when the caller injects one, gets
  *   first look at the query. A top-slot `poi_query` / `poi_category` / `near_me` verdict means the
- *   string asks for a THING, not an address — the address lanes can only manufacture confident
+ *   string asks for a THING rather than an address — the address lanes can only manufacture confident
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants
  *   in London" resolved London, Kentucky). The geocode ABSTAINS with the verdict's intent markers
  *   attached. POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a
- *   VERDICT, not a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
+ *   VERDICT rather than a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
  *   with a pinned register would skip this check and resolve the refused nonsense. measured on the
  *   harness's "Pharmacy near me" → a Hungarian namesake).
  *
@@ -54,7 +54,7 @@ export async function thingQueryRefusalMarkers(
 			code: "poi_category",
 			mechanism: "kind:poi_query",
 			message:
-				"The query asks for a kind of place, not an address — the address lanes abstain. " +
+				"The query asks for a kind of place rather than an address — the address lanes abstain. " +
 				"Use the POI search surface (the pipeline's poiIntent stage / poi_search) for an answer.",
 		})
 	}

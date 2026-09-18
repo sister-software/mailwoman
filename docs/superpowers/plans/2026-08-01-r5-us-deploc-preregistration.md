@@ -13,7 +13,7 @@ decoder, resolver, normalize, kind-classifier, phrase-grouper and geocode paths 
 hard emission mask (`-1e9`) — FR `street_suffix` — and `dependent_locality` appears in no
 `forbiddenTags` row in either the TS table or its Python training mirror. `componentsSupported`
 omits the tag for en-US, but nothing reads that field to mask emissions; its only consumer
-validates the policy registry. The en-US omission is documentation, not enforcement.
+validates the policy registry. The en-US omission is documentation rather than enforcement.
 
 **The tag is dead in the MODEL, and dead uniformly — not per-country.** Raw pre-prior logits
 (`parseWithLogits`) put `B-dependent_locality` at rank 11–15 of 25 everywhere, including the GB
@@ -66,7 +66,7 @@ venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). Nothing ships un
 - **D-R5.4 (disclosure).** The browser path's `detectPairIndexCountry` falls back to `us` for any
   bare Latin query with no postcode — so shipping a US index means unlabeled queries take US pair
   bias by default, where today they take none. Measure and report what that does to the GB and
-  bare-name boards; it is a packaging consequence, not a bug, but it must be stated before ship.
+  bare-name boards; it is a packaging consequence rather than a bug, but it must be stated before ship.
 
 Failing B-R5.1 or B-R5.2 stops the ship regardless of how good B-R5.3 looks.
 
@@ -102,7 +102,7 @@ correctly refused to build a US index without one), and both boards as reusable 
 `$MAILWOMAN_DATA_ROOT/scratch-r5-us/`.
 
 **Shipping `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
-decision, not taken here.** The bars were the technical check and they passed; what they do not
+decision rather than taken here.** The bars were the technical check and they passed; what they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
 nothing and silently dropped the second admin level. That is an improvement and a behaviour change
@@ -117,7 +117,7 @@ measured the deficit as "large but UNIFORM (~7.0 logits mean)" — and no locale
 emission comes from the model preferring it. GB emits because an artifact clears a uniform deficit;
 the US does not emit because no artifact exists. Every other locale in the campaign's wave 2–4 list
 (FR lieu-dit, ES pedanía, BR bairro, MX colonia, and the borough instances in Paris/Tokyo/Amsterdam)
-is therefore an ARTIFACT question, not a training question — which moves them out of R5's
+is therefore an ARTIFACT question rather than a training question — which moves them out of R5's
 training-conditional column and into the same decode-time lane R2–R4b already ran.
 
 ## R5 follow-on — the other projections, and a three-way split
@@ -141,7 +141,7 @@ has to generalize, which is why #1366's fine-tune shape was right even though V1
 three named residual mechanisms are the actual work.
 
 **Class 3 — compositional sub-venue structure (`building`, `campus`, `wing`, `concourse`, `arcade`,
-`enclosure`, `installation` → `venue` / `unit`).** Neither of the above: these are PATTERNS, not
+`enclosure`, `installation` → `venue` / `unit`).** Neither of the above: these are PATTERNS rather than
 names — a small closed designator vocabulary times an open numbering. It was **completely
 untested**: before this rung the gauntlet contained zero `unit:` expectations and one line matching
 any sub-venue term.
@@ -165,7 +165,7 @@ dependent-locality arc hit when PPD turned out to have no US analogue.
 
 A probe extending the designator set moved `Terminal 5` → `unit="Terminal 5", locality="Heathrow
 Airport"` and `Check 12` → `unit="Check 12"`, but split `Concourse B` into `unit=Concourse` +
-`venue=B` and left the trailing-designator `West Wing` untouched. **Real change, not a clean sweep** —
+`venue=B` and left the trailing-designator `West Wing` untouched. **Real change rather than a clean sweep** —
 and it is a default-on change to unit parsing with obvious confound risk (GB street names ending in
 `-check`, industrial estates literally named "Terminal"). It gets its own pre-registered board before
 anything ships; the experiment was reverted.

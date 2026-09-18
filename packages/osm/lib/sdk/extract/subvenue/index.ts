@@ -8,11 +8,11 @@
  *   campuses) out of a Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR
  *   tag-rule table and yielded as {@link SubVenueSourceRow}s. Mirrors `extract-poi.ts`'s
  *   process-spawn + GeoJSONSeq-over-stdout idiom. the two differences are the predicate (transport
- *   structure, not telecom infrastructure) and the LOCALIZED-NAME harvest described below.
+ *   structure rather than telecom infrastructure) and the LOCALIZED-NAME harvest described below.
  *
  *   WHY THIS EXISTS. `docs/engineering/sub-venue-corpus-task.mdx` establishes that `North Terminal` /
  *   `Upper Concourse` fail to parse because the `unit` tag was never TAUGHT the modifier+designator
- *   shape, not because a decode weight is too low — closing it by weight would need a bias scale near
+ *   shape rather than because a decode weight is too low — closing it by weight would need a bias scale near
  *   11 nats against the 6.0 the stronger designator+identifier evidence needed. The fix is corpus, and
  *   the densest real source of sub-venue naming in existence is airport and rail terminal data. OSM's
  *   `aeroway` key is already the provenance for `terminal` and `gate` in
@@ -54,7 +54,7 @@
  *   coordinates and a {@link SubVenueTier} discriminator. pairing is the consumer's job.
  *
  *   No `country` either, for the same reason `extract-poi.ts` has none: a Geofabrik extract's country
- *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
+ *   is a property of the invocation rather than of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -90,7 +90,7 @@ export {
  * so this is a character scanner that only leaves a quoted string on an unescaped quote.
  *
  * Returns an empty dict for `null`/empty input rather than throwing: `other_tags` is absent whenever every tag on a
- * feature was promoted, which is an ordinary outcome, not a fault.
+ * feature was promoted, which is an ordinary outcome rather than a fault.
  */
 export function parseOSMHstore(text: string | null | undefined): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -241,7 +241,7 @@ export interface SubVenueSourceRow {
  *
  * `promotedProps` are the feature's own GeoJSON properties (aliased tag columns plus `name`/`ref`); everything else
  * comes out of the parsed `other_tags` hstore. The two are merged before matching because a key's side of that split is
- * a property of the LAYER, not of the rule.
+ * a property of the LAYER rather than of the rule.
  */
 export function toSubVenueSourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },

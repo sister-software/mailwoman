@@ -89,7 +89,7 @@ describe("loadImportanceIndex", () => {
 	test("indexes current places only, and counts the unkeyable rather than dropping them silently", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// 9 source rows: 1 deprecated (excluded by the query), 1 unkeyable (counted, not indexed).
+		// 9 source rows: 1 deprecated (excluded by the query), 1 unkeyable (counted rather than indexed).
 		expect(index.stats.places).toBe(7)
 		expect(index.stats.unkeyable).toBe(1)
 		expect(index.stats.keys).toBe(6) // the two US Warwicks share one key

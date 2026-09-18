@@ -24,7 +24,7 @@
  *   of two renderings of the same edge. Those are reported as `boundary_tolerance` with their distance to the
  *   nearest edge, and the count is part of the receipt.
  *
- *   THE DISTANCE IS TO THE EDGE, NOT TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
+ *   THE DISTANCE IS TO THE EDGE rather than TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
  *   metres from every vertex of it — the flood verify's one near-miss read 1.58 m to vertices and 0.009 m to
  *   edges, an overstatement of 175-fold — so measuring vertices makes the boundary tolerance far stricter than
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
@@ -95,8 +95,8 @@ export interface VerifyCoastalResult {
 }
 
 /**
- * Points this product's mapping does not reach, named. Each is a place, not a bare pair of numbers: a coordinate a
- * reader cannot name is a coordinate nobody can check.
+ * Points this product's mapping does not reach, named. Each is a place rather than a bare pair of numbers: a coordinate
+ * a reader cannot name is a coordinate nobody can check.
  *
  * TWO POPULATIONS, AND BOTH ARE required. The inland English points are the case this layer's coverage posture exists
  * for — a builder that generalized the flood rule would answer them confidently. The Welsh and Scottish coastal points

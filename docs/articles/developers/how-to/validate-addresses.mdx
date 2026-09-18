@@ -45,7 +45,7 @@ row-level verdict is something you compute, and the weakest component is the one
 
 ## 2. Decide what "complete" means for your use
 
-Completeness is a property of what you are going to do with the address, not of the address. A shipping
+Completeness is a property of what you are going to do with the address rather than of the address. A shipping
 label needs a house number; a sales-territory rollup does not. Write the list down rather than
 inferring it:
 
@@ -215,7 +215,7 @@ done
 That run had `candidate.db` plus the DC address-point database on disk (the setup
 [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) builds). Without that file both
 rows answer `admin`, and the check below cannot distinguish them — precision data is what makes this
-test meaningful, not the parse.
+test meaningful rather than the parse.
 
 `address_point` means a rooftop record for that house number matched. `admin` means nothing finer than
 the city did, and the coordinate you got back is the city centroid. Adding
@@ -225,7 +225,7 @@ for it", and that is as close to existence as this system goes.
 Even then it is not deliverability. A rooftop record says a structure was surveyed at that address; it
 does not say mail is accepted there, that the unit number is right, or that the occupant is who you
 think. Nothing in Mailwoman contacts a carrier. If your requirement is "will this parcel arrive", the
-answer comes from a postal-carrier address-verification service, not from here.
+answer comes from a postal-carrier address-verification service rather than from here.
 
 ## Limits
 
@@ -233,12 +233,12 @@ answer comes from a postal-carrier address-verification service, not from here.
   postcode. Route to the right codex subpath from the parsed country, or use
   `candidateSystemsForPostcode` when the country is unknown.
 - **Codex holds no existence tables.** No ZIP-to-state cross-check, no street registry. The
-  `ZipCodePrefixAbbreviationMap` it does ship is a first-digit-to-state-band prior — a hint, not a
+  `ZipCodePrefixAbbreviationMap` it does ship is a first-digit-to-state-band prior — a hint rather than a
   lookup.
 - **A raw confidence near 0.9 is not 90% correct.** The scores on this page are uncalibrated, and their
   spread on clean input is narrow. See
   [Tune confidence thresholds](./tune-confidence-thresholds.mdx) before you pick `MIN_CONFIDENCE` for
-  production; 0.8 here is a demonstration floor, not a recommendation.
+  production; 0.8 here is a demonstration floor rather than a recommendation.
 - **`street_suffix` is sometimes its own component and sometimes part of `street`.** The check above
   handles both, and any check you write on street shape has to.
 

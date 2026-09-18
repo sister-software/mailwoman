@@ -46,7 +46,7 @@ Per STAGES.md "What's next" suggestion: **QueryShape first**, then Normalize. Re
 - [ ] `classifyInput(text: string): CharacterClass` — folds token classes to dominant class
 - [ ] Unicode-range detection for CJK, Cyrillic, Arabic (regex `\p{Script=...}` where supported)
 
-#### 4. Tokenization — internal, not exported
+#### 4. Tokenization — internal rather than exported
 
 - [ ] `tokenize(text: string): SpanRange[]` — whitespace + punctuation split, preserves character offsets
 - [ ] Treats consecutive non-whitespace-non-punct as one token

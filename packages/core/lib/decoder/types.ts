@@ -172,19 +172,19 @@ export interface AddressTree {
 	 * (`containmentFor(system)` in `./containment.ts`). Absent means the default Western hierarchy (`house_number →
 	 * street → locality → …`).
 	 *
-	 * This is forward-compat insurance, not yet a behavioral switch: every system currently resolves to the same map, so
-	 * an absent or present `system` produces identical trees today. It exists so that when a distinct system lands (e.g.
-	 * Japanese block addressing, where `building_number` nests under `sub_block`/`block` with no `street` parent),
-	 * consumers and the tree builder already carry the discriminator — no `AddressTree` shape change later. A locale
-	 * pre-classifier (Phase 6+) is the intended source of this value.
+	 * This is forward-compat insurance rather than yet a behavioral switch: every system currently resolves to the same
+	 * map, so an absent or present `system` produces identical trees today. It exists so that when a distinct system
+	 * lands (e.g. Japanese block addressing, where `building_number` nests under `sub_block`/`block` with no `street`
+	 * parent), consumers and the tree builder already carry the discriminator — no `AddressTree` shape change later. A
+	 * locale pre-classifier (Phase 6+) is the intended source of this value.
 	 */
 	system?: AddressSystem
 	/**
 	 * The parse-time locale-head verdict when it was CONFIDENT (softmax >= the action threshold): the model's own read of
 	 * which country's addressing this text is shaped like. Absent = under threshold or the head never ran — unknown,
-	 * never "domestic". Evidence about the TEXT, not a resolved country: the head is a 9-way classifier, so a Chinese
-	 * address may read GB — right about "not the locale's country", wrong about which. The scope check this exists for
-	 * (#1684) therefore only ever drops an inferred scope on a mismatch. it never re-points one.
+	 * never "domestic". Evidence about the TEXT rather than a resolved country: the head is a 9-way classifier, so a
+	 * Chinese address may read GB — right about "not the locale's country", wrong about which. The scope check this
+	 * exists for (#1684) therefore only ever drops an inferred scope on a mismatch. it never re-points one.
 	 */
 	localeCountry?: { country: string; confidence: number }
 }

@@ -150,7 +150,7 @@ describe("readWriteIntent", () => {
 	})
 
 	it("ignores a malformed payload rather than throwing", () => {
-		// A hook that throws on an unexpected payload becomes a broken editor, not a broken hint.
+		// A hook that throws on an unexpected payload becomes a broken editor rather than a broken hint.
 		expect(readWriteIntent({ tool_name: "Write", tool_input: {} })).toBeNull()
 		expect(readWriteIntent(null)).toBeNull()
 	})

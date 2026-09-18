@@ -11,7 +11,7 @@
  *   unchanged. the layer contract's polygon-builder section states them as requirements. A second copy of
  *   an allocator guard is a second place for it to stop guarding.
  *
- *   THE INDEX IS CELL-TOUCHES-POLYGON, NOT CENTRE-IN-POLYGON, AND A ZERO-CELL FEATURE FAILS THE BUILD.
+ *   THE INDEX IS CELL-TOUCHES-POLYGON rather than CENTRE-IN-POLYGON, AND A ZERO-CELL FEATURE FAILS THE BUILD.
  *   A polyfill keyed on cell centres drops every polygon smaller than a cell, and each dropped feature
  *   reads downstream as an absence. Measured: on Ireland's zoning layer `polygonToCells` returns zero cells
  *   for 86.8% of polygons at resolution 9, and the EA flood product's first row is a 128 m² square that
@@ -24,11 +24,11 @@
  *   which is the order an ingest already produces. Converting instead would put a transposition between the
  *   geometry and the index that nothing downstream could see.
  *
- *   WHOLE AND PARTIAL ARE TWO POLYFILLS OF THE SAME RING, NOT A TEST WE INVENT. `containmentFull` is the
+ *   WHOLE AND PARTIAL ARE TWO POLYFILLS OF THE SAME RING rather than A TEST WE INVENT. `containmentFull` is the
  *   cell set entirely inside the polygon; `containmentOverlapping` is the set that touches it at all. The
  *   difference is exactly the boundary fringe, which is where the geometry tier has to be consulted.
  *
- *   MOST PARTS NEVER REACH h3 AT ALL, AND THAT IS THE POINT. The WASM heap is exhausted by CALL VOLUME, not
+ *   MOST PARTS NEVER REACH h3 AT ALL, AND THAT IS THE POINT. The WASM heap is exhausted by CALL VOLUME rather than
  *   by any one polygon: h3-js frees every buffer it allocates, so what accumulates over millions of
  *   interleaved tiny and large allocations is fragmentation. Three runs over the EA product died on the
  *   same feature after roughly 510,000 others — a 164 m² feature of 23 parts and 130 vertices that
@@ -177,7 +177,7 @@ export interface FeatureCells {
  * How many cells at `resolution` the feature's bounding box spans.
  *
  * The same quantity h3 reserves its buffer from, computed here so an oversized polyfill is never issued. Approximate on
- * purpose: it decides which resolution to ask for, not what the answer is.
+ * purpose: it decides which resolution to ask for rather than what the answer is.
  */
 export function estimateCellCount(polygons: MultiPolygonRings, resolution: number): number {
 	const box = ringsBoundingBox(polygons)

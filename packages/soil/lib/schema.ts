@@ -6,7 +6,7 @@
  *   Typed schema for `soil.db` — the polygon truth table, the containment index above it, and the one
  *   reduction both consumers read, plus the layer-contract tables from `@mailwoman/core/layers`.
  *
- *   THREE CELL-FACING TABLES ARE ONE PIPELINE, NOT THREE SOURCES. {@link SoilMapUnitAreaTable} holds what
+ *   THREE CELL-FACING TABLES ARE ONE PIPELINE rather than THREE SOURCES. {@link SoilMapUnitAreaTable} holds what
  *   the authority drew, unsimplified. {@link SoilMapUnitCellTable} says which cells each delineation
  *   reaches and whether it fills them. {@link SoilCapabilityCellTable} is that index reduced once, at build
  *   time, into a per-cell distribution. A `partial` cell's contribution to the reduction is weighted by the
@@ -110,8 +110,8 @@ export interface SoilMapUnitTable {
 	mukey: string
 	areasymbol: string
 	/**
-	 * The map unit symbol. `NOTCOM` and `NOTPUB` are MEANINGFUL values here, not codes to skip: they name a polygon the
-	 * authority drew with no soil mapping behind it.
+	 * The map unit symbol. `NOTCOM` and `NOTPUB` are MEANINGFUL values here rather than codes to skip: they name a
+	 * polygon the authority drew with no soil mapping behind it.
 	 */
 	musym: string
 	muname: string

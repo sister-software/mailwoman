@@ -33,7 +33,7 @@ export function nomenclatureSource(tileJSONURL: string): VectorSourceSpecificati
 export function hillshadeSource(tileJSONURL: string): RasterDEMSourceSpecification {
 	return {
 		type: "raster-dem",
-		// The build writes `height = (R * 256 + G + B / 256) - 32768`, which is terrarium's, not Mapbox's.
+		// The build writes `height = (R * 256 + G + B / 256) - 32768`, which is terrarium's rather than Mapbox's.
 		encoding: "terrarium",
 		url: tileJSONURL,
 		tileSize: 256,

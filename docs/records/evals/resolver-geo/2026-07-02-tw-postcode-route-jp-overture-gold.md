@@ -14,7 +14,7 @@ district polygons — supplied the geometry both halves needed.
 Post's 3-digit postal-code → district table with official district centers (data.gov.tw dataset
 25489, OGDL v1; 371 rows, all county-prefixed). The 3-digit code is the admin-granularity key — the
 "+3" tail is road-segment level, and the full 3+3 file has been account-conditional at fpp.post.gov.tw
-since 2025. Sub-district resolution is therefore out of reach for now (noted, not chased).
+since 2025. Sub-district resolution is therefore out of reach for now (noted rather than chased).
 
 **Build** (`scripts/build-postcode-locality-tw.ts` → `postcode-locality-tw.db`, standard
 `postcode_locality` schema — the `postcode_area_resolution` strategy consumes it unchanged):
@@ -56,7 +56,7 @@ is a Point, so WOF polygons cannot grade this).
 | coord p50 / p90 km             |    2.54 / 14.13 |   2.55 / 17.91 |
 
 **PASS** (86.4% ≥ ~85%, stable across seeds). Failures concentrate exactly where WOF lacks district
-rows (東區/北區/三民區/南區 …) — a WOF coverage gap, not a routing defect; the city-level containment
+rows (東區/北區/三民區/南區 …) — a WOF coverage gap rather than a routing defect; the city-level containment
 line is the direct ledger for those. Split note: the builder consumes no Overture address points
 (inputs: postal table, WOF, division polygons), so every sampled point is held-out by construction;
 the polygon layer is shared between the builder's bridge and the eval's truth.
@@ -103,7 +103,7 @@ remains the only keying source; Overture serves as the independent admin + coord
 ## KR — explicitly out of scope
 
 Unchanged from the issue: KR is absent from Overture's addresses theme; Juso remains the blocked
-path. Noted, not chased.
+path. Noted rather than chased.
 
 ## Artifacts
 

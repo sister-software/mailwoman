@@ -17,7 +17,7 @@
  *       the geographic prior is the gazetteer's job.
  *
  *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode`
- *   returns both, and that ambiguity is by design (shape test, not membership test).
+ *   returns both, and that ambiguity is by design (shape test rather than membership test).
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet}
  */

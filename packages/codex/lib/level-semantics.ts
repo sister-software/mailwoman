@@ -36,8 +36,8 @@
  *   always 0. this table supplies the locale-aware mapping from a raw (designator, number) pair into
  *   that same ordinal space.
  *
- *   Data is convention encoded from common postal/building usage, not a single postal authority
- *   publication — level-numbering conventions are cultural, not regulatory, so no Pub-28-style single
+ *   Data is convention encoded from common postal/building usage rather than a single postal authority
+ *   publication — level-numbering conventions are cultural rather than regulatory, so no Pub-28-style single
  *   source exists for most of these locales. Retrieved/encoded 2026-07-13, epic #1100.
  *
  *   Deliberately-excluded ambiguities (handled by an explicit, documented rounding rule below, never a
@@ -46,21 +46,21 @@
  *   - **Spanish PRINCIPAL / ENTRESUELO**: pre-metric Spanish buildings run BAJO (0) → ENTRESUELO
  *     (~0.5) → PRINCIPAL (1) → PISO 1/2 (2), but the exact offset varies by city and building age.
  *     ENTRESUELO's true position (0.5) isn't representable as an integer ordinal. it floors to 0
- *     (grouped with ground) — a documented approximation, not an empirical claim. PRINCIPAL is a
- *     fixed, always-ordinal-1 designator (it names a specific floor by convention, not by a number the
+ *     (grouped with ground) — a documented approximation rather than an empirical claim. PRINCIPAL is a
+ *     fixed, always-ordinal-1 designator (it names a specific floor by convention rather than by a number the
  *     caller supplies).
  *   - **English LOWER GROUND / UPPER GROUND** (UK mixed-use buildings): sit at roughly -0.5 and +0.5
  *     relative to ground. Both round down (floor): LOWER GROUND → -1 (grouped with the first basement
- *     level), UPPER GROUND → 0 (grouped with ground). Convention choices, not measurements.
+ *     level), UPPER GROUND → 0 (grouped with ground). Convention choices rather than measurements.
  *   - **PENTHOUSE / ROOF / ATTIC / DACHGESCHOSS / ÁTICO / ATTICO**: named by relationship to the TOP of
- *     a SPECIFIC building, not by a fixed distance from ground — there is no locale-independent integer
+ *     a SPECIFIC building rather than by a fixed distance from ground — there is no locale-independent integer
  *     to assign. {@link levelToOrdinal} returns `undefined` for this designator kind rather than
  *     guessing.
  *   - **Nordic ground-floor vocabulary**: Danish STUEN/STUEETAGE is a well-attested standard term
  *     (the "st." you see on Danish addresses). Norwegian has no equally standard, universally-agreed
  *     single word for "ground floor" distinct from "1. etasje" in everyday use. GATEPLAN is included
  *     here for structural parity with the other Nordic tables but is a lower-confidence, regional
- *     inclusion — flagged in-line, not asserted as authoritative.
+ *     inclusion — flagged in-line rather than asserted as authoritative.
  *
  * @see {@link https://register.apple.com/resources/imdf/Level/ IMDF Level — `ordinal` (Apple Indoor Mapping Data Format)}
  */
@@ -171,7 +171,8 @@ export const EN_LEVEL_DESIGNATORS = [
 ] as const satisfies readonly LevelDesignatorRow[]
 
 /**
- * French (France, and — for the vocabulary, not the numbering convention — Francophone Canada) floor/level vocabulary.
+ * French (France, and — for the vocabulary rather than the numbering convention — Francophone Canada) floor/level
+ * vocabulary.
  */
 export const FR_LEVEL_DESIGNATORS = [
 	{
@@ -247,7 +248,7 @@ export const DE_LEVEL_DESIGNATORS = [
 
 /**
  * Spanish floor/level vocabulary. PRINCIPAL and ENTRESUELO offsets vary by city and building age (see the module
- * header) — encoded here as a single convention, not an empirical universal.
+ * header) — encoded here as a single convention rather than an empirical universal.
  */
 export const ES_LEVEL_DESIGNATORS = [
 	{ code: "PLANTA", name: "Planta/Piso (Floor)", variants: ["PLANTA", "PISO"], kind: "numbered", requiresNumber: true },
@@ -357,8 +358,8 @@ export const NL_LEVEL_DESIGNATORS = [
  * Japanese (and generic CJK numeral+letter) floor/level vocabulary. Japanese addresses write the numbered floor as a
  * trailing "F" suffix on the number ("2F", "地下1F"/"B1F") or the kanji "階" ("2階"); there is no distinct bare word for
  * "ground floor" the way RDC/EG/PLANTA BAJA exist in Europe — "1F"/"1階" already is ground (handled by the `"numbered"`
- * kind + the ja-JP `firstNumberedIsGround: true` convention, not a separate `"ground"` row). "B" (and "地下", literally
- * "underground") name the basement count the same way English "B1" does.
+ * kind + the ja-JP `firstNumberedIsGround: true` convention rather than a separate `"ground"` row). "B" (and "地下",
+ * literally "underground") name the basement count the same way English "B1" does.
  */
 export const JA_LEVEL_DESIGNATORS = [
 	{ code: "F", name: "階 (Floor)", variants: ["F", "階"], kind: "numbered", requiresNumber: true },

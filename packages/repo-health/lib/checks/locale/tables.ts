@@ -8,7 +8,7 @@
  *   pair fails silently: it answers a locale for the country asked about, and every consumer treats a plausible
  *   answer as the right one.
  *
- *   THE TABLES ARE DISCOVERED, NOT LISTED. A check that names its subjects cannot see the eighth table somebody
+ *   THE TABLES ARE DISCOVERED rather than LISTED. A check that names its subjects cannot see the eighth table somebody
  *   adds, which is the failure it exists to prevent. A declaration qualifies when at least two of its entries pair
  *   a country code with a locale tag and those are at least half of what it holds — both halves required,
  *   since two pairs alone admits a table of something else carrying a couple, and the ratio alone admits a

@@ -120,7 +120,7 @@ Most malformed input doesn't error at all: an address with no recognizable compo
 # escaping bug dumped into the address column — shown truncated below (…)
 curl -s localhost:3000/v1/batch \
   -H 'content-type: application/json' \
-  -d '{"addresses": ["350 5th Ave, New York, NY 10118", "123 Main St, Springfield, IL 62701 -- customer requested delivery instructions: please leave the package behind the blue recycling bin near the side door, not the front porch, because the front porch floods during rain …"]}'
+  -d '{"addresses": ["350 5th Ave, New York, NY 10118", "123 Main St, Springfield, IL 62701 -- customer requested delivery instructions: please leave the package behind the blue recycling bin near the side door rather than the front porch, because the front porch floods during rain …"]}'
 ```
 
 ```json
@@ -133,7 +133,7 @@ curl -s localhost:3000/v1/batch \
 			"resolution_tier": "interpolated"
 		},
 		{
-			"input": "123 Main St, Springfield, IL 62701 -- customer requested delivery instructions: please leave the package behind the blue recycling bin near the side door, not the front porch, because the front porch floods during rain …",
+			"input": "123 Main St, Springfield, IL 62701 -- customer requested delivery instructions: please leave the package behind the blue recycling bin near the side door rather than the front porch, because the front porch floods during rain …",
 			"error": "Cannot read properties of undefined (reading '0')"
 		}
 	]
@@ -267,4 +267,4 @@ Each record carries the same fields the endpoint returns, under `address.geocode
 }
 ```
 
-Two things to know before you tune it. Records arrive in **completion order**, not input order, so carry your own `id` through and rejoin downstream rather than trusting position. And `concurrency: 2` is not a placeholder we forgot to raise: the workers contend for one multi-gigabyte database, so throughput peaks there and degrades past it, with four workers landing back at baseline. Each worker also loads its own 38 MB model. Sweep it against your data instead of reaching for `availableParallelism()`.
+Two things to know before you tune it. Records arrive in **completion order** rather than input order, so carry your own `id` through and rejoin downstream rather than trusting position. And `concurrency: 2` is not a placeholder we forgot to raise: the workers contend for one multi-gigabyte database, so throughput peaks there and degrades past it, with four workers landing back at baseline. Each worker also loads its own 38 MB model. Sweep it against your data instead of reaching for `availableParallelism()`.

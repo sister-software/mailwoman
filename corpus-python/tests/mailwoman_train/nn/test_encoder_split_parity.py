@@ -2,7 +2,7 @@
 
 `__init__` is 405 lines and `forward` 415. Breaking either into named stages is where an
 initialization order or a branch condition changes without any test noticing: the suite exercises
-shapes and finiteness, not values. So this pins values.
+shapes and finiteness rather than values. So this pins values.
 
 The state-dict keys matter as much as the logits. `save_pretrained` writes a checkpoint keyed on
 attribute names, and every checkpoint on the Modal volume was written by the pre-split code. An
@@ -117,7 +117,7 @@ def reference_inputs(model: MailwomanCoarseEncoder) -> dict[str, torch.Tensor]:
     Passing no channel features is what let a reordered channel pass a logit comparison: a
     projection the forward never invokes cannot change a logit. Each channel gets a real tensor at
     its own declared width, so splitting `forward` into stages has to preserve what each one does
-    with its input, not merely that it is skipped.
+    with its input rather than merely that it is skipped.
     """
     generator = torch.Generator().manual_seed(1)
 

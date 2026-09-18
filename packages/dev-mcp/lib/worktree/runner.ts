@@ -74,7 +74,7 @@ export async function worktreeArmRunner(
 		answer: async (input) => {
 			const answer = byInput.get(input)
 
-			// A missing input is a batching fault, not a no-result, and says so: the child was handed this set, so
+			// A missing input is a batching fault rather than a no-result, and says so: the child was handed this set, so
 			// silence here would otherwise be scored as the pipeline declining to answer.
 			if (!answer) {
 				return {

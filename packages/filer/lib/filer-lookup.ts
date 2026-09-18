@@ -33,7 +33,7 @@
  *   **Temporal scoping (criterion 4).** An edge is "in force" `asOf` a date when `valid_from <= asOf AND
  *   (valid_to IS NULL OR asOf < valid_to)` — the same half-open-interval convention `cluster-filers.ts`'s
  *   cross-vintage supersession already commits to (`valid_to` marks the date an assertion STOPPED
- *   holding, not the last date it held). Applied identically to `identifiers` and `inferred_links`.
+ *   holding rather than the last date it held). Applied identically to `identifiers` and `inferred_links`.
  *
  *   **Authoritative/inferred never conflated (criterion 2).** `cluster` is read from `filer_cluster WHERE
  *   assertion = 'authoritative'` only; `inferred_links` is read from `filer_edge WHERE assertion =
@@ -58,7 +58,7 @@
  *   self-contradiction the primary-FRN temporal fix, above, closed for that probe). {@linkcode
  *   deriveClusterMembersAsOf} closes this: the static snapshot's member list is filtered down to whatever
  *   an authoritative edge, in force `asOf` the query date, actually corroborates. A node whose static
- *   cluster membership has no such corroborating edge reports `cluster: null` for that `asOf`, not the
+ *   cluster membership has no such corroborating edge reports `cluster: null` for that `asOf` rather than the
  *   full snapshot — see {@link FilerLookupCluster}'s own docstring.
  *
  *   **Primary-FRN rule (criterion 3, decision 6).** A `bdc_provider_id` node can carry more than one
@@ -81,7 +81,7 @@
  *   same key as a genuine sourced attribute would silently clobber it (reviewer-confirmed) and, even
  *   without a collision, be visually indistinguishable from one. `primary_frn` carries `derived_from`
  *   and `as_of` instead of `source`/`source_vintage` — its provenance is "this reader's own
- *   computation", not a row in `filer.db`, and that must stay legible at the call site.
+ *   computation" rather than a row in `filer.db`, and that must stay legible at the call site.
  *
  *   **`families` is a separate rollup from `cluster` (§7-3b criterion 1, required).** `cluster` answers
  *   "which other identifiers denote this same filer" (entity resolution); `families` answers "which
@@ -95,7 +95,7 @@
  *   other temporal read in this module (`filer/sdk/family-rollup.ts` copies this exact predicate rather
  *   than writing its own — independently written copies of it have drifted apart before).
  *
- *   **`family_id` alone is a canonicalized slug, not a display name.** Each
+ *   **`family_id` alone is a canonicalized slug rather than a display name.** Each
  *   {@link FilerLookupFamily} entry also carries {@linkcode readFamilyDisplayNames}'s output — the family's
  *   raw holding-/management-company name spelling(s), recovered from the `filer_edge` rows that imply the
  *   membership. See that function's docstring for why a MULTI-spelling family (two raw names that
@@ -222,9 +222,9 @@ export interface FilerLookupResult {
 	/**
 	 * Flattened `filer_attribute` facts for the queried node only — one value per `key`, the latest `source_vintage`
 	 * winning on a repeat key (same plain-string-comparison convention as `cluster-filers.ts`'s `readLatestLegalNames`;
-	 * see that function's docstring for the "lexicographically greatest, not date-parsed" caveat). Every value here is a
-	 * real `filer_attribute` row with its own `source`/`source_vintage` provenance — NEVER a computed value (see
-	 * {@link FilerLookupResult.primary_frn} for the derived counterpart, kept structurally separate on purpose).
+	 * see that function's docstring for the "lexicographically greatest rather than date-parsed" caveat). Every value
+	 * here is a real `filer_attribute` row with its own `source`/`source_vintage` provenance — NEVER a computed value
+	 * (see {@link FilerLookupResult.primary_frn} for the derived counterpart, kept structurally separate on purpose).
 	 */
 	attributes: Record<string, string>
 	cluster: FilerLookupCluster | null
@@ -238,11 +238,11 @@ export interface FilerLookupResult {
 	 * ({@link FilerLookupFamily}: `family_id`/`relationship`) is structurally incompatible with
 	 * {@link FilerLookupCluster} (`cluster_id`/`members`) on purpose. Empty array, never `null`, when the node carries no
 	 * family membership as of this date — `cluster`'s `null` means "no cluster has ever been computed for this node";
-	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact, not a
-	 * derived snapshot.
+	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact rather
+	 * than a derived snapshot.
 	 *
-	 * **One entry per DISTINCT `(family_id, relationship, assertion, match_score)`, not one per `filer_family` row.** A
-	 * single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
+	 * **One entry per DISTINCT `(family_id, relationship, assertion, match_score)` rather than one per `filer_family`
+	 * row.** A single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
 	 * canonicalize to one `family_id` (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows). The
 	 * rule is that the dedup key is exactly the projected tuple: two rows this shape cannot tell apart would arrive as
 	 * byte-identical entries, and a caller counting the array would read repetition as multiplicity. Two rows it can tell
@@ -308,8 +308,8 @@ export interface FRNFilingRecord {
  * the module docstring's criterion 3 section), picks the one with the most recent 499 filing date. "Most recent" is a
  * plain string comparison over `filedAt` (ISO-sortable filing dates), the same convention `cluster-filers.ts`'s
  * `readLatestLegalNames` uses for the identical reason. A tie keeps whichever candidate appears first in `candidates`
- * (deterministic, not meaningful — a genuine same-day double-filing under two different FRNs is not a case decision 6
- * resolves). Throws on an empty input: there is no "primary" of nothing.
+ * (deterministic rather than meaningful — a genuine same-day double-filing under two different FRNs is not a case
+ * decision 6 resolves). Throws on an empty input: there is no "primary" of nothing.
  */
 export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
 	if (!candidates.length) {
@@ -337,10 +337,10 @@ export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
  *
  * Applies the same full half-open predicate as every other temporal read in this module — `valid_from <= asOf AND
  * (valid_to IS NULL OR asOf < valid_to)` (see the module docstring; `schema.ts`'s `FilerEdgeTable.valid_to` documents
- * why the convention is half-open, not a stylistic choice). Both halves are required. With only `valid_from <= asOf`, a
- * CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the "most
- * recent" comparison over an in-force earlier edge, so the primary-FRN pick rests on an assertion this same reader
- * simultaneously reports as no longer in force via `identifiers`/`inferred_links`'s temporal scoping — a direct
+ * why the convention is half-open rather than a stylistic choice). Both halves are required. With only `valid_from <=
+ * asOf`, a CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the
+ * "most recent" comparison over an in-force earlier edge, so the primary-FRN pick rests on an assertion this same
+ * reader simultaneously reports as no longer in force via `identifiers`/`inferred_links`'s temporal scoping — a direct
  * self-contradiction.
  *
  * A `frn` with no in-force filing `asOf` the given date contributes no candidate at all (not an error — see
@@ -479,8 +479,8 @@ export interface FamilyMemberRow {
 /**
  * Read every `filer_family` row for `familyID`, in force `asOf` the query date — the same half-open predicate as
  * everywhere else in this module. Shared by `filerLookup`'s `families` field and `family-rollup.ts`'s `familyRollup` so
- * "who are this family's current members" has exactly one implementation, not two copies that could drift the way
- * independently written copies of the asOf predicate itself have.
+ * "who are this family's current members" has exactly one implementation rather than two copies that could drift the
+ * way independently written copies of the asOf predicate itself have.
  */
 export async function readFamilyMembers(
 	db: DatabaseClient<FilerDatabase>,
@@ -559,8 +559,7 @@ export async function readFamilyDisplayNames(
 			.innerJoin("filer_node", "filer_node.node_id", "filer_edge.to_node_id")
 			.select("filer_node.identifier_value")
 			.where("filer_edge.from_node_id", "=", member.node_id)
-			// The join: the builder's own record of which company node named this family — read,
-			// not recomputed. See the docstring above.
+			// The join: the builder's own record of which company node named this family — read rather than recomputed. See the docstring above.
 			.where("filer_edge.to_node_id", "=", member.naming_node_id)
 			// The EDGAR-only widening — see the docstring above for why every other source keeps the strict
 			// authoritative-only rule.
@@ -593,7 +592,7 @@ function otherEndOf(edge: { from_node_id: string; to_node_id: string }, nodeID: 
 /**
  * Look up a node in `byID`, throwing on a miss — every `filer_edge` row this reader touches must resolve to a real
  * `filer_node` row on both ends (referential integrity `filer.db`'s builder guarantees by construction); a miss means a
- * corrupted crosswalk, not a legitimate "not found" case, so this is loud rather than silently dropping the
+ * corrupted crosswalk rather than a legitimate "not found" case, so this is loud rather than silently dropping the
  * identifier.
  */
 function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string): FilerNodeTable {
@@ -619,8 +618,8 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * the primary-FRN temporal fix (see {@linkcode readFRNFilingCandidates}'s docstring) closed for that probe.
  *
  * Bounded to the CANDIDATE members `filer_cluster` already names — a plain `WHERE from_node_id/to_node_id IN
- * (candidateMembers)` query, not a whole-graph traversal. Re-deriving the entire authoritative component graph from
- * scratch on every READ (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
+ * (candidateMembers)` query rather than a whole-graph traversal. Re-deriving the entire authoritative component graph
+ * from scratch on every READ (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
  * would be redundant work and a real perf regression for a large crosswalk. restricting the BFS to the snapshot's own
  * member list keeps this a small, node-local query, matching every other query in this reader.
  *
@@ -635,7 +634,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * between two of `candidateMembers` (in practice, this can only ever be the writer-bug case this fix closes — a
  * same-entity cluster snapshot should never legitimately contain a holding-/management-company node as a member once
  * `readAuthoritativeGroups` is fixed) could corroborate a cross-entity link this asOf-scoping pass is supposed to be
- * validating, not merely re-deriving unfiltered.
+ * validating rather than merely re-deriving unfiltered.
  */
 async function deriveClusterMembersAsOf(
 	db: DatabaseClient<FilerDatabase>,
@@ -644,7 +643,7 @@ async function deriveClusterMembersAsOf(
 	asOf: string
 ): Promise<string[] | null> {
 	// A singleton candidate set (nodeID alone, no other member ever shared this authoritative component) asserts no
-	// cross-node relationship to corroborate against `asOf` in the first place — `null`, not a trivial one-member
+	// cross-node relationship to corroborate against `asOf` in the first place — `null` rather than a trivial one-member
 	// cluster, matching this reader's existing "no authoritative cluster assignment" null case.
 	if (candidateMembers.length <= 1) return null
 
@@ -702,9 +701,9 @@ async function deriveClusterMembersAsOf(
  * {@linkcode readFRNFilingCandidates} — a bare `identifier.value as FRN` type assertion would claim the shape without
  * ever checking it. Every `frn`-typed `identifiers[]` entry is minted from a `filer_node.identifier_value` that the
  * builder only ever writes via `mintFRNNodeID`/{@linkcode toFRN} (`build/node-ids.ts`, `frn.ts`) — a real FRN value
- * here is an invariant the crosswalk's own writers guarantee, not a possibility this reader ought to silently trust. A
- * miss means a corrupted crosswalk, the same class of failure {@linkcode nodeOrThrow} guards against, so this is loud
- * rather than passing a malformed value into the filing-candidate query.
+ * here is an invariant the crosswalk's own writers guarantee rather than a possibility this reader ought to silently
+ * trust. A miss means a corrupted crosswalk, the same class of failure {@linkcode nodeOrThrow} guards against, so this
+ * is loud rather than passing a malformed value into the filing-candidate query.
  */
 function assertFRNIdentifier(value: string): FRN {
 	if (!isFRN(value)) {
@@ -884,9 +883,8 @@ export async function filerLookup(
 		.orderBy("match_score")
 		.execute()
 
-	// display_names is a FAMILY-WIDE fact (every current member's own raw spelling), not just
-	// this node's — so each distinct family_id needs its own member fetch, not just the one row above. Plain loop,
-	// not .map(), since readFamilyDisplayNames is async.
+	// display_names is a FAMILY-WIDE fact (every current member's own raw spelling) rather than just
+	// this node's — so each distinct family_id needs its own member fetch rather than just the one row above. Plain loop rather than .map(), since readFamilyDisplayNames is async.
 	const families: FilerLookupFamily[] = []
 
 	for (const row of familyRows) {

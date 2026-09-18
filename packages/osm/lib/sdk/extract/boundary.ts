@@ -10,12 +10,12 @@
  *   exactly one match.
  *
  *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle asserts survey over
- *   whatever the rectangle overhangs, and a country/region extract is clipped to a polygon, not a
+ *   whatever the rectangle overhangs, and a country/region extract is clipped to a polygon rather than a
  *   rectangle. `bboxCoverageCells` in the POI pipeline is correct for the rectangular extracts it was written
  *   for. a named administrative region needs its own outline or the cells along its edge claim coverage
  *   the source never had.
  *
- *   Refusing a multi-match is the point, not politeness. `name` is not unique in OSM even within one
+ *   Refusing a multi-match is the point rather than politeness. `name` is not unique in OSM even within one
  *   admin level, and silently taking the first row would key a completeness claim to whichever feature
  *   the driver happened to emit first — indistinguishable downstream from the region the caller meant.
  */

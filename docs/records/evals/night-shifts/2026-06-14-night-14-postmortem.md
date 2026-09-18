@@ -13,8 +13,7 @@ All six merged to `main`:
   the joint-reconcile path (#427's default) **breaks the street+house_number geocode precondition on
   77–84% of clean US addresses and fixes 0%** (golden US+FR per-tag: street −25.6pp, house_number
   −23.1pp, worse-or-flat on every tag including venue). The phrase grouper bundles the house number into
-  the STREET_PHRASE and `reconcileSpans` fuses the span. Invisible because our evals grade **raw neural**,
-  not the assembled pipeline. Flipped the default to argmax; filed the grouper root cause as #565.
+  the STREET_PHRASE and `reconcileSpans` fuses the span. Invisible because our evals grade **raw neural** rather than the assembled pipeline. Flipped the default to argmax; filed the grouper root cause as #565.
 - **#567 — National situs.** 124,928,159 address points, 50 states, 29 GB, 0 failures, from the pinned
   Overture parquet. Driver `build-national-situs.mjs`.
 - **National interpolation** (shipped under the #569 arc, no separate PR — data artifacts). 52 extracts,
@@ -42,7 +41,7 @@ All six merged to `main`:
 - **The cascade extraction was clean.** Refactoring the validated CLI onto the shared core re-validated
   byte-for-byte (TX/CA 1m, NH 5m, HI 128m) — no regression, and now one implementation behind CLI + service.
 - **direct numbers throughout.** Named the situs-in-distribution caveat, the TX-only calibration caveat,
-  the interp-only-vs-combined DoD split. Confidence radii are now truthful, not decorative.
+  the interp-only-vs-combined DoD split. Confidence radii are now truthful rather than decorative.
 
 ## What could've gone better
 
@@ -62,7 +61,7 @@ All six merged to `main`:
   aligned win. Alternative (fix-first) would have blocked the geocoder on a corpus/grouper change.
 - **Build national situs UNFILTERED.** The zero-OSM probe overrode the campaign's "filter to NAD" plan.
   Alternative (NAD-only) would have dropped 39.4M points for no licensing benefit.
-- **Full national interpolation (all 3144 counties), not top-N.** The rural tail counties are tiny
+- **Full national interpolation (all 3144 counties) rather than top-N.** The rural tail counties are tiny
   (fast to fetch/build), so full ≈ top-N in cost but complete in coverage.
 - **Observability before RemoteResolver**, against the issue's stated order. Rationale: the issue says
   "measure SLOs first" (needs the latency instrument) and `/health` is high-value/low-risk, whereas

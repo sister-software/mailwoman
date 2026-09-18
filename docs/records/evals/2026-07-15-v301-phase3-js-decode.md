@@ -22,7 +22,7 @@ country channels **fed**, against the real 0.573 baseline.
 | oracle@10                     | 0.749                            | **0.7753**                    |
 
 Phase 1's +7.9pp was measured in the channel-starved Python check, where `token@1` reads 0.4906
-instead of 0.5693. **A large part of that gap was the BIO head's starvation, not the span head's
+instead of 0.5693. **A large part of that gap was the BIO head's starvation rather than the span head's
 strength.** Feed the channels and the BIO head recovers most of it. The Phase-1 doc flagged the
 absolutes as non-comparable; it did not anticipate that the _margin_ would shrink this much, and the
 direct correction belongs at the top rather than in a footnote.
@@ -51,7 +51,7 @@ state: **+23.8pp at rank 1**, and oracle@5 clears **0.90** on this fixture.
 
 The span head's value is **concentrated exactly where the BIO head fails**. On contextful addresses —
 most of the general corpus — BIO + channels already works and the span decode adds ~nothing at rank 1.
-On bare fragments it adds 24 points. That is a coherent result, not a disappointing one: it is the
+On bare fragments it adds 24 points. That is a coherent result rather than a disappointing one: it is the
 night-3 partition (66% of street failures are bare fragments) showing up in the ledger.
 
 **But it also means `seg@1` alone does not justify shipping the decode.** A +0.75pp aggregate margin
@@ -84,7 +84,7 @@ is a real drift hazard — a transposed unflatten in one host would mis-tag ever
 PLACETYPE_ORDER failure mode, one layer down). A **cross-runner parity test** pins them: the same
 flat buffer must produce the same nested array on both sides.
 
-**#378 SLO, measured on `onnxruntime-web`'s WASM EP** — the runtime the demo runs, not the
+**#378 SLO, measured on `onnxruntime-web`'s WASM EP** — the runtime the demo runs rather than the
 `onnxruntime-node` bench Phase 2 used:
 
 |                                | ms/infer             | spans read |

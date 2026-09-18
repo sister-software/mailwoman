@@ -3,7 +3,7 @@
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
 capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx).
-That matrix is a maintainer record, not a page on the site: `docusaurus.config.ts` serves `articles/`
+That matrix is a maintainer record rather than a page on the site: `docusaurus.config.ts` serves `articles/`
 and `research/`, and the August reorg left `records/` unpublished, so read it in the repository.
 Per-release detail lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
 and the per-step eval reports under `docs/records/evals/`.
@@ -73,7 +73,7 @@ be the only affected one — the five state and federal adapters that key human-
 `normalizeKeys: false`, and `form499-workbook.ts` is the only file in the repository that calls
 `normalizeColumnNames` directly.
 
-### Changed — a command's name is what it declares, not where its file sits
+### Changed — a command's name is what it declares rather than where its file sits
 
 `listCommandNames` in the native CLI router read a command's name off its filename, so the layout was a user-facing
 contract: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
@@ -155,7 +155,7 @@ written by `packages/mailwoman/lib/dev-tools/family/board.run.ts` over a curated
 record the builder resolves by name and refuses when absent or tied, and every status is what the shipped pipeline did
 when the file was written. The read moves two of the four issues. District plus city (#1914) parses on 20 of 21 rows,
 with the district as `dependent_locality`, and fails on the coordinate alone, 2.7–8.7 km off at the parent city's
-point: the stage that must change is the resolver, not the parse. Commonwealth and military po_box (#517) passes 14 of 16, `GPO Box`,
+point: the stage that must change is the resolver rather than the parse. Commonwealth and military po_box (#517) passes 14 of 16, `GPO Box`,
 `Locked Bag`, `Private Bag`, `PSC … Box` and `CMR … Box` all among them; the class is now the two `Unit … Box` rows.
 The locality-postcode family (#1821) reads 10 of 17, every Venezuelan row failing as measured; the possessive qualifier
 (#1754) 4 of 13. The grading and the case-file writer are one module, `grade-seed-cases.ts`, which the Singapore
@@ -168,7 +168,7 @@ The Spanish trailing-region tuples taught the region in English: 3,289 rows on d
 `…, 07691 Portopetro, Illes Balears, Spain` (#1673). The extraction read the gazetteer's English-preferred `spr.name`.
 It now reads the region's preferred names in the languages the region's addresses are written in, the country's
 official languages plus the province's co-official ones, and keeps the English exonym as one surface beside them; the
-locality takes its accented official form. The languages come from the codex, not from the names table's own list,
+locality takes its accented official form. The languages come from the codex rather than from the names table's own list,
 because Who's On First's preferred name in a language not spoken in a province is often the parent community's
 (`Zamora` → `Castella i Lleó`): `@mailwoman/codex/es` carries the sixteen provinces the statutes give a co-official
 language, and `@mailwoman/codex/country`'s `regionLanguagesAlpha3` answers per region. `mailwoman corpus tuples` is the
@@ -500,7 +500,7 @@ holds the tree at zero so it cannot return.
 `@mailwoman/filer/frn`, `@mailwoman/filer/family-rollup` and `@mailwoman/filer/filer-lookup`. No shims. All three
 are also re-exported from the package root, so `@mailwoman/filer` itself keeps resolving them.
 
-They are identity and corporate-family readers, not acquisition — and they were exactly the symbols a request path
+They are identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
 needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel,
 which `export *`s seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the EDGAR
 ingest along to reach three functions. That import now names the three modules, and `dependency-cruiser`'s

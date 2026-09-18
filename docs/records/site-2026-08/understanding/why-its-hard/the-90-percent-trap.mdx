@@ -12,7 +12,7 @@ tags:
 
 A geocoder that correctly parses 90% of addresses sounds good. It sounds especially good when the alternative — building or buying a better one — costs engineering time or API fees. The trap is that the 10% tail is not random. It is concentrated in the populations you most need to serve: rural areas, developing economies, multifamily housing, and anyone whose address doesn't look like a suburban US single-family home.
 
-This article is an economic argument, not a technical one. It explains why 90% coverage is deceptively expensive — and why owning your parser so you can fix your own failure modes is cheaper long-term than renting someone else's.
+This article is an economic argument rather than a technical one. It explains why 90% coverage is deceptively expensive — and why owning your parser so you can fix your own failure modes is cheaper long-term than renting someone else's.
 
 ## The 10% tail is concentrated
 
@@ -58,7 +58,7 @@ This is the inverse of the Pareto principle: the **last 10% of coverage costs mo
 | Privacy       | Your queries are Google's data          |
 | Customization | None — you get Google's ontology        |
 
-At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is not a large line item for a logistics company — $60,000/year. But the dependency is total: you cannot audit the results, you cannot fix failures, you cannot cache your own correctness corrections, and your query logs train Google's model, not yours. If Google changes its pricing (it has, multiple times) or its terms (it has), you have no alternative.
+At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is not a large line item for a logistics company — $60,000/year. But the dependency is total: you cannot audit the results, you cannot fix failures, you cannot cache your own correctness corrections, and your query logs train Google's model rather than yours. If Google changes its pricing (it has, multiple times) or its terms (it has), you have no alternative.
 
 ### geocode.earth / Pelias
 

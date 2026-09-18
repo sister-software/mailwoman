@@ -37,7 +37,7 @@ describe("segment", () => {
 		const text = "350 5th Ave,   New York"
 		const segs = segment(text)
 		expect(segs[1]!.body).toBe("New York")
-		// The trimmed segment should start at the 'N' position, not at the comma.
+		// The trimmed segment should start at the 'N' position rather than at the comma.
 		expect(text[segs[1]!.span.start]).toBe("N")
 	})
 

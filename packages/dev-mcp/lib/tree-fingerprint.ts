@@ -59,7 +59,7 @@ export interface TreeFingerprint {
 	gitHead: string
 	/**
 	 * Paths with uncommitted changes, as `git status --porcelain` reports them. A dirty tree is normal during development
-	 * — this is carried so a result can say which files were uncommitted when it was produced, not to refuse.
+	 * — this is carried so a result can say which files were uncommitted when it was produced rather than to refuse.
 	 */
 	dirtyFiles: string[]
 	/**

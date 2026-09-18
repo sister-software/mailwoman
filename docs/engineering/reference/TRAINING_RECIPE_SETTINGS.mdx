@@ -50,10 +50,10 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** When enabled, the encoder concatenates a per-token feature vector from the phrase grouper (Stage 2.7) onto the token embeddings before the first transformer layer. The feature encodes "is this token at the start/middle/end of a proposed phrase?" and "what kind of phrase does the grouper think this is?" (numeric, street, locality, etc.).
 
-| Value | Where                              | What happened                                  |
-| ----- | ---------------------------------- | ---------------------------------------------- |
-| false | v0.5.0, v0.5.0 bisect (phrase-off) | Diverged (dual-loss issue, not phrase-priors). |
-| true  | v0.5.1 (h384 + CE-only)            | Stable. val_macro_f1=0.633 at 55K.             |
+| Value | Where                              | What happened                                         |
+| ----- | ---------------------------------- | ----------------------------------------------------- |
+| false | v0.5.0, v0.5.0 bisect (phrase-off) | Diverged (dual-loss issue rather than phrase-priors). |
+| true  | v0.5.1 (h384 + CE-only)            | Stable. val_macro_f1=0.633 at 55K.                    |
 
 **How we got here.** Phrase priors were the headline architectural contribution of v0.5.0 Thread E (phrase grouper) + Thread C (classifier conditioning). They were turned off during the bisect campaign because we couldn't afford to test each variable on slow hardware. The v0.5.1 "unchained" run turned them back on. They're stable under CE-only.
 
@@ -75,7 +75,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../records/site-2026-08/concepts/dual-loss-curvature-conflict.mdx).
 
-**What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent, not a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
+**What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent rather than a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
 
 **Ceiling.** 0.0 is the floor. There is no known ceiling because any value > 0 reintroduces the curvature conflict on this data. The structural CRF benefits (no orphan I-tags) are preserved at inference via the frozen mask. The training-side CRF NLL is unnecessary.
 
@@ -114,14 +114,14 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** How large a step the optimizer takes per gradient update. Too high = overshoots optima (divergence). Too low = converges too slowly or gets stuck.
 
-| Value  | Where                              | What happened                    |
-| ------ | ---------------------------------- | -------------------------------- |
-| 5e-4   | v0.4.0 runs 1-2                    | Diverged step 750-1000.          |
-| 3e-4   | v0.4.0 run 3                       | Diverged step 1000.              |
-| 1.5e-4 | v0.3.0, v0.4.0 §4-only, all v0.5.x | Stable everywhere under CE-only. |
-| 1e-4   | v0.5.0 LR-drop attempt             | Diverged (dual-loss, not LR).    |
+| Value  | Where                              | What happened                        |
+| ------ | ---------------------------------- | ------------------------------------ |
+| 5e-4   | v0.4.0 runs 1-2                    | Diverged step 750-1000.              |
+| 3e-4   | v0.4.0 run 3                       | Diverged step 1000.                  |
+| 1.5e-4 | v0.3.0, v0.4.0 §4-only, all v0.5.x | Stable everywhere under CE-only.     |
+| 1e-4   | v0.5.0 LR-drop attempt             | Diverged (dual-loss rather than LR). |
 
-**How we got to 1.5e-4.** v0.3.0 empirically found it as the stable LR for this architecture + corpus. v0.4.0 tried higher (5e-4, 3e-4) but the bisect showed divergence was recipe-driven, not LR-driven. 1.5e-4 has been the constant since.
+**How we got to 1.5e-4.** v0.3.0 empirically found it as the stable LR for this architecture + corpus. v0.4.0 tried higher (5e-4, 3e-4) but the bisect showed divergence was recipe-driven rather than LR-driven. 1.5e-4 has been the constant since.
 
 **Ceiling.** Unknown under CE-only. The dual-loss divergence at higher LRs was caused by the CRF curvature conflict, which is gone. Higher LR might now be stable. But 1.5e-4 is working well enough that there's no pressure to explore.
 

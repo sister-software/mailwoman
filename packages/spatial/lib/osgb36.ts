@@ -5,7 +5,7 @@
  *
  *   OSGB36 / British National Grid (EPSG:27700) → WGS84 (EPSG:4326).
  *
- *   Ordnance Survey ships its open products in eastings/northings on the National Grid, not in
+ *   Ordnance Survey ships its open products in eastings/northings on the National Grid rather than in
  *   degrees — Code-Point Open, OS Open UPRN, OS Open Names all do. Nothing else in the repo speaks
  *   that coordinate system, so this module is the one place that converts it, and it lives in
  *   `@mailwoman/spatial` because that is the math home (`projection.ts` names the datums. this file
@@ -26,7 +26,7 @@
  *
  *   ## Accuracy: ±5 m, measured, and why we accept it
  *
- *   OSGB36 is a 1936 theodolite triangulation, not a geocentric datum. Its distortions relative to
+ *   OSGB36 is a 1936 theodolite triangulation rather than a geocentric datum. Its distortions relative to
  *   WGS84 are irregular across GB — a couple of metres of local warp that no rigid-body transform can
  *   absorb. OS's exact answer is **OSTN15**, a published ~1.5 MB grid of per-cell E/N shifts. the
  *   seven-parameter Helmert implemented here is OS's own documented approximation to it, which the
@@ -122,8 +122,8 @@ const PPM = 1e-6
 
 /**
  * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon}, in METRES of northing. OS's
- * guide specifies 0.01 mm. this is that figure. It bounds the northing residual, not the latitude, which is why it is
- * expressed in metres and compared against `northing - N0 - M`.
+ * guide specifies 0.01 mm. this is that figure. It bounds the northing residual rather than the latitude, which is why
+ * it is expressed in metres and compared against `northing - N0 - M`.
  */
 const MERIDIONAL_ARC_TOLERANCE_M = 1e-5
 

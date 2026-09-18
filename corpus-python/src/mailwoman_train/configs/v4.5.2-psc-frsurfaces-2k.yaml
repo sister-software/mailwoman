@@ -5,7 +5,7 @@
 # One config knob vs v4.5.0: synth-fr-bare-street weight 12.0 -> 6.0 (the FR shapes were the
 # erosion's attacker. CZ stays 12.0 — its forms were not implicated). B11 template otherwise
 # verbatim: init_from v4.4.0 step-060000, EWC lambda=1.0e4 + the base fisher, LR 1e-5.
-# Check (pre-registered, the v4.5.0 lesson): the probe is graded on the board, not val — export
+# Check (pre-registered, the v4.5.0 lesson): the probe is graded on the board rather than val — export
 # step-2000, int8, `eval gauntlet --candidate`. A pass is zero new counted failures vs the base board
 # and the bare-street probes holding (Calle de Alcalá / Madison Square West / COMER stay street-read)
 # and 'Praha 100 00, Czechia' moving. On a fail, read, never sweep.

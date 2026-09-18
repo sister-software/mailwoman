@@ -273,13 +273,13 @@ export interface EngineSummary {
  *
  * The cap is small on purpose. `geocode-stream.ts:23-28` records the measurement that sets it: on a shared multi-GB WOF
  * SQLite, throughput peaked at 2 workers (~1.4×) and DEGRADED beyond — memory bandwidth and the shared database are the
- * ceiling, not core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
+ * ceiling rather than core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
  * holding more engines adds nothing and can cost the box.
  */
 /**
  * What a tool needs from the engine registry.
  *
- * The tools take this, not {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
+ * The tools take this rather than {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
  * private fields, so no object literal can ever be assignable to it, and every stub in this package's tests had to
  * assert through `unknown` — which then keeps compiling after a method is renamed or its signature changes, and the
  * stub silently stops standing for the thing it doubles. `OracleGeocoderLike` in `oracle-arm.ts` is the same idea,
@@ -371,7 +371,7 @@ export class EngineRegistry implements EngineRegistryLike {
 			return existing
 		}
 
-		// Refuse against the BOOT fingerprint, not merely against whatever is resident. A resident engine under a
+		// Refuse against the BOOT fingerprint rather than merely against whatever is resident. A resident engine under a
 		// different digest is one symptom of a moved tree. an empty registry under a moved tree is the other, and it
 		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
 		// cannot import the new source — so both refuse here.

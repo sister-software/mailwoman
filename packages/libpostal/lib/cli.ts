@@ -9,7 +9,7 @@
  *
  *   Wires the real engine: `/parse` over Mailwoman's neural BIO tagger (`@mailwoman/neural`),
  *   `/expand` over `@mailwoman/normalize`. `/expand` is honest-minimal: it returns the original
- *   plus the deterministic normalized + abbreviation-expanded forms, not libpostal's probabilistic
+ *   plus the deterministic normalized + abbreviation-expanded forms rather than libpostal's probabilistic
  *   variants.
  */
 

@@ -14,7 +14,7 @@ counsel dossier before anything ships.
 ## 1. What is being sold
 
 Mailwoman's engine is AGPL and stays AGPL. The commercial license sells release from the
-copyleft condition, not access to the code. Neither of those is a recurring cost to us, which is
+copyleft condition rather than access to the code. Neither of those is a recurring cost to us, which is
 the flaw in pricing them alone: a perpetual grant against a one-time build.
 
 The recurring cost is the **data**. Rebuilding the admin gazetteer is a ten-minute build on top
@@ -34,7 +34,7 @@ gesturing at the brand:
 4. The free channel requires **attribution**. The paid channel does not (beyond whatever the
    upstream data's own license demands, which no contract of ours can waive).
 
-## 2. Delay, not degradation
+## 2. Delay rather than degradation
 
 The first design fork: does Lite differ from the subscriber artifact by being **older** or by
 being **worse**?
@@ -42,7 +42,7 @@ being **worse**?
 **Decision: older.** Lite and subscriber are the same bytes at different times. There is one
 build, one verify check, one artifact, and two publish dates.
 
-The argument against degradation is operational, not philosophical. A degraded artifact is a
+The argument against degradation is operational rather than philosophical. A degraded artifact is a
 second product line: a second build recipe, a second verify baseline, a second set of eval
 numbers, a second thing to regress. Worse, "degraded" has no natural stopping point — every
 support conversation becomes an argument about whether a given miss is the degradation or a bug.
@@ -50,7 +50,7 @@ A delayed artifact has neither problem. Its quality is exactly the quality we al
 published, and "how far behind is it" is a subtraction anyone can do.
 
 It also matches what the data is. An address register is a moving record of the world.
-The value in paying is having this quarter's buildings, not a secret better version of last
+The value in paying is having this quarter's buildings rather than a secret better version of last
 quarter's.
 
 ### 2.1 The cadence proposal
@@ -68,7 +68,7 @@ quarter's.
 Two honesty constraints on the "weekly" claim, both of which have to be true before it is
 published anywhere customer-facing:
 
-- **Weekly is a ceiling set by upstream, not a promise per artifact.** Overture releases
+- **Weekly is a ceiling set by upstream rather than a promise per artifact.** Overture releases
   monthly-ish; WOF changes continuously; TIGER is annual; BAN is frequent; the FCC BDC vintage
   is biannual. An artifact cannot be fresher than its source. The subscriber commitment is
   therefore "we publish within one week of a source release we ingest," not "a new artifact
@@ -77,7 +77,7 @@ published anywhere customer-facing:
   the operator rebuilds it (`RELEASING.md`: "Rebuilt periodically as WOF upstream changes"), and
   the HF dataset card has not been touched since 2026-05-28. A published weekly commitment
   without a scheduled build is a promise we would immediately break. §7 makes the scheduled
-  build a prerequisite, not a follow-up.
+  build a prerequisite rather than a follow-up.
 
 ### 2.2 What the delay is measured against
 
@@ -139,7 +139,7 @@ infrastructure:
   revoking one never touches artifacts already downloaded.
 - **Telemetry scope.** Key id, artifact, version, timestamp, coarse request origin. No IP
   retention beyond the edge log's own window, and no attempt to fingerprint an end user. The
-  privacy page needs a section for this before the endpoint exists, not after.
+  privacy page needs a section for this before the endpoint exists rather than after.
 
 > **PENDING COUNSEL — L1.** The registration form collects a name, an email, and a company, so
 > it is a personal-data collection under GDPR/CCPA, however small. What notice text must appear
@@ -148,7 +148,7 @@ infrastructure:
 > rather than an edit? File in the counsel dossier before the form goes up.
 
 > **PENDING COUNSEL — L2.** The instrument the Lite key is issued under. It is not the AGPL
-> (that governs code we wrote, not data we compiled), and it is not the commercial license. It
+> (that governs code we wrote rather than data we compiled), and it is not the commercial license. It
 > needs to be some short data-use notice that carries the attribution condition of §4 and the
 > no-redistribution-of-the-subscriber-artifact expectation, and it needs to sit correctly on top
 > of the upstream licenses in §5. Drafting that text is the counsel task; this document only
@@ -265,7 +265,7 @@ later, and the pricing page already publishes durable commitments we intend to k
    as the code and stay there. If a weights bundle ever enters the Lite line it does so as an
    _additional_ distribution channel, never as a replacement for the npm package.
 5. **No third channel.** Two channels, one rule. An "academic tier" or a "startup tier" is a
-   discount on the subscriber channel, not a new artifact line.
+   discount on the subscriber channel rather than a new artifact line.
 
 ## 7. Prerequisites, in order
 
@@ -290,7 +290,7 @@ for doing 1–4 first regardless of when counsel appears.
 
 ## 8. Open questions for the operator
 
-1. **Is 90 days the right delay?** It is a proposal, not a finding. Shorter makes Lite a real
+1. **Is 90 days the right delay?** It is a proposal rather than a finding. Shorter makes Lite a real
    product and weakens the subscription; longer makes Lite a demo. MaxMind's GeoLite equivalent
    differentiates on accuracy rather than delay, so there is no directly comparable number to
    copy.

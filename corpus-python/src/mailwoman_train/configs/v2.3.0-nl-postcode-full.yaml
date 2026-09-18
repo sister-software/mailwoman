@@ -8,7 +8,7 @@
 # If sentinels hold → full run (LR 1e-5, warmup 1000, ~5000 steps). No sentinel pinning in the pilot.
 # OUTPUT DIR IS FRESH — never overwrites v220's checkpoints (init_from reads them).
 # v2.2.0-full-family — THE #901 ANSWER AS A RECIPE: full FROM-SCRATCH retrain, the v1.9.3a3
-# NOTE (corrected during assembly): v1.9.3a3 was RESUME-lineage, not from-scratch — the modern line
+# NOTE (corrected during assembly): v1.9.3a3 was RESUME-lineage rather than from-scratch — the modern line
 # never retrained from zero. This config is the v0.8-ERA from-scratch schedule (lr 1.5e-4, warmup
 # 1000, batch 128, 100k steps — the last true from-scratch era) on the v0.10.0-boundary-family
 # corpus (698 parquet files incl. the validated four-orthography family

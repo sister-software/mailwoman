@@ -52,7 +52,8 @@ export interface NPPESStateSample {
 export interface NPPESSample extends NPPESStateSample {
 	/**
 	 * Corpus-wide address-frequency table — the inverse-frequency signal. Counted over every practice address in the
-	 * registry, not just the sample, so the sharing structure is a corpus statistic rather than a sampling artifact.
+	 * registry rather than just the sample, so the sharing structure is a corpus statistic rather than a sampling
+	 * artifact.
 	 */
 	addressFrequency: TermFrequencyTable
 }
@@ -118,7 +119,7 @@ export async function buildNPPESStateSamples(
 	report?.(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
 	// Make one full registry pass to build the global address-frequency table.
-	// address, so the sharing structure is corpus-wide, not sample-biased) and collect every state's sample. ---
+	// address, so the sharing structure is corpus-wide rather than sample-biased) and collect every state's sample. ---
 	report?.(`[B] full registry pass: address-frequency table + ${maxNpisPerState} × ${states.join("/")} sample…`)
 
 	const byState = new Map<string, NPPESStateSample>(

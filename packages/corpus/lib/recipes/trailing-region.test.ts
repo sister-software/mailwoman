@@ -43,7 +43,7 @@ describe("trailing-region postcode placement", () => {
 		const withField = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "leading" }), [])
 		const without = await run(repeat({ ...base, postcode: "07691" }), [])
 
-		// Byte-identical, not merely equivalent: the 17,908-row tuples file on disk carries no placement.
+		// Byte-identical rather than merely equivalent: the 17,908-row tuples file on disk carries no placement.
 		expect(without.rows.map((row) => row.raw)).toEqual(withField.rows.map((row) => row.raw))
 	})
 

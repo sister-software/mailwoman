@@ -66,7 +66,7 @@ export async function retrieveFilingDates(
 /**
  * Pick the latest (most recent) `as_of_date` among `entries` for the given `dataType`.
  *
- * Comparison is by parsed `Date` value, not string ordering — the FCC's `as_of_date` values are `date`-formatted
+ * Comparison is by parsed `Date` value rather than string ordering — the FCC's `as_of_date` values are `date`-formatted
  * (`YYYY-MM-DD`), which happens to sort correctly as strings too, but comparing as dates is the honest contract.
  */
 export function resolveLatestVintage(entries: readonly FCCAsOfDateEntry[], dataType: BDCFilingDataType): string {

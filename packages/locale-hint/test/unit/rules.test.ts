@@ -111,7 +111,7 @@ test("scoreByPostcode: no postcode hit at all → null", () => {
 
 test("scoreByPostcode: unambiguous hit wins over a co-present ambiguous 5-digit", () => {
 	// us_zip4@0.95 (unambiguous) and us_zip@0.6 (ambiguous) both present — the unambiguous branch
-	// runs first, so we get the strong en-US, not the 0.5 fallback.
+	// runs first, so we get the strong en-US rather than the 0.5 fallback.
 	expect(scoreByPostcode(shape({ knownFormats: [fmt("us_zip", 0.6), fmt("us_zip4", 0.95)] }))).toEqual({
 		locale: "en-US",
 		confidence: 0.95,

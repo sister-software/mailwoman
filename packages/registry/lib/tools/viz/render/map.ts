@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Render a {@link toMapHTML} page (MapLibre GL + Protomaps basemap) to a PNG via headless Chromium
- *   — the shared map renderer behind the `registry viz` map figures (an internal helper, not a
+ *   — the shared map renderer behind the `registry viz` map figures (an internal helper rather than a
  *   command).
  *
  *   Two house-stack constraints make this fiddlier than the Plotly/SVG renderers:
@@ -12,7 +12,7 @@
  *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`) provides one through
  *       SwiftShader.
  *   - The basemap tiles come from `tiles.mailwoman.ai`, which CORS-restricts to localhost + the docs
- *       domains — so the page must be served over localhost, not opened as a file (a file:// page
+ *       domains — so the page must be served over localhost rather than opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
  *

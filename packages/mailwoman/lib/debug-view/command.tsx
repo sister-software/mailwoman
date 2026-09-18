@@ -155,7 +155,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * that wipes the user's SCROLLBACK (#1577).
  *
  * Ink keeps one renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
- * `render()` arrives for the same stream. So the handoff is an unmount-then-render, not a second mount: `exit()`
+ * `render()` arrives for the same stream. So the handoff is an unmount-then-render rather than a second mount: `exit()`
  * unmounts the command tree synchronously through to `instances.delete(stdout)`, which frees the slot. It runs from a
  * `setImmediate` rather than from the effect body because `exit()` unmounts the tree this effect belongs to, and React
  * should not be asked to do that from inside its own commit.

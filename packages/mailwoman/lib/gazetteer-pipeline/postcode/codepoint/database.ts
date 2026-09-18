@@ -9,11 +9,11 @@
  *
  *   ## Why a separate builder rather than a source mode on `geonames-tail.ts`
  *
- *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
+ *   Folding this in was considered and rejected on the code rather than on taste. `geonames-tail.ts` is a
  *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
  *   and it is conditioned on per-country row-count parity against that artifact. Code-Point Open shares none
- *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row
+ *   of its inputs — different coordinate system (OSGB36 eastings/northings rather than degrees), different row
  *   grain (one row per unit postcode, so no medoid collapse), different licence block, and a row count
  *   that is SUPPOSED to differ from the frozen GB figure. Adding it as a mode would put a source that
  *   must change the numbers inside the one file whose job is to keep them identical.
@@ -228,7 +228,7 @@ export async function buildPostcodeCodePoint(
 				const name = normalizePostcodeName(record.postcode)
 				const id = CODEPOINT_ID_BASE + inserted
 
-				// Degenerate bbox — a unit postcode is a point in this product, not a polygon.
+				// Degenerate bbox — a unit postcode is a point in this product rather than a polygon.
 				sprInsert.run(
 					id,
 					name,

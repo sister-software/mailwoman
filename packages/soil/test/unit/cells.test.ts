@@ -5,7 +5,7 @@
  *
  *   The cell index this layer keeps, and the arithmetic the batched path cannot reach from a fixture build.
  *
- *   THE INVERSION IS PINNED HERE AS A PROPERTY, NOT AS A NUMBER. A polygon smaller than a cell produces
+ *   THE INVERSION IS PINNED HERE AS A PROPERTY rather than AS A NUMBER. A polygon smaller than a cell produces
  *   only `partial` cells — that is what makes this layer's containment index answer almost nothing on its
  *   own — while a polygon several cells across produces an interior that compacts. The measured shares on
  *   the real product are in the workspace README. what this file pins is that the two shapes behave

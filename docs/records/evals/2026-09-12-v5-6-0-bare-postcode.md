@@ -107,7 +107,7 @@ losing NL" meant holding 19/24. It reached 24/24.
 
 `fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-rule holds on the tier-1
 locale this arm most risked. `mask-regression` is SKIPPED because the spec declares no
-`requires_conventions`; that is a spec property, not a result.
+`requires_conventions`; that is a spec property rather than a result.
 
 The int8 delta cap, which failed an earlier arm where fp32 passed, is clear here: the largest
 divergence across 17 compared checks is **0.3pp** (`us.street`), with 11 of 17 at exactly 0.
@@ -167,7 +167,7 @@ rows until that data exists, and the tolerance is a ceiling rather than slack.
 - The capability is present on both artifacts and attributable: the 56 strings are excluded from
   training and moved 0 → 31 of 32 and 19 → 24 of 24.
 - The promotion battery passes 18 of 18 with no FR regression.
-- The two VE rows fail on a diagnosed upstream cascade, not on anything this corpus changed.
+- The two VE rows fail on a diagnosed upstream cascade rather than on anything this corpus changed.
 - `SK 010 01` and `Praha 100 00, Czechia` remain open. The in-context CZ form still splits into
   `postcode "00"` with `cz_postcode "100 00" matched: false`, so the bare form is fixed and the
   in-context form is not.

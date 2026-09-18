@@ -18,7 +18,7 @@
  *   V1 is REGION-tier only (admin.placetype = `region`): the ~124 places matching the census across 9
  *   countries (IT/ES/GB/JP/KR/FR/DE/NL/CN). County-tier same-name coincidences are deliberately
  *   excluded — they're dominated by French cantons and JP counties (admin subdivisions named after
- *   a seat town, not dual-role cities) that don't hit the parser-drops-locality failure. genuine
+ *   a seat town rather than dual-role cities) that don't hit the parser-drops-locality failure. genuine
  *   consolidated city-counties (US SF/Denver) are a separate follow-up needing a relative-size
  *   filter.
  *
@@ -31,7 +31,7 @@
  *   never enters the resolver hot path.
  *
  *   `relationship_type` is recorded for debuggability / deferred per-type behavior. v1 completion is
- *   uniform (see #405). It's a coarse classification, not critical.
+ *   uniform (see #405). It's a coarse classification rather than critical.
  *
  *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFTS`). Run incrementally
  *   against an existing `admin-global-priority.db` via `build-coincident-roles-cli.ts`; should also

@@ -19,7 +19,7 @@
  *       the sole level abbreviation pair.
  *   - **Ground floor** is treated by AMAS as `LEVEL G` (with the identifier "G"). Australia Post's
  *       addressing guidelines state that ground floor should be written as "LEVEL G"; the full word
- *       "GROUND" is a recognized alias for the identifier, not a separate designator type.
+ *       "GROUND" is a recognized alias for the identifier rather than a separate designator type.
  *   - **Mezzanine**, **Lower Ground**, and **Upper Ground** appear in AS 4590.1-2017 (the Australian
  *       Standard for interchange of client information) as recognized level-type values alongside
  *       LEVEL and GROUND. AS 4590.1-2017 Table 3 "Level type": B (Basement), G (Ground), MEZZANINE

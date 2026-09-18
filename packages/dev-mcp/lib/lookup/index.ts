@@ -63,7 +63,8 @@ export const LookupSource = {
 	 */
 	Codex: "codex",
 	/**
-	 * The postcode→anchor artifact in the resolved weights package — the channel the MODEL is fed, not a gazetteer.
+	 * The postcode→anchor artifact in the resolved weights package — the channel the MODEL is fed rather than a
+	 * gazetteer.
 	 */
 	Postcode: "postcode",
 } as const

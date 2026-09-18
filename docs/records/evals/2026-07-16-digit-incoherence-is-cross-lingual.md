@@ -13,7 +13,7 @@ why B4 (weight 12, 2k steps) moved the target only +1.7pp.**
 
 ## The one row coverage couldn't explain
 
-B1 showed most Track B failures were the Norway YAML bug (25k rows dropped) — coverage, not a model
+B1 showed most Track B failures were the Norway YAML bug (25k rows dropped) — coverage rather than a model
 defect. But one parity row survived: `aleja Wojska Polskiego 178` → postcode. **PL is in the corpus
 and admitted by the filter, and the street parses correctly**, so neither coverage nor the Track A
 street→locality leak explains it. It is the single clean digit-ownership failure.
@@ -99,21 +99,21 @@ This makes the #727 "lower-fertility vocab is upstream" claim concrete and scope
 splice** — add single pieces for common house-number and postcode ranges, exactly the shape of the
 FR multisplice that added 2,406 pieces — would make `178` one piece with zero continuations,
 removing the continuation-postcode mass for that class entirely. The model would then decide
-house_number-vs-postcode on one piece in full context (is there a street? a postcode slot?), not on a
-length-driven continuation prior. Postcodes becoming single pieces too is a feature, not a bug: a
+house_number-vs-postcode on one piece in full context (is there a street? a postcode slot?) rather than on a
+length-driven continuation prior. Postcodes becoming single pieces too is a feature rather than a bug: a
 5-digit piece and a 3-digit piece are _different_ pieces, so the model is no longer forced to use
 continuation-count as its only length discriminator.
 
 **Cost, stated directly:** a splice grows the vocab and the embedding table; the new rows need
 gradient (the init_from fine-tune path the multisplice used). It is a bigger, coordinated change than
-a extract — a tokenizer + model bump, not a corpus edit — so whether Track B justifies it is squarely
+a extract — a tokenizer + model bump rather than a corpus edit — so whether Track B justifies it is squarely
 the operator's call. But it attacks the root the extract only dents.
 
 ## What this does not change
 
 - **The fix is still a extract or the vocab — not a validator.** The house rule holds: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
-  `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it, not
+  `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it rather than
   to forbid postcodes.
 - **B4b is still the operator's call.** This sharpens the hypothesis (oversample long numbers; or go
   to vocab) but does not license a solo 3am run.

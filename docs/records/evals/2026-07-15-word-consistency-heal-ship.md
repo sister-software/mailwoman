@@ -11,7 +11,7 @@ default-OFF at the 2026-06-19 check: street −12.6 on the adversarial golden, a
 confidence-weighted vote amplifies noise on byte-soup rows," with a confidence-conditional variant named
 as the path to a clean win.
 
-Night-3 re-diagnosis: the regression was **two defects in the heal**, not vote noise —
+Night-3 re-diagnosis: the regression was **two defects in the heal** rather than vote noise —
 
 1. **Contract bug.** The vote re-decoded words whose pieces already AGREED in type whenever local
    type-mass preferred another type, silently overriding viterbi's global decision. Single-piece
@@ -22,7 +22,7 @@ Night-3 re-diagnosis: the regression was **two defects in the heal**, not vote n
 2. **Grouping bug.** Punctuation continuation pieces joined the preceding word's vote group
    (`Ave` + `,` — the comma piece carries no `▁` sentinel), and their `O` mass manufactured a fake
    intra-word disagreement that killed the real span. This is the whole ordinal-street golden class
-   (`1st Ave, ND`: the street dies at the comma, not at the ordinal). Fixed by
+   (`1st Ave, ND`: the street dies at the comma rather than at the ordinal). Fixed by
    `splitOnPunctuation`: punctuation-only pieces separate vote groups like whitespace — which also
    rescues slash compounds (`Unit 12/345` keeps unit ≠ house_number).
 
@@ -64,7 +64,7 @@ exact-match 24.5% → 25.5%. Full tables: `scratchpad/ea-wc-{off,on}.md` (sessio
 6/6 both modes, zero grouper-audit nodes. The `Pier 39` unit-tag quirk (conf 0.03) is pre-existing
 v264 behavior — identical with the heal off.
 
-### Diacritic locales (parity subset, heal ON — the "visibility, not regression" check)
+### Diacritic locales (parity subset, heal ON — the "visibility rather than regression" check)
 
 | locale | street-tag exact | resolve-locality |
 | ------ | ---------------- | ---------------- |

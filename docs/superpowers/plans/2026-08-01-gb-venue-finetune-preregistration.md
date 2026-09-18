@@ -20,7 +20,7 @@ rows fall into the shipped-era collapse (venue absorbed as locality/street).
 2. **Venue pool**: a GB-flavored pool alongside PLAIN_VENUES — institutional forms (Club/center/
    House/Arms/Station), "Ye"-archaic, and brand–dash–place compounds, INCLUDING directional-led
    names (the target class is venue-leading compass words). **The six probe venues themselves are
-   excluded** — the gauntlet fixtures must stay held-out, not taught to.
+   excluded** — the gauntlet fixtures must stay held-out rather than taught to.
 3. **Tuples**: extend `build_house_venue_tuples.py` with `--gb` sampling from the on-disk PPD
    derivation (`$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv`: NUMBER/STREET/CITY/DISTRICT/
    REGION/POSTCODE) → house-venue-tuples-v3.jsonl (FR 60k + US 60k + GB 60k).
@@ -61,7 +61,7 @@ becomes the B11 template default. Ties break to the larger λ.
 
 ## What ships on PASS
 
-Model 7.0.1 (a venue increment off the 7.0.0 base) is **staged, not auto-promoted** — the promote
+Model 7.0.1 (a venue increment off the 7.0.0 base) is **staged rather than auto-promoted** — the promote
 decision is the operator's with the verdict in hand. The gauntlet fixtures flip
 `improvement_target` → `pass` only at promote time.
 
@@ -73,13 +73,13 @@ The first λ sweep (v4.1.0, venue weight 2.0, lr 1e-5, 2k steps) came back **non
 four λ values byte-identical to the base on the six target fixtures, GB board venue 53.8% →
 54.5% (noise). The exposure arithmetic confirms the design defect: at weight 2.0 the venue extract is ~1.4% of
 samples — ~7k venue rows (~2.4k GB) seen in 2k steps at a fine-tune lr. The probe cannot
-exercise λ if the increment moves nothing; the sweep result is VOID, not "λ unconstrained".
+exercise λ if the increment moves nothing; the sweep result is VOID rather than "λ unconstrained".
 
 **Named revision (the one allowed):** raise `synth-house-venue` to **12.0** for the fine-tune
 feed — the v3.8.x oversample precedent (no-fragment ran its corrective extract at 12.0) — and
 re-run the identical 4-λ × 2k sweep as v4.1.2. Everything else unchanged. The λ pick rule
 applies at the revised weight. If the revised probe still shows no target movement, STOP —
-operator conversation before any further spend (the mechanism, not the weight, would be in
+operator conversation before any further spend (the mechanism rather than the weight, would be in
 question).
 
 ---
@@ -107,14 +107,14 @@ rules): they fail through three different mechanisms, each outside the extract's
    at ~29% at every weight; the PPD tuples are overwhelmingly typed streets. Ye Three Lords
    needs the model to accept a bare proper noun as a street on positional evidence alone.
 2. _The doubled bare venue_ ("Southfields Station, Southfields Station") — a venue-only
-   fragment, not the extract's venue+address template at all.
+   fragment rather than the extract's venue+address template at all.
 3. _Abbreviated internal directionals_ ("New N Rd") interacting with a directional-led venue —
    plus a digit-split oddity on "13 Gerrard St" (house_number "Ger") worth its own look.
 
 Each is nameable future work (a typeless-street extract leg; a venue-only doubled template in the
 no-street extract; an abbreviation-augmentation pass over the GB leg) — but that is three
-mechanisms, not the one contingency the envelope allows. **Stopped per pre-registration; the
-candidate (model 7.0.1-candidate, staged, not promoted) + all receipts go to the operator.**
+mechanisms rather than the one contingency the envelope allows. **Stopped per pre-registration; the
+candidate (model 7.0.1-candidate, staged rather than promoted) + all receipts go to the operator.**
 The six gauntlet fixtures stay `improvement_target`.
 
 ---

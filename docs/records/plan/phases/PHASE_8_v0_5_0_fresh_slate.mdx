@@ -44,7 +44,7 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
   - **Transliteration pairs**: generate N (target ~50K) US/FR addresses with their CJK/Cyrillic/Armenian script transliterations. Both as input → English gold pairs and as augmented training rows for the existing en-US/fr-FR classifiers.
   - **Kryptonite generation**: prompt-engineer DeepSeek to produce the operator's kryptonite catalogue at scale — `Buffalo Buffalo`, `NY-NY Steakhouse, Houston, TX`, `Saint Petersburg, FL`, `Paris, Texas`, mid-position postcodes, etc. Target 5-10K such examples with annotated correct parses.
   - **License hygiene**: DeepSeek outputs are AGPL-compatible for our use case. Document the generation pipeline + prompts so the corpus is reproducible.
-- **Output:** `corpus-v0.4.0` (added to `corpus-v0.3.0` rows, not replacing). Pure adapter additions; existing weights remain valid.
+- **Output:** `corpus-v0.4.0` (added to `corpus-v0.3.0` rows rather than replacing). Pure adapter additions; existing weights remain valid.
 - **Blocks:** Threads A, C.
 - **Blocked by:** nothing — can start immediately.
 

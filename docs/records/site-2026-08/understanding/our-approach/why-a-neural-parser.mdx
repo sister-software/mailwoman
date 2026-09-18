@@ -37,24 +37,24 @@ The rule-based approach won the first decade of geocoding (2008-2018) because th
 
 Mailwoman is not the first project to notice this. Deepparse (a 2020 academic project from Université Laval) showed that a BiLSTM encoder-decoder could match libpostal's accuracy on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is **productization**: a TypeScript-first runtime, browser deployability, per-component policy migration, and a corpus pipeline designed for retraining rather than one-shot publication.
 
-## What "neural" means: a small transformer, not a large one
+## What "neural" means: a small transformer rather than a large one
 
-Mailwoman's neural classifier is a **9-million-parameter encoder-only transformer** trained from scratch on address data. It is about the same size as a 2018 BERT-mini, not a 2026 GPT-6. This is deliberate.
+Mailwoman's neural classifier is a **9-million-parameter encoder-only transformer** trained from scratch on address data. It is about the same size as a 2018 BERT-mini rather than a 2026 GPT-6. This is deliberate.
 
 ### Why small
 
-Address parsing is a narrow task. The vocabulary is small (street names, city names, state abbreviations, country names — tens of thousands of tokens, not hundreds of thousands). The grammar is simple (ordered components, limited nesting). The output space is 21 BIO labels. A general-purpose language model that can write poetry and debug JavaScript is vast overkill.
+Address parsing is a narrow task. The vocabulary is small (street names, city names, state abbreviations, country names — tens of thousands of tokens rather than hundreds of thousands). The grammar is simple (ordered components, limited nesting). The output space is 21 BIO labels. A general-purpose language model that can write poetry and debug JavaScript is vast overkill.
 
 A small model is:
 
 - **Fast.** ~10ms per address on CPU.
 - **Browser-deployable.** The full ONNX bundle is ~25MB compressed.
 - **Cheap to train.** A full training run is ~6 hours on a consumer GPU.
-- **Cheap to retrain.** When you add training data for a new failure mode, you can retrain in hours, not days.
+- **Cheap to retrain.** When you add training data for a new failure mode, you can retrain in hours rather than days.
 
 ### Why from scratch
 
-The model is trained from scratch on Mailwoman's corpus, not fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
+The model is trained from scratch on Mailwoman's corpus rather than fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
 
 The argument for training from scratch: address text is unlike natural language. Street names are not sentences. Postcodes are not words. The co-occurrence statistics that a general-English BERT learns from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") are not useful for distinguishing "Saint" (street prefix) from "Saint" (part of a locality name). Training from scratch lets the model learn co-occurrence patterns that are specific to addresses.
 
@@ -74,7 +74,7 @@ The model is the **contextual parser** half of a "contextual parser + constraint
 
 ## Why rules still exist
 
-Rules are being augmented, not replaced.
+Rules are being augmented rather than replaced.
 
 Mailwoman v2 keeps every rule classifier from v1:
 

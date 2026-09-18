@@ -96,7 +96,7 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
  * misses the D-rule regressions that do ride the pipeline stages. With a `weightsCache` classifier this is fully
  * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
  * to load the locale FST from the weights package. The `--model` scorer path carries no FST (matching the gauntlet's
- * legacy `createScorer` modes — the FST belongs to the weights package, not the scorer).
+ * legacy `createScorer` modes — the FST belongs to the weights package rather than the scorer).
  */
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)

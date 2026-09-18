@@ -114,7 +114,7 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
  * `JAL`, `SP` are what appears on the envelope.
  *
  * WHEN THIS IS WRONG FOR YOUR CASE, read `raw.address_components` — both forms are always there. This is a default that
- * makes the common case right, not a claim about postal law.
+ * makes the common case right rather than a claim about postal law.
  */
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
 

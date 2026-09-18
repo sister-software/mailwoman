@@ -9,7 +9,7 @@
  *   does: resolve a user-typed POSTAL city ("Antioch", 37013) to the geographic locality the
  *   postcode sits in ("Nashville").
  *
- *   Why a SIDE-INDEX, not cloned `candidate` rows: the `candidate` B-tree is keyed `(name_key,
+ *   Why a SIDE-INDEX rather than cloned `candidate` rows: the `candidate` B-tree is keyed `(name_key,
  *   country_id, region_id, placetype_id, …)` and ranked population-first — it has no postcode
  *   dimension. A cloned alias row was tested (#741) and falsified: a sentinel rank is
  *   bare-name-safe but then loses to any in-region homonym, and there is no single rank that is

@@ -18,7 +18,7 @@
  *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
  *       titlecase).
  *
- *   The anchor is membership CLUES, not verdicts — the model decides every tag (model-first, see
+ *   The anchor is membership CLUES rather than verdicts — the model decides every tag (model-first, see
  *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
  *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
  *
@@ -145,7 +145,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 		for (const map of [entries, codeEntries]) {
 			for (const [key, bits] of map) {
 				if (bits & BIT.country && bits & BIT.region) {
-					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union, not a mistyped logical or
+					// oxlint-disable-next-line oxc/bad-bitwise-operator -- genuine bit-set union rather than a mistyped logical or
 					map.set(key, bits | BIT.homograph)
 				}
 			}

@@ -58,7 +58,7 @@ The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508
 `corpus/src/synthesize-po-box.ts` ships these templates plus three design decisions from a DeepSeek consultation:
 
 1. **PMB shares the `po_box` tag**. USPS treats PMB as a PO Box alias in CASS processing; downstream code can distinguish via "is a street line also present?" without needing a separate label.
-2. **Whole-phrase spans** ("PO Box 123" as one `po_box` span, not "123" alone). Matches the existing golden eval convention.
+2. **Whole-phrase spans** ("PO Box 123" as one `po_box` span rather than "123" alone). Matches the existing golden eval convention.
 3. **10% number-format noise** (commas, dashes, embedded spaces). Real OCR'd input is lousy with "Box 1,234" and "PMB-200" — the parser ships with that as native input.
 
 ## The pipeline

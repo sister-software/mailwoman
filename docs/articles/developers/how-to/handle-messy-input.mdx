@@ -69,7 +69,7 @@ more letters while leaving one- and two-letter runs shouting, so `DC` stays `DC`
 long runs, uppercase the short ones, so `dc` becomes `DC`. Both rewrites are length-preserving, and
 mixed-case or non-Latin input passes through byte-identically.
 
-## 2. Read offsets against your string, not against the tree's
+## 2. Read offsets against your string rather than against the tree's
 
 Case normalization has one consequence that surprises people, and it is worth ten seconds now rather
 than an afternoon later:
@@ -88,7 +88,7 @@ tree.raw: "1275 Pennsylvania Ave NW, Washington, DC 20004"
 ```
 
 The input to that run was all lowercase. `tree.raw` and every `value` come back in the normalized
-casing, not the casing you sent. Because the rewrite preserves length, `start` and `end` still index
+casing rather than the casing you sent. Because the rewrite preserves length, `start` and `end` still index
 your original string — so `yourInput.slice(node.start, node.end)` gives you your bytes back whenever you
 need to echo the user's own text.
 

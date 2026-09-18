@@ -5,7 +5,7 @@
  *
  *   Country-reference annotators. The flag emoji is a pure function of the ISO 3166-1 alpha-2 code
  *   (two Regional Indicator Symbols); calling code + currency come from {@link COUNTRY_REFERENCE}, a
- *   table generated from mledoze/countries (provenance-tracked, not hand-typed — the
+ *   table generated from mledoze/countries (provenance-tracked rather than hand-typed — the
  *   no-irrelevant-trivia rule).
  */
 

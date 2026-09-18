@@ -422,7 +422,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				// 2, not 1 — filerLookup refuses a manifest reporting a
+				// 2 rather than 1 — filerLookup refuses a manifest reporting a
 				// schema_version that predates filer_family, which this fixture now also creates above.
 				schema_version: 2,
 				source: "form-499,bdc-provider-list",
@@ -551,7 +551,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
 			// Two rows, same frn and same holding_company — proves the single-distinct-value shortcut looks at the
-			// DISTINCT set across every row, not just "there happened to be one row" (700002's trivial case above).
+			// DISTINCT set across every row rather than just "there happened to be one row" (700002's trivial case above).
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]
@@ -608,8 +608,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_004)
 			.executeTakeFirstOrThrow()
 
-		// Two rows, but the same holding_company on both — one DISTINCT value, not two rows worth of ambiguity —
-		// still populates. Proves the shortcut compares the distinct SET, not just "was there only one row".
+		// Two rows, but the same holding_company on both — one DISTINCT value rather than two rows worth of ambiguity —
+		// still populates. Proves the shortcut compares the distinct SET rather than just "was there only one row".
 		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
 		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
@@ -659,7 +659,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			})
 		).rejects.toThrow(/700001/)
 
-		// Loud, not partial: no sealed artifact from a build that couldn't resolve a required primary FRN.
+		// Loud rather than partial: no sealed artifact from a build that couldn't resolve a required primary FRN.
 		expect(await pathExists(providerOut)).toBe(false)
 	})
 
@@ -737,7 +737,7 @@ describe("peekProviderID", () => {
 })
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
-	// `peekProviderID` needs a finiteness guard, not a bare `Number.parseInt(...) as ProviderID`. A
+	// `peekProviderID` needs a finiteness guard rather than a bare `Number.parseInt(...) as ProviderID`. A
 	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (INTEGER NOT NULL) as
 	// SQLite NULL — `INSERT OR IGNORE` then silently drops every row of the file, miscounted as ordinary `deduped`
 	// rows rather than surfaced as the malformed-file error it actually is. This test goes through `csvPaths` (the
@@ -768,7 +768,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 		expect((caught as Error).message).toMatch(/provider_id/)
 		expect((caught as Error).message).toContain(malformedCSVPath)
 
-		// The rejection must be loud, not partial: no sealed artifact from a file whose rows were all rejected,
+		// The rejection must be loud rather than partial: no sealed artifact from a file whose rows were all rejected,
 		// never silently materialized/counted as "deduped".
 		expect(await pathExists(out)).toBe(false)
 	})

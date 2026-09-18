@@ -18,8 +18,8 @@
 #
 # PRE-REGISTERED READ (written before the numbers exist):
 #   PRIMARY : raw-BIO dependent_locality emission (GB + NZ boards), read off the checkpoint curve
-#             (every saved step, not just the endpoints) — step-8000 emission >= step-2000
-#             emission. No re-burial is the bar. the trajectory across the run is the evidence, not
+#             (every saved step rather than just the endpoints) — step-8000 emission >= step-2000
+#             emission. No re-burial is the bar. the trajectory across the run is the evidence rather than
 #             a single endpoint.
 #   INTERPRETATION:
 #     - Held (step-8000 emission >= step-2000, no re-burial): cRT gives better base weights for
@@ -34,10 +34,10 @@
 #                                            dead-tag mechanism finds its way back to a degenerate
 #                                            optimum even with a frozen, already-adequate
 #                                            representation. The bias-first path (the placetype-pair
-#                                            prior as the primary change, not a retrain schedule)
+#                                            prior as the primary change rather than a retrain schedule)
 #                                            stands.
 #   Because the encoder is frozen for the entire run, representation drift as a confound is
-#   EXCLUDED BY CONSTRUCTION, not merely controlled for — any change in emission traces to the
+#   EXCLUDED BY CONSTRUCTION rather than merely controlled for — any change in emission traces to the
 #   classifier head alone.
 #   GUARDS: none registered beyond the primary — this is a cheap, informational probe (~5 min GPU
 #   per DeepSeek's estimate), not a ship candidate. No promote path. report only. cRT "recovers the
@@ -104,7 +104,7 @@
 # ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
 # auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
-# all (silent no-op, not an error). See train.py L433-456.
+# all (silent no-op rather than an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
 # own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —

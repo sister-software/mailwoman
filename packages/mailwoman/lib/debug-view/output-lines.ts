@@ -7,7 +7,7 @@
  *   result panel, section for section: parsed components, the kind verdict, stage timing, the resolved place, the admin
  *   hierarchy, then the runner-up candidates.
  *
- *   A flat list is the design, not a shortcut. The pane scrolls, and a scroll offset over a nested structure has to be
+ *   A flat list is the design rather than a shortcut. The pane scrolls, and a scroll offset over a nested structure has to be
  *   translated into "which section, which row" by whoever draws it and by whoever clamps the offset. over a flat list
  *   both are one `.slice()` call. That is also why this module is pure data rather than elements: `DebugFrame` renders the list and
  *   `DebugSessionApp` clamps its ↑/↓ against the same list, so the two can't disagree about how far down it goes.
@@ -212,7 +212,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		kind: "field",
 		label: "  tier",
 		badge: result.resolution_tier,
-		// An admin centroid is the fallback answer, not the house-grade one the other tiers promise.
+		// An admin centroid is the fallback answer rather than the house-grade one the other tiers promise.
 		badgeColor: result.resolution_tier === "admin" ? "yellow" : "green",
 	})
 
@@ -226,7 +226,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 
 	// The resolved place is the DEEPEST decorated node — `hierarchy` is ordered most-specific-first, so its head is
 	// the finest place the gazetteer actually confirmed. Deliberately not `candidates[0]`: that is the resolver's
-	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database, not a
+	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database rather than a
 	// place row) it falls back to the first resolved admin node — the region, which is not what a reader means by
 	// "resolved place". The candidate head still shows up below when it differs.
 	const place = result.hierarchy.at(0)

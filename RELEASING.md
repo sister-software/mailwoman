@@ -77,7 +77,7 @@ The two sources differ only in where the bytes come from:
 version>` overrides the version, which otherwise comes from the base package's `model-card.json`
   exactly as CI reads it.
 
-What `--source hf` materializes is DERIVED, not listed: each `neural-weights-<locale>` package's
+What `--source hf` materializes is DERIVED rather than listed: each `neural-weights-<locale>` package's
 `files` array minus what `git ls-files` already reports, which is the same predicate
 `verify-tarball.ts` refuses a publish over. Each download is checked against the md5s the model
 cards declare, and the filenames no card declares one for are named in the receipt rather than
@@ -104,7 +104,7 @@ pushes, plus a daily audit that opens one deduplicated issue on a stale pin reac
 ## Before you ship — the Gauntlet
 
 Before shipping a model (or any change that can move a coordinate), run the full-pipeline Gauntlet.
-It grades the ASSEMBLED output (coordinate + tier), not per-tag F1 — the lesson #566 paid for once.
+It grades the ASSEMBLED output (coordinate + tier) rather than per-tag F1 — the lesson #566 paid for once.
 
 ```bash
 # Self-check on the shipped default (regression + metamorphic):
@@ -268,7 +268,7 @@ The manual recipe below is the same thing, step by step, for reference / one-off
 # 0. DURABLE upstream GeoNames-alias fold (#743/#193). Fold the bilingual / alt-language place-names
 #    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
 #    natively (FI hard-resolve 69.5→85.8%, coverage 74.4→94.0%) — the alt-name attaches to the real
-#    WOF place ("Karjaa" → Karis), not a duplicate row. Reuses ingestGeonamesAliases +
+#    WOF place ("Karjaa" → Karis) rather than a duplicate row. Reuses ingestGeonamesAliases +
 #    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the retired
 #    candidate-side stopgap (build-candidate-geonames-aliases, which patched a built candidate.db to
 #    MEASURE the lift before this became the durable home — the fold now lives in
@@ -333,7 +333,7 @@ minutes to propagate to all edges — don't conclude it's broken from a test in 
 - **Full sync** — every package in `.release-it.json` shares one version per release, the model included. The
   workspaces plugin enforces it, so don't fight it. `release.config.json#version` carries that number; the model
   card's `version` and the demo's `releases.json` are bumped to match.
-- **The model version follows the release**, not the other way around. The underlying trained artifact keeps its
+- **The model version follows the release** rather than the other way around. The underlying trained artifact keeps its
   own identity (filename, training step, tokenizer) under `release.config.json#weights` and in the model card's
   `model_lineage`; the published `version` is the unified release number (e.g. the Stage-3 / step-100000
   model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
@@ -355,7 +355,7 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 | ------------- | ------------------------------------------- | ------------------------------------------------------------------------------ |
 | **npm**       | `publish.yml` (CI, OIDC)                    | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
 | **HF bucket** | `mailwoman release hf`                      | the npm fetch source + HF-direct `loadFromWeights`                             |
-| **R2/demo**   | `docs/scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.mailwoman.ai`, NOT HF)                         |
+| **R2/demo**   | `docs/scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.mailwoman.ai` rather than HF)                  |
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
 
@@ -364,8 +364,8 @@ The end-to-end order that worked: **the promotion eval (revised if needed) → c
 - **`release.config.json` silently drifts from the card, and copy-weights trusts the config.** The card wins for _which_ model ships; `release.config.json#weights.model` is the PATH copy-weights.ts materializes from. They must move in the same commit as the card (Step 1 items 2+3) — when they don't, copy-weights materializes the superseded model and the Gauntlet grades it silently (#1024: config lagged at v220 `a64ad2e6` while the v5.4.0 promote shipped v230 `ea785a70`, costing a bisect detour). **Guardrail (#1024):** the Gauntlet harness now asserts the materialized `neural-weights-en-us/model.onnx` md5 == the card's `files_md5["model.onnx"]` for the shipped default and fails the Gauntlet on mismatch. Since the Gauntlet is the release `before:release` step, a drifted config can no longer ship. #1005 fixed the dev-weights-symlink half of the same class; this is the release-config half.
 - **The floor comparison is `>=`** (`mailwoman eval promote`, `mailwoman/eval-harness/promotion-eval.ts`). A floor set exactly at the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A promotion eval that needs a floor lowered gets a **new eval file** with a stated `$revision_*` reason (no silent drift); the full promotion eval is ~12–15 min, so set the floors right the first time.
 - **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions only `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` all of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
-- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, not a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
-- **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this, not the prior bucket's).
+- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation rather than a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
+- **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the promotion eval ran against — use this rather than the prior bucket's).
 
 ### Step 0 — figure out the version number (the divergence trap)
 
@@ -382,7 +382,7 @@ curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq -r .defau
 number is `max(npm-latest, demo-default) + one minor`. For v4.11.0: npm was at 4.10.0, demo at v4.6.0 → ship
 `4.11.0`. Do not assume the next number after the demo's model version — it will collide with npm.
 
-### Step 1 — promotion is a model-card REWRITE, not a relabel
+### Step 1 — promotion is a model-card REWRITE rather than a relabel
 
 When the model you're shipping isn't the current default, the repo still describes the old model. Update,
 in `main`, before anything is staged:
@@ -470,7 +470,7 @@ Four FST binaries in `$MAILWOMAN_DATA_ROOT/wof/` predate the `FST_LOCALES` regis
 **nothing in the tree can rebuild them.** `mailwoman gazetteer build fst` throws on any locale absent
 from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output template
 (`fst-<locale>.bin`) cannot even express the global one. `mailwoman gazetteer verify` reports them as
-`NO BUILDER — … has no FST_LOCALES entry`; that row is the intended signal, not a defect to silence.
+`NO BUILDER — … has no FST_LOCALES entry`; that row is the intended signal rather than a defect to silence.
 
 - **`fst-global-priority.bin` — RETIRED as of 2026-08-06. Do not stage it, and do not re-publish it.**
   Nothing in the tree loads it: the only in-tree reference is the freshness inventory
@@ -502,7 +502,7 @@ curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, bo
 `--pair-indexes` above stages the binaries on **Hugging Face**. The copies the browser demo reads are a separate
 push: they only reach the bucket through `publish-demo-assets-to-r2.py`, from a `--src` tree you assemble by hand.
 Nothing else produces them — not `publish.yml` (it downloads them from HF into the weights workspaces for the npm
-tarballs), not the docs runtime-assets plugin (that copies them into the Pages deploy for dev preview only).
+tarballs) rather than the docs runtime-assets plugin (that copies them into the Pages deploy for dev preview only).
 
 Stage them under a generation segment:
 
@@ -552,7 +552,7 @@ cd $(mktemp -d) && npm init -y >/dev/null && npm install mailwoman@<NEW> --dry-r
 
 Every model promotion leaves the same three-part staleness behind — a number copied from the old
 card, a CLI capture from the old weights. Do this AFTER Step 4 (the model is live), so captures run
-against the real shipped weights, not a staging candidate:
+against the real shipped weights rather than a staging candidate:
 
 1. **Refresh the model-card-derived numbers** on the known surfaces. **This list predates the site
    restructure and most of it no longer names a published page — see #2259.** The published tree is
@@ -608,8 +608,7 @@ both dry and real runs (skipped only on `publish_only` recovery). Run it locally
 yarn mwops release verify-metadata   # exit 0 = propagated; exit 1 = one actionable error per stale surface
 ```
 
-It keys off the **model** version — the `version` field of `neural-weights-en-us/model-card.json`,
-not npm/`package.json` — and checks: (1) `evals/scores-by-version.json` has a run for that
+It keys off the **model** version — the `version` field of `neural-weights-en-us/model-card.json` rather than npm/`package.json` — and checks: (1) `evals/scores-by-version.json` has a run for that
 `model_version`; (2) `releases.mdx` has a matrix row for it and the `(current)` marker sits on it;
 (3) the `status.mdx` `:::info[Verified as of …]` box cites it. Because it reads the model card, a
 **code-only release** (npm bumps, the model card doesn't) passes without error: the `(current)` marker is
@@ -738,7 +737,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    model, the `fst-en-US.bin` + `wof-hot.db` are unchanged; copy them from the previous version's bucket path.
 
    > **⚠️ The HF `--set-default` alone does not flip the live demo** (night-10 discovery, v4.2.0):
-   > `public.mailwoman.ai` serves from the **R2** bucket, not HF. The demo leg is a second, mandatory
+   > `public.mailwoman.ai` serves from the **R2** bucket rather than HF. The demo leg is a second, mandatory
    > step — stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the prior
    > version's R2 path when unchanged) into the R2 layout and run:
    >
@@ -758,7 +757,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    the model to already be on HF for that version (step 1).
 
 > A previous version of this workflow pulled weights from a Cloudflare R2 bucket (`mailwoman-assets`). That
-> bucket is the **training-data** store (corpus + tokenizer for Modal), not a release store; the pull was
+> bucket is the **training-data** store (corpus + tokenizer for Modal) rather than a release store; the pull was
 > unreliable and never shipped a model, and it's been removed.
 
 ## Client packages
@@ -796,7 +795,7 @@ Every dispatch of `publish.yml` — including a `dry_run` — regenerates both c
 workflow artifacts (`mailwoman-client-python`: the wheel + sdist; `mailwoman-client-rust`: a tarball of
 the assembled crate). That half runs unconditionally: it's the same local, receipt-verified pipeline as
 `mailwoman clients generate` (below), so a broken generator or a spec that drifted out from under
-`progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not the runs alone
+`progenitor`/`openapi-python-client` fails the job and shows up on every dispatch rather than the runs alone
 where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
 
 **A red `clients` job concludes the release run FAILED, and that is a receipt — not a rollback**
@@ -836,7 +835,7 @@ Provisioned by the operator:
   verified (crates.io refuses publishes until it is).
 
 Both registry names (`mailwoman-client` on PyPI and crates.io) were unclaimed as of 2026-07-12 —
-reserved by intent, not yet claimed. The first dispatches claim them.
+reserved by intent rather than yet claimed. The first dispatches claim them.
 
 ### Version sync — a client-only fix can't republish alone
 
@@ -852,7 +851,7 @@ crates.io both permanently reject re-publishing an already-used version number, 
 there is no "5.10.1, republished" override. The action is to ride the next scheduled release
 train — run an ordinary `yarn release` / `publish.yml` dispatch (code-only is fine) and the client fix
 goes out at that version alongside everything else. If this constraint ever becomes a real bottleneck
-(a client-only bug that can't wait), that's the trigger to revisit the sync decision, not a workaround
+(a client-only bug that can't wait), that's the trigger to revisit the sync decision rather than a workaround
 to reach for first.
 
 ### Local receipt — before touching the pipeline or provisioning anything
@@ -874,7 +873,7 @@ never be used to validate a real change — the verify step is the entire point.
   runner). A future step could have CI fetch them from Hugging Face before publishing, mirroring what the demo
   already does at runtime.
 - **`mailwoman release hf` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
-  is a separate manual command after the npm release, not part of `yarn release`.
+  is a separate manual command after the npm release rather than part of `yarn release`.
 - **Client-package first publish** — provisioning is done (see "Client packages" above: `pypi` +
   `cargo` environments, Trusted Publisher now bound to `publish-clients.yml`). First publishes are done for
   PyPI (`mailwoman-client` 6.0.0 live via Trusted Publishing); crates.io publishes via

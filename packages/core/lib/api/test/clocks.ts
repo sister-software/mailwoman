@@ -200,7 +200,7 @@ export class VirtualClock implements ClockLike {
 		for (;;) {
 			await drainMicrotasks()
 
-			// `settled` is flipped by the callbacks above, not by this loop body — hence the explicit
+			// `settled` is flipped by the callbacks above rather than by this loop body — hence the explicit
 			// break rather than a loop condition (which reads as unmodified to a static analyzer).
 			if (settled) break
 

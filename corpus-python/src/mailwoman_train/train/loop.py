@@ -5,7 +5,7 @@ owns state a callback only sees the end of. The running train loss accumulates a
 callback reports, so resetting it is what closes that window. Evaluating costs a forward pass over
 the val split, so the loop decides when it happens and the callbacks only observe the result.
 
-`step` counts OPTIMIZER steps, not micro-batches, so it lines up with `cfg.train.max_steps`
+`step` counts OPTIMIZER steps rather than micro-batches, so it lines up with `cfg.train.max_steps`
 whatever `grad_accum_steps` is.
 """
 
@@ -140,8 +140,7 @@ def run_training_loop(
             tb = to_tensor_batch(batch, device)
             apply_curricula(cfg, tb, step)
             # Optimizer step happens every ``accum`` micro-batches. gradients accumulate
-            # across the micro-batches in between. ``step`` counts *optimizer* steps,
-            # not micro-steps, so it lines up with the cfg.train.max_steps budget.
+            # across the micro-batches in between. ``step`` counts *optimizer* steps rather than micro-steps, so it lines up with the cfg.train.max_steps budget.
             is_accum_boundary = ((micro_step + 1) % accum) == 0
             if micro_step % accum == 0:
                 optim.zero_grad(set_to_none=True)
@@ -181,7 +180,7 @@ def run_training_loop(
             step += 1
             train_loss_running += float(loss.detach().cpu()) * accum
 
-            # The running sum is the loop's, not a callback's: it accumulates across the window
+            # The running sum is the loop's rather than a callback's: it accumulates across the window
             # a callback only sees the end of, and resetting it is what closes that window.
             if step % log_every == 0:
                 state.train_loss = train_loss_running / log_every

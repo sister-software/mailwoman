@@ -64,15 +64,15 @@ nearest-distance distribution (km, results-cases with ≥1 result, n=29): min 0.
   convention.
 - **nearest-distance distribution** — p50 0.58 km, p95 8.42 km, all well inside the 25 km
   tolerance on passing cases. The board is not measuring at the edge of its own tolerance
-  band; when a case fails it fails on zero results, not a near-miss on distance.
+  band; when a case fails it fails on zero results rather than a near-miss on distance.
 
 ## Notable failures (3/45, all left failing — not tuned away)
 
-| id     | query                                  | why                                                                                                                                                                                                                                                     |
-| ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago and near Austin (spot-checked separately) — a real poi.db coverage gap for that category, not an anchor-resolution miss                                                                              |
-| nm-06  | `supermarket near Guadalajara, Mexico` | same `supermarket` coverage gap, MX side                                                                                                                                                                                                                |
-| nm-04  | `hiking trail near Marseille`          | `trail` category (Overture `route=hiking`) returns 0 rows near Marseille, Toulouse, and Denver (spot-checked) — Overture Places carries few if any point-shaped trail rows; a structural fit issue for a line-geometry feature, not a query-parsing bug |
+| id     | query                                  | why                                                                                                                                                                                                                                                            |
+| ------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| syn-05 | `grocery near Chicago IL`              | `supermarket` category returns 0 rows near Chicago and near Austin (spot-checked separately) — a real poi.db coverage gap for that category rather than an anchor-resolution miss                                                                              |
+| nm-06  | `supermarket near Guadalajara, Mexico` | same `supermarket` coverage gap, MX side                                                                                                                                                                                                                       |
+| nm-04  | `hiking trail near Marseille`          | `trail` category (Overture `route=hiking`) returns 0 rows near Marseille, Toulouse, and Denver (spot-checked) — Overture Places carries few if any point-shaped trail rows; a structural fit issue for a line-geometry feature rather than a query-parsing bug |
 
 Both gaps are **subject-match successes, execution misses** — `matchPOISubject` correctly
 resolved `grocery`→`supermarket` and `hiking trail`→`trail` in every case; the poi.db search
@@ -81,7 +81,7 @@ bug here, the underlying category coverage does.
 
 One additional near-anomaly worth recording even though it didn't fail a fixture: anchor
 resolution is locale-sensitive in ways that aren't obvious from the query text alone. `"cafe
-near Montreal QC"` resolves the FTS backend to a same-named town in Wisconsin, not Montréal,
+near Montreal QC"` resolves the FTS backend to a same-named town in Wisconsin rather than Montréal,
 Québec — dropping the `QC`/state-style suffix in favor of `"cafe near Montreal, Canada"`
 resolves correctly. `"pharmacy near Calgary AB"` abstains `anchor_required` outright (the
 parse doesn't attach a resolvable center to the region-suffixed form), while bare `"bank near
@@ -143,7 +143,7 @@ category set each register as a breach.
   categories match what `osmTag`/category-id mapping in `poi-taxonomy/data/taxonomy.json`
   expects.
 - The Montreal/Calgary anchor-resolution quirks are FTS-backend homonym-ranking behavior,
-  independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering, not
+  independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering rather than
   logged as a poi-board failure because no fixture encodes an expectation against it.
 
 ## Standing update — 2026-07-20 (after #1206 / #1208 / #1209)
@@ -155,7 +155,7 @@ Overture snapshot under a curated overlay. Re-run against the rebuilt `poi.db`
 (`poi/2026-07-20a/poi.db`), the board now sits at **50/51 = 98.0% overall**, with **36/37
 results**, **abstain 8/8 (100%)**, and **address-guard 6/6 (100%)**.
 
-`nm-04` (`hiking trail near Marseille`) is the sole holdout. It is a ring-budget case, not a
+`nm-04` (`hiking trail near Marseille`) is the sole holdout. It is a ring-budget case rather than a
 coverage gap: the nearest `hiking_trail` row sits ~3.9 km from the Marseille anchor while the
 executor's k-ring reach lands at ~4 km, so the row fallsoutside the searched cells. The
 `supermarket` gaps (`syn-05`, `nm-06`) and the `trail` gap on the other anchors that failed in

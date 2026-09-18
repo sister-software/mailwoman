@@ -8,7 +8,7 @@
  *   The model reads a bare famous name as a `street` ("Zürich", "Berlin", "Moscow", "Fulda"), so it
  *   never reaches the admin walk and span-rescore is the only tier that resolves it. That tier takes
  *   the caller's `country` as a hard gazetteer filter — and for this query shape the caller's country
- *   is a locale default, not knowledge (span-rescore.ts already says so, at the #961 block). Measured
+ *   is a locale default rather than knowledge (span-rescore.ts already says so, at the #961 block). Measured
  *   through the compiled CLI on 2026-08-10: `geocode --locale en-US 'Zürich'` returns Zurich, Kansas
  *   (population 81), 8,043 km from the gold; `--locale en-GB 'Zürich'` returns nothing at all.
  *
@@ -199,7 +199,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	})
 
 	it("does NOT fire when a postcode qualifies the query (the hard filter stands)", async () => {
-		// A postcode is knowledge, not a locale guess — it has already picked the country.
+		// A postcode is knowledge rather than a locale guess — it has already picked the country.
 		const raw = "Berlin 54923"
 
 		const roots = [
@@ -233,7 +233,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const calls: Array<{ text: string; country?: string }> = []
 		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), { country: "DE" })
 
-		expect(hit?.place.id).toBe(8) // Weimar DE, not Thüringen AT
+		expect(hit?.place.id).toBe(8) // Weimar DE rather than Thüringen AT
 		expect(calls.filter((c) => c.text === "Thüringen").every((c) => c.country === "DE")).toBe(true)
 	})
 

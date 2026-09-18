@@ -21,7 +21,7 @@
  *   outright (operator ruling 2026-07-15), so no consumer may route through legacy rules on a trip.
  *
  *   It deliberately does not flag region-tier resolutions: a US state or a province centroid
- *   (`Texas` → the TX centroid) is a legitimate coarse geocode, not garbage. Only "resolved no finer
+ *   (`Texas` → the TX centroid) is a legitimate coarse geocode rather than garbage. Only "resolved no finer
  *   than a country" trips it.
  */
 
@@ -102,9 +102,10 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * manifest table at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record). When a
  * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those REPLACE this table wholesale
  * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
- * key here. This constant is the fallback for artifacts predating the manifest. grow the manifest record, not this.
+ * key here. This constant is the fallback for artifacts predating the manifest. grow the manifest record rather than
+ * this.
  *
- * A box bounds the country's outlying territory, not its populated core: one trimmed to the mainland refuses the
+ * A box bounds the country's outlying territory rather than its populated core: one trimmed to the mainland refuses the
  * Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. A country whose extent crosses the antimeridian cannot be
  * expressed as one box, so NZ spans the full longitude range and constrains latitude only.
  *

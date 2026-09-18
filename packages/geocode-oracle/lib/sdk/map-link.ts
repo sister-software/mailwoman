@@ -8,7 +8,7 @@
  *   human already picked, out of a link they already have — which is a different and often better oracle, because
  *   somebody chose that place deliberately rather than a matcher guessing at a string.
  *
- *   Same posture as the rest of the package: not truth, not a check. A share link points at whatever pin its author
+ *   Same posture as the rest of the package: not truth rather than a check. A share link points at whatever pin its author
  *   clicked, which may be a car park, a mall's centroid, or the wrong branch.
  *
  *   ## `!3d`/`!4d` is the pin. `@lat,lng` is not.
@@ -84,7 +84,7 @@ export interface MapLinkResolution {
  */
 const PIN_PATTERN = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/
 /**
- * `@<lat>,<lon>,<zoom>` — the map camera, not the place.
+ * `@<lat>,<lon>,<zoom>` — the map camera rather than the place.
  */
 const VIEWPORT_PATTERN = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/
 /**

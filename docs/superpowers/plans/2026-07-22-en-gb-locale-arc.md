@@ -17,7 +17,7 @@
 - Lint/format: oxlint + oxfmt (pre-commit checks formatting — run `npx oxfmt <file>` before committing).
 - Compiled CLI for runs: `yarn compile` then `node mailwoman/out/cli.js ...`. Never `npx tsx`.
 - Zero raw `process.env`/`process.argv` in shipped code — use `@mailwoman/core/env` + `core/utils/scripting`; data paths via `dataRootPath()` (never hardcode `/mnt/playpen/mailwoman-data`).
-- Acronym casing: whole camelCase components (`extractPPD`, not `extractPpd`).
+- Acronym casing: whole camelCase components (`extractPPD` rather than `extractPpd`).
 - never wrap `modal run -d` in shell `timeout`. Launch detached, poll with `run_in_background` + until-loops.
 - PPD snapshot (frozen): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/pp-complete.csv` (31,346,259 rows, md5 recorded). Column order: `0 id, 1 price, 2 date, 3 postcode, 4 type, 5 newbuild, 6 tenure, 7 PAON, 8 SAON, 9 street, 10 locality, 11 town, 12 district, 13 county, 14 category, 15 status`. All fields ALL-CAPS. Modern rows fill `locality` only when ≠ town; 1995-era rows pad `locality`=town (~64% of filled) — drop when equal.
 - Label indices (STAGE3, num_labels=33): `B-dependent_locality`=7, `I-dependent_locality`=8. Classifier: `model.classifier` = `nn.Linear(384, 33)`.
@@ -419,7 +419,7 @@ it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLoca
 - [ ] **Step 2: Run to verify the new test passes already or fails only on fixture plumbing**
 
 Run: `yarn vitest run corpus/src/extract-recipes/locale.test.ts`
-Expected: the GB test should pass with no production change (`readTuples` is source-agnostic) — it locks the mapping. If it fails, fix the test fixture, not `readTuples`.
+Expected: the GB test should pass with no production change (`readTuples` is source-agnostic) — it locks the mapping. If it fails, fix the test fixture rather than `readTuples`.
 
 - [ ] **Step 3: Add the `COUNTRY_SOURCES.GB` entry**
 
@@ -475,8 +475,8 @@ git commit -m "feat(corpus): GB locale source (PPD tuples) + country-append frac
 **Files:**
 
 - Create: `mailwoman/eval-harness/fixtures/gb-golden.jsonl` (~120 rows)
-- Create: `mailwoman/eval-harness/fixtures/nz-suburb-golden.jsonl` (promoted from `scratchpad/nz-golden-v383/nz.jsonl`, 300 rows / 246 suburb rows — the resurrection read board must be a committed artifact, not scratchpad)
-- Output (data, not committed): GB extract JSONL under the corpus build area
+- Create: `mailwoman/eval-harness/fixtures/nz-suburb-golden.jsonl` (promoted from `scratchpad/nz-golden-v383/nz.jsonl`, 300 rows / 246 suburb rows — the resurrection read board must be a committed artifact rather than scratchpad)
+- Output (data rather than committed): GB extract JSONL under the corpus build area
 
 **Interfaces:**
 
@@ -507,7 +507,7 @@ Expected: dependent_locality present on a substantial fraction (PPD profile says
 
 - [ ] **Step 3: Build the GB golden board**
 
-Generate 120 rows from the PPD tail (held-out modern rows, not rows used in the extract — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
+Generate 120 rows from the PPD tail (held-out modern rows rather than rows used in the extract — use `tail -1000000` sampling with a different seed), stratified: 60 with dependent_locality, 40 without, 20 with a country suffix. Same row shape as the NZ board. Hand-eyeball all 120 before committing (the operator reviews this file in the task's PR).
 
 - [ ] **Step 4: Promote the NZ board**
 
@@ -780,7 +780,7 @@ Expected: `postcode-gb.bin` written (outward-aggregated, ~3k records). Verify wi
 
 `neural-weights-en-gb/package.json` — copy `neural-weights-fr-fr/package.json` and change: name `@mailwoman/neural-weights-en-gb`, description (en-gb wording), `files` entry `postcode-fr.bin` → `postcode-gb.bin`, repository.directory. KEEP: `"dependencies": { "@mailwoman/neural-weights-en-us": "workspace:*" }`, `"mailwoman": { "baseWeights": "@mailwoman/neural-weights-en-us" }`, the license string, the `!*.test.ts` excludes. Copy `.npmignore` and the `link-dev-weights.ts` script from fr-fr, adjusting the linked file set — and include the anchor-lexicon + postcode-bin siblings (the link-dev-weights gap memory: fresh worktrees parse anchor-OFF when those aren't linked).
 
-- [ ] **Step 3: Wire the release path (the postcode-de outage lesson — day one, not ship time)**
+- [ ] **Step 3: Wire the release path (the postcode-de outage lesson — day one rather than ship time)**
 
 - `release.config.json`: `"locales": ["en-us", "fr-fr", "en-gb"]`; `softFeed.postcodeDBByCountry` add `"gb": "postalcode-gb.db"`.
 - `.github/workflows/publish.yml`: add `postcode-gb.bin` to the HF fetch + the hardcoded artifact guard list (L124, 155-161); extend the cp fallback block so en-gb receives the shared lexicons (mirror the fr-fr lines).

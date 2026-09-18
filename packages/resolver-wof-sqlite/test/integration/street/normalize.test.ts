@@ -59,7 +59,7 @@ describe("normalizeStreetForKey", () => {
 	})
 
 	it("does NOT fold an ordinal WORD that is not followed by a street suffix", () => {
-		// "First National Bank Rd" — "First" is a name prefix here, not an ordinal cross-street.
+		// "First National Bank Rd" — "First" is a name prefix here rather than an ordinal cross-street.
 		expect(normalizeStreetForKey("First National Bank Rd")).toContain("first")
 	})
 
@@ -207,7 +207,7 @@ describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 
 		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
 		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("jerozolimskie")
 		expect(normalizeStreetForKeyLocale("Plac Zamkowy", "pl")).toBe("zamkowy")
-		// The type alone is a name, not a prefix — never stripped to nothing.
+		// The type alone is a name rather than a prefix — never stripped to nothing.
 		expect(normalizeStreetForKeyLocale("Ulica", "pl")).toBe("ulica")
 	})
 

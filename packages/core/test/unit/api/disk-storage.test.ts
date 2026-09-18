@@ -279,7 +279,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 
 			await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
 
-			// And the key reads back as a plain miss, not as a half-written entry.
+			// And the key reads back as a plain miss rather than as a half-written entry.
 			expect((await storage.get("k")).state).toBe("empty")
 		} finally {
 			await restore()

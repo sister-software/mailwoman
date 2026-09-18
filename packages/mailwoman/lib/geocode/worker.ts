@@ -28,7 +28,7 @@ const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 
 const classifier = await NeuralAddressClassifier.loadRoutedFromWeights({ locale: cfg.locale })
 const wof = await import("@mailwoman/resolver-wof-sqlite")
-// Through the selector, not a direct FTS construction: a batch worker must resolve the same way the CLI and the
+// Through the selector rather than a direct FTS construction: a batch worker must resolve the same way the CLI and the
 // drop-in servers do, or a row geocoded in bulk answers differently from the same row geocoded singly.
 const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)

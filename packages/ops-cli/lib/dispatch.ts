@@ -241,7 +241,7 @@ async function runFix(
 
 	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two
 	// siblings that now share `outlier-`. So the plan is re-taken until the check has nothing left to say. The bound is
-	// a guard against a rule that never settles, not an expected number of passes — the repository's deepest family
+	// a guard against a rule that never settles rather than an expected number of passes — the repository's deepest family
 	// took two.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }

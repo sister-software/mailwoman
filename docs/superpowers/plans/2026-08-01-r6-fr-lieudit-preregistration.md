@@ -13,12 +13,12 @@ a mistake, and it is worth stating why, because the US instance took exactly the
 
 - A quartier **never appears in a French postal address.** French addresses are number, street,
   postcode, commune; the arrondissement is encoded in the postcode itself (75001 = 1er), and the
-  quartier is a cartographic subdivision, not an address line.
+  quartier is a cartographic subdivision rather than an address line.
 - The line that does appear is the **lieu-dit** — a named hamlet or place within a commune, written
   on its own line between the street and the commune. `261 Impasse des Pinsons / Pinsonnac / 12210
 Montpeyroux` is the shape.
 
-So the FR source is BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0), not WOF. Same mechanism,
+So the FR source is BAN's `nom_ld` field (DINUM/IGN, Licence Ouverte 2.0) rather than WOF. Same mechanism,
 different source — chosen by what the postal format carries. Getting this wrong would
 produce a technically-valid index that biases toward spans real French addresses never contain.
 
@@ -43,7 +43,7 @@ under test is that a lieu-dit pair index moves it the way GB's moved 0/69 → 69
   the order the GB δ-sweep cleared. Baseline to beat is the recorded 2/80 emit.
 - **D-R6.4 (disclosure).** Report what fraction of the golden board's (lieu-dit, commune) pairs the
   built index contains. A high positive score driven by a board whose pairs are all in the
-  index measures mechanism efficacy, not generalization — the same caveat R5's B-R5.3 carried, and
+  index measures mechanism efficacy rather than generalization — the same caveat R5's B-R5.3 carried, and
   it must be stated rather than implied.
 
 Failing B-R6.1 or B-R6.2 stops the ship regardless of B-R6.3.
@@ -57,7 +57,7 @@ self-check probes hit.
 
 And it changed nothing. The board stayed at **0/80**, with 100% of its pairs present in the index.
 An artifact that is provably correct and provably inert is a mechanism bug, so the next step was
-diagnosis, not tuning. Two defects, both in the shared probe chain rather than anything French:
+diagnosis rather than tuning. Two defects, both in the shared probe chain rather than anything French:
 
 **1. The segment probe assumed the parent owns its segment.** It stripped a TRAILING postcode from
 a parent-candidate key ("Macclesfield SK11 9PD" → "macclesfield") — the Anglo/NZ convention — and
@@ -88,11 +88,11 @@ multi-line address, in every locale, was silently missing the segment path.
 - **B-R6.3 PASS, and it is the campaign's largest single move.** The pre-existing 120-row
   `fr-lieudit-golden.jsonl` (80 rows carrying a dependent locality) goes **0/80 emit → 80/80 emit,
   0 → 76 tag-correct = 95.0%** against a ≥70% bar. The prior-OFF leg on identical bytes stays 0/80,
-  so the artifact is what moved it. The 4 residual misses are span-boundary, not retrieval: dropped
+  so the artifact is what moved it. The 4 residual misses are span-boundary rather than retrieval: dropped
   particles ("Pres" for "Pres de la Fontaine", "Jardin Touve" for "Jardin du Touve") and one
   unbalanced quote — the prior fired on all 80.
 - **D-R6.4 disclosed.** 80/80 of the board's pairs are in the index, so B-R6.3 measures mechanism
-  efficacy where the gazetteer has data, not generalization. Unavoidable here and worth naming: the
+  efficacy where the gazetteer has data rather than generalization. Unavoidable here and worth naming: the
   board and the index are both BAN-derived. The same caveat R5's B-R5.3 carried.
 
 ## Verdict

@@ -153,7 +153,7 @@ test("scoreRegionAbbreviation: non-tail region in a non-last segment gets the ne
 
 test("scoreRegionAbbreviation: a region-shaped HEAD of a multi-word place name is suppressed", () => {
 	// "SAN NAZARIO" — "SAN" is region-shaped but is followed by capitalized place-name content that is
-	// neither a region abbreviation nor a street suffix → it is the HEAD of a place name, not a region.
+	// neither a region abbreviation nor a street suffix → it is the HEAD of a place name rather than a region.
 	const text = "SAN Nazario"
 	const out = scoreRegionAbbreviation(tokens(text), text, true)
 	// "SAN" suppressed. "Nazario" is not 2-3 uppercase letters → never region-shaped. → no proposals.
@@ -292,7 +292,7 @@ test("scoreLocalityPhrase: a known US region name not at segment-tail is penaliz
 		{ body: "Tower", start: 6, end: 11, kind: "LOCALITY_PHRASE" },
 	])
 
-	expect(out[0]!.confidence).toBeCloseTo(0.35, 10) // "Texas" region-name, not at tail: 0.55 − 0.2
+	expect(out[0]!.confidence).toBeCloseTo(0.35, 10) // "Texas" region-name rather than at tail: 0.55 − 0.2
 	expect(out[1]!.confidence).toBeCloseTo(0.85, 10) // "Texas Tower": 0.55 + 0.15 + 0.05 + 0.1
 	expect(out[2]!.confidence).toBeCloseTo(0.7, 10) // "Tower" (at tail, last): 0.55 + 0.05 + 0.1
 })

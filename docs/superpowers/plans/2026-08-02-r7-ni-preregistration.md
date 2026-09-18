@@ -21,12 +21,12 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 
 1. **`"Londonderry / Derry"` is a single WOF surface.** It folds to one key that matches neither
    "Londonderry" nor "Derry", so those 3 pairs would ship dead — present in the artifact, incapable
-   of firing. A slash-separated WOF parent is an ALIAS SET, not a name; the extraction emits one
+   of firing. A slash-separated WOF parent is an ALIAS SET rather than a name; the extraction emits one
    pair per alternative. This is the dual-naming convention the city carries politically, and the
    index has to accept whichever form the writer used.
 2. **`"Lower Shenkill"` is a misspelling of Shankill** (the correctly-spelled "Upper Shankill" sits
    beside it in the same source). Harmless by construction — a wrong surface only never matches
-   real input — so it is recorded, not patched. Never edit a reference source in place; the fix
+   real input — so it is recorded rather than patched. Never edit a reference source in place; the fix
    belongs upstream.
 
 ## Pre-registered bars
@@ -48,7 +48,7 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 
 The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it — the pair index
 is hard-blocked on the resolved locale's country, so an IE artifact inside en-GB would never fire.
-That is a packaging decision plus the still-open license survey (Tailte Éireann / logainm), not a
+That is a packaging decision plus the still-open license survey (Tailte Éireann / logainm) rather than a
 rung that can be executed off the shelf like this one.
 
 ## The readings

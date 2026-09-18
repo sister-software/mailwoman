@@ -11,7 +11,7 @@
 # fixture that stops representing reality is a check that passes while meaning nothing. This run is
 # what would say so.
 #
-# A failure here is a DATA finding, not a broken build. Read it as "the gazetteer changed under the
+# A failure here is a DATA finding rather than a broken build. Read it as "the gazetteer changed under the
 # lexicon", and check the gazetteer build log before assuming the test is wrong.
 name: Lexicon nightly
 
@@ -32,7 +32,7 @@ env:
 
 concurrency:
   group: lexicon-nightly
-  # A queued second run would race the first for the same databases; the newest is the one that
+  # A queued second run would race the first for the same databases. the newest is the one that
   # matters, and neither is required for a merge.
   cancel-in-progress: true
 

@@ -14,7 +14,7 @@ Gold conventions, decided once here:
    component (`(Australia)` → country), it is labeled as that component, delimiters excluded.
 3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits;
    the c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
-   poisoning, not c/o extraction (that capability is a separate future change).
+   poisoning rather than c/o extraction (that capability is a separate future change).
 4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
    excluded from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
    still graded — never omitted. BALANCED quotes that are part of a name as written stay
@@ -37,7 +37,7 @@ Gold conventions, decided once here:
 `--engine v0` vs neural v4.4.0 ship config + `--fold-gold`. **Composition-shift note:** the set
 grew 120→200 on 2026-06-12, deliberately deepening slash, bracketed, and mixed-hard — the classes
 where v0 ties or where the depth decision needed more signal. Per-class numbers shifted relative to
-the 120-row run because the MIX changed (more challenging slash/mixed-hard rows were added), not
+the 120-row run because the MIX changed (more challenging slash/mixed-hard rows were added) rather than
 because either engine's behavior changed. Do not read this table as a model regression or
 improvement vs the 120-row baseline; it is a different population.
 

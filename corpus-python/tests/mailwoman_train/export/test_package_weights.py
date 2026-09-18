@@ -24,7 +24,7 @@ from mailwoman_train.labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE2_FINE_T
 def test_phase_label_reports_current_stage():
     # With ACTIVE_TAGS pointing at STAGE3_TAGS (the v0.6.0 ship-line), the phase
     # label must mention Stage 3 — otherwise the published model card silently
-    # mislabels itself. The named-stage branch must fire, not the "Custom" fallback.
+    # mislabels itself. The named-stage branch must fire rather than the "Custom" fallback.
     label = _phase_label()
     assert "Stage 3" in label, f"unexpected phase label {label!r}"
     assert not label.startswith("Custom"), f"phase label fell through to the fallback: {label!r}"

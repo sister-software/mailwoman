@@ -17,7 +17,7 @@ from ....corpora.builder import MAX_FIELD_CHARS
 from ....text.normalize import normalize_text
 from ..text import JP_PREFECTURES, normalize_name, normalize_number
 
-#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing, not here: reading the
+#: Where each input sits under `$MAILWOMAN_DATA_ROOT`. Resolved after parsing rather than here: reading the
 #: root at import would raise for a caller who passes the flag and never needs it.
 PARQUET_PARTS = ("overture", "2026-06-17.0", "addresses-jp.parquet")
 KENALL_PARTS = ("KEN_ALL_ROME", "KEN_ALL_ROME.CSV")
@@ -67,7 +67,7 @@ def load_kenall_postcodes(path: Path) -> KenAllIndex:
 
     Column layout: ``postcode, prefecture-kanji, city-kanji, town-kanji, …romaji``. Town names carry
     parenthetical annotations (``大通東（１～１３丁目）``) that are stripped, and the literal
-    ``以下に掲載がない場合`` ("if not listed below") is the municipality catch-all, not a town.
+    ``以下に掲載がない場合`` ("if not listed below") is the municipality catch-all rather than a town.
     """
     town: dict[str, str] = {}
     municipality: dict[str, str] = {}

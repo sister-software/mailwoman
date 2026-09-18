@@ -28,14 +28,14 @@ and a compliance team ends up with two provider universes that never reconcile.
 Mailwoman's record matcher doesn't try to make the strings agree. It resolves each record to a
 **place** — parse the address with the neural parser, geocode it, take the coordinate and the
 canonical key — and then asks a smaller, better question: _of the records at (or near) this place,
-which are the same entity?_ Blocking happens on the map, not on the text, so "STE 200" versus no
+which are the same entity?_ Blocking happens on the map rather than on the text, so "STE 200" versus no
 suite, "Dr" versus "Drive", ZIP versus ZIP+4 stop mattering before the comparison even starts.
 
 What's left is a scoring problem: same place, similar-enough name — one provider or two? For
 within-registry dedup we ship a learned scorer trained on NPI-grouped records. But cross-registry
 linking is the _opposite_ objective: the dedup scorer learned that "same address, names disagree"
 typically means two co-located providers, so it rejects exactly the drifted-text pair a cross-registry
-join wants to keep. Objectives, not thresholds — a lesson we measured the hard way before fixing it
+join wants to keep. Objectives rather than thresholds — a lesson we measured the hard way before fixing it
 properly.
 
 ## Training on truth nobody had to label

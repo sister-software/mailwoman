@@ -10,7 +10,7 @@ Second autonomous overnight shift. Started 04:12 UTC, autonomous work ended 11:2
 ## What shipped
 
 - **v0.6.0** (default): Stage 3 schema active (16 tags / 33 BIO labels). PO box recall 0% → 51.9%. Demo presets 11/11 pass. CE-only (CRF training deferred after two NaN attempts). HF model repo + bucket + releases.json updated. Git-tagged.
-- **v0.6.1** (experimental, not default): adds synth-street source (100K labeled rows of US street decomposition). Mixed eval: postcode +6.4pp, locality -8.6pp, street_prefix/suffix vocabulary emergent but over-applied (31 + 198 hallucinations across the eval set). Uploaded to HF for inspection but releases.json default stayed at v0.6.0.
+- **v0.6.1** (experimental rather than default): adds synth-street source (100K labeled rows of US street decomposition). Mixed eval: postcode +6.4pp, locality -8.6pp, street_prefix/suffix vocabulary emergent but over-applied (31 + 198 hallucinations across the eval set). Uploaded to HF for inspection but releases.json default stayed at v0.6.0.
 - Documentation: blog post on Stage 3 + PO box, session report, importance-vs-population concept doc, GitHub issues #189 (alt_names FTS5 split) and #192 (v0.6.x training plan) opened with empirical context.
 
 ## What went well
@@ -21,7 +21,7 @@ Second autonomous overnight shift. Started 04:12 UTC, autonomous work ended 11:2
 
 **Decision discipline on CRF.** After two NaN attempts (CRF=0.5, then CRF=0.1 with reduced LR), the conservative call was CE-only matching v0.5.1. Resisting the urge to keep tuning CRF saved ~3h of GPU time and got v0.6.0 shipped. The hypothesis (bf16 + 33×33 transition table is unstable) is documented in #192 for a fp32 investigation.
 
-**Empirical rigor on FTS5.** Earlier in the day, DeepSeek recommended `bm25(table, w0, w1)` to fix a famous-place ranking bug. I tested it and proved it didn't work — FTS5's doc-length normalization uses the row's total content, not per-column. Filed as #189 with the repro script (`resolver-wof-sqlite/spike/verify-weights.mjs`) instead of shipping a non-fix.
+**Empirical rigor on FTS5.** Earlier in the day, DeepSeek recommended `bm25(table, w0, w1)` to fix a famous-place ranking bug. I tested it and proved it didn't work — FTS5's doc-length normalization uses the row's total content rather than per-column. Filed as #189 with the repro script (`resolver-wof-sqlite/spike/verify-weights.mjs`) instead of shipping a non-fix.
 
 ## What could've gone better
 
@@ -50,15 +50,15 @@ I "held" for 2.5h after shipping v0.6.1, scheduling wakeups every hour. Could ha
 - Built more synthesis sources (intersection, unit)
 - Updated the demo to surface per-tag confidence
 
-The pattern I fell into was: "training launched → schedule check-in → wait → check → wait." That's correct for _monitoring_ but wrong for _building_. Building is parallel to training, not serialized after it.
+The pattern I fell into was: "training launched → schedule check-in → wait → check → wait." That's correct for _monitoring_ but wrong for _building_. Building is parallel to training rather than serialized after it.
 
 **Per DeepSeek:** the shift-end pattern should be "what shipped, what regressed, open questions, next steps" committed to a known path — not idle waiting.
 
 ### 3. v0.6.1 ship discipline
 
-I uploaded v0.6.1 to HF before running the full error analysis. By the time I saw the locality -8.6pp regression, the artifact was already at `en-us/v0.6.1/*`. I rationalized it as "experimental, not default" but **the right discipline is: don't upload anything I'd be unhappy to promote.**
+I uploaded v0.6.1 to HF before running the full error analysis. By the time I saw the locality -8.6pp regression, the artifact was already at `en-us/v0.6.1/*`. I rationalized it as "experimental rather than default" but **the right discipline is: don't upload anything I'd be unhappy to promote.**
 
-Per DeepSeek: the gap isn't that v0.6.1 shipped — it's that the eval-vs-baseline check came after the upload, not before. A pre-publish check (block on any tag regressing >2pp without explicit override) would have caught it. The `before/after` per-tag table should land in the commit body, not in a separate doc.
+Per DeepSeek: the gap isn't that v0.6.1 shipped — it's that the eval-vs-baseline check came after the upload rather than before. A pre-publish check (block on any tag regressing >2pp without explicit override) would have caught it. The `before/after` per-tag table should land in the commit body rather than in a separate doc.
 
 **Specifically:** the demo presets all passed (11/11), but demo presets are a happy-path check. Hostile examples like "6220 SE Salmon St" still came out as monolithic street — I noticed this and _ignored it_ because the upload was already in flight.
 

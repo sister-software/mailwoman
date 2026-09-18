@@ -14,7 +14,7 @@
  *   `formatter/` reads it, so a decoder that understands "Concourse B" still renders addresses
  *   through Pub 28.
  *
- *   PROVENANCE. Every entry below is a real vocabulary term, not an invention:
+ *   PROVENANCE. Every entry below is a real vocabulary term rather than an invention:
  *
  *   - `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation`, `wing` are WOF
  *       placetypes — the same vocabulary `placetype-evidence.mdx` already projects onto
@@ -36,7 +36,7 @@
  *   Amphitheatre Parkway` already parsed correctly, because BUILDING happens to be in Pub 28. In
  *   the same breath `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` collapsed to
  *   `locality="Terminal"`, `house_number=5`, with the airport dropped entirely — TERMINAL is not a
- *   postal designator, so the proposer had never heard of it. The asymmetry was the source's, not
+ *   postal designator, so the proposer had never heard of it. The asymmetry was the source's rather than
  *   the parser's.
  */
 
@@ -45,9 +45,9 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
 /**
  * WOF placetypes that name a structure inside a venue rather than a place on the map.
  *
- * Deliberately excludes `venue` itself (the container, not an interior division) and `address`/`intersection` (grammar
- * anchors, handled by the parser proper). Typed against {@link WhosOnFirstPlacetype} so the compiler enforces that each
- * entry is a genuine WOF term.
+ * Deliberately excludes `venue` itself (the container rather than an interior division) and `address`/`intersection`
+ * (grammar anchors, handled by the parser proper). Typed against {@link WhosOnFirstPlacetype} so the compiler enforces
+ * that each entry is a genuine WOF term.
  */
 const WOF_VENUE_STRUCTURE_PLACETYPES = [
 	"arcade",
@@ -62,8 +62,8 @@ const WOF_VENUE_STRUCTURE_PLACETYPES = [
 /**
  * Sub-venue designators from OpenStreetMap's `aeroway` key, which WOF's placetype vocabulary does not cover.
  *
- * Kept as its own list rather than merged above precisely so the provenance stays legible: these are OSM tag values,
- * not WOF placetypes, and a reader tracing where "terminal" came from should land on the right standard.
+ * Kept as its own list rather than merged above precisely so the provenance stays legible: these are OSM tag values
+ * rather than WOF placetypes, and a reader tracing where "terminal" came from should land on the right standard.
  */
 const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
 

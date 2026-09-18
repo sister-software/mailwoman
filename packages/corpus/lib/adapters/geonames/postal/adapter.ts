@@ -46,8 +46,8 @@ export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
  * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` — the CITY for the IN/MX/PT-shaped
  * exports whose `place` column is a street or colonia.
  *
- * `latitude`/`longitude` are the POSTCODE's coordinate, not the locality's. A consumer grading distance to a place
- * needs a gazetteer centroid instead.
+ * `latitude`/`longitude` are the POSTCODE's coordinate rather than the locality's. A consumer grading distance to a
+ * place needs a gazetteer centroid instead.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,

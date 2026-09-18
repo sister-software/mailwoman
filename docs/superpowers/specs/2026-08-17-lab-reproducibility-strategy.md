@@ -40,7 +40,7 @@ Two smaller facts worth carrying, because they shape what "reproducible" can mea
 
 ## The organising idea
 
-**Provenance, not configuration.**
+**Provenance rather than configuration.**
 
 A manifest describes what _was_ built. Configuration describes what _should_ be built. Reproduction needs
 the first. This distinction is not stylistic — it is the lesson of #1015, where
@@ -127,10 +127,10 @@ The design left three questions open. Resolving them here.
 | `link` is idempotent                                                      | **met**                                                                                                                                  |
 | `yarn test` leaves tracked directories untouched                          | **met** — all ten linkers and `buildPairIndexOverlay` write to the overlay; every tracked package stays empty across a full linker sweep |
 
-**Risk carried, not deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
+**Risk carried rather than deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design, so the new rung could turn a loud failure into a quiet one — a checkout that parses
 with no lexicons, no FST, no pair index, scoring worse and saying nothing. Sibling reporting ships with the
-rung, not after it.
+rung rather than after it.
 
 ## Phase 1 — `mw data inventory` — DONE
 
@@ -164,7 +164,7 @@ Everything phase 2 produces emits a manifest, so the phase 1 number improves by 
 "One country, one source" is currently held by comments in `defaults.ts`; `verifyAdmin` tests floors, so
 duplication moves every check number in the passing direction and the build ships. The command that moves a
 country between sources is exactly the thing that can violate the invariant, so the check lands with the
-command, not after it.
+command rather than after it.
 
 A second, newly measured instance of the same class: three repositories are currently checked out **twice**,
 under both the flat `<root>/<name>` and nested `<root>/<owner>/<name>` layouts, at identical commits. `ingestWOF`
@@ -177,12 +177,12 @@ order. Deduplicating the repos root and naming one layout canonical belongs here
 Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` that also owns the ordering
 (before the seal, or before the swap — a sealed artifact is `0444` and a swapped one is already live):
 
-| Builder                       | Artifact                   | Notes                                                                  |
-| ----------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| `gazetteer build admin`       | `admin-global-priority.db` | license is a CONJUNCTION of the folds that contributed                 |
-| `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
-| `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                   |
-| `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
+| Builder                       | Artifact                   | Notes                                                                         |
+| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `gazetteer build admin`       | `admin-global-priority.db` | license is a CONJUNCTION of the folds that contributed                        |
+| `gazetteer build candidate`   | `candidate-*.db`           | provenance is a CHAIN — names its ancestor rather than the ancestor's sources |
+| `situs interpolation-extract` | `interpolation/*` (52)     | TIGER, public domain                                                          |
+| `situs address-points`        | `address-points/*` (53)    | records the dataset allow-list the build applied                              |
 
 Plus a fix to the OSM rooftop builder, whose `build_cmd` recorded a path the workspace regroup moved — the
 defect phase 1 surfaced.
@@ -195,7 +195,7 @@ rather than the schema module. `street` is additive; existing layers are unaffec
 
 **The number does not move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
 shipped databases stay unprovenanced and `data inventory` will keep reporting them as such. That is the
-discipline working, not a gap.
+discipline working rather than a gap.
 
 ### What phase 3 did not cover, and why
 
@@ -228,4 +228,4 @@ Carried from the repo's own documents, restated because every phase can violate 
   harness reads the edits. So the pipeline decides those answers downstream of candidate ordering, and where
   is not yet known. The worktree arm is the instrument; this is the first thing to point it at.
 - **`ten-minute-trial.mdx` promises zero configuration.** Every phase here must leave that true. Phase 1 and
-  2 add commands, not settings, for that reason.
+  2 add commands rather than settings, for that reason.

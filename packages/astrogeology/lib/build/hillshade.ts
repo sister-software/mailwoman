@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The hillshade build: publish the DEM as terrain-RGB tiles, so MapLibre's `hillshade` layer shades it at draw
- *   time. The archive carries ENCODED ELEVATION, not a shaded picture.
+ *   time. The archive carries ENCODED ELEVATION rather than a shaded picture.
  *
  *   WHY NOT A SHADED IMAGE. `gdaldem hillshade` answers a single greyscale band, and greyscale carries no colour for
  *   a style to tint: MapLibre's raster paint properties are brightness, contrast, saturation and hue-rotate, and on

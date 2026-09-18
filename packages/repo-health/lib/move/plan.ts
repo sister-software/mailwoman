@@ -168,7 +168,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		)
 	}
 
-	// Candidates are derived from the maps the plan LEAVES, not the ones it found: a target that has moved would
+	// Candidates are derived from the maps the plan LEAVES rather than the ones it found: a target that has moved would
 	// otherwise offer a replacement naming the old path, or none at all.
 	const planned = manifests.map((manifest) => {
 		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)

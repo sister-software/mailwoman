@@ -30,7 +30,7 @@ describe("isFrenchRegionCode", () => {
 	it("accepts ISO 3166-2:FR region codes, case-insensitively", () => {
 		expect(isFrenchRegionCode("IDF")).toBe(true)
 		expect(isFrenchRegionCode("pac")).toBe(true)
-		expect(isFrenchRegionCode("BY")).toBe(false) // a German state, not French
+		expect(isFrenchRegionCode("BY")).toBe(false) // a German state rather than French
 	})
 })
 

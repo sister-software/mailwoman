@@ -13,7 +13,7 @@ A new overlay corpus, **v0.4.1-de**: v0.4.0's 684 base extracts (US/FR, referenc
 
 The German rows are real OpenAddresses Berlin + Saxony tuples (~1.2M unique, cached on disk) rendered in **German order** (house-number after street, postcode before city) by `synthesize-german.ts`, then aligned to BIO. The build reuses the v0.8.0 `scripts/build-german-extract.mjs` precedent — but at **200K rows, 40× the v0.8.0 supplement**, because that run was a _continue-train_ supplement (0.2 weight on an already-trained model) while this is a _from-scratch_ pilot that has to learn German from zero. Align pass rate was ~99.9% (186 skipped of 200K).
 
-## Why this is the right data for the pilot, not a repeat of v0.8.0
+## Why this is the right data for the pilot rather than a repeat of v0.8.0
 
 The v0.8.0 German order-extract failed — German street/house-number F1 jumped (+22/+16pp), but locality and postcode F1 _collapsed_ (−37/−58pp) via end-of-string span fragmentation, and US/FR slipped past the 1pp regression check. That collapse is exactly the failure self-conditioning is designed to prevent: a model that has resolved "this is a German address" globally, before per-token labels, shouldn't bleed a city's lead token into the postcode span. So this corpus + the PR3 architecture is the test of that hypothesis, and the `cross_pollution` regression check (now with the 4K German val extract for support) is the live readout of whether it holds.
 

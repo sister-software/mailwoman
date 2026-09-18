@@ -20,7 +20,7 @@
 - Every new browser-reachable subpath gets a `bundle-graph` row in `packages/repo-health/lib/checks/bundle-graph.ts`.
 - `node:*` imports only under `packages/core/lib/fs/`; filesystem work through `@mailwoman/core/fs`.
 - Dependency ranges match existing declarations (`sherif`): `sql.js-httpvfs` `^0.8.12`.
-- Comments state invariants, not history; the move is recorded in the commit, not in the file.
+- Comments state invariants rather than history; the move is recorded in the commit rather than in the file.
 - The docs geocoder page keeps working after every task: `cd docs && yarn build` exits 0 and the two Playwright specs `100-demo-cold-load` and `200-demo-resolve` pass.
 - Branch: `git fetch origin main && git checkout -b feat/earth-runtime-homes origin/main`. Land the shell plan first or rebase onto it; this plan does not touch `packages/earth`.
 
@@ -422,7 +422,7 @@ git mv docs/src/shared/demo-helpers.ts     packages/mailwoman/lib/browser-runtim
 git mv docs/src/shared/demo-loader.ts      packages/mailwoman/lib/browser-runtime/load-assets.ts
 ```
 
-Then split by moving text within the package, not by retyping:
+Then split by moving text within the package rather than by retyping:
 
 1. From `resources.ts`, move the `…Like` interfaces (`FSTProvenanceLike` through `ParseTraceLike`, and the `DualRole`/`MailwomanLookupLike` re-export line, which is deleted because consumers import `@mailwoman/resolver-wof-wasm/browser-cascade` directly) into a new `types.ts`. `resources.ts` keeps the URL functions, pins and loaders; it imports the `Like` types it references from `#browser-runtime/types`.
 2. From `classify.ts`, move `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest` into a new `manifest.ts`; `manifest.ts` imports `releasesManifestURL` from `#browser-runtime/resources`. `resolveStreet` and `StreetResolution` already left in Task 2. What remains in `classify.ts` is the list in the Interfaces block; its `ParseResult`/`ResolvedPlaceView` imports come from `@mailwoman/core/pipeline/client-result` (never `@mailwoman/react`), and `runCascade` from `@mailwoman/resolver-wof-wasm/browser-cascade`.
@@ -466,7 +466,7 @@ git mv docs/test/unit/src/shared/pair-index-url.test.ts     packages/mailwoman/t
 sed -i 's#@mailwoman/docs/shared/demo-helpers#mailwoman/browser-runtime/classify#; s#@mailwoman/docs/shared/resources#mailwoman/browser-runtime/resources#' packages/mailwoman/test/unit/browser-runtime/*.test.ts
 ```
 
-`manifest.test.ts` imports `normalizeReleasesManifest` and `WireReleaseEntry`, which now live in `manifest`, so its specifier is `mailwoman/browser-runtime/manifest`, not `classify`; `classify.test.ts` imports `MailwomanLookupLike` from `@mailwoman/resolver-wof-wasm/browser-cascade`. `rmdir docs/test/unit/src/shared` once empty.
+`manifest.test.ts` imports `normalizeReleasesManifest` and `WireReleaseEntry`, which now live in `manifest`, so its specifier is `mailwoman/browser-runtime/manifest` rather than `classify`; `classify.test.ts` imports `MailwomanLookupLike` from `@mailwoman/resolver-wof-wasm/browser-cascade`. `rmdir docs/test/unit/src/shared` once empty.
 
 - [ ] **Step 4: Docs consumes the package**
 
@@ -642,7 +642,7 @@ In `docs/superpowers/specs/2026-09-06-earth-app-design.md`, "The move map": the 
 
 > The runtime assembly (`_runtime.ts`) stays application code: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and maplibre graph by design, and the assembly imports all three. The loader lives in `mailwoman`, the one package that already depends on `neural` and `resolver-wof-wasm`, so the version pins `mailwoman gazetteer publish` bumps are package-local. The sql.js staging stays in docs: `PipelineExplorer` and `GuidedTour` resolve against the gazetteer, so the docs embed keeps the gazetteer half of the loader and the staged worker.
 
-And in "Docs after the move", replace the dependency list with: "`docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave; the list is measured at that point, not predicted here."
+And in "Docs after the move", replace the dependency list with: "`docs/package.json` loses every dependency `knip` reports unused once the page and its runtime leave; the list is measured at that point rather than predicted here."
 
 ```bash
 git add docs/superpowers/specs/2026-09-06-earth-app-design.md

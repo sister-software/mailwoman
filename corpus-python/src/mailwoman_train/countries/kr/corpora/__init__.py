@@ -26,7 +26,7 @@ The board is the held-out set of 시군구 (the same stable hash rule as the JP 
 carries no coordinate, so the board's coordinate half is the permit registry's: every permit row's EPSG:5174 point is
 projected through GDAL and averaged per 시군구, and the LABEL board row carries its 시군구's centroid, which is what
 the JP scorer compares a resolved (region, subregion) pair against. Permit rows in a held-out 시군구 go to the
-registry board, so a typed address in a held-out district is read, not trained.
+registry board, so a typed address in a held-out district is read rather than trained.
 
 The modules:
 

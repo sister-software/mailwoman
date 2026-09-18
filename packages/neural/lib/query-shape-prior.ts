@@ -157,7 +157,7 @@ export function buildEmissionPriors(
  *
  * 1. NO DIGITS anywhere in the input — any house number / postcode means this is not an admin-only query, and the M1
  *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
- * 2. The abbreviation is the FINAL token — the doubleton shape, not a mid-sentence state mention.
+ * 2. The abbreviation is the FINAL token — the doubleton shape rather than a mid-sentence state mention.
  * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health Service Inc - Grafton ND" does not).
  *
  * The retired version also carried a "name is the region" guard ("Washington, WA" stays region). It was DEAD in
@@ -187,7 +187,7 @@ function applyScopedLocalityBias(
 
 		const candidates = tokens.map((tok, t) => ({ tok, t })).filter(({ tok }) => tok.end <= abbrev.start)
 
-		// Guard 3: the doubleton shape — a short leading name, not a sentence.
+		// Guard 3: the doubleton shape — a short leading name rather than a sentence.
 		if (!candidates.length || candidates.length > MAX_PRIOR_CANDIDATES) continue
 
 		for (let i = 0; i < candidates.length; i++) {

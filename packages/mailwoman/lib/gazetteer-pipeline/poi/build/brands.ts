@@ -120,8 +120,8 @@ interface RawBrandAggregate {
  * typo/OCR-noise variants swelling the alias list), sorted alphabetically. QIDs whose total falls under `minRows` are
  * dropped entirely. QIDs whose modal name covers less than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
  * = 0.5) are also dropped entirely — a modal share under the floor means the QID is systematically mistagged across
- * many unrelated names, not one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
- * The final list is sorted by `rows` descending, ties broken by QID.
+ * many unrelated names rather than one real chain with noisy spelling variants, so no single name/alias split is
+ * trustworthy. The final list is sorted by `rows` descending, ties broken by QID.
  *
  * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties) are what make a rebuild
  * against the same db byte-identical — determinism never depends on SQL row order or `Map` iteration order here.

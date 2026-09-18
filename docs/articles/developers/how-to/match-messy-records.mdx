@@ -25,7 +25,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
 - Per-state rooftop databases, at your data root, for the states in your file. Every transcript below ran
   against a data root that has them, which is why the geocode tiers in step 2 are `address_point` rather
   than `admin`. [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) covers pulling
-  one. The entity counts on this page are the same either way — the tier changes the coordinates, not
+  one. The entity counts on this page are the same either way — the tier changes the coordinates rather than
   the linking.
 
 ## 1. Run it and read the count
@@ -71,7 +71,7 @@ wrote 20 features → entities.geojson
 
 So the recipe is: **have `candidate.db` where the resolver looks, and pass anything to `--resolve-db` to
 get past the boot check.** Passing the gazetteer's own path is the tidiest thing to pass, which is why this
-page and the tutorial both do it — but it is satisfying a check, not selecting a backend.
+page and the tutorial both do it — but it is satisfying a check rather than selecting a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
 is reachable at all — nothing at `<data root>/wof/candidate.db`, nothing in `$MAILWOMAN_CANDIDATE_DB` —
@@ -85,7 +85,7 @@ resolver-wof-sqlite/README.md).
 
 Before the convention-path fallback, that was the outcome whenever the variable was merely unset, which
 made it easy to hit. Now it takes a data root with no gazetteer in it. The requirement itself is unchanged: a
-command that demands an argument and then ignores it is a defect in this command, not a convention to
+command that demands an argument and then ignores it is a defect in this command rather than a convention to
 learn. It is recorded here because the workaround is needed today.
 
 ## 2. Confirm blocking is not the problem
@@ -194,7 +194,7 @@ including the three-way one, and nothing merged that should not have. At `-10` t
 an edge.
 
 `learnedScorer: false` in that call matters. The bundled gradient-boosted scorer is on by default and
-its output is a logit, not a Fellegi-Sunter weight in bits — so a threshold read off the weights above
+its output is a logit rather than a Fellegi-Sunter weight in bits — so a threshold read off the weights above
 is meaningless against it. It was also trained on US healthcare provider records, which a generic
 customer file is not; its own documentation says to A/B it or turn it off for a different domain.
 
@@ -215,7 +215,7 @@ jq -c '.features[] | select(.properties.recordCount > 1)
 {"org":"marlowe instruments","n":2,"ids":["C-2011","C-2012"]}
 ```
 
-The properties are the matcher's normalized view of your row, not your row. Your own identifier column
+The properties are the matcher's normalized view of your row rather than your row. Your own identifier column
 rides in `sourceIDs`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
 can be lower than the entity count — compare the two before you treat the file as complete.
 

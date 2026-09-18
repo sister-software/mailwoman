@@ -5,7 +5,7 @@
  *
  *   What the model was actually fed, read off a parse trace — the per-row half of the inert-mechanism story (#1718).
  *
- *   The distinction this module exists to keep is three-way, not two-way. A channel can be **absent** (never
+ *   The distinction this module exists to keep is three-way rather than two-way. A channel can be **absent** (never
  *   configured — the trace carries no record of it), **silent** (fed, and fed all zeros — the retrieval side had
  *   nothing to say about any token), or **fired** (fed at least one nonzero feature). Collapsing absent into silent is
  *   the standing meaning-of-zero mistake: one is a fact about the configuration, the other about this input, and the
@@ -72,8 +72,8 @@ export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
  * Which decode-time priors moved the emissions on this parse.
  *
  * `applied` is each prior record's own contract — "whether this prior moved anything" — so this is an L1 signal per
- * prior, not merely "the stage ran". `emissions_moved` is the cross-check over the whole matrix: true when the decoded
- * emissions differ anywhere from the raw logits, i.e. when SOME prior wrote something. `applied` kinds with
+ * prior rather than merely "the stage ran". `emissions_moved` is the cross-check over the whole matrix: true when the
+ * decoded emissions differ anywhere from the raw logits, i.e. when SOME prior wrote something. `applied` kinds with
  * `emissions_moved: false` (or vice versa) would mean a prior's own bookkeeping disagrees with the matrix it claims to
  * have written — worth surfacing, never worth papering over.
  */

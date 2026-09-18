@@ -162,7 +162,7 @@ describe("prefixDirectoriesCheck", () => {
 		expect(diagnostics).toEqual([
 			expect.objectContaining({
 				severity: "error",
-				// A directory member's diagnostic names the directory, not a file inside it.
+				// A directory member's diagnostic names the directory rather than a file inside it.
 				file: `${ADAPTERS}/state-hi-schools`,
 				message: expect.stringContaining(`${ADAPTERS}/state/`),
 			}),

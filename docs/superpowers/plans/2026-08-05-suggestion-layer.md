@@ -6,7 +6,7 @@ matcher. Two constraints came attached, and each one changes the design rather t
 
 1. **Ordinary people do not reliably know their own postcode.** It is strong evidence when present
    and absent a large share of the time, so the layer has to work postcode-free — and SUPPLYING the
-   missing code is one of the better nudges it can make. Completion, not only correction.
+   missing code is one of the better nudges it can make. Completion rather than only correction.
 2. **A suggestion layer that guesses is worse than no suggestion layer.** The posture is the
    abstention discipline already written down twice in this repo: #1480's unknown-postcode
    abstention, and `PipelineResult.faults`'s rule that a degraded stage is REPORTED and never
@@ -48,7 +48,7 @@ Every row exists today. The last column says what the suggestion layer would hav
 
 | Thing                   | Where                                       | Role                                                                                                                             |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `formatAddress`         | `formatter/format.ts:153`                   | `(components: ComponentDict, country: string, opts) => string`. Takes a flat dict, not an `AddressTree`                          |
+| `formatAddress`         | `formatter/format.ts:153`                   | `(components: ComponentDict, country: string, opts) => string`. Takes a flat dict rather than an `AddressTree`                   |
 | `toOpenCageComponents`  | `formatter/format.ts:299`                   | The slot mapping. `venue → house`, `locality → city`, `dependent_locality → suburb`/`quarter`/`place` per country                |
 | `canonicalKey`          | `formatter/key.ts:86`                       | The canonical match key. `KEY_FIELD_ORDER` at `:30-46` deliberately excludes `venue` and `attention`                             |
 | `normalizeAddressToken` | `formatter/key.ts:63-79`                    | NFKD → strip marks → lowercase → drop apostrophes → non-alphanumeric to space → collapse. The only case-folder in the round trip |
@@ -76,7 +76,7 @@ that is "abbreviation-expanded" — `key.ts:16-19` says expansion is deliberatel
 | ----------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Per-token softmax confidence        | `neural/classifier.ts:1084`, `:1093`                                                          | `probs[idx]`, or the word-consistency vote's mean when a word was healed                                                  |
 | Span confidence                     | `core/decoder/types.ts:74`, aggregated `build-tree.ts:98-100`                                 | Mean over the span's tokens, optionally through a `Calibrator` (`core/decoder/calibration.ts:9-49`) that nothing supplies |
-| Widened-span merge rule             | `neural/span-bridge.ts:129`                                                                   | `Math.min` of the two, not the mean                                                                                       |
+| Widened-span merge rule             | `neural/span-bridge.ts:129`                                                                   | `Math.min` of the two rather than the mean                                                                                |
 | `PipelineResult.faults`             | `core/pipeline/types.ts:501`, type `:460`, stages `:444-448`                                  | Three stage values only (`classifier`, `phrase-grouper`, `resolver`); `name` is the thrown value's constructor name       |
 | Fault propagation                   | —                                                                                             | **Stops at the pipeline boundary.** `faults` appears nowhere in `mailwoman/geocode-core.ts`, `api/`, or `apps/`           |
 | `minWinningScore`                   | `core/resolver/types.ts:383`, default `resolve.ts:762`, check `:1112`                         | Default 0. Set by exactly one caller in the tree: `resolver/resolve.test.ts:306`. Built, uncalled                         |
@@ -180,7 +180,7 @@ names this in its own text.
   answer-changing mechanisms in A.3, two stamp what they did and exactly one of those two reaches a
   caller. The other six either compute the evidence and throw it away (the fuzzy Jaccard at
   `candidate-lookup.ts:450`) or record it behind a flag nothing sets (`traceRepairs`).
-- **The entity tier is corpus-shaped**, so the second suggestion tier needs one new function, not a
+- **The entity tier is corpus-shaped**, so the second suggestion tier needs one new function rather than a
   new package.
 - **The garbage board is committed and unconditional**, which means the layer's most important bar can be
   written today against material that already exists.
@@ -190,7 +190,7 @@ names this in its own text.
 Scripts in the session scratchpad under `scripts/diagnostic/suggestion/` (gitignored, per the
 convention `docs/articles/reviews/2026-08-02-mailfail-robustness.md:402` established). Every number is
 a run against the shipped weights (`model.onnx` md5 `c968c24a`, the candidate-table backend at
-`$MAILWOMAN_DATA_ROOT/wof/candidate.db`), not an estimate.
+`$MAILWOMAN_DATA_ROOT/wof/candidate.db`) rather than an estimate.
 
 ### S-1: round-trip fidelity — the nudge inventory
 
@@ -226,7 +226,7 @@ the 39 non-identical rows under the shipped default, re-split by cause:
 1. **Slightly under half the corpus round-trips byte-identical (43/90).** Those rows are the layer's
    inertness population: a suggestion layer that emits anything on them is broken, which makes them a
    free and cheap bar.
-2. **`appendCountry` is a policy, not a fact, and neither default is right.** With it off, 13 rows
+2. **`appendCountry` is a policy rather than a fact, and neither default is right.** With it off, 13 rows
    lose only the country line the user typed. With it on, 50 rows gain a country line the user did
    not type. A suggestion layer must condition the flag on whether the input carried a country at
    all; grading either leg alone measures the flag.
@@ -276,7 +276,7 @@ dropped it teaches the user to distrust their own input for a formatter gap.
 
 `s2-postcode-free.ts`. Every Gauntlet row whose asserted `expect_components.postcode` appears
 verbatim in the input (139 of 192) is geocoded twice: once as written (the anchor), once with that
-exact substring deleted and the separator debris cleaned up. A literal delete, not a regex — a
+exact substring deleted and the separator debris cleaned up. A literal delete rather than a regex — a
 pattern-based stripper would delete house numbers on the 4-digit systems, which is the arc's M-1
 finding in reverse.
 
@@ -355,7 +355,7 @@ ACCEPT them as postcode-shaped — it EMITS them as the postcode the moment the 
 told the postcode slot is already filled — with a house number — and would abstain for the wrong
 reason, or worse, confirm it. The completion mechanism has a hard prerequisite on the arc's
 Mechanism 1 (shape exclusion) or on an equivalent guard, and its bar has to grade the substitution
-rate, not only the fill rate.
+rate rather than only the fill rate.
 
 ### S-3: the abstention population — what a naive layer would say about garbage
 
@@ -410,7 +410,7 @@ max span confidence reduce, applied to the 76
    localities (`Toronto, Canada`, `Sydney, Australia`, `Beirut, Lebanon`) that are the map-search
    register this product is aimed at. A `componentCount >= 3` rule deletes the nudge on a third of
    the real board. It also deletes the fullwidth-fold nudge, which is 2 components. So the guard is
-   a stack with a stated cost, not a threshold, and the bare-locality carve-out has to be part of the
+   a stack with a stated cost rather than a threshold, and the bare-locality carve-out has to be part of the
    design rather than discovered later.
 
 ## Part C — The design
@@ -528,7 +528,7 @@ calls the resolver.
 `normalizeAddressToken` equality → token multiset), and emits `canonicalize` and `drop` ops only.
 Concretely, the classes S-1 found: the missing locality/region comma (7 rows), the fullwidth and NBSP
 and BOM folds, `Str.` → `Str`, `Av.` → `Avenue`, and the country-line decision — which is
-conditioned on whether the input carried a country token, not on the formatter's default.
+conditioned on whether the input carried a country token rather than on the formatter's default.
 
 **Artifact.** None. Two contract changes it wants, both additive:
 
@@ -543,7 +543,7 @@ conditioned on whether the input carried a country token, not on the formatter's
   (`neural/postcode-anchor.ts:87`), so the naming is settled.
 
 **D-rule.** Opt-in behind `suggest`, default-OFF. It changes no answer — it only reports — so the
-promotion question is about the SUGGESTION's precision, not about resolution accuracy. That is a
+promotion question is about the SUGGESTION's precision rather than about resolution accuracy. That is a
 different check set and it gets its own record.
 
 **Pre-registered bars.**
@@ -565,7 +565,7 @@ different check set and it gets its own record.
   and re-parsing must yield the same `ComponentDict`. Bar: **100% on the 7 S-1 `canonical_only` rows
   plus the four mailfail folds** (BOM, fullwidth, NBSP, U+2028). A cosmetic change that moves the
   parse is not cosmetic, and this bar is the definition.
-- **B1-5 (the bare-locality carve-out is measured, not assumed).** The 30 Gauntlet `pass` rows with
+- **B1-5 (the bare-locality carve-out is measured rather than assumed).** The 30 Gauntlet `pass` rows with
   fewer than 3 components. Bar: **report the suggestion rate on this stratum separately in every
   run**, and the corroboration guard must be declared per-stratum rather than globally. S-3 measured
   the cost at a third of the board; a design that discovers this after shipping has deleted map
@@ -775,7 +775,7 @@ tool for open-vocab distributional tags; a diff between two strings is not one.
 Two model-adjacent items are named here so they are not mistaken for part of this arc:
 
 - The venue/locality slot swaps S-1b found (`MR & MRS CRAB` → locality `MR`) are parse defects. They
-  make the diff noisier and they are a corpus question, not a suggestion-layer question.
+  make the diff noisier and they are a corpus question rather than a suggestion-layer question.
 - The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists and nothing supplies a bin table.
   Every confidence threshold in this document is therefore a threshold on a RAW mean-of-softmax, and
   the 2026-08-04 review's caveat about the 0.918–0.945 band applies unchanged. Fitting a calibrator
@@ -795,7 +795,7 @@ Two model-adjacent items are named here so they are not mistaken for part of thi
 3. **B1-2 / B1-4** — inertness and reversibility, both against Gauntlet rows that already exist.
 4. **B1-5** — the bare-locality stratum, which decides the guard's shape before the guard is written.
 5. **The arc's Mechanism 1 shape exclusion**, which is a prerequisite for B2-4 and lives in
-   [the postcode-structure arc](./2026-08-05-postcode-structure-arc.md), not here.
+   [the postcode-structure arc](./2026-08-05-postcode-structure-arc.md) rather than here.
 6. **B2-1 / B2-2 / B2-3** — the completion bars, after the shape guard.
 7. **The ablation runner proper**, generalizing S-2 from `postcode` to every `ComponentTag`.
    S-2 is one column of it and the script generalizes by parameterizing the deleted tag.
@@ -813,14 +813,14 @@ all.
 - **Any default-on promotion.** All three mechanisms are opt-in, and a promotion is a separate
   decision with its own evidence record, the way #1477 got one.
 - **Fixing the parse defects S-1b found.** `MR & MRS CRAB` → locality `MR` is real and it is a corpus
-  task. Named here so the diff's noise floor is understood, not claimed as this arc's work.
+  task. Named here so the diff's noise floor is understood rather than claimed as this arc's work.
 - **Calibrating span confidence.** The `Calibrator` boundary is empty; filling it is its own
   preregistration with its own held-out set.
 - **`formatter/README.md`'s wrong signatures.** Recorded in A.1 so they are not lost; they belong to
   whoever next touches that package.
 - **The Gauntlet's missing "expect no coordinate" column.** `us-op3-island-lake-duplicate-degenerate`
   names the schema gap in its own note (`cases/regression.ts:3223`). B3-1 needs it; adding it is a
-  runner change, not a mechanism.
+  runner change rather than a mechanism.
 - **A `suggestions` field on `GeocodeResult`.** The suggestion layer is a separate call. Threading it
   through the geocode result would put an advisory surface inside a resolution contract, and
   `postcode_country_scope` is the precedent for how narrow that channel should stay.

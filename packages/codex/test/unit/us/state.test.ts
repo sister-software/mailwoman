@@ -26,7 +26,7 @@ test("isUSStateAbbreviation: case-insensitive (abbreviation arrives from raw add
 
 test("isUSStateAbbreviation: false for non-state / malformed / non-string input", () => {
 	expect(isUSStateAbbreviation("XX")).toBe(false)
-	expect(isUSStateAbbreviation("California")).toBe(false) // full name, not abbreviation
+	expect(isUSStateAbbreviation("California")).toBe(false) // full name rather than abbreviation
 	expect(isUSStateAbbreviation("CAL")).toBe(false)
 	expect(isUSStateAbbreviation("C")).toBe(false)
 	expect(isUSStateAbbreviation(" CA ")).toBe(false) // predicate does not trim

@@ -32,7 +32,7 @@ attention: `softmax(query_t · key_s / sqrt(d))`.
 
 This is **bidirectional**: position `t` attends to all positions (including
 positions both before and after itself), notearlier ones. There's no
-causal mask — this is a BERT-style encoder, not GPT-style.
+causal mask — this is a BERT-style encoder rather than GPT-style.
 
 The transformer stacks 6 of these attention layers. After 6 layers, a token's
 hidden state has been informed by every other token's information through
@@ -87,7 +87,7 @@ better scaling with more data.
 ## Attention as a soft, learned grammar
 
 What's emergent in the attention weights is essentially a soft, learned
-grammar — but expressed as continuous-valued weights, not categorical
+grammar — but expressed as continuous-valued weights rather than categorical
 production rules. The model learns:
 
 - "When a token is followed by a 2-letter all-caps token, give that 2-letter

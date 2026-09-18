@@ -46,13 +46,13 @@ import {
  * Concurrency for the clone fan-out.
  *
  * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of megabytes, so the ceiling is
- * bandwidth and GitHub's patience, not cores. A 128-core host opening 128 clones serves nobody.
+ * bandwidth and GitHub's patience rather than cores. A 128-core host opening 128 clones serves nobody.
  */
 const CONCURRENCY = 8
 
 /**
  * Above this many repositories the final list is summarized instead of printed in full. The `▸` lines above it are
- * complete either way — this bounds the closing frame, not the record.
+ * complete either way — this bounds the closing frame rather than the record.
  */
 const MAX_LISTED_CHECKS = 25
 
@@ -127,7 +127,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				all: options.all,
 			})
 
-			// WHERE each repo comes from is resolved per repo, not assumed to be upstream. `gh repo list` enumerates the
+			// WHERE each repo comes from is resolved per repo rather than assumed to be upstream. `gh repo list` enumerates the
 			// UPSTREAM org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
 			// clones are not re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes

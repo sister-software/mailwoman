@@ -91,7 +91,7 @@ Three different stories:
 
 ## Scoreboard 2 — the resolver, on real addresses, end to end
 
-The product is a geocoder, not a tag-matcher. The direct, non-circular metric is the
+The product is a geocoder rather than a tag-matcher. The direct, non-circular metric is the
 [OpenAddresses real-point eval](../evals/resolver-geo/2026-05-30-openaddresses-real-point-eval.mdx):
 every row is a real US address with a real government lat/lon, and we score whether each
 parser, run through the _same_ WOF resolver, lands on the right locality. On 10,000 rows:
@@ -103,10 +103,10 @@ parser, run through the _same_ WOF resolver, lands on the right locality. On 10,
 
 **On the metric that matches the product, neural beats the rules parser** (+1.5pp
 locality, on real addresses). The north-star claim — "a parser superior to Pelias's
-regex/rules system" — is demonstrated here, not merely asserted.
+regex/rules system" — is demonstrated here rather than merely asserted.
 
 (Coordinate accuracy is still admin-centroid tier: p50 2.4 km, p90 10.6 km. That is the
-_geometry_ gap, not a parsing gap — addressed in the roadmap below.)
+_geometry_ gap rather than a parsing gap — addressed in the roadmap below.)
 
 ## Where neural is worse at parsing — and why
 
@@ -127,8 +127,7 @@ Stripping out the harness bias, the real neural deficits are:
    **DC directional quadrants** (`…Street Ne` → tags `Ne` as a locality), and literal
    `<Null>` tokens in dirty input that `v0` shrugs off.
 
-Every one of these is **corpus-addressable** — they are gaps in what the model was shown,
-not architectural limits.
+Every one of these is **corpus-addressable** — they are gaps in what the model was shown rather than architectural limits.
 
 ## Where neural wins — and why we run it
 
@@ -176,7 +175,7 @@ possible future larger model — the negative result is specific to this 29M-par
    _locality_ but coordinates are admin-centroid only (p50 2.4 km). This is the km →
    tens-of-meters jump that makes "production geocoder" literally true. Check: **p50 ≤ 200 m,
    p90 ≤ 1 km** on a 1,000-point ground-truth set. ⚠ Requires geometry we don't yet have
-   (our `tiger.db` is street-name + ZIP only) — a new data pipeline, not a wiring job.
+   (our `tiger.db` is street-name + ZIP only) — a new data pipeline rather than a wiring job.
 2. **Resolver ranking depth** — fix the same-state wrong-town bug (`Saint Albans, VT` →
    `St. Johnsbury`) and harden the population/importance tiebreak. Cheap; lifts locality
    ~97.3 → ~98%. Good first/parallel win.

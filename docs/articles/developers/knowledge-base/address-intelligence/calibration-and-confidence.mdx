@@ -36,7 +36,7 @@ Your `0.6` never tempted anyone to route on it. A `0.92` does.
 Two facts about the score are worth stating before anything else, because they narrow what a
 threshold on it can mean.
 
-**It is per component, not per address.** There is no whole-parse confidence field. A six-component
+**It is per component rather than per address.** There is no whole-parse confidence field. A six-component
 address gives you six numbers, and reducing them to one is your decision — the usual rule being to
 take the weakest, since one badly read component spoils the row.
 
@@ -104,7 +104,7 @@ want to act on the number rather than understand it.
 
 **A calibration table is fit against one model, and models ship faster than fits.** The table in the
 package was fit on an earlier model than the one beside it, which makes the curve a starting point
-rather than a measurement of what you are running. Re-fitting is repository-side work, not something
+rather than a measurement of what you are running. Re-fitting is repository-side work rather than something
 a consumer can do from the installed package.
 
 **Calibration is per locale.** A table fit on United States data does not transfer to French data,
@@ -116,7 +116,7 @@ difference.
 residual is real, and it is a rate rather than a set — you cannot inspect your way out of it. Budget
 for it instead of tuning to remove it.
 
-**Confidence is about the reading, not about the place.** A high corrected score says the model read
+**Confidence is about the reading rather than about the place.** A high corrected score says the model read
 the string the way the corpus would have labeled it. It says nothing about whether the address
 exists, whether mail arrives there, or whether the coordinate is any good.
 [What the model cannot do](./what-the-model-cannot-do.mdx) draws that boundary, and

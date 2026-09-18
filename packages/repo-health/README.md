@@ -4,7 +4,7 @@ Private. Repository health checks as a registry: each check inspects the checkou
 pass/fail. `mwops health <id>` runs one; `mwops health all` runs the registry.
 
 Admission rule: a check inspects and reports. No mutation, generation, publishing, benchmark, probe, or one-shot
-migration lives here — a check that wants to write something is a release operation or a CLI command, not a check.
+migration lives here — a check that wants to write something is a release operation or a CLI command rather than a check.
 Two exports sit beside the registry and are never in it: `lib/baseline.ts` writes the debt baseline, and `lib/fixes.ts`
 plus `lib/move/` apply the mechanical repair a check's diagnostic describes.
 
@@ -19,27 +19,27 @@ repo-relative path, exact offsets and line/column range, syntax kind, text, and 
 `.cache/mailwoman/comment-triage.sqlite`.
 
 The `comment_triage_lead` table contains low-confidence leads for `outdated`, `sensational`, `unclear`, and
-`overly_verbose` wording. They are review queues, not source edits: a person confirms a lead before changing code.
+`overly_verbose` wording. They are review queues rather than source edits: a person confirms a lead before changing code.
 
 ## Checks
 
-| id                            | what it reads                                                                                                                                                                                          | spawns  |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| `version-sync`                | every `.release-it.json` workspace's manifest version against the root's                                                                                                                               | —       |
-| `test-contract`               | every tracked test sits under `test/{unit,integration,full}/` (plus `browser`, `build`, `e2e` where a `playwright.config.ts` runs them) and imports by package name                                    | —       |
-| `node-modules-reacharound`    | no `join`/`resolve` argument spells a `node_modules` layout outside the reasoned allowlist                                                                                                             | —       |
-| `runtime-flags`               | every flag in `docs/engineering/reference/runtime-flags.mdx` is touched by a test                                                                                                                      | —       |
-| `no-root-scripts`             | no root `scripts/` directory, no path built into one, no CI target running one or a bare `lib/*.ts`                                                                                                    | —       |
-| `manifest-targets`            | every `exports`/`imports` target resolves to a tracked source or data file (`out/` mapped to `lib/`)                                                                                                   | —       |
-| `prefix-directories`          | three or more siblings sharing a hyphen prefix live under a directory named for it (`usgov/nppes/`, not `usgov-nppes/`); a workspace directory and a directory holding no TypeScript are never members | —       |
-| `private-name-shadows-export` | a module-private function in `packages/*/lib` sharing its name with a function another module exports — a copy or a collision, named per site; the `debt` counter pins the count                       | —       |
-| `module-surface`              | a module's count of top-level interfaces, constants, functions, and divider comments against per-metric limits; advisory, and it claims no decomposition on the author's behalf                        | —       |
-| `module-cohesion`             | a module's top-level declarations partitioned by which reference which, reported when two communities share no imported dependency; advisory, and the warning names both groups                        | —       |
-| `debt`                        | the monotonic debt counters against `baseline.json`                                                                                                                                                    | —       |
-| `bundle-graph`                | every browser- and Worker-bundled subpath under its platform conditions: no Node builtin on the static graph, dynamic builtin imports only where a row lists them                                      | esbuild |
-| `vocab-census`                | every ambiguous-shorthand hit in tracked source, classified by action                                                                                                                                  | Vale    |
-| `exports`                     | every export is used, apart from the reviewed compatibility aliases                                                                                                                                    | knip    |
-| `typecheck-tests`             | every workspace's `tsconfig.test.json` under `tsc --noEmit`                                                                                                                                            | tsc     |
+| id                            | what it reads                                                                                                                                                                                                 | spawns  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `version-sync`                | every `.release-it.json` workspace's manifest version against the root's                                                                                                                                      | —       |
+| `test-contract`               | every tracked test sits under `test/{unit,integration,full}/` (plus `browser`, `build`, `e2e` where a `playwright.config.ts` runs them) and imports by package name                                           | —       |
+| `node-modules-reacharound`    | no `join`/`resolve` argument spells a `node_modules` layout outside the reasoned allowlist                                                                                                                    | —       |
+| `runtime-flags`               | every flag in `docs/engineering/reference/runtime-flags.mdx` is touched by a test                                                                                                                             | —       |
+| `no-root-scripts`             | no root `scripts/` directory, no path built into one, no CI target running one or a bare `lib/*.ts`                                                                                                           | —       |
+| `manifest-targets`            | every `exports`/`imports` target resolves to a tracked source or data file (`out/` mapped to `lib/`)                                                                                                          | —       |
+| `prefix-directories`          | three or more siblings sharing a hyphen prefix live under a directory named for it (`usgov/nppes/` rather than `usgov-nppes/`); a workspace directory and a directory holding no TypeScript are never members | —       |
+| `private-name-shadows-export` | a module-private function in `packages/*/lib` sharing its name with a function another module exports — a copy or a collision, named per site; the `debt` counter pins the count                              | —       |
+| `module-surface`              | a module's count of top-level interfaces, constants, functions, and divider comments against per-metric limits; advisory, and it claims no decomposition on the author's behalf                               | —       |
+| `module-cohesion`             | a module's top-level declarations partitioned by which reference which, reported when two communities share no imported dependency; advisory, and the warning names both groups                               | —       |
+| `debt`                        | the monotonic debt counters against `baseline.json`                                                                                                                                                           | —       |
+| `bundle-graph`                | every browser- and Worker-bundled subpath under its platform conditions: no Node builtin on the static graph, dynamic builtin imports only where a row lists them                                             | esbuild |
+| `vocab-census`                | every ambiguous-shorthand hit in tracked source, classified by action                                                                                                                                         | Vale    |
+| `exports`                     | every export is used, apart from the reviewed compatibility aliases                                                                                                                                           | knip    |
+| `typecheck-tests`             | every workspace's `tsconfig.test.json` under `tsc --noEmit`                                                                                                                                                   | tsc     |
 
 `debt` reports a counter that grew as an error and a counter that fell as a warning. Recording the new reading is a
 mutation, so it is not a check: `mwops health baseline debt` rewrites `baseline.json` through `lib/baseline.ts`, which

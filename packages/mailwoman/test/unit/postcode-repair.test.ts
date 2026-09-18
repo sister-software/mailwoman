@@ -54,7 +54,7 @@ describe("repairPostcodeContradiction (#1735)", () => {
 	})
 
 	it("is vetoed by a non-misread node overlapping the span", () => {
-		// A locality reading over the span means the parse holds a PLAUSIBLE alternative, not a misread.
+		// A locality reading over the span means the parse holds a PLAUSIBLE alternative rather than a misread.
 		const t = tree("KT2 6AB", [node("locality", "KT2 6AB", 0, 7)])
 
 		expect(repairPostcodeContradiction(t, computeQueryShape("KT2 6AB"))).toBe(false)

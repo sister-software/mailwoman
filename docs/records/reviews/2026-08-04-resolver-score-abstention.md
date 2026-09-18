@@ -96,7 +96,7 @@ Almost nobody, and nothing blocks on it by default.
   **default-OFF** (`runtime-pipeline.ts:479`, `jointReconcile ?? false`, retired as default 2026-06-14), so this is
   latent rather than live — but it is a trap waiting for whoever re-promotes that path.
 - `mailwoman/geocode-core.ts` reads `primaryNode.alternatives` to build the geocode `candidates` array, and never
-  reads the score. The API-facing `confidence` field comes from the coarse-country placer, not the resolver.
+  reads the score. The API-facing `confidence` field comes from the coarse-country placer rather than the resolver.
 
 Everything else is observational.
 
@@ -180,7 +180,7 @@ control wrong  >25km   n=127 mean=6.43     <- "wrong scores higher"
 That "wrong" bucket is 125 **region** nodes and 2 postcode nodes. A region node that resolves California correctly
 still sits 200 km from a Mill Valley address, so distance grading marks it wrong; and region rows carry the highest
 scores on that backend (5.31–7.59, vs 0.00–6.44 for localities and a flat 0.00 for postcodes). The pooled statistic
-is therefore **dominated by tag, not by correctness** — 6.43 is close to the 6.52 in the original claim, which makes
+is therefore **dominated by tag rather than by correctness** — 6.43 is close to the 6.52 in the original claim, which makes
 this the likely mechanism behind it.
 
 That is not a correction that rescues the score. It is a second, independent reason not to threshold on it:
@@ -231,7 +231,7 @@ the model is more sure about than any real address it read.
    city name a user types, and a row in this very fixture — is uncorroborated by construction. A
    corroboration-only rule would delete the bare-locality search path, which is the map-search register the product
    is aimed at.
-3. n=14 and n=12. These are directional results on a small violation set, not calibrated numbers.
+3. n=14 and n=12. These are directional results on a small violation set rather than calibrated numbers.
 
 Fields already on `ResolvedPlace` that nothing currently reads at `resolve.ts:1076`, and that a design could use:
 `exactMatch` (match-quality tier — already the primary sort key elsewhere), `prominence` (bounded ~`[0, 8]`, defined
@@ -306,12 +306,12 @@ one preserved beside it as `resolver_score_raw`.
   saturation as a side effect (a calibrated `[0, 1]` score is exactly what that combiner was written expecting).
 - **What it does not buy.** Calibration does not create separation. On the measured data the _ordering_ is barely
   separating; a monotone remap of a barely-separating signal is a barely-separating signal in nicer units. Design C
-  is a prerequisite for cross-backend comparison, **not** a solution to abstention.
+  is a prerequisite for cross-backend comparison rather than a solution to abstention.
 - **Evidence required to promote.** A held-out calibration set per backend (score → observed correctness rate), a
   reliability curve showing the calibrated value is a probability, and a demonstration that the ordering
   survives the remap on the resolver evals. Plus the usual major-version consumer sweep.
 
-**If you only take one thing:** Designs B and C are complementary, not alternatives, and B does not depend on C.
+**If you only take one thing:** Designs B and C are complementary rather than alternatives, and B does not depend on C.
 Design C makes the number comparable; Design B makes the decision possible. Doing C alone would produce a
 well-calibrated number that still cannot abstain.
 
@@ -325,7 +325,7 @@ well-calibrated number that still cannot abstain.
   non-Latin script in the _control_ (there is some in the garbage set). The corroboration signal's zero measured cost
   is an artifact of that shape and should not be quoted without this caveat.
 - **No FTS postcode database.** The FTS leg ran against the admin database alone, so it produced no postcode nodes and
-  never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source, not measured.
+  never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source rather than measured.
 - **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted, no reliability curve drawn.
 - **No `prominence` measurement.** It is argued for on the strength of its definition (bounded, same meaning on both
   backends) rather than a measured separation — it was not captured in these runs. That is a one-line probe change

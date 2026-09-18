@@ -6,7 +6,7 @@
  *   The FROZEN ruler for the absence-observation probe (#1965), and the arithmetic that reads it. Pure —
  *   no model, no database, no pipeline — so every refusal is testable without loading an engine.
  *
- *   WHAT THIS PROBE MEASURES IS AN ASYMMETRY, NOT A DELTA. #1928's ruler compares two arms against a
+ *   WHAT THIS PROBE MEASURES IS AN ASYMMETRY rather than A DELTA. #1928's ruler compares two arms against a
  *   frozen baseline count. This one asserts a conjunction and its complement: inside exclusion-grade
  *   coverage a pharmacy-affordance answer holding nothing carries an absence observation, and everywhere
  *   else the route is silent. So every row registers a `expectedOutcome` — either `absence_observation` or
@@ -14,12 +14,12 @@
  *   outcome registered for it. A row that stayed silent for a reason nobody registered fails, even though
  *   it stayed silent.
  *
- *   THE ANCHORS ARE DERIVED FROM THE PILOT LAYER, NOT INVENTED. Each target row names the coverage cell
+ *   THE ANCHORS ARE DERIVED FROM THE PILOT LAYER rather than INVENTED. Each target row names the coverage cell
  *   its anchor resolves into and the `observed_rows` that cell carries. The rows were selected by walking
  *   the pilot layer's own zero-observed cells, taking gazetteer places whose coordinates fall inside one,
  *   and keeping the ones whose resolved search centre lands back in the same cell. No address is written
  *   by hand anywhere in the definition, and a cell centroid is a coordinate — the row's anchor is a place
- *   the gazetteer already carries, not a street line composed to fit.
+ *   the gazetteer already carries rather than a street line composed to fit.
  *
  *   THE CONTROLS SPLIT THE CONJUNCTION. `outside_coverage` rows put the same query and the same empty
  *   answer outside the surveyed cell set, which is the whole contract: the `[]` there is silence.

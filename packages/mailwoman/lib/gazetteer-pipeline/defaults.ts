@@ -390,7 +390,7 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"AD",
 	// AE is deliberately absent and is the largest single country GeoNames publishes here: 178,171 rows, more than
 	// RU + RO + KR combined. Every one is a `NNNNN NNNNN` pair at Dubai-area coordinates (lat 24.63–25.32, lon
-	// 54.91–56.20) — Makani BUILDING codes, not postcodes. The United Arab Emirates has no postal code system. mail
+	// 54.91–56.20) — Makani BUILDING codes rather than postcodes. The United Arab Emirates has no postal code system. mail
 	// goes to PO boxes. Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country
 	// with none, and every coverage figure taken from that tier would inherit the claim.
 	//

@@ -12,7 +12,7 @@
 #
 # SINGLE VARIABLE: identical to v0.9.1-pilot-anchor-on EXCEPT corpus v0.4.2-de-bothorder, whose
 # `synth-german` recipe output is built with `--intl-fraction 0.4` (≈40% international order, ≈60% native). Any
-# delta is attributable to the order mix, not the recipe.
+# delta is attributable to the order mix rather than the recipe.
 #
 # PRE-REGISTERED CHECK (stop at 20k, the early check. extend to 100k only if it holds):
 #   - NATIVE-order DE locality >= 80% — hold the 83.8% we already have. do not regress native.

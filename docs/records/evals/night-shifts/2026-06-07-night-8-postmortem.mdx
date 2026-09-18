@@ -78,7 +78,7 @@ notunit-tested — the conditional re-measure happened this shift:
   warnings) — a local `yarn ci:docs` before pushing docs would've caught them.
 - Completion monitors false-positived twice on stale prior-run `step-020000` checkpoints → switched to
   app-task detection.
-- **The eval loads compiled `core/out/`, not source.** The first #387 before/after showed _zero_ effect —
+- **The eval loads compiled `core/out/` rather than source.** The first #387 before/after showed _zero_ effect —
   the `--city-state-fallback` flag was a silent no-op until `tsc -p core/tsconfig.json`. Unit tests pass on
   vitest's source aliases, so they hid it; only the eval scripts (which import the package `exports` map)
   bite. Recompile after touching any workspace an eval imports. (Captured in `feedback-compiled-cli`.)
@@ -103,7 +103,7 @@ notunit-tested — the conditional re-measure happened this shift:
   (0/3000), +7 pure improvements on NL (Dutch province-capitals Utrecht/Groningen). Serializers render the
   synthesized node fine (`decodeAsJSON` → `…,"locality":"Berlin"`). Only un-done check is the demo
   highlighting (your verify domain). Then it's a one-line default flip in `resolve.ts`.
-- **#387 residual (~12.5% Berlin) is a PARSER bug, not the resolver:** the model mangles `Straußstraße`→
+- **#387 residual (~12.5% Berlin) is a PARSER bug rather than the resolver:** the model mangles `Straußstraße`→
   `Strau`+`straße` and drops both Berlins (no region to anchor on). A distinct ß / compound-street
   tokenizer follow-up (`scripts/diag-citystate-fire.ts` reproduces it).
 - **#386 DONE + measured:** Sachsen name-match 51.1→65.5%. Residual Sachsen gap is the hyphenated-compound

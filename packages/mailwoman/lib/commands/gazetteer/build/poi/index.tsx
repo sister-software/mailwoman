@@ -16,7 +16,7 @@
  *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
  *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
  *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
- *   well-surveyed cell" needs its own zero-observed-rows coverage row, not silent absence. The manifest
+ *   well-surveyed cell" needs its own zero-observed-rows coverage row rather than silent absence. The manifest
  *   swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default Overture branch
  *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
  */

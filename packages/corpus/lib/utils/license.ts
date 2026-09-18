@@ -5,7 +5,7 @@
  *
  *   Corpus licensing — the single source of truth for the training-data license policy (#26).
  *
- *   Posture (operator, 2026-06-19): **exclusion is a deliberate act, not a silent default.** The
+ *   Posture (operator, 2026-06-19): **exclusion is a deliberate act rather than a silent default.** The
  *   build INCLUDES every row an adapter yields (stamping its `license`); a build that needs a clean
  *   license set — e.g. the proprietary `@mailwoman/neural-weights-*` weights, which must not
  *   inherit a share-alike obligation — PURPOSELY excludes kinds via `buildCorpus({ excludeLicenses
@@ -31,8 +31,8 @@ export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-S
 /**
  * Compile a `--exclude-licenses` spec (comma-separated, e.g. `"ODbL,CC-BY-SA"`) into anchored, case-insensitive prefix
  * patterns. Each entry matches a license string that STARTS with it, so `CC-BY-SA` catches `CC-BY-SA-3.0`,
- * `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped — the spec is a literal license prefix, not a user-supplied
- * regex.
+ * `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped — the spec is a literal license prefix rather than a
+ * user-supplied regex.
  */
 export function compileLicenseExcludes(spec: string): RegExp[] {
 	return extractDelimited(spec).map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))

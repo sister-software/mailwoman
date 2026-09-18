@@ -22,7 +22,7 @@
  *
  *   Unlike a French région or a German Bundesland, the prefecture does appear on a normal address
  *   line: a Japanese address is written largest-to-smallest (prefecture → city → ward → block), so
- *   the prefecture is the first thing written, not an inferred-from-postcode afterthought. See
+ *   the prefecture is the first thing written rather than an inferred-from-postcode afterthought. See
  *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 

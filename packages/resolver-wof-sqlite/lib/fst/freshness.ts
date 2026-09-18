@@ -19,13 +19,13 @@
  *   string or `undefined`, so a fact added to the stamp cannot be checked by some callers and not
  *   others — which is how three of the four base linkers ended up unable to notice a PIX1 schema bump.
  *
- *   FORMAT IS PART OF FRESHNESS. The check compares the serializer version too, not just the source
+ *   FORMAT IS PART OF FRESHNESS. The check compares the serializer version too rather than just the source
  *   md5. A guard that checks only the source reads a format-obsolete binary as "current" (the R5
  *   freshness-guard lesson, format edition), and a file below {@link MIN_STAMPED_FORMAT_VERSION}
  *   cannot carry a stamp at all — reported as its own reason rather than silently passing.
  *
- *   STALE IS A WARNING, NOT A FAULT. A dev tree with an old FST must still run. the artifact is a
- *   decode-time bias list, not a correctness dependency. Callers print {@link formatFSTStaleWarning}
+ *   STALE IS A WARNING rather than A FAULT. A dev tree with an old FST must still run. the artifact is a
+ *   decode-time bias list rather than a correctness dependency. Callers print {@link formatFSTStaleWarning}
  *   and continue.
  */
 
@@ -57,7 +57,7 @@ const PROVENANCE_OFFSET_FIELD = 28
 
 /**
  * First serializer version carrying the trailing provenance block. Below this a file has no place to put a stamp, so
- * "unstamped" is a statement about the FORMAT, not about the builder.
+ * "unstamped" is a statement about the FORMAT rather than about the builder.
  */
 export const MIN_STAMPED_FORMAT_VERSION = 3
 
@@ -93,9 +93,9 @@ export interface FSTStampFields {
  * What a caller expects the artifact to have been built from.
  *
  * `exclusionPolicy` is optional and caller-supplied on purpose. The policy id lives in
- * `mailwoman/gazetteer-pipeline/fst.ts` (which depends on this package, not the other way round), so only the caller
- * knows which policy it means — the same split as the pair-index guard, where the format+magnitude half is shared and
- * the source-md5 half stays with the script that knows its sources.
+ * `mailwoman/gazetteer-pipeline/fst.ts` (which depends on this package rather than the other way round), so only the
+ * caller knows which policy it means — the same split as the pair-index guard, where the format+magnitude half is
+ * shared and the source-md5 half stays with the script that knows its sources.
  */
 export interface FSTExpectation {
 	source: FSTSourceIdentity

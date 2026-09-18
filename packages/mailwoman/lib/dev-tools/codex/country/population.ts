@@ -79,7 +79,7 @@ export async function generateCountryPopulation(
 ): Promise<GenerateCountryPopulationSummary> {
 	const outPath = options.out ?? DEFAULT_OUT
 
-	// `responseType: "text"` because the source is a tab-separated dump, not JSON.
+	// `responseType: "text"` because the source is a tab-separated dump rather than JSON.
 	const text = await new APIClient({ displayName: "geonames-country-info", retry: true })
 		.fetch<string>({ url: SOURCE, responseType: "text" })
 		.then(pluckResponseData)

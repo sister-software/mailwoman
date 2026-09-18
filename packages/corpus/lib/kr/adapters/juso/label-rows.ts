@@ -180,7 +180,7 @@ export interface ReadJusoOptions {
  * Stream every LABEL row, region by region.
  *
  * The lot and supplement files of one 시도 are held while its address file streams, so the join never holds the country
- * at once — the largest region's two side files, not 6.4 million addresses.
+ * at once — the largest region's two side files rather than 6.4 million addresses.
  */
 export async function* readJusoLabelRows(
 	archivePath: PathBuilderLike,

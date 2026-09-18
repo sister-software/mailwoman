@@ -14,7 +14,7 @@
  *      includes the whitespace the sentinel consumed. the TS layer trims to the word start,
  *      preserving the decoder contract the shipped model was decoded with. The bare-`▁` piece
  *      collapses to the zero-width-after-space range the word grouper expects.
- *   3. **Normalizer-granular alignment is the TRAINING convention, not a bug** — on inputs where
+ *   3. **Normalizer-granular alignment is the TRAINING convention rather than a bug** — on inputs where
  *      the model's normalizer aligns coarsely (the ALL-CAPS class: `CALLE` → `▁C`[0,0) +
  *      `AL`[0,3)), the native offsets match what `EncodeAsImmutableProto` fed the trainer
  *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the same proto

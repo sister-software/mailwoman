@@ -76,7 +76,7 @@ push the second token toward `I-locality` and the first toward
 
 ## What Viterbi does
 
-Viterbi searches for the **highest-scoring label SEQUENCE**, not
+Viterbi searches for the **highest-scoring label SEQUENCE** rather than
 per-token argmaxes:
 
 ```
@@ -136,7 +136,7 @@ say "this transition is statistically likely."
 
 Consider: `B-region → B-locality` is structurally valid. So is
 `B-region → B-postcode`. But in real addresses, `region` is almost
-always followed by `postcode` (`MA 02101`), not another locality. The
+always followed by `postcode` (`MA 02101`) rather than another locality. The
 structural mask treats both as equally allowed.
 
 A learned transition matrix could in principle encode that statistical
@@ -146,7 +146,7 @@ common sequence. Mailwoman doesn't ship one. Viterbi runs on emission
 scores alone, which is what ships today. It works well enough because
 the encoder's emissions already carry most of the sequencing signal
 via attention — a learned transition layer would be an additive
-refinement on top of that, not a replacement for it.
+refinement on top of that rather than a replacement for it.
 
 ## Why there's no learned CRF
 
@@ -181,7 +181,7 @@ B-locality` is rare — a learned matrix could rank these apart.
 It would not provide:
 
 - Better encoder representations. The encoder is the upstream learner;
-  a CRF layer is downstream of it, not a substitute for it.
+  a CRF layer is downstream of it rather than a substitute for it.
 - Handling of novel patterns. If a sequence isn't represented well in
   training, a transition matrix has no opinion either.
 - Inference speed. Viterbi over a learned matrix is marginally slower

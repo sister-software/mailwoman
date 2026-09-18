@@ -13,7 +13,7 @@
  *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is `LOST`
  *   even when the transformed parse is non-empty, because the address is no longer resolvable to the same
  *   place. A drift confined to non-critical tags (locality, region, dependent_locality, unit, …) is
- *   DEGRADED: recoverable, worth flagging, not ship-blocking on its own.
+ *   DEGRADED: recoverable, worth flagging rather than ship-blocking on its own.
  *
  *   A critical tag that's absent in the original parse but present in the transformed one — a hallucination
  *   — is also `LOST`, not `DEGRADED` and not ignored. A missing
@@ -32,7 +32,7 @@ export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
  * Ordinal severity — INVARIANT < DEGRADED < LOST. Used by the runner's `--baseline` regression check to decide whether
- * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's, not merely "also
+ * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's rather than merely "also
  * non-INVARIANT" (see runner.ts's `preExisting` computation).
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }

@@ -102,12 +102,12 @@ with a reason, counted, and stepped over. The NFC assertion was the one place in
 pipeline that broke that contract and reached for a stack trace. We brought it back in line with
 how the rest of the system already treated bad data: a multi-hour unattended build should hold
 every row guilty until it proves itself alignable, and the cost of a guilty row is a line in a
-quarantine file, not a dead process.
+quarantine file rather than a dead process.
 
 The bill for that, this run: tens of thousands of non-Latin name variants set aside — under two
 hundredths of one percent of the corpus, every one of them logged with the reason `span-out-of-bounds`
 so the number is staring back at us in the manifest. Small, visible, and on the list to recover.
-Named, not swept under the parquet.
+Named rather than swept under the parquet.
 
 ## The two and a half hours we didn't lose
 
@@ -127,7 +127,7 @@ So the recovery shipped one more thing: resume. Each adapter writes its canonica
 only once that file is completely flushed, a manifest beside it. So the manifest's existence is a
 promise that the file behind it is whole. Resume checks for that pair; if both are there, it
 reuses them and skips the emit entirely. It's opt-in — the default still re-emits, because for a
-clean run you want the authoritative record, not yesterday's cache — but with the flag flipped, the
+clean run you want the authoritative record rather than yesterday's cache — but with the flag flipped, the
 re-run reused every gigabyte we'd already paid for and went straight back to alignment. Freed of
 the emit, the align phase turned out to be fast. The thing we'd budgeted twenty-two hours for is
 mostly going to come in under ten, because the original estimate was paying for an emit phase the

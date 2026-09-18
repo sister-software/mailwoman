@@ -59,9 +59,9 @@ node scripts/build-postcode-locality.ts --output .../postcode-locality-intl.db -
 | GB      | 7,630,560 |                            1,626,691 | unit postcodes; **~34% of GB postcodes get no candidate** (WOF GB locality coverage is incomplete)                                                                                                            |
 | ES      |    27,111 |                        3,273 (28.9%) | WOF orphan-heavy — sparse; inert until ES localities are in the admin DB                                                                                                                                      |
 | IT      |    18,349 |                        2,081 (42.2%) | WOF orphan-heavy — sparse; inert until IT localities are in the admin DB                                                                                                                                      |
-| JP      |   297,874 |              114,154 matched (94.9%) | **name-match build, NOT PIP** — see below. End-to-end resolver **98.5%** vs KEN_ALL, **93.9%** vs independent GeoNames gold                                                                                   |
+| JP      |   297,874 |              114,154 matched (94.9%) | **name-match build rather than PIP** — see below. End-to-end resolver **98.5%** vs KEN_ALL, **93.9%** vs independent GeoNames gold                                                                            |
 
-## CJK: a different build (name-match, not PIP) — `build-postcode-locality-cjk.ts`
+## CJK: a different build (name-match rather than PIP) — `build-postcode-locality-cjk.ts`
 
 WOF admin geometry in CJK (JP/KR/TW) is **point-based at the municipality/locality level** — there are no
 municipality POLYGONS — so the point-in-polygon build above is structurally inapplicable (it gives only

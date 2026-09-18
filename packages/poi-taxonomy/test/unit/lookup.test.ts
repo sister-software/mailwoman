@@ -170,7 +170,7 @@ describe("full Overture snapshot + curated overlay", () => {
 
 	it("curated records WIN id collisions and keep owning their synonym phrases (board depends on it)", () => {
 		// `supermarket`/`cafe`/`trail`/`bank`/`school` all exist as Overture codes too, but the curated record wins:
-		// its curated `overtureCategories` rollup survives, not a bare identity mapping.
+		// its curated `overtureCategories` rollup survives rather than a bare identity mapping.
 		expect(getPOICategory("supermarket")?.overtureCategories).toContain("grocery_store")
 		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
 
@@ -234,7 +234,7 @@ describe("full Overture snapshot + curated overlay", () => {
 
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
-		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
+		// file is compared by PARSED content rather than raw bytes: same data, formatting aside.
 		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())

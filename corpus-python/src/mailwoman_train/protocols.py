@@ -6,7 +6,7 @@ inherits from these: they are structural, checked by mypy and by `isinstance` in
 
 Each member below is a shape the tree already carries. A protocol that describes an interface
 nobody implements reads as a contract and enforces nothing, so a member is added here when the
-code it names exists, not in anticipation of it.
+code it names exists rather than in anticipation of it.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from typing import Any, Protocol, runtime_checkable
 class CountryModule(Protocol):
     """What one country contributes to training.
 
-    The implementer is a module, not an instance, which is why the settings are spelled as module
+    The implementer is a module rather than an instance, which is why the settings are spelled as module
     constants. `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the
     held-out board rather than the training pool. each country sets its own, because the population
     distributions differ.

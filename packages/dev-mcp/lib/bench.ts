@@ -69,7 +69,7 @@ export interface BenchReading {
 /**
  * Why every benchmark here is single-threaded, carried on the result rather than left to a reader to know.
  *
- * Two measurements, not a preference: `session.run()` in `onnxruntime-node` blocks its calling thread, and
+ * Two measurements rather than a preference: `session.run()` in `onnxruntime-node` blocks its calling thread, and
  * `geocode-stream.ts` recorded throughput on a shared multi-GB WOF SQLite peaking at 2 workers (~1.4x) and degrading
  * beyond it.
  */

@@ -10,7 +10,7 @@
  *
  *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   over the chosen scenarios per candidate and produces a table, not an artifact. The table is PER SCENARIO:
+ *   over the chosen scenarios per candidate and produces a table rather than an artifact. The table is PER SCENARIO:
  *   twelve layers cover the same frontages with different extents, and a pooled share would average a
  *   present-day designation together with a 2105 projection and describe neither.
  *

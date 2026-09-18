@@ -32,8 +32,8 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 
 /**
  * Names that keep their spelling — `AGENTS.md` lists them as contract-tied. A hit naming one of these is a formatting
- * fix, not a rewrite. Empty: every contract-tied identifier that carried a banned word has been renamed. add a name
- * here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
+ * fix rather than a rewrite. Empty: every contract-tied identifier that carried a banned word has been renamed. add a
+ * name here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
 const CONTRACT_TOKEN = /(?!)/
 
@@ -108,8 +108,8 @@ const EMPTY_MODIFIERS = new Set([
  * lines above it is reported as line 6. The COUNT is unaffected — the hit is real either way — but the census indexes
  * source by that number to derive a modifier, and a reader following the output would be sent to the wrong line.
  *
- * Searching a window rather than trusting the number makes the instrument self-correcting. Three lines is measured, not
- * guessed: the two files in this repository that drift are each off by two.
+ * Searching a window rather than trusting the number makes the instrument self-correcting. Three lines is measured
+ * rather than guessed: the two files in this repository that drift are each off by two.
  */
 const LINE_DRIFT_WINDOW = 3
 
@@ -165,7 +165,7 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 		const before = index === -1 ? "" : source.slice(0, index)
 		const modifier = (/([A-Za-z0-9_.`§/-]+)[\s-]*$/.exec(before.trimEnd())?.[1] ?? "").toLowerCase()
 
-		// A contract-tied name is decided by the WHOLE line, not the modifier: `mailwoman eval
+		// A contract-tied name is decided by the WHOLE line rather than the modifier: `mailwoman eval
 		// gate` and `` `promotion-eval.ts` `` put different words immediately before the hit.
 		const remedy = CONTRACT_TOKEN.test(source)
 			? Remedy.backtick
@@ -180,8 +180,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Which of the four words a match belongs to. Searched ANYWHERE in the token, not at its start: the code rule matches
- * the whole compound, so `promotion-eval` is a `gate` and a prefix test files it under whichever family the
+ * Which of the four words a match belongs to. Searched ANYWHERE in the token rather than at its start: the code rule
+ * matches the whole compound, so `promotion-eval` is a `gate` and a prefix test files it under whichever family the
  * fall-through names.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
@@ -214,7 +214,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 		relative(root, path)
 	)
 
-	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
+	// The CENSUS config rather than the enforcing one: enforcement exempts the Vale fixtures, and the census
 	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
 	// package's devDependency for exactly this line. knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
@@ -301,7 +301,7 @@ export const vocabCensusCheck: RepoCheck = {
 
 		const hits = classify(hitLines, sources)
 
-		// Asserted on the CLASSIFIED hits, not on the raw Vale lines. A control that greps the raw
+		// Asserted on the CLASSIFIED hits rather than on the raw Vale lines. A control that greps the raw
 		// output tests a different string than the classifier parses: renaming the rule to
 		// `AmbiguousShorthandCode` kept every raw line matching a substring check while the classifier's
 		// pattern matched none, and the census reported a clean tree.

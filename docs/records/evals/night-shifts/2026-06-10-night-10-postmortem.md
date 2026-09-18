@@ -55,7 +55,7 @@ substantially eaten.
   (1/461 vs 54%). Correction block published same-night, #498 filed with the real numbers.
   Lesson: classify the misses before naming the cause — the attribution was plausible,
   available, and wrong.
-- **The arena harness graded the wrong model silently** (env vars, not flags; the
+- **The arena harness graded the wrong model silently** (env vars rather than flags; the
   identical-to-baseline numbers were the tell). Caught before publication; the env-var
   interface is a misuse hazard worth a flags PR.
 - **The release pipeline had an undocumented mandatory leg** (R2). Cost ~20 minutes of
@@ -71,7 +71,7 @@ substantially eaten.
 2. **Repairs-in-both for `parseWithLogits`** — reconcile must see user-path tokens; the
    opts were silently ignored before, so no default change. Alternative (document the skip)
    rejected as preserving a latent divergence.
-3. **Arena dip (−2/3pp whole-parse) reported with caveats, not treated as a check** — the
+3. **Arena dip (−2/3pp whole-parse) reported with caveats rather than treated as a check** — the
    arenas were never pre-registered as ship criteria; adding one retroactively is check
    drift in the other direction. Flagged for morning eyes instead.
 4. **#487 eval build deferred** (census downloads + shapefile parsing at hour 7) — recipe

@@ -10,7 +10,7 @@ from typing import Any
 from ...corpora.address_points import sample_address_points
 from ...paths import data_root_path
 
-#: Resolved when needed, not at import, so `--help` runs with no data root configured.
+#: Resolved when needed rather than at import, so `--help` runs with no data root configured.
 BAN_DB_PARTS = ("ban", "address-points-fr.db")
 
 #: Particles that stay lower case inside a French name unless they open it — `Rue de la Paix`, not

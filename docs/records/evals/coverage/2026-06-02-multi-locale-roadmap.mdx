@@ -14,8 +14,8 @@ addresses per locale sorts them into three groups.
 | ES     | house after street, postcode before city            | `Calle Mayor 12` → street=`Calle Mayor 12`                                                                                              | **same order extract**                                |
 | IT     | house after street, postcode before city            | `Via Roma 12` → street=`Via Roma 12`                                                                                                    | **same order extract**                                |
 | NL     | house after street, `1012 LM` postcode before city  | `Damrak 70, 1012 LM Amsterdam` → street tagged venue, `locality: "LM Amsterdam"`                                                        | order extract + Dutch postcode                        |
-| GB     | house **first**, alphanumeric postcode last         | `10 Downing Street, London SW1A 2AA` → house+street correct, `locality: "London SW1A 2AA"`                                              | postcode coverage, **not** order                    |
-| FR     | house first, postcode before city (already trained) | region/venue/po_box weak, but the failing rows are multi-script (`Шом, Creuse`) + coarse `région, France` queries, not street addresses | multi-script + coarse-query coverage, **not** order |
+| GB     | house **first**, alphanumeric postcode last         | `10 Downing Street, London SW1A 2AA` → house+street correct, `locality: "London SW1A 2AA"`                                              | postcode coverage rather than order                    |
+| FR     | house first, postcode before city (already trained) | region/venue/po_box weak, but the failing rows are multi-script (`Шом, Creuse`) + coarse `région, France` queries rather than street addresses | multi-script + coarse-query coverage rather than order |
 
 ## What this means for the recipe
 
@@ -55,11 +55,11 @@ The v0.6.0-a0 SentencePiece tokenizer round-trips every script losslessly, which
 byte_fallback. The telling number is fragmentation, and there is almost none: zero byte-fallback
 pieces across Cyrillic, Greek, Japanese, Chinese, Korean, Arabic, Thai, and Devanagari, all sitting
 at roughly 0.5 to 1.1 pieces per character, the same range as Latin. The 48K vocab carries real
-subword pieces (and for CJK, per-character pieces) for all of them, not raw byte soup.
+subword pieces (and for CJK, per-character pieces) for all of them rather than raw byte soup.
 
 So the non-Latin collapse measured earlier is not the tokenizer shredding the script. The pieces
 exist; their embeddings areunder-trained, because the corpus is almost entirely Latin. That is
-the same diagnosis as German: coverage, not tokenizer. The synth-from-real-OA recipe therefore reaches
+the same diagnosis as German: coverage rather than tokenizer. The synth-from-real-OA recipe therefore reaches
 past the Latin scripts, and the expensive option of swapping in a multilingual encoder is less
 necessary than it looked, since the vocabulary is already multilingual enough to learn from.
 
@@ -68,9 +68,9 @@ necessary than it looked, since the vocabulary is already multilingual enough to
 Hold all of this behind the German result. If the German train lifts street and house_number without
 costing US or French accuracy, the recipe is proven and ES, IT, and NL follow on the same rails. If
 German shows interference instead, that same interference would hit the others, and pre-building them
-wouldbe three more extracts to pull back out. So this is a map, not a backlog. Measure the first
+wouldbe three more extracts to pull back out. So this is a map rather than a backlog. Measure the first
 one before you commit to the rest.
 
-The spot-check is directional (a few hand-written addresses per locale, not a labeled set); treat the
+The spot-check is directional (a few hand-written addresses per locale rather than a labeled set); treat the
 groupings as a planning aid, and confirm each locale with a held-out set the way German was confirmed
 before training on it.

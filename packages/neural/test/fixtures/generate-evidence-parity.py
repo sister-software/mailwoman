@@ -3,7 +3,7 @@
 Paints a probe set with MINI street-type + locality-surface lexicons through corpus-python's REAL
 painter (`mailwoman_train.gazetteer_anchor.realign_gazetteer_to_pieces`) against the in-repo fixture
 tokenizer, and snapshots per-piece features + confidence. The TS test
-(`neural/evidence-inference.test.ts`) replays the SAME lexicons + piece offsets through
+(`neural/evidence-inference.test.ts`) replays the same lexicons + piece offsets through
 `buildGazetteerFeatures` and asserts byte equality — the train/inference painter-parity guard the
 productionization plan's Phase 2 mandates.
 
@@ -68,17 +68,17 @@ PROBES = [
     "saint-denis",
     "L'Isle-Adam",
     "123 Main ST",  # uppercase code fires
-    "123 main st",  # lowercase does NOT (code_entries case discipline)
+    "123 main st",  # lowercase does not (code_entries case discipline)
     "La Grange Park Illinois",
     "Ancien Chemin de Rennes",
     "Springfield",
     "nothing to see here",
     "Chemin de Belleville",
-    # Digit-guard probes (v3.23): matched spans beside/containing digits must paint NOTHING.
+    # Digit-guard probes (v3.23): matched spans beside/containing digits must paint nothing.
     "Springfield 62704",  # trailing digit neighbor guards the locality match
     "12b rue du Springfield",  # alnum house number guards "rue"; "Springfield" (neighbor "du") still paints
     "Boulevard 7 des Capucines",  # digit inside the neighborhood of both matches
-    "Ancien Chemin 3 de Rennes",  # digit splits the 2-gram; guarded 1-gram consumption semantics
+    "Ancien Chemin 3 de Rennes",  # digit splits the 2-gram. guarded 1-gram consumption semantics
 ]
 
 

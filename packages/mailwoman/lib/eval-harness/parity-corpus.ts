@@ -160,7 +160,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {
-			// Loud, not silent. A requested prior that resolves nothing scores lower with no signal of its own, which
+			// Loud rather than silent. A requested prior that resolves nothing scores lower with no signal of its own, which
 			// reads as a model difference — #1516's shape, and the reason five overlays needed #1705.
 			console.warn(
 				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
@@ -191,7 +191,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 	// in the rows the filter dropped) and the deepparse comparison found on postcode: we report
 	// postcode 98.6% and that is recall — on 249 rows with no gold postcode, v264 emits one on 25.
 	// 16 of those are a house_number read as a postcode ("Epleskogen 39A" -> postcode "39A"), and
-	// `39A` is not a postcode in any system. Informational, not a floor: a floor is the operator's.
+	// `39A` is not a postcode in any system. Informational rather than a floor: a floor is the operator's.
 	const precision = new Map(PARITY_FLOORS.map((f) => [f.label, { spurious: 0, absent: 0, examples: [] as string[] }]))
 	const byCountry = new Map<string, { cases: number; fullAgree: number }>()
 

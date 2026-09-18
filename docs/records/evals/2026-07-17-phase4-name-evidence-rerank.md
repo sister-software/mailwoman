@@ -16,7 +16,7 @@ fired on 1/267: fixed 0, broke 0
 evidence rate: 9/267 (3.4%) — tier census: 1308 admin / 25 address_point / 2 street
 ```
 
-**The rerank collected nothing — because it is evidence-starved, not wrong.** The failing class is
+**The rerank collected nothing — because it is evidence-starved rather than wrong.** The failing class is
 context-free fragments, and a fragment cannot reach the rooftop layers (no locality/postcode to extract
 on), so every hypothesis ties at admin tier and the arbiter has nothing to prefer. Full-geocode tier
 is structurally blind exactly where the headroom lives.
@@ -56,8 +56,7 @@ collects it without a single training step.
 - **FR only** — the one locale with a complete street-name index on hand. Generalizing needs
   per-country name sources (US TIGER/situs, NO Kartverket, PT/RO BAN-equivalents) behind one
   `StreetLocalityEvidence` interface (P1's spec).
-- The index is BAN and the board fixtures are BAN-derived — not circular (the index is a lookup,
-  not the model; production carries the same index and the eval surfaces are real streets), but the
+- The index is BAN and the board fixtures are BAN-derived — not circular (the index is a lookup rather than the model; production carries the same index and the eval surfaces are real streets), but the
   coverage is by construction ideal. Foreign-locale generalization will be lower.
 - The 14 breaks are real street names outranking gold; a locality-scoped lookup (street × locality)
   should reduce them further. Unscoped membership was the v0 policy.

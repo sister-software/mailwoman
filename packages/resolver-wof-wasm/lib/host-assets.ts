@@ -57,7 +57,7 @@ export async function syncArtifact(
  * @param destDir - E.g. static/mailwoman/sqljs
  */
 export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolean> {
-	// The runtime files live under the package's `dist/`, so the anchor is the bundle inside it, not the manifest at
+	// The runtime files live under the package's `dist/`, so the anchor is the bundle inside it rather than the manifest at
 	// the package root.
 	const entry = tryResolvePackageSpecifier(import.meta.url, "sql.js-httpvfs", "dist/index.js")
 

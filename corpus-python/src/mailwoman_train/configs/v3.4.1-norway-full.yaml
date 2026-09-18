@@ -7,7 +7,7 @@
 # IDENTICAL), so we learn Norway from v264 (the less-committed parent) over the full schedule.
 #
 # PRE-REGISTERED READ:
-#   PRIMARY — the brief's Norwegian rows read as STREET, not locality:
+#   PRIMARY — the brief's Norwegian rows read as STREET rather than locality:
 #     Epleskogen 39A / Tindvegen nedre 44B / Ovste Skogen 121 -> street (+ hopefully house_number).
 #   DO-NO-HARM — the FR fragment board (board 2), global parity, and the 6 demo presets stay at v310's
 #     levels. This is v310's recipe + Norway. French/US must not regress (v310 shipped them).

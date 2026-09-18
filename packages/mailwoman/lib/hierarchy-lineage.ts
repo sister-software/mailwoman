@@ -111,7 +111,7 @@ export function assembleHierarchy(
 			tag: n.tag,
 			value: n.value.trim(),
 			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this, not `value`.
+			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),

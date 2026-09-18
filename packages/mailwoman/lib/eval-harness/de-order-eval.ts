@@ -41,7 +41,7 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
  *
  * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-ON cell of the 2x2 is
  * `de.native_locality`, which is also in the fp32↔int8 delta cap, so that run executes on both arms. The other five are
- * recorded, not floored.
+ * recorded rather than floored.
  */
 export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
 

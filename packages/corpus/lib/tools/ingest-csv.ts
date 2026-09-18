@@ -215,7 +215,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
-	// `Database` — the empty schema — deliberately, not by default: `createTableSQL` is built from the columns and
+	// `Database` — the empty schema — deliberately rather than by default: `createTableSQL` is built from the columns and
 	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
 	// below goes through `exec`/`prepare` for the same reason.
 	using db = new DatabaseClient<Database>(opts.outputPath)

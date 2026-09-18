@@ -22,8 +22,7 @@
  *   identifier ("Apt 4B", never bare "Apt"); BSMT, FRNT, LBBY, LOWR, OFC, PH, REAR, SIDE, and UPPR
  *   may stand alone. This formalizes, as provenance-tracked reference data, the split that
  *   `corpus/src/recipes/unit.ts` previously hand-rolled (and only partially covered) as
- *   in-file `ID_DESIGNATORS`/`STANDALONE_DESIGNATORS` arrays for synthesis weighting. A SEPARATE,
- *   not-yet-built deliverable of #1100 is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
+ *   in-file `ID_DESIGNATORS`/`STANDALONE_DESIGNATORS` arrays for synthesis weighting. A SEPARATE rather than-yet-built deliverable of #1100 is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
  *   planta/piso/bajo, piano/terra, 階/F/B1, …) — this module stays US/Pub-28 only.
  *
  *   Data is verbatim USPS Pub-28 C2.

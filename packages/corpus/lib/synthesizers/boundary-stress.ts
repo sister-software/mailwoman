@@ -8,7 +8,7 @@
  *   The within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under many
  *   names: the model mis-places token boundaries between adjacent components when the boundary is
  *   ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold boundary
- *   exactly where the model wobbles, so a retrain learns the boundary from context, not the
+ *   exactly where the model wobbles, so a retrain learns the boundary from context rather than the
  *   lexeme.
  *
  *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the recipe output never
@@ -45,7 +45,7 @@
  *   AU/NZ/UK slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the
  *   tokenizer splits `/`) and is the worst within-token class — but it inherently requires non-base
  *   AU/NZ/UK locales, which contradict the US/FR/DE base (the lint catch). It belongs in a
- *   separately-scoped AU/NZ/UK boundary-coverage recipe that also adds AU base coverage, not in this
+ *   separately-scoped AU/NZ/UK boundary-coverage recipe that also adds AU base coverage rather than in this
  *   base-locale recipe. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
@@ -59,7 +59,7 @@ import { sample } from "@mailwoman/core/random"
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -101,8 +101,8 @@ export interface SynthesizedBoundaryStressRow {
 /**
  * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name. Single-word
  * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary BITE (the model
- * must not read the trailing suffix word as part of the name). Kept diverse so the recipe output teaches the boundary,
- * not the lexeme.
+ * must not read the trailing suffix word as part of the name). Kept diverse so the recipe output teaches the boundary
+ * rather than the lexeme.
  */
 const MULTIWORD_STREETS = [
 	"Country Club",
@@ -431,7 +431,7 @@ export function synthesizeBoundaryStressRow(
 
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
-		// "United States" (United 98% / States 98% country in the base), not "USA" — the #511 lint found
+		// "United States" (United 98% / States 98% country in the base) rather than "USA" — the #511 lint found
 		// "USA" is locality-dominant (75%, only 6% country) in the base. labeling it country would contradict.
 		const countryName = "United States"
 		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
@@ -463,8 +463,7 @@ export function synthesizeBoundaryStressRow(
 		if (template === "house-number-before-street") {
 			// The confounding mirror of house-number-after-street: the same FR street vocab with the number
 			// before the name. A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US
-			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by FORM,
-			// not position — the probe found v1.6.0 confidently absorbs the TRAILING number into street (I-street
+			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by FORM rather than position — the probe found v1.6.0 confidently absorbs the TRAILING number into street (I-street
 			// P=0.96), the order-bias.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
 

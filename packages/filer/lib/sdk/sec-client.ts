@@ -54,8 +54,8 @@
  *   | exhausted network/timeout            | requeue       | `isTransientResourceError(error)`        |
  *   | disallowed host, undecodable body    | programmer bug| `isTransientResourceError(error)` is false |
  *
- *   REDIRECT POLICY — documented, not implemented: Axios follows redirects automatically, and the host
- *   allowlist is checked against the ORIGINAL request URL, not each hop. A redirect from an allowed
+ *   REDIRECT POLICY — documented rather than implemented: Axios follows redirects automatically, and the host
+ *   allowlist is checked against the ORIGINAL request URL rather than each hop. A redirect from an allowed
  *   host to an arbitrary one would carry the configured UA there unchecked. Accepted for now — EDGAR's
  *   public JSON/document endpoints don't redirect cross-host in normal operation — but a future
  *   hardening pass fetching caller-discovered (as opposed to hardcoded) URLs should set
@@ -81,8 +81,8 @@ import { $private } from "#env"
 /**
  * The SEC fair-access policy's stated ceiling (https://www.sec.gov/os/accessing-edgar-data): "Current max request rate:
  * 10 requests/second." {@linkcode createSECClient} clamps to this regardless of a caller-supplied value, and because the
- * underlying pacer is strict-interval rather than a bucket, this is a hard ceiling on the SCHEDULE, not a steady-state
- * average.
+ * underlying pacer is strict-interval rather than a bucket, this is a hard ceiling on the SCHEDULE rather than a
+ * steady-state average.
  */
 export const SEC_MAX_REQUESTS_PER_SECOND = 10
 
@@ -99,7 +99,7 @@ export const SEC_MAX_REQUESTS_PER_SECOND = 10
  * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy, and provides a
  * schedule that stays inside the published limit even when the event loop is late. `SEC_MAX_REQUESTS_PER_SECOND`
  * remains the clamp — a caller may ask for anything up to it — but the DEFAULT is this. Raise it only with a
- * measurement showing the arrival-time distribution stays under 10/s, not merely the grant times.
+ * measurement showing the arrival-time distribution stays under 10/s rather than merely the grant times.
  *
  * THE RATE ALONE IS NOT ENOUGH, and this constant did not meet its own bar when it was introduced. `1000 / 9` is
  * `111.111…`, and a fractional interval puts the 10th grant at exactly 1000.0 ms after the first — so sub-millisecond
@@ -123,7 +123,7 @@ const MS_PER_SECOND = 1000
 const DEFAULT_CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
 /**
- * The TTL applied to an immutable archive document — a century, not `Infinity`.
+ * The TTL applied to an immutable archive document — a century rather than `Infinity`.
  *
  * `Infinity` is the obvious spelling of "never expires" and the wrong one: `JSON.stringify(Infinity)` is `"null"`, and
  * `null` reads back as `0` in the cache interceptor's `createdAt + ttl < Date.now()` expiry test, so a "permanent"
@@ -226,7 +226,7 @@ export interface CreateSECClientOptions {
 	cacheTTLMs?: number
 	/**
 	 * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure (connect, timeout, or
-	 * mid-body-transfer). A STATED CEILING, not "until it works". Never applies to a 403.
+	 * mid-body-transfer). A STATED CEILING rather than "until it works". Never applies to a 403.
 	 */
 	maxAttempts?: number
 	/**
@@ -315,7 +315,7 @@ export class SECClient extends APIClient<SECClientConfig> {
 
 	/**
 	 * Issue a `GET` against a full absolute EDGAR URL and return the RAW response body as text — the sibling
-	 * {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text, not JSON, and
+	 * {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text rather than JSON, and
 	 * `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
 	 *
 	 * Same client, same pacing limit, same host allowlist, same retry policy, same {@linkcode ResourceError} mapping as

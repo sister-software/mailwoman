@@ -78,7 +78,7 @@ describe("buildEmissionPriors", () => {
 
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
-		// All three hits map to B-postcode. bias is the max (not sum) → 0.6, not 1.8
+		// All three hits map to B-postcode. bias is the max (not sum) → 0.6 rather than 1.8
 		expect(m[0]?.[postcodeCol]).toBeCloseTo(0.6, 6)
 	})
 

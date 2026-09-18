@@ -62,7 +62,7 @@ describe("featureCellRows", () => {
 	it("indexes a polygon smaller than a cell rather than returning nothing", () => {
 		const rows = featureCellRows(classifyFeatureCells(sliver, 9, "sliver", "test"))
 
-		// Cell-touches-polygon, not centre-in-polygon: a polyfill keyed on centres returns zero cells here, and a feature
+		// Cell-touches-polygon rather than centre-in-polygon: a polyfill keyed on centres returns zero cells here, and a feature
 		// indexed to nothing reads downstream as an absence. It touches two cells rather than one at this coordinate,
 		// because a 5.5 m square that straddles a cell boundary is in both — which is the answer overlapping containment
 		// is supposed to give.
@@ -111,7 +111,7 @@ describe("CoastalCellIndex", () => {
 		const measurement = index.finish()
 		const [first, second] = measurement.perScenario
 
-		// The same ground under two scenarios is two claims and therefore two rows, not one.
+		// The same ground under two scenarios is two claims and therefore two rows rather than one.
 		expect(measurement.storedCellRows).toBe(
 			first!.compactedWholeCells + first!.partialCells + second!.compactedWholeCells + second!.partialCells
 		)

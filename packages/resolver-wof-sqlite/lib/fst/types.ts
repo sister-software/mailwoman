@@ -131,8 +131,9 @@ export interface BuildFSTOpts {
 	 * Degenerate-surface curation (build-time. the ASR-contextual-biasing "prune the bias list" discipline). A name whose
 	 * full normalized token sequence joins to a member of this set is never inserted — the surface carries no
 	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
-	 * bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so excluded places stay
-	 * findable. they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
+	 * bias list rather than the gazetteer of record — the resolver's candidate tables are untouched, so excluded places
+	 * stay findable. they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join("
+	 * ")`.
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
@@ -147,12 +148,12 @@ export interface BuildFSTOpts {
 	exclusionPolicy?: string
 	/**
 	 * Surface-ambiguity classes (survey #4, 2026-07-27): normalized-join surface → the number of distinct countries
-	 * (across the whole admin DB, not just this build's country scope) with a place carrying that surface. When supplied,
-	 * every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
-	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
-	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
-	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior tempering,
-	 * the Option-A evidence channel) arrive behind their own measured checks.
+	 * (across the whole admin DB rather than just this build's country scope) with a place carrying that surface. When
+	 * supplied, every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`)
+	 * — an entry accessible under several surfaces records each surface's own count. Serialized into the place row's
+	 * former `_pad` byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts
+	 * read as "no data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior
+	 * tempering, the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>
 	onProgress?: (phase: string, detail?: string) => void

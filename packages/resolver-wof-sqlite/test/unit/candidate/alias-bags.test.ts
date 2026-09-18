@@ -57,7 +57,7 @@ interface Staged {
 
 /**
  * An in-memory source carrying only the one table pass 2 reads, plus a staging sink that records calls instead of
- * writing rows — the pass owns the loop, not the storage.
+ * writing rows — the pass owns the loop rather than the storage.
  */
 function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
 	using src = DatabaseClient.temp<WOFDatabase>()
@@ -94,7 +94,7 @@ describe("explodeAliasBags", () => {
 	test("skips an alias that folds onto the place's own primary key", () => {
 		const attrs = new Map([[202, place("Saint-Étienne")]])
 		// The diacritic-free spelling folds to the same key as the display name, so it is the place's
-		// primary row, not a second alias.
+		// primary row rather than a second alias.
 		const { nAlias, keyCounts } = run([{ id: 202, alt: bag("Saint-Etienne", "St Etienne") }], attrs)
 
 		expect(nAlias).toBe(1)

@@ -1,4 +1,4 @@
-"""A country is found through the registry, not by importing its module by name.
+"""A country is found through the registry rather than by importing its module by name.
 
 A caller that wants a country's label set or board floor asks the registry for the country, rather
 than importing the module whose name it has to know. `protocols.CountryModule` is what makes one

@@ -42,7 +42,7 @@ Falsified, respecified, retrained, conditional, and shipped between dinner and s
 
 An ablation tells you what a component contributes. Ours carry an extra obligation: every
 change must prove what it _didn't_ touch. When a change targets French, the untouched panels —
-US, German, the gauntlet's regression cases — must come back **byte-identical**, not "roughly
+US, German, the gauntlet's regression cases — must come back **byte-identical** rather than "roughly
 flat." The null hypothesis is verified, never assumed.
 
 The same discipline pins the variable under test. The fine-tune above held the training corpus
@@ -67,7 +67,7 @@ baseline, the softened threshold, the deleted test. Three structural rules close
 - **Baselines are pinned artifacts.** A baseline is recorded with its checksum and the verbatim
   command that produced it, at creation time. Comparing against a re-derived baseline under a
   different tokenizer or model label is a category error, and the harness refuses it.
-- **Expected failures are tracked, not hidden.** A known-bad case is an `xfail` with an issue
+- **Expected failures are tracked rather than hidden.** A known-bad case is an `xfail` with an issue
   reference — it stays visible in every run's output. Deleting a failing case and tracking it
   are different acts, and the diff shows which one happened.
 - **The regression suite is an executable bug log.** Every bug ever fixed remains a permanent,

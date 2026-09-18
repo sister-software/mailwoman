@@ -445,7 +445,7 @@ describe("POSTCODE_CONVENTIONS", () => {
 	})
 
 	it("omits countries whose surface no board row attests", () => {
-		// The bar is attestation, not plausibility — see the map's docstring for why AU and ZA do not clear it.
+		// The bar is attestation rather than plausibility — see the map's docstring for why AU and ZA do not clear it.
 		expect(POSTCODE_CONVENTIONS.has("AU")).toBe(false)
 		expect(POSTCODE_CONVENTIONS.has("ZA")).toBe(false)
 	})

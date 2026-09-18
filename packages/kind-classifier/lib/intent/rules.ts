@@ -56,8 +56,9 @@ const MAX_BARE_TOPONYM_WORDS = 4
  *
  * Same justification, and the same boundary, as `@mailwoman/phrase-grouper`'s `PLACE_NAME_PARTICLES` (which covers the
  * INFIX glue: `de`, `am`, `aan den`). This set covers the PREFIX heads, and it exists for exactly one job: keeping
- * `route_pair` off "New York", "San Francisco", "Fort Worth" and their kin. It is a closed morphological class, not a
- * gazetteer — growing it with actual place names is the wrong move, and the pressure for that belongs on the resolver.
+ * `route_pair` off "New York", "San Francisco", "Fort Worth" and their kin. It is a closed morphological class rather
+ * than a gazetteer — growing it with actual place names is the wrong move, and the pressure for that belongs on the
+ * resolver.
  *
  * Case-folded on read, because lowercase is the primary user register and "new york" is the same query.
  */
@@ -136,7 +137,8 @@ const TOPONYM_HEAD_PARTICLES: ReadonlySet<string> = new Set([
 
 /**
  * Generic toponymic TAIL nouns — the other half of the same bounded morphological class. "Belize City", "George Town",
- * "Cape Town", "Palm Springs": a place name whose last token is a settlement/landform generic is one name, not two.
+ * "Cape Town", "Palm Springs": a place name whose last token is a settlement/landform generic is one name rather than
+ * two.
  *
  * Measured additions, same as the heads above: `city`, `town` and `valley` each came off a real corpus row that was
  * forking wrongly.
@@ -170,8 +172,8 @@ const TOPONYM_TAIL_NOUNS: ReadonlySet<string> = new Set([
  * Deictic locator tails — "near me", "nearby", "around here", "in my area".
  *
  * The class is `preposition + a reference to the ASKER`, which is why it is bounded and why it is safe: `me`, `here`,
- * `my <noun>` are function words, not places. Anchored to the END of the string (`$`) on purpose — the whole point of
- * the kind is that the query names no anchor, so anything after the locator is an anchor and disqualifies it.
+ * `my <noun>` are function words rather than places. Anchored to the END of the string (`$`) on purpose — the whole
+ * point of the kind is that the query names no anchor, so anything after the locator is an anchor and disqualifies it.
  *
  * Linear by construction: every alternative begins with a required literal, and the only quantifiers are bounded `\s+`
  * runs BETWEEN two required literals or trailing before `$`. No unbounded-whitespace-then-literal prefix, which is the
@@ -246,8 +248,8 @@ export function scoreBareToponym(input: NormalizedInputLite, shape: QueryShapeLi
  * `route_pair` rule: exactly two toponym-shaped tokens with nothing between them.
  *
  * **The known confound is structural and unfixable here.** "Paris London" and "Moscow Idaho" are the same string shape
- * — two bare capitalized words — and separating them needs to know that Idaho is a region, which is a gazetteer fact,
- * not a structural one. The hard-case board's 18 `comma_free` rows
+ * — two bare capitalized words — and separating them needs to know that Idaho is a region, which is a gazetteer fact
+ * rather than a structural one. The hard-case board's 18 `comma_free` rows
  * (`packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) are that population, and they fire this rule. That
  * is the reason ROAD_TO_V9 §4.3 specifies **classification + a declared fork, never a router**: both readings are named
  * in the marker, neither wins, and the resolver keeps answering exactly as it did.

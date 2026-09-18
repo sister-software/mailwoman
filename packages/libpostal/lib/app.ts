@@ -87,7 +87,7 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
 	// Ahead of the canonicalizers (which buffer the full body into memory) so an oversized POST is rejected
-	// before that buffering happens, not after.
+	// before that buffering happens rather than after.
 	const guardBodySize = bodyLimit({
 		maxSize: MAX_BODY_BYTES,
 		onError: (c) => c.json({ error: "request body too large" }, 413),

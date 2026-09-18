@@ -191,7 +191,7 @@ async function geonamesNameFill(
 
 		if (!acc.size) continue
 
-		// One query, not one per postcode: the US database carries 42,318 of them.
+		// One query rather than one per postcode: the US database carries 42,318 of them.
 		const byPostcode = new Map<string, number>()
 
 		for (const row of await kdb
@@ -206,7 +206,7 @@ async function geonamesNameFill(
 			}
 		}
 
-		// `official` stays 0: a delivery city is what the postal system calls the place, not an official
+		// `official` stays 0: a delivery city is what the postal system calls the place rather than an official
 		// name OF it, and the #936 name-exact tier reads that bit.
 		const rows = [...acc]
 			.flatMap(([postcode, entry]) => {

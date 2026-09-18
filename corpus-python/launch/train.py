@@ -19,8 +19,7 @@ from .app import OUTPUT_DIR, VOL_MOUNT, app, hf_secret, training_image, vol
 # at the measured throughput 60k optimizer steps alone need ~3h55m, before image boot, volume
 # reload, loader init, validation, checkpointing, and the final save/commit. 21,600 s (6h)
 # covers the 60k A100 recipe with real headroom, and `_required_train_seconds` preflights any
-# recipe against the ceiling inside train() — a config that cannot fit fails in minute one,
-# not at the wire.
+# recipe against the ceiling inside train() — a config that cannot fit fails in minute one rather than at the wire.
 TRAIN_TIMEOUT_SECONDS = 21600
 # Measured on the v4.3.3 A100 run (2026-08-09): ~4.25 optimizer steps/s at batch 128.
 MEASURED_STEPS_PER_SECOND = 4.25
@@ -110,7 +109,7 @@ def _train_gpu(
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
     # Corpus existence is verified after the config loads (below), against cfg.data.corpus_dir — the
-    # corpus version travels in the config, not hardcoded here. (Was pinned to v0.3.0, which silently
+    # corpus version travels in the config rather than hardcoded here. (Was pinned to v0.3.0, which silently
     # blocked every later corpus once v0.3.0 was cleaned off the volume. 2026-06-12.)
 
     # The config file references paths relative to /data/ which matches our volume mount
@@ -157,7 +156,7 @@ def _train_gpu(
         print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
 
     # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
-    # this function's timeout must fail here, not die at the wire like the 60k predecessor
+    # this function's timeout must fail here rather than die at the wire like the 60k predecessor
     # that Modal killed at step 59,900.
     required = _required_train_seconds(cfg.train.max_steps)
     if required > TRAIN_TIMEOUT_SECONDS:

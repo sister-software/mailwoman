@@ -42,7 +42,7 @@ describe("isCanadianDirectional", () => {
 	it("matches the French words and the O = Ouest bilingual twist", () => {
 		expect(isCanadianDirectional("Nord")).toBe(true)
 		expect(isCanadianDirectional("Ouest")).toBe(true)
-		expect(isCanadianDirectional("O")).toBe(true) // French Ouest abbreviates to O, not W
+		expect(isCanadianDirectional("O")).toBe(true) // French Ouest abbreviates to O rather than W
 		expect(isCanadianDirectional("Est")).toBe(true)
 	})
 

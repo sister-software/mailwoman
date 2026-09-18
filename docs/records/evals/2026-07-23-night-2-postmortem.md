@@ -12,7 +12,7 @@ the pre-registered checks).
 - **PR #1253** (open, CI green, mergeable): the v3.12.0-comma-resilient config as a run record + the
   deploc redesign dossier (`docs/superpowers/plans/2026-07-23-deploc-redesign-dossier.md`). The
   night-merge classifier blocked self-merge, as designed — one click in the morning.
-- **No model shipped. No npm release shipped.** Both outcomes were check-driven, not omissions
+- **No model shipped. No npm release shipped.** Both outcomes were check-driven rather than omissions
   (details below).
 
 ## The v3.12.0 verdict — stop rule executed (second time)

@@ -13,7 +13,7 @@ import type { ComponentTag } from "#component"
  * Mapping from mailwoman's address-component tags to the resolver's placetype taxonomy.
  *
  * PARTIAL on purpose: a tag absent from the map is not queried, and the resolver pass leaves its classifier attribution
- * untouched. Omission is therefore a routing decision, not an oversight.
+ * untouched. Omission is therefore a routing decision rather than an oversight.
  */
 export type PlacetypeMap = Partial<Record<ComponentTag, string>>
 
@@ -21,7 +21,7 @@ export type PlacetypeMap = Partial<Record<ComponentTag, string>>
  * The map used when a backend does not supply its own.
  *
  * `street` and `house_number` are absent because WOF admin has no rows for them — they resolve through the situs
- * extracts instead, which are keyed by street, not by placetype.
+ * extracts instead, which are keyed by street rather than by placetype.
  *
  * The JP tiers are present because the candidate gazetteer keys them: 91.3% of Japanese records carry a kanji or kana
  * key (49,255 of 53,920), a prefecture is a WOF `region`, a municipality a `locality` (its filter group admits the
@@ -87,7 +87,7 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
  *   post-2016 French régions (Île-de-France) are `macroregion` too. An address's `region` span names exactly those, so
  *   a `region`-only filter resolved them to nothing (confirmed against the IT/FR eval rows). US states / DE
  *   Bundesländer / ES provincias are genuine `region`, so the EXACT-type match is preferred in ranking (see the
- *   resolve.ts fallback-quality annotation) — the macro is the recall safety net, not a demotion.
+ *   resolve.ts fallback-quality annotation) — the macro is the recall safety net rather than a demotion.
  * - **`county`** — `county` + `macrocounty` (#718). The `subregion` ComponentTag maps to `county` via
  *   {@link DEFAULT_PLACETYPE_MAP}; WOF carries `macrocounty` for FR départements-grouping / DE / GB tiers above the
  *   county. Proactive (no eval row exercises `subregion` today) but symmetric with `region` — biasing to inclusion,

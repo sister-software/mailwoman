@@ -143,7 +143,7 @@ async function discoverTotalCount(): Promise<number> {
  * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count of records written
  * and the count of pages that errored. The caller decides whether to mark the chunk complete based on errors === 0.
  *
- * NOTE(phase1): this is a JSON API pager, not a file download — the shared `downloadToFile` doesn't apply here.
+ * NOTE(phase1): this is a JSON API pager rather than a file download — the shared `downloadToFile` doesn't apply here.
  */
 async function fetchChunk(
 	chunkPath: string,

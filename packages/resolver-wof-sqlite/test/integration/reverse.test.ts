@@ -199,7 +199,7 @@ const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",
 	() => {
-		// Construct in beforeAll, not the describe body — the body runs at collection time even when
+		// Construct in beforeAll rather than the describe body — the body runs at collection time even when
 		// the suite is skipped, and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
 

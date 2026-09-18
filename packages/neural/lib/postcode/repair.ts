@@ -28,7 +28,7 @@
  *       → SNAP-only: they expand/clip an EXISTING postcode span, never create one from scratch.
  *   - A DESIGNATED shape carries the writing system's own postal marker: `〒506-0025` is a postcode by Japan Post's
  *       convention, and no house number is ever written behind 〒. It may overwrite any label, structural ones
- *       included — the one override the discipline below allows, because the mark, not the digit shape, decides. The
+ *       included — the one override the discipline below allows, because the mark rather than the digit shape, decides. The
  *       span excludes the mark: the resolver keys `506-0025`, and the character model was trained to leave 〒 outside.
  *   - Smear cleanup is LOCAL: only postcode tokens immediately flanking a snapped span are cleared. We
  *       never globally clear unmatched postcode tokens — that would regress shapes we don't

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   THE Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
- *   full-pipeline integration net, not just per-tag F1 (the whole point of building it; #566 lesson):
+ *   full-pipeline integration net rather than just per-tag F1 (the whole point of building it; #566 lesson):
  *
  *     1. regression  — the curated executable bug log. a fixed bug must stay fixed (conditioned on status=pass).
  *     2. metamorphic — un-gameable INV/DIR relations. surface-form robustness (conditional minus tracked xfails).
@@ -22,7 +22,7 @@
  *   verdict below: its expectations are DERIVED from the gazetteer at run time rather than stored, and a measurement
  *   that could fail a ship would invite tuning the corpus instead of the parser.
  *
- *   Derived, not absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
+ *   Derived rather than absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
  *   "correctly coarsened" and "abstained under untenable ambiguity" are passes and only the real defects are red.
  *
  *   The last of those is the resolver-pin pin (#42, added 2026-08-05). The check could swap the MODEL under test but
@@ -168,7 +168,7 @@ export function runResolverPins(options: GauntletRunOptions): GauntletResolverPi
 			: { spanRescoreWeakResolution: options.spanRescoreWeakResolution }),
 	}
 
-	// Absent, not empty: `undefined` is what `describeResolverPins` prints as "production defaults", and an empty
+	// Absent rather than empty: `undefined` is what `describeResolverPins` prints as "production defaults", and an empty
 	// object would read as "pinned to nothing".
 	return Object.keys(pins).length ? pins : undefined
 }
@@ -213,7 +213,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 				})
 			).exitCode
 		case "ablation":
-			// Exit 0 unless the instrument produced no cell. The map grades the corpus + resolver, not a candidate,
+			// Exit 0 unless the instrument produced no cell. The map grades the corpus + resolver rather than a candidate,
 			// so it can never block a ship — see the `GauntletLayer` docstring.
 			return (await runAblationLayer(runAblationOptions(options))).pass ? 0 : 1
 	}

@@ -123,7 +123,7 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for target, lineno in sorted(_imports(tree, holder, deferred=True, is_package=path.name == "__init__.py")):
             if target not in known:
-                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which does not exist")
+                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target} and the target is absent")
 
     assert offenders == [], "deferred imports naming a missing module:\n" + "\n".join(offenders)
 
@@ -151,7 +151,7 @@ def _declared_names(tree: ast.Module) -> set[str]:
 def test_an_import_names_the_module_that_declares_it() -> None:
     """Importing a name from a module that only re-imported it pins the wrong file.
 
-    A plain module's import list is its own business, not a public surface: ``trainer`` imports
+    A plain module's import list is its own business rather than a public surface: ``trainer`` imports
     ``build_optimizer`` so it can call it, and a test that took the name from there kept passing
     after the function moved to ``optim.groups`` — so the move looked complete while six call sites
     still named the old file. A package ``__init__`` is the exception: re-exporting is what it is

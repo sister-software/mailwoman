@@ -17,8 +17,8 @@ off from the core so its obligations never leak into the default product.
 
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
-The OpenStreetMap precision tier is **built but not enabled** in any published artifact — not on npm, not
-on R2, not in the demo. Turning it on is blocked on counsel reviewing the [questions
+The OpenStreetMap precision tier is **built but not enabled** in any published artifact — not on npm rather than
+on R2 rather than in the demo. Turning it on is blocked on counsel reviewing the [questions
 below](#what-counsel-needs-to-confirm). When that review lands, flip this to **☑ cleared**, name the
 reviewing counsel, and date it.
 
@@ -66,7 +66,7 @@ Produced Work** (attribution, no copyleft), while **distributing the extract its
 
 ## How the boundary is enforced
 
-The quarantine is structural, not a runtime flag you could forget to set. Four mechanisms keep ODbL data
+The quarantine is structural rather than a runtime flag you could forget to set. Four mechanisms keep ODbL data
 from reaching the permissive core:
 
 1. **Per-row provenance.** Every address point carries a `source` string
@@ -96,7 +96,7 @@ contributors"** with an ODbL link, on:
 - any geocoding result that resolved through an OSM extract, and
 - the distribution of any extract itself (a `LICENSE` + attribution file alongside the `.db`).
 
-Three gaps stand between today and that being true. They are prerequisites for enabling the tier, not
+Three gaps stand between today and that being true. They are prerequisites for enabling the tier rather than
 afterthoughts:
 
 - The Nominatim-compatible `licence` string
@@ -114,7 +114,7 @@ afterthoughts:
 
 (The note in [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) that
 "the resolver surfaces © OpenStreetMap contributors on any result that resolved through one" describes the
-target state, not the current one. The `source` tag rides as far as the resolver node; it is not yet emitted
+target state rather than the current one. The `source` tag rides as far as the resolver node; it is not yet emitted
 to a user.)
 
 ## What counsel needs to confirm

@@ -94,7 +94,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
   guard drifted, so the expensive run does not happen on a hunch. ~$1-2 of A100 to avoid ~$8. And I
   held my own bar rather than relaxing it once the number disappointed — the discipline reduces both
   ways or it is not discipline.
-- **`bare-street-hn` was designed as a diagnostic, not a score, and that is why it resolved the
+- **`bare-street-hn` was designed as a diagnostic rather than a score, and that is why it resolved the
   track.** It carries no postcode, so nothing competes for the digit. It still fails 31%, and
   `Hallingrudveien 32` → locality+postcode while `Hallingrudveien 32, 3370 Vikersund` parses
   perfectly. Same street, same digit. That single pair moved Track B from "digit ownership" to "the
@@ -123,7 +123,7 @@ Polskiego 178`). Tracing its piece-level posterior showed B0's exact signature o
 1. **The v6.4.0 publish.** Metadata is on main; npm + HF are untouched. Dispatch is yours.
 2. **G-NAF EULA (blocks B5 if it ships).** `.notes/data-sources.md` records G-NAF as CC-BY with a
    **no-mail-compilation clause**. Training a parser is not compiling a mailing list, but G-NAF-derived
-   weights are a licensing call, not a 3am one. B5's extract design names G-NAF as the tier-A source for
+   weights are a licensing call rather than a 3am one. B5's extract design names G-NAF as the tier-A source for
    the AU `12/345` split because it carries `flat_number`/`number_first` as separate columns — i.e. the
    gold split, for free. NZ LINZ is the fallback (attribution + registration).
 3. **#1141's ordering flag** — the span head was built and closed _before_ the vocab work the research
@@ -153,11 +153,11 @@ partner — it learned the joint distribution and not the marginals:
 | 2   | a **known street** licenses the _house_number_ reading | `Øvste Skogen 121` → postcode | open (B2)                       |
 | 3   | a **designator** licenses the _intra-word split_       | `12/345` → one span           | open (B5)                       |
 
-That is a **training-data property, not an architecture property**, and instance 1 was fixed with a
+That is a **training-data property rather than an architecture property**, and instance 1 was fixed with a
 phenomenon extract plus a counter-distribution without touching the architecture. It is why the night's
-plan is measure → extract, not measure → rearchitect.
+plan is measure → extract rather than measure → rearchitect.
 
-Per-piece tagging is vindicated on a representational argument, not a score: `Unit 12/345 Main St` →
+Per-piece tagging is vindicated on a representational argument rather than a score: `Unit 12/345 Main St` →
 `unit 12` + `house_number 345` is **not in a word-unit tagger's output space at any confidence**. The
 cost (intra-word incoherence) is real but confined to a tail — 2-digit continuations read postcode at
 0.0270 on the 351/376 rows we get right, against a corpus conditional of 0.0427.
@@ -177,19 +177,19 @@ pre-registered probes for a future shift.
 - **B5 — data-blocked, an operator decision.** The `12/345` intra-word split (instance 3, confirmed
   by B0) needs the unit/number decomposition, which the on-disk assembled AU data does not carry
   (it's flattened to `house_number`). Re-deriving from raw G-NAF (which has the columns) is blocked on
-  the G-NAF EULA — a licensing call, not mine. NZ LINZ is the license-clean fallback.
+  the G-NAF EULA — a licensing call rather than mine. NZ LINZ is the license-clean fallback.
 - **The Norway retrain** — warranted (Norway 0% → 4.19%) but B4 showed the _existing_ extract aims at
   ceiling and a fragment extract at 0.30 barely moves the target. So the retrain is really B4b: a
   higher-ratio fragment extract, pre-registered against board 3, operator-approved.
 - **B2 — CLOSED.** The street-familiarity lead was confounded with the Norway coverage gap. The one
   PL row that survives coverage (`aleja Wojska Polskiego 178`) was traced to B0's exact piece-level
   signature — cross-lingual, coverage-independent, length-conditioned — closing B2 into the unified
-  mechanism, not a separate lead.
+  mechanism rather than a separate lead.
 - **B4c — the root fix, an operator call.** The number-piece vocab splice (the tokenizer has 2
   multi-digit pieces, so `178` is 3 pieces with 2 postcode-leaning continuations). Removes the
   continuations the extract only dents. A tokenizer+model bump, bigger than a extract.
 
-## 8. Where things stand (a status, not a wind-down)
+## 8. Where things stand (a status rather than a wind-down)
 
 Track B is a complete, self-consistent arc: the defect was mis-scoped as "digit ownership," B0
 reframed it as one license defect in three components, B1 found that most of the Norwegian evidence

@@ -30,7 +30,7 @@ export const SHADOW_IGNORE_MARKER = "repo-health-ignore private-name-shadows-exp
 
 /**
  * Names too generic to mean the same thing twice: a private `normalize` beside an exported `normalize` is two different
- * normalizations, not a copy.
+ * normalizations rather than a copy.
  */
 const GENERIC_NAMES: ReadonlySet<string> = new Set([
 	"normalize",

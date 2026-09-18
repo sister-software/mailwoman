@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The health route: the report's five words, the no-store header, and the email word turning on a failure that has
- *   outlived the hour, not on a fresh one.
+ *   outlived the hour rather than on a fresh one.
  */
 
 import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"

@@ -28,7 +28,7 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * Fetch + construct the PIX1 placetype-pair indexes TOLERANTLY (the {@link loadPostcodeAnchorLookup} contract): each
  * `pair-index-<cc>.bin` is OPTIONAL, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
  * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
- * versions ship no pair indexes at all, and the prior is a soft decode channel, not a required model input.
+ * versions ship no pair indexes at all, and the prior is a soft decode channel rather than a required model input.
  *
  * **Phase 2 (#1278): no load-time country restriction.** Every successfully-fetched index is constructed into a live
  * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection

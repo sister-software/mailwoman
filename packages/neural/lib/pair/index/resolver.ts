@@ -111,7 +111,7 @@ export interface PairIndexEntry {
  * reads `.tag` visibly rather than silently getting a half-answer.
  *
  * Instances are INTERNED per resolver (there are a handful of distinct (tag, parentTag) combinations across even the
- * 199k-entry FR artifact), so the probe map costs one pointer per entry, not one object per entry.
+ * 199k-entry FR artifact), so the probe map costs one pointer per entry rather than one object per entry.
  */
 export interface PairEdge {
 	readonly tag: ComponentTag
@@ -162,14 +162,14 @@ export interface PairIndexHeader {
 	transitionBeta?: number
 	/**
 	 * Optional per-country whole-edge bias magnitude (#46, default-on 2026-08-04): on a pair hit, the prior also writes
-	 * `+parentDelta` onto the record's `parentTag` over the parent window, not just `+delta` onto the child. Absent = no
-	 * parent bias at all (the child-only behaviour every artifact carried before this) — absence-tolerant in the same
-	 * sense as {@link transitionBeta}, and absence means off, never 0-as-a-default.
+	 * `+parentDelta` onto the record's `parentTag` over the parent window rather than just `+delta` onto the child.
+	 * Absent = no parent bias at all (the child-only behaviour every artifact carried before this) — absence-tolerant in
+	 * the same sense as {@link transitionBeta}, and absence means off, never 0-as-a-default.
 	 *
 	 * Calibrated per country, and only where it was MEASURED. `us`/`gb`/`nz`/`fr` ship 5 — the smallest δ that saturates
 	 * bar B-2's brooklyn-class sub-board, flat from there through 20
 	 * (`docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`). `de`/`in`/`es`/`it` ship without it: no board has
-	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an
+	 * graded the parent side there, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an
 	 * inherited magnitude.
 	 *
 	 * Overridable at decode: `PlacetypePairPriorOpts.parentDelta` (which `MAILWOMAN_PAIR_PARENT_DELTA` feeds) wins over
@@ -180,8 +180,8 @@ export interface PairIndexHeader {
 
 /**
  * The caller-supplied half of {@link PairIndexHeader}: everything except the two format-owned fields (`schemaVersion`,
- * `tagTable`), which {@link serializePairIndex} stamps itself — the format version is the serializer's fact, not the
- * builder's claim.
+ * `tagTable`), which {@link serializePairIndex} stamps itself — the format version is the serializer's fact rather than
+ * the builder's claim.
  */
 export type PairIndexHeaderInput = Omit<PairIndexHeader, "schemaVersion" | "tagTable">
 
@@ -445,11 +445,11 @@ export class PairIndexResolver {
 }
 
 /**
- * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape, not
- * the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test double may
- * omit it. a real index's header carries the authoritative value. `transitionBeta` is optional in both senses: a test
- * double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta} — absent means
- * no transition term, not a default).
+ * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape
+ * rather than the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test
+ * double may omit it. a real index's header carries the authoritative value. `transitionBeta` is optional in both
+ * senses: a test double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta}
+ * — absent means no transition term rather than a default).
  */
 export interface PairIndexLike {
 	probe(child: string, parent: string): PairEdge | undefined

@@ -55,7 +55,7 @@ SOURCE_SCHEMA = pa.schema(
     ]
 )
 
-#: (region, district, village, street, number, unit) — the branches, not a sample. 新北市中和區 and
+#: (region, district, village, street, number, unit) — the branches rather than a sample. 新北市中和區 and
 #: 臺中市豐原區 hash to buckets 97 and 94, over the default board floor of 90, so they are held out.
 SOURCE_ROWS: list[tuple[str, str, str, str, str, str]] = [
     ("臺北市", "中正區", "黎明里", "重慶南路一段", "122號", "3樓"),  # every field present

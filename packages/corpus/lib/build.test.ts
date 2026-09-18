@@ -9,7 +9,7 @@
  *   updated in lockstep: the adapter is the JSON-bundle implementation at
  *   `./adapters/wof-admin-json/`, the fixture is a directory of cloned-repo skeletons under
  *   `../fixtures/wof-admin-json/` (no on-disk SQLite materialization step), and the holdout
- *   assertion still keys on "Vermont" since that's defined by the corpus split policy, not the
+ *   assertion still keys on "Vermont" since that's defined by the corpus split policy rather than the
  *   fixture shape.
  */
 

@@ -51,9 +51,9 @@ export class GeocoderFixture {
 	/**
 	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete. The options are the THIRD argument:
 	 * `waitForFunction` reads its second as the function's argument, and an options object passed there leaves the wait
-	 * on the 30 s action budget. Polling is on an interval, not on animation frames: a page the browser treats as hidden
-	 * fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the page
-	 * reports ends the wait at once, with that text, instead of running out the budget.
+	 * on the 30 s action budget. Polling is on an interval rather than on animation frames: a page the browser treats as
+	 * hidden fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the
+	 * page reports ends the wait at once, with that text, instead of running out the budget.
 	 *
 	 * Readiness is the ADDRESS FIELD being enabled, because `GeocoderControls` binds that field's `disabled` to
 	 * `runtime.ready` — the same state the search pill's submit button used to carry before the pill dropped it (a
@@ -119,7 +119,7 @@ export class GeocoderFixture {
 	}
 
 	async submit(): Promise<void> {
-		// Enter, not a button: the search pill carries no submit control, and a `type="search"` field submits its form on
+		// Enter rather than a button: the search pill carries no submit control, and a `type="search"` field submits its form on
 		// Enter. `Geocoder.test.tsx` drives the same control the same way.
 		await this.page.locator("#mw-pipeline-input").press("Enter")
 

@@ -9,12 +9,12 @@
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
  *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two differences
- *   are the predicate (telecom tags, not `addr:housenumber`) and the match fan-out (a feature can only
+ *   are the predicate (telecom tags rather than `addr:housenumber`) and the match fan-out (a feature can only
  *   satisfy the first rule in table order — `man_made` alone appears in four rules and `telecom` in
  *   two, but every rule sharing a key requires a different value for it, so a real feature, which
  *   carries one value per key, can satisfy at most one rule regardless of table order).
  *
- *   Tag disjunctions/conjunctions live here, not in the taxonomy (decision 2): `CategoryRecord.osmTag`
+ *   Tag disjunctions/conjunctions live here rather than in the taxonomy (decision 2): `CategoryRecord.osmTag`
  *   is a single scalar the Overpass emitter consumes (`poi-taxonomy/overpass.ts` hard-splits on one
  *   `=`), so a disjunction across two tags (telephone exchange) or a conjunction with a qualifier tag
  *   (street cabinet, comms mast) can't live there. {@link OSMPOITagRule.all} is a conjunction of

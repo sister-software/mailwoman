@@ -30,7 +30,7 @@
  *   different matter and does not hold the row back — the law constrains what refinement removes, so a
  *   candidate the coarse table was too small to show is explained by the window rather than unexplained by it.
  *
- *   LOOKUPS ARE PAIRED BY WHAT WAS ASKED, NOT BY WHEN. The pairing key is tag + placetype + folded value, so
+ *   LOOKUPS ARE PAIRED BY WHAT WAS ASKED rather than BY WHEN. The pairing key is tag + placetype + folded value, so
  *   the base's unscoped `Springfield` lookup pairs with the refined query's `Springfield` lookup under
  *   Illinois, which is exactly the pair the law is about. Repeats of one lookup within a single run are FOLDED
  *   into one pool: the walk records `#lookupAndPick` per call and a query can reach the same lookup twice, so
@@ -52,7 +52,7 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
  *   region qualifier the coarse query could not supply. The pool is a different population, and the account names the
  *   path that made it one.
  * - `beyond_window` — gone (or new), and the table on the other side was sitting at its recorded fetch window, so the
- *   candidate may be one row past the edge. An observation, not a finding.
+ *   candidate may be one row past the edge. An observation rather than a finding.
  * - `unexplained` — gone (or new) with no contradiction, no re-scope, and a table that had room to spare. On a removal
  *   this is the law failing. On an addition it is the unrelated candidate-set expansion the law also refuses.
  */
@@ -128,7 +128,7 @@ interface PooledCandidate {
  */
 export interface LookupFold {
 	/**
-	 * `tag|placetype|foldedValue` — what was asked, not when. See the module docstring.
+	 * `tag|placetype|foldedValue` — what was asked rather than when. See the module docstring.
 	 */
 	key: string
 	tag: string

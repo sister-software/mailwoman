@@ -13,7 +13,7 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 ## What went well
 
 - The proven recipe (codex synth + format-diverse + real-OOD check + int8 value_info-strip) carried two more changes directly through build+check.
-- Caught the **fold failure mode** fast (the affix 0% was a measurement artifact, not a training failure) — built the right tool instead of chasing a phantom.
+- Caught the **fold failure mode** fast (the affix 0% was a measurement artifact rather than a training failure) — built the right tool instead of chasing a phantom.
 - The multi-locale country extract **recovered the affix FR-postcode dilution** (95.6→99.5) — the secondary design goal worked.
 - Front-loaded the scorecard during the affix train window; no idle.
 - **Let a negative result reshape the strategy instead of forcing the change.** The country over-firing wasn't a bug to tune away — it revealed a _change-shape taxonomy_: closed-vocab/fixed-position tags (country, po_box, cedex) want a deterministic matcher; open-vocab/boundary tags (affix, unit, locality) want a retrain. That taxonomy now guides the remaining changes (po_box likely goes deterministic too).
@@ -26,7 +26,7 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 ## Decisions made autonomously
 
 1. **Held the affix promote** (check not directly passed; FR postcode −3.9 > 2pp) against DeepSeek's promote-rec — deferred to the operator via #462 rather than overriding their pre-registered check while offline.
-2. **Country change as cumulative consolidation** (bakes unit+affix+country) — efficient in intent but it surfaced dilution + over-firing. The DeepSeek pro consult on the fork timed out (180s); I proceeded on the diagnosis. **Resolution (autonomous): redirect country from retrain to a deterministic tagger.** The deterministic probe (P=R=100) settled it — country is closed-vocab and trailing, so a `matchCountry` `ProposalClassifier` (#464) is the right tool, not another extract. Kept #463 as the exploration record rather than force-merging an over-firing model.
+2. **Country change as cumulative consolidation** (bakes unit+affix+country) — efficient in intent but it surfaced dilution + over-firing. The DeepSeek pro consult on the fork timed out (180s); I proceeded on the diagnosis. **Resolution (autonomous): redirect country from retrain to a deterministic tagger.** The deterministic probe (P=R=100) settled it — country is closed-vocab and trailing, so a `matchCountry` `ProposalClassifier` (#464) is the right tool rather than another extract. Kept #463 as the exploration record rather than force-merging an over-firing model.
 3. **Held the v3 FR-fix as a committed-but-superseded artifact** rather than launching a v3 retrain — once the result, spending more GPU on the model path was unjustified. v3's corpus correctness fix (FR number-street order) is still committed for whoever revisits.
 
 ## Open questions for the operator
@@ -37,7 +37,7 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 
 ## Concrete next steps
 
-- **#464 — build one `ClosedVocabTagger`** (country + po*box + cedex; all three measured at P=R=F1=100 this shift). **Architecture decided** (DeepSeek pro consult): a \_post-parse `ProposalClassifier` overlay*, default-off/byte-stable, not an in-pass `classifiers/` entry — because it must _correct_ the model's over-firing, so it runs after the decode and overwrites. Homograph guard (country Georgia/Jordan) lives in the overlay's apply logic; po_box/cedex have no homograph risk and can land first. ~½ day, zero GPU.
+- **#464 — build one `ClosedVocabTagger`** (country + po*box + cedex; all three measured at P=R=F1=100 this shift). **Architecture decided** (DeepSeek pro consult): a \_post-parse `ProposalClassifier` overlay*, default-off/byte-stable rather than an in-pass `classifiers/` entry — because it must _correct_ the model's over-firing, so it runs after the decode and overwrites. Homograph guard (country Georgia/Jordan) lives in the overlay's apply logic; po_box/cedex have no homograph risk and can land first. ~½ day, zero GPU.
 - intersection (conditional — regressed before, needs care); FR venue/region (#330).
 - **Consolidation v1.0 (#466)** once affix is promoted: make the affix extract **multi-locale** (clears its own FR-postcode check without bundling the now-deterministic country), prove it solo, then **weight-merge** the affix delta into the v4.1.0 base rather than re-stacking extracts (the dilution is step-budget-bound). DeepSeek-recommended; blocked on #462 + operator go + GPU budget.
 

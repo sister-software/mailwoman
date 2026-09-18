@@ -7,7 +7,7 @@
  *   committed seed (`cases/<cc>/*.jsonl`). Build-on-copy: write a temp DB, then swap it into place.
  *
  *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
- *   chronological array order. Checked, not assumed: the regression runner reads every row. the ablation
+ *   chronological array order. Checked rather than assumed: the regression runner reads every row. the ablation
  *   layer's `SELECT` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way. and
  *   `ablationBoardID` hashes a SORTED fingerprint. What changes is the order the regression runner PRINTS its
  *   per-case lines in, which is why the migration's graded receipt sorted before diffing.

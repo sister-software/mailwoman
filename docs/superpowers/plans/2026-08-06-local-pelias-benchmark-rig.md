@@ -21,7 +21,7 @@ geocoding only.
 schema (one-shot), api, libpostal, placeholder (importers consult it for admin hierarchy — keeping
 it is cheaper than proving they don't), interpolation (**required**: street-centroid fallback would
 deflate the exact @1km metric under comparison). PIP omitted (no reverse). One custom project, one
-ES index — N per-country projects provide complexity, not accuracy, at 420 queries.
+ES index — N per-country projects provide complexity rather than accuracy, at 420 queries.
 
 **Pinning:** the `pelias/docker` release is pinned by commit and image digests, never floating
 tags. Data vintages pinned by SHA-256 manifest (§4).
@@ -68,7 +68,7 @@ before any import runs:
 - **(a) `pelias/interpolation` builds only from polylines (OSM centerlines), never TIGER.**
   Probe: shallow-clone `pelias/interpolation`, `grep -Ril tiger`, read the README data section.
   If TIGER can feed it, the US can keep interpolation without US OSM — a large scope win.
-- **(b) `pelias/polylines` may accept only a planet file, not per-country.** Probe: shallow-clone,
+- **(b) `pelias/polylines` may accept only a planet file rather than per-country.** Probe: shallow-clone,
   grep for the `files` config key + read the download script. If per-country works, US
   interpolation is affordable; if planet-only, the US row is annotated `no-interpolation` (or we
   hand-reduce a US polylines file — an added build step, decided then).
@@ -97,7 +97,7 @@ before any import runs:
 
 **Staging state (2026-08-07):** all 10 country PBFs down (12.2 GB, resumable, marker present);
 OA fr+de extracted from europe.zip (GB needs no OA — rides OSM); US scoping ruled
-panel-states-only (the panel is the preregistered population — a sampling frame, not post-hoc
+panel-states-only (the panel is the preregistered population — a sampling frame rather than post-hoc
 cleansing; state list derives from TRUTH COORDINATES, never query strings, verified before
 scoring; US index annotated "US subset: N states"). Remaining fetches: panel-state OA-us +
 TIGER ADDRFEAT counties + per-state PBFs for polyline reduces — all blocked on panel reconstruction.
@@ -116,7 +116,7 @@ A country failing its probes is marked `coverage-limited` and stays in the repor
 
 **Arms:** mailwoman 9.0.0 (local, production defaults) · scoped local Pelias (this build) · hosted
 geocode.earth (same day, response headers captured — if its Pelias version differs from our pin,
-the local-vs-hosted delta contains version delta and is labeled so, not called pure scope cost).
+the local-vs-hosted delta contains version delta and is labeled so rather than called pure scope cost).
 
 **Panel:** the same 420-row file, hash-pinned. Every row carries two pre-hoc columns assigned
 before any arm runs: `truth_type` (`rooftop / venue / city-only`) and `local_coverage_hint`
@@ -130,7 +130,7 @@ normalization; arms executed round-robin in one order; hosted responses cached w
 scorer deterministic (run twice, byte-identical), its command + hash recorded; bootstrap CIs
 per-locale with pinned seed and resample count.
 
-**The parity claim needs an equivalence bound, not a null result:** preregistered margin ±5 pp
+**The parity claim needs an equivalence bound rather than a null result:** preregistered margin ±5 pp
 @25km on the mailwoman-vs-local-Pelias difference, claimed only when the bootstrap CI on the
 difference excludes a larger gap (TOST-style), per locale and pooled.
 
@@ -174,7 +174,7 @@ Same panel, same host, same PBFs (one download feeds all three systems).
 - **Nominatim**: `mediagis/nominatim-docker`, release-tag pinned. ONE Postgres; panel PBFs combined
   with `osmium cat` (no contiguity requirement — add adjacent US states if truth points hug
   borders). Flatnode file on NVMe; `shared_buffers` 2–4 GB, `maintenance_work_mem` 1–2 GB. Wall
-  time dominated by Nominatim indexing, not PBF load. The exact `osmium cat` command + import
+  time dominated by Nominatim indexing rather than PBF load. The exact `osmium cat` command + import
   parameters join the §5 pin list.
 - **Photon**: builds its Lucene index FROM the Nominatim Postgres (export → standalone serve);
   `komoot/photon` pinned; JVM capped 6–8 GB, run alone with Postgres buffers lowered. No cheap

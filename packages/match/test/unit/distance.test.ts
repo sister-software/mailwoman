@@ -67,12 +67,12 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 	const rec = (key: string | undefined, latitude: number, longitude = 0): R => ({ key, coord: { latitude, longitude } })
 
 	it("scores an exact canonical-key match as the top tier regardless of coordinate", () => {
-		// Same key but the geocoder put them a hair apart — key equality is the evidence, not distance.
+		// Same key but the geocoder put them a hair apart — key equality is the evidence rather than distance.
 		expect(cmp.assess(rec("100 plaza dr", 29.76), rec("100 plaza dr", 29.7601))).toBe(0) // same-key
 	})
 
 	it("falls through to distance buckets when the keys DIFFER (the geo-first case)", () => {
-		// Different canonical strings, same rooftop → near-agreement, not exact, not far.
+		// Different canonical strings, same rooftop → near-agreement rather than exact rather than far.
 		expect(cmp.assess(rec("123 main st", 45.5152), rec("123 main street apt 2", 45.5153))).toBe(1) // same-building
 		expect(cmp.assess(rec("a", 0), rec("b", 0.003))).toBe(2) // ~0.33 km → same-block
 		expect(cmp.assess(rec("a", 0), rec("b", 0.018))).toBe(3) // ~2 km → same-area

@@ -5,14 +5,14 @@
  *
  *   Build `flood.db` — the sealed two-tier polygon layer, from the authority's published geodatabase.
  *
- *   THE ACCUMULATION IS IN SQL, NOT IN A MAP. Classification is per feature and shared with the resolution
+ *   THE ACCUMULATION IS IN SQL rather than IN A MAP. Classification is per feature and shared with the resolution
  *   measurement (`classifyFeatureCells`), but where the touches GO differs on purpose: the measuring
  *   instrument holds them in memory because it is comparing candidate resolutions in one pass, and the
  *   builder streams them into a temporary table because memory has to stay flat in row count. The poi
  *   build ran out of heap at 13.68M rows for exactly the shape this avoids, and a polygon layer's touches
  *   outnumber its features.
  *
- *   ZONE 1 IS WRITTEN AS COVERAGE, NOT AS ROWS. Inside England a location with no polygon is not
+ *   ZONE 1 IS WRITTEN AS COVERAGE rather than AS ROWS. Inside England a location with no polygon is not
  *   unsurveyed — the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — so the
  *   designated absence is carried by a `layer_coverage` row at `basis = designated`, `completeness = 1.0`.
  *   Outside England there is no row, because the EA's statement says nothing about Wales, Scotland or

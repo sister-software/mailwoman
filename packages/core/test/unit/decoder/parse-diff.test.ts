@@ -50,7 +50,7 @@ describe("diffParse", () => {
 		const diff = diffParse(INPUT, before, after)
 		const changed = diff.spans.filter(isChange)
 
-		// The venue was RETAGGED onto its own text, not deleted — a tag-keyed diff cannot say this.
+		// The venue was RETAGGED onto its own text rather than deleted — a tag-keyed diff cannot say this.
 		const retag = changed.find((s) => s.kind === "retagged")
 
 		expect(retag?.tagBefore).toBe("venue")

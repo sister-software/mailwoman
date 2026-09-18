@@ -183,7 +183,7 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 
 		return { session, source, renderer: new MapRenderer(source), mapNote: null }
 	} catch (error) {
-		// A corrupt or unreadable archive costs the map pane, not the session — the parse and the resolution are
+		// A corrupt or unreadable archive costs the map pane rather than the session — the parse and the resolution are
 		// still the answer the user came for.
 		return { session, source: null, renderer: null, mapNote: `tiles unavailable: ${messageOf(error)}` }
 	}
@@ -420,7 +420,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				(error: unknown) => {
 					if (requestID !== runRequestRef.current) return
 
-					// The previous result stays on screen — a failed re-run is a message, not a reset.
+					// The previous result stays on screen — a failed re-run is a message rather than a reset.
 					setErrorNote(messageOf(error))
 					setPhase("ready")
 				}

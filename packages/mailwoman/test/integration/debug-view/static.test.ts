@@ -105,7 +105,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 			expect(text).toContain(heading)
 		}
 
-		// Timing is measured, not defaulted — a zero here would mean the session handed over a placeholder.
+		// Timing is measured rather than defaulted — a zero here would mean the session handed over a placeholder.
 		expect(text).toMatch(/parse\s+\d+\.\d ms/u)
 
 		// And the footer says what this frame is.
@@ -128,7 +128,7 @@ describe("runStaticDebug --debug-size floor", () => {
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// The floor is arithmetic, not taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
+		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
 		// the pair is what keeps the constant and `mapPaneCellSize` from drifting apart the next time a row is added
 		// to the input area.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)

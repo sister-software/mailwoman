@@ -12,7 +12,7 @@
  *   server, `true` in the browser — which is the store-shaped statement of exactly this boundary. The
  *   earlier `useState(false)` + `useEffect(() => setMounted(true))` said the same thing with a
  *   render-cascade the react(set-state-in-effect) rule rightly flags: the second render was the
- *   mechanism, not an accident, and the store form gets the same second paint without a set-state.
+ *   mechanism rather than an accident, and the store form gets the same second paint without a set-state.
  */
 
 import { type ReactNode, useSyncExternalStore } from "react"

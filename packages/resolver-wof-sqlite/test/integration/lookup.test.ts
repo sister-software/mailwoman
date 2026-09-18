@@ -481,7 +481,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	})
 
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
-		// SMOKE test, not the regression guard: SQLite silently downgrades a write-mode open to read-only on
+		// SMOKE test rather than the regression guard: SQLite silently downgrades a write-mode open to read-only on
 		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does not distinguish old
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
 		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is

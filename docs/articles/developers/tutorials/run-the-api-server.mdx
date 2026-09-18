@@ -30,7 +30,7 @@ Read the memory line before you start — it is the one that bites.
 
 Two is a starting point with a measurement behind it. The threaded geocode path in this codebase was
 swept on a 16-core box against a single database and peaked at 2 workers, degrading from there — the
-ceiling is database and memory bandwidth, not core count. The reasoning is written up in
+ceiling is database and memory bandwidth rather than core count. The reasoning is written up in
 [`geocode-stream.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts).
 
 ## 1. Start it
@@ -101,7 +101,7 @@ curl -s http://127.0.0.1:7788/health | jq
 ```
 
 This is the route to point a load balancer at, and the route to read when a deployment answers
-differently than the last one did. `model.version` is the weights bundle, not the package version, which
+differently than the last one did. `model.version` is the weights bundle rather than the package version, which
 is the field to compare across two hosts when their answers diverge.
 
 The `data` block counts what it found under the data root. `wof_dbs` is empty because this deployment
@@ -231,7 +231,7 @@ The batch route caps at 500 rows per request by default. Past that, chunk your i
 
 ## 5. Read the failures
 
-A malformed request answers with a status code and a one-key object, not a stack trace:
+A malformed request answers with a status code and a one-key object rather than a stack trace:
 
 ```bash
 curl -s -i -X POST http://127.0.0.1:7788/v1/geocode -H 'content-type: application/json' -d '{}'
@@ -278,7 +278,7 @@ server, three answers. Run `--cpus 1` when you want a single coherent set, or su
 accept that the percentiles are per worker.
 
 The `tiers` histogram is the operational read that matters over time: a deployment that starts answering
-`admin` where it used to answer `address_point` has lost a database, not accuracy.
+`admin` where it used to answer `address_point` has lost a database rather than accuracy.
 
 ## 6. Find the contract
 

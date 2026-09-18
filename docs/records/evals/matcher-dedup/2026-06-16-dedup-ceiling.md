@@ -22,7 +22,7 @@ Of the 12989 collision pairs, **8715** (67.1%) also share a phone — so phone (
 
 ## Splitting the collisions: NPI over-segmentation vs distinct providers
 
-A collision (same address, ~same name, frequently same phone) with DIFFERENT NPIs is typically one organization holding multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting**, not a model error. NPPES's own fields separate the two cases:
+A collision (same address, ~same name, frequently same phone) with DIFFERENT NPIs is typically one organization holding multiple NPIs (subparts / departments) — where merging is **correct** and NPI-as-truth is **over-segmenting** rather than a model error. NPPES's own fields separate the two cases:
 
 | collision pair is…                              | pairs | share of collisions | merging it is…                                              |
 | ----------------------------------------------- | ----: | ------------------: | ----------------------------------------------------------- |
@@ -36,8 +36,8 @@ The raw collision rate is **6.1%** of co-located distinct-NPI pairs — but only
 
 **This is the answer to "how good is good enough," and it has two parts:**
 
-1. Measured against **NPI-as-truth**, F1 is capped well below 0.85 — but the cap is NPI-truth's own **over-segmentation**, not unseparable data. The matcher correctly fuses co-located same-org subpart-NPIs (the 6.1% name-collisions, 67% of which share an authorized official); NPI-truth scores those _correct_ merges as over-merge errors. You can't reach 0.85 against this yardstick without UN-merging correct subparts — which would be wrong. The round **0.85 target is unreachable under NPI-truth and should be dropped.**
-2. The _real_ irreducible over-merge — distinct co-located providers with identical names — is only ~**1.6%** of the co-located population. Against an **entity-level truth** (subpart-aware), the achievable ceiling is much higher. But that ceiling can only be MEASURED with an entity-level / adjudicated gold set — NPI-truth alone can't tell a correct subpart-merge from a true over-merge. **This is why the gold set (the "second comparison") is necessary, not optional.**
+1. Measured against **NPI-as-truth**, F1 is capped well below 0.85 — but the cap is NPI-truth's own **over-segmentation** rather than unseparable data. The matcher correctly fuses co-located same-org subpart-NPIs (the 6.1% name-collisions, 67% of which share an authorized official); NPI-truth scores those _correct_ merges as over-merge errors. You can't reach 0.85 against this yardstick without UN-merging correct subparts — which would be wrong. The round **0.85 target is unreachable under NPI-truth and should be dropped.**
+2. The _real_ irreducible over-merge — distinct co-located providers with identical names — is only ~**1.6%** of the co-located population. Against an **entity-level truth** (subpart-aware), the achievable ceiling is much higher. But that ceiling can only be MEASURED with an entity-level / adjudicated gold set — NPI-truth alone can't tell a correct subpart-merge from a true over-merge. **This is why the gold set (the "second comparison") is necessary rather than optional.**
 
 Recommendation: drop 0.85. Set the bar against a subpart-aware / adjudicated entity truth, report NPI-level AND entity-level side by side, and target "separate the ~1.6% distinct co-located pairs the GBT can still reach" rather than a round F1. The GBT's corroboration-feature work (#625 revised) attacks exactly that separable stratum.
 

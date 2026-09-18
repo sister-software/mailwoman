@@ -54,7 +54,7 @@ describe("departementOfCodePostal — the clean first-two-digits rule", () => {
 	})
 
 	it("returns null for a prefix with no département (collectivity / malformed)", () => {
-		expect(departementOfCodePostal("97500")).toBeNull() // St-Pierre-et-Miquelon, not a DOM
+		expect(departementOfCodePostal("97500")).toBeNull() // St-Pierre-et-Miquelon rather than a DOM
 		expect(departementOfCodePostal("98800")).toBeNull() // New Caledonia
 		expect(departementOfCodePostal("nope")).toBeNull()
 	})

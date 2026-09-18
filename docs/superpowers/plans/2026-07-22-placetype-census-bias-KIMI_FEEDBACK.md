@@ -24,26 +24,26 @@ Required before task 4 (calibration + battery):
 
 - Rebuild the GB census with a random k% (suggest 10%) of pairs **held out**, re-run the rung-3 check, and record the degradation curve. This converts "the ceiling is lower in production" from a caveat into a number.
 - Add one out-of-register coverage measurement: the wave-2 EPC×UPRN acquisition (99.99% join, per the postmortem) or OA rows excluded from the census build give real GB addresses whose dep-loc/post-town pairs can be checked against census membership without touching the boards.
-- Re-anchor the acceptance bar to the holdout number, not the 100%-coverage number.
+- Re-anchor the acceptance bar to the holdout number rather than the 100%-coverage number.
 
-### 2. Integration shape: this is a sixth emission prior, not a "decode bias hook"
+### 2. Integration shape: this is a sixth emission prior rather than a "decode bias hook"
 
 The classifier already has the exact composition point this design needs — `classifier.ts` `#decode` composes query-shape, FST, street-morphology, and span-proposer priors onto emissions via `addEmissionMatrix` before Viterbi (lines ~573–598). The plan's "decode bias hook" should be specified as:
 
 - A new `neural/placetype-census-prior.ts` returning the standard `[seqLen][numLabels]` log-bias matrix, composed in the same block. Same "encoder stays the authority" semantics, same `matrixHasBias` applied-flag convention.
 - A new entry in `TRACE_PRIOR_KINDS` (`trace.ts:28` — currently `["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"]`). This is also the eval-attribution path: flips become attributable to the census prior in traces and the grouper-audit-style reports, which the plan's eval-ledger row will want.
 - The probe injected via **structural typing**, exactly like `FSTMatcherLike` / `QueryShapeLike` — `neural/` consumes a `CensusMatcherLike { probe(child, parent): boolean }` shape and never imports the loader. This keeps resolver-free unit tests trivial and matches the zero-dependency comment convention in the existing prior modules.
-- Note for the plan's byte-identical-presets acceptance: priors only participate in the Viterbi path; `parseWithLogits` deliberately exposes RAW pre-prior logits ("the model's emissions, not the decode's opinions"). State explicitly which user-facing surfaces take the Viterbi path so "bias ON" doesn't silently no-op somewhere an argmax consumer is served.
+- Note for the plan's byte-identical-presets acceptance: priors only participate in the Viterbi path; `parseWithLogits` deliberately exposes RAW pre-prior logits ("the model's emissions rather than the decode's opinions"). State explicitly which user-facing surfaces take the Viterbi path so "bias ON" doesn't silently no-op somewhere an argmax consumer is served.
 
 ### 3. Decode-order open question is already answered in code — downgrade it to a test class
 
-The plan asks whether "a biased B- token + unbiased I- continuation mis-heals." The mechanism: `enforceWordConsistency` votes **over post-prior emissions** (`classifier.ts:674–688` — "every `▁`-delimited word's pieces are forced to one tag by a confidence-weighted vote over the post-prior emissions"; visible as the `wordConsistency` repair). So the census bias lands _before_ the vote, and a biased B- plus weakly-scored I- on the same word reconciles at the word level — the heal cannot split a word the bias united. The residual risk class is the inverse: the vote flipping a whole biased word _off_ dep-loc (fine — that's the encoder's veto working) or the span-bridge's crossing constraint interacting with a bias-induced span boundary. Both are test classes, not design tweaks. The plan's task list should say "register the test class" rather than "maybe a design tweak."
+The plan asks whether "a biased B- token + unbiased I- continuation mis-heals." The mechanism: `enforceWordConsistency` votes **over post-prior emissions** (`classifier.ts:674–688` — "every `▁`-delimited word's pieces are forced to one tag by a confidence-weighted vote over the post-prior emissions"; visible as the `wordConsistency` repair). So the census bias lands _before_ the vote, and a biased B- plus weakly-scored I- on the same word reconciles at the word level — the heal cannot split a word the bias united. The residual risk class is the inverse: the vote flipping a whole biased word _off_ dep-loc (fine — that's the encoder's veto working) or the span-bridge's crossing constraint interacting with a bias-induced span boundary. Both are test classes rather than design tweaks. The plan's task list should say "register the test class" rather than "maybe a design tweak."
 
 ### 4. Segmentation: comma-only blocking will under-serve the demo; specify word-span windows now
 
 Rung 3's check required each candidate to be a full comma-delimited segment matching a census entry after fold. Comma-free GB queries ("fishburn stockton on tees") are the common case in real geocode traffic, and the plan lists this as an open question — but there's a stronger default already proven in the same file: `fst-prior.ts` walks **whitespace-delimited word spans** (SentencePiece pieces grouped by the `▁` sentinel, normalized, walked as contiguous subpaths). Specify the census probe the same way: contiguous word-windows (1–N words, N from the PPD CITY length distribution — expect ≤3 to cover ~all of it), same two-sided pair requirement, same fold. This is uniform across comma/comma-free input, reuses a reviewed normalization bridge, and the comma-delimited check falls out as the special case where a window coincides with a segment.
 
-Cheap pre-measurement, zero GPU: strip commas from the four dep-loc boards, re-run the rung-3 script with window probing. That number, not intuition, should decide whether #727 k-best spans are ever needed. (Prediction: they aren't — the two-sided requirement keeps precision at any window size, and recall is bounded by census coverage, not segmentation.)
+Cheap pre-measurement, zero GPU: strip commas from the four dep-loc boards, re-run the rung-3 script with window probing. That number rather than intuition, should decide whether #727 k-best spans are ever needed. (Prediction: they aren't — the two-sided requirement keeps precision at any window size, and recall is bounded by census coverage rather than segmentation.)
 
 ### 5. Unknown-country behavior needs an explicit default — and the fallback has a named FP vector
 
@@ -65,7 +65,7 @@ The plan specifies "lowercase + trim" with a diacritic policy TBD. `fst-prior.ts
 - **Naming:** "census" collides with US Census/TIGER vocabulary (`tiger/` workspace, census-tract language throughout the geo pipeline). Name the artifact and module `placetype-pair` / `pair-index` / similar; never the bare word "census" in identifiers.
 - **`count` in the schema is currently unused** (presence-only boost). Fine — but say so, and mark it as the future confidence-scaling change so nobody "finishes the job" mid-implementation (cf. the raw-SQL addendum in AGENTS.md).
 - **Artifact header:** add fold-version and schema-version alongside δ, source md5, and build date; the runtime flag should name the minimum schema version it understands. Cheap forward-compat, consistent with sealed-artifact discipline.
-- **Checkpoint choice:** the rung-3 table shows feed-8k at δ=6.0 is 95.5% NZ / 100% GB — within the −5pp tolerance of feed-2k's 100/100, with its guards already measured. The digit-FAIL-vs-guards trade the plan frames as feed-2k's risk reduces both ways; the battery deciding is correct, but the decision matrix should include "feed-8k at δ=6 with a slightly lower NZ ceiling" as a first-class option, not a fallback.
+- **Checkpoint choice:** the rung-3 table shows feed-8k at δ=6.0 is 95.5% NZ / 100% GB — within the −5pp tolerance of feed-2k's 100/100, with its guards already measured. The digit-FAIL-vs-guards trade the plan frames as feed-2k's risk reduces both ways; the battery deciding is correct, but the decision matrix should include "feed-8k at δ=6 with a slightly lower NZ ceiling" as a first-class option rather than a fallback.
 - **Perf:** segmentation + hash probes are negligible next to ONNX inference, but state the budget (sub-millisecond per parse, census resident in memory) so it survives review.
 - **Multi-word/nested names:** with window probing (change 4), the "Little Whinging cum Hardwick" class becomes a window-size question, answerable from the PPD CITY length distribution — check it during the builder task and record the percentile that N covers.
 - **Eval attribution:** with the new `TracePriorKind` (change 2), add a ledger/eval row dimension that reports how several board flips had the census prior `applied: true` — the talk's "decoder reaches into the gazetteer" section will want that number.
@@ -80,10 +80,10 @@ The plan specifies "lowercase + trim" with a diacritic policy TBD. `fst-prior.ts
 
 ## Answers to the plan's open questions (summary)
 
-| Question                 | Answer                                                                                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Segmenting               | Word-span windows over the `▁`-grouped pieces (fst-prior pattern), not comma segments; measure with comma-stripped boards before reaching for #727 |
-| Decode-order interaction | Already safe by construction (vote is over post-prior emissions); register the two test classes, no design tweak expected                          |
-| Checkpoint               | Battery decides, but feed-8k@δ=6.0 (95.5/100) belongs in the decision matrix as a peer, not a fallback                                             |
-| NZ packaging             | Hold NZ — v385 control proves census-without-resurrection is inert                                                                                 |
-| Multi-word/nested        | Window-size question; N from PPD CITY length percentiles, fold = the FST bridge normalization                                                      |
+| Question                 | Answer                                                                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Segmenting               | Word-span windows over the `▁`-grouped pieces (fst-prior pattern) rather than comma segments; measure with comma-stripped boards before reaching for #727 |
+| Decode-order interaction | Already safe by construction (vote is over post-prior emissions); register the two test classes, no design tweak expected                                 |
+| Checkpoint               | Battery decides, but feed-8k@δ=6.0 (95.5/100) belongs in the decision matrix as a peer rather than a fallback                                             |
+| NZ packaging             | Hold NZ — v385 control proves census-without-resurrection is inert                                                                                        |
+| Multi-word/nested        | Window-size question; N from PPD CITY length percentiles, fold = the FST bridge normalization                                                             |

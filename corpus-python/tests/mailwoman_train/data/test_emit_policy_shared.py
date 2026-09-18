@@ -97,12 +97,12 @@ def test_audit_emitted_count_matches_the_loader_for_an_excluded_source(tmp_path:
         )
     )
 
-    # Share, not raw count: the audit skips `iter_rows`' shuffle buffer, which reorders rows without
+    # Share rather than raw count: the audit skips `iter_rows`' shuffle buffer, which reorders rows without
     # changing how many of each source fill the budget.
     loader_share = sum(1 for row in loader if row["source"] == EXCLUDED) / len(loader)
     audited_share = report["emitted_level"]["per_source"][EXCLUDED]["emitted_share"]
 
-    # The threshold is measured, not chosen. On this corpus the loader emits 0.3650 of the budget from
+    # The threshold is measured rather than chosen. On this corpus the loader emits 0.3650 of the budget from
     # the excluded source. the repaired audit reports 0.3368 (delta 0.028, the shuffle buffer) and the
     # pre-#2243 audit reported 0.5100 (delta 0.145, a 40% over-report). 0.05 separates them.
     assert abs(loader_share - audited_share) < 0.05, (

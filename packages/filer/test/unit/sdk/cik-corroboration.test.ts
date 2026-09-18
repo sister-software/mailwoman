@@ -82,7 +82,7 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// EDGAR published nothing to corroborate against. That is a gap in the source, not a judgment
+		// EDGAR published nothing to corroborate against. That is a gap in the source rather than a judgment
 		// about the company, and a caller reporting a run must be able to tell the two apart.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({

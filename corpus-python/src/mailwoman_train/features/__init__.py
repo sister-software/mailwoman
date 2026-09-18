@@ -32,7 +32,7 @@ zeroed near a postcode, so a trailing "…12345 USA" keeps its clue.
 **Street type** (the P-A probe) — a multi-hot from the codex street-type lexicon (rue, boulevard,
 street, straße, …), reusing the gazetteer lexicon format and its matcher. A separate channel rather
 than a gazetteer slot so an existing checkpoint loads bit-clean and no feature width shifts. The
-hypothesis it tests: street-versus-locality labeling errors are literal evidence absence, not
+hypothesis it tests: street-versus-locality labeling errors are literal evidence absence rather than
 mis-segmentation.
 
 **Locality surface** (the v3.16.0 evidence bundle) — `[locality, locality_homograph]` over curated

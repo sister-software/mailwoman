@@ -6,7 +6,7 @@
 > and root `yarn test` (9,460 tests) green, and **no module over 500 lines, no function over 120**.
 >
 > The step checkboxes below were never ticked during execution and are left as written — they are the
-> plan as authored, not a record of what happened. The record is the commit range and the criteria
+> plan as authored rather than a record of what happened. The record is the commit range and the criteria
 > above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
 > not `eval/`.
 
@@ -26,7 +26,7 @@
 - Run tests with `uv run --extra dev --extra train pytest tests -q`. The baseline is **983 passed, 11 skipped** in ~30 s. A task is not done below 983.
 - Never launch a training run. No step in this plan calls `modal run` against a GPU function.
 - Source lives under `src/mailwoman_train/`; tests mirror it under `tests/mailwoman_train/`.
-- Acronyms capitalize as whole components in identifiers: `parseJSON`, not `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter`, not `OnnxExporter`.
+- Acronyms capitalize as whole components in identifiers: `parseJSON` rather than `parseJson`. Python `snake_case` keeps its own convention (`onnx_path`), but a class is `ONNXExporter` rather than `OnnxExporter`.
 - `uvx ruff@0.16.5 check --fix .` and `uvx ruff@0.16.5 format .` after every move; ruff's `I` rule re-sorts imports and will otherwise fail CI.
 - A comment states an invariant, a constraint, or why an obvious implementation is unsafe. Move history to the commit message. When moving a docstring that carries a measured number, the number travels with it.
 - No module in `src/mailwoman_train/` exceeds 500 lines; no function exceeds 120.
@@ -245,7 +245,7 @@ from .country_lexicon import COUNTRY_FEATURE_DIM, realign_country_to_pieces
 from .gazetteer_anchor import realign_gazetteer_to_pieces, suppress_gazetteer_near_postcode
 ```
 
-Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place — they describe channel behavior, not imports.
+Then delete the six `from .` lines inside `encode_with_features` at 541, 550, 566, 583 and 598, along with the two comment lines that explain the deferral ("Local import keeps tokenizer.py import-light…"). Leave every other comment in that function in place — they describe channel behavior rather than imports.
 
 - [ ] **Step 7: Run the new test and the full suite**
 
@@ -304,7 +304,7 @@ This is the measured boundary — every name that crosses a builder today:
 Create `tests/mailwoman_train/test_text_normalize.py`:
 
 ```python
-"""The shared CJK text helpers answer from `text/`, not from a corpus builder."""
+"""The shared CJK text helpers answer from `text/` rather than from a corpus builder."""
 
 from __future__ import annotations
 
@@ -1059,7 +1059,7 @@ git commit -m "feat(train): drive logging, eval, checkpointing and trackio throu
 - [ ] **Step 1: Write the failing test**
 
 ```python
-"""A country is found through the registry, not by importing its module by name."""
+"""A country is found through the registry rather than by importing its module by name."""
 
 from __future__ import annotations
 
@@ -1430,7 +1430,7 @@ git commit -m "test(launch): pin the 57 sync functions before collapsing them"
 - Consumes: nothing.
 - Produces: `launch` as an importable package. `modal run -m launch.train` replaces `modal run corpus-python/modal/train_remote.py`.
 
-The rename is forced, not stylistic. Step 1 re-measures the reason.
+The rename is forced rather than stylistic. Step 1 re-measures the reason.
 
 - [ ] **Step 1: Re-measure the shadowing**
 
@@ -1468,7 +1468,7 @@ Leave `docs/records/` alone — those are dated point-in-time records and keep t
 
 - [ ] **Step 5: the result still fires**
 
-The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196`, not a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
+The guard matches `head: "modal"` at `packages/dev-mcp/lib/hooks/bash/write/rules.ts:196` rather than a filename, so a renamed target changes nothing. Confirm by reading that rule, and update the fixture strings in `bash-write-guard.test.ts` to the new path so the test describes a command someone could type.
 
 - [ ] **Step 6: Commit**
 
@@ -1527,7 +1527,7 @@ for name, spec in sorted(extract_sync_functions(Path('launch/train_remote.py').r
 "
 ```
 
-Transcribe each into a `CorpusVersion`. Read every one; the generator gives you the rows, not the review.
+Transcribe each into a `CorpusVersion`. Read every one; the generator gives you the rows rather than the review.
 
 - [ ] **Step 3: Write the single sync function**
 
@@ -1623,7 +1623,7 @@ Expected: the grep prints nothing before the delete. If it prints a hit, stop �
 
 `packages/repo-health/lib/checks/python-prefix-directories.ts` mirrors `prefix-directories.ts` with `_` as the delimiter and `.py` as the source extension, scoped to `corpus-python/`. Register it in `packages/repo-health/lib/registry.ts`.
 
-The TypeScript check excludes workspace directories because a directory name is an npm package name. There is no Python equivalent, so that exclusion does not carry over. `__init__.py` and `__main__.py` are excluded: both are Python's own names, not this repository's to arrange.
+The TypeScript check excludes workspace directories because a directory name is an npm package name. There is no Python equivalent, so that exclusion does not carry over. `__init__.py` and `__main__.py` are excluded: both are Python's own names rather than this repository's to arrange.
 
 - [ ] **Step 6: Run the check and the repo's own suites**
 
@@ -1676,4 +1676,4 @@ git commit -m "chore(train): mirror the test tree, ship py.typed, add the Python
 
 **Type consistency.** `PieceSpan` is defined in Task 1 and consumed by name in Tasks 2, 4 and 7. `protocols.TrainCallback` is defined in Task 7 with four hooks and implemented in Task 8 with the same four. `protocols.CountryModule` declares `country_code`, `label_set_name`, `build_corpus` and `registers`, and Task 9's `countries/jp/__init__.py` now supplies all four under those names. The first draft called the last one `registers_available`, which would have failed Task 9's own `isinstance` check against the protocol; it is corrected in the task body. Task 5 step 4's `serialization.save_pretrained` names the module that same step creates.
 
-**Known soft spot.** Task 9 step 3's `build_corpus` body assumes `build_jp_slice.py` exposes a `build(output_dir, limit=...)` entry point. The step says to read the real signature first and record it, rather than inventing one. Treat a mismatch there as expected work, not as a plan failure.
+**Known soft spot.** Task 9 step 3's `build_corpus` body assumes `build_jp_slice.py` exposes a `build(output_dir, limit=...)` entry point. The step says to read the real signature first and record it, rather than inventing one. Treat a mismatch there as expected work rather than as a plan failure.

@@ -9,7 +9,7 @@ that `company_tickers.json` omits for private carriers.
 ## Result
 
 **23 of 24 registrants recovered, 2,897 subsidiary rows.** One skip: Telephone and Data Systems
-has no Exhibit 21 in its most recent 10-K. That is the filer's choice, not a code defect.
+has no Exhibit 21 in its most recent 10-K. That is the filer's choice rather than a code defect.
 
 |                           |             count |
 | ------------------------- | ----------------: |
@@ -51,7 +51,7 @@ has no Exhibit 21 in its most recent 10-K. That is the filer's choice, not a cod
 Three SICs are blank because the registrant was pinned rather than corroborated:
 Comcast and AT&T (actual CIK ties broken by operator pins) and Bandwidth/Ooma
 (real carriers SEC files under software classifications). Pins are documented
-decisions; blank SICs here are the artifact of the pin bypass, not a gap in
+decisions; blank SICs here are the artifact of the pin bypass rather than a gap in
 the data.
 
 ## How the name-resolution false matches were avoided

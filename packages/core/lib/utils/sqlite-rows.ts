@@ -24,9 +24,9 @@ import type { SQLInputValue, StatementSync } from "@mailwoman/sqlite/client"
 /**
  * Execute a prepared statement whose selected columns are described by `Row`.
  *
- * Callers own the correspondence: `Row` must match the statement's PROJECTION, not the table. A column added to the
- * table without being selected does not belong in `Row`, and a `Row` field the `SELECT` omits reads back `undefined` at
- * runtime while the type promises otherwise.
+ * Callers own the correspondence: `Row` must match the statement's PROJECTION rather than the table. A column added to
+ * the table without being selected does not belong in `Row`, and a `Row` field the `SELECT` omits reads back
+ * `undefined` at runtime while the type promises otherwise.
  */
 export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row[] {
 	return statement.all(...parameters) as Row[]

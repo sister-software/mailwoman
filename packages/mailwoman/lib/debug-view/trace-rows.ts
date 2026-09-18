@@ -11,7 +11,7 @@
  *
  *   Every function here takes the {@link GeocodeTrace} the session recorded and returns one line. A stage that
  *   produced nothing renders {@link ABSENT} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
- *   channel band already reports, and an absent locale head is a property of the loaded bundle, not a zero. Nothing in
+ *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. Nothing in
  *   this module derives, infers, or fills in a value the trace did not carry.
  *
  *   Pure and Ink-free so the formatting is unit-testable without a render, and so a caller can truncate the result
@@ -145,8 +145,8 @@ export function channelsRow(trace: GeocodeTrace | undefined): string {
  * What the decode did: the algorithm, the mean per-token confidence, the component sequence it produced, which priors
  * actually moved the emissions, and which repair passes changed a label.
  *
- * `priors` reports EFFECT, not configuration — `TracePrior.applied` is true only where a composed prior carried a
- * nonzero bias — which is why this row is a usable substitute for the emissions matrix the terminal has no room for.
+ * `priors` reports EFFECT rather than configuration — `TracePrior.applied` is true only where a composed prior carried
+ * a nonzero bias — which is why this row is a usable substitute for the emissions matrix the terminal has no room for.
  */
 export function decodeRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -157,7 +157,7 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 	const meanConfidence = tokens.length ? tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length : null
 
 	// B-/I- stripped and runs collapsed: the ribbon above already carries per-character ownership, so what
-	// this row adds is the ORDER the decode produced, not a second copy of the spans.
+	// this row adds is the ORDER the decode produced rather than a second copy of the spans.
 	const sequence: string[] = []
 
 	for (const token of tokens) {

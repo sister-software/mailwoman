@@ -338,7 +338,7 @@ describe("the script a row renders in", () => {
 		expect(derived?.script).toBe("local")
 		expect(derived?.unplaced).toEqual([])
 
-		// The caller can still ask for it, and then the loss is theirs to see — it is reported, not silent.
+		// The caller can still ask for it, and then the loss is theirs to see — it is reported rather than silent.
 		expect(formatAddressRow(romanized, "JP", { singleLine: true, script: "latin" })?.unplaced).toEqual([
 			"locality",
 			"dependent_locality",

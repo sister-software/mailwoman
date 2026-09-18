@@ -18,7 +18,7 @@
  *
  *   **GOOGLE'S ERRORS ARRIVE UNDER HTTP 200.** `REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `INVALID_REQUEST`
  *   and `UNKNOWN_ERROR` are all 200s carrying a `status` field, so nothing in the HTTP layer — not
- *   Axios's `validateStatus`, not `APIClient`'s retry classifier, not the cache's status predicate —
+ *   Axios's `validateStatus` rather than `APIClient`'s retry classifier rather than the cache's status predicate —
  *   can see them. Two mechanisms handle that here, and both are the reason this file is longer than
  *   `sec-client.ts`: {@linkcode statusToResourceError} maps the in-band status onto the same
  *   `ResourceError` contract every other client in this repo throws, and {@linkcode isCacheableGoogleBody}
@@ -76,12 +76,12 @@ export const GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/
  * Google's published per-project ceiling for the Geocoding API is 3,000 requests per minute — fifty times this. The
  * default is deliberately nowhere near it, because the constraint that actually binds an oracle run is not the rate
  * limit, it is the BILL: every uncached request is charged, and the intended workload is a few hundred addresses
- * authored into gauntlet cases by a human, not a pipeline. One per second finishes 160 addresses in under three minutes
- * on a cold cache and costs nothing on a warm one.
+ * authored into gauntlet cases by a human rather than a pipeline. One per second finishes 160 addresses in under three
+ * minutes on a cold cache and costs nothing on a warm one.
  *
  * Raise it via {@linkcode CreateGoogleGeocoderClientOptions.requestsPerMinute} for a genuinely large sweep. This is a
- * default, not a clamp — unlike `SEC_DEFAULT_REQUESTS_PER_SECOND`, which clamps because SEC's limit is policed and
- * verifiable in fetchable HTML. Google's is enforced by returning `OVER_QUERY_LIMIT` under a 200, which this client
+ * default rather than a clamp — unlike `SEC_DEFAULT_REQUESTS_PER_SECOND`, which clamps because SEC's limit is policed
+ * and verifiable in fetchable HTML. Google's is enforced by returning `OVER_QUERY_LIMIT` under a 200, which this client
  * already retries.
  */
 export const GOOGLE_DEFAULT_REQUESTS_PER_MINUTE = 60
@@ -163,7 +163,7 @@ export interface CreateGoogleGeocoderClientOptions {
 	clock?: ClockLike
 	/**
 	 * On-disk cache root. Defaults to `dataRootPath("geocode-oracle", "google")`, resolved once at construction —
-	 * construct the client after setting `$MAILWOMAN_DATA_ROOT`, not before.
+	 * construct the client after setting `$MAILWOMAN_DATA_ROOT` rather than before.
 	 */
 	cacheDir?: string
 	/**
@@ -171,8 +171,8 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	cacheTTLMs?: number
 	/**
-	 * Total attempts (including the first) before giving up on a transient failure. A STATED CEILING, not "until it
-	 * works". Never applies to `REQUEST_DENIED`, `INVALID_REQUEST`, `ZERO_RESULTS` or `OVER_DAILY_LIMIT`.
+	 * Total attempts (including the first) before giving up on a transient failure. A STATED CEILING rather than "until
+	 * it works". Never applies to `REQUEST_DENIED`, `INVALID_REQUEST`, `ZERO_RESULTS` or `OVER_DAILY_LIMIT`.
 	 */
 	maxAttempts?: number
 	/**
@@ -209,7 +209,7 @@ export interface CreateGoogleGeocoderClientOptions {
 export interface GeocodeRequestOptions {
 	/**
 	 * Restrict results to a country, as an ISO-3166 alpha-2 code. Sent as Google's `components=country:XX` filter, which
-	 * is a hard restriction, not a bias — a match outside the country is not returned at all.
+	 * is a hard restriction rather than a bias — a match outside the country is not returned at all.
 	 *
 	 * This is the change a per-country oracle sweep wants: it stops `"Springfield"` resolving to Illinois when the case
 	 * under authorship is Neuseeland's.
@@ -343,7 +343,7 @@ export function statusToResourceError(body: GoogleGeocodeResponse, description: 
 
 	const message =
 		body.status === GoogleGeocoderStatus.RequestDenied
-			? `Google rejected the geocode request for ${description}: REQUEST_DENIED. This is a KEY problem, not an ` +
+			? `Google rejected the geocode request for ${description}: REQUEST_DENIED. This is a KEY problem rather than an ` +
 				"address problem — the key is missing, malformed, restricted to referrers/IPs this process does not match, " +
 				"or belongs to a project with the Geocoding API disabled or billing unattached. Check " +
 				"`GOOGLE_MAPS_API_KEY` against https://console.cloud.google.com/google/maps-apis. Not retried: a rejected " +
@@ -416,7 +416,7 @@ export class GoogleGeocoderClient extends APIClient<GoogleGeocoderClientConfig> 
 	 * Look up a Google Place ID and return it as an address.
 	 *
 	 * Google Place IDs are not permanent — Google's own documentation says to consider one stale after a few days — so
-	 * this is for resolving an ID captured moments ago, not for pinning a gauntlet case to.
+	 * this is for resolving an ID captured moments ago rather than for pinning a gauntlet case to.
 	 */
 	public async geocodePlaceID(
 		placeID: string,
@@ -591,7 +591,7 @@ export function createGoogleGeocoderClient(options: CreateGoogleGeocoderClientOp
 			generateKey: geocodeCacheKey,
 		},
 		axios: {
-			// THE KEY LIVES HERE, NOT IN THE URL. An instance-level `params` default is merged into every
+			// THE KEY LIVES HERE rather than IN THE URL. An instance-level `params` default is merged into every
 			// request by Axios before the interceptor chain runs, so the key reaches the wire — while
 			// `config.url`, which is what `APIClient` logs and what `delegateAxiosError` interpolates into
 			// timeout/DNS messages, stays free of it.

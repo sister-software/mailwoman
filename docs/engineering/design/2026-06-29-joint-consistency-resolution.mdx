@@ -10,7 +10,7 @@ tags:
 # Joint-consistency resolution — reading an address through the hermeneutic circle
 
 _The target this document sets: an address should resolve to wherever its spans are **jointly
-consistent** in the gazetteer's containment graph, not to wherever a whole-string country guess
+consistent** in the gazetteer's containment graph rather than to wherever a whole-string country guess
 points. "Portland, ME" is Portland, Maine because a Portland sits under Maine and none sits under
 Messina or Medway. Geography decides; the country prior only fills the silences. This is the design
 the #832 / #833 / VT failures asked for; it is not yet built._
@@ -74,7 +74,7 @@ This generalizes to every country with no country list and no placer in the loop
 data — `Portland (43.647, -70.168)` already records Maine as an ancestor in the swapped gazetteer. The
 hard constraint is **scope**: the check applies to the admin assignment only, so it cannot re-break the
 street/house-number path that retired the #566 reconcile. We are reintroducing the admin-coherence
-veto in isolation, not the whole beam.
+veto in isolation rather than the whole beam.
 
 Tracking issue: **#263**. The deterministic country-prior patch we prototyped first (a β-weighted damp
 of the foreign posterior when a US state is recognized) is **shelved** on `spike/833-beta-fusion-shelved`
@@ -91,7 +91,7 @@ signal; the prior is the fallback. The `HARD_PLACE_COUNTRY_SAFELIST` is the piec
 job shrinks as the graph's grows, and the docs already half-disown it (the 2026-06-26 postmortem
 measured that widening it changes nothing, because the placer abstains and it never checks).
 
-## The quick cache reuses the gazetteer, not a list
+## The quick cache reuses the gazetteer rather than a list
 
 There is room for a "well-known place" fast path, and the pieces already exist: the candidate-table
 byte-range gazetteer (`WofCandidateTableLookup`, `candidate-schema.ts`) — a `WITHOUT ROWID` B-tree keyed
@@ -110,7 +110,7 @@ address-system prior's job (US-format ⇒ prefer the US state), and it is the ne
 
 ## Future work, blocked on a measured residual
 
-Build to a measured gap, not to a good idea. Once descendant-consistency lands (#263), measure where it
+Build to a measured gap rather than to a good idea. Once descendant-consistency lands (#263), measure where it
 still fails, bucketed by why — romanized or transliterated input, mixed script, ambiguous field
 ordering, sparse-coverage countries where geography stays silent. That residual, and only that residual,
 scopes two things we do not have today (#265):
@@ -118,10 +118,10 @@ scopes two things we do not have today (#265):
 - A **supplementary address-system model**. The "don't memorize" rule is task-scoped: the open-world job
   (which Portland, of thousands) must generalize and retrieve; address-_system_ identification is a
   closed, small taxonomy where densely encoding the format-to-system structure is learning the real
-  distribution, not overfitting. Such a model warrants its keep on the fuzzy tier the rules and the graph
+  distribution rather than overfitting. Such a model warrants its keep on the fuzzy tier the rules and the graph
   both miss. It stays **advisory** — it proposes a system, it never vetoes where geography lands an
   address. Its larger payoff may be routing (which normalizer, which abbreviations, which field order,
-  which gazetteer extract), not disambiguation.
+  which gazetteer extract) rather than disambiguation.
 - An **address-system → country-set** linkage. "Parses like a US address" makes US _and_ Canada
   candidate postal systems, and floats their regions up — a derived prior, softer and better grounded
   than a whole-string guess. Not built.

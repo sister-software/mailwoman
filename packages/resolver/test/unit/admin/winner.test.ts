@@ -146,7 +146,7 @@ describe("resolvedSpecificity", () => {
 		expect(rank("postalcode", NL_PC6)).toBeGreaterThan(rank("locality"))
 	})
 
-	// The tier is the resolver's own `locality` GROUP, not the `locality` placetype: a New England civil town resolves
+	// The tier is the resolver's own `locality` GROUP rather than the `locality` placetype: a New England civil town resolves
 	// as `localadmin`, and ranking a ZIP above it puts the postcode point back on exactly those rows.
 	it("ranks an AREA-grade postcode below every member of the locality tier", () => {
 		const tier = PLACETYPE_FILTER_GROUPS["locality"] ?? []

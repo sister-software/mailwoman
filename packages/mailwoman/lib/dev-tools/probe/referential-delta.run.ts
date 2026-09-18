@@ -104,7 +104,7 @@ if (!(await pathExists(adminPath))) {
 
 /**
  * The pre-split within-tier key, verbatim from `lookup.ts` before the split: raw population DESC, weighted score as the
- * tiebreak. Kept here so the comparison is against the code that shipped, not against a paraphrase of it.
+ * tiebreak. Kept here so the comparison is against the code that shipped rather than against a paraphrase of it.
  */
 const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
 	(b.population ?? 0) - (a.population ?? 0) || b.score - a.score

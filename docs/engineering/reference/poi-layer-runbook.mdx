@@ -46,15 +46,14 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   (`taxonomy.primary`) replaces it. The builder probes for both and prefers `taxonomy`
   (`chooseCategoryColumn`). When bumping the pinned release, re-check the probe output in
   the build log — it prints which property it chose.
-- **`--limit` samples are geographically clustered, not representative.** LIMIT takes the
+- **`--limit` samples are geographically clustered rather than representative.** LIMIT takes the
   first rows the scan yields; the first 50k US rows in the 2026-05-20.0 release all landed
   in Hawaii. Fine for smoke verification, useless for coverage judgments. Never grade
   coverage or the query board on a limited build.
-- **`--limit` is also ~200× slower against S3, not faster.** DuckDB plans a LIMIT scan
+- **`--limit` is also ~200× slower against S3 rather than faster.** DuckDB plans a LIMIT scan
   serially — one S3 connection at ~10 KB/s on the 2026-08-19 measurement, zero bytes
   written after 6 minutes — while an unbounded country scan runs 7–8 parallel connections
-  and finishes GB in ~23 minutes. Smoke against S3 with an unbounded single-country ingest,
-  not a LIMIT.
+  and finishes GB in ~23 minutes. Smoke against S3 with an unbounded single-country ingest rather than a LIMIT.
 - **Overture prunes old releases from the bucket** — the 2026-08-19 listing held exactly
   one release; both prior pins were gone. Consequences: a stale `DEFAULT_RELEASE` fails
   every default build outright, a sealed artifact from a pruned release can never be
@@ -64,7 +63,7 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   invocation rides warm at 30–50 s, so batch them.
 - `brand.names.primary` is deliberately not extracted — the QID (`brand.wikidata`) is the
   join key and the row's own `name` carries the display form. Re-adding it is a schema +
-  builder change, not a flag.
+  builder change rather than a flag.
 
 ### Key decisions (do not silently re-decide)
 
@@ -72,7 +71,7 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   matches `ADDRESS_H3_RESOLUTION = 9` in `@mailwoman/address-id` so the POI↔address join is
   key-equality, and makes a neighborhood query one contiguous B-tree range — the
   byte-range/httpvfs serving profile. Coverage cells sit at res 6.
-- **WOF ancestry is decorated at read time, not build time** (deviation from the spec's
+- **WOF ancestry is decorated at read time rather than build time** (deviation from the spec's
   original build-time-PIP wording, pre-declared in plan 3). The read-time half plus
   `gersID` on results landed 2026-07-19 (`mailwoman/poi-executor.ts`'s `reverseGeocode`
   dep, wired lazily in `runtime-pipeline.ts` from a `WOFReverseGeocoder`) — see the
@@ -130,7 +129,7 @@ CLI default is 12). Contingency if the shipped file or probe latency surprises: 
 labeled regional extract, as fallback only.
 
 **Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the R2 asset
-uploader (`docs/scripts/publish-demo-assets-to-r2.py`), not the gazetteer path: stage a hardlink dir mirroring the R2 layout
+uploader (`docs/scripts/publish-demo-assets-to-r2.py`) rather than the gazetteer path: stage a hardlink dir mirroring the R2 layout
 `poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
 `set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
 (source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's
@@ -147,9 +146,8 @@ v1.1 92.2% (see
 [`2026-07-20-poi-promotion-battery.md`](../../records/evals/2026-07-20-poi-promotion-battery.md) and
 the [runtime-flag register](./runtime-flags.mdx)). After #1206/#1208/#1209 (leaf fan-out,
 indexed brand fetch, full ~2,110-category snapshot) the board stands at **50/51 = 98.0%**
-against the rebuilt `poi/2026-07-20a/poi.db` — `nm-04` the sole holdout (a ring-budget case,
-not a coverage gap), both hard floors green (see the 2026-07-20 standing update in
+against the rebuilt `poi/2026-07-20a/poi.db` — `nm-04` the sole holdout (a ring-budget case rather than a coverage gap), both hard floors green (see the 2026-07-20 standing update in
 [`2026-07-19-poi-query-board-v1-baseline.md`](../../records/evals/2026-07-19-poi-query-board-v1-baseline.md)). `undefined`/`true` is intent/abstain-only
 (no db); pass `false` to restore the pre-flag, byte-identical address-only classification.
-`forceFullPipeline` does not bypass the poi branch (routing branch, not a fast-path —
+`forceFullPipeline` does not bypass the poi branch (routing branch rather than a fast-path —
 decided, documented on `PipelineOpts`).

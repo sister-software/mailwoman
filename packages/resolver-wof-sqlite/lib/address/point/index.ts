@@ -86,7 +86,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		this.#localityKeys = opts.localityKeys ?? (this.#locale === "us" ? "abbreviated" : "full")
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
+		// `address_point` table this lookup is a no-op miss rather than a crash that loses the whole state (#568).
 		if (hasTable(this.#db, "address_point")) {
 			this.#byPostcode = prepareGet(
 				this.#db,

@@ -129,7 +129,7 @@ export const PLACE_BBOX_TABLE = "place_bbox"
  * penalty. Built upstream by `scripts/build-unified-wof.ts` at ingest (and copied through by `build-slim`) — this
  * module consumes it, never builds it.
  *
- * Schema: `(id INTEGER PRIMARY KEY, population INTEGER NOT NULL)`. Plain table, not virtual.
+ * Schema: `(id INTEGER PRIMARY KEY, population INTEGER NOT NULL)`. Plain table rather than virtual.
  */
 export const PLACE_POPULATION_TABLE = "place_population"
 

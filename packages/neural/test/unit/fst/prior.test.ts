@@ -24,7 +24,7 @@ import { describe, expect, it, test } from "vitest"
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 // Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
-// only occur in its vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
+// only occur in its vocab rather than the small fixture's. Not present in stripped-down CI, so this whole block skips
 // there. it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
@@ -188,7 +188,7 @@ describe("buildFSTEmissionPriors", () => {
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// The comma (piece 1) is now part of the "Washington" word group — it gets the same bias as an
-		// I-locality continuation piece, not a zero row.
+		// I-locality continuation piece rather than a zero row.
 		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.85 * 3, 2)
 		// "DC" never matches this mock FST ("washington" is the only indexed path) — untouched.
 		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
@@ -500,7 +500,7 @@ describe.skipIf(!haveProductionTokenizer)(
 	() => {
 		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice) than in the small
 		// test fixture: it hits short common words ("on", "upon", "super") and a trailing single-letter
-		// abbreviation ("IL"). Each case below asserts full group recovery, not merely a non-empty result.
+		// abbreviation ("IL"). Each case below asserts full group recovery rather than merely a non-empty result.
 		const cases: Array<{ raw: string; expected: string[] }> = [
 			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
 			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },

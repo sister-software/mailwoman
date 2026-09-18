@@ -17,7 +17,7 @@ overstates what n=54 can support: the two intervals overlap, and McNemar on the 
 (11 vs 4) gives **p = 0.12**. The **rate difference is not established**. What is established is that
 the 11 new hallucinations are real, individually inspectable failures — `New York, NY` → street=`new
 york` is not a statistical claim — and the pre-registered condition turns on the failure CLASS
-existing, not on its rate being by a measured margin worse. The verdict stands on those grounds. The rate
+existing rather than on its rate being by a measured margin worse. The verdict stands on those grounds. The rate
 question is settled by the T1c fragment board, whose `bare-locality` class carries n=400 (±4.0pp).
 Caught by the same discipline that produced the finding; left visible rather than without output edited.
 :::
@@ -110,7 +110,7 @@ street is arguable). Both partitions get worse: pure +6/−3, venue +5/−1.
 
 **Not a grammar defect.** The exported grammar carries explicit `start_transitions`, `end_transitions`,
 and an `O` segment type at index 0 — an all-`O` parse is representable and cheap to express. The decode
-chooses street anyway. This is **learned miscalibration**, not a structural hole. (Checked, because the
+chooses street anyway. This is **learned miscalibration** rather than a structural hole. (Checked, because the
 structural story was the attractive one.)
 
 ### 4.1 What n=54 can and cannot support
@@ -121,7 +121,7 @@ on the discordants:
 
 ```
 b = 11 (v264 silent, seg hallucinates)      exact two-sided p = 0.1185
-c =  4 (v264 hallucinates, seg silent)      => direction consistent, NOT significant at 0.05
+c =  4 (v264 hallucinates, seg silent)      => direction consistent rather than significant at 0.05
 ```
 
 So: **the rate difference is not established.** Anyone quoting "+58%" from this page is quoting noise
@@ -129,16 +129,16 @@ with a decimal point — the same sin the fragment board exists to stop, committ
 
 Three things survive that arithmetic, and they are what the verdict rests on:
 
-1. **The 11 failures are real, not inferred.** `New York, NY` → street=`new york` is a defect you can
+1. **The 11 failures are real rather than inferred.** `New York, NY` → street=`new york` is a defect you can
    read, reproduce, and fix. Its existence is not a statistical claim and no p-value bears on it.
-2. **The pre-registered condition turns on the class, not the rate.** It reads: _"if the regression
+2. **The pre-registered condition turns on the class rather than the rate.** It reads: _"if the regression
    class is 'street hallucinated where none exists', that's a new failure mode and the flag stays
    off-by-default."_ The class exists. The condition fires as written.
 3. **Precaution is asymmetric here.** The flag is opt-in either way; the cost of holding it is a
    consumer types a flag, and the cost of shipping it wrong is silent street hallucination in a
    geocoder. At p=0.12 you do not get to round toward the convenient answer.
 
-**The rate question is answered by T1c, not by this page.** The fragment board's `bare-locality` class
+**The rate question is answered by T1c rather than by this page.** The fragment board's `bare-locality` class
 runs n=400 — a ±4.0pp interval at p≈0.22, versus ±10.9pp here. That is the measurement; this was the
 detection.
 

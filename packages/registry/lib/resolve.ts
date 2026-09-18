@@ -165,9 +165,9 @@ export interface DefaultModelOptions {
 	/**
 	 * Closed-vocabulary CODE-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy change). The
 	 * attribute value is a whitespace-joined set of codes (NPPES taxonomy codes, license numbers, …); agreement = any
-	 * shared code (set overlap, not string similarity — `207R00000X` vs `207Q00000X` are different specialties despite
-	 * near-identical text, exactly the case string similarity mis-scores). The over-merge separator: two co-located
-	 * records of one entity nearly always share a code, two distinct co-located providers usually don't.
+	 * shared code (set overlap rather than string similarity — `207R00000X` vs `207Q00000X` are different specialties
+	 * despite near-identical text, exactly the case string similarity mis-scores). The over-merge separator: two
+	 * co-located records of one entity nearly always share a code, two distinct co-located providers usually don't.
 	 */
 	exactDiscriminators?: string[]
 }
@@ -474,7 +474,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	const clusters = cluster(records, links, { threshold, linkage: config.linkage })
 
 	// Cohesion = the weakest within-cluster link weight (how tightly an entity holds together). Compute it
-	// in one pass over links via a record→cluster index, not by filtering every link for every cluster —
+	// in one pass over links via a record→cluster index rather than by filtering every link for every cluster —
 	// the latter is O(clusters × links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
 

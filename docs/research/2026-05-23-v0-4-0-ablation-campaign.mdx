@@ -42,7 +42,7 @@ The collapse step shifted with the learning rate:
 | 3e-4               |              1000 |
 | 1.5e-4 (v0.3.0 LR) |              2000 |
 
-Three runs each at a different LR, each diverging in the same shape, with the divergence delayed proportionally — but only roughly. A factor-2 LR drop bought a factor-1.3 step delay, not factor-2. That ruled out "wepicked too high an LR" as the explanation. The destabilizer was in the recipe, not the learning rate.
+Three runs each at a different LR, each diverging in the same shape, with the divergence delayed proportionally — but only roughly. A factor-2 LR drop bought a factor-1.3 step delay rather than factor-2. That ruled out "wepicked too high an LR" as the explanation. The destabilizer was in the recipe rather than the learning rate.
 
 So we ran the ablations the issue had prescribed:
 

@@ -76,19 +76,18 @@ locale data rather than a second model.
 locale data only, so `@mailwoman/neural-weights-en-us` is installed alongside any of them.
 
 The New Zealand overlay ships no postcode anchor table. The encoder is anchor-trained, so New Zealand
-parses run with the anchor channel off. That is a declared gap, recorded in the package's model card,
-not a silent one.
+parses run with the anchor channel off. That is a declared gap, recorded in the package's model card rather than a silent one.
 
 ### Data bundles
 
 `mailwoman data pull <bundle>` downloads these. Sizes are the registered artifact totals at head.
 
-| Bundle      | Covers                | Artifacts | Size    | Tiers it unlocks                   |
-| ----------- | --------------------- | --------- | ------- | ---------------------------------- |
-| `candidate` | 244 countries         | 1         | 1.65 GB | `admin` everywhere                 |
-| `us`        | 50 states, DC, and VI | 103       | 41.3 GB | `address_point` and `interpolated` |
-| `fr`        | France                | 1         | 6.95 GB | `address_point` only               |
-| `poi`       | US, CA, MX, FR        | 1         | 3.89 GB | POI search, not address resolution |
+| Bundle      | Covers                | Artifacts | Size    | Tiers it unlocks                          |
+| ----------- | --------------------- | --------- | ------- | ----------------------------------------- |
+| `candidate` | 244 countries         | 1         | 1.65 GB | `admin` everywhere                        |
+| `us`        | 50 states, DC, and VI | 103       | 41.3 GB | `address_point` and `interpolated`        |
+| `fr`        | France                | 1         | 6.95 GB | `address_point` only                      |
+| `poi`       | US, CA, MX, FR        | 1         | 3.89 GB | POI search rather than address resolution |
 
 `candidate` is the one every install needs. It answers on the `admin` tier globally, which is a
 locality or region centroid rather than a rooftop coordinate.
@@ -98,7 +97,7 @@ than the full 41.3 GB. The French bundle ships rooftop points with no interpolat
 address whose exact point is absent falls straight through to `admin` rather than to a house-number
 estimate along the street.
 
-The US Virgin Islands ship a rooftop database and no interpolation database. That is a data gap, not an
+The US Virgin Islands ship a rooftop database and no interpolation database. That is a data gap rather than an
 omission from this table.
 
 ### The combination
@@ -130,12 +129,12 @@ built from a source that spans countries rather than from per-locale training.
 | `Could not resolve @mailwoman/neural-weights-<locale>` | No overlay is published for that locale                                | Use `en-US`. The base model parses non-tier-1 input at lower accuracy  |
 | Every result comes back on the `admin` tier            | No street bundle is installed for that country                         | Check the combination table. Only US and FR have published street data |
 | A Japanese address parses poorly                       | There is no Japanese parser claim. The resolver route is postcode-only | Resolve by postcode                                                    |
-| A Korean address parses poorly                         | No open Korean data path has been adopted                              | None today. The constraint is licensing, not engineering               |
+| A Korean address parses poorly                         | No open Korean data path has been adopted                              | None today. The constraint is licensing rather than engineering        |
 | A tier-2 locale is worse than the panel suggests       | Panels are 1000 rows per locale, and a sample can be unrepresentative  | Report it with the input strings                                       |
 
 ## Rationale
 
-A tier is a measurement, not a promise, and the levels exist so that "we support this locale" cannot
+A tier is a measurement rather than a promise, and the levels exist so that "we support this locale" cannot
 be said without saying how well it was checked. The alternative — one flat list of supported locales
 — makes a locale with a 1000-row coordinate panel indistinguishable from one that appeared in a
 training mix, and those are not the same product.

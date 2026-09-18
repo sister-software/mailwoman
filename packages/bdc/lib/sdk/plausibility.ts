@@ -26,7 +26,7 @@
  *     coordinate to search from: bdc.db stores no public geoid→centroid resolver (deriving one would
  *     need the same Fabric-adjacent block-centroid implementation the vertical explicitly keeps out of reach
  *     — §2.2's boundary), so physical evidence is skipped entirely for that shape of claim. This is a
- *     genuine, documented capability gap, not a missing-layer abstain: `coverage_confidence` still
+ *     genuine, documented capability gap rather than a missing-layer abstain: `coverage_confidence` still
  *     degrades honestly (see below), but no `PlausibilityEvidence` abstain variant fits "no coordinate
  *     available," so none is fabricated.
  *
@@ -41,7 +41,7 @@
  *   **Filing evidence.** Every `ProviderFilingSummary` row `filingLandscape` returns for the resolved
  *   block becomes its own `{ type: "filing" }` evidence entry (any provider filing there is positive
  *   evidence a market exists, informative regardless of tech match — spec §3.2 step 2's "a filing that
- *   contradicts it… weak signal, not disproof"). `corroborates` is true only when the filing's
+ *   contradicts it… weak signal rather than disproof"). `corroborates` is true only when the filing's
  *   `technology_code` matches the claim and its `speed_bucket` ranks at or above the claimed download
  *   speed's own bucket (via the exported {@link speedBucketForDownloadSpeed} + the four bucket consts —
  *   decision 8: reused, never re-derived). A same-tech LESSER filing, or a different-tech filing, is
@@ -56,7 +56,7 @@
  *   - bdc.db present, block surveyed, zero filings → the spec's POSITIVE meaning-of-zero case ("a
  *     genuine 'surveyed, zero providers here' result" — `filing-landscape.ts`'s own docstring). No
  *     `filing` evidence entries are pushed (there's nothing to report), but the filing layer still
- *     counts as COVERED for `coverage_confidence` — the absence is informative, not unknown.
+ *     counts as COVERED for `coverage_confidence` — the absence is informative rather than unknown.
  *
  *   **Physical evidence.** Symmetric to the above, over `nearestInfrastructure`'s hits — every hit
  *   becomes its own `{ type: "physical_plant" }` entry, nearest-first, whatever `nearestInfrastructure`'s
@@ -74,7 +74,7 @@
  *     evidence the area was surveyed) is read directly via `readLayerCoverage` to determine the layer's
  *     coverage state for this claim.
  *
- *   **`coverage_confidence` — survey completeness, not evidence-found.** This is deliberately orthogonal
+ *   **`coverage_confidence` — survey completeness rather than evidence-found.** This is deliberately orthogonal
  *   to whether any evidence was actually found (spec §4 rule 4: "coverage_confidence is mandatory on
  *   every answer… the product's honesty is this refusal to guess" — a refusal that has to hold even when
  *   the answer turns out to be "nothing found"). Each layer contributes one of `"covered"` / `"unknown"`
@@ -103,12 +103,12 @@
  *   {@link assertLayerSpineResolution} compares that one layer's recorded `spineKeys.h3.resolution` directly against
  *   the `BDC_H3_RESOLUTION` constant `pointCell` is actually derived from, and throws on a mismatch, catching a layer
  *   built at a different spine resolution before it silently mis-joins a coverage cell.
- *   This is TWO-SIDED, not conditioned on both layers being present together: a
+ *   This is TWO-SIDED rather than conditioned on both layers being present together: a
  *   poi-only call still checks poi's own recorded resolution, since `readLayerCoverage`'s poi-side join key (below)
  *   is derived from `BDC_H3_RESOLUTION` regardless of whether `bdcDB` is wired at all — comparing each manifest
  *   against the constant, rather than the two manifests against each other, is what makes a single-layer call
  *   checkable at all. It cannot catch a layer whose row spine is 9 but whose coverage cells were derived at some
- *   other resolution than 6 — that gap needs the schema addition, not a runtime assertion.
+ *   other resolution than 6 — that gap needs the schema addition rather than a runtime assertion.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -210,8 +210,8 @@ export type PlausibilityCoverageAxisState =
 	| "cell_unsurveyed"
 	/**
 	 * Physical axis only: the claim resolved no coordinate (a geoid-only claim — see the module docstring's
-	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap, not a missing layer
-	 * — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
+	 * claim-resolution note), so no physical-evidence search point exists. A genuine capability gap rather than a missing
+	 * layer — distinct from `"layer_missing"` even though both degrade `coverage_confidence` the same way.
 	 */
 	| "no_coordinate"
 	/**
@@ -335,7 +335,7 @@ function filingCorroborates(filing: ProviderFilingSummary, claim: PlausibilityCl
 /**
  * Collapse the fine-grained {@link PlausibilityCoverageAxisState} down to the 3-value space `combineCoverage` actually
  * reasons over: `"layer_missing"` and `"cell_unsurveyed"` are both simply UNKNOWN for confidence-combination purposes
- * (the distinction only matters for `coverage_detail`'s attribution, not for the confidence math itself).
+ * (the distinction only matters for `coverage_detail`'s attribution rather than for the confidence math itself).
  */
 function confidenceStateForAxis(state: PlausibilityCoverageAxisState): "covered" | "unknown" | "not_applicable" {
 	if (state === "covered") return "covered"
@@ -378,8 +378,8 @@ function combineCoverage(
  * poi-only call still needs poi's own recorded resolution checked, because `pointCell` is computed unconditionally from
  * `BDC_H3_RESOLUTION` and still drives the poi coverage-cell read below. Comparing each layer directly against the
  * constant, rather than the two manifests against each other, is also strictly stronger: it catches a layer built under
- * a since-changed `BDC_H3_RESOLUTION` even when the other layer is absent entirely, not just a disagreement between two
- * present layers.
+ * a since-changed `BDC_H3_RESOLUTION` even when the other layer is absent entirely rather than just a disagreement
+ * between two present layers.
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
@@ -437,7 +437,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 		: undefined
 
 	// Cheap, one-time per-layer sanity check — see the module docstring's coverage-resolution note. Runs
-	// independently per WIRED layer, not only when both are present: a poi-only call still joins poi's coverage
+	// independently per WIRED layer rather than only when both are present: a poi-only call still joins poi's coverage
 	// table against a BDC_H3_RESOLUTION-derived cell (below) and must not do so unchecked.
 	if (deps.bdcDB) {
 		await assertLayerSpineResolution("bdc", deps.bdcDB, BDC_H3_RESOLUTION)
@@ -492,7 +492,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 			evidence.push({ type: "abstain", reason: "requires_build_local_layer", layer: "poi" })
 		} else if (!point) {
 			// Geoid-only claim, no coordinate resolvable — see the module docstring's claim-resolution note. A real
-			// capability gap, not a missing-layer abstain: no evidence entry is fabricated, but the axis still
+			// capability gap rather than a missing-layer abstain: no evidence entry is fabricated, but the axis still
 			// degrades honestly for coverage_confidence, naming ITS OWN reason in `coverage_detail` rather than
 			// folding into the same generic "unknown" as `"layer_missing"`.
 			physicalCoverage = "no_coordinate"

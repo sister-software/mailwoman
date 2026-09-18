@@ -123,7 +123,7 @@ Both defects were found by this panel and neither is fixed here. They are record
 downloads a database built from the same register this panel grades against, so a within-one-meter hit
 means the pipeline found the row it was looking for in the table it was looking in. The claim this
 panel supports is **"a French address that exists in BAN resolves to its BAN rooftop"** — a statement
-about parsing and routing, not about coordinate accuracy. It cannot tell you whether BAN's coordinate
+about parsing and routing rather than about coordinate accuracy. It cannot tell you whether BAN's coordinate
 for a building is correct, because it has no independent view of that building. An address absent
 from BAN is outside the panel entirely.
 
@@ -179,7 +179,7 @@ To redraw the panel against a newer BAN release rather than grading the committe
 node fr-ban-panel.ts --resample --data-root <DATA_ROOT>
 ```
 
-The seed is a constant in the script, not a flag, because changing it changes which addresses are
+The seed is a constant in the script rather than a flag, because changing it changes which addresses are
 being reported on. A different BAN release renumbers the rows and will produce a different panel from
 the same seed, which is why the sample is committed rather than drawn at run time.
 

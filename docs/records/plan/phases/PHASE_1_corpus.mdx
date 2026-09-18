@@ -19,7 +19,7 @@
 ### 1. Package scaffolding
 
 - [ ] Create `packages/corpus/` workspace
-- [ ] Create `packages/corpus-python/` (Python, not in workspaces — has its own `pyproject.toml`)
+- [ ] Create `packages/corpus-python/` (Python rather than in workspaces — has its own `pyproject.toml`)
 - [ ] `packages/corpus/lib/types.ts` — `CanonicalRow`, `LabeledRow`, `CorpusAdapter`, `AdapterOptions` per `reference/INTERFACES.md`
 - [ ] Add to root tsconfig references, root package.json scripts
 
@@ -109,7 +109,7 @@ Given a `CanonicalRow` with `raw` and `components`, produce a `LabeledRow` with 
 
 ### 5. SentencePiece tokenizer training
 
-The tokenizer is trained on the corpus, not picked off the shelf.
+The tokenizer is trained on the corpus rather than picked off the shelf.
 
 - [ ] `packages/corpus-python/scripts/train_tokenizer.py`
 - [ ] Input: a sample (say 5M lines) of `raw` strings from coarse adapters, balanced US/FR
@@ -151,7 +151,7 @@ The tokenizer is trained on the corpus, not picked off the shelf.
 ⚠ This is where corpora silently leak. Do it correctly.
 
 - [ ] `packages/corpus/lib/split.ts`
-- [ ] Split strategy: **hold out by locality**, not random row sampling
+- [ ] Split strategy: **hold out by locality** rather than random row sampling
   - US: hold out all rows from Vermont, Wyoming, North Dakota (low-density states, ensures generalization)
   - FR: hold out all rows from Corse, Lozère, Creuse (small departments)
 - [ ] Output: split manifests as JSON files listing source_ids in each split. Manifests go in git.

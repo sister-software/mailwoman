@@ -72,7 +72,7 @@ test("an animated fitBounds omits the duration KEY — passing it as undefined i
 	const animated = fitBoundsOptionsFor(40, true)
 
 	// `duration: undefined` would satisfy maplibre's `'duration' in options` test and coerce to NaN. The key must be
-	// absent, not merely undefined — `toBeUndefined()` on the value would pass against the bug.
+	// absent rather than merely undefined — `toBeUndefined()` on the value would pass against the bug.
 	expect(Object.hasOwn(animated, "duration")).toBe(false)
 	expect(animated.padding).toBe(40)
 
@@ -98,7 +98,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort, as in the sibling map tests. Its absence means no software WebGL here, not a fault.
+	// GL surface — best-effort, as in the sibling map tests. Its absence means no software WebGL here rather than a fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return

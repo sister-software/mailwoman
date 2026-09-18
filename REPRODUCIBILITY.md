@@ -16,10 +16,10 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 | Aux lookups   | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
 > **Known gaps (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
-> R2/Modal, not derivable offline from the repo (adapters fetch from live sources that age);
+> R2/Modal rather than derivable offline from the repo (adapters fetch from live sources that age);
 > overlay corpus manifests reference base corpora by absolute volume path (strict-mode
 > loader is the planned guard); `init_from`/curriculum state is recorded in the model card's
-> recipe text, not yet machine-checked on resume.
+> recipe text rather than yet machine-checked on resume.
 
 ## The commands
 

@@ -15,7 +15,7 @@ Our neural parser handles German two ways. Native order — `Hauptstraße 5, 101
 
 The first retrain taught the model both word orders. It moved the model's intrinsic parsing but the production number stayed flat. The second re-added a region tail the synthetic data had dropped. It fixed _region_ tagging — and left locality exactly where it was. The third injected the country hint at the front of the sentence too, so word order couldn't hide it. Locality-match went from 44.7% to 43.7%. Down. Three swings, and the needle would not move.
 
-Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That is not what a "collapse" looks like. A model that couldn't parse German addresses at all would be putting them in the wrong country, not six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
+Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That is not what a "collapse" looks like. A model that couldn't parse German addresses at all would be putting them in the wrong country rather than six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
 
 ## Measuring the thing that can't be gamed
 
@@ -56,7 +56,7 @@ native German     83.5%          96.2%
 
 ## The bill
 
-Three retrains, an A100 each, to discover that the model was fine and the scoreboard was broken. The accounting: one bug was a measurement artifact in the resolver's name comparison (the fix is an alias, not a training run), one was a narrow city-state parsing bug (a small data fix, not a country hint), and the model's German was a good deal better than any of our numbers had admitted. We cancelled the fourth retrain that was already queued.
+Three retrains, an A100 each, to discover that the model was fine and the scoreboard was broken. The accounting: one bug was a measurement artifact in the resolver's name comparison (the fix is an alias rather than a training run), one was a narrow city-state parsing bug (a small data fix rather than a country hint), and the model's German was a good deal better than any of our numbers had admitted. We cancelled the fourth retrain that was already queued.
 
 The thing I keep turning over is that the coordinate error sat at six kilometers across all three runs and we kept retraining anyway, because the metric we'd built our checks around was the one telling us to. A benchmark you can fail while being right is worse than no benchmark, because it doesn'tfail to help — it actively points you at the wrong fix and lets you feel diligent while you chase it. We have a non-gameable metric now. We should have built it first.
 

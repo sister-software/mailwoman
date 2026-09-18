@@ -11,7 +11,7 @@
  *   - `variants` — verbatim USPS Pub-28: canonical suffix → every recognized variant in
  *     USPS-published order. the first variant is the preferred USPS abbreviation (e.g.
  *     `AVENUE → ["AVE", ...]` — `AVE` is what the post office prints).
- *   - `nameProneCanonicals` — OUR curation, not Pub-28: canonicals also observed as ordinary
+ *   - `nameProneCanonicals` — OUR curation rather than Pub-28: canonicals also observed as ordinary
  *     proper-name heads in street names (PARK, HILL, CREEK…), from golden v0.1.3 + the OA street
  *     pool. Shared by the golden relabel flags, the #1569 extract recipe, and (via the
  *     `gazetteer affix-relabel` v2 lexicon) the Python relabel pass, so the instrument and the

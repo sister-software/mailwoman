@@ -31,7 +31,7 @@ city, just coarse — needs rooftop data." The eyeball said otherwise: ~40% of C
 the **wrong city entirely** (80–280km off), because the diacritic parse was broken — `Vysoká` read as
 `Vysok`, `Čistá` as `istá`, localities truncated. The p50 had hidden a bimodal distribution. This is
 verify-before-verdict firing on our own summary statistic: the aggregate wasn't the verdict, the evidence
-was. CZ/PL was **parse-bound**, not coverage-bound, and coverage can't touch a wrong-city row.
+was. CZ/PL was **parse-bound** rather than coverage-bound, and coverage can't touch a wrong-city row.
 
 **The research said we weren't alone.** A tokenizer probe confirmed the mechanism: the 48k SentencePiece vocab
 has the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its
@@ -74,7 +74,7 @@ any fine-tune_ and it matches or beats the fine-tuned version on every metric (C
 fine-tune's 30%; PL and US identical). The 2k fine-tune not only added nothing — it began drifting toward the
 same overfit that killed v196. So the fix is a tokenizer splice plus an embedding average: no GPU training.
 And because it leaves v4.15.0's encoder byte-for-byte untouched, US identity is a **guarantee** (encoder
-unchanged + English input_ids unchanged → identical logits), not an observation — the freeze-encoder variant
+unchanged + English input_ids unchanged → identical logits) rather than an observation — the freeze-encoder variant
 we were going to build is what the mean-init already is.
 
 Every check passes: US non-inferiority (byte-identical), CZ improvement (p50 −1.70, CI wholly negative,
@@ -82,13 +82,13 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 ## What worked
 
-- **Grading the coordinate, not label-F1.** This is the whole story. The retrain's content-gap win (100→17)
+- **Grading the coordinate rather than label-F1.** This is the whole story. The retrain's content-gap win (100→17)
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
   wrong-city buckets) is the direct metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
   atomic) proved the mechanism before a single GPU dollar. The expensive retrain came first only because it
   was the pre-registered plan; the cheap tokenizer probe should have been the opening move.
-- **Verify-before-verdict, twice.** The eyeball corrected our own aggregate p50 (parse-bound, not
+- **Verify-before-verdict, twice.** The eyeball corrected our own aggregate p50 (parse-bound rather than
   coverage-bound), and we re-graded the CZ regression in fp32 to rule out int8 quantization before blaming
   training. Both saved a wrong conclusion.
 - **Parallel research that paid off.** Four SOTA agents + DeepSeek turned "we have a tokenizer problem" into a
@@ -98,7 +98,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 - **The retrain was the wrong first move, and it was expensive.** ~$25 of GPU to falsify a hypothesis a $0
   tokenizer probe could have flagged in an hour. The fertility check should have run before the ship
-  candidate, not after. We reached for the pre-registered change instead of the cheapest falsifier.
+  candidate rather than after. We reached for the pre-registered change instead of the cheapest falsifier.
 - **The 150-row CZ/PL eval sets are underpowered.** The CZ resolved-p50 CI was [−40, −0.34] — barely negative
   at the top, huge at the bottom. The wrong-city _rate_ carried the verdict; the p50 was noise. A promote
   decision needs ~1k rows.
@@ -107,16 +107,16 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
 
 ## Lessons
 
-1. **Fragmentation, not data.** For diacritic-heavy scripts, a data extract at a frozen tokenizer cannot fix
+1. **Fragmentation rather than data.** For diacritic-heavy scripts, a data extract at a frozen tokenizer cannot fix
    span boundaries — the tokenizer decides the boundaries. Fix the tokenizer.
 2. **The cheapest falsifier goes first.** The tokenizer fertility probe was $0 and decisive; it should have
-   preceded the GPU spend, not followed it.
+   preceded the GPU spend rather than followed it.
 3. **Disjoint-codepoint vocab splicing is a real tool.** Appending only non-ASCII pieces to a unigram vocab
-   keeps the source language byte-identical _by construction_ — a guarantee, not a hope. Worth remembering for
+   keeps the source language byte-identical _by construction_ — a guarantee rather than a hope. Worth remembering for
    any future non-Latin extension (with the caveat that it does not scale to CJK, where char-level is the
    natural unit).
 4. **A recipe copied from vN-1 inherits vN-1's bugs.** Diff the corpus and source-weights against the shipped
-   recipe before launching, not after.
+   recipe before launching rather than after.
 5. **Mean-init alone can be the whole fix.** The 2k fine-tune we assumed we needed added nothing — a good
    embedding average over already-trained constituents was enough for the existing tagger to read the now-
    atomic token. Run the mean-init-only ablation before spending a training run; the training might be dead

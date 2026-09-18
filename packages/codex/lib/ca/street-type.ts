@@ -142,7 +142,7 @@ export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
 	w: "W",
 	west: "W",
 	ouest: "W",
-	o: "W", // French Ouest abbreviates to O, not W — the bilingual trap.
+	o: "W", // French Ouest abbreviates to O rather than W — the bilingual trap.
 }
 
 /**

@@ -109,10 +109,10 @@ export interface InterpolationLookup {
 	/**
 	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the extract's
 	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier
-	 * is a property of the calibration set the artifact was built against, so it ships in the artifact, not in caller
-	 * code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
-	 * `undefined` (or an implementation without the property) = the artifact carries none — extracts built before the
-	 * metadata table existed. behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
+	 * is a property of the calibration set the artifact was built against, so it ships in the artifact rather than in
+	 * caller code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is
+	 * absent. `undefined` (or an implementation without the property) = the artifact carries none — extracts built before
+	 * the metadata table existed. behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
 	 * Implementations must read this at OPEN time (constructor/factory), never per-lookup — `find()` is synchronous by
 	 * design.
 	 */

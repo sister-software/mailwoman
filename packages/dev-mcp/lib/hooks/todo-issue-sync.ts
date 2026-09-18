@@ -7,7 +7,7 @@
  *   PostToolUse hook: mirror the session's todo list into the linked GitHub issue's task list.
  *
  *   The plan an agent keeps in its head — or in a session todo list — dies with the session, and the operator's
- *   window into an autonomous session is GitHub, not the transcript. The `task-intake` skill creates an issue whose
+ *   window into an autonomous session is GitHub rather than the transcript. The `task-intake` skill creates an issue whose
  *   `## Task list` section carries a marker-delimited block. this hook rewrites that block on every `TodoWrite`, so
  *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
  *
@@ -90,7 +90,7 @@ export function renderTaskList(todos: TodoItem[]): string {
  * Hook mode: stash the payload and hand off to a detached worker, so the turn never waits on `gh`.
  */
 async function hookMain(): Promise<void> {
-	// A malformed payload is a hook that does nothing, not a hook that throws into the turn.
+	// A malformed payload is a hook that does nothing rather than a hook that throws into the turn.
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	if (payload?.tool_name !== "TodoWrite") return

@@ -93,7 +93,7 @@ Meanwhile `release.config.json` points the source model at
 `/mnt/playpen/mailwoman-data/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
 on the same host the leg runs on. Only the derived `postcode-*.bin` / `pair-index-*.bin` need
 building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That
-is the "~5 min" the cache exists to avoid, not the copy.
+is the "~5 min" the cache exists to avoid rather than the copy.
 
 ### Finding 5 — the runner
 
@@ -109,7 +109,7 @@ Fast leg, 327 files, worker count swept:
 | 16 (default) | 6.00s |     23.41 |  41.96 | 38.76 |  104s |
 |           24 | 6.84s |     55.22 |  91.29 | 43.23 |  190s |
 
-`isolate: false` amortizes the module graph **per fork**, not per run, so import + transform scale
+`isolate: false` amortizes the module graph **per fork** rather than per run, so import + transform scale
 linearly with fork count while wall stays flat. `import('@mailwoman/core')` under plain node is
 0.15s; the same graph under Vite is ~2.6s per worker (42s ÷ 16 forks; 10.45s ÷ 4 forks — it divides
 exactly). Relevant because four legs share the lab's 16 cores: `unit-slow` ran at 281% CPU.
@@ -130,7 +130,7 @@ Error: No test suite found in file .../legend.test.js
 
 Normally it is the unexplained `1 skipped`. **CI is unaffected** — `.venv` and `scratchpad/` are not
 checked in, and a fresh worktree collects 316 files vs the main tree's 327. This is a local-dev and
-agent-worktree flake, not a CI cost.
+agent-worktree flake rather than a CI cost.
 
 ## Design
 
@@ -219,7 +219,7 @@ accessed within the last hour so it cannot race a live write.
 They are CodeQL's incremental-analysis cache; pruning to zero reclaims another ~240 MB and costs
 CodeQL time on every run. Revisit only if quota gets tight again.
 
-### b — weights from the data root, not GitHub's
+### b — weights from the data root rather than GitHub's
 
 Remove the `actions/cache` weights step from both `mailwoman-data` legs. `scripts/copy-weights.ts`
 grows a derived-artifact store at `$MAILWOMAN_DATA_ROOT/derived/weights/<key>/`:
@@ -262,7 +262,7 @@ drive the prominence and parent-inheritance math.
 
 The scale assertions do not migrate; they get stronger. A seeded below-floor row lets the fixture
 assert `skippedProminence === 1` where real data only supports `> 0`. `built.entries > 10_000` stays
-a full-build assertion, because that is a claim about the gazetteer, not about the laws.
+a full-build assertion, because that is a claim about the gazetteer rather than about the laws.
 
 Memoize `computeSurfaceCountryCounts` and `loadPersonNameSurfaces` by `dbPath` + mtime so the FR and
 US builds in one process share the scan: 237s → ~130s (estimate) wherever the full build runs.
@@ -275,20 +275,20 @@ meaning less, which is the thing `test.yml`'s header explicitly refuses.
 
 96.6s across 14 tests; five in the pair-prior block each pay a full
 `loadFromWeights({locale: "en-gb"})` at 12–13s while varying only decode-time configuration
-(`placetypePair`, `pairIndexPath`, `transitionBeta`), not the session. Hoist the session for those;
+(`placetypePair`, `pairIndexPath`, `transitionBeta`) rather than the session. Hoist the session for those;
 keep independent loads for the tests that are _about_ load behaviour — `resolveWeights` auto-resolve,
 the tolerant-loader paths, the error cases.
 
 The file contains no `vi.mock`, so the `isolate: false` reset contract documented in the root config
 does not bind here.
 
-Target **96.6s → ~45s** (estimate), not lower — some of those loads are the assertion.
+Target **96.6s → ~45s** (estimate) rather than lower — some of those loads are the assertion.
 
 ### e3 — cache `out/` + `*.tsbuildinfo`
 
 `out/` is 274 MB across 4104 files; `tsc -b` cold is 32.9s, and 13.0s with `out/` and the
 `.tsbuildinfo` files present but `node_modules` freshly reinstalled (measured — that is the restore
-scenario). So this is 33s → ~13s per leg, not → 0s: `tsc -b` still stats the project graph.
+scenario). So this is 33s → ~13s per leg rather than → 0s: `tsc -b` still stats the project graph.
 
 Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so there is quota for it.
 
@@ -302,11 +302,11 @@ Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so t
   runs 87 files at 4.2× parallelism and the cap becomes meaningful.
 
 The `vitest.config.ts:82` hardcoded `onnxruntime-web` path (surfaced by the e2 spike) moves to the
-migration spec — it has to be fixed before the layout changes, not after.
+migration spec — it has to be fixed before the layout changes rather than after.
 
 ## Sequencing
 
-`e2` is done (negative). The pnpm migration is a **sibling project**, not a step here — it touches
+`e2` is done (negative). The pnpm migration is a **sibling project** rather than a step here — it touches
 the publish pipeline, which is orthogonal to test performance and is the most-scarred surface in the
 repo. It checks only (e1).
 
@@ -324,8 +324,7 @@ install at a reliable ~24s warm; (e1)'s remaining ~14s is not worth building twi
 different layouts.
 
 Free items ride along with whichever step touches the same file — except the `vitest.config.ts:82`
-`onnxruntime-web` fix, which moves into the migration spec (it must land before the layout changes,
-not after).
+`onnxruntime-web` fix, which moves into the migration spec (it must land before the layout changes rather than after).
 
 All five steps are independent of the deferred migration. When it is picked back up, (e1) comes with
 it and the only shared file is `test.yml`.
@@ -339,7 +338,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   Projection from the per-step numbers is ~2m00–2m15s **without** (e1); the criterion is set at 3m00s
   because job queueing and runner startup are not in that projection.
 - Hosted-leg install ≤ 30s on all three legs across those same three runs — the point is that the
-  coin-flip is gone, not that one run was fast. (e1) later tightens this to ≤ 15s.
+  coin-flip is gone rather than that one run was fast. (e1) later tightens this to ≤ 15s.
 - `active_caches_size_in_bytes` < 8 GB.
 - `unit-slow` test step ≤ 120s on a PR that does not touch the gazetteer pipeline.
 - The full-scale locality-surface build still runs, and still asserts `entries > 10_000`, in at least
@@ -355,7 +354,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   optimizing.
 - Replacing vitest. Finding 5 shows the Vite transform pipeline costs ~17× plain node for the same
   graph, but changing runners is a different project with a different risk profile.
-- The pnpm migration. Approved, but its own project with its own driver (ecosystem direction, not
+- The pnpm migration. Approved, but its own project with its own driver (ecosystem direction rather than
   speed) — `2026-08-02-pnpm-migration-design.md`. It checks only (e1).
 - Making the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
   in `package.json`). Worth doing, does not serve wall-clock, deliberately deferred.

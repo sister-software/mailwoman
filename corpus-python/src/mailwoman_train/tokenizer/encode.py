@@ -122,7 +122,7 @@ def encode_row(
     span's label, which the token path structurally cannot express. Rows without spans use the
     legacy ``tokens``/``labels`` path unchanged, so the loader reads both corpus generations
     during the transition. the token path is deleted once v0.5.0 lands. This is one storage
-    format change in flight, not a permanent dual-format fork.
+    format change in flight rather than a permanent dual-format fork.
 
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
     ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``

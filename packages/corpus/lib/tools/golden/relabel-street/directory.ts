@@ -164,7 +164,7 @@ export async function relabelGoldenDirectory(
 				if (!line.trim()) continue
 
 				lineNumber++
-				// A corrupt answer-key line must STOP the relabel, not silently drop a row — a golden file
+				// A corrupt answer-key line must STOP the relabel rather than silently drop a row — a golden file
 				// short by one row is a floor threshold against a different denominator.
 				const row = parseJSONStrict<GoldenStreetRow>(line)
 				const result = relabelGoldenStreetRow(row, { splitPrefix: options.splitPrefix ?? true })

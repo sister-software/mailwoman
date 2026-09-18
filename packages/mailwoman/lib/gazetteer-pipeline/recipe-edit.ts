@@ -55,8 +55,8 @@ function bodyLines(body: string): string[] {
 /**
  * Comment lines immediately above `index`, walking upward until a non-comment line.
  *
- * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list, not to the entry,
- * and treating it as attached would refuse removals that are perfectly safe.
+ * Blank lines stop the walk: a comment separated from an entry by a blank line belongs to the list rather than to the
+ * entry, and treating it as attached would refuse removals that are perfectly safe.
  */
 function attachedComment(lines: readonly string[], index: number): string[] {
 	const out: string[] = []
@@ -82,8 +82,8 @@ const entryPattern = (country: string): RegExp => new RegExp(`^\\s*"${country}",
  * Add a country to a list, in sorted position.
  *
  * Sorted rather than appended because every list is sorted today, and an appended entry reads as an afterthought in a
- * file whose whole purpose is to be reviewed. Adding a country that is already present is a NO-OP reported as such, not
- * an error: a caller running the same plan twice should get the same tree.
+ * file whose whole purpose is to be reviewed. Adding a country that is already present is a NO-OP reported as such
+ * rather than an error: a caller running the same plan twice should get the same tree.
  */
 export function addCountry(source: string, listName: string, country: string): RecipeEditResult {
 	const cc = country.toUpperCase()

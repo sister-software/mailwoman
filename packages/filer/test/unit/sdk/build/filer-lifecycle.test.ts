@@ -205,7 +205,7 @@ describe("supersession edges", () => {
 		expect(superseded).toMatchObject({
 			from_node_id: `${FilerIdentifierType.Form499ID}:801004`,
 			to_node_id: `${FilerIdentifierType.Form499ID}:821002`,
-			// Effective when the FCC said the filer ceased, not when it last filed.
+			// Effective when the FCC said the filer ceased rather than when it last filed.
 			valid_from: "2013-09-08",
 			valid_to: null,
 		})

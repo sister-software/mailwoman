@@ -16,7 +16,7 @@ From the 2026-07-15 operator conversation: **[operator]**
   weighing over tokens well; what's missing is the same concept over _phrases_ — joint scoring of
   whole segmentations, with a segment-level transition grammar ("must not follow", one level up)
   and **k-best hypotheses with comparable scores** instead of a single binary answer.
-- **The arbiter for the k-best list is the resolver** (evidence-based: gazetteer coherence), not
+- **The arbiter for the k-best list is the resolver** (evidence-based: gazetteer coherence) rather than
   hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that resolves to a
   country centroid. Discipline: parse scores stay in one probability space; the rerank signal is
   measured resolution evidence only; rank-2-beats-rank-1 cases get logged as training data.
@@ -27,11 +27,11 @@ From the 2026-07-15 operator conversation: **[operator]**
 
 1. **Failure partition overturns the boundary narrative.** [measured] Of 122 parity street
    failures: the dominant class (80/122) is **bare fragments with no house number** (66% fail
-   rate) — a recall/polarity failure, not a boundary failure. Leading-number US-style inputs fail
+   rate) — a recall/polarity failure rather than a boundary failure. Leading-number US-style inputs fail
    only 21.6%. Alphanumeric numbers (`16a`) are the worst form bucket (73.3%); multi-digit numbers
    are the BEST (17.3%) — which kills the digit-atomicity splice as a priority (the tokenizer
    shattering multi-digit numbers per-digit does not correlate with failure).
-2. **The "empty street" class is mostly model refusal, not decode drop.** [measured] 26/34
+2. **The "empty street" class is mostly model refusal rather than decode drop.** [measured] 26/34
    empty-street fails have no street-family label anywhere in the raw argmax (model emits
    locality/venue/O); 8 are viterbi flipping street away; 0 are lost to priors/repairs/tree-build.
 3. **Word-consistency heal shipped default-ON (PR #1132).** [measured] The 2026-06-19 shelving
@@ -40,7 +40,7 @@ From the 2026-07-15 operator conversation: **[operator]**
    pieces joining vote groups. Fixed, the heal is a clean win with no confidence floor: golden fr
    macro 42.2→51.5, us street 82.0→82.2, parity house_number .767→.808, postcode →1.000, street
    .543→.573, error-analysis 2pp check pass, presets 6/6.
-4. **Diacritics confirmed "visibility, not regression."** [measured] With the heal on,
+4. **Diacritics confirmed "visibility rather than regression."** [measured] With the heal on,
    resolve-locality is 100% on every scored diacritic locale (CZ 3/3, PL 2/2, PT 2/2, RO 3/3,
    SK 1/1) while street-tag surface exactness sits at 0.63–1.00. The city never goes wrong. The
    PT/RO splice case shrank but survives: RO `ț` byte-fallback words are heal-skipped by design.
@@ -57,7 +57,7 @@ From the 2026-07-15 operator conversation: **[operator]**
    Both pre-registered branches resolved: (a) naive decode hardening does not clear the residual
    (seg@1 < baseline) — a **trained** span scorer is necessary; (b) the correct street reading
    already exists in the top-10 segmentations 74.9% of the time (+16.5pt over shipped) — the
-   k-best + resolver-rerank headroom is real and measured, not hypothesized.
+   k-best + resolver-rerank headroom is real and measured rather than hypothesized.
    Probe: `scratchpad/probe-semimarkov.mjs`.
 
 ## Stage-2 design requirements (consult-reviewed, session 019f6471)
@@ -72,7 +72,7 @@ From the 2026-07-15 operator conversation: **[operator]**
    hard "must emit street" decode mask (kind errors become hallucinations); constrained-hypothesis
    injection into the k-best list (scores from different normalizations are incomparable — the
    Pelias-blend antipattern in miniature). Fallback if C plateaus: score-preserving unary-logit
-   bias before decode, not a graph change.
+   bias before decode rather than a graph change.
 3. **k-best decode** — k-way extension of the semi-Markov Viterbi recurrence over the pruned span
    graph. Scores within one input share the partition function → directly comparable for the
    reranker. [consult]
@@ -83,7 +83,7 @@ From the 2026-07-15 operator conversation: **[operator]**
    filtering, and k-best decode in JS/WASM post-processing (mirrors the probe's decoder). No
    dynamic-shape ONNX ops; #378 SLO impact is the pruned-decode cost, ~negligible. [consult]
 6. **fp32 for logsumexp/partition + final path scores; encoder can stay bf16.** The token-CRF
-   bf16 NaN scar applies to the partition math, not the granularity. [consult]
+   bf16 NaN scar applies to the partition math rather than the granularity. [consult]
 7. **Alphanumeric house numbers** — expected to benefit directly from joint span scoring; if the
    class plateaus, add a char-ngram feature over the span surface (tiny, JS-computable).
    [consult, hypothesis]
@@ -104,7 +104,7 @@ hypothesis-space improvements were invisible. Before the first training run:
 ## Process changes (from the same conversation)
 
 - **Architecture arcs get a guarded lane**: multi-night bets are scheduled as their own
-  workstream with acceptance criteria at arc scope, not re-litigated against nightly splice
+  workstream with acceptance criteria at arc scope rather than re-litigated against nightly splice
   opportunities each evening.
 - **Scar-tissue audit**: "CRF diverged" (v0.5.0, bf16, token-level) was treated as a standing
   verdict for ~200 versions; its conditions don't hold at segment granularity in fp32. When a
@@ -125,15 +125,15 @@ hypothesis-space improvements were invisible. Before the first training run:
    street loss (option C); fp32 partition math; export path + #378 check; k-best decode in
    neural/ + neural-web mirroring the probe.
 5. Wire resolver rerank behind a flag; measure rank-2-beats-rank-1 + coordinate parity; the
-   plausibility guard becomes a rerank feature, not a router.
+   plausibility guard becomes a rerank feature rather than a router.
 6. Re-run the v7 parity floors. The floors check the excision swaps exactly as plan-2 wrote them;
    if the arc clears them, `hold/v1-parse-neural-check-blocked` unblocks mechanically.
 
 ## Open for the operator
 
 - Ratify the guarded-lane framing (item 4 will span multiple nights; the nightly cadence should
-  treat it as one arc, not re-decide it nightly).
+  treat it as one arc rather than re-decide it nightly).
 - The parity floors stay the acceptance criterion for the swap (option (a) of night-2's decision
-  1); the coordinate-parity evidence now rides UNDER the floors as diagnosis, not as a
+  1); the coordinate-parity evidence now rides UNDER the floors as diagnosis rather than as a
   replacement check. If the span arc stalls below 0.90 street with everything above shipped, the
   floor-vs-coordinate-check question reopens with data.

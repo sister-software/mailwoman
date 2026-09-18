@@ -27,7 +27,7 @@ answer is clean.
 > **CORRECTION (night-10, hours after first publication):** the first version of this
 > section attributed the locality gap to the postal-city/vanity-city divergence (#475).
 > The alias-table join MEASURED that attribution and refuted it: only 1 of 461 named
-> misses is alias-explained — NAD's locality field carries _census/municipal_ names, not
+> misses is alias-explained — NAD's locality field carries _census/municipal_ names rather than
 > postal names, so this eval cannot exhibit the vanity-city failure mode at all.
 
 What the misses are (classified, n=461 with a resolved-but-wrong name):
@@ -65,7 +65,7 @@ entirely, and the strict designation class (`<name> <designation>` ↔ `<name>`)
 **14 rows (~0.2pp)** — far below implementation threshold. #498 closed as
 premise-refuted-by-corrected-measurement. The real residual gap (9.2pp vs v0) is ranking/
 coverage misses concentrated in ID/WY/UT/LA plus WOF neighborhood-vs-locality granularity
-(`College CDP` ↔ `Fox Farm-College`) — the latter is the PIP lens's territory, not a
+(`College CDP` ↔ `Fox Farm-College`) — the latter is the PIP lens's territory rather than a
 name-credit's.
 
 Running tally for this document: three findings published, two corrected by their own

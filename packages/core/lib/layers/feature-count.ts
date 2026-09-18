@@ -7,8 +7,8 @@
 
 /**
  * The count a build may check a stream against when `limit` bounds the read. A limit above the layer's own count reads
- * every feature there is, so the declaration is the layer's count, not the limit's: a builder that compares what it
- * streamed against the limit as a strict equality would otherwise read a complete download as a short one and refuse
+ * every feature there is, so the declaration is the layer's count rather than the limit's: a builder that compares what
+ * it streamed against the limit as a strict equality would otherwise read a complete download as a short one and refuse
  * it.
  */
 export function limitedFeatureCount(layerCount: number, limit: number | undefined): number {

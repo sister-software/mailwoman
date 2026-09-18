@@ -34,7 +34,8 @@ export interface ByteFormatterOptions {
  *   answer.
  *
  * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale. Pass an explicit
- * locale when a caller needs a stable string — a test asserting an exact rendering, not a line printed for a human.
+ * locale when a caller needs a stable string — a test asserting an exact rendering rather than a line printed for a
+ * human.
  */
 export class ByteFormatter {
 	public static SI_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte"] as const

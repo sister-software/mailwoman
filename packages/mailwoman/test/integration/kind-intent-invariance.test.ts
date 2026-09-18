@@ -6,7 +6,7 @@
  *   THE ZERO-RECLASSIFICATION RECEIPT for the ROAD_TO_V9 §4 intent vocabulary.
  *
  *   Four kinds were added to Stage 2.5. The D-rule obligation attached to that addition is that an
- *   ADDRESS-SHAPED query behaves identically — and "identically" has to be a measurement, not a
+ *   ADDRESS-SHAPED query behaves identically — and "identically" has to be a measurement rather than a
  *   claim, so this file states exactly what it pins and over what.
  *
  *   ## What actually reaches the parser
@@ -112,10 +112,10 @@ beforeAll(async () => {
 })
 
 /**
- * A FLOOR, not the current count. The failure worth catching is a corpus that loads SHORT — a truncated read or a
- * silently-filtered set makes every zero-reclassification claim below vacuous while still passing. Growth is the normal
- * operation: a board row lands most working days, and an exact pin turns each one into a red build in a file nobody
- * editing the board would think to open. Raise this only when the floor stops being a meaningful lower bound.
+ * A FLOOR rather than the current count. The failure worth catching is a corpus that loads SHORT — a truncated read or
+ * a silently-filtered set makes every zero-reclassification claim below vacuous while still passing. Growth is the
+ * normal operation: a board row lands most working days, and an exact pin turns each one into a red build in a file
+ * nobody editing the board would think to open. Raise this only when the floor stops being a meaningful lower bound.
  */
 const CORPUS_FLOOR = 550
 
@@ -240,7 +240,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 
 		for (const raw of corpus) {
 			// The #1649 category-query rows carry intent markers by DESIGN — they are the thing-query
-			// board, not the irreducible address-shaped fork this exhaustive list pins.
+			// board rather than the irreducible address-shaped fork this exhaustive list pins.
 			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 
 			for (const text of [raw, raw.toLowerCase()]) {
@@ -254,7 +254,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 
 		// Both registers of each row, and nothing else. Compared as SETS of inputs: the corpus may
 		// legitimately carry the same surface in two boards ('Rua Augusta' is a Lisbon case and a
-		// São Paulo case), and the population claim is about distinct inputs, not case rows.
+		// São Paulo case), and the population claim is about distinct inputs rather than case rows.
 		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()
 		)

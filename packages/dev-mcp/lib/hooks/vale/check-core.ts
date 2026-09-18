@@ -15,7 +15,7 @@
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
  *   curated to near-zero legitimate use, and the correction must REPLACE the judgment with the
- *   concrete claim, not merely delete the flagged word. Warning-only findings render a `context`
+ *   concrete claim rather than merely delete the flagged word. Warning-only findings render a `context`
  *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex does
  *   not have, so the agent weighs them.
  */

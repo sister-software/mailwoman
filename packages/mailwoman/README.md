@@ -132,7 +132,7 @@ for (const root of result.tree.roots) {
 
 Confidence calibration ships with the weights: `loadFromWeights` applies the bundled
 per-locale calibrator, so node confidences are calibrated probabilities (a `0.88` is
-right about 88% of the time), not raw scores.
+right about 88% of the time) rather than raw scores.
 
 ### Options
 
@@ -157,8 +157,8 @@ await parse("350 5TH AVE, NEW YORK, NY 10118", {
 Resolution turns parsed components into a Who's On First place ID and coordinate. It needs a
 gazetteer SQLite database — build one with `mailwoman gazetteer build admin` +
 `mailwoman gazetteer build fts`, or point at a prebuilt database. The resolver is
-administrative/postcode-level, not rooftop: it returns place centroids (locality, region,
-postcode), not delivery-point coordinates.
+administrative/postcode-level rather than rooftop: it returns place centroids (locality, region,
+postcode) rather than delivery-point coordinates.
 
 ```bash
 # CLI — resolve while parsing, or geocode directly

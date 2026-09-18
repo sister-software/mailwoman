@@ -92,7 +92,7 @@ export const SLOTS: Readonly<Record<ComponentTag, AddressSlot>> = Object.freeze(
 
 /**
  * The first alternative that renders wins. Used for the street line, where an intersection and a street name are two
- * ways of saying where, not two things to print.
+ * ways of saying where rather than two things to print.
  */
 export function either(...alternatives: readonly AddressLayout[]): AddressAlternation {
 	return { alternatives }
@@ -102,7 +102,7 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
  * A post-office box takes a line of its own directly above the street line, and coexists with one: a record may carry
  * both a box and a street address, and printing the box alone would lose the half a courier needs.
  *
- * That placement is measured, not assumed. The engine this table replaces rendered `P.O. Box 5` + `100 Main St` +
+ * That placement is measured rather than assumed. The engine this table replaces rendered `P.O. Box 5` + `100 Main St` +
  * `Portland, OR 97214` as three lines in that order, and the same shape for Germany, Australia and Great Britain.
  * libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
  */
@@ -111,9 +111,9 @@ const poBoxLine = SLOTS.po_box
 /**
  * The street line where the number leads: the anglophone order, and France's.
  *
- * An intersection is an ALTERNATIVE to the street name because it is a different way of saying where, not a second
- * thing to print — the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a chain of
- * `if` statements. The box is not an alternative, so it sits outside the choice.
+ * An intersection is an ALTERNATIVE to the street name because it is a different way of saying where rather than a
+ * second thing to print — the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a
+ * chain of `if` statements. The box is not an alternative, so it sits outside the choice.
  */
 export const numberFirstStreet: AddressLayout = addr`${poBoxLine}
 ${either(

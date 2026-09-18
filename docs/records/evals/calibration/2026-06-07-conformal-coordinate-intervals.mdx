@@ -24,7 +24,7 @@ Split conformal regression, no distributional assumption. For every row the reso
 
 It runs offline over an `oa-resolver-eval --out-resolved` dump plus the admin gazetteer's centroids —
 no model in the loop. Coverage is conditional on the resolver placing the row; rows it
-declined to place are reported as an abstention rate, not silently dropped.
+declined to place are reported as an abstention rate rather than silently dropped.
 
 ## Results
 
@@ -39,14 +39,14 @@ DE        65.2%      14.74 km  (0.895)       19.48 km  (0.952)
 ```
 
 Read the French row as: when we place a French address at a locality, the real point is within
-5.49 km of it nine times in ten — and that "nine times in ten" is measured, not hoped for (0.893).
+5.49 km of it nine times in ten — and that "nine times in ten" is measured rather than hoped for (0.893).
 
 Two things fall out of the table for free. France and the Netherlands resolve nearly everything
 (~99%) into tight circles; Germany resolves only 65% and into a circle three times wider. That
 34.8% German abstention is not noise — it is the Berlin / Hamburg / Bremen city-state rows where the
 parser drops the locality entirely ([#387](https://github.com/sister-software/mailwoman/issues/387)),
 surfacing here a second time through a completely independent lens. The wider German radius is the
-actual city-centroid-to-doorstep distance for the rows that _do_ resolve, not a modelling failure.
+actual city-centroid-to-doorstep distance for the rows that _do_ resolve rather than a modelling failure.
 
 ## Where it lives
 

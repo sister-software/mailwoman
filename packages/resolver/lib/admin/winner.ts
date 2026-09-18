@@ -71,8 +71,8 @@ export interface ResolvedPostcodeHit {
 	value: string
 	resolverName: string | undefined
 	/**
-	 * ISO-3166 alpha-2 the RESOLVER placed the postcode in, not a caller's requested scope. Absent when the postcode did
-	 * not resolve to a country, which reads as the locality-first default.
+	 * ISO-3166 alpha-2 the RESOLVER placed the postcode in rather than a caller's requested scope. Absent when the
+	 * postcode did not resolve to a country, which reads as the locality-first default.
 	 */
 	country?: string
 }

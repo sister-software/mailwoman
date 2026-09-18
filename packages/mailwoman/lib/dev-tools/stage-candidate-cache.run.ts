@@ -16,7 +16,7 @@
  *   the resolver and it finds the base model beside it rather than shipping its own. Every other file is a symlink
  *   into `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, except the base's `model.onnx`, which points at the candidate.
  *
- *   A declared file with nothing behind it is REPORTED, not silently skipped and not fatal: the data root legitimately
+ *   A declared file with nothing behind it is REPORTED rather than silently skipped and not fatal: the data root legitimately
  *   lacks some declared siblings (en-us's calibration pair is not materialized there), and the harness has its own
  *   guard, `assertDeclaredAnchorBins`, for the ones whose absence changes a score. A cache that names what it does not
  *   carry is a measurement. one that stays quiet is the defect this tool was written for.

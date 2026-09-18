@@ -101,4 +101,4 @@ points; only 548 housenumber features lacked a usable street. On the repaired pa
 `OSMRegionDatabaseProvider` path, it moved Mailwoman from 3/20/30 to 56/58/59 at 1/5/25 km, produced 56
 `address_point` results, eliminated all 17 no-results, and caused no regression. Photon remains stronger at
 1 km (60/60); Mailwoman with the locally built database exceeds the frozen Pelias NZ arm (45/45/46). This is a
-build-local result, not a shipped-data claim.
+build-local result rather than a shipped-data claim.

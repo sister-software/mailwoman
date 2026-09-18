@@ -15,7 +15,7 @@ _ARABIC_DIGITS = "〇一二三四五六七八九"
 def fold_halfwidth_kana(text: str) -> str:
     """Fold half-width katakana (U+FF61–FF9F) to full width, composing the dakuten.
 
-    Targeted, not blanket NFKC: NFKC would also fold full-width digits to ASCII, and the two-register
+    Targeted rather than blanket NFKC: NFKC would also fold full-width digits to ASCII, and the two-register
     chōme convention needs those registers kept apart. The fold is LENGTH-CHANGING (ﾃﾞ → デ, 2 chars
     → 1), which is safe here only because it runs on field values before they are concatenated and
     their spans recorded. 14,739 ``number`` values in the source need it.

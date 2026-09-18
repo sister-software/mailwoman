@@ -53,7 +53,7 @@
  *   are disjoint), a regression worse than the defect. Cross-country multi-postcode strings are
  *   pathological, and every M-1 span carries a country/region/`country_hint` signal instead.
  *
- *   `defaultCountry` is never a signal: it is a LOCALE DEFAULT, not knowledge. B1-3's confound —
+ *   `defaultCountry` is never a signal: it is a LOCALE DEFAULT rather than knowledge. B1-3's confound —
  *   "Sydney NSW 2000, Australia" reached with a US default must not have its 2000 excluded, and "10
  *   Downing Street, London SW1A 2AA" under a US default must not either. Those rows are exactly what
  *   `findPostcodeCountryScope` exists to rescue, and an exclusion pass that trusted the default
@@ -116,7 +116,7 @@ export interface PostcodeShapeVerdict {
 /**
  * Collect the sibling country signals: the country node (territory-mapped), the region node (`matchSubdivision` +
  * `country_hint`), each filtered to the codex SystemCode universe. The tree is walked once for all postcode spans —
- * sibling evidence is tree-level, not per-span.
+ * sibling evidence is tree-level rather than per-span.
  */
 function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 	const out = new Set<string>()

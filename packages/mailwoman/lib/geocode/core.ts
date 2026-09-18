@@ -200,8 +200,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Title-case all-caps ASCII input before the model (#690), detection-restricted so mixed-case + non-Latin pass
 	 * through untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility
-	 * locality 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it
-	 * is a clean win. Set `false` to restore the legacy raw-case parse.
+	 * locality 90.1 → 99.7%). The #694 comma-less crater was the space-join rather than the casing, so on comma-joined
+	 * input it is a clean win. Set `false` to restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -214,8 +214,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * A pre-parsed tree to resolve, skipping the internal `classifier.parse` (the address's single most expensive step).
 	 * Supply the output of {@link parseForGeocode} when a caller already parsed the same address for another purpose — a
-	 * PostalAddress, say — so the inference runs once, not twice. Must come from `parseForGeocode` (same input + opts),
-	 * or the resolved tree won't match the address. Omit for the normal one-shot path.
+	 * PostalAddress, say — so the inference runs once rather than twice. Must come from `parseForGeocode` (same input +
+	 * opts), or the resolved tree won't match the address. Omit for the normal one-shot path.
 	 */
 	parsedTree?: AddressTree
 	/**
@@ -275,9 +275,9 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	postcodeCountryPrior?: boolean
 	/**
 	 * Admin descendant-consistency (#263, `ResolveOpts.adminCoherence`) — re-pick a (region, locality) pair so the
-	 * locality descends from the region ("Portland, ME" → Maine, not Messina). **Default-on** for the geocode path. only
-	 * fires when a region's child locality fell through, so the well-resolved path is byte-identical. Pass `false` to opt
-	 * out.
+	 * locality descends from the region ("Portland, ME" → Maine rather than Messina). **Default-on** for the geocode
+	 * path. only fires when a region's child locality fell through, so the well-resolved path is byte-identical. Pass
+	 * `false` to opt out.
 	 */
 	adminCoherence?: boolean
 	/**
@@ -412,7 +412,7 @@ export function geocodeParseInputs(
 	const queryShape = computeQueryShape(parseInput)
 
 	// Decision A: explicit register wins. otherwise the kind verdict decides (same derivation as the
-	// runtime pipeline — the drop-ins + geocode CLI reach parse through here, not runPipeline). The kind
+	// runtime pipeline — the drop-ins + geocode CLI reach parse through here rather than runPipeline). The kind
 	// classifier stays UNCALLED under an explicit register, exactly as before the split.
 	let inputMode = deps.inputMode
 	let kind: QueryKindResult | undefined
@@ -797,7 +797,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
 	// The tag → placetype map is the country's where WOF types a tier differently (TW `subregion` is a locality-band
-	// placetype, not a county). The default object is answered for every other country, so this line is byte-stable
+	// placetype rather than a county). The default object is answered for every other country, so this line is byte-stable
 	// for them.
 	opts.placetypeMap = placetypeMapForCountry(preResolveCountry)
 

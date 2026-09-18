@@ -29,13 +29,13 @@ evidence is computed over projections.**
 | `borough`, `neighbourhood`, `macrohood`, `microhood`                             | `dependent_locality`                                            | The pair/census family. Macro/micro variants measure nesting DEPTH under a parent — a parent rich in microhoods signals multi-level structure.                                                                                                    |
 | `region`, `macroregion`                                                          | `region`                                                        | Live.                                                                                                                                                                                                                                             |
 | `county`, `macrocounty`                                                          | `subregion` (US); **`region` for IE-style formats**             | Ireland writes county as an address line ("Co. Kerry") — a county census under IE contexts is the same conditional nudge GB's dep-loc got.                                                                                                        |
-| `country`, `nation`, `dependency`, `disputed`                                    | `country`                                                       | `dependency` covers crown dependencies (Isle of Man, Faroes-adjacent forms) — country-channel surface coverage, not new grammar.                                                                                                                  |
+| `country`, `nation`, `dependency`, `disputed`                                    | `country`                                                       | `dependency` covers crown dependencies (Isle of Man, Faroes-adjacent forms) — country-channel surface coverage rather than new grammar.                                                                                                           |
 | `postalcode`                                                                     | `postcode`                                                      | Shipped: the postcode-anchor channel is this pattern's first production instance.                                                                                                                                                                 |
 | `venue`                                                                          | `venue`                                                         | Venue-density per parent (poi.db can answer it) — venue-led parse likelihood by `neighbourhood` of the hierarchy.                                                                                                                                 |
 | `intersection`, `address`                                                        | — (structurally multi-span; deliberately null)                  | Neither projects onto a single tag — an intersection is `intersection_a` + `intersection_b`, and an address is a whole record. Both are `null` in `PLACETYPE_PROJECTION`. Consumed by the kind-classifier and the resolver's address-point tiers. |
 | `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | `venue` (building, campus) / `unit` (the interior subdivisions) | The sub-venue census: "does this venue-parent have wing/concourse children?" is the airport-terminal / campus parsing nudge.                                                                                                                      |
 | `metroarea`, `marketarea`, `postalregion`, `timezone`                            | — (context only)                                                | Conditioning features and annotation surfaces; never emitted spans.                                                                                                                                                                               |
-| `continent`, `ocean`, `marinearea`, `planet`                                     | — (out of grammar)                                              | Resolver/meta only. A query landing in ocean-parented space is evidence it's a FEATURE name, not a postal address.                                                                                                                                |
+| `continent`, `ocean`, `marinearea`, `planet`                                     | — (out of grammar)                                              | Resolver/meta only. A query landing in ocean-parented space is evidence it's a FEATURE name rather than a postal address.                                                                                                                         |
 
 ## From pairs to the census
 
@@ -68,7 +68,7 @@ What the offline probe measured, and what it did not:
   board — directional `neighbourhood` surfaces that open venue names — every row shares the London
   parent with the true positives, so the census has dependent-locality mass on 100% of them. A
   census bias alone would lift the venue span exactly as much as the real dependent locality. This
-  is the artifact's ceiling, not a tuning problem.
+  is the artifact's ceiling rather than a tuning problem.
 
 It therefore ships **without a `delta`**: the header field exists, is optional, and stays unset
 until a calibration rung composes the census with span-level evidence and measures a magnitude.
@@ -85,7 +85,7 @@ What comes out is a `placetypeCensus` record on the parse trace (`{parent, child
 per known parent, plus the probed-parent count as the denominator), whose `applied` is hard-coded
 `false`. The decode is byte-identical with the census present or absent, asserted at both the prior
 and the full-decode level in `neural/placetype-census-observability.test.ts`. That test is the
-contract: a calibration δ has to be measured off these traces, not slipped in.
+contract: a calibration δ has to be measured off these traces rather than slipped in.
 
 Two things the first real traces showed. `shoreditch, london` (en-GB) reads `london` at lift 1.52×
 on `dependent_locality` — the evidence is there and it is the right sign. `astoria, queens, ny`
@@ -113,14 +113,13 @@ boarding process would ever finish.
 3. **Per-locale conventions still decide expectations.** One model serves every locale; what a
    locale _expects_ to emit stays governed by its conventions (codex address-system conventions).
 4. **Locale-scoped artifacts must be provably inert elsewhere.** en-us ships no pair index and a
-   dedicated test asserts GB-shaped input takes no pair bias through en-us — a packaging seatbelt,
-   not a doctrine. The US joins the census program through its own instances (boroughs first).
+   dedicated test asserts GB-shaped input takes no pair bias through en-us — a packaging seatbelt rather than a doctrine. The US joins the census program through its own instances (boroughs first).
    Measured 2026-08-01 in the other direction too: an experimental US index misses all five GB
    canonical pairs (Shoreditch/London, Nine Elms/London, Clapham/London, Camden/London,
    Didsbury/Manchester), so the browser's `us` fallback for postcode-less queries would not
    manufacture GB bias if a US artifact shipped.
 
-## Why en-us has no pair index today (and why that's sequencing, not doctrine)
+## Why en-us has no pair index today (and why that's sequencing rather than doctrine)
 
 The GB/NZ indexes exist because those POSTAL formats carry the dependent-locality/suburb line and
 national registers (HM Land Registry PPD, LINZ) provide millions of pair rows. The US format has
@@ -151,10 +150,9 @@ measurements, in the order that determines the result:
 locality=Brooklyn`. Gauntlet unchanged, 0/60 venue-confound false positives, 60/60 tag-correct
    on a positive board.
 
-The US instance is therefore an ARTIFACT question, not a training question — and so is every other
+The US instance is therefore an ARTIFACT question rather than a training question — and so is every other
 locale in the campaign's wave 2–4 list. Whether `pair-index-us.bin` ships inside the flagship
-en-us package is a packaging and defaults decision (it changes US parse output for every consumer),
-not a question about the model.
+en-us package is a packaging and defaults decision (it changes US parse output for every consumer) rather than a question about the model.
 
 ## Coverage boundaries measured so far (2026-08-01 probe set)
 
@@ -182,7 +180,7 @@ post towns. Worth re-reading any deferred blocker after a premise moves.
 
 Two register-vs-writer distinctions the GB rungs had to make explicit, both general:
 
-- A slash-separated WOF parent (`Londonderry / Derry`) is an **alias set**, not a name. It folds to
+- A slash-separated WOF parent (`Londonderry / Derry`) is an **alias set** rather than a name. It folds to
   one key matching neither alternative, so such pairs ship _dead_ — present in the artifact,
   incapable of firing. Emit one pair per alternative.
 - A civil-parish suffix (`Pontypridd Community`, `Llanelli Rural`) is administrative furniture. The
@@ -211,7 +209,7 @@ harvested.
 
 Three things the non-GB instances established that the GB arc never had to face:
 
-- **The source follows the postal format, not a rule.** France's lieu-dit comes from BAN because it
+- **The source follows the postal format rather than a rule.** France's lieu-dit comes from BAN because it
   IS the postal line; the US, DE, ES, IT and IN take WOF because no postal register carries their
   sub-city line at all.
 - **A leading postcode makes the artifact inert.** France, Germany, Spain and Italy write

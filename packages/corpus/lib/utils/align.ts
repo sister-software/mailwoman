@@ -23,7 +23,7 @@
  *        rebuild deletes. during the transition both representations ride on every labeled row.
  *
  *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
- *   than quarantines, because it indicates a bug here, not bad source data):
+ *   than quarantines, because it indicates a bug here rather than bad source data):
  *
  *   - `tokens.length === labels.length` always.
  *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
@@ -174,8 +174,8 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
  * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping — loudly.
  *
  * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts, so
- * a violation here is a bug in this file, not bad source data: throw (naming the row) rather than quarantine, so the
- * corruption can't ride into a corpus. Exported for every other span producer (`composeAdversarialRow`'s offset
+ * a violation here is a bug in this file rather than bad source data: throw (naming the row) rather than quarantine, so
+ * the corruption can't ride into a corpus. Exported for every other span producer (`composeAdversarialRow`'s offset
  * arithmetic, future synthesis paths) — any code that emits the triple without going through `alignRow` must pass its
  * output through this.
  */

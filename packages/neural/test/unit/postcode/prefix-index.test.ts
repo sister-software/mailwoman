@@ -142,8 +142,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const parsedHeader = parseJSONStrict<PostcodePrefixHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
 
 		expect(parsedHeader.schemaVersion).toBe(1)
-		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested,
-		// not absent, and a reader cannot tell the two apart without it.
+		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested rather than absent, and a reader cannot tell the two apart without it.
 		expect(parsedHeader.coverageNote.length).toBeGreaterThan(0)
 
 		// ancestor_count: u4le, then the interned dictionary
@@ -160,7 +159,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 			const placetypeLen = bytes[o++]!
 			expect(decoder.decode(bytes.subarray(o, o + placetypeLen)).length).toBeGreaterThan(0)
 			o += placetypeLen
-			// f64, not u32: WOF ids exceed 2^32 and must stay exactly representable.
+			// f64 rather than u32: WOF ids exceed 2^32 and must stay exactly representable.
 			const wofID = view.getFloat64(o, true)
 			o += 8
 

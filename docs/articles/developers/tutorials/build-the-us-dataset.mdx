@@ -28,7 +28,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 - **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
   resident set size 7,445,032 KB", and that field is kibibytes despite the label, so the GB figure is
   7,445,032 × 1024 ÷ 1e9). Everything after it stays under 500 MB. That leaves under 400 MB of headroom
-  against the 8 GB figure above, tighter than it looks — treat 8 GB as a floor, not a comfortable
+  against the 8 GB figure above, tighter than it looks — treat 8 GB as a floor rather than a comfortable
   margin. If you have less, the ingest is the step that fails, and it fails at the end of a 21-minute
   run.
 - **The CLI, and Node 24.18 or newer:**
@@ -113,7 +113,7 @@ npx mailwoman gazetteer overture-ingest --countries US --release 2026-06-17.0
 ```
 
 21 minutes and 6.93 GB on the machine this page was verified on, for 126,672,517 rows. Most of the clock
-is the scan, not the write: Overture's addresses theme is partitioned by type and not by country, so a
+is the scan rather than the write: Overture's addresses theme is partitioned by type and not by country, so a
 one-country ingest reads the planet's address parquet and filters. Liechtenstein, the smallest country in
 the theme, takes 132 s for 12,950 rows on the same connection — the floor is the scan.
 
@@ -137,7 +137,7 @@ downstream issue proceeds on a country whose relevant field fills <80% without a
 
 Street fills at 99.2% and number at 98.9%, which is what a rooftop database keys on. `unit` at 14.3% is the
 number to plan around: apartment and suite detail is present for one row in seven, so a build on this
-source resolves buildings, not doors. Below the table the report lists every contributing dataset by row
+source resolves buildings rather than doors. Below the table the report lists every contributing dataset by row
 count — 120 of them. `NAD`, the US National Address Database, supplies 85,482,422 rows; the other 119
 arrive through OpenAddresses one jurisdiction at a time, 57 of them California counties.
 
@@ -163,7 +163,7 @@ npx mailwoman situs address-points --state VT --release 2026-06-17.0
 7.32 s over the 6.93 GB parquet, and 81.9 MB on disk. That ratio is the reason step 2 is a one-time cost:
 the parquet is scanned once per state and every state after the first is seconds.
 
-The provenance block is per-row, not per-file. Every Vermont point traces to `NAD`, so this database carries
+The provenance block is per-row rather than per-file. Every Vermont point traces to `NAD`, so this database carries
 one license. A California build prints 57 OpenAddresses county sources under that heading, and each of
 them wants credit — which is what step 5 is for.
 
@@ -240,7 +240,7 @@ vt            333,610 points · 1 sources
 ```
 
 This reads every database in the directory and aggregates the per-row `source` column into one ledger. Run it
-after the last state you build, not after each one: it counts what is on disk, so a partial run undercounts
+after the last state you build rather than after each one: it counts what is on disk, so a partial run undercounts
 and a rerun fixes it. NAD is US public domain; the OpenAddresses sources named in `ATTRIBUTION.json` are
 the ones you owe credit to when you redistribute a database.
 
@@ -304,7 +304,7 @@ npx mailwoman data status us 2>&1 | grep -i vt
 
 Both files are correct and both report `stale`, so know what that word means before you act on it.
 `data status` compares each file's byte count against the size recorded for the **published** bundle; it is
-a "does your download match ours" check, not a validity check on a database you built. A locally-built one
+a "does your download match ours" check rather than a validity check on a database you built. A locally-built one
 fails it by construction. The rooftop file is 81,903,616 bytes against the bucket's 72,945,664 because you
 built it from a newer Overture release; the interpolation file is 58,511,360 against 58,507,264, one
 4 KB SQLite page apart, and both round to 58.5 MB in the message — which is why that second line reads as a
@@ -388,7 +388,7 @@ npx mailwoman situs interpolation
 ```
 
 Those two are the only commands on this page that were not run to produce it — a national build is days of
-wall clock, not an afternoon. So the numbers below are the published national tier's, which was built by
+wall clock rather than an afternoon. So the numbers below are the published national tier's, which was built by
 these same two commands, read off the bundle registry the CLI ships:
 
 | Artifact                         | Files | Size    |

@@ -105,7 +105,7 @@ const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
  * ran. The `.sh`/`.mjs`→`.ts` conversion keeps that exact behavior so release output is byte-identical. The real fix is
  * to HEAD-probe `${DEMO_BASE}/${locale}/${version}/${name}` and return `r.ok` — but that can flip `hasAnchor` /
  * `hasPolygons` in releases.json (only in the postcodeBins-empty / no-`--polygons` fallback path), so it needs a
- * deliberate review before a release dispatch, not a silent change inside a cleanup.
+ * deliberate review before a release dispatch rather than a silent change inside a cleanup.
  */
 async function servedOnDemoPath(_name: string, _locale: string, _version: string): Promise<boolean> {
 	return false
@@ -194,7 +194,7 @@ async function stageBinaryList(spec: string | undefined, label: string): Promise
 
 /**
  * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
- * every caller of this is an artifact a locale may ship, not one it must.
+ * every caller of this is an artifact a locale may ship rather than one it must.
  */
 async function stageOptionalBinary(spec: string | undefined, label: string): Promise<string | null> {
 	const localPath = spec || null
@@ -403,7 +403,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	if (localitySurfaceLexicon) {
 		// Staged by SOURCE basename (was a hardcoded v6 name until 9.0.0): publish.yml's preflight
 		// HEAD-checks the exact generation the release ships (v7 as of the v4.2.0 base), so the
-		// remote name must follow the artifact, not a frozen string.
+		// remote name must follow the artifact rather than a frozen string.
 		const dst = `${BUCKET_PATH}/${remoteBase}/${basename(localitySurfaceLexicon)}`
 
 		console.error(`  → ${dst}`)

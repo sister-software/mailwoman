@@ -117,7 +117,7 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
             bits = lexicon.entries.get(key, 0)
             if n == 1:
                 # code_entries is case-sensitive: the surface must already be uppercase ("IN" the
-                # state code, not "in" the English word). Keys are uppercase. compare the raw
+                # state code rather than "in" the English word). Keys are uppercase. compare the raw
                 # word_norm without folding case.
                 bits |= lexicon.code_entries.get(parts[0], 0)
             if bits:

@@ -82,7 +82,7 @@ Parsing free-text postal addresses into structured components
 (country, region, locality, dependent_locality, postcode, subregion, cedex,
 venue, street, house_number, street_prefix, street_suffix, unit, po_box,
 intersection) for **geocoding** — resolving a parsed address to coordinates via
-a gazetteer/resolver. The model is the parsing front-end of that pipeline, not a
+a gazetteer/resolver. The model is the parsing front-end of that pipeline rather than a
 standalone geocoder.
 
 ## Ship-config requirement (read before using)
@@ -111,7 +111,7 @@ look far worse than it is. Every eval here is **anchor-on**.
 
 ## Evaluation
 
-We grade the **assembled coordinate** (the resolved place), not raw label-F1 in
+We grade the **assembled coordinate** (the resolved place) rather than raw label-F1 in
 isolation — a model can win on labels while the assembled address resolves to the
 wrong city. All numbers below are the production-faithful, **anchor-on**
 configuration on the currently shipped model (lineage `v1.5.0-fr-order`, step
@@ -135,7 +135,7 @@ resolve to the locality **centroid** — legitimately a few km from an edge addr
 per-state situs + interpolation data layer on top and resolves the actual point:
 **83.5% of US addresses land on an exact address-point, 9.7% on a street
 interpolation, and under 7% fall back to the centroid — p50 0.0 km, 90.0% within
-100 m.** That data layer is the released data the geocoder consumes, not part of
+100 m.** That data layer is the released data the geocoder consumes rather than part of
 this weights package; see the situs-cascade eval under
 [`docs/articles/evals/`](https://mailwoman.ai) for the breakdown.
 
@@ -146,7 +146,7 @@ Two more notes on reading these:
   `localadmin`) — New England towns are `localadmin` in the gazetteer, which an
   earlier metric discarded, under-counting locality-match by ~14pp (the corrected
   metric is 97.8%). The small residual (~2%) is mostly civic-suffix name-mismatch
-  ("Barre City" vs the gazetteer's "Barre"), not absent places — a naming-convention
+  ("Barre City" vs the gazetteer's "Barre") rather than absent places — a naming-convention
   artifact more than a coverage hole.
 - **Structured types are where the neural front-end leads** the rules
   baseline it replaces: on templated PO boxes, units, and intersections the
@@ -155,7 +155,7 @@ Two more notes on reading these:
   trained on that negative space.
 
 Per-tag F1 (golden set, production-faithful anchor-on, indicative — these are
-diagnostic floors on a hard set, not the headline coordinate metric): us.locality
+diagnostic floors on a hard set rather than the headline coordinate metric): us.locality
 ≈ 77.9, us.region ≈ 90.5, us.street ≈ 80.2, us.house_number ≈ 98.3,
 us.country ≈ 68.4. See the eval reports under
 [`docs/articles/evals/`](https://mailwoman.ai) for the full per-tag
@@ -186,7 +186,7 @@ inference.
   `@mailwoman/neural`'s `normalizeCase` opt title-cases detected all-caps ASCII
   input before the model and recovers it (byte-stable for mixed-case / non-ASCII
   input, which it leaves untouched).
-- **Coverage, not precision, is the frontier** for the assembled coordinate:
+- **Coverage rather than precision, is the frontier** for the assembled coordinate:
   where local rooftop/interpolation data is absent the coordinate is the
   admin-centroid (legitimately tens of km from an edge address); the parse is not
   the bottleneck.

@@ -24,7 +24,7 @@
  *        when those tables are loaded). The proposer never decides between readings — downstream
  *        consumers weigh them.
  *
- *   The proposals are INFORMATION, not decisions (the #464 lesson): consumers treat them as phrase
+ *   The proposals are INFORMATION rather than decisions (the #464 lesson): consumers treat them as phrase
  *   priors the classifier conditions on and as structural boundaries the decode-side span bridge
  *   must not merge across. The classifier can always disagree.
  *
@@ -45,7 +45,7 @@ const SHORT_INPUT_MAX_TOKENS = 3
 const SHORT_TAIL_CONFIDENCE = 0.45
 
 /**
- * Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode, not a house number.
+ * Digits in the first half of a ZIP+4. A hyphen compound with this shape is a postcode rather than a house number.
  */
 const ZIP5_LENGTH = 5
 
@@ -437,7 +437,7 @@ function proposeDesignatorPhrases(
 		const beforeModifier = tokens[i - 2]
 
 		// A house number before the modifier makes this a STREET line — "12 East Gate" is an address on East
-		// Gate, not a sub-venue of anything. The number is the discriminator the surface itself provides.
+		// Gate rather than a sub-venue of anything. The number is the discriminator the surface itself provides.
 		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
 
 		// A capitalized word before the modifier means the pair sits inside a longer proper name rather than
@@ -491,7 +491,7 @@ const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
 /**
  * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category (road-type
  * leaders), mirroring the phrase grouper's street-type sets. The leading-designator-shape fallback must not read them
- * as sub-premise designators: a slash after a road leader is a route concurrency, not an AU unit/house split.
+ * as sub-premise designators: a slash after a road leader is a route concurrency rather than an AU unit/house split.
  */
 const ROAD_LEADERS: ReadonlySet<string> = new Set(["hwy", "highway", "route", "rte", "sr", "cr", "interstate", "loop"])
 
@@ -617,7 +617,7 @@ function proposeNumericReadings(
 		const hyphen = HYPHEN_COMPOUND.exec(t.stripped)
 
 		if (hyphen) {
-			// ZIP+4 shape is a postcode, not a house number — never propose a reading for it.
+			// ZIP+4 shape is a postcode rather than a house number — never propose a reading for it.
 			if (hyphen[1]!.length === ZIP5_LENGTH) continue
 			const next = i + 1 < tokens.length ? tokens[i + 1] : undefined
 			const leftEnd = t.strippedStart + hyphen[1]!.length
@@ -655,7 +655,7 @@ function proposeNumericReadings(
 				// House-number position (a street follows — capitalized or ordinal): "69-10 47th Ave",
 				// "14-16 Smith St".
 				// Fused only — whether it is a Queens label or a range is not the parser's call (OSM
-				// models the difference with a separate tag, not syntax).
+				// models the difference with a separate tag rather than syntax).
 				out.push({
 					start: t.strippedStart,
 					end: t.strippedEnd,
@@ -681,7 +681,7 @@ function proposeNumericReadings(
  *
  * Designator and numeric proposals fully inside a confident (≥ 0.6) `ANNOTATION_SPAN` are suppressed — bracketed asides
  * describe the address ("(Apt 4 around back)"), and the annotation proposal already carries the span. Content inside
- * QUOTED_SPANs is not suppressed (quotes wrap names, not asides).
+ * QUOTED_SPANs is not suppressed (quotes wrap names rather than asides).
  */
 export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_SPAN_PROPOSER_LEXICON): ProposedSpan[] {
 	if (!text.length) return []

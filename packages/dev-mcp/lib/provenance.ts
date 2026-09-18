@@ -60,7 +60,7 @@ export interface ProvenanceReport {
 	artifacts: ArtifactState[]
 	/**
 	 * Read from the stamp `gazetteer repos-sync` writes. Absent when that has never been run here — which is reported as
-	 * absence, not as "the repos are current".
+	 * absence rather than as "the repos are current".
 	 */
 	repos: RepoVintage[] | null
 	reposStampPath: string
@@ -147,7 +147,7 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	if (await pathExists(buildLogPath)) {
 		try {
-			// The build appends to `notes` — verified against the committed file, not assumed from the key's name. Each
+			// The build appends to `notes` — verified against the committed file rather than assumed from the key's name. Each
 			// entry is one dated line carrying the record counts, the Overture release and whether it was swapped live.
 			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []

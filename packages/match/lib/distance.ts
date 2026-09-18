@@ -6,7 +6,7 @@
  *   Geographic distance as a scoring feature — the other half of geocode-first matching.
  *
  *   Blocking uses geography to _propose_ candidates. this scores them on it. The research is explicit
- *   that an address must be matched as a SPATIAL attribute, not by string similarity (a
+ *   that an address must be matched as a SPATIAL attribute rather than by string similarity (a
  *   one-character edit can be 650 m apart), and that distance measurably helps as a comparison
  *   feature. So we bucket the great-circle distance between two records' coordinates into ordered
  *   Fellegi-Sunter agreement levels (Splink's `DistanceInKMAtThresholds`): "same building" / "same

@@ -102,8 +102,8 @@ export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * The coverage statement a `designated` basis rests on: what NRCS declares complete inside a published survey area.
  *
- * It is the mapping at the survey's own scale, not a site-specific determination — which is why the observation reports
- * what the survey assigns to the map unit covering a location and never whether the land can be farmed.
+ * It is the mapping at the survey's own scale rather than a site-specific determination — which is why the observation
+ * reports what the survey assigns to the map unit covering a location and never whether the land can be farmed.
  */
 export const SSURGO_COVERAGE_STATEMENT =
 	"Soil surveys are published by survey area. Inside a published survey area the soil mapping is complete at the " +

@@ -11,12 +11,12 @@
 # 20,000 val / 20,000 board, 47 prefectures, per-prefecture cap 42,978, board municipalities held
 # out on the probe's bucket rule. BIO char coverage 1.0000 on every split.
 #
-# --- FROM SCRATCH. There is no `init_from`, and that is a decision, not an omission. -------------
+# --- FROM SCRATCH. There is no `init_from`, and that is a decision rather than an omission. -------------
 #
 # Three independent reasons the probe checkpoint cannot warm-start this run:
 #   1. `classifier.weight` is (33, 384) there and (47, 384) here. `train.py`'s init_from path calls
 #      `load_state_dict(..., strict=False)`, which tolerates missing/unexpected KEYS but still
-#      raises on a SIZE mismatch — the load would crash, not partially apply.
+#      raises on a SIZE mismatch — the load would crash rather than partially apply.
 #   2. `char_embedding` is (1918+, 64) there and (2237+, 64) here — the same size wall, and the row
 #      ORDER differs too (both vocabs are codepoint-sorted over different character sets), so even
 #      a padded copy would map the wrong embedding to the wrong character.
@@ -40,18 +40,18 @@
 #     starts with `classifier.` into its own AdamW param group at this LR; `LambdaLR` scales each
 #     group's own `initial_lr`, so warmup/cosine composes for free and the resume path re-stamps it
 #     (`_restamp_resume_lrs`). Set it and the run prints `[classifier_learning_rate] N params @ LR`.
-#   * The GRANULARITY is the whole head, not the 14 fresh rows. `classifier` is one `nn.Linear`
+#   * The GRANULARITY is the whole head rather than the 14 fresh rows. `classifier` is one `nn.Linear`
 #     (47, 384); a PyTorch param group owns whole tensors, so rows 33..46 cannot be separated from
 #     rows 0..32. A gradient hook cannot substitute: Adam's update is scale-invariant in the
 #     gradient (m-hat / sqrt(v-hat)), so scaling 14 rows' gradients does not create a per-row LR.
 #     Splitting the 14 out would mean a second `nn.Linear` and a concat in `forward` — a model-shape
-#     change, not a config change, and it is not what the shipped mechanism does.
+#     change rather than a config change, and it is not what the shipped mechanism does.
 #   * The PREMISE ("existing warm layers") does not hold on a from-scratch run. #727's precedent
 #     numbers (inherited 1e-5 stalled at 0.004, own 1e-3 converged) come from a fresh head on a
 #     PRETRAINED encoder. Here the encoder is cold too, so this is not a rescue — it is an ordinary
 #     head/body LR-ratio change with an unmeasured effect on this corpus.
 #
-# So: 1.0e-3 is a 2x ratio over the 5.0e-4 base, NOT #727's 100x. It is set deliberately modest
+# So: 1.0e-3 is a 2x ratio over the 5.0e-4 base rather than #727's 100x. It is set deliberately modest
 # because it is unvalidated here, and `v8-jp-full-2k.yaml` exists to read it before the full run.
 # If the 2k probe shows no separation, the defensible simplification is to DELETE this key (None =>
 # one param group => byte-identical to the probe recipe that already scored 0.9925).
@@ -73,11 +73,11 @@
 #   * `max_steps: 24000` = 3.07 epochs (2,000,000 rows / batch 256 = 7,812.5 steps per epoch). The
 #     probe did 8,000 steps over 200k = 10.24 epochs and converged (loss 3.37 -> 0.66, val macro-F1
 #     0.9997), so this is ~3x the probe's token exposure at a third of its epoch count.
-#   * `coarse_filter: false` is required, not stylistic. The filter keeps rows carrying country plus
+#   * `coarse_filter: false` is required rather than stylistic. The filter keeps rows carrying country plus
 #     one of (region, locality, postcode); JP rows carry `prefecture`/`municipality` under
 #     `stage3-jp` and would be dropped wholesale.
 #
-# Launch (the operator runs this — it is recorded here, not executed by tooling):
+# Launch (the operator runs this — it is recorded here rather than executed by tooling):
 #   cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-full.yaml --resume auto
 # Prerequisite: the corpus must be on the Modal volume — see the `jp_full` row in launch/corpora.py.
 

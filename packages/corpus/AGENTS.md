@@ -37,7 +37,7 @@ prevented one retrain proposed over a file timestamp.
 ## The embedded-newline census
 
 A CSV value may contain a newline (inside a quoted field). Whether any given source actually does is
-a property of the DATA, not of the code, so measure rather than argue:
+a property of the DATA rather than of the code, so measure rather than argue:
 
 ```sh
 unzip -p <zip> <csv> | awk '{n=gsub(/"/,"&"); if(n%2==1) odd++} END{print FILENAME, NR, odd+0}'
@@ -57,7 +57,7 @@ Two consequences worth not rediscovering:
 - **Line-based pre-filters run BEFORE the parser and can reduce a record in half.** `po-box-cedex`'s
   `awk 'NR%211==3'` stride and the `head -n` caps elsewhere count PHYSICAL lines. The parse cannot
   repair what the pre-filter already reduce; a halved record fails the field checks and drops. This is a
-  sampling artefact, not a correctness bug, and it is documented at the call site. FR gets away with
+  sampling artefact rather than a correctness bug, and it is documented at the call site. FR gets away with
   it by luck — neither physical line of its one multi-line record is `≡ 3 (mod 211)`.
 
 ## `spliterator` ≥ 5.0.0 is a hard floor
@@ -74,7 +74,7 @@ keys. A reader that indexes publisher spelling — for example OpenAddresses' `L
 
 ## Before claiming a built recipe output needs rebuilding
 
-Recipe outputs are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/slices/`, not committed
+Recipe outputs are build outputs under `$MAILWOMAN_DATA_ROOT/corpus/slices/` rather than committed
 artifacts. Two checks, one command each, before asserting that a code change invalidates one:
 
 1. **Is that reader on the changed path?** Several recipes read the same source through different

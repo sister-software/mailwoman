@@ -31,7 +31,7 @@ must hold. A decisive homonym outside the base ladder is a takeover and expects 
 on the wrong hierarchy.
 
 Grading starts at the undeleted result's achieved rung. This anchor floor ensures the deletion is charged only for the
-degradation it caused, not for a miss already present in the base case.
+degradation it caused rather than for a miss already present in the base case.
 
 ## Decisiveness
 

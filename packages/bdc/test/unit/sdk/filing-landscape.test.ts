@@ -78,7 +78,7 @@ const CENTROID_SF = { lat: 37.7749, lon: -122.4194 }
 const CENTROID_NY = { lat: 40.7128, lon: -74.006 }
 const CENTROID_DIVERGENT = { lat: 37.119, lon: -79.6658 }
 // Never registered in `blockCentroids` — purely a coordinate the TEST uses to prove that area's res-6
-// cell carries no coverage row at all (an independent check on the fixture's honesty, not something
+// cell carries no coverage row at all (an independent check on the fixture's honesty rather than something
 // `filingLandscape` ever looks up for an unrouted geoid — it has no cell to look up in the first place).
 const CENTROID_NEVER_SURVEYED = { lat: 41.8781, lon: -87.6298 }
 
@@ -212,7 +212,7 @@ describe("filingLandscape — Check 2: meaning-of-zero", () => {
 		const contractDB = db
 
 		// Independent honesty check on the fixture: an area never fed to the builder carries no
-		// coverage row at all — proves the "absence" below is real, not an artifact of the query.
+		// coverage row at all — proves the "absence" below is real rather than an artifact of the query.
 		const neverSurveyedRes6 = shortCellToInt(
 			latLngToCell(CENTROID_NEVER_SURVEYED.lat, CENTROID_NEVER_SURVEYED.lon, 6) as H3Cell
 		)
@@ -266,7 +266,7 @@ describe("filingLandscape — Check 2 (extended): coverage-check is required, no
 
 		const contractDB = writable
 		// Sanity: the builder did write this coverage row, at the cell the reader derives — deleting it below is a
-		// deliberate corruption, not a pre-existing gap.
+		// deliberate corruption rather than a pre-existing gap.
 		expect(await readLayerCoverage(contractDB, sfCoverageCell)).toBeDefined()
 
 		await contractDB.deleteFrom("layer_coverage").where("h3_cell", "=", sfCoverageCell).execute()
@@ -323,7 +323,7 @@ describe("filingLandscape — builder/reader coverage-cell unification", () => {
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)
 
-		// The builder (fixed) must have written coverage under the UNIFIED derivation, not the old buggy one.
+		// The builder (fixed) must have written coverage under the UNIFIED derivation rather than the old buggy one.
 		expect(await readLayerCoverage(contractDB, unifiedDerivation)).toBeDefined()
 		expect(await readLayerCoverage(contractDB, oldBuggyDerivation)).toBeUndefined()
 
@@ -429,7 +429,7 @@ describe("speed bucket boundaries", () => {
 	})
 
 	describe("SQL CASE agrees with the JS mirror at every boundary", () => {
-		// One geoid per boundary value, all at the same centroid (the geoid string, not location, is what
+		// One geoid per boundary value, all at the same centroid (the geoid string rather than location, is what
 		// `filingLandscape` groups on) — same provider/tech throughout, so the only thing that can split the
 		// resulting groups is the SQL CASE's bucketing of `max_advertised_download_speed`.
 		const BOUNDARY_PROVIDER = 999_001

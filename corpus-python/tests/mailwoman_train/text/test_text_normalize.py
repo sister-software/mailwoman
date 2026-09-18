@@ -79,7 +79,7 @@ def _record(tag: str) -> dict[str, object]:
 
 
 def test_verify_record_names_the_label_set_it_was_given() -> None:
-    """A caller's own label set appears in the message, not the verifier's module constant.
+    """A caller's own label set appears in the message rather than the verifier's module constant.
 
     While the verifier read a module constant, a Taiwanese row with an out-of-set tag reported
     `stage3-jp` — the label set of the module the function was defined in — while the tag set it

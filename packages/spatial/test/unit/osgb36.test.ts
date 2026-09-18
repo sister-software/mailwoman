@@ -23,7 +23,7 @@ function dms(degrees: number, minutes: number, seconds: number): number {
 
 /**
  * Rough metres-per-degree at GB latitudes, for turning an angular residual into the metres the accuracy claim is stated
- * in. Approximate on purpose — it is measuring a 3 m error against a 5 m bar, not surveying.
+ * in. Approximate on purpose — it is measuring a 3 m error against a 5 m bar rather than surveying.
  */
 function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
 	const dNorth = (a.latitude - b.latitude) * 111_132
@@ -78,7 +78,7 @@ test("osgb36GridToAiryLatLon reproduces OS's Annexe C.2 worked example to sub-mi
 	const got = osgb36GridToAiryLatLon(ANNEXE_C_GRID)
 
 	// 1e-4 arc-seconds is ~3 mm of ground distance. The measured residual is ~1.3e-5 arcsec (~0.4 mm),
-	// which is the worked example's own rounding, not our error — OS publishes to 0.0001".
+	// which is the worked example's own rounding rather than our error — OS publishes to 0.0001".
 	expect(Math.abs(got.latitude - ANNEXE_C_OSGB36.latitude) * 3600).toBeLessThan(1e-4)
 	expect(Math.abs(got.longitude - ANNEXE_C_OSGB36.longitude) * 3600).toBeLessThan(1e-4)
 })
@@ -98,7 +98,7 @@ test("the Helmert reproduces OS's Annexe D worked example to the centimetre", ()
 	expect(Math.abs(airy.latitude - ANNEXE_D_OSGB36.latitude) * 3600).toBeLessThan(1e-3)
 	expect(Math.abs(airy.longitude - ANNEXE_D_OSGB36.longitude) * 3600).toBeLessThan(1e-3)
 
-	// And the shift must be a real correction, not a no-op: OSGB36 and WGS84 differ by ~70-120 m across
+	// And the shift must be a real correction rather than a no-op: OSGB36 and WGS84 differ by ~70-120 m across
 	// GB, so a Helmert that silently did nothing would still look close to the OSGB36 intermediate.
 	expect(offsetMeters(got, ANNEXE_D_OSGB36)).toBeGreaterThan(50)
 })
@@ -110,7 +110,7 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 		expect(offsetMeters(got, { latitude, longitude }), id).toBeLessThan(5)
 	}
 
-	// The bar is a promise, not a description — the mainland points are far better than it, and pinning
+	// The bar is a promise rather than a description — the mainland points are far better than it, and pinning
 	// that keeps a regression that doubles the mainland error from hiding under an offshore-sized budget.
 	const bristol = OSTN15_POINTS.find((p) => p.id === "TP08")!
 

@@ -38,7 +38,7 @@ In-scope cells whose mask-OFF F1 moved: 7 of 19, all US, every move under 1.3pp 
 
 `✓ PASS — no tag regresses more than 2.0pp under the conventions mask (2 locale(s), 16 tags each)` in both modes.
 
-No ledger row carries this re-baseline. `evals/scores-by-version.json` is one row per model version and its metrics are the battery's per-locale F1 cells, not the mask-off/mask-on table; the current spec (`v9.0.0-base`) declares no `requires_conventions`, so the promotion battery run on the same installed weights (PASS, out-dir kept in the session scratchpad) skipped the mask check entirely. The mask numbers live here and in every future promotion out-dir's `mask-regression.json` whose spec declares a mask.
+No ledger row carries this re-baseline. `evals/scores-by-version.json` is one row per model version and its metrics are the battery's per-locale F1 cells rather than the mask-off/mask-on table; the current spec (`v9.0.0-base`) declares no `requires_conventions`, so the promotion battery run on the same installed weights (PASS, out-dir kept in the session scratchpad) skipped the mask check entirely. The mask numbers live here and in every future promotion out-dir's `mask-regression.json` whose spec declares a mask.
 
 ## Receipts
 

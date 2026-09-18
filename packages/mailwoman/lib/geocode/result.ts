@@ -157,9 +157,9 @@ export interface GeocodeResult {
 	 * Admin hierarchy from the resolver, locality → country (most specific first). `name` is the resolved gazetteer name
 	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
 	 *
-	 * Entries are INDEPENDENTLY resolved parse nodes, not one containment walk — so the chain can compose places no
-	 * containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped ancestor
-	 * chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
+	 * Entries are INDEPENDENTLY resolved parse nodes rather than one containment walk — so the chain can compose places
+	 * no containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped
+	 * ancestor chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
 	 * unverifiable (no sidecar, or no place identity). See `hierarchy-lineage.ts`.
 	 */
 	hierarchy: HierarchyEntry[]
@@ -210,8 +210,8 @@ export interface GeocodeResult {
 	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone.
 	 * the fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate list's dominance
 	 * margin and comparing it to the measured 0.5-log10 decisive threshold — a read, never a re-rank. This is the same
-	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract, not a
-	 * second opinion about the result.
+	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract rather
+	 * than a second opinion about the result.
 	 */
 	intent_markers: QueryIntentMarker[]
 	/**

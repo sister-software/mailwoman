@@ -17,7 +17,7 @@
  *   anywhere eventually gets pointed at `photon.komoot.io`, and a volunteer endpoint is not ours to spend. A comparison
  *   against some other host is `mwdev_compare`'s external arm, which refuses the shared instances by name.
  *
- *   Queries here are OBSERVATIONS, not measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
+ *   Queries here are OBSERVATIONS rather than measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
  *   engines into a number.
  */
 
@@ -58,7 +58,7 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx. those are STATES here, read from the status field, not
+			// A rig that is still warming answers 4xx/5xx. those are STATES here, read from the status field rather than
 			// exceptions to throw. `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
@@ -142,7 +142,7 @@ export interface RigStatus {
 	containers: ContainerState[]
 	/**
 	 * Whether the endpoint answered its health query just now. `false` with running containers is the normal state during
-	 * an Elasticsearch warm-up, not a fault.
+	 * an Elasticsearch warm-up rather than a fault.
 	 */
 	answering: boolean
 	/**
@@ -229,8 +229,8 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to ANSWER, not merely to be running — a container that is up while Elasticsearch is still
- * loading serves 500s, and a caller told "started" would read those as the engine's opinion.
+ * Start a rig and wait for it to ANSWER rather than merely to be running — a container that is up while Elasticsearch
+ * is still loading serves 500s, and a caller told "started" would read those as the engine's opinion.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {
 	const rig = ENGINE_RIGS[name]

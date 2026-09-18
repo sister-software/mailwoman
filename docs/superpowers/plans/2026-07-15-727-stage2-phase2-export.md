@@ -10,17 +10,17 @@ browser SLO (size + latency). Phase 3's JS decoder consumes both.
 `with_spans` toggle — outputs are fetched **by name**, so appending `span_scores` is
 backward-compatible (a consumer that never asks for it pays nothing; ORT prunes unfetched graph
 branches). The transition table follows the `export_crf_transitions` JSON-sidecar precedent —
-transitions are decode-time data, not graph.
+transitions are decode-time data rather than graph.
 
 **Check (pre-registered):**
 
 1. ONNX `span_scores` ≈ torch `span_scores` (atol 1e-3 fp32) on random inputs — parity or no ship.
 2. int8 size delta vs v264's 39.8 MB within +1 MB (the head is 101k params ≈ +0.1 MB int8).
 3. Fetching ONLY `logits` from the span-enabled graph costs ≤5% latency vs the v264 graph — the
-   browser must not pay for spans it doesn't decode. (5% is noise floor, not a tuned number.)
+   browser must not pay for spans it doesn't decode. (5% is noise floor rather than a tuned number.)
 
 **Non-goals:** JS decode (Phase 3), rerank/option-C (Phase 4), any promotion — v301 is a probe
-checkpoint; this phase proves the _path_, not the artifact.
+checkpoint; this phase proves the _path_ rather than the artifact.
 
 ## Global constraints
 

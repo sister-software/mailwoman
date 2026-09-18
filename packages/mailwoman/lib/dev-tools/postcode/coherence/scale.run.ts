@@ -135,7 +135,7 @@ async function makeBackend(): Promise<ResolverBackend> {
 	}
 
 	// The PRODUCTION database set, exactly as `wofExtractPaths()` orders it — the point of the FTS leg is to measure what a
-	// default-on mechanism would see in production, not what a hand-picked database list can be made to show.
+	// default-on mechanism would see in production rather than what a hand-picked database list can be made to show.
 	const paths = await existingWOFDatabasePaths()
 
 	console.error(`[probe] FTS backend over ${paths.length} databases: ${paths.join(", ")}`)

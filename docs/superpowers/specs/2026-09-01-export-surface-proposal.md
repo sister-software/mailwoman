@@ -65,7 +65,7 @@ resolves to nothing, which caught three real breaks during the fold (`resolver-w
 
 ## 0. The shape
 
-1. **Directory-level entries, not file-level.** Each prefix fold becomes one export: `./geocode` →
+1. **Directory-level entries rather than file-level.** Each prefix fold becomes one export: `./geocode` →
    `lib/geocode/index.ts`, `./eval-harness` → its barrel. Internal reach stays free through `#*`, which is the
    map that was doing the real work all along.
 2. **Keep the deliberate isolation leaves, and MARK them** — each needs its reason in its own docstring, which
@@ -98,7 +98,7 @@ whether or not anyone outside the package should reach that file.
 
 ## 2. What the subpaths are buying
 
-Measured, the answer is **bundle isolation, not API design**. Three leaves exist because a barrel import
+Measured, the answer is **bundle isolation rather than API design**. Three leaves exist because a barrel import
 dragged a Node-only dependency into a browser graph:
 
 | subpath                           | what it keeps out                      |
@@ -118,7 +118,7 @@ are side-effect-free **and** every Node-only dependency sits behind its own entr
 
 That is how a deliberate leaf gets tidied away: a future agent collapsing the surface reads three modules,
 finds one reason, and folds the other two into a barrel — reintroducing exactly the bundle break the split was
-made to prevent. **Writing the reason into each docstring is a prerequisite of the collapse, not a follow-up.**
+made to prevent. **Writing the reason into each docstring is a prerequisite of the collapse rather than a follow-up.**
 
 ### 2.2 The hand-copied mirror is already stale
 
@@ -145,7 +145,7 @@ private but exports nothing at all, so it is not in scope.
 
 ## 4. Sequencing
 
-1. **Fold the collapse into the hierarchy arc's second half**, not before it.
+1. **Fold the collapse into the hierarchy arc's second half** rather than before it.
 2. **Take the subpath removals in the same breaking release as the `sdk/` rename** — one CHANGELOG entry per
    package listing every removed path, rather than two rounds of consumer churn. See
    `2026-09-01-sdk-rename-and-layer-kit-proposal.md` §6, which sizes what is left to bundle.

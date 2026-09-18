@@ -44,7 +44,7 @@
  *   Only REACHABLE behavior is scored — no brand/name-subject cases. that detection doesn't exist yet
  *   (spec §3.1 Phase 2). A `results` expectation's `maxNearestKm` is deliberately city-scale (25 km):
  *   this board grades whether the ANCHOR resolved to roughly the right place and the SUBJECT matched
- *   the right category, not sub-block precision.
+ *   the right category rather than sub-block precision.
  *
  *   GRADING (pure, unit-testable without a db — see `poi-board.test.ts`): `gradeCase` takes a fixture
  *   and the pipeline's own outcome shape (`path` + optional `poiIntent`), never the pipeline itself,
@@ -500,7 +500,7 @@ export interface FloorInput {
 /**
  * Grade a report against {@link POI_BOARD_FLOORS}. Pure — no I/O, no pipeline — so breach detection is unit-tested
  * against synthetic reports (`poi-board.test.ts`) without a live board run. A category floor over an absent kind (zero
- * cases of it) is treated as UNMET, not vacuously met.
+ * cases of it) is treated as UNMET rather than vacuously met.
  */
 export function evaluateFloors(report: FloorInput): FloorEvaluation {
 	const categoryLine = (key: "abstain" | "address", label: string): FloorLine => {
@@ -586,7 +586,7 @@ export interface POIBoardRunResult {
 /**
  * Linear-interpolated quantile — deliberately not `percentile` from `@mailwoman/core/utils`.
  *
- * They are different estimators, not two copies of one. Core's is nearest-rank and its docstring warns against
+ * They are different estimators rather than two copies of one. Core's is nearest-rank and its docstring warns against
  * "upgrading" it, because the resolver eval baselines were measured with that exact semantics. This one interpolates
  * between the bracketing order statistics, which is what the POI board's distance summaries have always reported.
  * Pointing this at core would shift published board numbers without changing a single measurement.

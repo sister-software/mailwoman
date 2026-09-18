@@ -3,7 +3,7 @@
 The [same-data controlled benchmark](./2026-09-13-same-data.md) refused its registered claim on one
 condition: in the withheld-gold stratum, Mailwoman answered on 75 of 100 rows against the baseline's 57. This record measures what an abstention rule could do about that, on the same 453 frozen rows.
 
-That stratum withholds the gold **id**, not every row denoting the gold place, so "no correct
+That stratum withholds the gold **id** rather than every row denoting the gold place, so "no correct
 candidate is in the pool" holds for most of it rather than by construction — see
 [the correction](#correction-nine-of-the-twenty-eight-name-the-right-place) and the whole-stratum
 re-grading in the
@@ -43,7 +43,7 @@ committed results: a selection whose confidence falls below the threshold is re-
 No resolver is re-run, so the walk is held fixed. A resolver that refused a node could ask
 different questions afterwards, through `parentFallback` and `hierarchyCompletion`, and reach a
 different final selection. Everything in the next two sections is therefore an upper bound on what a
-threshold over this signal can provide at the final selection, not a prediction of shipped behaviour. The
+threshold over this signal can provide at the final selection rather than a prediction of shipped behaviour. The
 knob section below is the opposite: a real replay, and it shows what that caveat costs.
 
 ## The trade curve
@@ -171,7 +171,7 @@ names agree and the places are 1,421 km apart.
 
 Across the 28 max-margin rows, nine name the gold settlement under another id within 5 km (eleven
 within 25 km), and twelve sit within 5 km of the gold whatever they are called. So the floor the
-margin cannot cross is **19 rows, not 28** — still structural, and still for the reason the next
+margin cannot cross is **19 rows rather than 28** — still structural, and still for the reason the next
 paragraph gives, but a fifth smaller than published. The
 [same-data record](./2026-09-13-same-data.md#correction-what-the-withheld-gold-rate-counts) carries
 the whole-stratum re-grading.
@@ -186,7 +186,7 @@ stratum whatever the outcome:
 | `bare_race`        |                   69 | 57 (82.6%) |
 | no `bare_race`     |                   31 | 18 (58.1%) |
 
-On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE, not a failure: bare-toponym
+On the gold-present rows it fires on 73 of 353. So it marks a query SHAPE rather than a failure: bare-toponym
 rows do select more frequently than the rest of the stratum, 82.6% against 58.1%, but two thirds of the
 stratum carries the check and a quarter of those rows still abstained. The enrichment is worth a
 separate measurement; it is not on its own evidence that the race manufactures these selections.
@@ -217,7 +217,7 @@ state and has the call site decline; it is inert at the default, because `minWin
 to 0 and no shipped backend emits a negative score.
 
 Generated into [`same-data-knob.md`](/benchmarks/same-data-knob.md). Unlike the curve above this is a
-real replay of the resolver at each option set, not a re-grade. Every rate is measured over the 372 of
+real replay of the resolver at each option set rather than a re-grade. Every rate is measured over the 372 of
 453 rows that every arm scored without a replay miss, so the columns are comparable to each other;
 all 100 withheld-gold rows survive every arm, so the false-selection column is complete.
 

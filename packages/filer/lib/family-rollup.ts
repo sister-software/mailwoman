@@ -16,7 +16,7 @@
  *   note below). Given a `nodeID`, it resolves every family (if any) that node belongs to as of that date
  *   and returns the full rollup for each — a node can legitimately belong to more than one family at once
  *   (a filer whose holding company differs from its management company gets two different family
- *   memberships), and this is a normal shape, not an exceptional one to guess around or refuse:
+ *   memberships), and this is a normal shape rather than an exceptional one to guess around or refuse:
  *   `filerLookup.ts`'s own `families` field answers the identical "which families does this node belong to"
  *   question with an array, so throwing here would make the two surfaces disagree about whether a normal
  *   multi-family shape is exceptional.

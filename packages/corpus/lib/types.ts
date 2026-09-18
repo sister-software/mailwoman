@@ -38,7 +38,7 @@ export interface SourceProvenance {
 	source_id: string
 
 	/**
-	 * Corpus version string. Stamped by the runner, not the adapter. Locked together with the tokenizer version:
+	 * Corpus version string. Stamped by the runner rather than the adapter. Locked together with the tokenizer version:
 	 * `corpus-v0.1.0` ships with `tokenizer-v0.1.0`.
 	 */
 	corpus_version: string

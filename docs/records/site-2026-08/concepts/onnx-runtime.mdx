@@ -113,7 +113,7 @@ A few subtle issues come up during ONNX export:
 - **Dynamic axes.** The model needs to handle variable batch sizes and variable sequence lengths. Both are declared as "dynamic axes" during export. The exported model graph contains shape inference logic so the runtime can adapt at call time.
 - **Operations that have no ONNX equivalent.** Most PyTorch ops do. A few (some custom ROCm kernels, some experimental quantization ops) do not. Mailwoman avoids them.
 - **The `dynamo` exporter path.** PyTorch 2.x ships two ONNX exporters: the legacy TorchScript-based one and the newer `dynamo`-based one. The legacy path crashes on `transformers ≥ 5`'s attention masking implementation; we use the `dynamo` path with `onnxscript` post-processing.
-- **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time, not per-iteration.
+- **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time rather than per-iteration.
 
 ## Where this lives in the code
 

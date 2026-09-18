@@ -6,8 +6,8 @@
  *   The sealed polygon-artifact build sequence: one temp file beside the destination, two handles, every
  *   cleanup path, then `VACUUM` → seal → atomic swap.
  *
- *   THE INGEST AND THE FINISH PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does
- *   not need them separated. The batched path does: its children open the same file, so the parent's handle
+ *   THE INGEST AND THE FINISH PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path. The batched
+ *   path requires this separation: its children open the same file, so the parent's handle
  *   has to be closed across them, and a single shared handle silently becomes a closed one by the time the
  *   finish phase runs. Doing it one way in both paths is what puts the fixture suites on the same sequence a
  *   national build takes.

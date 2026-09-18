@@ -73,7 +73,7 @@ that's a standing obligation.
    before measuring — so when fork A failed, when W1 first failed, and when the default-on battery
    failed one bar, the next action was already decided (pivot / iterate / opt-in-fallback). The one
    bar revision that shipped was dated, operator-ratified, and carries its own retirement condition.
-6. **Presence vs importance is a measured question, not a principle.** Fork B used gazetteer
+6. **Presence vs importance is a measured question rather than a principle.** Fork B used gazetteer
    _presence_ to reach importance-zero places — but the marquee case (Sainte-Livrade-sur-Lot) never
    recovered (FST coverage/tokenization), while presence is exactly what let surname
    collisions fire. Presence bought ~nothing measured; R1b's importance-aware check is what made the

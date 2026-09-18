@@ -33,7 +33,7 @@
  *   THE PROBE IS ONE PRIMARY-KEY READ. The reduction is single-resolution and one row per cell, which is
  *   what makes it the spine key: a coordinate becomes a cell, the cell becomes a row, and the geometry tier
  *   underneath is never touched at read time. The unsimplified rings are there for a caller that wants to
- *   re-derive the claim, not for the probe.
+ *   re-derive the claim rather than for the probe.
  *
  *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, matching the resolution ladder's existing
  *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.

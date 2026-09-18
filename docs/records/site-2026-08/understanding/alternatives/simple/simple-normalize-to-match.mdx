@@ -24,7 +24,7 @@ The normalization pipeline:
 4. **Remove noise tokens.** Apartment numbers, "Attn:" lines, floor numbers — if your database doesn't have them, strip them from the input.
 5. **Fuzzy match.** After normalization, compute edit distance or Jaccard similarity between the input and each candidate. Return the best match above a threshold.
 
-It's string normalization plus similarity matching, not true parsing or structural understanding, and it works surprisingly well when your universe of possible addresses is bounded.
+It's string normalization plus similarity matching rather than true parsing or structural understanding, and it works surprisingly well when your universe of possible addresses is bounded.
 
 ## When it works
 
@@ -41,11 +41,11 @@ It's string normalization plus similarity matching, not true parsing or structur
 - **International addresses.** French `rue de la République` abbreviates nothing like US `Republic St`. UK postcodes (`SW1A 1AA`) don't normalize like US ZIP codes. The abbreviation table is per-country and grows without bound.
 - **New construction.** A building built last month is not in your database. A customer who moved last week is at an address you don't have. The normalizer returns nothing for addresses that didn't exist when the database was built.
 - **Structural errors.** `123 Main St, Springfield` and `123 Springfield St, Main` normalize to similar strings if "Main" and "Springfield" both appear in both strings. The fuzzy matcher doesn't know that the street and city are different fields — itsees word overlap.
-- **No confidence signal.** The fuzzy matcher returns a similarity score, not a confidence. A 0.85 similarity might mean "this is the right address with a typo" or "this is a different address in the same city." The downstream system cannot distinguish.
+- **No confidence signal.** The fuzzy matcher returns a similarity score rather than a confidence. A 0.85 similarity might mean "this is the right address with a typo" or "this is a different address in the same city." The downstream system cannot distinguish.
 
 ## Where Mailwoman fits
 
-Normalize-to-match and Mailwoman's parser are complementary, not competing. A system that normalizes against a known database can use Mailwoman to **ingest new addresses** into that database:
+Normalize-to-match and Mailwoman's parser are complementary rather than competing. A system that normalizes against a known database can use Mailwoman to **ingest new addresses** into that database:
 
 1. A new customer signs up. Their address is not in the database.
 2. Mailwoman parses `123 Main St, Springfield, IL 62701` into `{house_number: 123, street: Main St, locality: Springfield, region: IL, postcode: 62701}`.

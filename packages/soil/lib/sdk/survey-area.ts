@@ -395,7 +395,7 @@ function elementText(xml: string, name: string): string | undefined {
 	const from = start + open.length
 	const end = xml.indexOf(`</${name}>`, from)
 
-	// An element with no closing tag is unreadable, not empty — the same answer an absent element gets, because both
+	// An element with no closing tag is unreadable rather than empty — the same answer an absent element gets, because both
 	// mean the value could not be read rather than that it is blank.
 	return end === -1 ? undefined : xml.slice(from, end)
 }

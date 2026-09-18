@@ -3,17 +3,17 @@
 # WHY THIS EXISTS: measured 2026-08-02, the repo sat at 10.7 GB against a 10 GB limit with 78
 # entries. Over quota, GitHub evicts LRU — and what it evicted was the hosted legs' yarn cache, so
 # `Install dependencies` flipped between 24s (warm) and 83s (cold) run to run, on three legs, with
-# `yarn cache is not found` in the Setup Node log. Nothing about the yarn config was wrong; there
+# `yarn cache is not found` in the Setup Node log. Nothing about the yarn config was wrong. there
 # was no room. CodeQL's default-setup overlay-base databases were 4324 MB across 54 entries — 40%
 # of the entire budget, for a workflow that is not even in this directory (code scanning default
 # setup, configured in the repo UI).
 #
 # POLICY:
 #   - codeql-overlay-base-database-*  keep the NEWEST per language, delete the rest. These are
-#     CodeQL's incremental-analysis cache; deleting them all costs CodeQL time on every run, so this
+#     CodeQL's incremental-analysis cache. deleting them all costs CodeQL time on every run, so this
 #     keeps one working set per language rather than zero. The 2026-08-02 first run took the group
 #     from 4324 MB / 54 entries to 242 MB / 3.
-#   - everything else                 LEFT ALONE. This is not a general garbage collector; an
+#   - everything else                 LEFT ALONE. This is not a general garbage collector. an
 #     unrecognized key prefix is somebody's working cache and is none of its business. The loop
 #     re-checks the prefix on each row before deleting, so a jq change upstream cannot widen it.
 #
@@ -22,14 +22,14 @@
 #
 # ⚠ DO NOT report size from `/actions/actions/cache/usage`. That endpoint is EVENTUALLY CONSISTENT
 # and lagged badly on the first manual run — it still read 10.7 GB / 77 entries immediately after 51
-# successful deletions that the live listing confirmed. Sum `/actions/caches` instead; that is
+# successful deletions that the live listing confirmed. Sum `/actions/caches` instead. that is
 # authoritative.
 #
 # ⚠ The key's language is field index 6 when split on "-", not 5:
 #   codeql-overlay-base-database-1-<hash>-<language>-<version>-<sha>-<runid>-1
 #   0      1       2    3        4 5      6          7         8     9       10
 #
-# DRY RUN: workflow_dispatch exposes `apply` (default false). The scheduled run applies; a manual
+# DRY RUN: workflow_dispatch exposes `apply` (default false). The scheduled run applies. a manual
 # run reports what it would delete unless you tick the box.
 name: Cache prune
 
@@ -84,7 +84,7 @@ jobs:
           seen=""
           deleted=0
 
-          while IFS=$'\t' read -r id accessed lang size key; do
+          while IFS=$'\t' read -r id accessed lang size key. do
             [ -n "${id:-}" ] || continue
 
             # Belt on the prefix a second time: the jq filter above already restricts the set, but a

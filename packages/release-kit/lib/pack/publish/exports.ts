@@ -42,8 +42,8 @@ function emittedTargetFor(target: string): string {
  * `publishConfig.exports`. The conditions themselves are kept: a Node target and a browser target may be different
  * files.
  *
- * The rewrite is keyed on the TARGET being TypeScript source, not on the condition name — a condition-name rule only
- * covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
+ * The rewrite is keyed on the TARGET being TypeScript source rather than on the condition name — a condition-name rule
+ * only covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports

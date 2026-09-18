@@ -203,7 +203,7 @@ export async function trainDedupGBT(
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
 	// Emit the model as a committed TypeScript module with a prettier-stable literal.
-	// retrain produces a clean one-line diff, not a thousand reformatted lines. ---
+	// retrain produces a clean one-line diff rather than a thousand reformatted lines. ---
 	const meta = {
 		version: "1.0.0",
 		locale: LOCALE,

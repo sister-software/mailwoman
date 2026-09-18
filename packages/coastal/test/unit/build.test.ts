@@ -350,7 +350,7 @@ describe("the declared domains", () => {
 			published_year: number
 		}
 
-		// A single space, not an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
+		// A single space rather than an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})

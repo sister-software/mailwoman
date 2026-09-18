@@ -41,7 +41,7 @@ def fold(value: str) -> str:
 def _surface(pieces: list[str]) -> tuple[str, list[tuple[int, int]]]:
     """Detokenized text + each piece's (start, end) char offsets into it.
 
-    Offsets, not piece-concatenation: the JS parity harness reads each node's `value` by slicing the
+    Offsets rather than piece-concatenation: the JS parity harness reads each node's `value` by slicing the
     ORIGINAL text between the span's char offsets, so the spacing between spans survives. Joining the
     selected pieces instead silently drops the `O`-labelled bare `▁` separator and welds words
     together — `▁5 | th | ▁ | Ave` becomes "5thAve" instead of "5th Ave", which scored token@1 at
@@ -102,7 +102,7 @@ def main() -> int:
             out = model(input_ids=ids, attention_mask=mask)
 
         # token@1 — the shipped decode's shape: BIO argmax over street-family pieces.
-        # strict=True: pieces and labels are the same sequence — a length mismatch is a bug, not
+        # strict=True: pieces and labels are the same sequence — a length mismatch is a bug rather than
         # something to silently truncate past.
         bio = [ID_TO_LABEL[int(i)] for i in out.logits[0].argmax(-1)]
         token_street = _join_runs(

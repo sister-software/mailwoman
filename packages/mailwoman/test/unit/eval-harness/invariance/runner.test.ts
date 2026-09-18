@@ -51,7 +51,7 @@ describe("loadSuite", () => {
 
 	it("every declared transform id is a real transform (no fixture typos)", async () => {
 		// loadSuite itself doesn't validate ids — runInvarianceSuite does, via getTransform. Exercise it here
-		// with a no-op parser so a fixture typo fails this test, not a real grading run.
+		// with a no-op parser so a fixture typo fails this test rather than a real grading run.
 		const rows = await loadSuite()
 		const noop: ParseFn = async (): Promise<Record<string, string>> => ({})
 
@@ -201,7 +201,7 @@ describe("runInvarianceSuite", () => {
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
 		// Same case as the severity-threshold test above (baseline `DEGRADED`, candidate `LOST` — a new,
-		// enforcing violation) — but this time asserting on the printed report LINE itself, not just the
+		// enforcing violation) — but this time asserting on the printed report LINE itself rather than just the
 		// structured outcome. A violation line that hardcodes "baseline held INVARIANT" is false on its
 		// face here: the baseline was DEGRADED, so the line has to read the baseline's actual verdict.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
@@ -250,7 +250,7 @@ describe("runInvarianceSuite", () => {
 
 	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
 		// Swapping "Avenue" -> "Ave" in the input makes a span-extraction model correctly echo "Ave" in its
-		// `street` output — that's the transform doing its job, not a violation. Comparing RAW values would
+		// `street` output — that's the transform doing its job rather than a violation. Comparing RAW values would
 		// flag it as a false `LOST` (street is critical); compareForTransform's abbreviation-swap branch
 		// canonicalizes both sides to long-form first. This test goes through the real "abbreviation-swap"
 		// transform id (not a fake one) so a typo'd id string in that dispatch fails this test with a
@@ -320,7 +320,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			["pennsylvania", "en-US"],
 		] as const)
 
-		// Same fake parser on both sides — this is a locale-THREADING test, not a regression test.
+		// Same fake parser on both sides — this is a locale-THREADING test rather than a regression test.
 		await runInvarianceSuite({ rows, parse, baselineParse: parse })
 
 		expect(calls.length).toBeGreaterThan(0)
@@ -382,7 +382,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits the venue's
 		// street in any register, so the row's baseline ORIGINAL has no critical components. the
 		// candidate (v4.2.0) gained the street in 7/8 registers and loses it only on the register-flat
-		// tail (quoted + comma-dropped). Those residual LOST/DEGRADED pairs are gains, not regressions.
+		// tail (quoted + comma-dropped). Those residual LOST/DEGRADED pairs are gains rather than regressions.
 		const row: InvarianceRow = {
 			id: "gb-quoted-residual",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",

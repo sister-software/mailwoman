@@ -40,7 +40,7 @@ SCHEMA = pa.schema(
 MAX_FIELD_CHARS = 64
 
 # The hard invariant the field budget exists to produce. Violation RAISES — reaching it means the
-# field budget stopped bounding the rendered length, which is a code defect, not tail data.
+# field budget stopped bounding the rendered length, which is a code defect rather than tail data.
 MAX_RENDERED_CHARS = 96
 
 
@@ -105,7 +105,7 @@ def verify_record(
     max_rendered_chars: int = MAX_RENDERED_CHARS,
     forbid_whitespace: bool = True,
 ) -> None:
-    """Re-validate one rendered record through the TRAINING consumer, not through its own author.
+    """Re-validate one rendered record through the TRAINING consumer rather than through its own author.
 
     Five independent checks, each of which has a scar behind it: the row fits S=96 so the loader
     never truncates it silently, no span holds whitespace (an interior U+3000 in a source name field
@@ -152,7 +152,7 @@ def verify_cjk_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
 
 
 def coverage_stats(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
-    """The BIO coverage the eval protocol asks for — counted on the LABEL ARRAY, not on the JSON.
+    """The BIO coverage the eval protocol asks for — counted on the LABEL ARRAY rather than on the JSON.
 
     ``JSON hides gaps``: a span triple can look complete while the array the model reads is mostly
     ``O``. So this walks ``char_label_array_from_spans`` output, the same array the loader builds.

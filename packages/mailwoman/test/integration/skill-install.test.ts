@@ -7,7 +7,7 @@
  *   and asserts it copies the packaged Claude Code skill (`skills/mailwoman/`, shipped inside this
  *   package) into `<dest>/.claude/skills/mailwoman/`. Covers the default (cwd-rooted) destination, a
  *   second idempotent run, the explicit `--dest` override, and the clean-slate reinstall (a stale file
- *   a newer shipped skill dropped must be REMOVED, not left behind by a merge-only copy — the finding
+ *   a newer shipped skill dropped must be REMOVED rather than left behind by a merge-only copy — the finding
  *   the task review caught: `cpSync` alone never deletes).
  */
 

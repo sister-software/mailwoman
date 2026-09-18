@@ -5,7 +5,7 @@
  *
  *   What is this string MADE OF — mailwoman's reading against libpostal's, on the same input.
  *
- *   `mwdev_compare` grades geocoders on a coordinate, and libpostal produces none: it is a parser, not a geocoder, so
+ *   `mwdev_compare` grades geocoders on a coordinate, and libpostal produces none: it is a parser rather than a geocoder, so
  *   an arm that scored it there would record a miss on every row at every threshold. It is also the only genuinely
  *   like-for-like PARSE comparison available — it is Pelias's parser, and `@mailwoman/libpostal` implements its exact
  *   `/parse` contract — which is why the question gets its own surface rather than a column in a distance table.

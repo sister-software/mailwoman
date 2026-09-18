@@ -5,7 +5,7 @@
  *
  *   Acquire the Department's bulk GeoJSON export — a 247,452,342-byte file streamed to disk.
  *
- *   THIS IS A FILE TRANSFER, NOT AN API REQUEST, AND IT KEEPS RAW `fetch` ON PURPOSE. The repo's rule sends
+ *   THIS IS A FILE TRANSFER rather than AN API REQUEST, AND IT KEEPS RAW `fetch` ON PURPOSE. The repo's rule sends
  *   HTTP clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
  *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
  *   None of it applies here. Caching a 247 MB body through a JSON-validating disk cache would write a second,

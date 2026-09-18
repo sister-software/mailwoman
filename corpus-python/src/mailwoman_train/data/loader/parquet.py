@@ -147,7 +147,7 @@ def _source_iter(
     Files are visited in shuffled order. within each file, row-groups and row indices
     are also shuffled (see ``_file_row_iter``). One row-group's worth of rows is held
     in memory at a time per source, so total RAM is bounded by the number of distinct
-    sources, not by any file-pool parameter.
+    sources rather than by any file-pool parameter.
     """
     order = list(paths)
     rng.shuffle(order)

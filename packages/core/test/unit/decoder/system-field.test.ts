@@ -11,7 +11,7 @@
  *   2. It is currently BEHAVIOR-NEUTRAL: every system resolves to the same containment map, so the same
  *        tokens produce a structurally identical tree regardless of `system`. (When a distinct
  *        system map lands in Phase 6, that last guarantee is the one that intentionally changes —
- *        and this test is where the change must be made deliberately, not by accident.)
+ *        and this test is where the change must be made deliberately rather than by accident.)
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"

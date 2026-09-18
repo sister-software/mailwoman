@@ -45,7 +45,7 @@ would be worse than none.
 One thing this layer deliberately does **not** do at runtime: expand
 abbreviations. `normalize/abbreviations.ts` can turn `Rd` into `Road` and `Ave`
 into `Avenue`, and it's fully built, but it's opt-in, and the runtime pipeline
-leaves it off (`normalize/compute.ts`). That's a choice, not an oversight.
+leaves it off (`normalize/compute.ts`). That's a choice rather than an oversight.
 Abbreviation is the model's job. Hard-coding `Ave → Avenue` in front of the parser
 would be the sieve regrowing: a rule seizing a decision the model is supposed to
 own, and one it can't unlearn if the rule turns out wrong for a locale. See
@@ -97,7 +97,7 @@ The one that matters most is `mailwoman eval gauntlet --layer metamorphic`
 (`mailwoman/eval-harness/gauntlet/metamorphic.ts`), layer 2 of
 [the Gauntlet](./eval-discipline.mdx). It asserts _relations_ between outputs rather
 than stored expected values, which is exactly why a curated corpus can't breed false
-confidence in it. It also grades the **assembled geocode**, coordinate and tier, not
+confidence in it. It also grades the **assembled geocode**, coordinate and tier rather than
 parse F1, because a robustness bug that leaves the tags intact but moves the pin is
 still a bug that ships a wrong answer.
 
@@ -135,14 +135,14 @@ one), house-number spelling misses the band outright, and a single-char typo in 
 locality or street can lose the pin. Those last are measured with the anchor and
 gazetteer channels off, which is the harness default; the gazetteer soft-feed is exactly
 what would recover a typo'd `Amsterdam` in ship-config, so read them as the anchor-off
-floor, not a verdict on production.
+floor rather than a verdict on production.
 
 ### Golden `graceful/*` sets — labeled adversarial cases
 
 The golden set (`data/eval/golden/v0.1.2`) carries a small hand-labeled adversarial
 track under `graceful/*`: typos (`Pensylvania`, `Portlnad`, `Fransisco`), mis-casing,
 mis-punctuation, whitespace abuse. Around ten of these are single-character typo
-cases. They're a stress test with expected components attached, not a coordinate
+cases. They're a stress test with expected components attached rather than a coordinate
 check: the parse should survive with lower confidence, and the labels say what
 "survive" means.
 
@@ -152,7 +152,7 @@ check: the parse should survive with lower confidence, and the labels say what
 perturbations (strip the delimiters, lowercase everything, glue the region to the
 postcode as `OR97214`) while keeping the component labels intact. It exists to show
 that a contextual model degrades more gracefully than a delimiter-hungry rule parser.
-It's a generator you run when you want that arena, not a standing check.
+It's a generator you run when you want that arena rather than a standing check.
 
 ## The coverage matrix
 
@@ -183,7 +183,7 @@ running them.
 ## See also
 
 - [Eval discipline](./eval-discipline.mdx) — the full Gauntlet, and why the
-  coordinate is graded, not the name string
+  coordinate is graded rather than the name string
 - [What Mailwoman is](./what-mailwoman-is.mdx) — why knowledge stays outside the
   learner, the principle behind Layer 1's abstention
 - [The pipeline contract](./staged-pipeline-contract.mdx) — where the normalize stage

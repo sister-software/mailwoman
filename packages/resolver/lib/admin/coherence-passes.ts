@@ -134,8 +134,8 @@ export async function applyAdminCoherence(roots: readonly AddressNode[], backend
  * `ResolvedPlace` runner-ups `decorateNode` attached (typed `unknown[]` in the decoder, which can't import resolver
  * types — the cast is sound). Picks the first same-named locality (already score-ordered) that descends from a
  * same-named region candidate, then swaps both nodes. Leaves both untouched when no consistent pair exists (a genuinely
- * un-gazetteered locality — "Portland, VT" with no Portland in Vermont — stays as the region centroid, not a foreign
- * namesake).
+ * un-gazetteered locality — "Portland, VT" with no Portland in Vermont — stays as the region centroid rather than a
+ * foreign namesake).
  */
 async function reconcileAdminPair(
 	regionNode: AddressNode,
@@ -297,8 +297,8 @@ function revertResolverDecoration(node: AddressNode): void {
  * (Vienna WV) and IGNORES the "Austria" the address named. This pass asks the question the greedy order skipped —
  * _which "Vienna" is in the country the address names?_ — and re-picks the locality to the same-named place under that
  * country. The country code comes from the parser's own `country` emission via codex's ISO-3166 table (a name→code
- * normalization of a token the model already classified, not a routing prior or safelist); the gazetteer's `country`
- * column does the geographic confirmation. No pin, no list. generalizes to every country.
+ * normalization of a token the model already classified rather than a routing prior or safelist); the gazetteer's
+ * `country` column does the geographic confirmation. No pin, no list. generalizes to every country.
  *
  * Disjoint from {@link applyAdminCoherence} by the region guard: that pass owns the case where a REGION scopes the
  * locality. this one fires only when the explicit country is the locality's nearest admin context (no region between),
@@ -397,7 +397,7 @@ async function reconcileExplicitCountry(
  * `{ name: "Quebec", country: "CA" }`, handling the FTS index's missing "QC" alt-name code-side), then asks the two
  * questions the greedy walk skipped: does that subdivision genuinely resolve UNDER its own country, and is there a
  * same-named locality under it? Only when both hold does it swap the region and locality to the in-country pair.
- * Geography confirms. the subdivision table is a soft name→country prior, not a routing decision.
+ * Geography confirms. the subdivision table is a soft name→country prior rather than a routing decision.
  *
  * Evidence-conditional to stay byte-stable on the domestic path. It fires only when (a) a default country is in force,
  * (b) the region node is unresolved (the default-country filter came up empty — a US region resolves fine under `US`,

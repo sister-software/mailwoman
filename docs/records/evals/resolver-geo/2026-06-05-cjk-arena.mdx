@@ -7,7 +7,7 @@ We spent the European locales teaching a resolver to drop a postcode's centroid 
 
 ## The wall: there are no municipality polygons in CJK
 
-The European coordinate-first recipe is point-in-polygon: take a postcode centroid, find the WOF locality whose polygon contains it, done. It got Germany to 92.6% and the Netherlands to 94.9%. It gets Japan to **25%** — and it took a while to understand why, because the failure is structural, not a tuning gap.
+The European coordinate-first recipe is point-in-polygon: take a postcode centroid, find the WOF locality whose polygon contains it, done. It got Germany to 92.6% and the Netherlands to 94.9%. It gets Japan to **25%** — and it took a while to understand why, because the failure is structural rather than a tuning gap.
 
 WOF's administrative geometry for the CJK countries is **point-based exactly where postcodes resolve.** We sampled the per-placetype geometry and the pattern is the same across all three:
 
@@ -20,7 +20,7 @@ WOF's administrative geometry for the CJK countries is **point-based exactly whe
 
 The level a postcode resolves to — the municipality — is essentially all points, in Japan, Korea, and Taiwan alike. So point-in-polygon has nothing to contain. This isn't a Japan quirk we can special-case around; it's the shape of the whole CJK arena, and it means the European recipe doesn't generalize east. Confirmed, quantified, written down.
 
-## The pivot: resolve by authoritative name, not by polygon
+## The pivot: resolve by authoritative name rather than by polygon
 
 If you can't ask "which polygon contains this point," you ask the postal authority "what's the municipality for this postcode," and then you find that municipality in WOF. Japan's postal authority publishes exactly that — **KEN_ALL**, from Japan Post, and crucially a _romanized_ edition whose municipality column reads `SAPPORO SHI CHUO KU`, in the same alphabet as WOF's romanized place names. Authoritative, and matchable.
 

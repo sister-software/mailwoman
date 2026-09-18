@@ -28,7 +28,7 @@ test("splitCSVLine strips the wrapping quotes Code-Point puts on every text fiel
 	expect(row[1]).toBe("10")
 	expect(row[2]).toBe("526506")
 	expect(row[4]).toBe("E92000001")
-	// The empty admin-county field is an empty string, not a `""` literal and not undefined.
+	// The empty admin-county field is an empty string rather than a `""` literal and not undefined.
 	expect(row[7]).toBe("")
 })
 

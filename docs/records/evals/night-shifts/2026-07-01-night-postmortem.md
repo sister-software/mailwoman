@@ -32,28 +32,28 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 
 - **#379** repo housekeeping — PR #849 (undici 6.23→6.24 security patch, merged) + the full dependabot triage logged on the issue (kept open for the serialize-javascript/tar major bumps that need testing).
 - **#818** docs recipes — PR #850 (filled the timezone + un-locode recipe stubs, verified usage; the 4 new OpenCage-style recipes remain).
-- **#735, #481** — closed as already-shipped (above), not PRs.
+- **#735, #481** — closed as already-shipped (above) rather than PRs.
 
 ## What went well
 
 - **The live geocode probe earned its keep.** Before closing #822/#823 I ran the addresses through the actual harness — and caught a real bug: `Vienna, Austria` still resolves to **Vienna, WV**. That would have been a false close. #823 (off-map coverage) in fact resolved; #822 (named-foreign-country routing) did not. Verify-before-verdict, one probe, two correct calls.
-- **Three issues were already done.** #735, #481, and #823's coverage half were closed by investigation, not by re-doing the work — a stale issue is cheaper to verify than to re-implement.
+- **Three issues were already done.** #735, #481, and #823's coverage half were closed by investigation rather than by re-doing the work — a stale issue is cheaper to verify than to re-implement.
 - **Delegate-then-verify on the bulk triage.** An agent read ~45 issue bodies and cross-referenced the code; I spot-checked every CLOSE recommendation's evidence (the merged PR / commit / file) before acting. Eight confident closes, zero guesses.
 
 ## What could've gone better
 
 - **A stale diagnostic nearly misled me.** `coverage-266-validate.ts` pointed at a removed `staging-266/` DB and reported everything UNRESOLVED — including New York, which the gauntlet proves resolves. Caught it because the failure was too broad to be real; re-ran against the live harness instead.
-- **The dependabot "safe bumps" were thinner than the issue implied.** The issue cited 44 alerts (1 critical); it's now 24 (no critical). The in fact-safe bump was a single dev-dep patch (undici); the high-value fixes (serialize-javascript RCE, tar path-traversal) are major bumps on the older lockfile line — risk the operator should test, not an autonomous bump.
+- **The dependabot "safe bumps" were thinner than the issue implied.** The issue cited 44 alerts (1 critical); it's now 24 (no critical). The in fact-safe bump was a single dev-dep patch (undici); the high-value fixes (serialize-javascript RCE, tar path-traversal) are major bumps on the older lockfile line — risk the operator should test rather than an autonomous bump.
 
 ## Decisions made autonomously
 
-- **#822 → keep, not close.** The live probe found the named-foreign-country namesake bug still live; closing would have buried it. Sharpened the issue with a clean fix path (a resolver hint on unambiguous foreign country names) instead.
+- **#822 → keep rather than close.** The live probe found the named-foreign-country namesake bug still live; closing would have buried it. Sharpened the issue with a clean fix path (a resolver hint on unambiguous foreign country names) instead.
 - **Did not force the serialize-javascript/tar major bumps.** A 6→7 forced resolution could break terser/webpack silently; logged for operator testing.
-- **Left the #818 multi-service recipe.** It frames Mailwoman against paid APIs — competitive positioning that wants the operator's voice (gracious, not vengeful). Wrote the two factual stubs; left the positioning piece.
+- **Left the #818 multi-service recipe.** It frames Mailwoman against paid APIs — competitive positioning that wants the operator's voice (gracious rather than vengeful). Wrote the two factual stubs; left the positioning piece.
 
 ## Open questions / next
 
-- **#822** — a foreign-country-name resolver hint (Austria/Australia/Switzerland are unambiguous; Georgia is not). Clean change, resolver-side, not the GPU placer.
+- **#822** — a foreign-country-name resolver hint (Austria/Australia/Switzerland are unambiguous; Georgia is not). Clean change, resolver-side rather than the GPU placer.
 - **#379** — serialize-javascript (RCE) + tar (path-traversal) major bumps need a build+test pass before forcing.
 - **#818** — four OpenCage-style recipes remain; the multi-service one wants a voice review.
 - **#260 (B3)** — still blocked on #249 ODbL counsel sign-off (from the day shift).
@@ -86,11 +86,11 @@ you can make — each with my recommendation:
 1. **Change E — the $20 GPU budget.** _(Corrected after a DeepSeek nudge prompted a deeper dive — my first
    read of this was wrong twice over.)_ The multilocale corpus is staged and **the corpus already
    shipped**: v1.9.1-multilocale-3order = **v4.13.0** (PT 52→82%, PL 53→62%, AT +31pp), and v4.16.0 sits on
-   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-conditional, not a
+   that base. So #825 is the _incremental_ push beyond v4.13.0, and its next change is campaign-conditional rather than a
    cheap probe: more eval-safe data (#477's recipe, a parity-scorecard decision) or a representation change —
    and **weight is a falsified change** here (the v1.9.1 postmortem: "only the RENDERING fixes it"). So a
    "resume v194 + upweight the extract, 2k probe" has no falsifiable upside. **Rec: hold the budget; the further
-   push is a campaign-strategy + data call, not an overnight GPU run.** (Budget untouched.) Details on #825.
+   push is a campaign-strategy + data call rather than an overnight GPU run.** (Budget untouched.) Details on #825.
 2. **#378 in-browser P95 trace.** The cold-path SLO + budget shipped (#857), but the live P95 — the SLO's
    real check, which also checks #372 flatbush — needs a Chrome box (the lab has none). **Rec: run the
    chrome-devtools trace against `/demo` from a Chrome-capable machine.**
@@ -103,7 +103,7 @@ you can make — each with my recommendation:
    it explicitly wants "operator eyes for the visual," so I stopped at the decision-free primitive.
 5. **#379 — `tar` 7.x.** The lone remaining dependabot alert (medium) needs the 7.x major (no 6.x backport);
    pulled only by cacache/node-gyp install tooling. **Rec: a deliberate test-then-bump pass; low real-world
-   exposure, not an autonomous force.**
+   exposure rather than an autonomous force.**
 
 ## Change A — #822 named-foreign-country namesake (PR #852)
 
@@ -118,7 +118,7 @@ re-shaped it twice before a line of resolver code was written:
   only US Viennas and there's no `country` row for Austria. Querying the DB directly corrected it: Vienna AT
   **does** exist (an exonym-folded row), just _outranked_ by the populous US namesakes; and well-covered WOF
   countries carry no `country`-placetype row (only the #267 gap countries do), so the re-pick must filter by
-  the `country` ISO **column**, not a `parentId` descendant scope.
+  the `country` ISO **column** rather than a `parentId` descendant scope.
 - **Salvage-first.** `@mailwoman/codex/country` already carries the ISO-3166 base + address surface forms
   (`matchCountry`, salvaged from isp-nexus). No new table written.
 
@@ -134,13 +134,13 @@ default-on, awaiting CI.
 
 **verify-before-verdict fired (again):** the first gauntlet run failed Sydney "7532km off." Instead of
 assuming the fix broke, I dug in — the resolver was right (−33.87,151.21); my _expected_ value had a dropped
-minus sign (`33.8696` not `−33.8696`). My typo, caught by the check, not a regression.
+minus sign (`33.8696` not `−33.8696`). My typo, caught by the check rather than a regression.
 
 ## Change D — resolver/parser backlog (#305, #435, #456): triaged, none a clean CPU PR
 
-The diagnostic-first discipline earned its keep — all three are GPU/schema/coverage-dependent, not the
+The diagnostic-first discipline earned its keep — all three are GPU/schema/coverage-dependent rather than the
 "CPU-doable subset" the plan hoped. The realistic output was a correct re-scope of each (which saves the
-next cycle), not three implementations:
+next cycle) rather than three implementations:
 
 - **#305** (proximity-check the exact-name tier) — the check needs the postcode anchor's _coordinate_, which
   lives at the resolver layer; the JP/EU postcode extracts exist on disk but aren't wired into the default
@@ -173,7 +173,7 @@ expected a GPU placer retrain to do. The flat +hint ceiling confirms it closed t
 structurally. Artifact: `2026-06-30-822-frontier-gap.md`.
 
 The 18-country residual (exonym + coverage, fails even with a hint) is unchanged — it's the parallel #826
-change, not #822's job. Updated #826 with the post-fix split (5 exonym / 13 coverage), with the nuance that
+change rather than #822's job. Updated #826 with the post-fix split (5 exonym / 13 coverage), with the nuance that
 **the capitals already resolve — the misses are 2nd/3rd-tier cities** (so the exonym change's ceiling is the
 long tail). Verify-before-verdict fired: my first exonym probe tested the capitals (which resolve) before I
 realized the failures were the smaller cities.
@@ -192,7 +192,7 @@ recipe was left for the operator's voice pass (competitive positioning, gracious
 Verify-before-verdict on the dependabot alerts: serialize-javascript is no longer flagged (on 6.0.2, patched);
 js-yaml is all 4.2.0 (above the vuln range); the one directly-safe fix was **http-proxy-middleware 2.0.9 →
 2.0.10** (in-major patch, dev-server-only) — shipped. The remaining `tar` alert needs the **7.x major** (no
-6.x backport), pulled only by cacache/node-gyp install tooling — left for the operator, not an autonomous force.
+6.x backport), pulled only by cacache/node-gyp install tooling — left for the operator rather than an autonomous force.
 
 ## Change I — #480 reproducibility (PR #856): #4 shipped, the rest already done
 
@@ -209,9 +209,9 @@ Couldn't run the live browser trace (**no Chrome on the lab box**), so delivered
 cold-path budget from real artifact sizes (29 MB int8 model, the 1.3 GB candidate.db byte-range-fetched ~12
 cold chunks) + a node-side compute floor (model session-init 126 ms, warm parse 5.7 ms native EP) + a
 proposed two-surface SLO (cold-load < 6 s / per-keystroke < 50 ms on a Moto-G-class phone). The numbers
-already name the cold bottleneck: **the 29 MB model download**, not compute — so the cold change is model size
+already name the cold bottleneck: **the 29 MB model download** rather than compute — so the cold change is model size
 
-- streaming + CDN, not the SQLite path. The per-keystroke resolve cost (which checks **#372 flatbush**) is the
+- streaming + CDN rather than the SQLite path. The per-keystroke resolve cost (which checks **#372 flatbush**) is the
   one piece still needing the in-browser trace. Artifact: `2026-06-30-378-wasm-cold-path-slo.md`. **#372 is
   explicitly parked** behind that trace (diagnostic-before-fix — don't build the index before the profile).
 
@@ -235,7 +235,7 @@ the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-
 `2026-06-22-nppes-dedup-setting-ladder.md` report — #718's "anchor-off 68.0" concern was resolved by
 `loadFromWeights`'s default-on soft-feed). Re-doing any of these would have been wasted motion.
 
-What's in fact left is **operator-conditional or focused-session**, not contained CPU riders:
+What's in fact left is **operator-conditional or focused-session** rather than contained CPU riders:
 
 - **#493** (lossless decomposition) — scoped with a round-trip diagnostic (baseline 97.8% content coverage /
   90.4% fully covered; the dominant lost-content class is **multibyte/accented-character fragmentation**,
@@ -246,7 +246,7 @@ What's in fact left is **operator-conditional or focused-session**, not containe
   consumer contracts → the focused session the issue calls for.
 - **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the result
   **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-conditional (more data
-  / a representation change — weight is falsified). Budget preserved for that campaign call, not a probe.
+  / a representation change — weight is falsified). Budget preserved for that campaign call rather than a probe.
 - **#372 flatbush** — parked behind the #378 in-browser trace (diagnostic-before-fix); that trace needs Chrome
   (absent on the lab box).
 - **#718 remainder, the record-matcher epics (#598/#602/#603/#615), #480 #3/#5** — focused sessions / train-loop.
@@ -271,7 +271,7 @@ paid off twice:
 
 - **Corrected a factual error on change E.** Chasing it down, I found my "corpus not staged, E is corpus-blocked"
   read was wrong both ways: the corpus is staged, and the multilocale retrain's big win already shipped (v4.13.0,
-  PT 52→82). So E's value is largely banked; the residual is campaign-conditional, not a probe. Corrected on #825 +
+  PT 52→82). So E's value is largely banked; the residual is campaign-conditional rather than a probe. Corrected on #825 +
   the decision brief. (The lesson: "exhausted" deserved the same verify-before-verdict as everything else.)
 - **Shipped the #493 serializer surface (PR #864, flagged).** I'd over-deferred the _whole_ serializer wiring as
   "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
@@ -307,7 +307,7 @@ The decision brief at the top of Part 2 is the authoritative list; the forks for
 - **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
   #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
 - **Change E / $20** — held. the result is banked (v4.13.0); the further push is a campaign-strategy
-  - data call (#477 recipe), not an overnight probe. Budget untouched.
+  - data call (#477 recipe) rather than an overnight probe. Budget untouched.
 - **#861** — port the country branch to the demo cascade (quick) vs converge on the shared `resolveTree`
   (principled). My rec: converge.
 - **#378** — the in-browser P95 trace needs a Chrome-capable machine (checks #372).

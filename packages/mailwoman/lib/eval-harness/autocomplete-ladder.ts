@@ -13,7 +13,7 @@
  *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
  *
  *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
- *   is the ordinary board grade for that row, and a difference there is a harness defect, not a finding.
+ *   is the ordinary board grade for that row, and a difference there is a harness defect rather than a finding.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -348,7 +348,7 @@ export async function runAutocompleteLadder(
 			.execute()
 
 		for (const row of rows) {
-			// `0,0` is the gazetteer's unlocated sentinel, not a place in the Gulf of Guinea.
+			// `0,0` is the gazetteer's unlocated sentinel rather than a place in the Gulf of Guinea.
 			if (row.latitude === 0 && row.longitude === 0) continue
 
 			out.set(row.id, { lat: row.latitude, lon: row.longitude })

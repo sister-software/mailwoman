@@ -14,7 +14,7 @@
  *     Postcode, Positional_quality_indicator, Eastings, Northings, Country_code,
  *     NHS_regional_HA_code, NHS_HA_code, Admin_county_code, Admin_district_code, Admin_ward_code
  *
- *   We read the first five and drop the health/admin codes — they are ONS lookup keys, not geography,
+ *   We read the first five and drop the health/admin codes — they are ONS lookup keys rather than geography,
  *   and nothing in the resolver consumes them.
  *
  *   ## Two traps, both measured against the 2026-05 extract
@@ -49,7 +49,7 @@ const CODEPOINT_COLUMNS = 10
 
 /**
  * ONS country codes present in Code-Point Open, and the ISO-3166-2 subdivision each maps to. There are exactly three —
- * the absence of a Northern Ireland code is the product's defining coverage limit, not an omission here.
+ * the absence of a Northern Ireland code is the product's defining coverage limit rather than an omission here.
  */
 export const CODEPOINT_COUNTRY_CODES = {
 	E92000001: "ENG",

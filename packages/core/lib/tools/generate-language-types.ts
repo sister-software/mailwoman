@@ -6,7 +6,7 @@
  *   Regenerate `core/resources/languages/types.gen.ts` — the ISO 639-1 / 639-2 language-code types +
  *   label maps — from the committed `internal/languages.csv` resource dictionary.
  *
- *   Both 639-2 standards are emitted, and the reason is data, not completeness. ISO 639-2 has two
+ *   Both 639-2 standards are emitted, and the reason is data rather than completeness. ISO 639-2 has two
  *   three-letter forms: /B (bibliographic) and /T (terminological, identical to 639-3). They differ
  *   for exactly 20 languages, and **Who's On First keys its name properties in /T** — so a /B-only
  *   union excluded `deu`, `fra` and `nld`, three tier-1 locales, while admitting spellings the data

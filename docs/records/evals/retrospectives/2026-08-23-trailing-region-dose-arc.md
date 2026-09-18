@@ -92,7 +92,7 @@ Adding a dependent locality moved the "first named segment" binding from `locali
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
-### v4.10.0 — the share is a change, not a fix
+### v4.10.0 — the share is a change rather than a fix
 
 Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 
@@ -189,7 +189,7 @@ the four.
 
 ### What this changes for anything shipped from here
 
-The baseline for grading a candidate is the NULL RUN, not the shipped model. A candidate that costs
+The baseline for grading a candidate is the NULL RUN rather than the shipped model. A candidate that costs
 ten rows has cost nothing; one that costs eighteen has cost eight. Every check in this arc used the
 wrong denominator.
 
@@ -206,7 +206,7 @@ If the same nine rows regress under every intervention, the next question is whe
 under no intervention: **fine-tune the base corpus with no added extract at all, same steps, same seed.**
 
 - If those nine still move, the arc's entire premise is wrong. The regressions are an artifact of
-  fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about extracts is
+  fine-tuning this base for 4,000 steps rather than of the data, and every conclusion above about extracts is
   measuring the wrong thing.
 - If they hold, the data is implicated after all and the floor is a real interaction.
 
@@ -224,7 +224,7 @@ Regressions fell 18 -> 10. But ten is the null's tax, so the extract now costs n
 adds nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
 distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
 
-The finding is in the shape of the tax, not the net. **It is paid in the first 1,000 steps and barely
+The finding is in the shape of the tax rather than the net. **It is paid in the first 1,000 steps and barely
 grows to 4,000** — 10 rows at both. It is not proportional to how far the weights travel; it is a
 fixed cost of touching this base at all. No shorter run avoids it.
 
@@ -273,7 +273,7 @@ larger commitment than a fine-tune and should be scoped as one.
   byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
   sub-linear fall, the share that stops hurting is below the share that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street
-  precedes the locality before it can carry a meaningful share. That is authoring, not tuning.
+  precedes the locality before it can carry a meaningful share. That is authoring rather than tuning.
 - **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela and nothing on
   disk carries a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
   VE's `after_locality` in any of the three runs.
@@ -292,7 +292,7 @@ source this project consumes was checked on 2026-08-23:
 
 So VE postcodes are not an acquisition someone forgot to run. They are absent from the open corpus this
 project is built on. The one avenue not checked is Overture's upstream `addresses` theme, which is not
-mirrored locally — worth one query before concluding it is unobtainable, not worth assuming it helps.
+mirrored locally — worth one query before concluding it is unobtainable rather than worth assuming it helps.
 
 That makes the VE question a product decision rather than a data-fetching task: either a synthetic
 4-digit code paired with a real (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
@@ -316,14 +316,14 @@ adds nothing. **Every regression reported in this document is real.**
 
 Worth keeping as a habit rather than a one-off: a self-comparison costs one board run and is the only
 thing that separates "the candidate is worse" from "my rig is noisy". It should precede the first
-candidate of any arc, not follow the eighth.
+candidate of any arc rather than follow the eighth.
 
 ## Method notes worth keeping
 
-- **Grade the board, not the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
+- **Grade the board rather than the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
   and `cross_pollution=0.00%`. Every one of them was a do-not-ship. The val split cannot see the venue
   class the board is built to see.
-- **A smoke run proves the config loads, not that the extract is reached.** The mixed extract's leading
+- **A smoke run proves the config loads rather than that the extract is reached.** The mixed extract's leading
   arm keeps the zero-rows guard from firing even when the whole trailing arm is dropped. The check
   that mattered was reading the extract through the loader's own check before launching.
 - **A false negative in the measuring tool looks exactly like a real absence.** Corpus `labels` is a

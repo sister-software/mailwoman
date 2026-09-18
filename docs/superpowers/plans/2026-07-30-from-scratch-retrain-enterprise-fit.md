@@ -11,12 +11,12 @@ The from-scratch retrain is not a competitor to the enterprise fine-tune product
 where forgetting-protection gets built in at the only point it is cheap, and the base whose QA
 harness becomes the per-customer acceptance battery.
 
-## Why the enterprise line makes the retrain _more_ urgent, not less
+## Why the enterprise line makes the retrain _more_ urgent rather than less
 
 1. **Every fine-tune inherits the base's debt.** The v8.2.0 arc measured this precisely: every
    fine-tune off v385 — bundle or not, either feed — pays ~−5pp on Canadian PO-box rows
    (fr.cedex 85.6→~80.5, replay-boost plateau ~83.4). That is _rare-class forgetting_, and it is
-   structural to fine-tuning, not to our recipes. A customer fine-tuning on their address stock
+   structural to fine-tuning rather than to our recipes. A customer fine-tuning on their address stock
    will hit the same class of erosion on whatever _their_ rare classes are — invisible until the
    right instrument reads it. If fine-tuning is the product, the base model's own debts (the cedex
    watch, the re-anchored floor, the Fifth-Ave fixture) should be zero at the starting line.
@@ -65,7 +65,7 @@ harness becomes the per-customer acceptance battery.
    budget, possibly the encoder change) — plan in agent-nights with the full G1–G7 ladder plus
    per-locale checks; the acceptance battery in its packaged form is the exit criterion.
 3. **B11 alpha after:** the packaged battery + the Fisher-guarded fine-tune recipe make the
-   first enterprise fine-tune engagement mostly configuration, not research.
+   first enterprise fine-tune engagement mostly configuration rather than research.
 
 **Net:** if B11 is real, the retrain is its foundation work and should be scheduled as such —
 "the release that makes fine-tuning safe to sell." If B11 stays parked, the retrain is still owed

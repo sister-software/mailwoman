@@ -15,7 +15,7 @@
  *   breadth is blocked by #1980 today, so every run prints `coverage partial`.
  *
  *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
- *   instrument that could not run, a missing database. A recorded decision is a result, not a failure, and
+ *   instrument that could not run, a missing database. A recorded decision is a result rather than a failure, and
  *   the RECORDING itself is the operator's.
  */
 

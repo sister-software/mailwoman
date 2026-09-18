@@ -11,7 +11,7 @@
  *   `filer-lookup.test.ts`'s `describe("§7-3b criteria")` block instead, since criterion 1 is specifically about
  *   `filerLookup`'s `families` field staying structurally distinct from `cluster`.
  *
- *   **A `nodeID` resolving to more than one family is ordinary, not an error.** `familyRollup` always
+ *   **A `nodeID` resolving to more than one family is ordinary rather than an error.** `familyRollup` always
  *   returns `FamilyRollup[]` (0, 1, or more elements) — never a bare object, `null`, or a throw on
  *   ambiguity. The builder routinely emits exactly this shape (`build-filer.test.ts`: a filer whose
  *   holding company differs from its management company), and `filerLookup.ts`'s own `families` field
@@ -486,7 +486,7 @@ describe("familyRollup — general reader contract", () => {
 			const HOLDING_NODE_SPELLING_2 = `${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`
 
 			// Confirms the fixture's premise before using it: these two spellings really do canonicalize to the
-			// identical family_id (real mintFamilyID, not an arbitrary constant).
+			// identical family_id (real mintFamilyID rather than an arbitrary constant).
 			const familyIDSpelling1 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
 			const familyIDSpelling2 = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corporation, LLC")!
 			expect(familyIDSpelling1).toBe(familyIDSpelling2)
@@ -596,7 +596,7 @@ describe("familyRollup — general reader contract", () => {
 			const FAMILY_NORTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Northwind Holdings")!
 			const FAMILY_SOUTH = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Southgate Group")!
 
-			// The fixture's premise: these are genuinely two families, not one.
+			// The fixture's premise: these are genuinely two families rather than one.
 			expect(FAMILY_NORTH).not.toBe(FAMILY_SOUTH)
 
 			await db

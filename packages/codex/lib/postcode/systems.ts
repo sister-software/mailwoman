@@ -11,10 +11,10 @@
  *   It is the shared source of truth for "which systems can this shape be" — consumed by the postcode
  *   anchor (to narrow which systems' street vocabularies it checks) and, in time, by the runtime
  *   pipeline's `@mailwoman/locale-hint` stage (so its format→locale scoring derives from the same patterns rather than
- *   a second, divergent copy). The point is to unify the DATA, not to couple the modules: callers
+ *   a second, divergent copy). The point is to unify the DATA rather than to couple the modules: callers
  *   depend on this pure function, never on each other.
  *
- *   Note this is a SHAPE test, not a gazetteer-membership test. A bare `68161` matches the US,
+ *   Note this is a SHAPE test rather than a gazetteer-membership test. A bare `68161` matches the US,
  *   German, French, Spanish and Italian 5-digit shapes, so it returns `["us", "de", "fr", "es", "it"]` —
  *   the shape alone cannot split the numeric-postcode systems. The anchor uses real gazetteer membership for the finer
  *   call. this function answers the coarser, model-free "which systems is this shape even eligible
@@ -143,7 +143,7 @@ const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpper
  *
  * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed.
  * 2. The node resolved (a coordinate is present — checked by the caller); and
- * 3. The resolver's own hit is the full code, not a coarsened prefix (a 4-digit NL stem or a GB outward district is
+ * 3. The resolver's own hit is the full code rather than a coarsened prefix (a 4-digit NL stem or a GB outward district is
  *    AREA-class, and promoting it is the exact trade the epoch convention forbids).
  */
 export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
@@ -158,10 +158,10 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Address systems whose AREA-grade postal code is still FINER than the locality containing it — the third granularity
  * tier, between {@link UNIT_GRADE_POSTCODE} and the locality-first default.
  *
- * Whether a postal zone is coarser than its locality is a fact about a country's ADMINISTRATIVE geography, not about
- * its postal system, and code length does not predict it: FR and DE are both 5-digit and land on opposite sides. France
- * has ~35,000 communes and one code postal often spans several, so the commune is finer. A German Gemeinde can be
- * enormous — Berlin is one WOF locality — so the PLZ is finer by a wide margin.
+ * Whether a postal zone is coarser than its locality is a fact about a country's ADMINISTRATIVE geography rather than
+ * about its postal system, and code length does not predict it: FR and DE are both 5-digit and land on opposite sides.
+ * France has ~35,000 communes and one code postal often spans several, so the commune is finer. A German Gemeinde can
+ * be enormous — Berlin is one WOF locality — so the PLZ is finer by a wide margin.
  *
  * Membership is earned by a full-panel measurement, the same bar {@link UNIT_GRADE_POSTCODE} sets for CA. Coordinate
  * p50 on the OpenAddresses panels, locality-first (the default) against the postcode point:

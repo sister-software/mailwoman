@@ -26,7 +26,7 @@ export function argument(config: CommandArgumentMetadata): string {
  * The version of the `mailwoman` package this process ships in — read from the package's own manifest via
  * `resolvePackagePath`, so dev checkouts, `out/` trees, and published installs all answer the same file.
  *
- * @throws {TypeError} When the manifest carries no string version — a broken install, not a formatting choice.
+ * @throws {TypeError} When the manifest carries no string version — a broken install rather than a formatting choice.
  */
 /**
  * The fields of mailwoman's own `package.json` that the CLI reports about itself: the version (`--version`), the Node
@@ -63,7 +63,8 @@ let manifest: Promise<MailwomanManifest> | undefined
  * published tarball. The one place this read happens, and it happens once per process: the version line, the license
  * notice, the doctor and the license command all read the same file.
  *
- * @throws {TypeError} When the manifest carries no string `version` or `license` — a broken install, not a choice.
+ * @throws {TypeError} When the manifest carries no string `version` or `license` — a broken install rather than a
+ *   choice.
  */
 export function readMailwomanManifest(): Promise<MailwomanManifest> {
 	manifest ??= readManifestFile()

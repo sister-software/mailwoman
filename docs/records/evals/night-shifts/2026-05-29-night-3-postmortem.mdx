@@ -44,22 +44,22 @@ caveat: the effect dwarfs any quantization artifact; final check uses parity.)
 Interim check on the step-50K checkpoint (int8, parity with v0.6.0 int8) vs
 v0.6.0@100K. **Caveat: calib is half-trained here; 100K is the fair compare.**
 
-| Metric                         | v0.6.0@100K | calib@50K       |                             |
-| ------------------------------ | ----------- | --------------- | --------------------------- |
-| Overconfidence-on-wrong (≥0.9) | 86.3%       | 65.4%           | ✓ down (but ~65%, not ~50%) |
-| Harness pass rate (PRIMARY)    | 14.6%       | 12.0%           | ✗ down 2.6pp                |
-| Structural validity (#37)      | 97.6%       | 69.7%           | ✗ down 28pp                 |
-| Exact match (TEST)             | 21.5%       | 18.6%           | ✗ down 2.9pp                |
-| locality recall                | 36.9%       | 27.3%           | ✗ down 9.6pp                |
-| postcode recall                | 74.8%       | 78.4%           | ✓ up 3.6pp                  |
-| dep_locality                   | 0 halluc.   | **+88 halluc.** | ✗✗                          |
-| subregion                      | absent      | **+30 halluc.** | ✗✗                          |
+| Metric                         | v0.6.0@100K | calib@50K       |                                    |
+| ------------------------------ | ----------- | --------------- | ---------------------------------- |
+| Overconfidence-on-wrong (≥0.9) | 86.3%       | 65.4%           | ✓ down (but ~65% rather than ~50%) |
+| Harness pass rate (PRIMARY)    | 14.6%       | 12.0%           | ✗ down 2.6pp                       |
+| Structural validity (#37)      | 97.6%       | 69.7%           | ✗ down 28pp                        |
+| Exact match (TEST)             | 21.5%       | 18.6%           | ✗ down 2.9pp                       |
+| locality recall                | 36.9%       | 27.3%           | ✗ down 9.6pp                       |
+| postcode recall                | 74.8%       | 78.4%           | ✓ up 3.6pp                         |
+| dep_locality                   | 0 halluc.   | **+88 halluc.** | ✗✗                                 |
+| subregion                      | absent      | **+30 halluc.** | ✗✗                                 |
 
 **Mechanism (under-training alone):** label smoothing flattens the target
 distribution, so low-prior tags (dep*locality / subregion, class-weight 0.3)
 that were suppressed now leak → hallucination explosion and structural-validity
 collapse (spurious spans + dropped anchors → stranded fragments). The \_pattern*
-(rare-tag leakage) is smoothing overcorrection, not uniform under-training.
+(rare-tag leakage) is smoothing overcorrection rather than uniform under-training.
 The #37 checker earned its keep — it caught a regression the harness pass-rate
 number alone would have under-weighted.
 
@@ -96,7 +96,7 @@ intersections (65 assertions, 0% neural), street/locality boundary errors,
 venue. This is the plan's "flat + overconfidence↓ → structural" situation.
 
 The artifact stays experimental on the Modal volume (`output-v070-calib`,
-step-100000) + local int8 — **not uploaded to HF, not promoted**.
+step-100000) + local int8 — **not uploaded to HF rather than promoted**.
 
 **Fork (operator / DeepSeek-delegated call), under the 2-iteration cap:**
 
@@ -114,7 +114,7 @@ structural pivot over another calibration tweak. But `ls=0.05` is cheap (~$8,
 ~2h) and settles whether the per-tag regression was the 0.1 magnitude. Operator
 picks; I staged the config either way.
 
-## 0d. Why the harness didn't move — ceiling is COVERAGE, not confidence
+## 0d. Why the harness didn't move — ceiling is COVERAGE rather than confidence
 
 Read-only cluster analysis of the 321/376 neural failures (v0.6.0 harness),
 to inform the fork:
@@ -122,12 +122,12 @@ to inform the fork:
 - **Failure clusters:** intersection 65, address.usa 56, functional 33,
   address.fra 24, then non-US/FR locales — nzd 22, nld 20, deu 17, aus/nor/prt/pol.
 - **Mode:** 396 expected components are MISSED (model emits no such tag) vs 323
-  labeled-but-wrong — i.e. ~55% of the gap is _missing labels_, not bad values.
+  labeled-but-wrong — i.e. ~55% of the gap is _missing labels_ rather than bad values.
 - **Most-missed tags:** street ×197, house_number ×100, venue ×21.
 - **Intersections: the model emits `intersection_a`/`intersection_b` in 0 of the
   65 failing intersection cases** — it never learned the tag (corpus gap).
 - Only 9/321 failures are structurally invalid → failures are coherent-but-
-  incomplete, not garbled.
+  incomplete rather than garbled.
 - **Intersection root-cause (logit probe):** the `intersection_a/b` labels exist
   (indices 29–32) and the decode mask permits them, but on canonical
   intersections ("Broadway & W 42nd St", "Market St and Castro St") the model
@@ -154,7 +154,7 @@ either. The dominant harness changes are **corpus coverage** (intersection
 templates; EU/Oceania locales — #40 OpenAddresses) and **capacity** (#43 larger
 model) for street extraction (street recall 30%, 197 misses). Recommend the
 operator weigh those against another calibration tweak: the data says the
-release metric is coverage-bound, not calibration-bound.
+release metric is coverage-bound rather than calibration-bound.
 
 ## 1. What shipped
 
@@ -175,7 +175,7 @@ release metric is coverage-bound, not calibration-bound.
 - **Eval tooling (PR #194):** `eval-error-analysis.ts` + `harness-v0-neural.ts`
   gained `--model/--tokenizer/--model-card` + `--postcode-repair` so the check
   can measure the calibration checkpoint on the held-out TEST.
-- **#33 locale pre-classifier — measured, not built (PR #194):** rather than
+- **#33 locale pre-classifier — measured rather than built (PR #194):** rather than
   build an MLP blind, measured the existing rule-based `@mailwoman/locale-hint`
   (4600 samples). Postcode-shape baseline: **65.9%** — GB/CA/JP detected, but
   **FR/DE/NL collapse to US** (shared `\d{5}`). Adding lexical features
@@ -206,7 +206,7 @@ targets, which is why #31 is the binding experiment.
 **direct finding:** the postcode fix is decisive for postcode accuracy but
 moves the _primary_ harness metric by only +2 assertions — whole-address
 assertions rarely fail on postcode alone; street/locality/venue/intersection
-are the larger gaps. Postcode fix is necessary, not sufficient.
+are the larger gaps. Postcode fix is necessary rather than sufficient.
 
 ## 2. What went well
 
@@ -229,14 +229,14 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 
 ## 4. Decisions made autonomously
 
-- **CI unblock via PR, not direct main push.** Auto-classifier (correctly)
+- **CI unblock via PR rather than direct main push.** Auto-classifier (correctly)
   blocked direct-to-main; routed through a reviewable PR. Operator merged it.
 - **#35 as a decoder-side label repair (not a tokenizer change or emission
   prior).** A true "guard-before-SentencePiece" needs a retrained model;
   the no-retrain, highest-precision change is snapping the decoded span to the
   regex match. Built with precision guards (longest-match-wins, SNAP-only for
   numeric shapes, local smear-clip) → 0 regressions.
-- **Calibration base = v0.6.0, not v0_6_4.** Acceptance compares to "v0.6.0
+- **Calibration base = v0.6.0 rather than v0_6_4.** Acceptance compares to "v0.6.0
   dev"; building label_smoothing on the diluted v0_6_4 synth recipe would
   confound calibration with corpus changes. Single-variable discipline.
 - **Full 100K run with a 20K early-kill check** (not a short probe). Budget
@@ -250,7 +250,7 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
   for the operator.
 - **Did not promote/ship the calibration model.** It failed the check (harness
   flat, house_number −6pp). Per ship discipline + the pre-publish eval check,
-  kept it experimental (volume + local), not uploaded to HF. Resisted the pull
+  kept it experimental (volume + local) rather than uploaded to HF. Resisted the pull
   to "ship something" from a long training run.
 - **Did not autonomously launch iteration-2 (`ls=0.05`).** Training is
   authorized, but the iteration-2-vs-pivot fork is an actual judgment call at
@@ -267,7 +267,7 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 
 - **the fork — what moves the harness next** (§0c + §0d). `ls=0.1` didn't move
   the release metric, and the §0d cluster analysis says why: the harness is
-  **coverage-bound** (missing street/intersection/foreign-locale labels), not
+  **coverage-bound** (missing street/intersection/foreign-locale labels) rather than
   calibration- or fragmentation-bound. Three paths:
   - (a) **`ls=0.05`** — staged, last recipe iteration (~$8/2h). Cheapest; but
     §0d predicts it won't move the harness (it can't create missing labels).

@@ -39,7 +39,7 @@ export interface StreetMorphologyPriorOpts {
 	maxAffixBias?: number
 	/**
 	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label. Default 2.0 — a touch
-	 * weaker than the affix bias because the neighbour is inferred from adjacency, not direct match.
+	 * weaker than the affix bias because the neighbour is inferred from adjacency rather than direct match.
 	 */
 	maxNeighbourStreetBias?: number
 	/**

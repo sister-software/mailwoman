@@ -70,7 +70,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	{
 		const r = collapseWhitespace(text)
 
-		// Compare the TEXT, not its length: folding a lone tab to a space is length-preserving, and a
+		// Compare the TEXT rather than its length: folding a lone tab to a space is length-preserving, and a
 		// length test reads that edit as no edit at all.
 		if (r.text !== text) {
 			text = r.text

@@ -80,7 +80,7 @@ export interface GeocoderControlsProps {
 	map?: MapInstance | null
 	/**
 	 * Fired with the query whenever one is submitted, before the parse starts. The host writes it into the URL. this
-	 * package never touches `location`, because the address bar is the app's state, not a control's.
+	 * package never touches `location`, because the address bar is the app's state rather than a control's.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
@@ -176,7 +176,7 @@ export function GeocoderControls({
 			floor: viewport * 0.15,
 			// Released below this, the drag reads as "put it away" rather than "make it small".
 			dismissBelow: viewport * 0.28,
-			// At or under this the drawer is a search field over a map, not a panel standing on one.
+			// At or under this the drawer is a search field over a map rather than a panel standing on one.
 			collapsedBelow: viewport * 0.2,
 		}
 	}, [])
@@ -201,7 +201,7 @@ export function GeocoderControls({
 	}, [])
 
 	/*
-	 * The whole header is the grab target, not just the pill: that is the part of a sheet a thumb lands on, and the
+	 * The whole header is the grab target rather than just the pill: that is the part of a sheet a thumb lands on, and the
 	 * pill alone is a 3rem strip to hit. The field and the close keep their own gestures.
 	 */
 	const onHeaderPointerDown = useCallback(
@@ -284,7 +284,7 @@ export function GeocoderControls({
 	}, [sheetDetents, toggleDetent])
 
 	/*
-	 * OVERSCROLL IS A DRAG, not a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
+	 * OVERSCROLL IS A DRAG rather than a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
 	 * itself should come down — that is what the reference sheets do, and it is what makes a drawer dismissable
 	 * without first hunting for the pill. A rubber band in that position says the gesture was heard and refused.
 	 *

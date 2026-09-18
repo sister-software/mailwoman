@@ -630,7 +630,7 @@ async function runBatchedIngest(
 	const script = resolveModulePath("@mailwoman/zoning/scripts/ingest-chunk")
 	const chunks: ZoningChunkResult[] = []
 
-	// The upper bound is deliberately open — the source reports a count, not a maximum id, and a range that stopped at the
+	// The upper bound is deliberately open — the source reports a count rather than a maximum id, and a range that stopped at the
 	// count would drop every feature past a gap in the numbering.
 	let from = 1
 
@@ -755,7 +755,7 @@ function writeVocabularyRows(
 			scheme,
 			code,
 			label,
-			// DECLARED IS A PROPERTY OF THE PUBLISHER'S DOMAIN, NOT OF THE SCHEME. A local authority's own codes are observed
+			// DECLARED IS A PROPERTY OF THE PUBLISHER'S DOMAIN rather than OF THE SCHEME. A local authority's own codes are observed
 			// rather than declared — the Department publishes no domain for them — and an undeclared generic type is the event
 			// this column exists to make visible.
 			declared: scheme === GZT_CROSSWALK_SCHEME && GZT_DECLARED_CODE_SET.has(code) ? 1 : 0,
@@ -768,7 +768,7 @@ function writeVocabularyRows(
 	for (const row of [...rows.values()].toSorted((left, right) =>
 		left.scheme === right.scheme ? (left.code < right.code ? -1 : 1) : left.scheme < right.scheme ? -1 : 1
 	)) {
-		// NULL, not a plausible URL. Every one of the 85,330 rows links its generic type's definition to `viewer.myplan.ie`,
+		// NULL rather than a plausible URL. Every one of the 85,330 rows links its generic type's definition to `viewer.myplan.ie`,
 		// which has no DNS record, and three candidate replacements on the live host answer HTTP 404 — so the definitions
 		// behind the code-to-label pairs were not retrievable and this column says so by being empty.
 		insert.run(row.scheme, row.code, row.label, null, null, row.declared, row.observedRows)

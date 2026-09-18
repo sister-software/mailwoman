@@ -3,7 +3,7 @@
 _Written during night-7 as the groundwork for the operator's "service worker cache" ask. We did **not**
 ship a service worker this shift: the investigation below turned up enough cross-origin sharp edges that a
 blind end-of-shift implementation would have been the wrong call. This is the map so the next session starts
-with the gotchas already paid for, not a from-scratch spike._
+with the gotchas already paid for rather than a from-scratch spike._
 
 ## What you want
 
@@ -29,7 +29,7 @@ export function assetURL(locale, version, filename) {
 // index.tsx: modelURL / tokenizerURL / wof-hot.db source all go through assetURL(locale, selectedVersion, …)
 ```
 
-So the requests a service worker has to cache are **cross-origin to `huggingface.co`**, not same-origin. That
+So the requests a service worker has to cache are **cross-origin to `huggingface.co`** rather than same-origin. That
 single fact is most of the design.
 
 ### Sharp edge 1 — HF answers with a 302 to an expiring signed CDN URL
@@ -107,7 +107,7 @@ self.addEventListener("fetch", (event) => {
 	if (!isHeavyAsset(url)) return // let everything else hit the network normally
 	event.respondWith(
 		(async () => {
-			// cache key = the stable HF request, NOT the signed redirect target
+			// cache key = the stable HF request rather than the signed redirect target
 			const caches_ = await caches.keys()
 			for (const name of caches_) {
 				if (!name.startsWith("mailwoman-assets-")) continue
@@ -160,7 +160,7 @@ them are visible to `tsc` or a single-page render:
    explicit assertion that the SW served the body without a redirect).
 
 Playwright drives all five with a real Chromium + service-worker support; that's the check this feature needs,
-and it's a session's worth of careful work, not an end-of-shift add-on.
+and it's a session's worth of careful work rather than an end-of-shift add-on.
 
 ## Recommendation
 

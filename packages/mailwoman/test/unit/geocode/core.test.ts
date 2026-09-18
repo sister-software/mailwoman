@@ -602,7 +602,7 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 		const qs = calls[0]!.opts!.queryShape!
 		// The Wetstraat/Rue-de-la-Loi cross-border class: no known postcode format, no region abbreviation, so
 		// buildEmissionPriors returns an all-zeros matrix — the emission prior cannot move it. That class needs a
-		// lexical country prior, not this belt.
+		// lexical country prior rather than this belt.
 		expect(qs.knownFormats).toHaveLength(0)
 		expect(qs.regionAbbreviations ?? []).toHaveLength(0)
 	})
@@ -711,7 +711,7 @@ describe("#1537: a famous namesake the model reads as a `street` keeps its candi
 			findPlace: async (query) =>
 				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
 		}),
-		// No placer: this test is about the resolver's candidate list, not the country prior — and loading the
+		// No placer: this test is about the resolver's candidate list rather than the country prior — and loading the
 		// bundled placer model in a unit test would be a several-hundred-millisecond side quest.
 		placeCountry: false,
 	})

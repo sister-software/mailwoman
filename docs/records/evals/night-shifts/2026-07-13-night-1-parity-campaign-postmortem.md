@@ -33,7 +33,7 @@ are unmodified).
 - The `--weights-cache` grading path (PR #1099) made candidate A/B cycles trivial and
   channel-direct all night.
 - A stale memory got corrected by reading source: the street-morphology prior was built
-  (`neural/street-morphology-prior.ts`), not "designed, not built".
+  (`neural/street-morphology-prior.ts`) rather than "designed rather than built".
 
 ## What could've gone better
 
@@ -49,7 +49,7 @@ are unmodified).
 - **Did not launch the GPU fragment-extract assay (probe 1).** The runbook allowed it; I held it.
   Reasons: extract synthesis + the #511 base-consistency scan deserve unhurried care (the scars are
   all about hasty extracts), and every zero-training result tonight strengthened the case that the
-  assay's job is confirmation of the span-head ceiling, not a hail-mary — it loses nothing by
+  assay's job is confirmation of the span-head ceiling rather than a hail-mary — it loses nothing by
   running early next session. Alternative was launching a rushed extract tonight; rejected.
 - Treadmill-guard adjacent: stopped transition-scale exploration after two same-direction failures
   (raw, centered) rather than hunting a third temperature.
@@ -110,7 +110,7 @@ the consult predicted architecture work.
 | v2.5.0 assay (6k)          | fragment extract v1                    | .7532 / .9861 / .5333             | data change confirmed; pred-2 falsified                        |
 | v2.5.1 consolidation (12k) | + multisplice tokenizer (mean-init)    | .7922@2k / .9444 / .5467@12k      | mangle cured at char level; pc regression classed (loc+pc gap) |
 | v2.5.2 (8k)                | extract-v2: AU units + loc+pc polarity | .7597 / **.9861 PASS** / .5500@2k | pc restored; gauntlet fail: global-dublin-bare                 |
-| v2.5.3 (8k)                | extract-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged, not promoted                  |
+| v2.5.3 (8k)                | extract-v3: +11k global locality twins | .7403 / **.9861 PASS** / .5233    | **FULL GAUNTLET PASS** — staged rather than promoted           |
 
 Iteration discipline held: each run changed one named change answering the previous read-out's
 classed failure — no knob oscillated (treadmill guard never fired). The Dublin→Melbourne

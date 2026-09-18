@@ -48,7 +48,7 @@ def test_hyphen_class_is_folded_in_numbers_and_left_alone_in_names() -> None:
     assert normalize_number("3ー16") == "3-16"
     assert normalize_number("3−16") == "3-16"
     assert normalize_number("3－16") == "3-16"
-    # U+30FC inside a katakana name is a prolonged-sound mark, not a hyphen. Folding it corrupts
+    # U+30FC inside a katakana name is a prolonged-sound mark rather than a hyphen. Folding it corrupts
     # the name, so normalize_name must leave it.
     assert normalize_name("コーポ丘の上") == "コーポ丘の上"
 
@@ -288,7 +288,7 @@ def test_verify_rejects_an_all_o_row() -> None:
 
 
 def test_every_significant_character_carries_a_label() -> None:
-    # The JSON-hides-gaps read: counted on the label ARRAY the loader builds, not on the triple.
+    # The JSON-hides-gaps read: counted on the label ARRAY the loader builds rather than on the triple.
     records = [render(URBAN, register) for register in REGISTER_WEIGHTS]
     records.append(render_row(**URBAN, register="native", postcode="7600017", spaced=True, country=True))
     stats = coverage_stats(records)
@@ -350,7 +350,7 @@ def test_exact_selection_yields_exactly_the_quota() -> None:
 
 
 def test_water_fill_caps_the_dominant_bucket() -> None:
-    # Tokyo cannot drown Tottori: the cap is the level, not the share.
+    # Tokyo cannot drown Tottori: the cap is the level rather than the share.
     counts = {"tokyo": 1_992_163, "tottori": 40_000, "kagawa": 120_000}
     cap = water_fill(counts, 300_000)
     assert cap == 140_000  # 140,000 + 40,000 + 120,000 = 300,000 exactly

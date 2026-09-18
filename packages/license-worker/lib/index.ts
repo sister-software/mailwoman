@@ -5,7 +5,7 @@
  *
  *   The Worker export. `readEnv` runs per request and is cheap. a placeholder var answers 503 for every request rather
  *   than letting one route work while another mints. The ledger, the email provider and the signing self-test are built
- *   once per isolate: the self-test signs and verifies a probe token, which is worth doing once, not per request.
+ *   once per isolate: the self-test signs and verifies a probe token, which is worth doing once rather than per request.
  */
 
 import type { ExportedHandler } from "@cloudflare/workers-types"

@@ -6,7 +6,7 @@
  *
  *   Every link existed and was tested in isolation before this file. nothing joined them, so nothing had
  *   ever produced a row `buildFilerDatabase` could consume. This is that join, and it is deliberately thin
- *   — the judgment lives in the pieces it calls, not here.
+ *   — the judgment lives in the pieces it calls rather than here.
  *
  *   ```
  *   name → resolveCIKCandidates      (edgar-filings.ts — every candidate, never a winner)
@@ -77,7 +77,7 @@ export const EdgarSkipReason = {
 	 */
 	NoTenK: "no-10-k",
 	/**
-	 * The most recent 10-K carries no Exhibit 21 — a filer's choice, not a contract break.
+	 * The most recent 10-K carries no Exhibit 21 — a filer's choice rather than a contract break.
 	 */
 	NoExhibit21: "no-exhibit-21",
 	/**
@@ -179,13 +179,13 @@ async function resolveCorroboratedCIK(
 	// some candidates are dropped by the SIC check.
 	corroborated.sort((a, b) => b.score - a.score)
 
-	// Ambiguity is a genuine TIE at the top, not "more than one survived". A slower-scoring candidate
+	// Ambiguity is a genuine TIE at the top rather than "more than one survived". A slower-scoring candidate
 	// that also happened to be a telecom company is not ambiguity — it's noise the score already ranked.
 	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`; with the
 	// 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
 		// A pinned CIK at the top score breaks the tie — the operator already decided this registrant
-		// is in scope, which is a decision about identity, not just corroboration.
+		// is in scope, which is a decision about identity rather than just corroboration.
 		const pinnedBreak = corroborated.find(
 			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
 		)
@@ -205,7 +205,7 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	// EDGAR occasionally 404s a filing document that objectively exists — a transient fetch failure, not a
+	// EDGAR occasionally 404s a filing document that objectively exists — a transient fetch failure rather than a
 	// missing filing. Catching here rather than letting a single 404 kill the whole run.
 	let documents: { url: string }[]
 
@@ -252,7 +252,7 @@ async function collectForFiling(
  * takes whatever index the caller assembled rather than fetching one itself.
  *
  * Only the MOST RECENT 10-K is read. A registrant's older filings restate the same family with an earlier vintage, and
- * ingesting all of them would multiply rows without adding facts — a deliberate scope choice, not an oversight.
+ * ingesting all of them would multiply rows without adding facts — a deliberate scope choice rather than an oversight.
  */
 export async function collectEdgarSubsidiaryRows(
 	client: SECIngestClient,

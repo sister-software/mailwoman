@@ -31,7 +31,7 @@
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -179,7 +179,7 @@ export async function evalOpenSet(
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
 	/**
-	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry, not calibration.
+	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry rather than calibration.
 	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
@@ -373,7 +373,7 @@ export async function evalOpenSet(
 
 	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + TEST.
 	// The operating threshold is picked on DEV (maximizing balanced min); the reported point is frozen on
-	// TEST — so the number is a generalization estimate, not a threshold fit to the set it's scored on.
+	// TEST — so the number is a generalization estimate rather than a threshold fit to the set it's scored on.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)

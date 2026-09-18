@@ -58,7 +58,7 @@ const PIN_PATTERNS: Record<keyof BoardPins, RegExp> = {
 
 /**
  * Read the committed constants out of the pin test's source. Throws when a constant is missing or duplicated — a
- * reshaped test file needs a human, not a guess.
+ * reshaped test file needs a human rather than a guess.
  */
 export function readCommittedPins(testText: string): BoardPins {
 	const read = (key: keyof BoardPins): string => {

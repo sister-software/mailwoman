@@ -9,7 +9,7 @@
  *   in the same subpath. This is the GB artifact the physical-constraint design record decided on
  *   (`docs/superpowers/specs/2026-09-03-physical-constraint-prior-design.md`, section 2): the register
  *   is open, and the `PO`-area measurement on #1975 showed no reconstruction from centroids and
- *   footprints comes close to it, so the register is stored, not inferred.
+ *   footprints comes close to it, so the register is stored rather than inferred.
  *
  *   ## Acquisition
  *
@@ -102,7 +102,7 @@ export const NSUL_PORTAL_URL = "https://geoportal.statistics.gov.uk"
 
 /**
  * The four attribution statements the NSUL User Guide requires of anyone redistributing an address product derived from
- * AddressBase, in the guide's wording and order. `year` is the copyright year of the data, not the build year.
+ * AddressBase, in the guide's wording and order. `year` is the copyright year of the data rather than the build year.
  */
 export function nsulAttribution(year: number): string {
 	return (
@@ -208,7 +208,7 @@ export type NSULLineClass =
  * CRLF-terminated in the wild: the `\r` is stripped at the reader boundary or the last column carries it into every
  * value (the G-NAF lesson). A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT}, when `UPRN` is
  * not a literal digit string within the safe-integer range, or when a non-empty `PCDS` does not have a unit-postcode
- * shape — a postcode-shaped column holding anything else is a defect to be counted, not a key to be stored.
+ * shape — a postcode-shaped column holding anything else is a defect to be counted rather than a key to be stored.
  */
 export function classifyNSULLine(line: string): NSULLineClass {
 	const parts = (line.endsWith("\r") ? line.slice(0, -1) : line).split(",")

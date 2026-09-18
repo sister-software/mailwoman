@@ -6,7 +6,7 @@
 # documents, generate the Python package (openapi-python-client), assemble the
 # Rust crate (progenitor), `uv build` + wheel import-check, `cargo check
 # --examples` — leaving artifacts under `clients-build/` for the caller to
-# upload. A non-zero exit means a broken generator or spec drift; callers
+# upload. A non-zero exit means a broken generator or spec drift. callers
 # must treat that as fatal (composite steps propagate failure by default).
 name: Generate API clients
 description: Compile the repo and run `mailwoman clients generate` (Python + Rust, verified)
@@ -27,11 +27,11 @@ runs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
       with:
-        # Pinned to the lab host's uv (keep in lockstep — bump deliberately, not via "latest").
+        # Pinned to the lab host's uv (keep in lockstep — bump deliberately rather than via "latest").
         version: "0.11.16"
 
     # `@stable` is this action's own documented canonical usage (a tracking ref it repoints
-    # itself, not a release tag).
+    # itself rather than a release tag).
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
 

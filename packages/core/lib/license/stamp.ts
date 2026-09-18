@@ -10,7 +10,7 @@
  *
  *   The stamp carries no licensee and no key id. A deployment serving the public must not carry its operator's
  *   commercial relationship in every response. the doctor prints those two locally. It is offline: the well-known
- *   register is the doctor's freshness check, not a per-process network call.
+ *   register is the doctor's freshness check rather than a per-process network call.
  */
 
 import { docsSiteURL } from "#license/docs-site"

@@ -14,9 +14,9 @@ tags:
 
 A single physical building can have multiple valid addresses. For commercial buildings, multifamily housing, corner properties, and any structure that touches more than one administrative system, that is the normal state of affairs. A parser that assumes "one building = one address" will fail silently on a large fraction of real-world queries.
 
-## The address is a protocol, not a property
+## The address is a protocol rather than a property
 
-An address is a **social protocol** for directing a courier, not a geographic fact — different couriers use different protocols, and the same building can participate in several at once.
+An address is a **social protocol** for directing a courier rather than a geographic fact — different couriers use different protocols, and the same building can participate in several at once.
 
 ### Mailing address vs. 911 address
 
@@ -96,7 +96,7 @@ locality: New York City
 
 And let the resolver return candidates for "Empire State Building" in New York City — which will include the 350 5th Ave location with high confidence. The parser does not need to know that "Empire State Building" and "350 5th Ave" are the same place. The the system that because WOF stores both as names for the same `wof:id`.
 
-When the input is `350 5th Ave, New York, NY 10118` and the resolver returns the WOF record for the Empire State Building, the output should include the WOF ID and coordinates, but also preserve the raw parsed address. The user might need the mailing address form, not the building name.
+When the input is `350 5th Ave, New York, NY 10118` and the resolver returns the WOF record for the Empire State Building, the output should include the WOF ID and coordinates, but also preserve the raw parsed address. The user might need the mailing address form rather than the building name.
 
 When the input is `123 Main St` and the resolver finds a multifamily building with 20 units, the output should flag the ambiguity: "This address is a multi-unit building. Specify an apartment number to resolve to a specific unit." The parser cannot guess which unit the user meant, but it can tell the user that the query is underspecified.
 

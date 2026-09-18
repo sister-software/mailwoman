@@ -28,7 +28,7 @@ Pre-registered before the first import as §4 of
 ## What is published, and what is withheld
 
 The full internal panel is 420 rows across seven lanes, 60 per lane, each row carrying a reference
-coordinate assigned before any arm ran. Reference-coordinate provenance is per row, not per lane, and
+coordinate assigned before any arm ran. Reference-coordinate provenance is per row rather than per lane, and
 it splits four ways:
 
 | provenance of the reference coordinate                                    | rows | published?                 |
@@ -62,14 +62,13 @@ published; this record's numbers are computed only over rows whose truth a third
 | Pelias    | `pelias/docker` @ `3dfa07d5`, images pinned by digest (Elasticsearch 7.17.27; `pelias/api:master@sha256:cec95697…`)                                                                                  | scoped local build, 12 countries (US FR DE GB AU NZ AT CH CZ DK BE NL): OpenAddresses (311 source files, countrywide for FR/AU/NZ), per-country OSM extracts, Who's On First, polylines + interpolation; built 2026-08-07/08, source checksums in the rig manifest | 2026-08-09 (UTC) |
 | Photon    | komoot/photon **1.3.0**                                                                                                                                                                              | the public pre-built **planet** index, vintage 2026-08-03 (OpenStreetMap)                                                                                                                                                                                          | 2026-08-09 (UTC) |
 
-The footprints are deliberately different, and the comparison is behavioral, not
+The footprints are deliberately different, and the comparison is behavioral rather than
 index-for-index: Photon answers from an OSM planet index; Pelias and Mailwoman answer from local
 builds scoped to the panel countries. This helps Photon wherever OSM has the address and hurts it
 wherever OSM does not; it is stated here rather than corrected for.
 
 One arm-configuration caveat: Mailwoman's `eu-mixed` rows ran under the production default `en-US`
-locale (no EU-mixed weights package exists), so that lane measures the unconstrained fallback path,
-not a locale-tuned configuration.
+locale (no EU-mixed weights package exists), so that lane measures the unconstrained fallback path rather than a locale-tuned configuration.
 
 ## Results — per lane, all three arms
 
@@ -104,7 +103,7 @@ Photon leads this lane at 1 km; Mailwoman trails both arms at 1 km.
 | Photon    | 57/57 (100.0%) | 57/57 (100.0%) | 57/57 (100.0%) | 0         |
 
 Mailwoman and Photon both resolve every row; the 14 Pelias misses all land beyond 25 km
-(wrong-place answers, not near-misses).
+(wrong-place answers rather than near-misses).
 
 ### en-us — United States (n = 45 of 60)
 
@@ -162,7 +161,7 @@ The §4 pre-registration set a ±5 pp equivalence bound at 25 km on this differe
 
 At 1 km the CI excludes zero in Pelias's favor. At 5 km and 25 km it excludes zero in Mailwoman's
 favor. The pre-registered ±5 pp equivalence claim at 25 km is **not** met — the CI extends past
-+5 pp — so the 25 km result reads as a directional difference in Mailwoman's favor, not as
++5 pp — so the 25 km result reads as a directional difference in Mailwoman's favor rather than as
 equivalence. Per-lane CIs are wide at these denominators (run the scorer for the full table); the
 only per-lane differences whose CIs exclude zero are en-nz (Mailwoman +24.6 pp, all thresholds) and
 eu-mixed (Pelias, 1 km and 5 km).
@@ -177,7 +176,7 @@ should be read with that in view:
 - **Mailwoman's rooftop layers share upstreams with the truth on four lanes**: G-NAF (en-au), LINZ
   (en-nz), BAN (fr-fr), and the US open address-point files (en-us). Its rooftop hits there are
   likewise partly recall of shared upstream data. Its de-de and eu-mixed answers draw on
-  OSM-derived address points and the admin gazetteer, not on the registers the truth came from —
+  OSM-derived address points and the admin gazetteer rather than on the registers the truth came from —
   which is visible in the numbers.
 - **Photon's index is OpenStreetMap only** — no OpenAddresses, no national-register feed. Its @1 km
   column is closest to a measure of independent coverage, and its no-result and beyond-25 km rows

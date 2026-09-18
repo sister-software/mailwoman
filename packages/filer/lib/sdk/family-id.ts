@@ -24,8 +24,8 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
  * already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`). Namespaced by `identifierType`
  * (`holding_company_name` vs `management_company_name`) so a holding company and a different management company that
  * happen to canonicalize to the same string never collapse into one family (spec §3.1 finding 1 — ownership and
- * operational control are different assertions, and that separation should hold for family membership too, not just for
- * the edge kind).
+ * operational control are different assertions, and that separation should hold for family membership too rather than
+ * just for the edge kind).
  *
  * Returns `null` when the name canonicalizes to an empty string (rare — e.g. a bare legal-designation token with
  * nothing else surviving) — the same defensive check `cluster-filers.ts`'s `buildInferredRecords` makes before using a

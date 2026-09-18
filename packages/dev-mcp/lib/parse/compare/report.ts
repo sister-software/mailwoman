@@ -7,7 +7,7 @@
  *   `/parse` endpoint, diffed span by span.
  *
  *   Two refusals carry over from `external-arm.ts` unchanged, and the second is sharper here than anywhere else in
- *   this server. Nothing is ever started: an endpoint that is not up is a refusal with the reason, not a run where
+ *   this server. Nothing is ever started: an endpoint that is not up is a refusal with the reason rather than a run where
  *   every row records libpostal as silent. And an arm's identity is never inferred from a port, because
  *   `@mailwoman/libpostal` answers this exact path with this exact shape — pointing at the wrong port compares
  *   mailwoman against mailwoman and produces a beautifully high agreement rate.

@@ -75,7 +75,7 @@ def export_onnx(
 
     # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
     # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
-    # is DECODE-TIME data, not part of the graph. Write it as a sidecar next to model.onnx so the
+    # is DECODE-TIME data rather than part of the graph. Write it as a sidecar next to model.onnx so the
     # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
     # keeping the export byte-identical for every pre-#727 recipe.
     import json as _json

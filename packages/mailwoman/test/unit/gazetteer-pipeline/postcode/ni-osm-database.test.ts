@@ -64,7 +64,7 @@ beforeAll(async () => {
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
 			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so
-			// this is one postcode with two attestations, not two codes and a typo.
+			// this is one postcode with two attestations rather than two codes and a typo.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.
@@ -99,7 +99,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo, not a bug.
+	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
@@ -107,9 +107,9 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.sectors).toBe(2)
 	// Every internal identity holds. nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
-	// The data extract, not the wall clock — the date that actually describes the rows.
+	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root.path
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync: root.path
 	// ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
@@ -130,7 +130,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const spaced = db.prepare("SELECT COUNT(*) AS n FROM spr WHERE name LIKE '% %'").get() as { n: number }
 	expect(spaced.n).toBe(0)
 
-	// Case folding: the lowercase and double-spaced tags collapsed into one place, not two plus a typo.
+	// Case folding: the lowercase and double-spaced tags collapsed into one place rather than two plus a typo.
 	const bt1 = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT1 5GS'").get() as { n: number }
 	expect(bt1.n).toBe(1)
 

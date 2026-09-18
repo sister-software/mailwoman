@@ -273,10 +273,10 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 		const yMaxData = ymx + yPad
 
 		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: innerYMinData, yMax: yMaxData, yMinData: innerYMinData }
-		// Log scale: the floor must come from the smallest *positive* data value, not the
+		// Log scale: the floor must come from the smallest *positive* data value rather than the
 		// linearly-padded minimum — otherwise a metric that touches/approaches zero (F1 scores
 		// start near 0, val_loss can be tiny) drags the floor to ~0 and the axis spans many
-		// empty decades, squashing the real data into a sliver. Pad in log-space, not linear.
+		// empty decades, squashing the real data into a sliver. Pad in log-space rather than linear.
 		let posMin = Infinity
 
 		for (const p of allPoints) {

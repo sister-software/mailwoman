@@ -1,6 +1,6 @@
 # Mailwoman trajectory review and re-railing plan — 2026-07-01
 
-**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months went versus where the plan said they would go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction, not code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
+**Date:** 2026-07-01 · **Scope:** project trajectory at v5.0.0 — where the last two months went versus where the plan said they would go, and a concrete plan to get the project back on rails. Produced from git-history analysis plus a doc/eval synthesis pass over `docs/articles/plan/`, `docs/articles/evals/`, `docs/articles/releases.mdx`, `evals/scores-by-version.json`, and the open issue queue. This review is about direction rather than code quality — the [2026-06-25 mile-marker review](./2026-06-25-claude-review.md) covers code quality and remains largely current.
 
 ---
 
@@ -11,7 +11,7 @@ The project matured from "does the model parse" into "does the system geocode" �
 Three facts frame everything below:
 
 1. **The early model climb was real and has flattened.** Micro-F1 went from ~0.72 (v0.2.0) to 84.8 → 85.1 → 86.1 across v4.2 → v4.4, with starved tags rescued outright (street_suffix 48.8 → 96.6, po_box 0 → 89.1). Since v4.4.0 no full per-tag re-score has landed; the ledger rows for 4.2.0–4.4.0 carry `null` headline F1 and nothing newer exists.
-2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling, not weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy — it is what the parse/resolve split was _for_ — but it changed what "progress" means without the measurement or the roadmap being updated to match.
+2. **The wins moved downstream of the model.** The largest recent gains came from resolver logic and data relabeling rather than weights: #822 lifted bare "City, Country" resolve from 54.2% → 77.9% with no retrain; the v4.13.0 multi-locale extract lifted EU resolve (IT 79 → 92.7%, PT 52 → 82%, AT 50 → 81.3%). This is healthy — it is what the parse/resolve split was _for_ — but it changed what "progress" means without the measurement or the roadmap being updated to match.
 3. **Nobody outside the lab can see any of it.** The public demo runs its own `runCascade` that skips the shared joint-consistency resolver passes entirely (#861), and it has trailed the npm model by multiple versions before (#203). The +23.7pp resolve win is invisible at the exact URL the project points people to.
 
 The process discipline that got the project here — pre-registered checks, falsified changes reverted rather than shipped (#305: measured −21pp, rolled back), documented check revisions, ~30 postmortems — is strong and should not change. What needs to change is where the effort points next.
@@ -24,9 +24,9 @@ The repo dates to 2019 (Pelias-parser lineage) and was near-dormant through earl
 
 Against the original plan, three drifts are must be explicit:
 
-**The phase plan was abandoned, not completed.** `plan/README.mdx` says Phases 0–4 "shipped and superseded by the release train," and the live roadmap moved to a project board (epic #488). Meanwhile the phase directory accreted post-hoc phases (7, 8E, 8-fresh-slate — the v0.5.0 rebuild), and new architecture specs are still being written six weeks after "shipped" (`2026-06-29-joint-consistency-resolution.mdx`, edited today). The plan directory now describes a project that no longer exists in the shape it describes.
+**The phase plan was abandoned rather than completed.** `plan/README.mdx` says Phases 0–4 "shipped and superseded by the release train," and the live roadmap moved to a project board (epic #488). Meanwhile the phase directory accreted post-hoc phases (7, 8E, 8-fresh-slate — the v0.5.0 rebuild), and new architecture specs are still being written six weeks after "shipped" (`2026-06-29-joint-consistency-resolution.mdx`, edited today). The plan directory now describes a project that no longer exists in the shape it describes.
 
-**Locale scope tripled past its own boundary.** The v1 scope was "US + France… Japanese is a deliberate Phase 6 stress test, not v1." Shipped reality: a 16-locale model (v4.13.0), Japan live in the resolver, Sweden queued as locale 17 pending license approval (#202). The multi-locale campaign became the main effort. It worked — but no document ever re-declared the scope, so every remaining plan artifact understates what the project is now responsible for maintaining.
+**Locale scope tripled past its own boundary.** The v1 scope was "US + France… Japanese is a deliberate Phase 6 stress test rather than v1." Shipped reality: a 16-locale model (v4.13.0), Japan live in the resolver, Sweden queued as locale 17 pending license approval (#202). The multi-locale campaign became the main effort. It worked — but no document ever re-declared the scope, so every remaining plan artifact understates what the project is now responsible for maintaining.
 
 **Whole workstreams appeared that the plan never mentioned.** Record matching (Fellegi-Sunter scorer, NPPES dedup benchmarks, epics #602/#603/#615/#625/#655), the client-side WASM geocoder demo, competitive benchmarks against Nominatim/Pelias/Photon. Individually justified; collectively a second product growing inside the first one's roadmap.
 
@@ -59,8 +59,8 @@ The ordering principle: **make the truth visible first, then decide, then spend.
 The single highest-changeage item in the backlog, because every win already shipped is discounted to zero until the demo serves it.
 
 - **Fix #861:** route the browser cascade through the shared `resolveTree` joint-consistency passes (or extract those passes to a target both runtimes import). Acceptance: the #822 "City, Country" cases that resolve on the server resolve identically in the browser.
-- **Close the version-lag class, not the instance:** add a release-train checklist item (or CI check) that fails when the demo's pinned model/package version trails the latest npm release. #203 was fixed once as an instance; make it structural.
-- While in there, spend the small effort on #827 (progressive region centering / gazetteer cold-load) only if it falls out of the parity work — it is polish, not rail.
+- **Close the version-lag class rather than the instance:** add a release-train checklist item (or CI check) that fails when the demo's pinned model/package version trails the latest npm release. #203 was fixed once as an instance; make it structural.
+- While in there, spend the small effort on #827 (progressive region centering / gazetteer cold-load) only if it falls out of the parity work — it is polish rather than rail.
 
 ### Track 2 — Re-anchor measurement (days, CPU only) — #885
 
@@ -69,7 +69,7 @@ R1 and R5 have the same fix: one full re-score and one documentation truth-pass.
 - **Run a full per-tag parity re-score** against the current shipped model (v5.0.0 line) on the same golden sets as the v4.4.0 check, and publish it as `parity-scorecard-2026-07-xx.md`. This re-baselines the "coordinate-invisible" ledger of deferred label-F1 debt in one shot: either the erosion is bounded (likely) and the pattern is vindicated, or it is not and we learn that now, cheaply.
 - **Decide the ledger's fate explicitly.** Either repopulate `evals/scores-by-version.json` from the re-score and commit to updating it at every promote, or formally deprecate it and update `AGENTS.md` to name the actual authority (the latest parity scorecard + per-release model-cards). The current state — documented-canonical but null-filled — is the worst of both.
 - **Truth-pass the three stale records:** `releases.mdx` current-version line, `status.mdx` (still quoting v4.4.0 tables per the 06-25 review), and the plan `README.mdx` — see Track 5.
-- **Add the standing rule:** every N promotes (suggest 5) or any promote that lowers a check floor triggers a full re-score. Write it into `CONTRIBUTING_MODEL_WORK.mdx` so it is a check, not a virtue.
+- **Add the standing rule:** every N promotes (suggest 5) or any promote that lowers a check floor triggers a full re-score. Write it into `CONTRIBUTING_MODEL_WORK.mdx` so it is a check rather than a virtue.
 
 ### Track 3 — One decision session to drain the operator queue (hours)
 
@@ -100,7 +100,7 @@ Write the successor to `plan/README.mdx` — a short "what mailwoman is now" sco
 
 ### What not to do
 
-- **No new resolver micro-changes past the frontier.** The shift notes already identified the residual as gazetteer name-key hygiene and exonym coverage (#877), not more changes — #781 measured +0.0pp and was correctly closed. Resist the treadmill.
+- **No new resolver micro-changes past the frontier.** The shift notes already identified the residual as gazetteer name-key hygiene and exonym coverage (#877) rather than more changes — #781 measured +0.0pp and was correctly closed. Resist the treadmill.
 - **No breaking cosmetic sweeps mid-campaign.** #875 waits for the major it is assigned to.
 - **No new locales before the rendering fix** (covered above, worth repeating as a rule).
 - **No new workstreams** until Tracks 1–3 are done. They total less than a week and everything else compounds on them.
@@ -121,7 +121,7 @@ Between this review and the next morning, the night shift ran the #825 question 
 
 **What happened.** The extract retrain the plan was blocking (v196-slavic-anchor, correctly built on the v4.15.0 base) ran and was falsified: it held US but regressed CZ at convergence (wrong-city 44 → 58%, resolved-p50 5.24 → 82.89 km). Root-causing the failure found the bottleneck was never training data: the 48k SentencePiece unigram vocab contains the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its own piece (`Vysoká → [▁V, ys, ok, á]`) — and a unigram model cannot emit a subword absent from its table, so no volume of data fixes it. The fix is a **training-free tokenizer vocab-splice + embedding mean-init** (#884): CZ wrong-city 44 → 28%, PL 30 → 11%, US coordinate output byte-for-byte identical by construction (bootstrap diff 0, CI [0, 0]). No GPU. The ship candidate is the mean-init model; a 2k fine-tune was ablated and retired as slightly harmful.
 
-**What this vindicates.** Two of the disciplines this review said not to change did exactly their job in one night: the falsified-change rule killed the retrain instead of shipping it, and coordinate-first grading caught what label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_, not an argument for re-anchoring on label-F1.
+**What this vindicates.** Two of the disciplines this review said not to change did exactly their job in one night: the falsified-change rule killed the retrain instead of shipping it, and coordinate-first grading caught what label-F1 would have promoted — the retrain's content-gap label metric _improved_ 100 → 17 while the coordinate regressed. That is the sharpest evidence yet for the R1 nuance: the re-score in #885 is a drift _backstop_ rather than an argument for re-anchoring on label-F1.
 
 **R2 is closed as written.** "Stalled with no probe" no longer describes reality; the probe ran, the hypothesis flipped from data to representation, and the fix is committed and reproducible (branch `feat/825-v196-slavic-anchor`, `tokenizer_splice.py`, day eval `2026-07-01-day-825-tokenizer-fix.md`). The residual risk moves downstream: shipping it.
 
@@ -131,9 +131,9 @@ The remaining work is mechanical and tracked on #884:
 
 - **#291 — grow the CZ/PL coord eval sets 150 → ~1k.** The 150-row sets are underpowered (CZ p50 CI was [−40, −0.34]); wrong-city% is the defensible headline until then. This is the #884 equivalent of the pre-registered check and should land before promotion.
 - **#293 — int8-quantize the mean-init model and measure the browser budget.** The vocab growth (48k → 58.6k) took fp32 ONNX 118 → 134 MB; int8 lands near ~34 MB against the ~30 MB browser SLO. If it busts, the fallback decision is prune rarer diacritic pieces vs ship server-only — an operator call, added to Track 3.
-- **#295 — the coordinated model + tokenizer promotion** (operator check). The spliced tokenizer ships _with_ the model in both runtimes; model-card plus OA CZ/PL ODbL/CC-BY attribution. This inherits Track 4's old role as the conditional spend — except the spend is now a release, not a training run.
+- **#295 — the coordinated model + tokenizer promotion** (operator check). The spliced tokenizer ships _with_ the model in both runtimes; model-card plus OA CZ/PL ODbL/CC-BY attribution. This inherits Track 4's old role as the conditional spend — except the spend is now a release rather than a training run.
 - **#296 — CZ/PL coverage residual** (re-opened): the remaining wrong-city is gazetteer/rooftop coverage, downstream of the now-fixed parse. OA CZ 2.83M + PL 7.67M rows already on disk.
-- **#297 — CharCNN CJK track stays deferred.** It is the next representational question, not this one.
+- **#297 — CharCNN CJK track stays deferred.** It is the next representational question rather than this one.
 
 ### Consequent edits to the standing plan
 

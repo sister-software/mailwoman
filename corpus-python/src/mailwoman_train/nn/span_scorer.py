@@ -4,7 +4,7 @@ The flat BIO head decodes T independent token choices, so "these k tokens are on
 emergent property of token votes rather than a scored decision. This module makes a segmentation a
 first-class hypothesis: every span up to ``max_span`` tokens gets a per-type score, a segment-level
 transition table carries the address grammar (the level at which "must not follow" is well-posed —
-5-8 segments, not 40 subwords), and the whole segmentation is scored jointly.
+5-8 segments rather than 40 subwords), and the whole segmentation is scored jointly.
 
 Phase 1 scope: scoring + loss + decode, evaluated in Python. Export/JS/rerank are later phases. see
 docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md and the phase-1 plan beside it.
@@ -118,7 +118,7 @@ class SemiMarkovCRF(nn.Module):
     The linear-chain CRF this project abandoned (v0.5.0, bf16 NaN) modelled transitions between
     SUBWORD tags — mostly noise ("must `1` follow `▁8`" is not grammar). At segment granularity the
     same table is well-posed: house_number -> street, one postcode per reading, venue before locality.
-    Sequences are 5-8 segments, not 40 subwords.
+    Sequences are 5-8 segments rather than 40 subwords.
 
     All DP is fp32 (see module docstring). ``O`` segments are length 1 by construction: every
     non-entity token is its own O segment, which keeps the DP small and matches the word-level O

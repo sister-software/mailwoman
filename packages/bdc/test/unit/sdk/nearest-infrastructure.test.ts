@@ -25,7 +25,7 @@
  *     accidentally permissive.
  *
  *   `contractDB` fixtures are separate, minimal `LayerContractDatabase`-only databases (no `poi` table at
- *   all) — proving the coverage join runs against WHATEVER database the caller passes, not poi.db's own
+ *   all) — proving the coverage join runs against WHATEVER database the caller passes rather than poi.db's own
  *   coverage. One fixture's `layer_coverage` is left completely empty (every hit must report
  *   `coverage: undefined`, the meaning-of-zero rule); another has coverage written for exactly the res-6
  *   cells the hits actually land in (computed via the same `res9ShortCellToRes6Parent`
@@ -235,7 +235,7 @@ describe("nearestInfrastructure", () => {
 			categoryIDs: TELECOM_CATEGORY_IDS,
 		})
 
-		// The cafe trap must never surface — categoryIDs filtering, not a plain nearest-POI scan.
+		// The cafe trap must never surface — categoryIDs filtering rather than a plain nearest-POI scan.
 		expect(hits.every((h) => TELECOM_CATEGORY_IDS.includes(h.categoryID))).toBe(true)
 		expect(hits.some((h) => h.name === CAFE_TRAP.name)).toBe(false)
 
@@ -306,7 +306,7 @@ describe("nearestInfrastructure", () => {
 				observedRows: 42,
 			})
 
-			// Cross-check against a direct readLayerCoverage call, not just the wrapper's own math.
+			// Cross-check against a direct readLayerCoverage call rather than just the wrapper's own math.
 			const direct = await readLayerCoverage(contractDB, res9ShortCellToRes6Parent(hit.h3Cell))
 			expect(hit.coverage).toEqual(direct)
 		}

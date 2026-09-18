@@ -96,7 +96,7 @@ def run_draw_pass(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
-    # REPS PER ROW, not just share (#1677). `reps_per_row` is the number every weight is implicitly choosing
+    # REPS PER ROW rather than just share (#1677). `reps_per_row` is the number every weight is implicitly choosing
     # and that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
     # share over 53,078 rows is 5. The v4.6.0 bare-country collapse was picked at weight 1.0 — the
     # smallest number in the config — by someone reading 1.0 as a small exposure.

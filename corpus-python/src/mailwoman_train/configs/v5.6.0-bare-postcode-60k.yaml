@@ -24,7 +24,7 @@
 #
 # HELD-OUT INTEGRITY. All 56 evaluation strings (32 CZ/SK, 24 NL) are excluded from the recipe GLOBALLY
 # by normalized form, so a Czech case cannot re-enter training as the identical Swedish input. Verified
-# against the built parquet, not its source jsonl: 0 of 56 present.
+# against the built parquet rather than its source jsonl: 0 of 56 present.
 #
 # THE GAUNTLET BARE-POSTCODE ROWS ARE NOT HELD OUT, and two of the nine are now memorization checks.
 # Checked each of the nine against the built parquet: `cz/bare-postcode.jsonl`'s `100 00` and `110 00`
@@ -48,7 +48,7 @@
 #
 # THE EMITTED LEVEL IS 23% LOWER, AND THAT IS THE NUMBER TO REASON WITH. Augmentation expands long
 # addresses into more rows, so a short-row source keeps a smaller part of a fixed emitted budget: at
-# 0.2049% this source delivers about 15,736 rows over the run, or 0.77 passes per row, not 1.0. That is
+# 0.2049% this source delivers about 15,736 rows over the run, or 0.77 passes per row rather than 1.0. That is
 # not the `augment_exclude_sources` entry below — `synth-no-fragment` (0.7696) and `synth-fr-fragment`
 # (0.7708) are not excluded and carry the same ratio, and `synth-sg-register` sits at 0.8247.
 #
@@ -69,7 +69,7 @@
 # What separates `100 00` from `100 00 Praha, Czechia` is that the row ENDS after two tokens. Counted as
 # a complete row, the mixture carries 508 per 1,000,000 emitted — 3,901 over the run, every one from
 # this source — against zero labelled house_number at either level, and against zero of any kind before
-# v0.30.0. The quantity is a shape going from absent to present, not a margin over rival evidence, so
+# v0.30.0. The quantity is a shape going from absent to present rather than a margin over rival evidence, so
 # the only open question is whether about 3,900 instances teach it. A census cannot answer that. the run
 # can.
 #
@@ -77,7 +77,7 @@
 #
 #   1. The held-out spaced-postcode sweep — `eval bare-postcode`, 32 CZ/SK `NNN NN` and 24 NL `NNNN LL`,
 #      none of them on the board. v5.5.0 reads 0/32 and 19/24. This arm must recover CZ/SK WITHOUT
-#      losing NL. a partial recovery is a partial result, not a pass.
+#      losing NL. a partial recovery is a partial result rather than a pass.
 #   2. `fr.bare_street_intact` in the promotion battery, which v5.5.0 raised 95 -> 100. FR is tier 1, so
 #      a drop here disqualifies the arm outright.
 #   3. The target-family boards v5.4.0 won and v5.5.0 held, which must not give any of it back:
@@ -264,7 +264,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the seven
+  # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the seven
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
   # 1.0*20460 = 437,799 draws, 5.7% of the run. The big register sources take one pass each because they
   # carry their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the
@@ -286,7 +286,7 @@ data:
     # generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing
     # failed for five model versions.
     #
-    # The floor is COUNTED, not chosen by symmetry with the entries below. A reps target of 1.0 is exactly
+    # The floor is COUNTED rather than chosen by symmetry with the entries below. A reps target of 1.0 is exactly
     # rows/samples of the run (`derive_source_weights`), so 20,460 rows over 7,680,000 samples draw about
     # 2,664 per 1,000,000-row epoch, and the measured CZ share of the parquet — 5,290 of 20,460 — puts
     # about 689 of those under `country: CZ`. 250 is the floor a real draw clears three times over and a

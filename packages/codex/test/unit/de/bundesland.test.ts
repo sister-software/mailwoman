@@ -18,7 +18,7 @@ describe("isGermanStateCode", () => {
 	it("accepts ISO 3166-2:DE codes, case-insensitively", () => {
 		expect(isGermanStateCode("BY")).toBe(true)
 		expect(isGermanStateCode("nw")).toBe(true)
-		expect(isGermanStateCode("CA")).toBe(false) // a US state, not German
+		expect(isGermanStateCode("CA")).toBe(false) // a US state rather than German
 	})
 })
 

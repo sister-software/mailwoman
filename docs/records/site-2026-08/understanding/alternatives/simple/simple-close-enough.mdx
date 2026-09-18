@@ -10,7 +10,7 @@ tags:
 
 # Close-enough geocoding
 
-Not every application needs sub-meter accuracy. For most applications, "in the right city" is close enough. A geocode that places a customer in the correct metropolitan area is sufficient for market analysis, sales territory assignment, and regional logistics. The coordinate needs to be useful for the task, not necessarily correct.
+Not every application needs sub-meter accuracy. For most applications, "in the right city" is close enough. A geocode that places a customer in the correct metropolitan area is sufficient for market analysis, sales territory assignment, and regional logistics. The coordinate needs to be useful for the task rather than necessarily correct.
 
 ## The approach
 
@@ -22,15 +22,15 @@ This is the economic argument for "close enough" — the cost of higher precisio
 
 ## When it works
 
-- **Statistical aggregation.** You're counting customers by city, not delivering packages to them. A geocode that places 1,000 customers in the Los Angeles metro area is statistically useful even if every individual coordinate is off by miles. The aggregate is correct even if the individuals are not.
-- **Market analysis.** You're deciding where to open a new store. You need to know which ZIP codes have high customer density, not which buildings they're in. ZIP-level geocoding answers this.
-- **Regional routing.** A package bound for "Springfield" goes to the Springfield distribution center. The street address is for the last-mile carrier, not the regional sort. The regional sort only needs city-level accuracy.
+- **Statistical aggregation.** You're counting customers by city rather than delivering packages to them. A geocode that places 1,000 customers in the Los Angeles metro area is statistically useful even if every individual coordinate is off by miles. The aggregate is correct even if the individuals are not.
+- **Market analysis.** You're deciding where to open a new store. You need to know which ZIP codes have high customer density rather than which buildings they're in. ZIP-level geocoding answers this.
+- **Regional routing.** A package bound for "Springfield" goes to the Springfield distribution center. The street address is for the last-mile carrier rather than the regional sort. The regional sort only needs city-level accuracy.
 - **You have a known address universe.** A utility company with 500,000 service addresses. The addresses are already in a database. You don't need to geocode them — you need to verify that an input address matches one in the database. Normalize-to-match handles this.
-- **You can't get finer data anyway.** WOF's coordinate for a rural locality may be the best data available. The building doesn't exist in any gazetteer. The street is not mapped. The locality centroid is the closest approximation that exists. Spending engineering effort on higher precision would require new data collection, not better algorithms.
+- **You can't get finer data anyway.** WOF's coordinate for a rural locality may be the best data available. The building doesn't exist in any gazetteer. The street is not mapped. The locality centroid is the closest approximation that exists. Spending engineering effort on higher precision would require new data collection rather than better algorithms.
 
 ## What you lose
 
-- **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office, and the carrier who delivers it knows the route. The geocode was wrong, but the package arrived anyway, because the postal system's last mile is human, not algorithmic.
+- **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office, and the carrier who delivers it knows the route. The geocode was wrong, but the package arrived anyway, because the postal system's last mile is human rather than algorithmic.
 - **The false confidence of high precision.** A coordinate with 8 decimal places looks authoritative and implies sub-millimeter accuracy, so the consumer trusts it. A coordinate with 1 decimal place (10-kilometer precision) looks approximate, so the consumer treats it accordingly. The high-precision coordinate may in fact be less accurate: the extra digits can be noise rather than signal, yet the consumer still trusts the precise-looking one more.
 - **The misuse case.** You built a geocoder for market analysis. Someone uses it for delivery routing. The geocoder was "close enough" for its intended use case. It is catastrophically wrong for the unintended one. The geocoder has no way to signal its intended precision level. The consumer has no way to know.
 - **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are concentrated in rural areas, new construction, and informal settlements — the populations where precision matters most and is hardest to get.

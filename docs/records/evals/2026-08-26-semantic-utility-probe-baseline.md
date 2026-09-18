@@ -123,7 +123,7 @@ branch, and the reason is not the category lexicon: `matchPOISubject` returns `n
 answers a clothing store 211.75 km from Toulouse.
 
 That makes this row's baseline a confident wrong answer rather than a miss, which is a worse starting
-point than the other three, not a better one. The row is kept: its form is attested in §5.1, and
+point than the other three rather than a better one. The row is kept: its form is attested in §5.1, and
 swapping it out after measuring would be exactly the row selection this pre-registration exists to
 prevent. It is the reason the diagnostic baseline is 1 rather than 0, and therefore the reason the
 diagnostic delta bar is +2 rather than +3.

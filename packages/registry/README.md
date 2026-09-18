@@ -10,7 +10,7 @@ calibrated, label-free matcher.
 ```ts
 import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/registry"
 
-// 1. Ingest — rows → normalized SourceRecords. The mapping is POSITIONAL (arg 2), not a field of the
+// 1. Ingest — rows → normalized SourceRecords. The mapping is POSITIONAL (arg 2) rather than a field of the
 //    options object, and `geocodeAddress` belongs here: each address is resolved as it is ingested.
 const records = await ingestRows(
 	rows,
@@ -19,7 +19,7 @@ const records = await ingestRows(
 )
 
 // 2. Resolve — block → score → cluster with geo-first defaults. SYNCHRONOUS, and it returns a
-//    ResolveResult, not a bare array: `entities` alongside the pair counts blocking produced.
+//    ResolveResult rather than a bare array: `entities` alongside the pair counts blocking produced.
 const { entities, candidatePairs, droppedBlocks } = resolveEntities(records)
 
 // 3. Export — GeoJSON for QGIS. Entities with no resolved coordinate are skipped, so the feature
@@ -63,7 +63,7 @@ import { reconcile, toGeoJSON, toMapHTML } from "@mailwoman/registry"
 import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "@mailwoman/registry"
 ```
 
-`geocodeAddress` is an `ingestRows` option, not a `resolveEntities` one — coordinates have to exist
+`geocodeAddress` is an `ingestRows` option rather than a `resolveEntities` one — coordinates have to exist
 before blocking can use them.
 
 ## Default configuration
@@ -75,7 +75,7 @@ before blocking can use them.
 - **Scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
 - **Learned scorer:** the bundled `DEDUP_GBT_MODEL`, on by default for single-dataset dedup
 - **Threshold:** `DEDUP_GBT_META.recommendedThreshold` (2.8324) while the bundled model is active,
-  otherwise 0. The unit is the GBT's own logit, not a Fellegi-Sunter match weight in bits and not a
+  otherwise 0. The unit is the GBT's own logit rather than a Fellegi-Sunter match weight in bits and not a
   probability, so a 0-to-1 value is a category error here. Higher is stricter.
 - **Linkage:** single (connected components), with average linkage available for the over-merge case
 

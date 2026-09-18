@@ -32,9 +32,9 @@ export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyr
  * writing system, which is a different question and the one a locale hint needs: `서울특별시` and `東京都` are the same
  * `CharacterClass` and are `Hang` and `Hani`.
  *
- * `Zyyy` (Common) and `Zzzz` (Unknown) are Unicode's own codes and are answers, not failures. A digit is genuinely
- * script-neutral. a codepoint in a script this file carries no ranges for is genuinely unknown, and saying so beats
- * folding it into a script that happens to be nearby.
+ * `Zyyy` (Common) and `Zzzz` (Unknown) are Unicode's own codes and are answers rather than failures. A digit is
+ * genuinely script-neutral. a codepoint in a script this file carries no ranges for is genuinely unknown, and saying so
+ * beats folding it into a script that happens to be nearby.
  */
 export type ScriptCode = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "Arab" | "Yiii" | "Zyyy" | "Zzzz"
 

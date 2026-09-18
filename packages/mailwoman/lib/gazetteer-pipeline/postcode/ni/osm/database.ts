@@ -197,7 +197,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const sidecar = await readAcquisitionSidecar<NIAcquisitionSidecar>(sourceDir)
 
 	// The saved query is authoritative over the module constant: the database must record the query that
-	// produced its bytes, not the query the code would issue today. They diverge the moment the constant
+	// produced its bytes rather than the query the code would issue today. They diverge the moment the constant
 	// is edited, and the whole point of the sidecar is to survive that edit.
 	const queryText = sidecar?.query ?? NI_POSTCODE_OVERPASS_QUERY
 	const queryMD5 = sidecar?.queryMD5 ?? niPostcodeQueryMD5()
@@ -264,7 +264,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		for (const record of records) {
 			const id = NI_OSM_ID_BASE + inserted
 
-			// Degenerate bbox — a unit postcode is a point here, not a polygon.
+			// Degenerate bbox — a unit postcode is a point here rather than a polygon.
 			sprInsert.run(
 				id,
 				record.name,

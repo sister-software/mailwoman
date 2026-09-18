@@ -24,7 +24,7 @@ A French address can lead with its postcode: `47110 Sainte-Livrade-sur-Lot, 69 A
 Bugatel`. The house number, `69`, sits in the back half. Our model learned house numbers
 from data that almost always puts them out front — so when the number moves, the model
 reaches for the first number-shaped thing it sees and labels `47110`, the postcode, as
-the house number. It reads by position, not by meaning.
+the house number. It reads by position rather than by meaning.
 
 For a while we never noticed, because a decode-time span bridge was papering over the
 worst of it. When we shipped the char-offset corpus and retired that bridge, which had

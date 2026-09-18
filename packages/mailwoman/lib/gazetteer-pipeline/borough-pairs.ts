@@ -39,11 +39,11 @@ export interface BoroughPair {
 	tag: "dependent_locality"
 	/**
 	 * The parent row's own `ComponentTag` (PIX2 / schema 3) — the WOF `placetype` of the ancestor this pair was drawn
-	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW, not per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits
-	 * `locality`, `localadmin` and `borough` as parents on several countries, and those do not project to the same tag
-	 * (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag instead
-	 * — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF` gives
-	 * `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW rather than per-source: `PAIR_PLACETYPES_BY_COUNTRY`
+	 * admits `locality`, `localadmin` and `borough` as parents on several countries, and those do not project to the same
+	 * tag (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag
+	 * instead — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF`
+	 * gives `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
 	 */
 	parentTag: ComponentTag
 }
@@ -71,14 +71,14 @@ function parentTagFor(placetype: string): ComponentTag {
  * Which WOF placetypes count as the child and the parent of an extracted pair, per country.
  *
  * This is deliberately per-country rather than one global rule, because the two shipped instances are shaped by their
- * SOURCES, not by a universal truth about hierarchy:
+ * SOURCES rather than by a universal truth about hierarchy:
  *
  * - **GB** takes boroughs only. Its neighbourhood pairs come from a curated, venue-confound-boarded file
  *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods here would ship
  *   an unboarded batch and skip the law-1 discipline every GB increment has cleared.
  * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent. WOF parents US neighbourhoods to the
- *   LOCALITY, not to the borough ("Astoria" hangs off New York, not off Queens), so a locality-only parent rule
- *   silently drops the borough-level pairs the US instance exists for (campaign R5).
+ *   LOCALITY rather than to the borough ("Astoria" hangs off New York rather than off Queens), so a locality-only
+ *   parent rule silently drops the borough-level pairs the US instance exists for (campaign R5).
  *
  * A country absent from this table gets the GB-shaped default, so adding a country is an explicit act.
  */
@@ -211,7 +211,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 			// LATIN SCRIPT ONLY. India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names
 			// for its cities. this model never sees those scripts, so indexing them is pure artifact weight. The check
-			// is on the alias, not the language tag, because a language can be written in more than one script.
+			// is on the alias rather than the language tag, because a language can be written in more than one script.
 			if (!LATIN_SURFACE_PATTERN.test(alias)) continue
 
 			const set = aliasesByParent.get(canonical) ?? new Set<string>()

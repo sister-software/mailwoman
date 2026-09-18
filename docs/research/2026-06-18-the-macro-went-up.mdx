@@ -20,7 +20,7 @@ So we built a synthetic training extract that puts the gold boundary on exactly 
 
 ## The catch
 
-We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the _assembled_ output: the actual parse a user would get, not the per-token score the trainer optimizes.
+We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the _assembled_ output: the actual parse a user would get rather than the per-token score the trainer optimizes.
 
 One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average averaged it away.
 
@@ -28,7 +28,7 @@ This is the trap we've been burned by before, and it has a name on this project:
 
 ## Three probes, one culprit
 
-A failing floor tells you _that_ something regressed, not _what_. So we wrote probes.
+A failing floor tells you _that_ something regressed rather than _what_. So we wrote probes.
 
 The first asked a simple question of every boundary the model got wrong: is it _confidently_ wrong, or is it _uncertain_? If the model spreads its probability mass and shrugs, that's a capacity ceiling — you need a bigger model, and more data is wasted GPU. If it commits hard to the wrong answer, that's a signal problem — more of the right data can flip it. Every failure came back confident. Good: this is fixable with data.
 
@@ -56,4 +56,4 @@ And then the lesson came back for a third helping. Before promoting the new mode
 
 The flatness pointed somewhere we hadn't been looking. The addresses still wrong on the map are small rural towns the gazetteer itself resolves poorly (a third of Vermont's, in one sample), places no amount of model training reaches. For now the model has caught up to its own database, and the result is in the atlas. That's a different post, and we'll grade it on the coordinate.
 
-One footnote, because "add more data" and "buy a bigger model" aren't the only two endings a stuck case has. When a change refuses to move, there are three reasons, and they ask for different things. Maybe the model picked up a bad habit from the data; better data breaks it, which is the whole story above. Maybe it's a thirty-million-parameter model out of room; only a bigger one helps. Or maybe the answer was never in the text: "Paris," on its own, is Paris, France or Paris, Texas, and no amount of data or parameters settles that, because the string doesn't carry the answer. The cheap way to tell the second reason from the third is to ask whether a person could do it from the very same input. Our four stubborn boundary cases are the second kind. A person segments a comma-less "City STATE" without trouble, so that's capacity, not confusion; we banked the result and left the boundaries for a bigger model. The third kind was never the model's job in the first place. It tags "Paris" as a place, and the gazetteer decides which Paris, leaning on the rest of the address and, when there's nothing else to go on, on which one more people mean. Telling the three apart is worth as much as the fix. That's a different post.
+One footnote, because "add more data" and "buy a bigger model" aren't the only two endings a stuck case has. When a change refuses to move, there are three reasons, and they ask for different things. Maybe the model picked up a bad habit from the data; better data breaks it, which is the whole story above. Maybe it's a thirty-million-parameter model out of room; only a bigger one helps. Or maybe the answer was never in the text: "Paris," on its own, is Paris, France or Paris, Texas, and no amount of data or parameters settles that, because the string doesn't carry the answer. The cheap way to tell the second reason from the third is to ask whether a person could do it from the very same input. Our four stubborn boundary cases are the second kind. A person segments a comma-less "City STATE" without trouble, so that's capacity rather than confusion; we banked the result and left the boundaries for a bigger model. The third kind was never the model's job in the first place. It tags "Paris" as a place, and the gazetteer decides which Paris, leaning on the rest of the address and, when there's nothing else to go on, on which one more people mean. Telling the three apart is worth as much as the fix. That's a different post.

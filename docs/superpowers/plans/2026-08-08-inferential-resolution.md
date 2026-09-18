@@ -2,7 +2,7 @@
 
 Operator design note, 2026-08-08. Captured from a conversation immediately after the first-pass
 Pelias benchmark; the failure-mode analysis in `FIRST_PASS.md` is the evidence that motivates it.
-This is a design record, not a plan of record — nothing here is scheduled.
+This is a design record rather than a plan of record — nothing here is scheduled.
 
 ## The idea in one paragraph
 
@@ -16,7 +16,7 @@ one another.
 ## Why now
 
 The benchmark measured our failure shape precisely. Our misses are bimodal: either 0.01 km or
-10,000 km, with very little between. Every catastrophic row was a country-scope failure, not a
+10,000 km, with very little between. Every catastrophic row was a country-scope failure rather than a
 parse failure — the model read `Favona`, `Maylands WA` and `Mulda` correctly and the resolver then
 chose a same-named place on another continent. Pelias fails differently: its misses cluster in the
 hundreds-to-few-thousand km range, because full-text ranking degrades into plausible-but-wrong.
@@ -38,10 +38,10 @@ not have crossed an ocean. The constraint that was already in hand went unused.
    this depends on.
 
 3. **Structural affinity.** Naming schemes are real and mineable. A neighborhood whose streets are
-   all US presidents admits an unknown `Garfield Ave` on family membership, not string similarity.
+   all US presidents admits an unknown `Garfield Ave` on family membership rather than string similarity.
    The same shape generalizes: an unknown hydronym against known hydrology, an unknown toponym
    against a region's morphology (the `-ton`/`-by`/`-thorpe` families in GB, `-ville` in FR).
-   The identification is by structure-preserving relationship, not by label — the operator's
+   The identification is by structure-preserving relationship rather than by label — the operator's
    category-theory framing.
 
 4. **Physical plausibility.** Terrain, development and habitability act as exclusion. An address
@@ -80,7 +80,7 @@ Not every constraint is allowed to do the same thing. The operational vocabulary
 - **Relation / affinity** — establishes structural compatibility between entities or regions.
 - **Prior** — changes probability and can never, by itself, prove or exclude.
 
-The derivation graph is therefore the central data structure, not metadata attached after the
+The derivation graph is therefore the central data structure rather than metadata attached after the
 resolver has chosen an answer. A result is a projection of that graph:
 
 ```text
@@ -134,7 +134,7 @@ supplies the fit; the fit's error on held-out regions is the confidence attached
 
 ## Precompute
 
-The relationships should be mined ahead of time, not derived per query — the resolver ladder is
+The relationships should be mined ahead of time rather than derived per query — the resolver ladder is
 synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
@@ -204,7 +204,7 @@ physical constraint and reports its derivation answers _where is this, how do we
 claim even possible_ — which is address intelligence rather than address lookup. The BDC
 verification case is the proof that the second question has customers.
 
-The caution from the provenance section applies with more force here, not less: an infrastructure
+The caution from the provenance section applies with more force here rather than less: an infrastructure
 prior that without output promotes a plausible-but-wrong coordinate is worse than no prior. Every
 constraint must be named in the derivation, and every fitted relationship must carry the residual
 it was fitted at.
@@ -228,7 +228,7 @@ rather than an assumption embedded in application code.
 
 ## Consequence for OSM ingestion
 
-OSM should enter the engine as versioned observations, not as a timeless truth table. The ingest
+OSM should enter the engine as versioned observations rather than as a timeless truth table. The ingest
 contract is:
 
 ```text
@@ -243,7 +243,7 @@ acquire snapshot/replication sequence
 
 Natural source identity is `(osm_type, osm_id, version)`; the artifact also records snapshot or
 replication sequence, source URL/hash, builder version, region, timestamps and ODbL attribution.
-Current state and history are separate products. Deletes and redactions are events, not missing
+Current state and history are separate products. Deletes and redactions are events rather than missing
 rows silently forgotten by a rebuild.
 
 Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
@@ -263,7 +263,7 @@ gap, and builds on a temporary database before atomic replacement. Before full-s
 still needs:
 
 - required source URL/hash/size, extract polygon, OSM timestamp or replication sequence and builder
-  Git SHA (`--release unknown` must fail, not ship);
+  Git SHA (`--release unknown` must fail rather than ship);
 - an embedded layer manifest plus surveyed-extent coverage whose completeness does not default to
   1 merely because the PBF was traversed;
 - a companion assertion table retaining OSM type/id/version, geometry method (node versus polygon
@@ -303,11 +303,11 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 3. **Does CPT fit our own POI data?** Fit threshold/range against poi.db in covered metros, predict
    held-out metros, report error. A wide residual kills the density prior.
 4. **Does inference beat the current fallback on the benchmark panel?** Re-score the panel with
-   inference on and off. The bar is the strata table, not a pooled headline.
+   inference on and off. The bar is the strata table rather than a pooled headline.
 
 ## Prohibitions
 
-- **Never emit an inferred point as though retrieved.** Provenance is mandatory, not optional
+- **Never emit an inferred point as though retrieved.** Provenance is mandatory rather than optional
   decoration.
 - **Soft priors never exclude.** Registries and theory may nudge ranking; only a typed exclusion
   backed by a hard rule and an explicitly complete coverage scope may remove a candidate

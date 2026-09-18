@@ -17,7 +17,7 @@
  *   Appendix C2 explicitly marks FLOOR, BASEMENT as requiring a secondary number (alongside APT,
  *   BLDG, etc.) while PENTHOUSE and LOBBY may stand alone. PH and LBBY are kept here (not just in
  *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints —
- *   "LOBBY" and "PH" name a specific floor-analog, not a numbered unit, and the prior map routes
+ *   "LOBBY" and "PH" name a specific floor-analog rather than a numbered unit, and the prior map routes
  *   `LEVEL_PHRASE` → `unit` (the schema carries no separate `level` tag).
  *
  *   This table drives the `levelDesignators` set in the span-proposer lexicon. The full

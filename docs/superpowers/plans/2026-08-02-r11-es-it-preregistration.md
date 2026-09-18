@@ -46,7 +46,7 @@ narrows geography without identifying a province, the same trap German Leitzonen
 
 Final: ES 3,559 pairs, IT 4,026.
 
-## Both packages were scaffolded, not copied
+## Both packages were scaffolded rather than copied
 
 `scripts/scaffold-weights-overlay.ts` (shipped hours earlier, after the template-copy bug cost three
 fixes) created both and registered all four automatable points. Neither reproduced the

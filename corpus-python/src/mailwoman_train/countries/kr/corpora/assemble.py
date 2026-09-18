@@ -45,7 +45,7 @@ from .rows import (
 )
 from .survey import PermitSurvey, RegisterSurvey, survey_permits, survey_register
 
-#: Resolved after parsing, not here: reading the data root at import would raise for a caller who
+#: Resolved after parsing rather than here: reading the data root at import would raise for a caller who
 #: passes the flags and never needs it.
 JUSO_ZIP_PARTS = ("corpus", "sources", "juso-kr", "202608ALLMTCHG00.zip")
 PERMIT_DIR_PARTS = ("corpus", "sources", "localdata-kr")

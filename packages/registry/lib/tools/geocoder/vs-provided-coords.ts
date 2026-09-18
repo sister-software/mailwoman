@@ -14,7 +14,7 @@
  *
  *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
  *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
- *   inspect, not automatically our error.
+ *   inspect rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
@@ -74,7 +74,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  * GeoJSON `[longitude, latitude]`, so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and
  * `GeoPoint.from` maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
  * The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to stay
- * rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
+ * rejected or measured as-is, never rewritten. Strictness is the measurement rather than an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null

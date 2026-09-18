@@ -57,9 +57,9 @@ is the direct "evidence sensitivity" measurement.
 
 **Pitfalls.** Choice of corruption distribution changes conclusions (Gaussian-noise vs.
 counterfactual-token patching disagree; discussed across the patching literature [M]). Patching
-finds _sufficient mediators_, not unique stories; backup/redundant circuits can hide behind each
+finds _sufficient mediators_ rather than unique stories; backup/redundant circuits can hide behind each
 other (the hydra effect [M]). For BIO tagging, patch metrics should be per-token label logit
-deltas, not sequence loss, or Viterbi coupling smears the localization.
+deltas rather than sequence loss, or Viterbi coupling smears the localization.
 
 **Weimar verdict.** A patch sweep would have localized the locality/region decisions to the
 embedding→mid-layer-MLP pathway on the "Weimar"/"Thüringen" pieces with zero causal contribution
@@ -103,7 +103,7 @@ with gradient-based importance and admit adversarial alternative distributions y
 predictions. Wiegreffe & Pinter 2019, _Attention is not not Explanation_ [S]: the rebuttal —
 existence of an alternative distribution constructed ad hoc doesn't prove unfaithfulness; tests
 must be model-consistent — but even the rebuttal claims only that attention _may sometimes_ carry
-explanatory signal, not that it's faithful. Serrano & Smith 2019, _Is Attention Interpretable?_
+explanatory signal rather than that it's faithful. Serrano & Smith 2019, _Is Attention Interpretable?_
 [M], and the survey Bibal et al. 2022, _Is Attention Explanation? An Introduction to the Debate_
 (ACL) [S] round out the picture. Practical rule for us: attention maps are a debugging _display_,
 never a faithfulness _claim_; anything we assert about "the model looked at X" must come from
@@ -155,7 +155,7 @@ library (Gemma-2-2B / Llama-3.2-1B / Qwen3-4B) [S].
 - Related-but-different: OpenAI Nov 2025, _Weight-sparse transformers have interpretable circuits_
   (arXiv 2511.13653) + the Dec 2025 `circuit-sparsity` release [S] — train the _model_ sparse
   instead of decomposing a dense one; circuits ~16× smaller at matched loss. Interesting for us
-  only as a _retraining_ option (we own training), not as post-hoc analysis.
+  only as a _retraining_ option (we own training) rather than as post-hoc analysis.
 
 **Cost/feasibility at our scale.** Training cost is a non-issue: d_model of a few hundred, a
 dictionary of 4–16k features, activations harvested over the corpus — an SAE per layer trains in
@@ -205,7 +205,7 @@ Concept Bottleneck Models_ (NeurIPS) [S]; Shin et al. 2023, _A Closer Look at th
 Procedure of Concept Bottleneck Models_ (ICML) [S]; _Avoiding Leakage Poisoning: Concept
 Interventions Under Distribution Shifts_ (2025) [S]; a 2025 survey of risks/limitations of
 concept-based models and even a 2026 _In Defense of Information Leakage in Concept-based Models_
-[S] — the field now recognizes leakage as a tradeoff, not a sin. Hard bottlenecks provide intervention
+[S] — the field now recognizes leakage as a tradeoff rather than a sin. Hard bottlenecks provide intervention
 validity and pay in accuracy exactly on inputs the concept vocabulary doesn't cover — which for us
 is every place the gazetteer doesn't know. **Weimar is the proof we want the leak**: a hard
 bottleneck (parse only from channels) would have had literally zero input and been forced to
@@ -246,7 +246,7 @@ synthetic transformers with known circuits [S]; the MIB benchmark, 2025 [S, hedg
 is derivable only from a channel, so any faithful method must attribute to it.
 
 **Pitfalls.** IIT constrains capacity and could cost tier-1 accuracy — it lands under the D-rule
-(no default-on mechanism with a known tier-1 regression), so it's a conditional experiment, not a free
+(no default-on mechanism with a known tier-1 regression), so it's a conditional experiment rather than a free
 win. Reliance metrics averaged over a board hide per-locale collapse; compute them per tier.
 Leakage literature warns that intervention on a leaky bottleneck can _hurt_ (leakage poisoning,
 2025 [S]) — relevant if we ever add "correct the channel and re-run" tooling.
@@ -306,14 +306,14 @@ is large; alarm when the set is empty at the working level). Two specifics for o
 
 **The evolving vocabulary — no off-the-shelf standard; here is the assembled practice.** I found no
 literature that directly treats "calibrated posterior over a _changing_ discrete diagnosis
-vocabulary" as a solved problem [S — searched; absence noted, not proven]. The assembled recipe
+vocabulary" as a solved problem [S — searched; absence noted rather than proven]. The assembled recipe
 from adjacent literatures:
 
 1. **An explicit `novel/other` outcome** backed by conformal novelty p-values — test "does this
    case conform to _any_ known class" (conformal novelty detection with FDR control: AdaDetect,
    Marandon et al. [S]; _Conformal Inference for Open-Set and Imbalanced Classification_, 2025
    [S]); lineage: open-world recognition, Bendale & Boult 2015 (CVPR) [S] / OpenMax 2016 [M].
-   A case that conforms to no known shape is the trigger to _mint a class_, not a classification.
+   A case that conforms to no known shape is the trigger to _mint a class_ rather than a classification.
 2. **Mondrian per-class calibration makes vocabulary growth cheap**: adding diagnosis class K+1
    requires only K+1's own calibration rows; existing classes' guarantees are untouched. Marginal
    calibration would need a global refit and silently shifts everyone's coverage.

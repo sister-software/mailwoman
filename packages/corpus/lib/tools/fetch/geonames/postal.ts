@@ -30,7 +30,7 @@
  *
  *   ## Coverage is not universal, and the gap is the point
  *
- *   GeoNames publishes ~80 countries, not all of them. Venezuela returns 404 — so a VE postcode recipe output cannot be
+ *   GeoNames publishes ~80 countries rather than all of them. Venezuela returns 404 — so a VE postcode recipe output cannot be
  *   built
  *   from this source at any effort, and that is an acquisition question rather than a build one. Ask for a country
  *   before assuming it is there. an absent country fails as one entry, never as the whole run.
@@ -106,7 +106,7 @@ interface GeonamesPostalManifest {
 	files: GeonamesPostalFileEntry[]
 	/**
 	 * Countries asked for and not published by GeoNames, recorded so a later reader does not spend the fetch again to
-	 * rediscover it. An absence here is a fact about the source, not about the run.
+	 * rediscover it. An absence here is a fact about the source rather than about the run.
 	 */
 	unavailable: string[]
 }

@@ -37,7 +37,7 @@ hard for both parsers. The neural model is not failing on intrinsically hard
 addresses — it is failing on addresses that are easy _for a rule parser tuned on
 this exact corpus_.
 
-## Why that is expected, not alarming
+## Why that is expected rather than alarming
 
 `data/eval/external/README.md` already documented the lineage problem for the
 external arenas; it applies to the harness itself. The `mailwoman/test/*.test.ts`
@@ -74,7 +74,7 @@ delimiter/format cues it saw in training rather than on token semantics.
 
 ## The direct scoreboard: resolver end-to-end
 
-The product goal is _address to correct place plus coordinates_, not _match
+The product goal is _address to correct place plus coordinates_ rather than _match
 Pelias's component spans_. The Direction-C resolver eval
 (`scripts/eval/resolver-eval.ts`, 2406 WOF-bootstrap rows, custom gazetteer)
 measures that directly. Numbers below were re-verified two ways: the script's own
@@ -99,7 +99,7 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
 
 1. **Resolver end-to-end Acc@1 is the headline metric.** It matches the product,
    is lineage-neutral, and is where the model's value shows.
-2. **The `harness-v0-neural` suite is a regression check, not a promotion bar.**
+2. **The `harness-v0-neural` suite is a regression check rather than a promotion bar.**
    Keep running it — a _drop_ signals a real regression — but stop treating "25%
    neural on a v0-lineage suite" as the goal. It asks the neural model to imitate
    Pelias's conventions on Pelias's own corpus.
@@ -111,7 +111,7 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
 This reframe unblocks two stalled cycles (v0.6.x held after three recipe
 iterations; v0.7.x calibration null on the harness): both were optimizing a
 lineage-biased metric. It is consistent with the v0.7.2 eval's own conclusion
-("the path to 25% is coverage and the resolver, not another recipe tweak") and
+("the path to 25% is coverage and the resolver rather than another recipe tweak") and
 with `project-neural-vs-v0-capability-map`.
 
 ## Next model experiment (one pre-registered hypothesis)

@@ -34,7 +34,7 @@ import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -187,8 +187,8 @@ export interface StreetSynthesisOpts {
 	 * Probability of emitting the street bare — no `, City, ST ZIP` tail and no region/locality/ postcode components
 	 * (just `street_prefix`/`street`/`street_suffix` + optional `house_number`). Default 0 (preserves the original
 	 * full-address behavior exactly, including the RNG sequence). Set >0 to teach the model that a bare `10th Ave` /
-	 * `Main St` is a STREET, not a locality — the functional-test failure cluster (bare streets mislabeled `locality`),
-	 * the bare-format analogue of the v0.7.x intersection-bare fix.
+	 * `Main St` is a STREET rather than a locality — the functional-test failure cluster (bare streets mislabeled
+	 * `locality`), the bare-format analogue of the v0.7.x intersection-bare fix.
 	 */
 	bareProb?: number
 }

@@ -9,7 +9,7 @@
  *   which carries native-script alternate names in dozens of languages
  *   (rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — i.e. exactly the off-map scripts we want the model to
  *   learn to abstain on. Balanced per-language for script diversity, filtered to a genuinely
- *   off-map dominant script (not Latin, not CJK — those are the in-map countries), then APPENDED to
+ *   off-map dominant script (not Latin rather than CJK — those are the in-map countries), then APPENDED to
  *   the train/val/test splits as `country: "OTHER"`.
  *
  *   Run after build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang

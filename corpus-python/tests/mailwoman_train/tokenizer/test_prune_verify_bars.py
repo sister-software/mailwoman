@@ -93,7 +93,7 @@ METAS = [
 
 
 def test_feeds_resolve_every_symbolic_dimension() -> None:
-    """A symbolic dimension left unresolved is a feed the session refuses, not a wrong number."""
+    """A symbolic dimension left unresolved is a feed the session refuses rather than a wrong number."""
     feeds = feeds_for(METAS, [1, 2, 4])
 
     assert feeds["input_ids"].tolist() == [[1, 2, 4]]

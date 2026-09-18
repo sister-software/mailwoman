@@ -71,7 +71,7 @@ describe("detectRegionAbbreviations", () => {
 		const tokens = makeTokenClasses(text)
 		const segs = segment(text)
 		const hits = detectRegionAbbreviations(tokens, segs)
-		// "WORLD" is 5 letters, not 2
+		// "WORLD" is 5 letters rather than 2
 		expect(hits).toEqual([])
 	})
 

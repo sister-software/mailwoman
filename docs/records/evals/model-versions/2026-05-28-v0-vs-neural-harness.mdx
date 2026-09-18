@@ -89,7 +89,7 @@ Neural tokenizer + BIO decoder garbles multi-byte characters. Examples:
 - `Korunní 810, Praha` → neural: `{locality: ["Korunn"], region: ["ha"]}` — `ní` is split mid-character
 - `Rua Raul Leite Magalhães, 65, Tapiraí - SP, 18180-000, Brazil` → neural: `{street: ["es"], region: ["zil"], venue: ["Rua Raul Leite Magalh"]}` — Portuguese diacritics destroy span boundaries
 
-This is a tokenizer/encoder issue, not a schema issue. The model can't recover when SentencePiece pieces don't reassemble to the original characters.
+This is a tokenizer/encoder issue rather than a schema issue. The model can't recover when SentencePiece pieces don't reassemble to the original characters.
 
 ### 2. Schema gap: `unit_designator`
 

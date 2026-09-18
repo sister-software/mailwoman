@@ -44,9 +44,9 @@ Each layer's contribution is additive and non-overlapping. Examples:
 | `Plein 1944`              | no signal                                        | "plein_1944" has Nijmegen co-occurrence           | direct match in NL FST     |
 | `Health Clinic`           | matches no street affix                          | zero locality co-occurrence → strongly not street | (not in OSM as a street)   |
 
-Layer 4 (brand FST for franchise venues) is parallel, not subordinate. Layer 5 (locality-conditional hierarchy blocking) is meta — it modulates which layers are active per country.
+Layer 4 (brand FST for franchise venues) is parallel rather than subordinate. Layer 5 (locality-conditional hierarchy blocking) is meta — it modulates which layers are active per country.
 
-## Schema storage: flat ComponentTag, not WOF emulation
+## Schema storage: flat ComponentTag rather than WOF emulation
 
 Mailwoman's tag schema lives in two files:
 
@@ -55,7 +55,7 @@ Mailwoman's tag schema lives in two files:
 
 **This stays the authoritative record.** A tempting alternative is to store our extensions in WOF placetype JSON format (`wof:id`, `wof:name`, `wof:role`, `wof:parent`) so tooling that already consumes WOF placetypes works transparently. That alternative is rejected:
 
-1. **Ontology mismatch.** WOF placetypes answer "what kind of geographical feature is this?" Mailwoman component tags answer "what role does this span play in an address?" `street` is a linear feature with no WOF identity, not a placetype. `house_number` is not a place at all. `unit` is a building subdivision, not a feature.
+1. **Ontology mismatch.** WOF placetypes answer "what kind of geographical feature is this?" Mailwoman component tags answer "what role does this span play in an address?" `street` is a linear feature with no WOF identity rather than a placetype. `house_number` is not a place at all. `unit` is a building subdivision rather than a feature.
 2. **ID-space fragility.** WOF issue #246 explored adding `lane`, `block`, `parish`. Any "private" ID range is a latent collision with a future WOF allocation.
 3. **TypeScript exhaustiveness.** The `ComponentTag` discriminated union forces the compiler to flag every code path that doesn't handle every tag. Runtime-loaded JSON has no such guard, and the schema will evolve.
 4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent, but WOF format has no native "valid children" field — you'd compute it from parents anyway, which is what `PARENT_OF` already does.
@@ -163,7 +163,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 **Wiring:** Add `fstStreetMorphology?: FSTMatcherLike` to `ParseOpts` in `neural/classifier.ts`. Apply via `addEmissionMatrix` after the existing admin FST bias. Same 3.0-logit cap.
 
-**Locale handling:** Build a single combined FST containing all locales — the morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. Position (prefix vs suffix) is encoded in the `PlaceEntry` payload, not derived per-entry at query time.
+**Locale handling:** Build a single combined FST containing all locales — the morphology data is small enough (60 locales × ~30 affix lines × ~5 variants = ~9K entries) that per-locale extract routing is unnecessary. Position (prefix vs suffix) is encoded in the `PlaceEntry` payload rather than derived per-entry at query time.
 
 ### Layer 1.5: Street candidacy lookup
 
@@ -177,7 +177,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 **Cold-token fallback:** Unknown n-grams produce zero candidacy signal — fall through to Layer 1 heuristics.
 
-**Status:** Spec'd, not built. Lands after Layer 1 results inform whether candidacy provides additional headroom.
+**Status:** Spec'd rather than built. Lands after Layer 1 results inform whether candidacy provides additional headroom.
 
 ### Layer 2: Street identity FST
 
@@ -197,7 +197,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 
 ### Layer 3: Schema extensions
 
-**For Japan (activation, not addition):** The schema already has `prefecture`, `municipality`, `district`, `block`, `sub_block`, `building_number`, `building_name` declared in `core/types/component.ts` and in `PARENT_OF`. They're inactive — no golden-set entries, no training. The work is:
+**For Japan (activation rather than addition):** The schema already has `prefecture`, `municipality`, `district`, `block`, `sub_block`, `building_number`, `building_name` declared in `core/types/component.ts` and in `PARENT_OF`. They're inactive — no golden-set entries, no training. The work is:
 
 1. JP corpus adapter (ingest Japanese address data, likely from OpenAddresses-JP or government sources)
 2. JP golden-set entries (~200-500 labeled JP addresses)
@@ -210,11 +210,11 @@ No new tags needed. The locality-conditional blocking (above) is what activates 
 
 ### Layer 4: Brand FST (franchise venues)
 
-**Status:** Resolver-side concern, not parser-side. The parser keeps classifying brand-name spans as `venue`. A brand FST — structurally identical to the street identity FST — maps known brand names → venue-confidence boosts at resolver lookup time.
+**Status:** Resolver-side concern rather than parser-side. The parser keeps classifying brand-name spans as `venue`. A brand FST — structurally identical to the street identity FST — maps known brand names → venue-confidence boosts at resolver lookup time.
 
 **Brand-alias problem:** McDonald's = Macca's = マクド = McDo = Mek. These are not translations — they're co-referential aliases. The brand FST entries should encode alias-equivalence at build time so the resolver matches any variant.
 
-**No `venue_chain` tag.** A chain instance is a specific venue, not a new component type. Schema unchanged.
+**No `venue_chain` tag.** A chain instance is a specific venue rather than a new component type. Schema unchanged.
 
 See [`docs/records/site-2026-08/understanding/exotic-poi/franchise-queries.mdx`](../understanding/exotic-poi/franchise-queries.mdx) for the user-facing problem statement.
 
@@ -229,7 +229,7 @@ See [`docs/records/site-2026-08/understanding/exotic-poi/franchise-queries.mdx`]
 - Ambiguous abbreviations (`CA` for California vs `ca.` for "circa")
 - Mixed scripts within a span
 
-Applied to span-level confidence scores only. Zero contamination of emission or transition layers — the model's logits stay unmodified. This is calibration-side, not classification-side.
+Applied to span-level confidence scores only. Zero contamination of emission or transition layers — the model's logits stay unmodified. This is calibration-side rather than classification-side.
 
 ## Sequencing
 

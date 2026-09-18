@@ -94,7 +94,7 @@ Every node carries `start` and `end`. They are character offsets, half-open, and
 them is the one
 [Install and first parse](../get-started/install-and-first-parse.mdx#4-read-the-tree) describes. Here it
 is casing only, so the two strings are the same length and an offset taken against either lands in the
-same place. That is a property of this input, not a guarantee: read spans out of `tree.raw`.
+same place. That is a property of this input rather than a guarantee: read spans out of `tree.raw`.
 
 Spans are what you build a highlighted input box on, what you use to attribute a correction back to a
 position, and what you check when a component looks right but came from the wrong part of the string.
@@ -264,7 +264,7 @@ and the span. Read the three alternatives in order: the first is the same place 
 ranking is population-first, and this gazetteer's own population column puts those three at 280,305,
 59,031 and 27,987.
 
-That ordering is a default, not a verdict. When your records carry a state, or a viewport, or a known
+That ordering is a default rather than a verdict. When your records carry a state, or a viewport, or a known
 service area, you have evidence the resolver did not — so keep the alternatives, filter them yourself,
 and treat a same-name collision as something to disambiguate rather than something to accept.
 

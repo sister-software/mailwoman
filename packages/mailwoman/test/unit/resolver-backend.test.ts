@@ -134,7 +134,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
 
-	// Neither source: the explicitly-asked-for key must fail loudly, not no-op.
+	// Neither source: the explicitly-asked-for key must fail loudly rather than no-op.
 	await expect(loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).rejects.toThrow(
 		/capital_tier/
 	)

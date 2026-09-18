@@ -19,11 +19,11 @@ relation, two external mappings, two assertions. Authored by hand; edit these an
 
 | File             | Record                                                                                                    | Reading                                                                                                                                                                                                |
 | ---------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `relations.json` | `affords`                                                                                                 | `establishment` → `activity`, not transitive, not symmetric, `defeasible` semantics — an exception qualifies a record rather than falsifying the set                                                   |
+| `relations.json` | `affords`                                                                                                 | `establishment` → `activity` rather than transitive rather than symmetric, `defeasible` semantics — an exception qualifies a record rather than falsifying the set                                     |
 | `concepts.json`  | `place`, `establishment`, `healthcare_facility`, `pharmacy`, `drugstore`, `activity`, `obtain_medication` | the `isA` chain the record set names, and two assertions: `pharmacy affords obtain_medication` (`necessary`, unscoped) and `drugstore affords obtain_medication` (`strongly_expected`, scoped to `US`) |
 | `mappings.json`  | `poi-taxonomy-pharmacy`, `poi-taxonomy-drugstore`                                                         | `@mailwoman/poi-taxonomy` categories `pharmacy` and `drugstore` name the concepts of the same names                                                                                                    |
 
-Identifiers are bare (`pharmacy`, not `mw:pharmacy`). The issue writes the `mw:` prefix as namespace notation in prose;
+Identifiers are bare (`pharmacy` rather than `mw:pharmacy`). The issue writes the `mw:` prefix as namespace notation in prose;
 a literal colon inside a concept identifier would collide with the separator `compileGeographicModel` builds derived
 identifiers from, which is a collision its `duplicate_derived_fact_id` refusal exists to catch.
 

@@ -63,7 +63,7 @@ def test_dataconfig_accepts_a_quoted_country_key():
 
 @pytest.mark.parametrize("config_path", sorted(CONFIG_DIR.glob("*.yaml")), ids=lambda p: p.name)
 def test_every_shipped_config_has_string_country_keys(config_path):
-    """The 44-config sweep, pinned. Parsed, not grepped — the text always looked right."""
+    """The 44-config sweep, pinned. Parsed rather than grepped — the text always looked right."""
     cfg = yaml.safe_load(config_path.read_text())
     weights = ((cfg or {}).get("data") or {}).get("country_weights") or {}
     offenders = [k for k in weights if not isinstance(k, str)]

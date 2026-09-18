@@ -9,7 +9,7 @@
  *   Kysely, matching `schema.test.ts`'s convention), never through `buildFilerDatabase` — this suite
  *   exercises the clustering pass in isolation.
  *
- *   **Why the identifier veto is hard, not a score.** Pure organization-name matching (even with
+ *   **Why the identifier veto is hard rather than a score.** Pure organization-name matching (even with
  *   `exactDiscriminators` wired in) produces real false-identity links across different authoritative
  *   components — two different components structurally always have disjoint frn/form499ID/providerID
  *   code sets, so those "discriminators" can only ever contribute a constant negative tax, never
@@ -532,7 +532,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			.execute()
 
 		// A normal node, present purely so `recordsConsidered` has something to be COMPARED against (proving
-		// the designation-only node was excluded, not that nothing was scored at all).
+		// the designation-only node was excluded rather than that nothing was scored at all).
 		const normalFRN = `${FilerIdentifierType.FRN}:1230000001`
 		const normalNode = `${FilerIdentifierType.Form499ID}:999998`
 
@@ -782,7 +782,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterFirstBuild[0]?.valid_to).toBeNull()
 
 		// filer.db gets corrected and rebuilt (node B's real legal name was wrong) without bumping the
-		// clustering vintage label — a plausible operational correction re-run, not a new reporting period.
+		// clustering vintage label — a plausible operational correction re-run rather than a new reporting period.
 		await db
 			.insertInto("filer_attribute")
 			.values({
@@ -803,7 +803,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(inferredMap.get(nodeAID)).not.toBe(inferredMap.get(nodeBID))
 
 		// ...and filer_edge must not contradict that: zero rows at all connecting them (the stale same-vintage
-		// row was deleted, not left open — see the module docstring's "cross-vintage supersession" section),
+		// row was deleted rather than left open — see the module docstring's "cross-vintage supersession" section),
 		// and specifically zero open (still "valid") inferred edges anywhere.
 		const edgesAfterRebuild = await db
 			.selectFrom("filer_edge")

@@ -260,7 +260,8 @@ export class NeuralAddressClassifier {
 	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span logit aggregation
 	 * (Option C joint-reconcile integration). Shares the entire decode path with `parse` (one `#decode`, #481) — repair
 	 * passes included, because reconcile must consume the same tokens the argmax path serves users, under the same repair
-	 * opts. `logits` stay RAW (pre-prior, pre-repair) — they are the model's emissions, not the decode's opinions.
+	 * opts. `logits` stay RAW (pre-prior, pre-repair) — they are the model's emissions rather than the decode's
+	 * opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
 		if (!text.length) {
@@ -432,7 +433,7 @@ export class NeuralAddressClassifier {
 		//
 		// The limit is reachable by ordinary input: 128 pieces is roughly 330 characters, which a
 		// form-concatenated delivery address clears. Dropping the tail is the runner's existing choice made
-		// visible. the alternative is throwing on a valid address. Note the tail is lost, not deferred —
+		// visible. the alternative is throwing on a valid address. Note the tail is lost rather than deferred —
 		// components past the window never reach the model at all.
 		//
 		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen` — including models whose
@@ -614,7 +615,7 @@ export class NeuralAddressClassifier {
 			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
 		})
 
-		// PCN1 census observability (2026-08-05). `applied` is HARD-CODED false, not computed: this rung composes no
+		// PCN1 census observability (2026-08-05). `applied` is HARD-CODED false rather than computed: this rung composes no
 		// matrix to test for a nonzero cell, and it must stay that way until a calibration rung measures a δ (the
 		// artifact header deliberately ships none — see `PlacetypeCensusHeader.delta`). The observation list and its
 		// probe-count denominator ride only when a census was actually wired, so a build without the artifact produces

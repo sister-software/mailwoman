@@ -27,7 +27,7 @@ export const MODULE_COHESION_THRESHOLDS = {
 	 */
 	modularity: 0.35,
 	/**
-	 * Members a community needs before it counts toward a reported pair. A lone declaration is a helper, not a
+	 * Members a community needs before it counts toward a reported pair. A lone declaration is a helper rather than a
 	 * responsibility.
 	 */
 	communityMembers: 2,

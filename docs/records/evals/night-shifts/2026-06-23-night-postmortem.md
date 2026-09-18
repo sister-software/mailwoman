@@ -13,7 +13,7 @@ confidence). Zero-GPU, coordinate-graded._
    `f970bc42 "Clean up types"` guarded a bucket increment with `if (counts[bucket]) counts[bucket]++`,
    so the first entity in each bucket never counted (enrolled read 0 not 1; registry/reconcile.test.ts
    red, blocking every PR). Restored the plain increment; test 8/8. **Self-merged once CI green** (a
-   red main blocks all night work — flagged here, not silent).
+   red main blocks all night work — flagged here rather than silent).
 2. **Three PRs to review + merge, all CI-green, suggested order:**
    - **#775** — competitive benchmark + scorecard. The direct verdict: **we win US (99 vs Nominatim
      84), trail EU on coverage.** Read the scorecard before the trade show — the precise claim is "more
@@ -36,14 +36,14 @@ confidence). Zero-GPU, coordinate-graded._
 ### Proposed follow-ups (your call)
 
 - **#370 production wiring — SHIPPED (#780, default-off).** Reframed as do-able solo: the night-shift
-  wall is on _merging/promoting_, not on building a ready default-off PR, and a flag that's off changes
+  wall is on _merging/promoting_ rather than on building a ready default-off PR, and a flag that's off changes
   nothing until you set it. Wired `spanRescore` into `resolveTree` as the idiomatic twin of the
   `addressPoints`/`interpolation` tiers (blocked on `hasResolvedPlace` = the #685 brake, injects via the
   same `decorateNode` path). 8 new tests + the 48 existing resolver tests still pass (byte-stable);
   typecheck clean. **Then validated end-to-end** (`scripts/eval/span-rescore-e2e.ts`, on #780): flipping
   the flag through the _real_ `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
   (+16pp)** and resolved 76 → 95% — PL +42, CZ +42, PT +11; ~17% of new resolutions land >25km (the
-  mis-fire rate #777 measured). So the wired change delivers the result in production, not
+  mis-fire rate #777 measured). So the wired change delivers the result in production rather than
   just in the standalone validator. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (the
   +16pp vs the 17% mis-fire is the trade), and widen postcode coverage so the check reaches CZ/AU (IT today).
 - **Demo confidence toggle — SHIPPED in #776 (default off).** Resolved by making it opt-in: the default
@@ -62,7 +62,7 @@ mailwoman 59 vs Nominatim 79, no rescore) to an estimated **~−4pp** (59 + the 
 and directly stated. (The ~−4pp is an estimate combining #775's same-harness baseline with the result;
 a single same-harness run with the flag on confirms the exact standing.)
 
-The benchmark's bad news was EU @25km: mailwoman ~59–63% vs Nominatim ~79% (no-result, not precision).
+The benchmark's bad news was EU @25km: mailwoman ~59–63% vs Nominatim ~79% (no-result rather than precision).
 The **#370 span-rescore (#780) attacks exactly that tail**, and the end-to-end e2e gives the clean,
 defensible number: enabling the flag lifts mailwoman EU **@25km 63.2 → 79.2% (+16pp)** — a flag-only A/B,
 no caveat. **That lift is the headline.** What it does to the standing-vs-Nominatim is more nuanced, and
@@ -70,7 +70,7 @@ I corrected my own first draft of this (verify-before-verdict): it is **not** "p
 locale, mailwoman-with-change **leads** IT (99 vs 75) / PT (73 vs 47) / FR (81 vs 59) and still **trails**
 PL (85 vs 96) / AT (85 vs 97) / CZ (71 vs 88) / AU (42 vs 97 — the cross-state problem the country check
 can't fix). The aggregates land ~79% each, but that's a _mix_ (the IT/PT/FR leads offsetting the
-Slavic/German/AU trails), not a uniform catch-up — **and** it's a cross-harness compare in which the e2e
+Slavic/German/AU trails) rather than a uniform catch-up — **and** it's a cross-harness compare in which the e2e
 grades mailwoman more leniently than #775 (e2e IT 99 vs #775 92), so a same-harness run could put
 mailwoman-with-change _below_ Nominatim's 79%.
 **The precise trade-show claim: the change makes mailwoman competitive on EU aggregate and ahead of
@@ -108,12 +108,11 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   isotonic calibrator, shifting the under-confident bars upward (raw 0.92 → 0.99 — visible proof the
   number means something). Display-only (the resolver reads the raw nodes); build clean, calibrator
   direction verified numerically.
-- **#370 — span-rescore, falsify then build (#777).** The benchmark localized the EU loss to _no-result_,
-  not precision, so this attacks the no-result tail. Falsifier PASSED (the swap-case gold locality,
-  postcode-disambiguated, lands p50 1.8 km from truth — real recall, not a same-name mirage). Built the
+- **#370 — span-rescore, falsify then build (#777).** The benchmark localized the EU loss to _no-result_ rather than precision, so this attacks the no-result tail. Falsifier PASSED (the swap-case gold locality,
+  postcode-disambiguated, lands p50 1.8 km from truth — real recall rather than a same-name mirage). Built the
   rescore (raw-token enumeration + exact same-country gazetteer match); a diagnostic caught that
   shortest-span-wins was _backwards_ (it grabbed the ambiguous prefix `Tomaszów` of gold
-  `Tomaszów Mazowiecki`, 135 km off) — longest-wins fixed it. Coordinate-graded (#566, not the gold
+  `Tomaszów Mazowiecki`, 135 km off) — longest-wins fixed it. Coordinate-graded (#566 rather than the gold
   string): **78% of recoveries ≤25 km; lifts 136/259 = 53% of the EU no-result tail to a right-place
   coordinate**, at a cost of 33 (19%) >100 km mis-fires. PL fully solved (56/56, p50 1.8 km). Then
   **built the postcode-region consistency check** in the same PR: resolve the postcode → point (the
@@ -125,7 +124,7 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   the conditional change, no production wiring._
 - **EU qualified-name recall — #734's "measure first," answered (#778).** Buffer-time diagnostic, same
   root cause as the #370 swap tail (OA's qualified locality forms vs gazetteer base names). Coordinate-
-  graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93%, not 88%" — the 88% was a
+  graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93% rather than 88%" — the 88% was a
   Lithuanian eval-extraction artifact, LT absent here). The change #734 called "collision-risky" — a
   trailing-token base-name strip — is the **safe** one when bounded to **≤3 chars**: +14 PT _freguesia_-
   code recoveries (`Santa Eulália Viz`→`Santa Eulália`, 1 km), **zero collisions** (the bound spares real
@@ -145,7 +144,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails both co
 
 - **Config handicap RULED OUT** (verify-before-verdict): mailwoman is ~44% across all three resolver configs — admin-only, admin+postcode-locality-intl, and the demo's actual candidate gazetteer (20h). The resolver isn't the cause.
 - **Our internal "resolve-rate" OVERSTATES by ~15–22pp.** Internal PL resolve 62% but @25km right-place only 42%; CZ 52%→28%; AU 53%→32%. The gap = resolves that land >25 km (region-level / wrong same-name place). The direct right-place metric (what the plan + DeepSeek called for) reveals it. **This is the required finding: we've been grading ourselves on a lenient metric.**
-- **Two confounds that soften the loss, not yet quantified:** (a) **the test set is OpenAddresses, which Pelias INDEXES as a source** — Pelias's 81% / p50 0.0 km is partly recall-of-its-own-data, not generalization (the home-field-advantage trap). (b) The set is clean/multi-order; the **MESSY subset** (typo/abbrev/no-postcode — where a calibrated parser should beat a search index) is not yet measured. That's the trade-show subset and the next test.
+- **Two confounds that soften the loss rather than yet quantified:** (a) **the test set is OpenAddresses, which Pelias INDEXES as a source** — Pelias's 81% / p50 0.0 km is partly recall-of-its-own-data rather than generalization (the home-field-advantage trap). (b) The set is clean/multi-order; the **MESSY subset** (typo/abbrev/no-postcode — where a calibrated parser should beat a search index) is not yet measured. That's the trade-show subset and the next test.
 - mailwoman's real gap is **~45% no-result** on these messy EU addresses (parse-recall + coverage) vs Pelias ~1% / Nominatim ~20%. mailwoman's centroid (p50 1.3–1.8 km) is not the problem — @25km forgives it.
 
 **THE RESOLUTION — US flips it to a good, direct story.** US @25km: **mailwoman 99% vs Nominatim 84%** (0% no-result vs 16% — OSM's US coverage gaps; TIGER + national situs win). So: **we dominate US, trail EU.** Messy: mailwoman degrades gracefully (59→49), Nominatim is resilient (the "Nominatim chokes on messy" thesis is FALSE). Pelias's messy "6%" was a **geocode.earth 429 rate-limit artifact** (verified by direct query — every call now 429s) — verify-before-verdict killed a false "Pelias collapses" headline. Net trade-show framing: **lead with US dominance + calibrated confidence + deployability (30MB/browser/no-ES); present EU as the fast-improving frontier; never claim "more accurate than Nominatim" globally (false on EU, true on US — claim it precisely).** Scorecard: `docs/articles/evals/2026-06-23-vs-nominatim-pelias.md`. **Biggest internal takeaway: our resolve-rate metric overstated EU by ~15–22pp (counts >25km region-level resolves) — grade right-place @25km/PIP going forward.**
@@ -162,7 +161,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails both co
   understated it), and caught the off-canvas SVG bug before it shipped.
 - **Falsify-then-build kept #370 direct.** The cheap falsifier (gold→truth p50 1.8 km) greenlit the
   build with evidence; the build then surfaced its own surprise (shortest-wins backwards), fixed by a
-  one-knob diagnostic, not a guess.
+  one-knob diagnostic rather than a guess.
 - **The centerpiece got render-verified, notbuild-verified** — Playwright with an intercepted
   R2 fetch drew the real SVGs (24 circles, 2 polylines, zero errors); production CORS confirmed by header.
 - **The #780 wiring got end-to-end-verified, and it caught a stale-compile lie.** The unit tests pass on
@@ -175,10 +174,10 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails both co
 - **The #370 build shipped a backwards heuristic in its first reduce.** Shortest-span-wins (lifted from
   DeepSeek's over-merge guard) was wrong for real OA, where the gold locality is the _longer_ name.
   The diagnostic caught it in one pass, but a moment's thought about the data ("gold is `Tomaszów
-Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
+Mazowiecki` rather than `Tomaszów`") would have predicted it before the run.
 - **Couldn't render-verify the showcase against live R2 locally** — R2's CORS allowlist excludes
   `localhost`, so the first Playwright pass hit the component's error state. Resolved by intercepting
-  the fetch, but a few minutes were spent proving it was a localhost artifact, not a bug.
+  the fetch, but a few minutes were spent proving it was a localhost artifact rather than a bug.
 - **The #370 check's reach is data-limited and I found that late** — the postcode→point lookup the check
   needs only covers IT among the swap locales (CZ/AU resolve ~none). The change is still net-positive,
   but the check is more "proof of the mechanism" than "broad fix" until postcode coverage widens.

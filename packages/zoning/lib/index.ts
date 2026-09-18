@@ -576,7 +576,7 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 			.all() as Array<{ crosswalk_scheme: string }>
 	).map((entry) => entry.crosswalk_scheme)
 
-	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS, NOT DECLARED. The manifest's spine key names the INDEX
+	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS rather than DECLARED. The manifest's spine key names the INDEX
 	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it. Recovering
 	// it is exact rather than approximate — a short cell expands to a valid index at exactly one resolution — and the
 	// shared helper throws on a table that mixes them.

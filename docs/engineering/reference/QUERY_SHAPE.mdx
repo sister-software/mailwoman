@@ -1,6 +1,6 @@
 # Query Shape — Cheap Structural Priors
 
-Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx)). Bitter-lesson-safe because it recognizes _what shape an input has_, not _which strings are localities_.
+Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx)). Bitter-lesson-safe because it recognizes _what shape an input has_ rather than _which strings are localities_.
 
 ## Status
 
@@ -104,7 +104,7 @@ Three uses, in order of complexity:
 2. **As attention mask** — let tokens within a segment attend strongly to each other, weakly across. Modest architecture change.
 3. **As per-segment kind hint** — `segment[3] is 5-digit-numeric → postcode-prior for this segment only`. Stage 2.5 emits per-segment QueryShape; encoder gets per-segment priors.
 
-**Locale-dependence is bounded.** Commas segment in US/FR/UK; whitespace segments in JP; honorifics in Korean. The _punctuation grammar_ itself is locale-aware Stage-1 normalization, but the output is an abstract `Segment[]` that downstream stages consume uniformly. Each new locale adds ~5 lines of segmentation rules, not 50K dictionary entries.
+**Locale-dependence is bounded.** Commas segment in US/FR/UK; whitespace segments in JP; honorifics in Korean. The _punctuation grammar_ itself is locale-aware Stage-1 normalization, but the output is an abstract `Segment[]` that downstream stages consume uniformly. Each new locale adds ~5 lines of segmentation rules rather than 50K dictionary entries.
 
 ### 3. Known-format detection
 
@@ -120,11 +120,11 @@ A bounded set of universal postcode and well-known-format regexes:
 
 When a known-format pattern matches with high confidence and the user-location prior agrees, Stage 2.5 can route directly to **Stage 6 (resolver)**, skipping the encoder entirely. This is a measurable browser-side win — ~5 ms encoder inference + ~25 MB model load saved per call for the trivial cases.
 
-⚠ **Fast paths are advisory, not authoritative.** `"10118"` could be a partial typed input (`"10118 Maple St"` mid-keystroke). Every fast path must:
+⚠ **Fast paths are advisory rather than authoritative.** `"10118"` could be a partial typed input (`"10118 Maple St"` mid-keystroke). Every fast path must:
 
 - Honor a `force_full_pipeline?: boolean` option (default false)
 - Apply a conservative confidence floor before short-circuiting
-- Still report alternatives in the result, not collapse to one answer
+- Still report alternatives in the result rather than collapse to one answer
 
 If autocomplete or streaming-input workflows ever break because fast-paths short-circuited prematurely, the confidence floor was too low.
 
@@ -136,7 +136,7 @@ External signal joining the input-side priors. Goes into **Stage 6 (resolver)** 
 score(candidate) = match × population_prior × regional_prior_from_language × regional_prior_from_user_location
 ```
 
-All four factors are **soft priors**. The TX-IP user typing `"Paris"` in French input gets a tie between Paris-FR and Paris-TX; structural cues (state abbreviation, postcode shape, etc.) break it. None of the priors hard-filter — that would violate the project's stated "possibilities, not constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
+All four factors are **soft priors**. The TX-IP user typing `"Paris"` in French input gets a tie between Paris-FR and Paris-TX; structural cues (state abbreviation, postcode shape, etc.) break it. None of the priors hard-filter — that would violate the project's stated "possibilities rather than constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
 
 API shape (optional input):
 
@@ -197,9 +197,9 @@ New field on `QueryShape`:
 regionAbbreviations?: Array<{ start: number; span: string }>
 ```
 
-Detection is a single regex per locale (`/,\s*[A-Z]{2}\b/` for en-us), same cost as postcode-format detection. The WOF verification is the safety constraint — only bias tokens that are verified localities, not every preceding token.
+Detection is a single regex per locale (`/,\s*[A-Z]{2}\b/` for en-us), same cost as postcode-format detection. The WOF verification is the safety constraint — only bias tokens that are verified localities rather than every preceding token.
 
-This passes the bitter-lesson framing test: the regex is locale-bounded, not a gazetteer. The WOF check is a safety rail that prevents over-biasing non-locality tokens like "Pennsylvania" (street) in the same address.
+This passes the bitter-lesson framing test: the regex is locale-bounded rather than a gazetteer. The WOF check is a safety rail that prevents over-biasing non-locality tokens like "Pennsylvania" (street) in the same address.
 
 ## Open questions for implementation
 

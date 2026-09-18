@@ -30,7 +30,7 @@ test("normalizeNZPostcode: rejects wrong-shape / non-string → null", () => {
 	expect(normalizeNZPostcode("79 42")).toBeNull() // interior space
 	expect(normalizeNZPostcode("")).toBeNull()
 	expect(normalizeNZPostcode("   ")).toBeNull()
-	expect(normalizeNZPostcode(7942)).toBeNull() // number, not string
+	expect(normalizeNZPostcode(7942)).toBeNull() // number rather than string
 	expect(normalizeNZPostcode(null)).toBeNull()
 	expect(normalizeNZPostcode(undefined)).toBeNull()
 })

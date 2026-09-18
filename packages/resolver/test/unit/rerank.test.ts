@@ -137,7 +137,7 @@ describe("rerankByResolution", () => {
 
 	it("vetoes a resolution outside the expected country — guard B, reachable now", async () => {
 		// A locality that resolves in the middle of the Atlantic is the cross-country-jump class the bare-centroid guard
-		// structurally cannot see: the node is a locality, not a country, so guard A passes it.
+		// structurally cannot see: the node is a locality rather than a country, so guard A passes it.
 		const resolve = vi.fn(async (tree: AddressTree) =>
 			tree.raw === "a" ? localityAt(39.7392, -104.9903, "a") : localityAt(0, 0, "b")
 		)

@@ -266,7 +266,7 @@ describe("rankByCountryPrior", () => {
 	})
 
 	it("keeps the in-country answer when the contest is close (Manchester under en-US)", () => {
-		// Manchester NH 5.06 + 2 = 7.06 beats Manchester GB 5.74. A soft prior, not a global coin-flip:
+		// Manchester NH 5.06 + 2 = 7.06 beats Manchester GB 5.74. A soft prior rather than a global coin-flip:
 		// the locale still decides everything it plausibly can.
 		const manchester = [
 			place({ id: 1, name: "Manchester", country: "GB", prominence: 5.74 }),

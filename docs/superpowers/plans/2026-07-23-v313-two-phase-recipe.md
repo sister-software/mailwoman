@@ -1,7 +1,7 @@
-# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-CONDITIONAL, NOT LAUNCHED)
+# v3.13 — two-phase classifier-LR recipe (pre-registered proposal, OPERATOR-CONDITIONAL rather than LAUNCHED)
 
 **Date:** 2026-07-23 (night #2) · **Status:** proposal — the stop rule ended the v3.12 lineage;
-this is the dossier's **option B** written out so the morning decision is a green-light, not a
+this is the dossier's **option B** written out so the morning decision is a green-light rather than a
 drafting session. **Nothing here has run.**
 
 ## Why B, mechanistically (the cRT diagnostic)
@@ -46,7 +46,7 @@ Cost: about 25 min A100 (about $1.50) + the standard grade.
    flowing); dep-loc raw-BIO trajectory across phase 2 (does the anneal hold the resurrection, or
    does re-burial resume at base LR? — either answer is information the window theory needs).
 5. STOP RULE: one run (= one phase-1 + one phase-2 resume; the phase boundary is part of the
-   recipe, not an iteration). No checkpoint clean ⇒ back to the redesign table with the
+   recipe rather than an iteration). No checkpoint clean ⇒ back to the redesign table with the
    accumulation hypothesis falsified too — no anneal-point sweeps, no third phase.
 
 ## Open parameter the operator may want to move before launch

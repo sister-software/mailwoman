@@ -31,7 +31,7 @@ The layer vocabulary (`packages/core/lib/layers/schema.ts`: `designated`, `surve
 
 - **BAN — designated.** The publisher declares BAN the national reference address base for every
   commune (Loi 3DS, art. 169). The designation is of the register; per-commune BAL certification is
-  not a column in the extract, so a commune's street list is "designated complete" by mandate, not
+  not a column in the extract, so a commune's street list is "designated complete" by mandate rather than
   by audit. Treated as `designated` here. The Paris row below (a 2021 esplanade the register does
   not hold) is what that caveat costs.
 - **TIGER EDGES — designated, with a caveat a reader may refuse.** MAF/TIGER is the Census Bureau's
@@ -49,11 +49,11 @@ The layer vocabulary (`packages/core/lib/layers/schema.ts`: `designated`, `surve
 
 Two counts in the pre-registration were wrong and are corrected here rather than silently.
 
-1. **The board is 651 rows, not 930.** 930 was `wc -l` over every `.jsonl` under `cases/`, which
+1. **The board is 651 rows rather than 930.** 930 was `wc -l` over every `.jsonl` under `cases/`, which
    includes `cases/generalization/` (279 rows) — a directory `loadRegressionCases` deliberately
    excludes (its country-directory filter is `^[a-z]{2}$`). The regression board the harness grades is
    651 rows, the same figure the 2026-09-03 decomposition comment on #1571 reports.
-2. **F2's locality pool is drawn from 52 extracts, not 54.** `address-points-us-il-cook.db` duplicates
+2. **F2's locality pool is drawn from 52 extracts rather than 54.** `address-points-us-il-cook.db` duplicates
    `il` and `address-points-us-vi.db` carries no `locality_norm`.
 
 Every threshold, denominator definition and outcome class is unchanged.
@@ -124,7 +124,7 @@ carry no parsed street and a further 44 no resolved locality rung, which leaves 
 arms (18 missed, 62 passing).
 
 Of the 26 missed US/FR rows, 8 assert a truth locality. In 7 of those 8 the resolved locality names
-the truth place (Tonopah is resolved by name and lands 91 km away — a same-named place, not a
+the truth place (Tonopah is resolved by name and lands 91 km away — a same-named place rather than a
 different name); in 1 (`fr-cs-plougonvelin-trailing-region`) it names a different place. The other
 18 assert no locality. By failure shape: 13 of the 26 land in the right locality and miss on
 coordinate or tier alone (0.20 km off against a 150 m tolerance, `admin` instead of
@@ -221,7 +221,7 @@ locality would.
 
 ## Reading
 
-Observation: the board's US/FR misses are precision and span misses, not identity misses. Thirteen
+Observation: the board's US/FR misses are precision and span misses rather than identity misses. Thirteen
 of 26 land in the right locality at the wrong tier or a few kilometers off and 7 more miss on a
 venue or street span; one lands in a wrong locality by name, and the one wrong same-named place
 (Tonopah, 91 km) carries `N Main St`, a street present in the wrong county too, so the exclusion is
@@ -236,12 +236,12 @@ the commune or the house number. Inference: register membership tested on the pa
 builder's fold is the wrong instrument. Any negative-evidence mechanism would first need a
 membership test at least as forgiving as the resolver's own street lookup (directionals,
 abbreviations, route prefixes, span trimming), and its false-fire rate should be re-measured with
-that test before the mechanism is judged again. That is a precondition, not a re-run of this
+that test before the mechanism is judged again. That is a precondition rather than a re-run of this
 falsifier.
 
 Observation: one fire on a correct answer came from WOF ancestry (White House, TN has two counties
 and one ancestor row), one from a register absence in a designated source (the Bercy esplanade).
-Inference: `designated` is a claim about the register's mandate, not about a row, and the county unit
+Inference: `designated` is a claim about the register's mandate rather than about a row, and the county unit
 inherits every gap in the ancestry table. A per-locality completeness claim would need to be measured
 (`surveyed`) before it could license an exclusion the resolver acts on.
 
@@ -260,8 +260,8 @@ The phenomenon is established; the demand is not.
 3. Structural affinity (constraint source 3) survives its falsifier on the trees family. No mechanism
    is built: with F1's D1 at zero useful rows there is nothing for it to act on. The finding is
    recorded as an input the support-surface design may draw on, and the trigger for revisiting it is
-   board rows of the unknown-street-in-known-locality class, not more measurement.
-4. Two defects surfaced as by-products and belong to their owners, not to this record: WOF's single
+   board rows of the unknown-street-in-known-locality class rather than more measurement.
+4. Two defects surfaced as by-products and belong to their owners rather than to this record: WOF's single
    county ancestor for a two-county locality (White House, TN), and Connecticut's county keying
    (WOF pre-2022 counties vs TIGER2023 planning regions), which makes every CT locality
    `unit_not_in_source` for a county-keyed lookup.

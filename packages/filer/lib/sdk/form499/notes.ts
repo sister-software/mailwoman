@@ -20,7 +20,7 @@
  *   The other six are cessation REASONS, and they are the FCC's own words about a filer's status. They are
  *   carried as a small closed vocabulary plus the verbatim source string, never as a derived judgment of
  *   our own — `Form499Lifecycle.notes` always holds exactly what the file said. This matters most for
- *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance, not a
+ *   {@linkcode Form499CessationReason.Bankruptcy}: it is a quoted federal record with provenance rather than a
  *   claim this project makes about a company.
  *
  *   **Nothing here infers.** A note that matches no shape is counted in
@@ -92,7 +92,7 @@ export interface Form499Lifecycle {
 	 */
 	ceasedAt?: string
 	/**
-	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`. A supersession edge, not an
+	 * The Form 499 filer ID that superseded this one, from `Replaced by filer <id>`. A supersession edge rather than an
 	 * ownership one: it says this registration became that registration, and nothing about who owns either.
 	 */
 	replacedByForm499ID?: string
@@ -150,7 +150,8 @@ function pad2(value: string): string {
  * `null`/`undefined`/blank entries are skipped, and any number of cells is tolerated so a future vintage adding `note4`
  * needs no signature change.
  *
- * Never throws. A note this does not recognize is counted, not guessed at — see {@link Form499Lifecycle.unrecognized}.
+ * Never throws. A note this does not recognize is counted rather than guessed at — see
+ * {@link Form499Lifecycle.unrecognized}.
  */
 export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefined>): Form499Lifecycle {
 	const notes: string[] = []

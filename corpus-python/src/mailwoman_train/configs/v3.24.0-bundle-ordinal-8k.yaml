@@ -7,7 +7,7 @@
 #      soft-features boundary. locality evidence needs street context. every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
-#      a real model regression. 1/8 in the targeted sweep (point brittleness, not a class — the
+#      a real model regression. 1/8 in the targeted sweep (point brittleness rather than a class — the
 #      state-name-starvation hypothesis was probed and weakened: 5/6 state-name-city rows clean).
 #
 # ONE NAMED DELTA vs v3.23.0: augment_ordinal_prob 0.3 — the ordinal-street swap (5th↔Fifth, both

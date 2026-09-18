@@ -65,7 +65,7 @@ test("readAvailabilityRows: location_id stays a string, preserving leading zeros
 	expect(typeof leadingZeroRow!.location_id).toBe("string")
 	expect(leadingZeroRow!.location_id).toHaveLength(10)
 
-	// Every location_id is a string, not just the leading-zero one.
+	// Every location_id is a string rather than just the leading-zero one.
 	for (const row of rows) {
 		expect(typeof row.location_id).toBe("string")
 	}

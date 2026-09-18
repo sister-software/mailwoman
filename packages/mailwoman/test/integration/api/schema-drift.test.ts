@@ -8,10 +8,10 @@
  *   boundary) and the real `GeocodeResult` interface this package owns (`geocode-core.ts`). `mailwoman`
  *   is the one workspace allowed to import both sides, so the pin lives here.
  *
- *   THE ALARM IS A TYPE ERROR, NOT A RUNTIME ONE. vitest's esbuild transform strips types without
+ *   THE ALARM IS A TYPE ERROR rather than A RUNTIME ONE. vitest's esbuild transform strips types without
  *   checking them, so a plain `.test.ts` file gets zero protection from `yarn vitest run` alone — the
  *   type-level declarations below only mean anything under `tsc`. `mailwoman/tsconfig.json` normally
- *   excludes all of `./test/**` (vitest-only, not part of `tsc -b`); this one file is carved back in via
+ *   excludes all of `./test/**` (vitest-only rather than part of `tsc -b`); this one file is carved back in via
  *   an explicit `files` entry specifically so `yarn compile` type-checks it. The `test()` at the bottom
  *   is a secondary, genuinely-useful RUNTIME backstop (see its own comment) — not the primary alarm.
  *
@@ -23,7 +23,7 @@
  *   `z.infer<typeof GeocodeOutcomeSchema>` an implicit `{ [x: string]: unknown }` catchall, and
  *   TypeScript never treats a plain interface (`GeocodeResult`, no index signature) as assignable TO a
  *   type that has one — regardless of whether the named fields actually line up. Verified empirically
- *   (scratch `tsc` runs, not checked in): `type _x = IsAssignable<GeocodeResult, z.infer<typeof
+ *   (scratch `tsc` runs rather than checked in): `type _x = IsAssignable<GeocodeResult, z.infer<typeof
  *   GeocodeOutcomeSchema>>` is `false` even when every field matches, purely because of the index
  *   signature — "Index signature for type 'string' is missing in type 'GeocodeResult'." So the LITERAL
  *   two-line form the brief sketches (`z.infer<typeof GeocodeOutcomeSchema> = {} as GeocodeResult` and
@@ -55,7 +55,7 @@
  *
  *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately not used — they only gain teeth under
  *   `vitest --typecheck` (a mode this repo doesn't run. its default `typecheck.include` is `*.test-d.ts`
- *   anyway, not this file's required `.test.ts` name), so they'd silently no-op under the repo's actual
+ *   anyway rather than this file's required `.test.ts` name), so they'd silently no-op under the repo's actual
  *   `yarn vitest run`. The hand-rolled `Equal`/`IsAssignable` utilities below are pure type-level
  *   conditional types with zero runtime footprint and zero new dependencies, wired to fire under the
  *   thing this repo actually runs: `yarn compile`.

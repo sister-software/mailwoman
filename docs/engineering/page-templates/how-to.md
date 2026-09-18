@@ -60,8 +60,8 @@ geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
 
 ## Checks before commit
 
-- The outcome sentence names a state, not an activity.
+- The outcome sentence names a state rather than an activity.
 - Every command was executed, and the verify step's output is pasted from a real run.
-- Unsupported cases appear in Limits with a next action, not as a discovery mid-procedure.
+- Unsupported cases appear in Limits with a next action rather than as a discovery mid-procedure.
 - No marketing language survives anywhere on the page.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

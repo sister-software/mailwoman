@@ -161,7 +161,7 @@ def sync_assets(
     Args:
         corpus_versions: comma-separated version names, e.g. ``v0.24.0-trailing-region-structured``.
         tokenizer: tokenizer subdirectory under ``models/tokenizer/``; empty syncs the flat directory.
-        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy, not git).
+        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy rather than git).
         extras: comma-separated ``<r2-path>><vol-subdir>`` pairs for gazetteer files, eval fixtures.
 
     Usage:

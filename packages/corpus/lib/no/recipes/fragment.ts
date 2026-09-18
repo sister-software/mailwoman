@@ -173,7 +173,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// COUNTER-DISTRIBUTION — drawn from the harvested pools, not this row's street. Half bare
+			// COUNTER-DISTRIBUTION — drawn from the harvested pools rather than this row's street. Half bare
 			// localities (so "bare -> street" is not free), half bare postcodes (so the model does not
 			// stop emitting postcode to win the digit — board 3's bare-pc must hold).
 			if (random() < counterProb) {
@@ -197,7 +197,7 @@ export const noFragmentRecipe: CorpusRecipe = {
 			} else {
 				const klass = number.includes("/") ? "slash-hn" : "street-hn"
 				// knob 3: the failing class is street + LONG number (Leppdalsvegen 1285 -> postcode). The
-				// digit count, not the slash, is what tips the length prior toward postcode. Oversample
+				// digit count rather than the slash, is what tips the length prior toward postcode. Oversample
 				// those rows to fight the prior with volume and teach the street/number boundary directly.
 				const digits = (number.match(/\d/g) ?? []).length
 				const copies = digits >= longNumberMinDigits ? longNumberBoost : 1

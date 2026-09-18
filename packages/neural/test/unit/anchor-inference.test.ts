@@ -82,8 +82,8 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 /**
  * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
  *
- * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it, not against a hash, so
- *    the oracle is readable.
+ * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
+ *    hash, so the oracle is readable.
  * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
  *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
@@ -206,7 +206,7 @@ describe("buildAnchorFeatures — span modes", () => {
 		const { features, confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
 		const gb = anchorFeatureVector({ GB: 1 }, 51.50354, -0.1277)
 
-		// The unit key won, not the outward key — the outward centroid differs, so this distinguishes them.
+		// The unit key won rather than the outward key — the outward centroid differs, so this distinguishes them.
 		pieces.forEach((p, i) => {
 			const inside = p.start >= spanStart && p.end <= spanEnd
 
@@ -214,7 +214,7 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces, not 4.
+		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 

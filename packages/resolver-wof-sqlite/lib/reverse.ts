@@ -195,7 +195,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
-		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
+		// Fail loudly up front — the R*Tree is a build artifact rather than part of the upstream WOF
 		// distribution, and a missing index would otherwise surface as an opaque SQL error per query.
 		if (!tableExists(this.#admin, PLACE_BBOX_TABLE)) {
 			throw new Error(

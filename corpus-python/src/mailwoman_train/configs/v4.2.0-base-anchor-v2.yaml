@@ -1,4 +1,4 @@
-# === v4.2.0-base-anchor-v2 — DRAFT, NOT LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
+# === v4.2.0-base-anchor-v2 — DRAFT rather than LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
 #
 # NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
 # GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
@@ -46,7 +46,7 @@
 #      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
 #   4. cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2.yaml --resume none
 #
-# SHIP OBLIGATION — the inference half, which does not live in this file. The train painter keys a
+# SHIP OBLIGATION — the inference half, which belongs elsewhere. The train painter keys a
 # postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->
 # `SW1A2AA`). Inference's default scan keys `[A-Za-z0-9]+` runs and so can never produce that key.
 # The model this run produces must therefore ship a card declaring:
@@ -138,7 +138,7 @@ data:
     # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc UNDER the 0.3 class
     # weight this run corrects to 1.0) is exactly what the 2k probe reads before the 60k spend —
     # per-tag dep-loc emission + the US/FR stability boards are the kill switch. Weight 6.0 matches
-    # the other single-country synth sources, not the 12.0 saturation tier.
+    # the other single-country synth sources rather than the 12.0 saturation tier.
     synth-gb: 6.0
     # The `synth-sub-venue` source (#1486): 120k rows (84k pos / 36k neg), weight 12.0 per the recipe report —
     # `unit` is a starved tag and the recipe output's negatives (rejection-ledger confounds) carry the
@@ -203,7 +203,7 @@ model: # Verbatim from v4.0.1.
     I-region: 1.5
     B-locality: 2.0
     I-locality: 2.0
-    # 1.0, NOT the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
+    # 1.0 rather than the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
     # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead — it was

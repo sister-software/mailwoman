@@ -6,7 +6,7 @@
  *   #727 stage-2 Phase 4a — reranking a k-best parse list on RESOLUTION EVIDENCE.
  *
  *   The arc's thesis, stated by the operator (2026-07-15): the arbiter for a k-best list is the
- *   resolver, not hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that
+ *   resolver rather than hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that
  *   resolves to a country centroid.
  *
  *   The measured case for this existing at all: on the triaged parity corpus the shipped decode gets
@@ -21,7 +21,7 @@
  *   whoever complained loudest). The moment this file grows a per-hypothesis score blend, we have
  *   rebuilt that with extra steps.
  *
- *   So the rule is one bit of evidence, not a score: **drop hypotheses whose resolution is
+ *   So the rule is one bit of evidence rather than a score: **drop hypotheses whose resolution is
  *   implausible. otherwise keep the model's own ranking.** The parse scores already share a partition
  *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.

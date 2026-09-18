@@ -8,7 +8,7 @@ config.json, `fisher-diag-v1.npz` + `fisher-diag-v1.json`, training_state.json),
 `model-int8.onnx` (39.4 MB). Tokenizer `models/tokenizer/v0.9.0-multisplice/tokenizer.model`.
 **Baseline everywhere below:** `model-v401-base-step-060000-int8.onnx` — the v4.0.1 base, which is what
 `link-dev-weights.ts` puts in `neural-weights-en-us/model.onnx` on this worktree. Every baseline number
-was re-measured here on the same instrument, not quoted from a prior record, except where a prior
+was re-measured here on the same instrument rather than quoted from a prior record, except where a prior
 record's number is named explicitly as a replication target.
 
 ## The instrument
@@ -296,13 +296,13 @@ structure). Every head carries nonzero mass.
    comparison instrument), but it is a real divergence from the base card.
 4. **G1's harness does not exist.** The sheet names a P0 grid taking `--lexicon` / `--street-lexicon`.
    Neither `mailwoman eval fragment-board` nor `eval fragment-dev` carries those flags, and nothing else in
-   `mailwoman/commands/eval/` does. The FR fragment board above is the nearest existing instrument, not a
+   `mailwoman/commands/eval/` does. The FR fragment board above is the nearest existing instrument rather than a
    substitute.
 5. **G2/G5/G8 have no fixtures on this host.** `$MAILWOMAN_DATA_ROOT/eval/golden` and `.../eval/splits` are
    both EMPTY directories; the golden set the recipe points at (`/data/eval/golden/v0.1.2`) lives on the
    Modal volume. `mailwoman eval check` cannot run its battery here. The "SHIPPED 6.7.0 same-grader
    reference" G2 and G5 compare against also has no artifact in `mailwoman/eval-harness/checks/` (which
-   carries `v6.0.0-shipped-baseline.json` and `v7.0.0-base.json`, not 6.7.0).
+   carries `v6.0.0-shipped-baseline.json` and `v7.0.0-base.json` rather than 6.7.0).
 6. **G6's canary harness was not found** under any name in `mailwoman/commands/eval/` or
    `mailwoman/eval-harness/`.
 7. **`span_mode: "shaped"` is uppercase-only, and survives only because of `normalizeInputCase`.** The

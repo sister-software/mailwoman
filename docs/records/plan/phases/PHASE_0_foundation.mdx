@@ -89,7 +89,7 @@ Implement `LocaleProfile` and `LocaleRegistry`.
 Before declaring Phase 0 done, verify the design handles Phase 6 (Japan) directly:
 
 - [ ] Mentally add a `ja-JP` `LocaleProfile` with `componentsSupported: ['prefecture', 'municipality', 'district', 'block', 'sub_block', 'building_number', 'building_name', 'country', 'postcode']` (no `street`, no `house_number`).
-- [ ] Does any core code break? It shouldn't. If it does, the abstraction is wrong — fix it now, not in Phase 6.
+- [ ] Does any core code break? It shouldn't. If it does, the abstraction is wrong — fix it now rather than in Phase 6.
 - [ ] Verify by running the test suite with a hypothetical JP profile registered (you don't need actual JP classifiers; just verify the registration doesn't throw and the type system is happy).
 
 ## Success criteria checklist

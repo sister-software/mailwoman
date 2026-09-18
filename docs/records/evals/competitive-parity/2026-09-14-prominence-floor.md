@@ -98,7 +98,7 @@ administrative noun in the four registers' languages:
 | pop_50k_up    |  200 |                           142 |
 
 So `pop_50k_up` is 71% rows like `Arrondissement de Vannes` (295,698), `Kreis Lippe` (347,149) and
-`Vale of White Horse District` (128,738). Its numbers describe administrative-division resolution, not city
+`Vale of White Horse District` (128,738). Its numbers describe administrative-division resolution rather than city
 resolution, and should not be read as the latter.
 
 **The verdict does not rest on those bands.** Each arm's disqualifying accuracy cost falls on a band with zero

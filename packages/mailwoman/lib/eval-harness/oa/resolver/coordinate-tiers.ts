@@ -39,7 +39,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// The postcode anchor supplies the postcode's own centroid, the finer tier between admin-centroid and
 	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
-	// row isolates exactly what the anchor sharpens: where, not which place.
+	// row isolates exactly what the anchor sharpens: where rather than which place.
 	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
 	// resolveOpts. the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
@@ -66,7 +66,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 
 	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
 	// per-row, per-state situs + interpolation databases via RegionDatabaseProvider — so the eval reports the shipped
-	// coordinate (address_point > interpolated > admin) across all states, not the admin centroid the
+	// coordinate (address_point > interpolated > admin) across all states rather than the admin centroid the
 	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
 	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
 	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
@@ -148,7 +148,7 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 	const prefer = (preferCountry && preferCountry.toLowerCase() !== "none" ? preferCountry : "").toUpperCase()
 	// Pick the placed span with the HIGHEST position-aware confidence, above the trust floor. The
 	// anchor down-weights a digit-only code that shares its segment with a street word (`12345 Main
-	// St` reads as a house number, not a postcode), so a real trailing postcode (`… City, ST 90210`)
+	// St` reads as a house number rather than a postcode), so a real trailing postcode (`… City, ST 90210`)
 	// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.
 	// Ties break toward the later span (the postcode trails the locality in a rendered address).
 	let best: { lat: number; lon: number; conf: number; start: number } | null = null

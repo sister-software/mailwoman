@@ -8,7 +8,7 @@
  *   The differentiator vs Pelias/Nominatim + a bolt-on ER stack is that the whole resolve (block →
  *   Fellegi-Sunter → cluster) runs in one Node process with no external service. This measures how
  *   far that goes: synthetic geo-clustered records (so geo-blocking produces realistic candidate
- *   pairs, not one giant block or all singletons), resolved at increasing N, timing wall-clock +
+ *   pairs rather than one giant block or all singletons), resolved at increasing N, timing wall-clock +
  *   peak RSS. Geocoding is not in scope here (it's the per-record cost measured elsewhere) — this
  *   isolates the matcher's block/score/cluster cost as a function of N.
  *
@@ -111,7 +111,7 @@ export async function matcherScale(
 		const t0 = performance.now()
 
 		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline (the learned scorer
-		// is now default-on. its per-pair tree eval is a separate cost, not what this scale number tracks).
+		// is now default-on. its per-pair tree eval is a separate cost rather than what this scale number tracks).
 		const { entities, candidatePairs } = resolveEntities(records, {
 			collapseSpatial: true,
 			trainEM: EM,

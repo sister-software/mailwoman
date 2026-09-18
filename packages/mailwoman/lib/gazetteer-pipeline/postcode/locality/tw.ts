@@ -303,7 +303,7 @@ interface AdminPlace {
  * Chinese/romanized name forms, the region tier (the 22 直轄市/縣/市 that back the containing-city fallback), the Wikidata
  * concordance bridge, and a 0.5°-cell proximity grid behind `nearby`.
  *
- * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
+ * The database handle is closed before returning — everything downstream reads these indexes rather than SQL.
  */
 function loadAdminIndexes(args: { adminDB: string }) {
 	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
@@ -507,7 +507,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
 				// inside this polygon (Zhongshan's point sits in 中正區), so bare containment alone picks
 				// the wrong namesake when both are inside. Bare containment stays as the in-tier backup and
-				// OUTRANKS the wikidata bridge — measured, not assumed: promoting wd above bare containment
+				// OUTRANKS the wikidata bridge — measured rather than assumed: promoting wd above bare containment
 				// dropped eval PIP 86.4→85.2% (2026-07-02, n=3000 seed 42), because WOF's TW wd
 				// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries KEELUNG's
 				// Q712871 while its point sits in Taipei). A point inside the polygon is at least

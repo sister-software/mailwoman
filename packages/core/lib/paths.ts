@@ -67,8 +67,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * removes the branch that bug lived in.
  *
  * If a future layout change breaks that equality — moving this file to a different depth under `lib/`, or pointing
- * `outDir` somewhere that is not a sibling of `lib/` — the fix is to restore the equality, not to reintroduce the flag.
- * {@link PathReflection} is the single declaration of that shared depth.
+ * `outDir` somewhere that is not a sibling of `lib/` — the fix is to restore the equality rather than to reintroduce
+ * the flag. {@link PathReflection} is the single declaration of that shared depth.
  *
  * WHY NOT NATIVE RESOLUTION (2026-08-05 triage, still current). `node:module`'s `findPackageJSON` would compute
  * {@link CorePackageAbsolutePath} without any arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the
@@ -120,8 +120,8 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  * `core/` — which is why this takes a fixed `".."` pair rather than the mode-dependent third segment it used to carry.
  * See the note on {@link RepoRootAbsolutePath} for why that branch is gone.
  *
- * Used to locate package-bundled assets (dictionary data) that live under the workspace root, not the repo root — so
- * that `npm install @mailwoman/core` ships those assets alongside the JS without any post-install copy step. TODO:
+ * Used to locate package-bundled assets (dictionary data) that live under the workspace root rather than the repo root
+ * — so that `npm install @mailwoman/core` ships those assets alongside the JS without any post-install copy step. TODO:
  * Deprecate this
  */
 const CorePackageAbsolutePath = resolvePath(__dirname, "..")

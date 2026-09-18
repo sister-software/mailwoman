@@ -1,7 +1,7 @@
 # Night Shift Postmortem — 2026-07-01/02 (30th shift)
 
 Drafted during the shift; finalized at hand-off. Window: **05:30 → 13:10 UTC** (operator returned early).
-Posture: autonomous, CPU/local, ~$0 Modal (GPU changes flagged, not run). PRs shipped + flagged for
+Posture: autonomous, CPU/local, ~$0 Modal (GPU changes flagged rather than run). PRs shipped + flagged for
 operator merge (no self-merge).
 
 ## 🔔 Operator decision brief (read first)
@@ -20,7 +20,7 @@ operator merge (no self-merge).
 - **#825 GPU retrain** — the multilocale diagnosis is done + damning: **CZ 84% / PL 77% content-gap**, root-caused to Slavic-diacritic mis-tokenization. Worth a Modal budget? (CZ now in scope; AU/US already clean.)
 - **#877 candidate rebuild** — #880 says **low-ROI** (English resolves ~96%; residual ~4%, split ~evenly). My read: **defer**.
 - **#875 `Json`/public-`Us` acronym batch** — version-conditional (breaking). Bundle into the next major, or leave?
-- **#861 demo↔server resolver parity** — recommended **B** (converge on shared resolver) as a focused session; no regression today, not urgent.
+- **#861 demo↔server resolver parity** — recommended **B** (converge on shared resolver) as a focused session; no regression today rather than urgent.
 
 ## What shipped / opened
 
@@ -43,12 +43,12 @@ operator merge (no self-merge).
 - **#305 — measured + FALSIFIED (not shipped).** Implemented the proximity check on the coord-first exact
   tier (`coordFirstExactProximityKm`, default-off/byte-stable), A/B'd on the JP end-to-end eval:
   baseline KEN_ALL 98.5% / GeoNames 93.9% → **conditional 90.3% / 72.8%** (−8/−21pp). 50km ≡ 200km (identical),
-  so it's the `pcInfo`-membership check suppressing correct FTS-exacts, not distance. Reverted; posted the
+  so it's the `pcInfo`-membership check suppressing correct FTS-exacts rather than distance. Reverted; posted the
   data + redesign direction to #305; lowered priority (the 98.5% baseline is already good, the existing
   mismatch-flag is the right conservative behavior).
 
 - **Exonym-residual diagnostic (#877).** Dumped C's 3 residual cities against the live gazetteer — all
-  **exist** (Tel Aviv pop 432k, Kuwait City, Jerusalem), so the endgame is indexing/ranking, not more data.
+  **exist** (Tel Aviv pop 432k, Kuwait City, Jerusalem), so the endgame is indexing/ranking rather than more data.
   The bare-form keys **match** (`normalizeLocalityForKey("Tel Aviv")` = `"tel aviv"` = 1 row); the frontier
   miss is the geonames name-**variant** (`Tel Aviv-Yafo` → `"tel aviv-yafo"` = 0 rows) + primary/pop ranking.
   Filed + corrected #877.
@@ -63,14 +63,14 @@ operator merge (no self-merge).
   external OpenAddresses sets. **CZ 84% / PL 77%** content-gap rate (the worst by far; PT 27, AT 15, FR 10, IT 2,
   AU 0, US 0). Root cause **verified by dumping cases** (probe before write-up this time): a **Slavic-diacritic
   tokenization/offset failure** — `Grudziądz` splits at `ą`, `Bohaterów` at `ó`, and the span shift eats trailing
-  digits (`39`→`9`). Told #825 the change is diacritic robustness + CZ-in-scope, not per-locale volume (AU/US
+  digits (`39`→`9`). Told #825 the change is diacritic robustness + CZ-in-scope rather than per-locale volume (AU/US
   already 0%). The 3 PRs (#874/#876/#878) all verified MERGEABLE/CLEAN + green.
 
 - **PR #879 — dropped the `as unknown as ResolverBackend` cast (closes #873).** Filed #873 (day session)
   assuming `createWOFResolver(lookup)` didn't typecheck; verified it does (`PlaceCandidate` is structurally
   a `ResolvedPlace`; method param is bivariant). Removed all **18** cast sites + dead imports. Pure
   type-level, byte-identical runtime, 76 resolver tests green. A clean unconditional API-papercut removal — and
-  this time the assumption was verified (one cast removed + compiled) before the fix, not after.
+  this time the assumption was verified (one cast removed + compiled) before the fix rather than after.
 - **CZ/PL diacritic gap: no clean CPU fix (→ #825 GPU).** `parseWithLogits` shows the tokenizer isolates
   diacritics into own pieces the model tags O; a decoder gap-bridge would patch `Grudziądz` but not the
   broader Polish under-tagging (`Daliowa`→`owa`), and it's #305-class repair risk. Declined; it's the
@@ -87,7 +87,7 @@ operator merge (no self-merge).
 - **Verify-before-verdict earned its keep on #305.** The issue's hypothesis was plausible; the eval said
   −21pp. Shipping on the hypothesis would have been a real regression. Grade the assembled output.
 - **Scope discipline on the acronym gaps.** The `Json` sweep is ~28 identifiers across packages incl.
-  public API — recognized it as a version-conditional batch, not an overnight slip-in, after a partial sweep
+  public API — recognized it as a version-conditional batch rather than an overnight slip-in, after a partial sweep
   half-renamed callers vs their def (caught + reverted immediately).
 
 ## What could've gone better
@@ -100,8 +100,8 @@ operator merge (no self-merge).
   before running the one probe that tests it; both times the probe flipped the story (keys do match; clean
   region abbrevs do tag). Caught + corrected each on the next step, but the pattern is clear: **the numbers
   were solid, the mechanism interpretation kept outrunning the probe.** Rule for the rest of the shift and
-  next: dump the specific case before writing the "why", not after. The verify-before-verdict reflex fired
-  on the correction, not the claim — it needs to fire one step earlier.
+  next: dump the specific case before writing the "why" rather than after. The verify-before-verdict reflex fired
+  on the correction rather than the claim — it needs to fire one step earlier.
 - **Branch-stacking from an aborted `git switch`.** `git switch main` silently aborts when the working tree
   has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have
   carried #879's 18-file cast diff. Caught it on a diff-review before it mattered, rebased both onto main
@@ -110,8 +110,7 @@ operator merge (no self-merge).
 
 ## Decisions made autonomously
 
-- **Did not ship #305.** A default-off change that regresses 21pp when enabled is misleading scaffolding,
-  not a fix. Reverted rather than ship-behind-a-flag.
+- **Did not ship #305.** A default-off change that regresses 21pp when enabled is misleading scaffolding rather than a fix. Reverted rather than ship-behind-a-flag.
 - **Deferred the `Json`/public-`Us` acronym batch to the operator** (breaking, version-conditional) rather than
   do a piecemeal overnight sweep.
 

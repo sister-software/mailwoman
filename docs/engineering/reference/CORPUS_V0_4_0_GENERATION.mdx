@@ -100,7 +100,7 @@ Three artifacts pin the generation:
    `KRYPTONITE_CATEGORIES`. Version-pinned through git history.
 2. **Raw responses** — every chat-completion is persisted to
    `raw-deepseek-kryptonite.jsonl` with `{batch_id, category, n_requested, model, finish_reason, usage, response_content}`.
-   Regenerating from this raw log requires only the JSON validator, not another DeepSeek call.
+   Regenerating from this raw log requires only the JSON validator rather than another DeepSeek call.
 3. **Checkpoint** — `.kryptonite-checkpoint.json` records the set of completed
    `batch_id`s. Reruns with identical args skip done batches.
 
@@ -118,7 +118,7 @@ allocates the total budget proportionally:
 | ------------------------- | -------------------------------------------------------------------- | ------ |
 | `venue-shadow-region`     | Venue brand contains a region-like token; actual region is elsewhere | 1.0    |
 | `locality-shadow-country` | US locality shadows a famous foreign city (Paris TX, Moscow ID)      | 1.0    |
-| `mid-position-postcode`   | Postcode appears between locality and country, not at the end        | 1.0    |
+| `mid-position-postcode`   | Postcode appears between locality and country rather than at the end | 1.0    |
 | `repeated-token`          | Same token in venue and locality (Buffalo Buffalo, Walla Walla)      | 0.9    |
 | `abbrev-collision`        | State abbreviation collides with a venue/street token                | 0.8    |
 | `saint-shadow`            | Saint X / St. X colliding with a famous European saint-name city     | 0.8    |
@@ -290,7 +290,7 @@ rows fit comfortably.
   which treats space-less CJK as a single token. The substring invariant still holds
   (raw and component values are space-matched verbatim), so alignment passes — but
   per-character labeling at training time comes from the sentencepiece tokenizer
-  Thread A retrains, not from the corpus alignment.
+  Thread A retrains rather than from the corpus alignment.
 
 ## Changelog
 

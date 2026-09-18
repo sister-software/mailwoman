@@ -5,7 +5,7 @@
  *
  *   Refuse a tree whose committed well-known key file differs from the typed register it derives from. The doctor and
  *   `license verify --online` read the committed file from mailwoman.ai. the shipped trust map reads the typed register.
- *   a difference between them is a key that one side trusts and the other does not. Parsed JSON is compared, not text,
+ *   a difference between them is a key that one side trusts and the other does not. Parsed JSON is compared rather than text,
  *   so the repository formatter may lay the file out as it likes.
  */
 

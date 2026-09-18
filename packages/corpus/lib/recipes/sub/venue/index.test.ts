@@ -159,7 +159,7 @@ describe("isSignIdentifier", () => {
 			expect([value, isSignIdentifier(value)]).toEqual([value, true])
 		}
 
-		// Multi-letter prefixes are campus / platform / stop codes, not identifiers — `AG1` is a
+		// Multi-letter prefixes are campus / platform / stop codes rather than identifiers — `AG1` is a
 		// Sheffield bus stop on a street called Arundel Gate.
 		for (const value of ["AG1", "AG124", "BS04", "PWP2", "WSW3687", "RQ8", "CHU", "Inn", "de"]) {
 			expect([value, isSignIdentifier(value)]).toEqual([value, false])

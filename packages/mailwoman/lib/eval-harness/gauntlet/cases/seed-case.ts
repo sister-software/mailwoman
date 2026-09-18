@@ -12,7 +12,7 @@
  *   to a file format instead of a table — and, as `SameShape`'s docstring records, the obvious one-line version
  *   of it does not work.
  *
- *   The schema is STRICT: an unknown key in a JSONL row is an error, not ignored. A typo'd `expectLon` that
+ *   The schema is STRICT: an unknown key in a JSONL row is an error rather than ignored. A typo'd `expectLon` that
  *   parsed as "coordinate not asserted" is exactly the input-tail defect this file exists to make loud.
  */
 
@@ -159,7 +159,7 @@ export const SeedCaseSchema = zod.strictObject({
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
- * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key, not merely valid ones.
+ * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list every key rather than merely valid ones.
  *
  * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never reaches the array would
  * be silently dropped from every emitted row and from the content hash. This fails instead.

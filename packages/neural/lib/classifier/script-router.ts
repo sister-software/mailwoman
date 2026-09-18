@@ -150,7 +150,7 @@ export class ScriptRoutedClassifier<C extends RoutableClassifier = RoutableClass
 
 	/**
 	 * The primary's encoder. A per-input reading is {@link forInput}: the normalizer's postal-mark decision must follow
-	 * the classifier that will run, not the one the process was opened with.
+	 * the classifier that will run rather than the one the process was opened with.
 	 */
 	get encoder(): RoutableClassifier["encoder"] {
 		return this.primary.encoder

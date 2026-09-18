@@ -19,7 +19,7 @@ Read these before you start — two of them will stop you partway through if the
   Check yours with `node --version`.
 - **About 750 MB of free disk.** Measured on Linux x64 on 2026-08-03, the three packages below plus
   their dependencies land 746 MB in `node_modules`. 500 MB of that is `onnxruntime-node`'s prebuilt
-  binaries and 74 MB is the English model package. This is a one-time cost per project, not per
+  binaries and 74 MB is the English model package. This is a one-time cost per project rather than per
   parse.
 - **An ESM project.** The packages are ESM-only. Either put `"type": "module"` in your
   `package.json` or name the script file `.mjs`, as this page does.
@@ -100,7 +100,7 @@ and keep it, rather than rebuilding it per request.
 
 Three things in that output are worth knowing before you write code against it.
 
-**It is a tree, not a flat record.** `result.tree.roots` is an array of top-level nodes, and each
+**It is a tree rather than a flat record.** `result.tree.roots` is an array of top-level nodes, and each
 node has `tag`, `value`, `confidence`, and `children`. The nesting is geographic containment: `NY`
 contains `New York`, which contains the street and the postcode, and the street contains the house
 number, the unit, and the suffix. If you want a flat record, walk the tree and collect by `tag` —
@@ -108,7 +108,7 @@ the shape above is what containment looks like, and flattening it is your choice
 default the parser makes for you.
 
 **The confidence is the model's own score, and it is not calibrated by default.** Read `0.91` as
-"the model scored this span 0.91", not as "this span is right 91% of the time". A calibration fit
+"the model scored this span 0.91" rather than as "this span is right 91% of the time". A calibration fit
 ships in the same weights package (`calibration.json`), and you apply it by wiring `createCalibrator`
 from `@mailwoman/core/decoder`; leaving it out keeps the parse output byte-stable, which is why it is
 off by default. The difference is measurable and it runs in one direction: on the held-out set this
@@ -117,7 +117,7 @@ calibration error from 0.0698 to 0.0017. If you plan to route on the number — 
 0.8 to human review, say — wire the calibrator first, because the uncalibrated score will send you
 more work than the error rate warrants.
 
-**Values come back repaired, not as typed.** The input said `apt 4b` and the output says `Apt 4B`;
+**Values come back repaired rather than as typed.** The input said `apt 4b` and the output says `Apt 4B`;
 the ordinal `5th` comes back as `5TH`. Hand the same address in mixed case with commas and the
 repair leaves the casing alone. If you need the exact characters the user typed, keep your own copy
 of the input string — `result.input` has it.

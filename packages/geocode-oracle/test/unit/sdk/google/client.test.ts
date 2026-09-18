@@ -343,7 +343,7 @@ describe("input dispatch", () => {
 		expect(transport.calls).toHaveLength(0)
 	})
 
-	it("treats a bare coordinate STRING as an address, not a point", async () => {
+	it("treats a bare coordinate STRING as an address rather than a point", async () => {
 		// Deliberate. `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter and
 		// longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that as GeoJSON without a
 		// heuristic — so reading the string as a point would silently reverse-geocode Somalia for
@@ -402,7 +402,7 @@ describe("pacing", () => {
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
 		// 60000 / 60 = 1000ms. `requestsPerMinute` ALONE would have let all three go out at once — it is
-		// a budget, not a rate. See `bdc/sdk/client.ts` for the measurement.
+		// a budget rather than a rate. See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])
 	})
 })

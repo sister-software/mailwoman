@@ -58,9 +58,9 @@ export interface LinkWeightsOverlayReport {
  * The digest a weights package RECORDS for an artifact it ships, or `undefined` when the package records none.
  *
  * Read from the package's committed `model-card.json`, which is the register the release re-verifies against the
- * published tarball — so linking against it is checking the same claim the release checks, not a second one. Measured
- * across the ten workspaces: only `en-us` populates `files_md5`. Every overlay's is empty, which is defensible for the
- * shared base binaries and is not defensible for the artifacts an overlay actually owns.
+ * published tarball — so linking against it is checking the same claim the release checks rather than a second one.
+ * Measured across the ten workspaces: only `en-us` populates `files_md5`. Every overlay's is empty, which is defensible
+ * for the shared base binaries and is not defensible for the artifacts an overlay actually owns.
  */
 async function recordedDigests(locale: string): Promise<Record<string, string>> {
 	const card = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
@@ -109,7 +109,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// overlay to the checkout that wrote it. the writer is idempotent, so re-running from another checkout re-points it.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
-		// COPIED, not linked. Every other overlay entry points at the data root, which outlives any checkout. a
+		// COPIED rather than linked. Every other overlay entry points at the data root, which outlives any checkout. a
 		// symlink to the card would make the whole overlay depend on one working tree still existing at that
 		// path — and a worktree removed after linking would leave the overlay resolving a dangling card, which
 		// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.

@@ -9,7 +9,7 @@
  *   The unit tests pin the rules and the invariance receipt pins the 306-row corpus, but neither can
  *   answer the question that decides whether `declared_ambiguity` is worth shipping: on live
  *   gazetteer data, does the 0.5-log10 threshold separate the names that need a warning from the ones that
- *   do not? That is a property of the candidate table's populations, not of any code in this repo,
+ *   do not? That is a property of the candidate table's populations rather than of any code in this repo,
  *   so it needs the ~9 GB database set and cannot live in CI.
  *
  *   Reads `$MAILWOMAN_DATA_ROOT` read-only. Needs the dev weights linked
@@ -43,7 +43,7 @@
  *
  *   Two things to read out of that table. The threshold lands where the doctrine wants it: Cambridge
  *   (MA/UK/ON, three cities within 0.07 of each other) and Richmond (VA/BC/CA) are declared, and
- *   every capital-city query stays silent. And **Paris reads 1.94, not 0.01**, which is the
+ *   every capital-city query stays silent. And **Paris reads 1.94 rather than 0.01**, which is the
  *   coincident-collapse working — without it the `locality`/`localadmin` twin sits 0.3 km away with a
  *   0.01 margin and every major city on earth reads maximally ambiguous.
  *

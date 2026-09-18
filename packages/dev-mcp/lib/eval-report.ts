@@ -224,7 +224,7 @@ export function summarizeEvalReport(report: EvalReport): string {
  * Artifacts the card itself declares, beyond the three the layout check covers.
  *
  * Read from `files_md5` rather than from a list here, so a card that starts declaring a new sibling is checked without
- * anyone remembering to update this file. `$comment` is a documentation key, not an artifact.
+ * anyone remembering to update this file. `$comment` is a documentation key rather than an artifact.
  */
 async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]> {
 	const cardPath = resolvePath(packageDir, "model-card.json")

@@ -63,7 +63,7 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
 	// Each key is minted from the SURFACE the build folds, never written folded by hand — for an alias row that
-	// surface is the ALIAS, not the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	// surface is the ALIAS rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
 	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
 	{
 		name_key: nameKey("Illes Balears"),
@@ -212,7 +212,7 @@ describe("lookupCandidate", () => {
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
 		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`, resolving the NL PC6
 		// unit to its 4-digit stem (and to a DK row) while the unit's own record sits under `1012lg`. The runtime
-		// folds whitespace at the top of findPlace, so this order is the runtime's, not a preference.
+		// folds whitespace at the top of findPlace, so this order is the runtime's rather than a preference.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 
@@ -426,7 +426,7 @@ describe("lookupPostcodeAnchor", () => {
 	})
 
 	it("says a present record is unreachable at serve under an alnum-run card", () => {
-		// The artifact has the key and the running model is never fed it — a hit and a warning, not a miss.
+		// The artifact has the key and the running model is never fed it — a hit and a warning rather than a miss.
 		const [row] = lookupPostcodeAnchor(resolver, ["SW1A 2AA"], { spanMode: "alnum-run" })
 
 		expect(row!.hit).toBe(true)
@@ -499,7 +499,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 			}
 		}
 
-		// Without the option the property is absent — unread, not measured-empty.
+		// Without the option the property is absent — unread rather than measured-empty.
 		const [bare] = lookupCandidate(db, ["Porto Petro"])
 		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
 

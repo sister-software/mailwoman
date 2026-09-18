@@ -34,5 +34,5 @@ What's out of scope: third-party data we bundle or attribute (libpostal,
 libaddressinput, Who's on First, GeoNames — see
 [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)), and issues that require a
 malicious local data file you supplied yourself. The model is a statistical
-parser — a wrong parse is a quality bug, not a security one; please file those
+parser — a wrong parse is a quality bug rather than a security one; please file those
 as normal issues.

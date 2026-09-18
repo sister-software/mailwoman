@@ -5,7 +5,7 @@
  * @file The vocabulary an SEC Exhibit 21 filing states about its own columns and rows.
  *
  *   Every label, pattern and predicate here is US SEC filing vocabulary — "state or other jurisdiction of
- *   incorporation" is a phrase from a disclosure form, not a fact about HTML tables. It sits in `@mailwoman/filer`
+ *   incorporation" is a phrase from a disclosure form rather than a fact about HTML tables. It sits in `@mailwoman/filer`
  *   beside the parser that reads it, and the generic grid machinery it is applied to sits in
  *   `@mailwoman/core/html/tables` with no knowledge of any of it.
  *
@@ -116,7 +116,7 @@ const KNOWN_HEADER_LABELS = new Set<string>([
  * narrow checks, both applied to every non-blank value: pure decoration (no letter or digit anywhere in it, which no
  * legal entity name can be), or an exact case-insensitive match against the short fixed list of literal boilerplate
  * phrases EDGAR Exhibit 21 filings actually use. All-blank input is not a header/decoration row (that is the
- * empty-row/blank-name handling's job, not this one's).
+ * empty-row/blank-name handling's job rather than this one's).
  */
 export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 	const nonBlank = values.filter((value) => value !== "")
@@ -128,10 +128,10 @@ export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 
 /**
  * A row whose first non-blank value is nothing but a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`. The row is the
- * footnote's own text, not a subsidiary: `widepoint-2025.htm`'s second table is `[(1), "In January 2019, WidePoint
- * Solutions Corp. was merged into…"]`, and `echostar-2025.htm`/`atn-international-2025.htm` state one such table per
- * footnote. Checked before any column mapping is consulted, so a footnote table trailing a labelled list never inherits
- * that list's mapping.
+ * footnote's own text rather than a subsidiary: `widepoint-2025.htm`'s second table is `[(1), "In January 2019,
+ * WidePoint Solutions Corp. was merged into…"]`, and `echostar-2025.htm`/`atn-international-2025.htm` state one such
+ * table per footnote. Checked before any column mapping is consulted, so a footnote table trailing a labelled list
+ * never inherits that list's mapping.
  */
 export const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
 
@@ -151,8 +151,8 @@ export function carriesLegalDesignation(value: string): boolean {
  * True when one cell holds several entity values the source kept in separate blocks — a split point with a complete
  * legal entity name on both sides of it. `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks.
  * reading it as one string runs them together into `"Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC
- * …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims, not
- * one. Decision 6: the row states more than this parser can align, so it abstains.
+ * …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims
+ * rather than one. Decision 6: the row states more than this parser can align, so it abstains.
  *
  * A block boundary alone is not enough, and this is the rule's whole difficulty: EDGAR's Word/Workiva exporters also
  * emit a soft line wrap as a block boundary, so `att-2025.htm` states one name as `<div>Illinois Bell
@@ -162,8 +162,8 @@ export function carriesLegalDesignation(value: string): boolean {
  * name's designation off the front half (`"Illinois Bell Telephone"` carries none). Ten of AT&T's nineteen subsidiaries
  * are stated on wrapped rows.
  *
- * Each side is CUMULATIVE, not the adjacent block: a name may itself wrap across two blocks, and the question is
- * whether the cell can be split in two, not whether two neighbours happen to look complete.
+ * Each side is CUMULATIVE rather than the adjacent block: a name may itself wrap across two blocks, and the question is
+ * whether the cell can be split in two rather than whether two neighbours happen to look complete.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {
 	for (let split = 1; split < blocks.length; split++) {

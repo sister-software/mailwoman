@@ -121,7 +121,7 @@ export function candidateFromSearchRow(
 
 	if (row.population !== null && row.population > 0) {
 		candidate.population = row.population
-		// The named ranking key (ROAD_TO_V9 §2). DERIVED, not stored — a pure function of the
+		// The named ranking key (ROAD_TO_V9 §2). DERIVED rather than stored — a pure function of the
 		// population already on this row, so it cannot drift from what the ordering uses.
 		candidate.referential = referentialFromPopulation(row.population)
 	}
@@ -179,7 +179,7 @@ export function rankCandidates<DB>(
 
 		// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
 		// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
-		// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
+		// crossing the exact/partial boundary ("ME" → Maine rather than the more-populous Missouri).
 		for (const c of candidates) {
 			c.exactMatch = exactIDs.has(c.id as number)
 		}
@@ -195,14 +195,14 @@ export function rankCandidates<DB>(
 			// #912 sub-tier: a NAME-exact candidate (spr.name equals the query) outranks an
 			// ALIAS-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
 			// The place's own name is a stronger identity claim than an alias — aliases exist to
-			// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
+			// widen recall rather than to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
 			// nothing, so the alias sub-tier still decides there. Population orders within each
 			// sub-tier as before.
 			const needle = foldQueryText(query.text)
 
 			// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
 			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
-			// Turku's name, not merely its alias. Floor-conditioned on the holder's population (see the
+			// Turku's name rather than merely its alias. Floor-conditioned on the holder's population (see the
 			// RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs by
 			// construction (official rows are names rows), so only the sub-tier KIND changes.
 			const officialIDs = weights.officialNameExact
@@ -234,7 +234,7 @@ export function rankCandidates<DB>(
 			// the tiebreak, which is provably the SAME ORDER as the `(b.population ?? 0) - (a.population ?? 0)`
 			// it replaces — referential is strictly increasing in population below saturation and
 			// constant above it, and the tiebreak restores the order in the saturated tail. Measured
-			// zero-delta, not assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
+			// zero-delta rather than assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
 			// Encyclopedic importance is not, and must not become, an input here.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 

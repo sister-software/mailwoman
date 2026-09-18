@@ -81,7 +81,7 @@ date-name class. Its docstring states the exact assumption that designated cover
 > incompleteness is the default state of the world)**, so the policy always fails open.
 
 The parenthetical is true in general and false inside a `designated` cell. The negative half is
-therefore a coverage-qualified mode on an interface that already exists, not a new subsystem.
+therefore a coverage-qualified mode on an interface that already exists rather than a new subsystem.
 
 ---
 
@@ -203,7 +203,7 @@ null when:
   · the country is outside the probe's scope
 ```
 
-Only `designated` and `surveyed` pass. **Fold parity is a precondition, not a footnote:** the probe
+Only `designated` and `surveyed` pass. **Fold parity is a precondition rather than a footnote:** the probe
 must import the same fold function the layer's builder wrote (`foldStreetSurface`,
 `normalizeLocalityForKey`), and the check takes it as an argument so a mismatch is a compile-time
 concern rather than a silent miss.
@@ -225,15 +225,15 @@ Removal power is revisitable once §6's falsifier has a number, and not before.
 
 ## 4. Four arms
 
-Ordered by what is buildable today, not by expected value.
+Ordered by what is buildable today rather than by expected value.
 
 ### 4.1 GB spatial existence — `designated`, ready now
 
-`uprn.db` carries designated coverage and no names, so the GB probe is spatial, not lexical: _does
+`uprn.db` carries designated coverage and no names, so the GB probe is spatial rather than lexical: _does
 any designated address point exist within R of this candidate?_ A candidate landing in a designated
 cell with no UPRN inside R warrants one negative bit.
 
-No new artifact. `R` is a parameter with a measured default, not a tuned weight.
+No new artifact. `R` is a parameter with a measured default rather than a tuned weight.
 
 ### 4.2 US block completeness — `surveyed`, three columns
 
@@ -293,7 +293,7 @@ probe's output is a per-commune basis assignment or a decision that BAN supports
 - `epistemic_status: EpistemicStatus` — always present.
 - `derivation?: DerivationProjection` — opt-in, naming each constraint and its contribution.
 
-The graph is **projected from the existing `ResolveNodeTrace`** (#1721), not newly recorded. That
+The graph is **projected from the existing `ResolveNodeTrace`** (#1721) rather than newly recorded. That
 recorder already has the three properties this needs, and its tests pin them: no sink means no
 bookkeeping and a byte-identical walk; the per-stage rank vector attributes loss; every exit path
 emits, because "an absent record is indistinguishable from a lookup that never ran."
@@ -309,14 +309,14 @@ independent likelihoods manufactures confidence.
 
 ## 6. Falsifiers
 
-Run before building the arms, not after.
+Run before building the arms rather than after.
 
 1. **The 187 decomposition.** Of the coverage-class misses on the board, what is the split between
    mis-tag (an exclusion would be correct) and fold failure (an exclusion would be wrong)? The
    denominator is 187 and `mwdev_constraints` already produces the rows. **If fold failures
    dominate, fold repair ships before negative evidence does** — and this spec has falsified its own
    first arm, which is the intended outcome in that case.
-2. **GB arm on the board.** Negative mode on vs off, demote-only. Bar is the strata table, not a
+2. **GB arm on the board.** Negative mode on vs off, demote-only. Bar is the strata table rather than a
    pooled headline.
 3. **Gauntlet 369:** no regression.
 4. **`plausibilityCheck` suite:** passes unchanged, proving §4.3 is lossless.
@@ -327,11 +327,11 @@ Run before building the arms, not after.
 
 ## 7. Prohibitions
 
-- **Never emit an inferred point as though retrieved.** `epistemic_status` is mandatory, not optional
+- **Never emit an inferred point as though retrieved.** `epistemic_status` is mandatory rather than optional
   decoration.
 - **Soft priors never exclude.** Only a typed `Exclusion` from `requireExclusionBasis` may demote on
   absence.
-- **No exclusion without fold parity.** A fold mismatch is a fold failure, not a coverage fact.
+- **No exclusion without fold parity.** A fold mismatch is a fold failure rather than a coverage fact.
 - **Never sum reachability and coverage.** They call for opposite work.
 - **A bounded region with stated confidence, never a fabricated coordinate.**
 - **Honesty is not a premium feature.** Provenance, epistemic status, uncertainty and abstention are
@@ -361,7 +361,7 @@ Run before building the arms, not after.
 | Exclusion power | demote only, one bit                           | bounds the worst case at the model's own ranking                          |
 | Core home       | new `@mailwoman/evidence` workspace            | three consumers, two of them leaf; core's data weight is the blocker      |
 | First arm       | GB spatial                                     | the only designated artifact that exists                                  |
-| US basis        | `surveyed`, not `designated`                   | no public designated US address register; H1 is the independent reference |
+| US basis        | `surveyed` rather than `designated`            | no public designated US address register; H1 is the independent reference |
 | FR arm          | probe-conditional                              | a blanket per-commune designation claim would be false                    |
 
 ## Receipts (2026-09-05)

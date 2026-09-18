@@ -67,7 +67,7 @@ fragments with full addresses.
 
 Nothing regressed; street gained **+8 fixtures** on the broad corpus. The `FAIL` verdicts printed by
 `eval parity` are the **v7 campaign floors** (street 0.90 / hn 0.97) — v264 fails them too. They are a
-target, not a regression check.
+target rather than a regression check.
 
 ## 4. What the in-training eval said, and why it is not the verdict
 
@@ -95,7 +95,7 @@ Two things survive from it:
 **int8** baselines — the shipped weights package ships int8 (39.4 MB), a fresh `export_onnx` is fp32
 (157 MB). The check specs cap int8-vs-fp32 at 1.5pp, larger than several cells above. The read script's
 md5 check passed it because "differs from the baseline model" is true of a precision
-change: **an md5 difference proves the file changed, not that it is comparable.** Fixed (`5e5f9c2a`) —
+change: **an md5 difference proves the file changed rather than that it is comparable.** Fixed (`5e5f9c2a`) —
 the pipeline is export → quantize → grade, and the script now asserts the precision class matches.
 Every number on this page is int8-vs-int8.
 
@@ -117,13 +117,12 @@ ship config, int8 both sides):
 
 **Every tag is inside the 2pp bar. Two improve. The pre-publish check passes.**
 
-So the val split's −1.0pp region was a **false positive**, not a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
+So the val split's −1.0pp region was a **false positive** rather than a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
 real; this one reported a problem that was not. Same root — a metric on a distribution nobody asked
 about — and the same rule: read the instrument the check names.
 
 That does not make `region` uninteresting. It is the tag the fragment mass pulls on, #1102 is real,
-and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch,
-not a thing to ignore, and it is cheap to watch: this table is one command.
+and a heavier weight or a second locale's extract could push −0.2pp into −2pp. It is a thing to watch rather than a thing to ignore, and it is cheap to watch: this table is one command.
 
 ### 4.2 The pre-registered "ALSO" — which did not come out as predicted
 
@@ -161,7 +160,7 @@ The two populations do not contradict each other; they partition:
 
 The fix is a sibling of what is already there — extend the counter-distribution to French zone
 designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). Not a new idea, a wider one.
-It is a extract change, so it belongs to the next run, not to this verdict.
+It is a extract change, so it belongs to the next run rather than to this verdict.
 
 **This is what pre-registration is for.** Two of the three check clauses passed decisively; the third
 went the other way and is on the page at the same size as the wins.
@@ -176,13 +175,13 @@ synthetic coverage** source — the doctrine's whole claim — works on its firs
 **Does not establish:**
 
 - **Promotion.** The 2pp pre-publish check passes (§4.1), which clears the largest single hurdle — but
-  that is one leg, not the battery. A promote still wants `mailwoman eval check --check <spec>` (the
+  that is one leg rather than the battery. A promote still wants `mailwoman eval check --check <spec>` (the
   per-locale floors, the int8↔fp32 delta cap, the cascade smoke, the mask-regression lock) and an
   operator GO. Nothing ships on this page.
 - **The v7 floors.** street 0.6067 vs a 0.90 floor. +3.0pp is real and it is not 32pp.
 - **`date-name`.** 0.158 is +10.3pp and still 84% wrong. BAN holds only ~1,418 date-name streets and
   the extractor already takes every one; the extract has 655 rows of it. The change there is **extract
-  weight**, not more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
+  weight** rather than more data — and, per T1c, the underlying confusion (a digit inside a street name vs a
   house number) is the same one the span decode shows from the other side.
 - **Other locales.** FR only. Generalization goes **by tier** (BAN → BAG → TIGER-with-scope), never
   folded into one step.

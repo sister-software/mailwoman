@@ -40,7 +40,7 @@ like a description of addresses rather than a description of one country's conve
 Germany writes the house number after the street. France writes the postcode before the town.
 Japanese addresses start at the prefecture and work inward, and number blocks rather than streets —
 so there is no street name to parse at all. Mannheim's city center is a lettered grid where `R 5` is a
-block, not a road. [Addressing around the world](../postal/addressing-around-the-world.mdx) walks
+block rather than a road. [Addressing around the world](../postal/addressing-around-the-world.mdx) walks
 those conventions properly.
 
 The structural point is not that there are exceptions. It is that there is no privileged ordering for
@@ -50,7 +50,7 @@ per-country set, and the number of countries is not the problem. The problem is 
 string does not come labeled with which set to apply, so choosing the grammar requires having
 already partly understood the string.
 
-## Two: the ambiguity is intrinsic, not incidental
+## Two: the ambiguity is intrinsic rather than incidental
 
 Here is the part that resists every amount of engineering: **you cannot group the words correctly
 without knowing what they are, and you cannot tell what they are without knowing how they group.**

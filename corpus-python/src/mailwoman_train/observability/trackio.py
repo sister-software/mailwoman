@@ -10,7 +10,7 @@ every run to a backing HF Dataset. with no ``space_id`` it logs to a local dashb
 
 Design rule — tracking must never crash training. An A100 run costs real money and the
 night-shift workflow runs unattended. a metrics upload that 401s, a missing package, or
-an API drift must degrade to CSV-only, not take the run down with it. So:
+an API drift must degrade to CSV-only rather than take the run down with it. So:
 
   * the whole thing no-ops when ``cfg.train.trackio_enabled`` is False (the default), or
     when the ``trackio`` package isn't installed (plain tokenizer-only installs don't

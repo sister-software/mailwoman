@@ -6,7 +6,7 @@ LABEL key sets (`tw_registry.py`, `jp_registry.py`) and kept only where the whol
 measured over every row and written to the build report. a string that does not align is a board row, never a
 training row.
 
-Hold-out follows the LABEL corpus of the same locale exactly, so a typed address in a held-out unit is read, not
+Hold-out follows the LABEL corpus of the same locale exactly, so a typed address in a held-out unit is read rather than
 trained: Taiwan holds out 鄉鎮市區 by the (縣市|鄉鎮市區) hash at the TW board's bucket, Japan holds out municipalities
 by the municipality hash at the JP board's bucket.
 

@@ -49,7 +49,7 @@ dot.
 This is the distinction that costs people the most, so it is worth being slow about.
 
 When a geocoder resolves `Springfield, IL`, two separate things come back. There is the **place**: a
-record in a gazetteer, with a stable identifier, a name, a type (this is a city, not a county), and a
+record in a gazetteer, with a stable identifier, a name, a type (this is a city rather than a county), and a
 chain of parents (in Sangamon County, in Illinois, in the United States). And there is the
 **coordinate**, which is a property of that record — the center of whatever geometry the gazetteer
 holds for it, where it holds one at all.
@@ -67,7 +67,7 @@ places of latitude is about a millimetre of ground, and decimals are a property 
 format rather than of the measurement behind it. A coordinate cannot tell you which of the two
 failures you are looking at. Something else has to.
 
-## Precision comes from the source, not the geocoder
+## Precision comes from the source rather than the geocoder
 
 The something else is the coordinate's provenance, and the vocabulary for it is **precision tiers**.
 The idea is that a geocoder does not have one way of producing a coordinate; it has several, arranged
@@ -102,7 +102,7 @@ returns the wrong Springfield is not 400 km accurate, it is wrong.
 **How far is the coordinate from the true location?** A distance question, and the only one of the
 three that a number in meters answers. It is meaningful only once the first question is settled yes.
 
-**Is it close enough for what I am doing?** A comparison, not a property. Assigning a facility to a
+**Is it close enough for what I am doing?** A comparison rather than a property. Assigning a facility to a
 regulator wants the right polygon and does not care about kilometers. Sending a van to a loading dock
 cares about meters and does not care that the town was right. Both consumers can read the same result
 and disagree about whether it worked.

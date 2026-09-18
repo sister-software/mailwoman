@@ -19,7 +19,7 @@ import type { Tagged } from "type-fest"
 
 /**
  * A German postcode: five digits since the 1993 reform (`12623`). A bare 5-digit string, same shape as a US ZIP or a
- * French code postal — disambiguation is the parser's job, not the shape's.
+ * French code postal — disambiguation is the parser's job rather than the shape's.
  *
  * @category Postal
  * @type string
@@ -66,7 +66,7 @@ export interface LeitzoneInfo {
 	 */
 	region: string
 	/**
-	 * Well-known anchor cities in the zone (illustrative, not exhaustive).
+	 * Well-known anchor cities in the zone (illustrative rather than exhaustive).
 	 */
 	cities: readonly string[]
 }

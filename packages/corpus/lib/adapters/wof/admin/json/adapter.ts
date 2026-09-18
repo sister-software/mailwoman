@@ -20,7 +20,7 @@
  *   Input: a directory containing one or more cloned `whosonfirst-data-admin-<cc>` GitHub repos. Each
  *   repo has `data/XXX/YYY/ZZZ/<wof-id>.geojson` files; `**\/*.geojson` walks the tree recursively.
  *   Alternate-geometry siblings (`-alt-*`) are skipped — they're separate exports of the same
- *   record, not new records.
+ *   record rather than new records.
  *
  *   Per record, the adapter emits one row per `(name-variant, hierarchy-variant)` pair:
  *
@@ -56,7 +56,7 @@ import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
  * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record FILTER for its adapter's
- * emission set, not a shared vocabulary.
+ * emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {

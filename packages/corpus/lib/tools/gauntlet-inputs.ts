@@ -9,7 +9,7 @@
  *   so neither register knows the other exists, and a board row that reaches the corpus stops measuring a capability
  *   and starts measuring recall of one string.
  *
- *   READ FROM DISK, NOT IMPORTED. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
+ *   READ FROM DISK rather than IMPORTED. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
  *   gauntlet loader without a cycle. A recipe is a build tool reading the repository it is built in, which is a file
  *   read rather than a dependency. the shipped package never calls this.
  */

@@ -453,7 +453,7 @@ describe("assembleAccount — the terminal states", () => {
 		)
 
 		expect(resolved.resolved_without_recorded_lookup).toBe(true)
-		// An abstention with no lookups is the ordinary reading of an empty list, not a coverage gap.
+		// An abstention with no lookups is the ordinary reading of an empty list rather than a coverage gap.
 		expect(abstained.resolved_without_recorded_lookup).toBe(false)
 		expect(renderAccount(resolved)).toContain("NO recorded lookup")
 	})

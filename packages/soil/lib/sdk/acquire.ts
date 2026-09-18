@@ -6,7 +6,7 @@
  *   Acquisition, end to end: which survey areas a region holds, their archives, and the inputs the builder
  *   takes.
  *
- *   THE FRESHNESS QUESTION IS ANSWERED BY THE TABULAR SERVICE, NOT BY THE FILE HOST. `sacatalog.saverest` is
+ *   THE FRESHNESS QUESTION IS ANSWERED BY THE TABULAR SERVICE rather than BY THE FILE HOST. `sacatalog.saverest` is
  *   the version-established date, and it is also what the archive's filename embeds — so one catalogue call
  *   both decides what to download and names the file. The download host cannot answer it: it refuses `HEAD`
  *   with 405 and ignores `Range`, so a length probe there is a full transfer.

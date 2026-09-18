@@ -33,7 +33,7 @@
   7.8 → 75.7, postcode 0.1 → 98.3 — the project history in one table.
 - **P2.5 DE holdout**: Saarland + Mecklenburg-Vorpommern added to `defaultHoldouts()` — takes
   effect at the next base rebuild (a holdout added after a corpus is built is
-  leakage-laundering, not a holdout). 1500 corpus tests green.
+  leakage-laundering rather than a holdout). 1500 corpus tests green.
 - **P2.8 pipeline contract**: the decode-time constraint layers (conventions mask + span bridge)
   documented as the ship-config decode contract. The angle lint narrowed to its measured
   breakage class (digit prose) after false-positiving on legitimate JSX.
@@ -58,7 +58,7 @@
   apply between runs.
 - **The extract agent's audit check shared its builder's blind spot** (both normalized the dots
   away), so the dotted-truncation bug reached the full run instead of dying at the audit. Audit
-  checks need at least one check that operates on the RAW surface, not the builder's own
+  checks need at least one check that operates on the RAW surface rather than the builder's own
   normalization.
 - DeepSeek consults again mixed one keeper insight per session with fabricated specifics
   (the "glue rows tie rue→street_prefix" mechanism never existed). The verify-before-steering
@@ -87,7 +87,7 @@
   as a morning item when it was already-granted night work.
 - #517 (Commonwealth/military po_box): needs codex au/nz modules first — queue position?
 - The char-offset label format (the structural fix for what the bridge contains): a corpus-
-  format change with wide impact — deserves a day-session design, not a night slot.
+  format change with wide impact — deserves a day-session design rather than a night slot.
 - FR house_number 97.7→97.2 and fr.postcode 99.7→99.6: both within single-row noise, both
   recorded in the card's known-regressions — flagging per the no-silent-drift habit.
 

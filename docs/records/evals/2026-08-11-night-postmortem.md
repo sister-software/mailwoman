@@ -86,7 +86,7 @@ prod e2e cascade at 8/9 (the one red is pre-existing, filed #1589).
   (3.19–3.25x against the 3x bar, algorithm healthy each time): paired back-to-back arms + median
   per-pair ratio replace sequential best-of blocks; the bar itself untouched.
 - The scheduled demo smoke now runs (unblocked by #1590) and directly reds on the Zabiče case
-  every cycle until the demo republish — flagged as an operator decision, not silently quieted.
+  every cycle until the demo republish — flagged as an operator decision rather than silently quieted.
 
 ## The issue sweep (operator-directed, 10:20–12:10 UTC)
 
@@ -144,7 +144,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   the keyed probe. The #48 (identifier/unit boundary) family, now with a live resolver-visible
   receipt and two change shapes (a leading-letter-street board stratum; a self-validating probe
   retry).
-- **The two standing reds, not relaxed**: Zabiče SI (demo republish debt) and the autocomplete
+- **The two standing reds rather than relaxed**: Zabiče SI (demo republish debt) and the autocomplete
   typeahead (port interaction drift).
 - **PR #1604**: ConsoleFixture failures now NAME their resource URL (`msg.location()`) — its first
   capture resolved what had looked like an intermittent 404 into a stale-tree artifact on the
@@ -169,7 +169,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
   cache 1000 → 4000) hit the same under-1k/s cliff at ~1.1M nodes, so the second knob was not turned
   solo. Diagnosis (append-mode COPY into a `planet_osm_nodes` btree that no longer fits the buffer
   pool) + a three-way fork recorded in `pelias-rig/logs/nominatim-append-ledger.txt`.
-- **Two direct e2e reds left standing, not relaxed**: the Zabiče SI case (the demo's stale
+- **Two direct e2e reds left standing rather than relaxed**: the Zabiče SI case (the demo's stale
   candidate gazetteer — Node resolves `Zabiče 8, 6250 Zabiče` to 45.508/14.369 SI correctly; the
   browser serves the pre-importance artifact) and the autocomplete typeahead (interaction drift
   beyond ids).
@@ -182,7 +182,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 - Pre-registered falsifiers did their job: two of three KILLED their own hypotheses directly, and
   the convergence produced a design record instead of three disconnected negative results.
 - The measured-change discipline: the append's first collapse got a measured knob (cache), the
-  second identical collapse got the treadmill guard, not a third guess.
+  second identical collapse got the treadmill guard rather than a third guess.
 
 ## What could've gone better
 

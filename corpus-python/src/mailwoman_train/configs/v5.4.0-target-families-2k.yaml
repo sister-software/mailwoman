@@ -6,7 +6,7 @@
 # a family, and any board read off this checkpoint is noise.
 #
 # The reps targets are the 60k config's divided by thirty, because the probe is thirty times shorter and the
-# quantity worth holding constant is the SHARE of the mixture, not the exposure per row. 2,000 steps
+# quantity worth holding constant is the SHARE of the mixture rather than the exposure per row. 2,000 steps
 # x batch 128 = 256,000 samples. the six sources demand 0.03333*142083 + 0.03333*80081 + 0.26667*4551
 # + 0.26667*4944 + 0.26667*5279 + 0.01667*153965 = 13,911 draws, 5.4% of the probe, which is the same
 # 5.4% they take of the full run. Reps per row are correspondingly a thirtieth, so no row is learned;

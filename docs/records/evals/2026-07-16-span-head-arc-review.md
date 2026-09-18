@@ -74,12 +74,12 @@ scheme list; anything off-template falls through); flat BIO fails on clean input
 **The proposal:** score whole _segmentations_ — a semi-Markov CRF over spans, with a **segment-level**
 transition grammar. Same idea as scheme matching, except the scores are learned and the hypothesis
 space is every segmentation rather than a hand-written list. And : **k-best output**, because
-the useful artifact is a ranked list of readings, not one answer.
+the useful artifact is a ranked list of readings rather than one answer.
 
 Worth noting for anyone who's been here before: this project abandoned a **token-level** CRF at v0.5.0
 (bf16 NaN, `crf_loss_weight=0.0` ever since). That scar was treated as "CRF diverged" for ~200 model
 versions. It doesn't transfer: at subword granularity, transitions are noise — _"must `1` follow `▁8`"_
-is not grammar. At segment granularity (5–8 segments, not 40 subwords), "house_number is adjacent to
+is not grammar. At segment granularity (5–8 segments rather than 40 subwords), "house_number is adjacent to
 street", "one postcode per reading" is well-posed. Same table, right altitude.
 
 ---
@@ -170,7 +170,7 @@ soft channels (postcode anchor / gazetteer / country lexicon). With channels fed
 | oracle@10              | 0.749                  | **0.7753**              |
 
 **The margin over the token decode is +0.75pp — two fixtures, inside noise.** Much of the original
-+7.9pp was the BIO head's _starvation_, not the span head's strength. Feed the channels and BIO
++7.9pp was the BIO head's _starvation_ rather than the span head's strength. Feed the channels and BIO
 recovers most of it.
 
 What survives, and matters:
@@ -195,7 +195,7 @@ Korunní 810, Praha  →  Korunni:street  810:house_number  Praha:locality
 branch); the transition table as a JSON sidecar with the segment-type axis **in the file** (never
 hardcoded); k-best decode in JS, brute-force verified, shared by node and browser.
 
-Costs, measured on the runtime that ships (`onnxruntime-web` WASM EP, not the node bench):
+Costs, measured on the runtime that ships (`onnxruntime-web` WASM EP rather than the node bench):
 
 |                                             |                       |
 | ------------------------------------------- | --------------------- |
@@ -254,7 +254,7 @@ list with no arbiter to collect it.
 The resolver answers _"where is this?"_ The question a bare fragment needs is **"is this a street name
 at all?"** — an existence check against the BAN/gazetteer **name index**. No locality, no house number
 required, so it sidesteps the circularity entirely. `ban/street-centroids-fr.db` contains every French
-street name; asking whether `Rue de Rome` is in it is a lexicon lookup, not a geocode.
+street name; asking whether `Rue de Rome` is in it is a lexicon lookup rather than a geocode.
 
 Two signals have already failed (plausibility veto: inert; resolution specificity: −16, because
 preferring "finer" among `country` / `region` / `locality` _rewards the locality-reading failure mode_). A
@@ -337,7 +337,7 @@ local grading run.
 
 > **Answered.** All four went to review and came back adjudicated — see
 > [`2026-07-16-span-head-arc-review-follow-up.md`](./2026-07-16-span-head-arc-review-follow-up.md)
-> for the verdicts and the converged plan. Kept here as asked, not as open.
+> for the verdicts and the converged plan. Kept here as asked rather than as open.
 
 1. **Is +0.75pp at rank-1 enough to justify the decode?** We say no, and that the case is the list.
    Is that motivated reasoning about a phase we already built?

@@ -17,7 +17,7 @@
  *        (the new `ResolveConfig.scorer` hook), once with the LR. Sweep the link threshold for
  *        each. take best F1.
  *   4. Report the eval clustering F1 (the dedup benchmark's metric): does the learned scorer beat the FS
- *        baseline on the ASSEMBLED output, not just pairwise ranking?
+ *        baseline on the ASSEMBLED output rather than just pairwise ranking?
  *
  *   The FS arm is the benchmark's baseline (same model: address-frequency + collapsed spatial,
  *   EM-fit), so the comparison is credible. Honest framing: in-domain (one state), a held-out-NPI

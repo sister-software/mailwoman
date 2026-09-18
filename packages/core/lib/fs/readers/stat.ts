@@ -211,9 +211,9 @@ export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
 /**
  * Whether the process may WRITE to a path.
  *
- * A permission question, not an existence one: `access` answers about the caller's credentials against the file as it
- * stands, where a stat answers about the file. Absence reads as `false` here, which is what a caller checking "can I
- * write here" means by it.
+ * A permission question rather than an existence one: `access` answers about the caller's credentials against the file
+ * as it stands, where a stat answers about the file. Absence reads as `false` here, which is what a caller checking
+ * "can I write here" means by it.
  */
 export function isWritable(path: PathBuilderLike): Promise<boolean> {
 	return access(path.toString(), constants.W_OK).then(

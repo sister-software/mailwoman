@@ -32,7 +32,7 @@ Mailwoman v1 was an effort to **replace `libpostal`** with a TypeScript-native p
 
 Mailwoman v1 used **rule classifiers**: hand-written code that looks at each token (word) of the input and decides what kind of address component it is. A rule like "if it starts with 5 digits, it is a US postcode" is one classifier. There are dozens of them, one per component type. They run in parallel, vote, and a solver picks the best combination. See [`how-it-used-to-work.md`](./how-it-used-to-work.mdx) for the full story.
 
-This worked, but it ran into the same limit every rule-based parser hits: the long tail. Real-world addresses have shapes the rules do not know about. "Saint Petersburg, FL" is two words but one city. "Mt Tabor Park" is a venue, not a street. Rules can describe these cases, but writing them all out is a never-ending project.
+This worked, but it ran into the same limit every rule-based parser hits: the long tail. Real-world addresses have shapes the rules do not know about. "Saint Petersburg, FL" is two words but one city. "Mt Tabor Park" is a venue rather than a street. Rules can describe these cases, but writing them all out is a never-ending project.
 
 ## What changed in 2026
 

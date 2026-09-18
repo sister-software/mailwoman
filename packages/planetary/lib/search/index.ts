@@ -35,7 +35,7 @@ export interface SearchHit {
 
 /**
  * The payload the build wrote beside every entry. Read through the schema rather than cast, so an artifact from a build
- * with a different payload fails at load, not as `undefined` in the panel.
+ * with a different payload fails at load rather than as `undefined` in the panel.
  */
 const SearchPayloadSchema = z.object({
 	id: z.string().min(1),

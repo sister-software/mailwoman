@@ -23,7 +23,7 @@ A neural classifier makes the same promise implicitly, every time it hands you a
 
 We measured the gap with Expected Calibration Error. Bucket the predictions by stated confidence, and in each bucket compare the average confidence to how frequently those predictions were right. Average the gaps, weighted by how several predictions land in each bucket. Zero is a forecaster you can trust. The shipped model sat around 0.060, about six points of slack between what it claimed and what it delivered — and, interestingly, mostly _under_-stated: a span it called 92% was right closer to 98% of the time. Slack is slack in either direction; a number you can't trust to be too low is no more useful than one you can't trust to be too high.
 
-## A correction sticker, not a new model
+## A correction sticker rather than a new model
 
 The fix doesn't touch the model. It's the same move you'd make with a cheap kitchen thermometer that reads ten degrees low. You don't crack it open and re-machine the probe; you tape a little card to the handle that says "reads 340, it is 350."
 

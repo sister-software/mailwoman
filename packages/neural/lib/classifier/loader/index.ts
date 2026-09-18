@@ -54,7 +54,7 @@ export async function loadScriptRoutedClassifier(
 		onFamilyUnavailable: (family, error) => {
 			console.warn(
 				`[neural] the ${family} weights family is not installed ` +
-					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message, not a data file.
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
 					`(${error instanceof Error ? error.message.split("\n")[0] : String(error)}); ` +
 					`inputs in that script run on the ${opts.locale ?? "en-US"} model. Install @mailwoman/neural-weights-${family}.`
 			)
@@ -257,8 +257,7 @@ export async function loadClassifierFromWeights(
 
 	// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
 	// when the package shipped one for this country. HARD COUNTRY CHECK — an index built for one
-	// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
-	// not something to apply anyway): the index header's `country` must equal the resolved locale's
+	// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug rather than something to apply anyway): the index header's `country` must equal the resolved locale's
 	// country subtag, or the default is skipped with a single warning naming both. Unlike the
 	// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
 	// case here — the prior is opt-in plumbing, so a missing/mismatched index degrades silently to the
@@ -302,7 +301,7 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
-	// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL, not a weights-package sibling — the
+	// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL rather than a weights-package sibling — the
 	// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
 	// entirely inert, silently, because not having built it is the normal state for every consumer.
 	const placetypeCensus = await loadPlacetypeCensus(

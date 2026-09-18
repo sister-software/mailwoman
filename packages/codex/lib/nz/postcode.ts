@@ -9,7 +9,7 @@
  *   "The province, region, district or territory is not to be used."
  *
  *   The shape collides with Australia's (also 4 digits) — `candidateSystemsForPostcode` returns both,
- *   by design (shape test, not membership test).
+ *   by design (shape test rather than membership test).
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, Oct 2021)}
  */
 

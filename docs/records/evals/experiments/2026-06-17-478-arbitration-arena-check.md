@@ -71,7 +71,7 @@ regression is fully attributable to arbitration (the only delta is `arbitrate: t
   coherence → flat-rebuild path.
 
 This is invisible to leg 1 because the arena scores loose top-1 label-match (does the parse name the
-same components as v0), not the resolved coordinate. Arbitration makes the labels look more v0-like
+same components as v0) rather than the resolved coordinate. Arbitration makes the labels look more v0-like
 (+122) while wrecking the geocode — the exact gap the #566 reconcile-retirement warned the check must
 close.
 
@@ -94,7 +94,7 @@ proposal/tree representation has no containment.
 - **Precondition (street dropped 42%, all by overlap eviction).** Neural emits `street` + a separate
   `street_suffix`/`street_prefix` (e.g. `street[4,12]"Seminary"` + `street_suffix[13,15]"Dr"`); the
   solved v0 parse emits the combined `street[4,15]"Seminary Dr"`. Under `rule_preferred` both survive
-  arbitration (v0 has no `street_suffix`), then the coherence pass — which only knows intervals, not
+  arbitration (v0 has no `street_suffix`), then the coherence pass — which only knows intervals rather than
   that a suffix is _part of_ a street — sees `street_suffix` (conf 0.94) overlapping `street` (conf
   0.82) and **evicts the street**, leaving a dangling suffix and no street. Measured: 25/60 rows drop
   street, **25/25 by this overlap eviction**. (When v0's street outranks the neural suffix, it

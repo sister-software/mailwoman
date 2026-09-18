@@ -7,7 +7,7 @@
  *   OpenAddresses country dump (#229 Phase A).
  *
  *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street
- *   boundary falls is a judgement, not a fact — so these rows carry the truth lat/lon and are graded
+ *   boundary falls is a judgement rather than a fact — so these rows carry the truth lat/lon and are graded
  *   on the ASSEMBLED COORDINATE by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
  *   Expects a countrywide CSV with `LON,LAT,NUMBER,STREET,CITY,POSTCODE[,REGION]` (IT/FR/most OA
@@ -91,8 +91,8 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must OPEN with a letter: OA rows whose STREET is a bare number or a lone punctuation mark are parse noise,
- * not addresses. House number `"0"` is the dump's placeholder for "no number known".
+ * The street must OPEN with a letter: OA rows whose STREET is a bare number or a lone punctuation mark are parse noise
+ * rather than addresses. House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {
 	const num = (row.NUMBER ?? "").trim()

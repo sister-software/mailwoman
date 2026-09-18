@@ -16,7 +16,7 @@ import type { DevTool, DevToolDeps } from "#tool-kit"
  * How many diffs to render in full before falling back to a one-line-per-input summary.
  *
  * Rendering every changed row is the point of the tool, and rendering three hundred of them is not — past this a caller
- * is comparing models, not reading addresses, and should narrow the input set.
+ * is comparing models rather than reading addresses, and should narrow the input set.
  */
 const RENDERED_LIMIT = 40
 
@@ -81,7 +81,7 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 			const a = await base.session.geocode(input)
 			const b = await candidate.session.geocode(input)
 
-			// `tree` hangs off the RUN, not the result: `GeocodeResult` carries a flat component map and drops the spans,
+			// `tree` hangs off the RUN rather than the result: `GeocodeResult` carries a flat component map and drops the spans,
 			// which is the lossy shape this tool exists to avoid. `localeCountry` is a property of the tree.
 			diffs.push(
 				diffParse(input, a.tree, b.tree, {

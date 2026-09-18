@@ -13,7 +13,7 @@
 #
 # THE CHANGE (one variable for attribution = "auxiliary-channel hardening", conditional as a unit):
 #  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-SHAPED spans (port POSTCODE_PATTERNS
-#     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. The required fix.
+#     from neural/postcode-repair.ts), MIRRORING inference rather than gold spans. The required fix.
 #  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
 #     scalar log(1 + min_km from the token's postcode centroid to the NEAREST gazetteer region centroid);
 #     non-postcode-shaped -> log(1+10000). Train/inference-congruent (gazetteer-only, no detected region
@@ -35,12 +35,12 @@
 # wrong -> follows TEXT).
 # Checks set RELATIVE to the measured v1.9.2 baseline on each eval set (not DeepSeek's absolute %; trust
 # structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing OR ROBUST-MISLEAD still
-# heavily anchor-following. RESUME from v192 ckpt (grow a capability, not init_from). CRF CE-only.
+# heavily anchor-following. RESUME from v192 ckpt (grow a capability rather than init_from). CRF CE-only.
 # conventions-loss-mask off. Not promoted without operator GO + the canary.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.3-anchor-absorption.yaml --resume <v192-ckpt>
 data:
   # PROBE A0 (this config): v192's corpus verbatim — anchor_paint_mode is a LOAD-TIME transform
-  # (encode_row paints on shape, not the parquet), so the WHERE fix needs no new data / no rebuild. The
+  # (encode_row paints on shape rather than the parquet), so the WHERE fix needs no new data / no rebuild. The
   # existing US corpus already carries real 5-digit house numbers. shaped-painting fires the anchor on
   # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves eval set H) swaps
   # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption recipe output to amplify the signal.

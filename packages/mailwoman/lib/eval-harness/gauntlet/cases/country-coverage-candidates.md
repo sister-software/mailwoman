@@ -1,7 +1,7 @@
 # Country-coverage candidates — proposed gauntlet seed cases
 
 > **STATUS: EXECUTED 2026-08-05. This file is now the PROVENANCE RECORD for the
-> `operator:country-sweep-2026-08-05` batch, not a to-do list.** The body below is preserved as authored —
+> `operator:country-sweep-2026-08-05` batch rather than a to-do list.** The body below is preserved as authored —
 > including the entries the sweep proved wrong — because what a draft PREDICTED is the only thing that makes
 > the measurement mean anything. Read `batch-notes.md`'s `operator:country-sweep-2026-08-05` section for
 > what happened to each row.
@@ -9,7 +9,7 @@
 > **Result, in one paragraph.** All 400 candidates went through the Google oracle
 > (`@mailwoman/geocode-oracle`, country-restricted, `language=en`): 400/400 resolved, zero `ZERO_RESULTS`,
 > so every address in this file exists as written. Seven came back `partial_match` — the drafted string is
-> not the string Google answered about — and were parked, not promoted. The remaining 393 went through the
+> not the string Google answered about — and were parked rather than promoted. The remaining 393 went through the
 > production pipeline (the gauntlet harness with no options, per-country weights overlay): **114 FAILED and
 > are promoted** to `cases/<cc>/regression.jsonl` as `improvement_target`, **279 PASSED** and are parked in
 > `cases/generalization/country-sweep-2026-08-05-passes.jsonl` (the loader walks two-letter dirs only, so
@@ -36,7 +36,7 @@
 > **Triage protocol (measure, don't reason):** run each entry through the pipeline before promoting.
 > Entries that FAIL are real bugs → promote to `regression.ts` as `improvement_target` (or `pass`
 > once fixed). Entries that PASS are generalization evidence → they belong in the held-out runner
-> (`holdout.ts`), NOT in the regression leg. Coordinates are deliberately NOT asserted here; assert
+> (`holdout.ts`) rather than in the regression leg. Coordinates are deliberately NOT asserted here; assert
 > components first, coordinates only after the resolver is measured on the entry.
 >
 > `source: "operator:country-sweep-2026-08-05"`, `status: "improvement_target"` for all entries.

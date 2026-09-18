@@ -92,7 +92,7 @@ export function isAtLeastAsSpecific(
 }
 
 /**
- * Is `candidate` STRICTLY finer than `reference` — a child rung, not the same one?
+ * Is `candidate` STRICTLY finer than `reference` — a child rung rather than the same one?
  *
  * The distinction from {@link isAtLeastAsSpecific} is the whole bug it was written for. "Does this live row cover that
  * dead one" wants the EQUAL case to count as covering: a live `locality` covers a dead `locality` of the same name.

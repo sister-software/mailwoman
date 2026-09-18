@@ -13,7 +13,7 @@
  *   extends a run by exactly the characters a register name needs and re-opens the span that followed. It fires only
  *   when the extended surface is a register name, so a real city followed by a look-alike district is untouched.
  *
- *   A decode-time consumer of a positive attestation, not a prior: it changes labels only where the register states
+ *   A decode-time consumer of a positive attestation rather than a prior: it changes labels only where the register states
  *   the boundary. The character model emits a second `B-` for a continuation it is unsure of (`해:B 운:B`); the pass
  *   reads each `B-` run on its own and absorbs across that split, so both halves join the name.
  */

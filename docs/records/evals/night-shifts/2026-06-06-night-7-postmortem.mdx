@@ -15,8 +15,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **#325 — order-robustness eval & diag tooling** (merged). `scripts/eval/de-order-eval.sh` (the 2×2
   native/intl × anchor on/off + US/FR check harness), `--model-anchor-lookup` on `per-locale-f1.ts`
   (anchor-aware per-tag F1), and the three diag scripts the finding/memories reference.
-- **v0.9.2 both-order retrain** — trained clean (20k, no NaN), evaluated, **not shipped** (research result,
-  not a production regression). Full report: `2026-06-06-v0.9.2-eval.md`. Headline: both-order training moved
+- **v0.9.2 both-order retrain** — trained clean (20k, no NaN), evaluated. The production package stayed unchanged because this was a research result rather than a production regression. Full report: `2026-06-06-v0.9.2-eval.md`. Headline: both-order training moved
   the model's _intrinsic_ international parsing (anchor-off intl 35.9 → 48.4, **+12.5pp**) but the
   production-anchor config is flat (intl 45.5 → 44.5) — the postcode anchor, injected at the _trailing_
   postcode, fights the word order on international layout. Native held (82.1, beats Pelias), US/FR held
@@ -26,26 +25,25 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   mechanism. Issue **#327** filed for the v0.9.3 direction.
 - **DeepSeek consult (3 turns, delegated authority)** — turn 1–2 pressure-tested the anchor-vs-word-order
   mechanism, signed off region-tail as the v0.9.3 single variable, and prescribed a posterior-ablation
-  diagnostic (force DE=1.0) that left v0.9.2 intl at 44.5% → the anchor harm is **structural-positional, not
+  diagnostic (force DE=1.0) that left v0.9.2 intl at 44.5% → the anchor harm is **structural-positional rather than
   posterior**; it designed v0.9.4 (dual-injection) as the fallback. Turn 3, after v0.9.4 also failed, **made
   the strategic call** (the operator was away and had delegated authority for the shift): accept the asymmetry,
   no more GPU, and the multi-locale plan survives via a country-conditioned anchor. See #337.
-- **#328 / #329 — v0.9.3 region-tail** (merged, trained, evaluated, **not shipped**). International German
+- **#328 / #329 — v0.9.3 region-tail** (merged, trained, evaluated). The production package stayed unchanged. International German
   renders `City, Region Postcode` now. **Clean negative:** ≈ v0.9.2 on every locality metric (native off/on
   48.3/83.6 beats Pelias, intl off/on 47.1/44.7, US 97.2 / FR 84.9 held). The region tail did exactly its job —
   international region-match 0% → ~40%, Berlin intl-loc 34.4→38.7 — but locality stayed flat. The anchor-on
-  intl gap (38.9pp) is the anchor's **positional** harm, not the corpus (the posterior diagnostic already
+  intl gap (38.9pp) is the anchor's **positional** harm rather than the corpus (the posterior diagnostic already
   ruled out feature content). **The corpus change is exhausted for the anchor-on intl gap.** → v0.9.4.
-- **#334 / #336 — v0.9.4 dual-injection** (merged, trained, evaluated, **not shipped**). DeepSeek's signed-off
+- **#334 / #336 — v0.9.4 dual-injection** (merged, trained, evaluated). The production package stayed unchanged. DeepSeek's signed-off
   architectural fix: pool the anchor and inject it _also_ at position 0, an order-independent cue (no new
   params, `c=0` identity holds, 8/8 anchor tests, ONNX-export-equivalent). It did **nothing** to the intl gap
   (native off/on 48.3/83.5, intl off/on 47.3/43.7, US 96.4 / FR 84.9 held). Three retrains, one immovable
-  number (~44%). The anchor's native-help (+35) / intl-hurt (−4) asymmetry is **fundamental** — not corpus,
-  not region, not injection position.
+  number (~44%). The anchor's native-help (+35) / intl-hurt (−4) asymmetry is **fundamental** — not corpus rather than region rather than injection position.
 - **#337 — the anchor fork, RESOLVED** (merged). With the operator away, the third DeepSeek turn (delegated
   authority) made the call: **(b) accept the asymmetry, burn no more GPU.** Its mechanistic read reframes the
   multi-locale plan — the anchor's direction is _learned per locale_ from the dominant training order, so the
-  next thread is a **country-conditioned anchor vector**, not another tuning pass. Decision record in
+  next thread is a **country-conditioned anchor vector** rather than another tuning pass. Decision record in
   `2026-06-06-v0.9.2-eval.md` §"accept the asymmetry".
 - **Multi-locale tooling (#332 / #333 / #335)** — `build-locale-extract.mjs` rebuilt registry-driven, with a
   streaming Algorithm-R reservoir so FR/US-scale OA CSVs (2.5 GB+) sample without OOM; NL postcode
@@ -96,7 +94,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   traced it to the branch base. Lesson logged: an anchor eval needs #322 on the branch.
 - **The generalized builder (S3) hit real walls** I should have anticipated: FR's OA CSV is 2.5 GB (over
   the 1 GB buffer → needs streaming + reservoir sampling), NL's template reformats the postcode. DE-parity
-  is proven; the rest is held, directly documented, not half-shipped.
+  is proven; the rest is held, directly documented rather than half-shipped.
 - **The demo tier serialized on merges.** S34/S37/S40 each touch `ResultPanel.tsx`, so each waited on the
   previous to merge before it could branch directly (the last one rebased onto the prior). It worked, but a
   single demo PR bundling all three would have spent less wall-clock on merge-poll loops. Worth batching
@@ -116,7 +114,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 
 ## Surprises (captured fresh)
 
-- **S1 — the anchor is essential in both orders, not a US-order band-aid.** v0.9.1 anchor-on model, DE
+- **S1 — the anchor is essential in both orders rather than a US-order band-aid.** v0.9.1 anchor-on model, DE
   locality, 2×2: US/off 35.9 · US/on 45.8 · native/off 48.4 · **native/on 83.8**. The anchor adds +35.4pp
   on native order (vs +9.9 on US). Revises the #321 guess that the anchor merely rescued a US-order symptom.
   Caveat: `c=0` deprives an anchor-_trained_ model of a learned signal; the clean test is whether v0.9.2
@@ -127,7 +125,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   ceiling is only ~48% (= v0.9.1 anchor-off). Two separable changes: order-training lifts the anchor-OFF
   intl ceiling; the anchor unlocks native 48→83 (and Berlin needs it). Resolved the "not yet re-measured"
   caveat in memory.
-- **S-diagnostic — the anchor's intl harm is structural, not posterior.** Forcing the German postcode
+- **S-diagnostic — the anchor's intl harm is structural rather than posterior.** Forcing the German postcode
   posterior to DE=1.0 on v0.9.2's intl eval left it at 44.5% (= uniform). The additive anchor at the
   trailing postcode is the harm, independent of its feature content. → v0.9.4 dual-injection design.
 
@@ -136,13 +134,12 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **the fork (#327) — RESOLVED by DeepSeek (delegated authority), ~11:50 UTC → (b) accept the asymmetry.**
   Three retrains — both-order corpus (v0.9.2), region tail (v0.9.3), **and the architectural fix,
   dual-injection (v0.9.4)** — ALL left the anchor-on international number immovable at ~44% (gap to native
-  ~40pp). The anchor's native-help (+35) / international-hurt (−4) asymmetry is **fundamental** — not corpus,
-  not region, not injection position. With the operator away, the third DeepSeek turn made the call: **(b)** —
+  ~40pp). The anchor's native-help (+35) / international-hurt (−4) asymmetry is **fundamental** — not corpus rather than region rather than injection position. With the operator away, the third DeepSeek turn made the call: **(b)** —
   the result is large/resilient/generalizing (US 96.4, FR 84.9 hold), the intl penalty small/stable, and
   anchor-off intl already ~48% (the `c=0` path serves international order), so burn no more GPU. The turn's
   mechanistic read reframes the multi-locale plan: the anchor's direction is **learned per locale** from the
   dominant training order (US trains postcode-after-city → anchor looks left → never hurt US; German native is
-  postcode-before-city → looks right; one shared vector can't serve both). The plan is constrained, not dead —
+  postcode-before-city → looks right; one shared vector can't serve both). The plan is constrained rather than dead —
   the documented next thread is a **country-conditioned anchor vector** (a future iteration with its own check),
   plus a no-GPU operational change: route international-order inputs to the `c=0` path via a lightweight
   order check. None of v0.9.2/3/4 promote; v0.6.0 stays production. The operator can revisit the next-thread
@@ -155,12 +152,12 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Eyeball the deployed demo.** The span ribbon / timing bar / copy button were validated by `tsc` + the docs
   build + standalone tests, but not by an in-shift screenshot (they only render after a real 60 MB parse).
   A 30-second look at the live demo confirms the visuals land.
-- **The demo's service-worker cache (S38) is the operator's other explicit ask, not yet started.** Today the
+- **The demo's service-worker cache (S38) is the operator's other explicit ask rather than yet started.** Today the
   ~60 MB bundle is HTTP-cache-only ("the browser caches everything" — fragile, no offline, no version
   awareness). Next session: evaluate `@docusaurus/plugin-pwa` vs a hand-rolled Cache API, precache
   `model.onnx` + `tokenizer.model` + `wof-hot.db` **keyed by `selectedVersion`** (evict old blobs on switch).
   Deserves its own focused session with real browser testing — too easy to half-ship at end-of-shift.
-- **FR (#330):** the FR gap is venue (0%) + region (19%) — convention gaps, not basics. Worth a targeted FR
+- **FR (#330):** the FR gap is venue (0%) + region (19%) — convention gaps rather than basics. Worth a targeted FR
   venue+region corpus supplement on the next multi-locale push?
 - The 19 high + 1 critical dependabot alerts (vitest dev-scope) — bump in a dedicated `chore(deps)` pass?
 
@@ -171,7 +168,7 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   The interim no-GPU change (order-check → `c=0` route) is the cheap first move.
 - **Multi-locale databases:** DE / NL / FR / IT / **ES** are all extract-ready via `build-locale-extract.mjs` (ES via
   a per-part `conform` map on the raw CNIG upstream). The check before any retrain is the country-conditioned
-  anchor (#327), not the data.
+  anchor (#327) rather than the data.
 - **Demo S38 — service-worker precache** for the ~60 MB bundle, keyed by `selectedVersion` (see above).
 - **FR (#330):** assemble a venue+region FR extract (real OSM/WOF POIs + FR région forms), measure with
   `per-locale-f1.ts`.

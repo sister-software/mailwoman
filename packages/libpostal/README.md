@@ -15,12 +15,12 @@ curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington 
 
 ## Endpoints
 
-| Endpoint        | libpostal contract                                             |
-| --------------- | -------------------------------------------------------------- |
-| `/`             | HTML landing page (endpoint index + example queries)           |
-| `/parse`        | `parse_address` — ordered `[{label, value}]` components        |
-| `/expand`       | `expand_address` — normalized forms (see the note below)       |
-| `/openapi.json` | the emitted OpenAPI 3.1 document — the spec, not a copy of one |
+| Endpoint        | libpostal contract                                                    |
+| --------------- | --------------------------------------------------------------------- |
+| `/`             | HTML landing page (endpoint index + example queries)                  |
+| `/parse`        | `parse_address` — ordered `[{label, value}]` components               |
+| `/expand`       | `expand_address` — normalized forms (see the note below)              |
+| `/openapi.json` | the emitted OpenAPI 3.1 document — the spec rather than a copy of one |
 
 `/parse` maps Mailwoman's `ComponentTag` classifications to libpostal's labels (`street`→`road`,
 `locality`→`city`, `region`→`state`, …) via `COMPONENT_TO_LIBPOSTAL`. Both `/parse` and `/expand`
@@ -29,7 +29,7 @@ to mount.
 
 **Note on `/expand`:** Mailwoman's normalization is deterministic, so `/expand` returns the
 original plus its normalized + abbreviation-expanded forms — not libpostal's probabilistic multi-variant
-expansion. One canonical alternative, not a hypothesis set.
+expansion. One canonical alternative rather than a hypothesis set.
 
 ## Library use
 

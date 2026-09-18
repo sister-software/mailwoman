@@ -12,11 +12,11 @@
  *
  *   A GB outward code is "the compact form minus its last three characters", never a greedy
  *   `^([A-Z]{1,2}\d{1,2})`. The greedy form reads `BT4 1NY` as district `BT41`, which deletes BT1–BT9
- *   from a census and invents nine districts that do not exist. That is a measured trap, not a
+ *   from a census and invents nine districts that do not exist. That is a measured trap rather than a
  *   hypothetical: the arc's M-2b measurement hit it first. {@link outwardOf} is the one place the
  *   rule lives.
  *
- *   ## Why the coordinate policy is DERIVED, not passed in
+ *   ## Why the coordinate policy is DERIVED rather than passed in
  *
  *   A prefix centroid is only honest when the database enumerates that prefix's units COMPLETELY.
  *   Over a partial database the centroid and its `radiusP95Km` describe the SAMPLE — and the sample is
@@ -63,7 +63,7 @@
  *   p95 radii of 614–1,030 km, which is not contamination — that is the size of an Alaskan mail
  *   catchment, and a consumer reading 1,030 km learns exactly what the prefix is worth.
  *
- *   ## Why US ancestry is point-in-polygon, not a gazetteer join
+ *   ## Why US ancestry is point-in-polygon rather than a gazetteer join
  *
  *   Both are available and they disagree. Graded against the ZIP numbering plan — the first digit is
  *   assigned geographically, so a `5xxxx` code cannot be in New York whatever a parent row says —
@@ -116,7 +116,7 @@ export interface BuildPostcodePrefixOptions {
 	level: PostcodePrefixLevel
 	/**
 	 * WOF polygon DB the US arm tests region containment against. Required for `country: "us"`, unused elsewhere — GB
-	 * ancestry comes from a documented area table, not from geometry.
+	 * ancestry comes from a documented area table rather than from geometry.
 	 */
 	polygonPath?: string
 }
@@ -156,8 +156,8 @@ export interface BuildPostcodePrefixResult {
 	/**
 	 * Units the US arm dropped because their coordinate is not a location, by reason. Empty on the GB arm, which drops
 	 * none. Reported rather than folded into {@link BuildPostcodePrefixResult.skippedShort}: "the name was too short to
-	 * cleave" and "the name was a place, not a postcode" are different source defects and a build log that conflated them
-	 * would hide one behind the other.
+	 * cleave" and "the name was a place rather than a postcode" are different source defects and a build log that
+	 * conflated them would hide one behind the other.
 	 */
 	excludedUnits: Readonly<Record<string, number>>
 	/**
@@ -198,8 +198,8 @@ function prefixOf(compact: string, level: PostcodePrefixLevel): string | null {
 }
 
 /**
- * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`. They are `macroregion`s in WOF,
- * not `region`s — the `region` tier under GB is the ~200 unitary authorities and council areas.
+ * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`. They are `macroregion`s in WOF
+ * rather than `region`s — the `region` tier under GB is the ~200 unitary authorities and council areas.
  */
 const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
 	ENG: "England",
@@ -281,7 +281,7 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 	if (country !== "gb") {
 		throw new Error(
 			`postcode-prefix: no ancestry rule for country "${country}". GB and US are implemented; a new one needs a ` +
-				`stated rule for what a prefix may assert, not just a database.`
+				`stated rule for what a prefix may assert rather than just a database.`
 		)
 	}
 
@@ -394,8 +394,8 @@ export function buildPostcodePrefixIndex(options: BuildPostcodePrefixOptions): B
 
 /**
  * Centroid of a prefix's clean unit coordinates, with the p95 great-circle distance from it — the pair PFX1 requires
- * together. Mean-of-points, not a bounding-box centre: a prefix is a set of delivery points, and the mean is where they
- * are, while a bbox centre is a corner artefact of the two extremes.
+ * together. Mean-of-points rather than a bounding-box centre: a prefix is a set of delivery points, and the mean is
+ * where they are, while a bbox centre is a corner artefact of the two extremes.
  */
 function centroidWithRadius(members: ReadonlyArray<readonly [number, number]>): {
 	lat: number
@@ -497,7 +497,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	let skippedShort = 0
 
 	for (const row of rows) {
-		// The shape guard, not a length check: six rows in the shipped database are PLACE NAMES that reached a postcode
+		// The shape guard rather than a length check: six rows in the shipped database are PLACE NAMES that reached a postcode
 		// table, and one of them ("Lea County-Zip Franklin Memorial Airport") carries a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++

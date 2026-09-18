@@ -13,7 +13,7 @@
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
  *   pick to its postcode neighborhood. The implementation already ships. it was coverage-starved.
  *
- *   Two hard-won laws from the experiment are enforced here, in code, not in a runbook:
+ *   Two hard-won laws from the experiment are enforced here, in code rather than in a runbook:
  *
  *   1. **The name law (#920 format law):** a postcode row's `name` is stored in the
  *      SANITIZED-QUERY token shape — every non-letter/number stripped — because that is what
@@ -80,7 +80,7 @@ export interface MedoidSupport {
 	rows: number
 	/**
 	 * Distinct coordinates among them. One means every row named the same point, which in a dump whose coordinates are
-	 * computed is one value inherited N times, not N sources agreeing.
+	 * computed is one value inherited N times rather than N sources agreeing.
 	 */
 	distinctPoints: number
 }
@@ -97,9 +97,9 @@ export interface MedoidSupport {
  * 37.1%. TH 10230 is the worked case — `Lat Phrao` and `Khanna Yao`, both Bangkok districts, both published at 14.3333
  * / 99.9167, about 90 km from either.
  *
- * Exact equality, not a proximity radius. `collapseCoincident` in the gauntlet ablation answers a different question —
- * which ranked candidates are the same physical place, within `COINCIDENT_PLACE_KM` — and two surveyed settlements 200
- * m apart are two points here.
+ * Exact equality rather than a proximity radius. `collapseCoincident` in the gauntlet ablation answers a different
+ * question — which ranked candidates are the same physical place, within `COINCIDENT_PLACE_KM` — and two surveyed
+ * settlements 200 m apart are two points here.
  */
 function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
 	const seen = new Set<string>()
@@ -130,9 +130,9 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * changes no answer where the points differ — the mean of distinct points is the mean the law intends — and
  * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
- * Distance is squared-Euclidean in DEGREES, not haversine. At the scale a postcode spans, the ranking the two produce
- * is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which makes
- * the result a pure function of the input order — the property a rebuilt extract's ids depend on.
+ * Distance is squared-Euclidean in DEGREES rather than haversine. At the scale a postcode spans, the ranking the two
+ * produce is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which
+ * makes the result a pure function of the input order — the property a rebuilt extract's ids depend on.
  *
  * Exported (rather than inlined at each ingest) because it is the second half of the #920 pair: every postcode source
  * that groups member points — GeoNames postal, OSM `addr:postcode` — owes the same law, and a second hand-rolled copy

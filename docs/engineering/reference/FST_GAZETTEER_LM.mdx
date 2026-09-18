@@ -11,7 +11,7 @@ Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoma
 
 **Goal:** Pre-compute a finite-state transducer from the WOF SQLite gazetteer that maps token sequences → `(placetype, wof_id, parent_chain, importance)` entries. Use it as an [emission prior in the neural Viterbi decoder](../../records/site-2026-08/concepts/fst-gazetteer-prior.mdx), as a CLI introspection tool, and as the autocomplete backend.
 
-**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth), not O(gazetteer_size).
+**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth) rather than O(gazetteer_size).
 
 ### Shipped metrics (US admin)
 
@@ -204,7 +204,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 ## Key design decisions
 
-1. **FST is an emission PRIOR, not a replacement.** The neural model remains the authority for non-gazetteer components. The FST handles what the model can't: knowing which place names exist and their hierarchies.
+1. **FST is an emission PRIOR rather than a replacement.** The neural model remains the authority for non-gazetteer components. The FST handles what the model can't: knowing which place names exist and their hierarchies.
 
 2. **Wikipedia importance-weighted bias when ambiguous.** Each place carries a [0,1] importance score derived from Wikipedia link count ([Nominatim methodology](https://nominatim.org/release-docs/latest/customize/Importance/)). "New York" biases both locality (0.95) and region (0.85) proportionally. Washington DC locality (0.815) correctly outranks Washington state (0.764) despite lower population. Formula: `importance × biasScale × maxBias` (linear, capped at 3.0 logits).
 
@@ -214,7 +214,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 5. **The FST eliminates reconciler beam search for admin components.** Only concordant paths exist in the FST. Invalid admin combinations were pruned at build time.
 
-6. **Autocomplete is a prefix walk, not an index scan.** O(depth × branching) vs Elasticsearch's O(matches). The FST IS the autocomplete index.
+6. **Autocomplete is a prefix walk rather than an index scan.** O(depth × branching) vs Elasticsearch's O(matches). The FST IS the autocomplete index.
 
 ---
 

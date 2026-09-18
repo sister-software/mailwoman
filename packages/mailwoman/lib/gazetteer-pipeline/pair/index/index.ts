@@ -25,7 +25,7 @@
  *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
  *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
  *   dependent_locality candidate rarely spans more than a handful of words. the p99 here is the
- *   evidence for that window, not a guess).
+ *   evidence for that window rather than a guess).
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

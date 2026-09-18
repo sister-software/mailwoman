@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a MEASUREMENT this layer takes, not a number argued to.
+ *   The index resolution is a MEASUREMENT this layer takes rather than a number argued to.
  *
  *   ONE STREAM, EVERY RESOLUTION. Re-reading a survey area's shapefile per candidate adds nothing — the
  *   classification is per delineation, so every candidate index folds the same delineation in turn. The cost

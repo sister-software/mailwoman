@@ -62,13 +62,14 @@ export function strippedDesignationKey(name: string): string {
  * (verified). A match that provably cannot tell three companies apart must not report the same confidence as one on
  * identical raw names.
  *
- * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured, not assumed.**
- * `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485** and
- * vs `"American Broadband Corp"` at **0.9557** — HIGHER than a flat 0.92 would be, because Jaro-Winkler's prefix boost
- * rewards exactly the long shared head these pairs have. String distance measures how alike two spellings look. the
- * signal that separates a real match from a designation collision is WHICH TOKENS canonicalization deleted, which is a
- * set comparison. So this uses `canonicalizeOrganizationName`'s own `designations` output — already computed on this
- * path, no new dependency — rather than a comparator that would score the ambiguous case highest of all.
+ * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured rather than
+ * assumed.** `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at
+ * **0.9485** and vs `"American Broadband Corp"` at **0.9557** — HIGHER than a flat 0.92 would be, because
+ * Jaro-Winkler's prefix boost rewards exactly the long shared head these pairs have. String distance measures how alike
+ * two spellings look. the signal that separates a real match from a designation collision is WHICH TOKENS
+ * canonicalization deleted, which is a set comparison. So this uses `canonicalizeOrganizationName`'s own `designations`
+ * output — already computed on this path, no new dependency — rather than a comparator that would score the ambiguous
+ * case highest of all.
  *
  * Three outcomes, no interpolation: a similarity curve here would imply a resolution this evidence does not have.
  */
@@ -95,8 +96,8 @@ export interface CanonicalNameCandidate {
  * "which FRNs share this exact canonical legal name" — the input {@linkcode processEdgarSubsidiaryRow}'s corroboration
  * match reads. A canonical name shared by two or more distinct FRNs is a genuine collision (the same
  * false-identity-link hazard `edgar-filings.ts`'s `resolveCIKCandidates` documents), so the caller must see the full
- * bucket rather than just "the first match" — abstaining on a multi-member bucket is `processEdgarSubsidiaryRow`'s job,
- * not this function's.
+ * bucket rather than just "the first match" — abstaining on a multi-member bucket is `processEdgarSubsidiaryRow`'s job
+ * rather than this function's.
  */
 export function groupFRNsByCanonicalLegalName(
 	legalNameByFRN: ReadonlyMap<string, { name: string; filedAt: string }>

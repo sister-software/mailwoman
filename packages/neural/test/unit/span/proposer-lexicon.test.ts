@@ -23,7 +23,7 @@ test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-ser
 
 test("buildCodexSpanLexicon: a building LEVEL is categorized apart from a numbered unit", () => {
 	const lex = buildCodexSpanLexicon(["us"])
-	// FLOOR is a USPS Pub-28 level canonical → goes to levelDesignators, not unitDesignators.
+	// FLOOR is a USPS Pub-28 level canonical → goes to levelDesignators rather than unitDesignators.
 	expect(lex.levelDesignators.has("floor")).toBe(true)
 	expect(lex.unitDesignators.has("floor")).toBe(false)
 })

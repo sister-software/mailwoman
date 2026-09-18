@@ -15,7 +15,7 @@
  *   `name`, centroid, bbox), and population rank is precomputed into `neg_rank` — so the result is
  *   POPULATION-FIRST and COUNTRY-AGNOSTIC (when no `country` filter is given), exactly like the
  *   demo. That's the deliberate divergence from {@link WOFSQLitePlaceLookup}'s FTS/bm25 ranking: a
- *   bare "Moscow" resolves to the 10.4 M-pop Russian city, not whichever same-name US township bm25
+ *   bare "Moscow" resolves to the 10.4 M-pop Russian city rather than whichever same-name US township bm25
  *   floats to the top.
  *
  *   Disambiguation rides the same mechanism the cascade already uses: a parsed region resolves to its
@@ -178,7 +178,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Checks the
 	 * fuzzy fallback: fuzzy is a TYPO corrector, so it engages only when the name doesn't exist in the gazetteer at all.
 	 * A name that does exist but missed under the active filter is a filter miss (e.g. a placer misroute "Vienna,
-	 * Austria"→IT), not a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
+	 * Austria"→IT) rather than a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
 	 * cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
@@ -231,10 +231,10 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 * probe. Backs `ResolveOpts.includeAncestors` (#404) on this backend, which is what puts region-class ancestry in
 	 * front of the admin-coherence check (#1717).
 	 *
-	 * A PROPERTY, not a method, and assigned only when the artifact carries the sidecar: capability probes (`typeof
-	 * backend.ancestors === "function"` — the resolver's gap report) then read the ARTIFACT truthfully. A candidate.db
-	 * built before the sidecar reports the capability absent instead of presenting a method that answers `[]` for every
-	 * place, which would be an absence dressed as a negative answer.
+	 * A PROPERTY rather than a method, and assigned only when the artifact carries the sidecar: capability probes
+	 * (`typeof backend.ancestors === "function"` — the resolver's gap report) then read the ARTIFACT truthfully. A
+	 * candidate.db built before the sidecar reports the capability absent instead of presenting a method that answers
+	 * `[]` for every place, which would be an absence dressed as a negative answer.
 	 */
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
@@ -746,7 +746,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 				if (strippedKey && strippedKey !== nameKey) {
 					// #1626: a stripped probe may answer only through a NON-PRIMARY alias key, which is a
-					// scrape, not a qualifier match — 'Savile Row' stripped to 'row' resolved Rhu, Scotland
+					// scrape rather than a qualifier match — 'Savile Row' stripped to 'row' resolved Rhu, Scotland
 					// (585 km) through the village's historical-name alias. The legitimate qualifier class
 					// matches the place's own primary key ('Lenk im Simmental' → the Lenk row keyed 'lenk',
 					// is_primary=1), so refusing alias-keyed rows keeps every intended case and kills the
@@ -763,7 +763,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			// Skipped when the index is absent (byte-stable for an older candidate.db).
 			//
 			// Condition: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
-			// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
+			// but missed under the active country/placetype/bbox filter is a FILTER miss rather than a spelling miss
 			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
 			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
 			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
@@ -834,7 +834,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 
 		// Postcode-containment coherence (#31, Mechanism 2): re-rank the rows by proximity to the postcode's
 		// own centroid, so the locality that CONTAINS the postcode wins the name-match tie (the "Paris" that
-		// holds 75001, not the one that holds a 75001-free namesake). The resolver sends this flag on locality
+		// holds 75001 rather than the one that holds a 75001-free namesake). The resolver sends this flag on locality
 		// lookups when `ResolveOpts.postcodeContainmentCoherence` is on. Strictly beneath the #741 postal-city
 		// short-circuit above — an exact (name, postcode) hit is the answer and outranks any re-rank — and after
 		// the region-scope fallback, so it sees the final row set. Rows within the radius sort by distance first.

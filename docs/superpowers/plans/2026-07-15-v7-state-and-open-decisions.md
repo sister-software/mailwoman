@@ -38,7 +38,7 @@ Ship v7.0.0 = **delete** the legacy rules parser. "Delete" qualifies as all of:
 5. not deleted: the libpostal dictionary data + the generic tokenization utilities.
 
 The swaps for (1) are already built on `origin/hold/v1-parse-neural-check-blocked`. Deletion is conditional
-on **the three swapped surfaces producing acceptable output**, not on the model reaching a specific
+on **the three swapped surfaces producing acceptable output** rather than on the model reaching a specific
 parity score. That distinction is the crux of the open decisions below.
 
 ## What shipped tonight (done + verified)
@@ -56,7 +56,7 @@ None of the v7 work below has shipped or merged.
 The neural model misses the plan-2 parity floors on the rescued parity corpus (321 live fixtures):
 **street 0.54 vs 0.90, house_number 0.77 vs 0.97, postcode 0.99 PASS**. [measured]
 
-This is an old plateau, not a regression: v264 ≈ v257 (street 0.543 vs 0.536), so the span-boundary
+This is an old plateau rather than a regression: v264 ≈ v257 (street 0.543 vs 0.536), so the span-boundary
 head and the country channel did not erode fragment parsing. [measured]
 
 Where it breaks is one joint: the **street ↔ house-number boundary**. Coarse geography is fine
@@ -82,20 +82,20 @@ Two claims I made and then corrected under review — **do not carry these forwa
   fragmentation) is country-independent, and US highway/rural addresses fail too. The defensible read
   is **structural difficulty / capacity under flat BIO**, which is what the #727 runbook already
   concluded — not a frequency/overfit effect. I have no evidence for the frequency version.
-- **"Diacritics are a new problem" — [corrected to: visibility, not regression].** Prior splice work
+- **"Diacritics are a new problem" — [corrected to: visibility rather than regression].** Prior splice work
   (v5.1.0 CZ/PL/SK/SI, v5.2.0 Nordic, v5.9.0 FR) fixed diacritic fragmentation, but measured on
   **resolve / wrong-city**. Tonight's misses are **street-tag surface exactness** on the parity
   corpus, a metric that only exists since 2026-07-13. The city can resolve while the street surface
   reads `K jovská`. Plus PT and RO were never spliced (RO `ț` byte-falls-back — confirmed by probe).
-  So it is old signal newly measured + two coverage gaps, not the covered locales regressing. Caveat:
-  the "prior work measured resolve, not street-surface" split is inferred from release notes, not
+  So it is old signal newly measured + two coverage gaps rather than the covered locales regressing. Caveat:
+  the "prior work measured resolve rather than street-surface" split is inferred from release notes rather than
   re-run — it is worth confirming by re-scoring one covered locale (CZ) on both metrics.
 
 ## Proxy vs goal (the useful part of tonight)
 
 The plan-2 floors are **parse-tag byte parity** — a proxy plan 2 chose for "acceptable." The drop-in
 surfaces serve a geocode, so the question that decides deletion is whether the swapped surfaces
-geocode acceptably, not whether the tags match byte-for-byte.
+geocode acceptably rather than whether the tags match byte-for-byte.
 
 Measured coordinate parity (resolve each parity fixture through the same WOF resolver with both the
 rules tree and the v264 tree): [measured]
@@ -106,7 +106,7 @@ rules tree and the v264 tree): [measured]
   to a country centroid or wrong state (`California` → Maryland; bare `6000, NSW, Australia` → the AU
   country centroid). Concentrated on bare-fragment / US-highway / bare-state-name classes.
 
-Caveats on that experiment: it measures neural-vs-rules divergence, not accuracy against ground truth
+Caveats on that experiment: it measures neural-vs-rules divergence rather than accuracy against ground truth
 (the corpus has no gold coords, and rules is sometimes the wrong one); the corpus is deliberately
 fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than the 21% seen here.
 
@@ -117,10 +117,10 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
   resolves no finer than a country centroid. Reusable for any check direction. [done]
 - I then drafted a **hybrid swap check** (route `structured_address`→neural, everything else→rules
   fallback, + the guard) and measured it bounds the garbage tail to ~3/321 (0.9%) with zero
-  false-positive fallbacks. **But this keeps rules as a fallback = demote, not delete.** The held
+  false-positive fallbacks. **But this keeps rules as a fallback = demote rather than delete.** The held
   `/v1/parse` swap's own docstring says its design is "no rules fallback (the legacy-excision's
   point)." So the hybrid **contradicts the option-A delete spec**. This is a spec-level decision that
-  is yours, not mine, and I stopped before wiring it.
+  is yours rather than mine, and I stopped before wiring it.
 
 ## Changes considered and not committed to
 
@@ -128,11 +128,11 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
   numbers per-digit (`810`→`▁8 1 0`), so the boundary can fall inside a number. [measured] But I have
   **no evidence the fix works** — `16a` tokenizes atomically (`▁16`) and still absorbs into the
   street, and the cited literature (GLiNER, Filtered Semi-Markov CRF, Yin'23) points at structured
-  span prediction, not digit-atomicity. Launching a retrain on the cause alone would be
+  span prediction rather than digit-atomicity. Launching a retrain on the cause alone would be
   over-commitment on self-generated confirmation. [hypothesis, unvalidated]
 - **#727 stage-2 (FSemi-CRF span head).** The runbook's confirmed next model arc for the boundary
   class; stage-1 (aux head) plateaued at 5→2 flips. Explicitly a multi-night architecture build (new
-  export path, #378 SLO, capability rework) — a fresh dedicated workstream, not a tail-end launch.
+  export path, #378 SLO, capability rework) — a fresh dedicated workstream rather than a tail-end launch.
 - **29M extract campaign.** Deprioritized — the v250→v257 campaign already threw 12.0-weight targeted
   extracts and plateaued; more re-plateaus. [concluded]
 
@@ -152,7 +152,7 @@ fragment/edge-case-heavy, so the tail is smaller on real drop-in traffic than th
 
 ## Artifacts + state
 
-- Branch `feat/v7-hybrid-swap-check` (off main): the plausibility guard + tests, committed, not pushed.
+- Branch `feat/v7-hybrid-swap-check` (off main): the plausibility guard + tests, committed rather than pushed.
 - Held swaps: `origin/hold/v1-parse-neural-check-blocked` (T1 libpostal / T2 /v1/parse / T4 nominatim),
   blocked by `mailwoman/test/v1-parse-check.test.ts` (the 0.90/0.97 parse-tag floors).
 - Diagnosis write-up: `docs/articles/evals/2026-07-15-v7-parity-floor-diagnosis.md`.

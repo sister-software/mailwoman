@@ -156,7 +156,7 @@ export const PremiseLinkageFailureCategory = {
 	 */
 	IdentifierMismatch: "identifier_mismatch",
 	/**
-	 * The provider committed to a premise but named no identifier in the graded scheme — ungradable, not wrong.
+	 * The provider committed to a premise but named no identifier in the graded scheme — ungradable rather than wrong.
 	 */
 	SchemeAbsent: "scheme_absent",
 	/**

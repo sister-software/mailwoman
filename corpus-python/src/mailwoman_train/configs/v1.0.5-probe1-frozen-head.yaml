@@ -19,7 +19,7 @@
 #   - country       (balanced recipe output, #464)        → synth-country 2.0 (corpus v0.4.10-country-bal)
 #   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
 #   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (first trained here)
-# po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up, not in this flag-plant).
+# po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up rather than in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
 # + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat. every
@@ -89,7 +89,7 @@ data:
     # 20.0. Run A (10.0, RESUME) → 65. Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
     # the confound — momentum is required to slide the CRF into the prefix→street→suffix basin). This is
     # RESUME (output_dir below = consolidation dir, --resume auto finds clean step-040000. Run A's
-    # 042k-060k deleted). NOTE: 20.0, NOT DeepSeek's "40.0" — its "20×" arithmetic mislabeled the
+    # 042k-060k deleted). NOTE: 20.0 rather than DeepSeek's "40.0" — its "20×" arithmetic mislabeled the
     # diagnostic, which actually used 20.0. Run to convergence (15k) so suffix asymptotes past 64.
     synth-affix: 20.0
     synth-country: 2.0

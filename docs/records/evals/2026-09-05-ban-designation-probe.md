@@ -1,7 +1,7 @@
 # BAN designation probe: does BAN support a per-commune `designated` coverage claim?
 
 **Date:** 2026-09-05. **Task:** evidence-derivation plan Task 10
-(`docs/superpowers/plans/2026-08-21-evidence-derivation.md`). **Deliverable:** an answer, not a coverage table.
+(`docs/superpowers/plans/2026-08-21-evidence-derivation.md`). **Deliverable:** an answer rather than a coverage table.
 Nothing here writes `layer_coverage`.
 
 ## Verdict: DESIGNATED, per commune — the signal exists upstream and is RECOVERABLE; the current extract does not carry it
@@ -50,9 +50,9 @@ One département read end to end (Ain, `01`, 9,040,886 bytes gzipped):
    `nom_commune` is a display name) into `address_point`.
 2. The street-centroid build writes `layer_coverage` per commune cell: `designated` where every address point in the
    commune is certified, `source_present` otherwise; `basis` never inferred from a share.
-3. Re-measure nationally before any FR exclusion ships: Ain's 45.5% wholly certified is one département, not France.
+3. Re-measure nationally before any FR exclusion ships: Ain's 45.5% wholly certified is one département rather than France.
 
 ## Not measured
 
 The national share. One département was read because the question was whether the signal exists and varies per
-commune, not what the national rate is; the national rate is the follow-up's first number.
+commune rather than what the national rate is; the national rate is the follow-up's first number.

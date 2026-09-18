@@ -62,7 +62,7 @@ export interface ConfoundReading {
 	variable_isolation: VariableIsolation
 	/**
 	 * Every key that actually differs, whether or not it was declared. This is the field to read; `variable` as passed is
-	 * the caller's claim, not a finding.
+	 * the caller's claim rather than a finding.
 	 */
 	variable_effective: string[]
 	declared: string[]
@@ -153,9 +153,9 @@ export function checkConfounds(
  *
  * What is actually true is shorter and worse: the arms hold different indexes built from different sources at different
  * vintages, and no record either arm can produce says by how much. The panel comparator in the benchmark rig states the
- * same thing in its own header — "a behavioral comparison over deliberately different data footprints, not a claim that
- * the arms have equivalent indexes". So the reading is fixed at {@link VariableIsolation.CrossEngine} and the caller's
- * `variable` is echoed rather than checked: there is nothing to check it against.
+ * same thing in its own header — "a behavioral comparison over deliberately different data footprints rather than a
+ * claim that the arms have equivalent indexes". So the reading is fixed at {@link VariableIsolation.CrossEngine} and the
+ * caller's `variable` is echoed rather than checked: there is nothing to check it against.
  */
 export function crossEngineReading(armA: string, armB: string, declared: string[]): ConfoundReading {
 	return {

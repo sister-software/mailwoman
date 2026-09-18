@@ -1,6 +1,6 @@
 """What each corpus version stages onto the volume, as data.
 
-One row per version. A new version is a row here, not a new Modal function — the variation between
+One row per version. A new version is a row here rather than a new Modal function — the variation between
 versions is which directories move and which files must land afterwards, and that is a manifest
 rather than code. `launch/plan.py` turns a row into commands; `launch/sync.py` runs them.
 
@@ -9,7 +9,7 @@ and the volume path, because the name otherwise appears four times in one pair a
 ends up existing only as a substring of two strings nobody can enumerate. `corpus_versions()` reads
 them back off the table for exactly that reason.
 
-The three layouts differ by when a version was built, not by anything about its contents, so each
+The three layouts differ by when a version was built rather than by anything about its contents, so each
 row names which one it uses:
 
     NESTED   (22 transfers)  corpus/<v>/corpus-<v>/  ->  corpus/versioned/<v>/corpus-<v>/

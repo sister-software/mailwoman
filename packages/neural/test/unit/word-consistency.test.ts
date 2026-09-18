@@ -65,7 +65,7 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented contract)", () => {
 	it("never rewrites an already-consistent multi-piece word, even when the vote mass prefers another type", () => {
 		// `▁G am le` all street (B,I,I — consistent), but the summed emissions lean locality. The heal's
-		// job is consistency, not re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`
+		// job is consistency rather than re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`
 		// golden regression, 2026-07-15.)
 		const pieces = [{ piece: "▁G" }, { piece: "am" }, { piece: "le" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(3, 2)] // locality-heavy mass

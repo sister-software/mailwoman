@@ -36,8 +36,8 @@ import type { SourceRecord } from "#types"
 
 /**
  * Similarity at which two official names count as the same organisation. Set high because the feature is a near-exact
- * agreement signal, not a fuzzy one — the fuzzy comparison is a separate feature and this one exists to distinguish
- * it.
+ * agreement signal rather than a fuzzy one — the fuzzy comparison is a separate feature and this one exists to
+ * distinguish it.
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 

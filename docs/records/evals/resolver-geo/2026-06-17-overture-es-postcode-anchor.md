@@ -3,7 +3,7 @@
 #474 asked to close the postcode-anchor's **ES/IT coverage gaps** from Overture postcode centroids. The
 measurement says the gap is **mostly already closed** (a GeoNames backfill got there first), Overture
 adds a **marginal +1.5% ES coverage at equivalent accuracy**, and **IT is Overture-blocked**. Net: the
-anchor's ES/IT coverage is effectively solved; Overture is a complementary source, not a needed fix.
+anchor's ES/IT coverage is effectively solved; Overture is a complementary source rather than a needed fix.
 
 ## What was measured
 
@@ -25,8 +25,7 @@ ran the existing harness (`scripts/eval/postcode-anchor-accuracy.ts`) on the 3,0
   ES postcodes GeoNames missed. But GeoNames carries ~481 more postcodes overall (11,331 vs 10,850), so
   the two are **complementary**: the union (GeoNames ∪ Overture) is strictly ≥ either alone.
 - **Accuracy: a tie.** The distance distributions are identical (p50 1.0 km, p90 6.3 km). The metric
-  reflects the **postcode's spatial extent** (a random address sits ~1 km from the postcode centroid),
-  not centroid error — both methods place the centroid near the postcode's true center, so Overture's
+  reflects the **postcode's spatial extent** (a random address sits ~1 km from the postcode centroid) rather than centroid error — both methods place the centroid near the postcode's true center, so Overture's
   15.7M-point density provides no accuracy edge here. The anchor only needs center-of-postcode; it has it.
 - **IT is blocked.** Overture's IT postcode fill is **0%** (the #474 ingest check "≥80% else renegotiate"
   fails for IT) — GeoNames stays IT's source. Documented as an Overture gap alongside GB (Overture has no

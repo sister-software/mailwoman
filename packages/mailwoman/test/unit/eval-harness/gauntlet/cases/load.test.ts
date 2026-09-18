@@ -9,7 +9,7 @@
  *   loaded corpus against `REGRESSION_CASES` row for row — see the commit that added `cases/<cc>/*.jsonl`,
  *   where that test is green against both. That commit measured {@linkcode CORPUS_HASH} and
  *   {@linkcode BOARD_ID}; the commit that deleted the array kept the pins and dropped the array leg, so the
- *   content claim outlives the source it was checked against. The deep-equal is in the history, not in prose.
+ *   content claim outlives the source it was checked against. The deep-equal is in the history rather than in prose.
  *
  *   The board id is the required one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
  *   content-addressed and not order-addressed: reorganizing 192 rows into 29 files is invisible to it, and

@@ -274,7 +274,7 @@ export const typoInject: Augmentation = (row) => {
 	if (typed === value) return null
 	const newRaw = row.raw.replace(value, typed)
 
-	// first occurrence; `replace(string, …)` is literal, not regex
+	// first occurrence; `replace(string, …)` is literal rather than regex
 	return withAugmentation(row, "typo-inject", newRaw, { ...row.components, [tag]: typed })
 }
 
@@ -820,7 +820,7 @@ export function countryToLocale(country: string): string {
 //   `LabeledRow` directly (it cannot defer labels to alignment without the embedded-token bug).
 // - Augmentations preserve provenance to a single source. compositions cite the address source
 //   in `synth.base_source_id` and carry the venue surface form on the `venue` component.
-// - Throttling (the issue calls for ~5-15% of training set) is a build-time policy, not an
+// - Throttling (the issue calls for ~5-15% of training set) is a build-time policy rather than an
 //   adapter-level concern — the build pipeline applies it. the primitive stays pure.
 //
 // See `DECISIONS.md` for the rationale on why composition lives alongside augmentation but is
@@ -939,7 +939,7 @@ export function composeAdversarialRow(
 	// Re-target the char-offset spans (#519) onto the composed surface: the venue span covers the
 	// whole trimmed venue (internal punctuation included — the token path cannot say that), and the
 	// address's spans shift right by the venue + separator length. alignRow emits the triple on
-	// every labeled row, so absence here is an alignment-contract bug, not data — fail loudly.
+	// every labeled row, so absence here is an alignment-contract bug rather than data — fail loudly.
 	const { span_starts: addrStarts, span_ends: addrEnds, span_tags: addrTags } = addressAligned.row
 
 	if (addrStarts === undefined || addrEnds === undefined || addrTags === undefined) {

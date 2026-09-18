@@ -12,7 +12,7 @@
  *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
  *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
  *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no
- *       label and contribute nothing). So the recorded delta is the bias the DECODER sees, not a proxy for it
+ *       label and contribute nothing). So the recorded delta is the bias the DECODER sees rather than a proxy for it
  *       computed off the database.
  *
  *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted verbatim from
@@ -170,7 +170,7 @@ for (const s of SWEEP_ROWS) {
 	const locale = "en-us"
 	// MEASURED, never declared. The first version of this builder wrote `popBias: 0, impBias: 0` here on the
 	// reasoning that "no FST covers Botswana", and that was WRONG in the way this repo keeps finding: the
-	// arm loads the FST by LOCALE, not by answer-country, so an en-us row's surface is scored against the
+	// arm loads the FST by LOCALE rather than by answer-country, so an en-us row's surface is scored against the
 	// US gazetteer whatever the answer's country is. "Moscow" carries 0.3411 → 0.5465 from 33 US bearers
 	// and "Nassau" 0.0755 → 0.4234 from 8 — real bias, on rows whose correct answer is in RU and BS. A
 	// declared zero would have hidden the single most interesting thing about this class, which is that

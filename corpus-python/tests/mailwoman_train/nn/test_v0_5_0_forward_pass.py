@@ -171,7 +171,7 @@ def test_forward_with_phrase_features_and_labels_produces_finite_loss():
     )
     assert out.loss is not None
     assert torch.isfinite(out.loss)
-    # No backward() — this is a wiring smoke, not a training step.
+    # No backward() — this is a wiring smoke rather than a training step.
 
 
 def test_forward_phrase_features_default_to_zeros_when_omitted():
@@ -363,7 +363,7 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     - class_weights written against the 21-class STAGE2 BIO vocab (the active set when the
       config was authored. ACTIVE has since moved to STAGE3's 33 — the STAGE2 vocabulary is
       an intact prefix of the lineage, so every weight still names a live label)
-    - constant-LR smoke per VERDICT_SMOKES.md (driven via CLI flag, not the YAML)
+    - constant-LR smoke per VERDICT_SMOKES.md (driven via CLI flag rather than the YAML)
     """
 
     from mailwoman_train.config import load_config

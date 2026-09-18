@@ -20,7 +20,7 @@ NPM-promote bar); the full gauntlet.
 
 The oscillation — twins fix bare-locality robustness and erode US admin recall; the counterweight
 repairs US recall and re-breaks bare-locality — is a capacity/stability constraint at 29M params
-under the 5e-5/8k fine-tune idiom, not a extract-composition problem. Per the treadmill guard: no
+under the 5e-5/8k fine-tune idiom rather than a extract-composition problem. Per the treadmill guard: no
 seventh solo run; the fork goes to the operator (documented on #1102):
 (a) dynamics probe (v255 composition, gentler LR/warmup, 2k steps), (b) ship v254 experimental
 (the only gauntlet-green candidate; default blocked by the 2pp check), (c) the #727 span-head arc,
@@ -58,9 +58,9 @@ cheapest falsifier. **v256-dynamics-probe**: v255's exact composition, gentle dy
 | parity street (v1 denom)     | 0.55                 | 0.4833 (2k, undertrained) |
 | parity postcode              | 0.96–0.99            | 0.9861 PASS               |
 
-**Schedule, not capacity.** The gentle LR + longer warmup held both the US admin-recall repair and
+**Schedule rather than capacity.** The gentle LR + longer warmup held both the US admin-recall repair and
 bare-locality robustness at 2k steps — the two objectives that oscillated under 5e-5/8k. The
-oscillation was an optimization-dynamics artifact, not a 29M-param ceiling. Street 0.4833 is low
+oscillation was an optimization-dynamics artifact rather than a 29M-param ceiling. Street 0.4833 is low
 only because 2k ≪ 8k; the diagnostic wasn't a candidate.
 
 Residual (persists under gentle schedule): the 5 flips are all postcode-adjacent VT cases where
@@ -71,7 +71,7 @@ does not touch and is now the named last change.
 was PARSE-level, and the v255 FAIL was a COORDINATE assertion. Rather than the #718-trap `--model`
 path or a destructive package swap, a `--weights-cache` path was added to the gauntlet (#9, commit
 e0ab8b32; mirrors `eval parity --weights-cache`, resolves the candidate package-shaped). v256
-graded through it (md5-confirmed the cache model loaded, not the shipped one) and **PASSED the
+graded through it (md5-confirmed the cache model loaded rather than the shipped one) and **PASSED the
 regression layer 30/30 counted cases — including the Dublin bare-city coordinate pin** that broke
 v255. The schedule verdict is now confirmed at the coordinate level, notthe parse level.
 

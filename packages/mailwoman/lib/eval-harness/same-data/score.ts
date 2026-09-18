@@ -97,8 +97,8 @@ export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed. This is the row count, not the denominator of any rate below. each
-	 * rate carries its own.
+	 * Rows scored — after errored rows are removed. This is the row count rather than the denominator of any rate below.
+	 * each rate carries its own.
 	 */
 	n: number
 	errors: number
@@ -221,8 +221,8 @@ export interface PairedComparison {
 /**
  * Compare two arms over the rows both scored, paired row by row.
  *
- * The bootstrap resamples ROWS, not arms: a resample draws row indices with replacement and recomputes both arms'
- * accuracy on the same draw, which is what makes the interval a paired one.
+ * The bootstrap resamples ROWS rather than arms: a resample draws row indices with replacement and recomputes both
+ * arms' accuracy on the same draw, which is what makes the interval a paired one.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],

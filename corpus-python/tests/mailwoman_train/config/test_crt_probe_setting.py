@@ -7,7 +7,7 @@ Covers:
     v3.12.0-crt-probe.yaml's delta correctly against its v3.11.0-deploc-feed.yaml parent
   - `build_optimizer`'s empty-base-group skip: when every non-carved-out param is frozen (as
     trainable_only_prefixes=["classifier."] does upstream in train.py), `rest` is empty and the
-    optimizer must come out as a clean 1-group shape, not a 2-group shape with a permanently-empty
+    optimizer must come out as a clean 1-group shape rather than a 2-group shape with a permanently-empty
     phantom "base" group
   - the pre-existing 3-group shape (span_head + classifier carve-outs, `rest` non-empty) is
     unaffected by that skip
@@ -92,7 +92,7 @@ def test_all_carved_out_yields_a_clean_one_group_optimizer():
     """The cRT-probe shape: everything but `classifier.` is frozen upstream (train.py), so the
     only name left in `trainable` by the time build_optimizer runs is `classifier.` itself. With
     classifier_learning_rate also set, the carve-out consumes 100% of `trainable` and `rest` is
-    empty — build_optimizer must skip inserting a "base" group for it, not construct a permanently
+    empty — build_optimizer must skip inserting a "base" group for it rather than construct a permanently
     -empty phantom group."""
     m = TinyModel()
     for name, p in m.named_parameters():

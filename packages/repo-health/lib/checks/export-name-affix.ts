@@ -151,7 +151,7 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
 	}
 
-	// One diagnostic per declaration, not per matching run and not per overload: an overload set is one name, and a name
+	// One diagnostic per declaration rather than per matching run and not per overload: an overload set is one name, and a name
 	// containing several shorter names is still one thing to look at.
 	const pairs = new Map<string, AffixPair>()
 

@@ -39,8 +39,8 @@ const GEOCODER_UNAVAILABLE_DETAIL =
 /**
  * The "engine method absent" 503, for the engine method the route actually needed.
  *
- * `subject` is a WIRE VALUE, not a label. `<subject> not available` is published verbatim in the HTTP API reference
- * table and in the docker deploy guide, so a caller branching on it is doing what the docs told them to — and
+ * `subject` is a WIRE VALUE rather than a label. `<subject> not available` is published verbatim in the HTTP API
+ * reference table and in the docker deploy guide, so a caller branching on it is doing what the docs told them to — and
  * `/v1/resolve` answers `resolver`, not `geocoder`, because the method it found missing is `engine.resolveTree`. Rename
  * this function freely. never the string it emits.
  */

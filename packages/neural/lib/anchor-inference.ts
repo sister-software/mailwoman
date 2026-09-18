@@ -21,7 +21,7 @@
  *   spanning a space — `SW1A 2AA` was probed as `SW1A` and `2AA`. Nothing caught it because every
  *   shipped lookup held DE/FR/US five-digit keys only, where the two rules agree exactly.
  *   {@linkcode AnchorSpanMode} is the fix, and it is OPT-IN: `shaped` changes what the encoder sees,
- *   so it lands with the retrain that widened the lookup, not before.
+ *   so it lands with the retrain that widened the lookup rather than before.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -84,8 +84,8 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 /**
  * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`) into a Map. The optional
  * trailing `source` is the centroid's provenance label (#525 — `"wof"`, `"census-zcta-2024"`, or `null` for a
- * placeholder); build-side bookkeeping, ignored at inference. Pure (takes the parsed object, not a path) so this module
- * stays browser-safe — the file read lives in the Node-side caller (the eval).
+ * placeholder); build-side bookkeeping, ignored at inference. Pure (takes the parsed object rather than a path) so this
+ * module stays browser-safe — the file read lives in the Node-side caller (the eval).
  */
 export function parseAnchorLookup(
 	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
@@ -158,11 +158,12 @@ const GB_INWARD_LENGTH = 3
  * How many of `lookup`'s keys the DEFAULT `alnum-run` scan can never reach — the SHIP OBLIGATION check (A2 of
  * ROAD_TO_V9 §1, from the `v4.2.0-base-anchor-v2` recipe header).
  *
- * The class is concrete, not hypothetical. A GB unit key is written with a space in every real address (`SW1A 2AA`), so
- * the alnum-run scan sees `SW1A` and `2AA` and can never produce the `SW1A2AA` the train painter keys. Every such key
- * in a loaded lookup is therefore dead weight under `alnum-run` — 1,746,976 of them in `pilot-anchor-lookup-v2`, which
- * is the entire point of that lookup. If a package ships one of these and its card does not declare `span_mode:
- * "shaped"`, the anchor channel is silently feeding zeros on exactly the rows the retrain was for.
+ * The class is concrete rather than hypothetical. A GB unit key is written with a space in every real address (`SW1A
+ * 2AA`), so the alnum-run scan sees `SW1A` and `2AA` and can never produce the `SW1A2AA` the train painter keys. Every
+ * such key in a loaded lookup is therefore dead weight under `alnum-run` — 1,746,976 of them in
+ * `pilot-anchor-lookup-v2`, which is the entire point of that lookup. If a package ships one of these and its card does
+ * not declare `span_mode: "shaped"`, the anchor channel is silently feeding zeros on exactly the rows the retrain was
+ * for.
  *
  * Not counted: NL PC6 (`1012LG`) and every numeric system. Those are written glued at least some of the time, so the
  * alnum-run scan reaches them — their presence says nothing about the card's declaration.
@@ -350,7 +351,7 @@ export function buildAnchorFeatures(
 			let entry = lookup.get(key)
 
 			// Outward fallback: an unknown GB unit (a new-build code, or an NI `BT` code Code-Point Open
-			// does not carry) still anchors from its district — and paints the whole unit span, not just
+			// does not carry) still anchors from its district — and paints the whole unit span rather than just
 			// the outward half, so the painted extent matches what a known unit would have produced.
 			if (!entry && GB_UNIT_KEY.test(key)) {
 				entry = lookup.get(key.slice(0, -GB_INWARD_LENGTH))

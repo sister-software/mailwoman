@@ -10,7 +10,7 @@
  *   rather than missing a raw `München`. The trigram tokenizer makes `MATCH` a substring/fuzzy
  *   operation. the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
  *   loose set, then re-ranks it with a WORD-level similarity. The trigram index is the candidate
- *   GENERATOR, not the scorer — trigram Jaccard scores a true transposition correction below a wrong
+ *   GENERATOR rather than the scorer — trigram Jaccard scores a true transposition correction below a wrong
  *   answer, because shared generic suffixes count as evidence and transpositions count against it.
  *   The receipts are on `candidate-lookup.ts`'s `FUZZY_FETCH` and `WORD_FUZZY_MIN`.
  *

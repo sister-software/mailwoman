@@ -540,7 +540,7 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
-		// not_applicable, not layer_missing — DSL has no physical falsifier regardless of poi's presence.
+		// not_applicable rather than layer_missing — DSL has no physical falsifier regardless of poi's presence.
 		expect(bundle.coverage_detail.physical).toBe("not_applicable")
 	})
 
@@ -622,7 +622,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 				claimedDownloadMbps: 1000,
 			},
-			{ bdcDB: bdc.db } // no poi — physical axis is layer_missing, not not_applicable (fiber does have a falsifier)
+			{ bdcDB: bdc.db } // no poi — physical axis is layer_missing rather than not_applicable (fiber does have a falsifier)
 		)
 
 		expect(bundle.coverage_confidence).toBe("low")
@@ -757,7 +757,7 @@ describe("§7-2b criteria", () => {
 			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero bdc_availability rows of
 			// its own — filing-landscape.ts's meaning-of-zero POSITIVE case (see the "positive absence" test in the
 			// "filing evidence + corroboration" suite above). Cover that same res-6 parent on the poi side too, so
-			// the physical axis is genuinely surveyed as well, not merely absent — the well-covered half of this
+			// the physical axis is genuinely surveyed as well rather than merely absent — the well-covered half of this
 			// criterion’s contrast (the sparse-cell half is the next test).
 			await writeLayerCoverage(poiContractDB, [
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
@@ -815,7 +815,7 @@ describe("§7-2b criteria", () => {
 		 * adds a verdict-shaped member (e.g. `"implausible"`) to any of these unions therefore either fails to compile here
 		 * — silently missing from the pinned list, forcing a reviewer to touch this file — or, once added to the list,
 		 * fails the runtime blocklist check below. That's the "mutation-style" assertion criterion 1 asks for: the pins are
-		 * what keep the property true, not a reviewer's memory.
+		 * what keep the property true rather than a reviewer's memory.
 		 *
 		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
 		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the

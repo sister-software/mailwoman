@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The tracked-source enumerator the checks share: a filter over `RepoContext.trackedFiles`.
  *
- *   Enumerated from the INDEX, not the filesystem. A file set read off the disk is not a property of the repository —
+ *   Enumerated from the INDEX rather than the filesystem. A file set read off the disk is not a property of the repository —
  *   it is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch
  *   scripts counted 166 `asNever` against a clean checkout's 85 at the same commit, so the debt check failed on files no
  *   commit contains. a directory walk likewise kept flagging `scratchpad/` probes and agent worktrees — hits that fail
@@ -33,7 +33,7 @@ export interface TrackedSourceOptions {
 	 */
 	excludePrefixes?: readonly string[]
 	/**
-	 * Keep `.d.ts` files. Off by default: declarations are outputs, not sources.
+	 * Keep `.d.ts` files. Off by default: declarations are outputs rather than sources.
 	 */
 	includeDeclarations?: boolean
 	/**
@@ -49,8 +49,8 @@ const PATTERN_SPECIALS = /[.+^${}()|[\]\\]/g
  * The regular expression a `git ls-files` pathspec matches, reproduced so a filter over the index answers exactly what
  * the spawned command answered.
  *
- * Git matches a wildcard pathspec with fnmatch and without the pathname flag, so `*` crosses `/` and `**` is two stars,
- * not a directory glob: `scripts/**` followed by `/*.ts` requires a literal `/` after `scripts/`, so it matches
+ * Git matches a wildcard pathspec with fnmatch and without the pathname flag, so `*` crosses `/` and `**` is two stars
+ * rather than a directory glob: `scripts/**` followed by `/*.ts` requires a literal `/` after `scripts/`, so it matches
  * `scripts/eval/x.ts` and not `scripts/x.ts`. Measured on this repository: the pathspec listed 31 files, 0 of them at
  * the top of `scripts/`. A pathspec with no wildcard is a leading-path match, as git treats it.
  */

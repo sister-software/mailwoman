@@ -19,7 +19,7 @@
  *   `--extracts` takes `REGION=path` pairs because the REGION is the axis every curation decision is
  *   taken on and no extract filename carries it reliably (`ile-de-france` is FR, `great-britain` is
  *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
- *   be promoted — that is the correct failure, not a convenience.
+ *   be promoted — that is the correct failure rather than a convenience.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

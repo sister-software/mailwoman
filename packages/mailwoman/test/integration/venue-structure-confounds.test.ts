@@ -13,7 +13,7 @@
  *
  *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
  *   measured. Its bar is absolute — zero `unit` emissions — because every row is a surface where a
- *   unit is simply wrong, not one where a unit is merely unlikely.
+ *   unit is simply wrong rather than one where a unit is merely unlikely.
  *
  *   WHY THIS LIVES HERE AND NOT BESIDE THE CLASSIFIER. It has to run the path a USER runs.
  *   `enforceWordConsistency` defaults to off on `NeuralAddressClassifier` (so a bare classifier
@@ -40,9 +40,9 @@ interface ConfoundRow {
 	class: string
 	must_not: string
 	/**
-	 * Set when a row is KNOWN to fail, carrying the reason. Tracked, not hidden: the row keeps running, and if it ever
-	 * starts passing the test fails and says to remove the marker — the gauntlet's xfail discipline, which exists so a
-	 * fix can never land silently and leave a stale exemption behind.
+	 * Set when a row is KNOWN to fail, carrying the reason. Tracked rather than hidden: the row keeps running, and if it
+	 * ever starts passing the test fails and says to remove the marker — the gauntlet's xfail discipline, which exists so
+	 * a fix can never land silently and leave a stale exemption behind.
 	 */
 	xfail?: string
 }

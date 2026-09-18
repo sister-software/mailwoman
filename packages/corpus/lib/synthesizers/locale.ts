@@ -12,7 +12,7 @@
  *   postcode `36`). The cause is ORDER: the model was trained US+FR (house-number-FIRST,
  *   postcode-AFTER-city), and never saw the German convention (house-number-AFTER-street,
  *   postcode-BEFORE-city). DE-0 confirmed the tokenizer round-trips German orthography cleanly, so
- *   this is a coverage gap, not a tokenizer ceiling.
+ *   this is a coverage gap rather than a tokenizer ceiling.
  *
  *   The original German generator produced the missing signal as a small targeted supplement source
  *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done). It does not synthesize
@@ -31,7 +31,7 @@ import type { CanonicalRow } from "#types"
  * A real address tuple (e.g. one OpenAddresses row): street + locality required, rest optional.
  */
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
@@ -183,7 +183,7 @@ export function synthesizeLocaleRow(
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 
 	// Sub-locality (suburb / district) sits between street and locality and renders in both orders — it's part
-	// of the address body, not the admin-region tail that native order drops. NZ needs it (suburb + city both on
+	// of the address body rather than the admin-region tail that native order drops. NZ needs it (suburb + city both on
 	// the envelope). The tokenPresent check below drops the row if the template didn't surface it verbatim.
 	if (base.dependent_locality) {
 		components.dependent_locality = base.dependent_locality

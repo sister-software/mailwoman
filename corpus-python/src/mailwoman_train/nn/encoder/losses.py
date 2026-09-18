@@ -40,7 +40,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         the inference path returns.
 
         Answers `None` for the loss when no term fired, which is inference. The span scores come
-        back separately because they are an output, not a loss: the export path reads them.
+        back separately because they are an output rather than a loss: the export path reads them.
         """
         loss: torch.Tensor | None = None
         if labels is not None:
@@ -197,7 +197,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 loss = sb_term if loss is None else loss + sb_term.to(loss.dtype)
 
         # #727 stage-2 phase 1: the semi-Markov span loss. fp32 throughout (the DP owns its upcast).
-        # Rows whose gold segmentation exceeds `max_span` are SKIPPED, not truncated — a truncated
+        # Rows whose gold segmentation exceeds `max_span` are SKIPPED rather than truncated — a truncated
         # gold teaches a wrong boundary, which is the exact defect this arc exists to fix.
         span_scores_out: torch.Tensor | None = None
 

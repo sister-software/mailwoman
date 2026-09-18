@@ -70,7 +70,7 @@ export async function removeIfPresent(dest: string): Promise<void> {
  *
  * Every one of these artifacts is OPTIONAL by design — the runtime has a fallback for each, so a fresh worktree that
  * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
- * operator needs to know which channel just resolved off, not to have the link step abort.
+ * operator needs to know which channel just resolved off rather than to have the link step abort.
  */
 export async function linkSoftFeedSibling(
 	source: string,
@@ -106,7 +106,7 @@ export const PAIR_INDEX_TRANSITION_BETA = 5
 /**
  * The WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5 — see
  * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Only the measured locales (us/gb/nz/fr) pass it. the
- * D-rule's answer to an unmeasured locale is a per-locale absence, not an inherited magnitude.
+ * D-rule's answer to an unmeasured locale is a per-locale absence rather than an inherited magnitude.
  */
 export const PAIR_INDEX_PARENT_DELTA = 5
 
@@ -459,7 +459,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
 	const CLI = String(workspacePath("mailwoman", "out", "cli", "index.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
-	// Built into the data-root OVERLAY, not into the tracked package. The locale is recovered from the
+	// Built into the data-root OVERLAY rather than into the tracked package. The locale is recovered from the
 	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
 	// already had.
 	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))

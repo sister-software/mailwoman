@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The capability-gap report exists so a backend that omits an optional method cannot disable a default-ON option
- *   silently. These cases pin the property that matters: a gap is DATA, not a log line that a caller may or may not
+ *   silently. These cases pin the property that matters: a gap is DATA rather than a log line that a caller may or may not
  *   have been watching for.
  */
 
@@ -55,7 +55,7 @@ describe("describeCapabilityGaps", () => {
 		expect(gaps[0]?.backend).toBe("MinimalBackend")
 		expect(line).toContain("MinimalBackend")
 		expect(line).toContain("default-ON")
-		// Both gaps share one line — an operator reads it or skips it once, not once per capability.
+		// Both gaps share one line — an operator reads it or skips it once rather than once per capability.
 		expect(line).toContain("ancestors()")
 		expect(line).toContain("coincidentLocalitiesFor()")
 		expect(line).not.toContain("\n")

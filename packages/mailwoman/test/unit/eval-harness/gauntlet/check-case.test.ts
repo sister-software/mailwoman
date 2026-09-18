@@ -7,7 +7,7 @@
  *   2026-08-06 none of it was reachable without the ~9 GB database set — which is how two stored expectation
  *   columns (`expect_place_id`, `expect_place_name`) went the corpus's whole life unread (#1507).
  *
- *   The required case is `grades place identity off the RESOLVED place, not the echoed query span`: it
+ *   The required case is `grades place identity off the RESOLVED place rather than the echoed query span`: it
  *   pins the exact confusion that would make this whole check decorative.
  */
 

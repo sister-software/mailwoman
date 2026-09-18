@@ -242,7 +242,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		const fr = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
-		// "Roazhon" is a real Breton nickname for Rennes, not a sub-phrase of it.
+		// "Roazhon" is a real Breton nickname for Rennes rather than a sub-phrase of it.
 		expect(fr.surfaces.roazhon).toBeDefined()
 	})
 

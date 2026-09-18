@@ -263,7 +263,7 @@ class MailwomanCoarseEncoder(
         # labels" step the design calls for — and the reason it warrants its keep is the probe: the
         # postcode alone settles the country <50% of the time, so the model has to read the city
         # and street to know where it is, then condition on that. Runs at inference too (predict()
-        # routes through here), so the conditioning shapes real emissions, not just the loss.
+        # routes through here), so the conditioning shapes real emissions rather than just the loss.
         locale_logits: torch.Tensor | None = None
         if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
             # Mean-pool over real (non-pad) tokens. fp32 reduction on principle — the v0.6.0 CRF

@@ -23,7 +23,7 @@ tier where we have a rooftop for the parsed street + number, and p50 collapses t
 **interpolation** tier (no exact point, interpolated along the street segment) lands p50 **0.1 km** —
 100 m, street-accurate. The direct caveat is **coverage**: the rooftop tier fires on 47% of these
 facilities and interpolation on a further 12.5%, so ~40% still fall back to the city centroid. The tail
-(p99 ~470–740 km) is wrong-place resolutions, not tier imprecision — a handful of facilities whose
+(p99 ~470–740 km) is wrong-place resolutions rather than tier imprecision — a handful of facilities whose
 parse resolves to the wrong locality entirely.
 
 ## The direct surprise — v0 out-parses neural on this distribution
@@ -62,11 +62,11 @@ small, fixable artifact (preserve all-caps 2-letter state codes) against a large
 ## Reading
 
 - **The geocoder works where it has data.** On real TX facility addresses, the address-point + street
-  tiers put p50 error at 0.1–0.7 km — rooftop-to-street accuracy, not city-centroid. The pre-geocoded
+  tiers put p50 error at 0.1–0.7 km — rooftop-to-street accuracy rather than city-centroid. The pre-geocoded
   seed (#619's other half) lets us skip re-geocoding where the source already carries an authoritative
   point; this validation is what justifies trusting our own coordinate where it doesn't.
-- **Coverage, not precision, is the frontier.** ~40% of these facilities fall back to the city centroid
+- **Coverage rather than precision, is the frontier.** ~40% of these facilities fall back to the city centroid
   for lack of a TX rooftop/interp hit on the parsed street — the address-point extract coverage is the
-  change, not the tier math.
+  change rather than the tier math.
 - **Case robustness is a measurable neural gap.** All-caps compliance/registry data is common, and we
   lose 6.7pp of locality there vs the rules parser. Cheap to fix, worth fixing.

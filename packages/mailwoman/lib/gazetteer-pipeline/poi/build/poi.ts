@@ -254,7 +254,7 @@ export interface BuildPOIOptions {
 	 */
 	release: string
 	/**
-	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
+	 * `git rev-parse --short HEAD` — passed in by the command rather than read from the repo here.
 	 */
 	buildSHA: string
 	/**
@@ -482,7 +482,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 			createdAt: opts.createdAt ?? new Date().toISOString(),
 		})
 
-		// Coverage is source-level, not survey completeness: a res-6 cell we have Overture Places rows in
+		// Coverage is source-level rather than survey completeness: a res-6 cell we have Overture Places rows in
 		// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is not a
 		// claim about how complete Overture's own Places extraction is within that cell. A cell absent
 		// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule

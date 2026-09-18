@@ -8,7 +8,7 @@
 
 This branch carries a cluster of work that takes mailwoman from "the US champion" to "competitive in Europe." It ships ~925 lines across 11 files: two resolver changes (span-rescore recovery + postcode-consistency disambiguation), a GGeonames-to-SQLite postcode extract builder, a 3-way competitive benchmark harness (mailwoman vs Nominatim vs Pelias), a failure-mode classifier, an AU word-order probe, and the blog post + demo wiring that makes the changes visible.
 
-The headline: with both changes active, mailwoman leads Nominatim and Pelias on the @25km right-area metric across a 7-locale EU+AU panel (90.0%), from a 30 MB browser model with no Elasticsearch. The star is Europe: mailwoman 94.2% vs Nominatim 78%, Pelias 89%. Australia is the open problem (65% vs Nominatim 97%), now characterized as a word-order training-data gap, not a capability deficit.
+The headline: with both changes active, mailwoman leads Nominatim and Pelias on the @25km right-area metric across a 7-locale EU+AU panel (90.0%), from a 30 MB browser model with no Elasticsearch. The star is Europe: mailwoman 94.2% vs Nominatim 78%, Pelias 89%. Australia is the open problem (65% vs Nominatim 97%), now characterized as a word-order training-data gap rather than a capability deficit.
 
 ---
 
@@ -40,7 +40,7 @@ A clean, direct competitive benchmark. Key design decisions that are correct:
 - **Identical inputs.** Same raw OA address strings, same country hint for all three systems.
 - **Two-axis reporting.** Resolve-rate (the denominator) and conditional median error (among resolved rows) are reported separately — prevents lumping "half the rows failed but the rest were perfect" into one misleading number.
 - **Pelias is country-scoped** for this run (previously unscoped, which understated it by allowing wrong-country matches).
-- **`--span-rescore` grades base + change from a single parse.** The model parses once; both `resolveTree(spanRescore:false)` and `resolveTree(spanRescore:true)` are run from `structuredClone(tree)`. Independent, not serial.
+- **`--span-rescore` grades base + change from a single parse.** The model parses once; both `resolveTree(spanRescore:false)` and `resolveTree(spanRescore:true)` are run from `structuredClone(tree)`. Independent rather than serial.
 
 The blog post (`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx`) is draft (`draft: true`) but publication-ready narrative quality. It accurately characterizes the centroid-vs-rooftop trade, the AU drag, and the two-fix story.
 
@@ -48,7 +48,7 @@ The blog post (`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbe
 
 **`a113506b`** — `core/resolver/postcode-consistency.test.ts` (93 lines), `core/resolver/resolve.ts` (+85 lines), `core/resolver/types.ts` (+13 lines)
 
-The single biggest miss class on the EU panel: a same-named town resolved to the WRONG instance while the postcode that would disambiguate it sits resolved in the same tree. Example: "06260 Saint-Pierre" lands 617 km off because the resolver picked the Saint-Pierre in Vendée, not the one in Alpes-Maritimes — despite postcode 06260 resolving correctly.
+The single biggest miss class on the EU panel: a same-named town resolved to the WRONG instance while the postcode that would disambiguate it sits resolved in the same tree. Example: "06260 Saint-Pierre" lands 617 km off because the resolver picked the Saint-Pierre in Vendée rather than the one in Alpes-Maritimes — despite postcode 06260 resolving correctly.
 
 The change is backend-agnostic. After the admin resolution walk, it finds the resolved postcode anchor, then walks every resolved locality/dependent_locality node. For each one farther than `thresholdKm` (default 50 km) from the postcode, it re-picks from the node's already-captured `alternatives` (the runner-up gazetteer candidates `decorateNode` stored). Falls back to the postcode point if no alternative reconciles, flagging `postcode_city_mismatch`.
 
@@ -90,7 +90,7 @@ Extends the `#193` extract builder to PT, AU, AT. The benchmark's failure dump s
 
 **`4b5e0f09`** — `scripts/eval/au-order-probe.ts` (97 lines)
 
-Decisive. Quantifies the ceiling: the model parses AU addresses PERFECTLY in canonical order and mis-segments only AU's native postcode-first / house-number-last order. "3053 Carlton, Barry Street 50" → locality=Barry street=Carlton hn=3053 pc=50 (wrong); "50 Barry Street, Carlton 3053" → locality=Carlton street=Barry hn=50 pc=3053 (right). As-written: 65% @25km; reordered-to-canonical: 87%. The +22pp ceiling is the upside of AU-native-order training data (#208 G-NAF) — a model fix, not a resolver trick.
+Decisive. Quantifies the ceiling: the model parses AU addresses PERFECTLY in canonical order and mis-segments only AU's native postcode-first / house-number-last order. "3053 Carlton, Barry Street 50" → locality=Barry street=Carlton hn=3053 pc=50 (wrong); "50 Barry Street, Carlton 3053" → locality=Carlton street=Barry hn=50 pc=3053 (right). As-written: 65% @25km; reordered-to-canonical: 87%. The +22pp ceiling is the upside of AU-native-order training data (#208 G-NAF) — a model fix rather than a resolver trick.
 
 This is the German v0.9.2 artifact again — same root cause, different locale.
 
@@ -140,7 +140,7 @@ PR #782 ports span-rescore into the browser demo cascade. Design choices are cor
 
 - Reuses `findRescoreCandidate` from `core/resolver` (exported via the barrel — browser-safe, no node deps).
 - Recovery fires only when the cascade produced zero hits (the demo's #685 brake).
-- Unconditional recoveries are labeled "unverified" — the precision signal is surfaced, not hidden.
+- Unconditional recoveries are labeled "unverified" — the precision signal is surfaced rather than hidden.
 
 ---
 
@@ -224,6 +224,6 @@ Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on th
 
 ## Bottom line
 
-The branch ships measured, direct improvements that take mailwoman from "US champion" to "European competitive." The code is disciplined: every change is default-off, byte-stable, tested, and validated against real coordinates before promotion. The eval tooling is a pipeline, not a collection of scripts. The remaining gaps — AU word-order, AT postcode coverage, rooftop precision — are all characterized with measured ceilings and named next steps.
+The branch ships measured, direct improvements that take mailwoman from "US champion" to "European competitive." The code is disciplined: every change is default-off, byte-stable, tested, and validated against real coordinates before promotion. The eval tooling is a pipeline rather than a collection of scripts. The remaining gaps — AU word-order, AT postcode coverage, rooftop precision — are all characterized with measured ceilings and named next steps.
 
 The project is in good shape. The highest-value next action is unblocking the AU fix (G-NAF training data) and publishing the incumbent-comparison blog post. The centroid-vs-rooftop trade is the direct framing; don't let marketing pressure blur it.

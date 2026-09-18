@@ -19,9 +19,9 @@ interface CommandModule {
  * source, so the router reads `out/commands/` even when the package's `#` imports have handed it the source router —
  * the same reach `geocode-stream.ts` makes for its worker.
  *
- * Anchored at the PACKAGE, not counted in `..` from this file. The count is a statement about this module's depth,
- * which is not something this module gets to know: moving it one directory deeper turned `../../out/commands/` into
- * `lib/cli/out/commands/`, and every command became `Unknown command` at once.
+ * Anchored at the PACKAGE rather than counted in `..` from this file. The count is a statement about this module's
+ * depth, which is not something this module gets to know: moving it one directory deeper turned `../../out/commands/`
+ * into `lib/cli/out/commands/`, and every command became `Unknown command` at once.
  */
 const COMMANDS_ROOT = pathToFileURL(`${String(resolvePackagePath("mailwoman", "out", "commands"))}/`)
 
@@ -29,7 +29,8 @@ const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`${parts.join("/")}${index ? "/index" : ""}.js`, COMMANDS_ROOT)
 
 /**
- * The command names one directory of the compiled tree offers — what a user types, not what the files are called.
+ * The command names one directory of the compiled tree offers — what a user types rather than what the files are
+ * called.
  *
  * A prefix directory contributes its children as `<directory>-<child>` rather than itself, because that is the name
  * they answer to. `listCommandNames` is help-only, so reading one extra directory level costs nothing anyone waits on.

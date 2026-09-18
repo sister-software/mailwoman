@@ -1,8 +1,7 @@
 # Direction C — Phase 1 end-to-end resolver eval (2026-05-30)
 
 The first **"address string → correct WOF place"** benchmark, and the kill/continue
-check for the per-input routing thesis. Headline: the change was **fixing the resolver**,
-not routing parsers.
+check for the per-input routing thesis. Headline: the change was **fixing the resolver** rather than routing parsers.
 
 ## Setup
 
@@ -24,7 +23,7 @@ The first run exposed two resolver gaps the deleted off-the-shelf DB had masked:
 1. **No top-level country constraint** — `ResolveOpts` only propagated country _down_
    from a resolved parent, so a bare "IL" over the 7-country gazetteer fuzzy-matched a
    **French** region (`@48.15,−1.64`), poisoning the whole walk.
-2. **US state abbreviations didn't resolve** — WOF regions carry "Illinois", not "IL";
+2. **US state abbreviations didn't resolve** — WOF regions carry "Illinois" rather than "IL";
    `findPlace('IL')` returned nothing, killing the parent-constraint the walk depends on.
 
 Fixes (both production keepers):
@@ -62,13 +61,13 @@ Fixes (both production keepers):
 
 ## Conclusions
 
-1. **The resolver was the bottleneck, not parser routing.** Fixing country + abbreviation
+1. **The resolver was the bottleneck rather than parser routing.** Fixing country + abbreviation
    coverage took the stack from broken (~10%) to 68.9% Acc@1 / 0 km median. Ship
    **neural→resolver** as the geocoding stack.
 2. **Routing is a real but modest lift** (+3.1pp overall, +4.7pp noisy). Worth building as
    the **banded** version (cheap lexical router → arbiter only on the noisy/ambiguous band),
    so the dual-parse cost is spent only where it pays and clean inputs stay on neural.
-3. **The biggest remaining change is resolver coverage**, not the parser: more aliases/
+3. **The biggest remaining change is resolver coverage** rather than the parser: more aliases/
    abbreviations, street-level resolution (TIGER — WOF has no street node), more locales.
    The p90 of 1,090 km is the cross-state ambiguity tail when a region fails to constrain.
 

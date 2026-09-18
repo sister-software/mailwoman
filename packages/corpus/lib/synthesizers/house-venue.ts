@@ -9,7 +9,7 @@
  *   house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
  *
  *   1. Direct: `5th Avenue Theatre`-style adversarial venues teach the model that tokens like "5th"
- *        belong to venues, not house_numbers. (Fixed in `no-street.ts` by removing
+ *        belong to venues rather than house_numbers. (Fixed in `no-street.ts` by removing
  *        digit+ordinal venue patterns.)
  *   2. Distributional dilution: synth-no-street adds 122K rows where house_number is absent. The model's
  *        training distribution shifts toward "house_number is rare," and it under-emits the tag at
@@ -24,7 +24,7 @@
  *   Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
  *
  *   Venue pool: PLAIN_VENUES from `no-street.ts` (re-exported here). Adversarial venues
- *   are deliberately not used here — the point is to teach co-occurrence, not to re-introduce
+ *   are deliberately not used here — the point is to teach co-occurrence rather than to re-introduce
  *   decompose-mode pressure.
  */
 
@@ -66,8 +66,8 @@ export interface SynthesizedHouseVenueRow {
 //#region Venue pool
 
 /**
- * PLAIN venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue coexistence, not
- * decompose-mode pressure — adversarial venue names live in `no-street.ts`.
+ * PLAIN venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue coexistence
+ * rather than decompose-mode pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -171,7 +171,7 @@ const FALLBACK_STREETS: ReadonlyArray<string> = [
 
 function randomHouseNumber(random: () => number): string {
 	// Generate a plain numeric house number 1-9999. No fractions/ranges — those land in
-	// `data/eval/falsehoods/numbers.jsonl` as known edge cases, not training material.
+	// `data/eval/falsehoods/numbers.jsonl` as known edge cases rather than training material.
 	const digits = Math.floor(random() * 4) + 1
 	const max = Math.pow(10, digits)
 	const n = Math.floor(random() * max) + 1
@@ -272,7 +272,7 @@ export function synthesizeHouseVenueRow(
 	// `London, EC3N 1DE`, because the GB layout puts the locality and the postcode on separate LINES and the country's
 	// single-line join is one separator for every break. Both registers are attested — `wof-postalcode` carries
 	// 3,265,642 GB rows with the comma against 10,282,560 without — so this is a codex question about which the layout
-	// writes, not a defect to route around here.
+	// writes rather than a defect to route around here.
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder

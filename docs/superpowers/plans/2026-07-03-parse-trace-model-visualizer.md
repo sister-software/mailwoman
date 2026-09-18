@@ -1,4 +1,4 @@
-> **Point-in-time design record.** The embedded code listings are the plan as written, not the shipped code —
+> **Point-in-time design record.** The embedded code listings are the plan as written rather than the shipped code —
 > several diverged during implementation (e.g. the repair test's input, the Stage-prefix heatmap window). The
 > shipped files are canonical; read this for intent and sequencing only.
 
@@ -17,7 +17,7 @@
 - **Git on this machine:** `~/.gitconfig` is TCC-blocked. Every git write: `export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` then `git -c user.name="Teffen Ellis" -c user.email="teffen@sister.software" commit …`. Commit messages end with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 - **#481 invariant:** `#decode` stays the single decode path. Trace capture happens inside it, blocked on a flag. `parse` / `parseWithLogits` must stay byte-stable — the existing neural suite is the guard and must pass untouched.
 - **File conventions:** every new `.ts`/`.tsx` file starts with the 4-line `@copyright Sister Software / @license AGPL-3.0 / @author Teffen Ellis, et al.` docblock plus a purpose paragraph. Indentation is tabs. Workspace files live at workspace root (no `src/`); docs components live in `docs/src/components/<Name>/`.
-- **Acronym casing:** whole-component caps (`parseJSON`, not `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
+- **Acronym casing:** whole-component caps (`parseJSON` rather than `parseJson`). No new acronym identifiers are expected in this plan; if one appears, cap it whole.
 - **Docs type discipline:** `docs/src/shared/resources.tsx` uses locally-defined structural `*Like` types — do NOT import types from `@mailwoman/neural` into docs.
 - **Run TS directly:** `node <file>` for scripts; `yarn vitest --run <path>` for tests (root vitest config resolves the `@mailwoman/*` source aliases).
 
@@ -153,7 +153,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
 		// The span proposer is default-ON; whether it fires depends on the text. The contract
-		// here is presence + a boolean, not a specific value.
+		// here is presence + a boolean rather than a specific value.
 		for (const kind of ["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"]) {
 			expect(bare.priors.map((p) => p.kind)).toContain(kind)
 		}
@@ -1011,7 +1011,7 @@ Four bands + gauge, one shared piece-per-column x-axis. Pure — no context, no 
  *
  *   1. Token ribbon — the SentencePiece pieces with char offsets.
  *   2. Channel band — anchor/gazetteer confidence as fed ("not fed" when a channel is absent —
- *      an unfed channel is a diagnostic fact, the #566/#685 OOD class, not an empty one).
+ *      an unfed channel is a diagnostic fact, the #566/#685 OOD class rather than an empty one).
  *   3. Emissions heatmap — labels × pieces; toggle raw logits vs post-prior emissions (the delta
  *      IS the priors' influence); conventions-masked cells hatched; viterbi path outlined.
  *   4. Decode band — final tokens, confidence bars, repair-pass diffs as before→after chips.
@@ -1554,7 +1554,7 @@ export function LiveModelVisualizer(): JSX.Element {
 
 Implementation notes:
 
-- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured, not a string) — adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
+- Check `DemoEmbedState`'s exact field names in `docs/src/contexts/DemoEmbed.tsx` before wiring (`loadingProgress` may be structured rather than a string) — adjust the loading line to whatever the context exposes (the GuidedTour usage at `docs/src/components/GuidedTour/GuidedTour.tsx:102` is the reference consumer).
 - `useDemoEmbed().classifier` is typed `MailwomanClassifierLike | null` — the optional `traceParse` added in Task 3 makes the feature-detect type-check.
 
 - [ ] **Step 2: Implement the page**

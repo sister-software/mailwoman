@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Synthetic Overture ids must be a function of the PLACE, not of the build.
+ *   Synthetic Overture ids must be a function of the PLACE rather than of the build.
  *
  *   The failure this pins is silent and cross-artifact. Ids were `idBase + rowIndex` over a threaded DuckDB scan, so
  *   the same division took a different id in each build: `8000001092006` is _Dolok Merawan, Indonesia_ in one shipped

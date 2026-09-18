@@ -432,7 +432,7 @@ export async function buildCoverageTiles(
 		// (Wikipedia notability via place_importance, with a population fallback baked in by
 		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the
 		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal
-		// count as "civilization" (the unknown long tail is dropped, not flagged as work-to-do). Each
+		// count as "civilization" (the unknown long tail is dropped rather than flagged as work-to-do). Each
 		// place spreads to a 1-ring halo. a cell's salience is the strongest place touching it.
 		await duck.run(`
 			CREATE TEMP TABLE sal AS

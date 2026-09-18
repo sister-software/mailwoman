@@ -11,7 +11,7 @@
  *   purpose (en-gb under the #1476 mitigation, en-nz for want of a WOF NZ postcode database), which is why the
  *   expectation is read from each package's own card instead of a list in the harness.
  *
- *   Fixture packages, not the workspace ones: "declared and missing" cannot be posed against the real
+ *   Fixture packages rather than the workspace ones: "declared and missing" cannot be posed against the real
  *   neural-weights-* dirs without deleting an artifact out from under every other test in the run.
  */
 

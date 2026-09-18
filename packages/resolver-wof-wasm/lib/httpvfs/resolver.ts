@@ -377,7 +377,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 		if (query.placetype) {
 			// Shared placetype-equivalence expansion (core/resolver): a `locality` query must also reach
-			// `borough` / `localadmin` rows — Brooklyn-the-borough is a borough, not a locality, and a
+			// `borough` / `localadmin` rows — Brooklyn-the-borough is a borough rather than a locality, and a
 			// strict filter made it unreachable (the "Brooklyn → Brooklyn Park, MN" bug).
 			const types = expandPlacetypeFilter(
 				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(isPresent)
@@ -721,7 +721,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			}
 		})
 
-		// Proximity re-rank (#938) — the same function the Node candidate reader calls, not a transcription of
+		// Proximity re-rank (#938) — the same function the Node candidate reader calls rather than a transcription of
 		// it. The two copies this replaced agreed on every constant and still disagreed on which field the
 		// population term reads and on whether the combined value is written back, which is the half that
 		// decides the answer. See proximity-rerank.ts.

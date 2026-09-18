@@ -212,12 +212,12 @@ export interface ZoningVocabularyTable {
 /**
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
- * EMPTY FOR IRELAND, AND THE EMPTINESS IS A MEASUREMENT. The Department's generic type is assigned PER POLYGON, not per
- * code: 52 of the 795 (authority, local code) pairs take more than one generic type inside a single authority — Cork
- * County Council's `Special Policy Area` takes 14 and its `Green Infrastructure` 12 — so the mapping is not a function
- * of the pair and no edge table can carry it without inventing one. The mapping lives on `zoning_area`, per row, where
- * the Department put it. {@linkcode assertCrosswalkIsNotATable} refuses a build that would write edges while such a
- * pair exists.
+ * EMPTY FOR IRELAND, AND THE EMPTINESS IS A MEASUREMENT. The Department's generic type is assigned PER POLYGON rather
+ * than per code: 52 of the 795 (authority, local code) pairs take more than one generic type inside a single authority
+ * — Cork County Council's `Special Policy Area` takes 14 and its `Green Infrastructure` 12 — so the mapping is not a
+ * function of the pair and no edge table can carry it without inventing one. The mapping lives on `zoning_area`, per
+ * row, where the Department put it. {@linkcode assertCrosswalkIsNotATable} refuses a build that would write edges while
+ * such a pair exists.
  */
 export interface ZoningCrosswalkEdgeTable {
 	from_scheme: string

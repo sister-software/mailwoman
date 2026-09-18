@@ -4,14 +4,14 @@
 
 **Goal:** `npx mailwoman parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"` keeps feeling good with zero setup: missing weights prompt an interactive download into a user cache; declining runs the real pipeline in degraded (encoder-less) structural mode with a banner; scripts stay deterministic via `--download-weights` / `--degraded`.
 
-**Spec:** `docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md` §Weights guard. Plan 3 of 5 — independent of the check-blocked plan-2 swaps (this guards weight _presence_, not parse quality).
+**Spec:** `docs/superpowers/specs/2026-07-12-legacy-rules-excision-design.md` §Weights guard. Plan 3 of 5 — independent of the check-blocked plan-2 swaps (this guards weight _presence_ rather than parse quality).
 
 **Pre-v7 scoping (deliberate):** the guard is additive. Non-interactive runs with absent weights keep today's behavior (silent fallback chain, rules via `runIsolated`) until plan 4 flips that branch to a hard error. The `declined` path goes straight to the spec's degraded mode — the pipeline-without-classifier composition that `parse.tsx:362-372` documents and then bypasses today.
 
 ## Design (settled by direct source survey, 2026-07-13)
 
 - **Cache = an npm prefix:** `~/.cache/mailwoman/weights` (via `os.homedir()` — no raw env). Download delegates to the user's own `npm install --prefix <cache> @mailwoman/neural-weights-<locale>@<cli-version>` (integrity, proxy, registry config for free; own child PID). Version-pinned to the running CLI; fall back to `@latest` when the pinned version 404s.
-- **Metadata-only-tarball trap:** code-only releases publish weights packages without binaries (`MAILWOMAN_SKIP_WEIGHTS_COPY`). After install, PROBE `model.onnx` + `tokenizer.model`; a binary-less install is a loud, actionable error, not a success. Durable fix is a publish-workflow `weights-latest` dist-tag — filed as a board issue, out of scope here.
+- **Metadata-only-tarball trap:** code-only releases publish weights packages without binaries (`MAILWOMAN_SKIP_WEIGHTS_COPY`). After install, PROBE `model.onnx` + `tokenizer.model`; a binary-less install is a loud, actionable error rather than a success. Durable fix is a publish-workflow `weights-latest` dist-tag — filed as a board issue, out of scope here.
 - **Resolution learns one fallback branch:** `neural/weights.ts` gets `resolveFromPackageDir(packageDir, …)` extracted from the existing package branch (sibling artifacts — model-card, CRF, anchor bin, gazetteer lexicon — resolve identically for cache installs; the explicit-paths branch stays sibling-less, which is exactly the degraded-quality trap the cache layout avoids). `resolveWeights` order: explicit paths → `require.resolve` package → cache prefix (`<cache>/node_modules/@mailwoman/neural-weights-<locale>`) → error naming all tried paths including the cache. Test injection point: optional `cacheRoot` opt.
 - **Guard component** `mailwoman/cli-kit/weights-guard.tsx` (AuthGuard-wrapper pattern): probe → `neural` passthrough; absent + raw-mode-capable stdin → Y/n prompt (ink `useInput`) → accept: spawn download with live status → re-probe → `neural`; decline/download-failure → `declined`; absent + non-interactive → `unavailable` (caller keeps legacy chain). Flags short-circuit the prompt: `--download-weights` ⇒ auto-accept, `--degraded` ⇒ straight to declined-mode output.
 - **Degraded runner:** `createRuntimePipeline({})` — the real stages minus the encoder — serialized like the normal path, plus a stderr banner naming what's degraded and both upgrade paths (install the package / rerun with `--download-weights`). stdout stays machine-parseable.
@@ -38,7 +38,7 @@
 
 ### Task 4: live verification (lab host) + board issue
 
-- e2e cache flow with the real registry: scratch `cacheRoot` → `npm install --prefix` the published weights → `resolveWeights({cacheRoot})` resolves incl. sibling artifacts → classifier loads and parses. (Uses a scratch dir, not the real `~/.cache`.)
+- e2e cache flow with the real registry: scratch `cacheRoot` → `npm install --prefix` the published weights → `resolveWeights({cacheRoot})` resolves incl. sibling artifacts → classifier loads and parses. (Uses a scratch dir rather than the real `~/.cache`.)
 - Interactive prompt under a pty (`script -qec … /dev/null` with piped `n\n` / `y\n`): decline renders degraded output + banner; `--degraded` and `--download-weights` behave non-interactively.
 - Binary-less-install probe: point the pin at a known metadata-only version (or simulate by removing `model.onnx` from the scratch install) → actionable error text.
 - ~~File the dist-tag board issue~~ Executor finding (2026-07-13): npm view shows 5.10.0 AND 6.0.0 weights tarballs both ~40 MB — code-only releases do ship binaries (the publish flow stages them regardless of release_weights). The metadata-only trap is not observed on the registry; the post-install probe stays as defense-in-depth, no issue filed.

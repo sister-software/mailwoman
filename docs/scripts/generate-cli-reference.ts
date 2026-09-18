@@ -279,7 +279,7 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-// The PACKAGE ROOT, not the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
+// The PACKAGE ROOT rather than the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
 // answered the same thing only while the entry sat at the package root. once source moved under `lib/` it started
 // answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
 const packagePath = resolvePackageDirectory("mailwoman")

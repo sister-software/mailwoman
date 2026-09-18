@@ -1,7 +1,7 @@
 # Wrap handoff — close out the FST / comma-free / #1143 arc (2026-07-26)
 
 **For:** DeepSeek (fresh context, executing lead) · **From:** the coordinating lead (Claude) · **Repo:** mailwoman @ `main`
-(`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up, not a
+(`426379e4` or later). **The arc is ~90% done and merged** — this doc is the remaining wrap-up rather than a
 build brief. Read the prior session's own report first:
 `docs/superpowers/plans/2026-07-25-SESSION-REPORT-fst-arcs.md` (your predecessor's verdicts, verified
 accurate against main + the ledger). The full dated record is `.superpowers/sdd/progress.md`
@@ -20,7 +20,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 
 ## Where the arc landed (settled — do not re-open)
 
-- **Comma-free "street + trailing city" is a DECODE DEAD END** — confirmed with receipts, not
+- **Comma-free "street + trailing city" is a DECODE DEAD END** — confirmed with receipts rather than
   abandoned. Fork B (trailing-locality prior) passed a curated 33-row board then went net-negative on
   400-row held-out BAN population: no decode geometry separates a trailing city from a person-name
   street surname (`Avenue Marceau Julien` ≡ `Rue des Lyonnais Paris`). Same open-vocab wall as
@@ -101,11 +101,11 @@ promotion expected to flip the sign). Right now that obligation lives only in `p
 retire or renew the homonym bar revision", linking the ledger entry and the exact battery
 (pre-registration #6). If the homonym flips positive as predicted, the revision retires; if it doesn't,
 we've shipped a durable regression and must decide whether to check the prior harder or revert
-default-on. This is a standing obligation, not optional.
+default-on. This is a standing obligation rather than optional.
 
 ### 3. ~~Formalize the #1143 waive~~ — ✅ DONE (Claude, 2026-07-26)
 
-Operator delegated the call ("most long-term accurate parsing, not a pile of hacks") → **waived to
+Operator delegated the call ("most long-term accurate parsing rather than a pile of hacks") → **waived to
 training, no decode patch.** GitHub **#1143 CLOSED as not-planned**
 (https://github.com/sister-software/mailwoman/issues/1143): disposition comment posted (re-anchored
 0.605/0.777, the decode-dead-end rationale, what #1315 covered), title de-ghosted (0.215 removed),

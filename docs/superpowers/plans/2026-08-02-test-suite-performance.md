@@ -262,7 +262,7 @@ EOF
 
 ---
 
-### Task 2: Materialize weights from the data root, not GitHub's cache
+### Task 2: Materialize weights from the data root rather than GitHub's cache
 
 The `weights-*` cache payload is 76.3 MB of real files and takes 48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path to the cache service. The source model is already on local disk on that same host (`release.config.json` → `dataRoot: /mnt/playpen/mailwoman-data`). Only the derived `postcode-*.bin` / `pair-index-*.bin` are expensive to produce; those get a content-keyed store in the data root.
 
@@ -355,7 +355,7 @@ describe("derivedWeightsKeyFrom", () => {
 		expect(derivedWeightsKeyFrom([a, b])).toBe(derivedWeightsKeyFrom([b, a]))
 	})
 
-	it("treats a MISSING input as a distinct state, not as empty", async () => {
+	it("treats a MISSING input as a distinct state rather than as empty", async () => {
 		const a = join(scratch, "a.json")
 		await writeFile(a, "1")
 		const present = derivedWeightsKeyFrom([a])
@@ -529,7 +529,7 @@ function tryServeDerived(dir: string, filename: string): boolean {
  * Deposit a freshly-built `filename` into the derived store under this checkout's key.
  *
  * Best-effort: a store write that fails must never fail a release. The build already succeeded and
- * the workspace already has the artifact; the store is an optimization, not a source of truth.
+ * the workspace already has the artifact; the store is an optimization rather than a source of truth.
  */
 function stashDerived(dir: string, filename: string): void {
 	try {
@@ -639,7 +639,7 @@ In `.github/workflows/test.yml`, delete from both the `unit-slow` and `smoke` jo
 For `unit-slow` the two steps become:
 
 ```yaml
-# Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
+# Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key> rather than from
 # actions/cache. The cache entry carried 76.3 MB and restored at ~1.6 MB/s over the lab's path
 # to GitHub's cache service (48–54s) — to a host that already has the source model on local
 # disk. `copy-weights.ts` now serves the derived binaries from that store and only pays the
@@ -669,7 +669,7 @@ yarn oxfmt scripts/derived-weights-key.ts scripts/derived-weights-key.test.ts sc
 yarn lint:oxlint
 git add scripts/derived-weights-key.ts scripts/derived-weights-key.test.ts scripts/copy-weights.ts .github/workflows/test.yml
 git commit -m "$(cat <<'EOF'
-ci(weights): serve the derived binaries from the data root, not GitHub's cache
+ci(weights): serve the derived binaries from the data root rather than GitHub's cache
 
 The weights-* actions/cache entry carried 76.3 MB of real files and took
 48-54s to restore on the two mailwoman-data legs — about 1.6 MB/s over the
@@ -929,7 +929,7 @@ loadPersonNameSurfaces re-reads the curation files; the FR and US locality-
 surface passes in one process each paid both. Measured 2026-08-02 that pair
 was 236.9s of a 253s CI leg.
 
-Keyed on (path, mtimeMs, size), NOT path alone: the WOF admin DB is a sealed
+Keyed on (path, mtimeMs, size) rather than path alone: the WOF admin DB is a sealed
 readonly artifact that a rebuild replaces, and a path-only memo would serve
 the old scan against the new file for the life of the process.
 
@@ -976,7 +976,7 @@ Create `mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts`:
  *   split: the two full-DB tests were 236.9s of a 253s CI leg and growing.
  *
  *   What does NOT live here: `entries > 10_000` and the other coverage-scale assertions. Those are
- *   claims about the gazetteer, not about the laws — see `evidence-lexicons.full.test.ts`.
+ *   claims about the gazetteer rather than about the laws — see `evidence-lexicons.full.test.ts`.
  */
 
 import { readFileSync } from "node:fs"
@@ -1187,7 +1187,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		const fr = buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
-		// "Roazhon" is a real Breton nickname for Rennes, not a sub-phrase.
+		// "Roazhon" is a real Breton nickname for Rennes rather than a sub-phrase.
 		expect(fr.surfaces.roazhon).toBeDefined()
 	})
 
@@ -1213,7 +1213,7 @@ Expected: it runs in under a second. Some assertions will likely fail on the fir
 yarn vitest run mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts --reporter=verbose
 ```
 
-Adjust the **fixture rows** (populations, names) to make the intended law fire. Do not weaken an assertion to match observed output — that inverts the test. If a law cannot be provoked with a seeded row, that is a finding worth reporting, not a reason to delete the case.
+Adjust the **fixture rows** (populations, names) to make the intended law fire. Do not weaken an assertion to match observed output — that inverts the test. If a law cannot be provoked with a seeded row, that is a finding worth reporting rather than a reason to delete the case.
 
 - [ ] **Step 3: Move the full-scale tests to their own file**
 
@@ -1237,7 +1237,7 @@ Create `mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts` containing 
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which is invariant to
  *   gazetteer size. What stays HERE is the coverage-scale claims — `entries > 10_000` and the
- *   nonzero skip counters — because those are claims about the gazetteer, not about the laws.
+ *   nonzero skip counters — because those are claims about the gazetteer rather than about the laws.
  */
 
 import { existsSync } from "node:fs"
@@ -1291,7 +1291,7 @@ yarn oxfmt mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts mailwoman/gaze
 yarn lint:oxlint
 git add mailwoman/gazetteer-pipeline/evidence-lexicons.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.fixture.test.ts mailwoman/gazetteer-pipeline/evidence-lexicons.full.test.ts package.json
 git commit -m "$(cat <<'EOF'
-test(gazetteer): assert the four laws against a fixture, not the whole WOF
+test(gazetteer): assert the four laws against a fixture rather than the whole WOF
 
 evidence-lexicons.test.ts was 236.9s of a 253s CI leg — two tests each
 building the locality-surface lexicon over the full admin DB, FR then US.
@@ -1659,7 +1659,7 @@ For the tests that call the bare `loadFromWeights({ locale: "en-gb" })` with no 
  * One en-gb classifier for the tests that load it with NO varying options.
  *
  * The tests in this block differ in decode-time configuration (`placetypePair`, `pairIndexPath`,
- * `transitionBeta`), not in how the session was constructed — so the ones that take the plain
+ * `transitionBeta`) rather than in how the session was constructed — so the ones that take the plain
  * `{ locale: "en-gb" }` path were each paying a 12–13s load for an identical object.
  *
  * Tests that are ABOUT load behaviour keep their own load: the auto-resolve cases, the tolerant
@@ -1677,7 +1677,7 @@ async function gbClassifier() {
 
 and in those tests replace `const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })` with `const cls = await gbClassifier()`.
 
-⚠ Do not share into a test that passes any option beyond `{ locale: "en-gb" }`, and do not share into `resolveWeights` tests — those assert on resolution, not on a loaded model. If a test mutates the classifier or relies on fresh decode state, leave it with its own load and say so in a comment.
+⚠ Do not share into a test that passes any option beyond `{ locale: "en-gb" }`, and do not share into `resolveWeights` tests — those assert on resolution rather than on a loaded model. If a test mutates the classifier or relies on fresh decode state, leave it with its own load and say so in a comment.
 
 - [ ] **Step 5: Run to verify**
 
@@ -1698,12 +1698,12 @@ yarn oxfmt neural/test/weights.test.ts
 yarn lint:oxlint
 git add neural/test/weights.test.ts
 git commit -m "$(cat <<'EOF'
-test(neural): load the en-gb weights once, not once per assertion
+test(neural): load the en-gb weights once rather than once per assertion
 
 weights.test.ts was 96.6s. Five tests in the pair-prior block each spawned
 TWO link-dev-weights.ts scripts and then loaded the model, at 12-13s apiece
 — while varying only decode-time configuration (placetypePair, pairIndexPath,
-transitionBeta), not how the session was built. The link scripts are
+transitionBeta) rather than how the session was built. The link scripts are
 idempotent symlink creation; ten spawns could not produce a different result
 than one.
 
@@ -1721,7 +1721,7 @@ EOF
 
 ### Task 7: Cache the compiled `out/` tree
 
-`tsc -b` costs 29–36s in every leg — five times per PR on the same commit. Measured: cold is 32.9s; with `out/` and the `.tsbuildinfo` files present but `node_modules` freshly reinstalled it is 13.0s. So this is 33s → ~13s per leg, not → 0s.
+`tsc -b` costs 29–36s in every leg — five times per PR on the same commit. Measured: cold is 32.9s; with `out/` and the `.tsbuildinfo` files present but `node_modules` freshly reinstalled it is 13.0s. So this is 33s → ~13s per leg rather than → 0s.
 
 **Files:**
 
@@ -1780,7 +1780,7 @@ gh api repos/sister-software/mailwoman/actions/runs/<id>/jobs \
 
 Expected on the second run: `Compile` ≤ 15s (was 29–36s), and `Restore compiled tree` a few seconds.
 
-⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is correct, not a failure — the key includes `github.sha`, so within one PR the legs of the _same_ run all miss. the result on re-runs and on the pushes after the first. If that trade is not worth it, drop `github.sha` from the key and hash the sources directly.
+⚠ On the first run the cache misses on every leg and `Compile` is unchanged. That is correct rather than a failure — the key includes `github.sha`, so within one PR the legs of the _same_ run all miss. the result on re-runs and on the pushes after the first. If that trade is not worth it, drop `github.sha` from the key and hash the sources directly.
 
 - [ ] **Step 4: Confirm the cache is not blowing the quota**
 
@@ -1961,7 +1961,7 @@ Check every criterion from the spec:
 | `evidence-lexicons` PR path invariant to gazetteer size       | fixture test unchanged by a rebuild                             |
 | no net loss of assertions                                     | every law still asserted on every PR                            |
 
-⚠ Report every number, including any that miss. A criterion that is not met is a finding, not something to without output drop — say which one and by how much.
+⚠ Report every number, including any that miss. A criterion that is not met is a finding rather than something to without output drop — say which one and by how much.
 
 - [ ] **Update the spec with the measured outcome**
 

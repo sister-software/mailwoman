@@ -11,7 +11,7 @@
  *   if its content hash has moved. The runner adds an ARM LABEL and the measurements; #1929 supplies one
  *   semantic observation and runs the same command, and #1930 reads the two receipts.
  *
- *   THE RECEIPT CARRIES ARTIFACT IDENTITY, not just numbers. A pass rate over an unnamed database and an
+ *   THE RECEIPT CARRIES ARTIFACT IDENTITY rather than just numbers. A pass rate over an unnamed database and an
  *   unnamed weights package is not reproducible, and the two arms have to be shown to have run against the
  *   same ones. So the receipt records the poi.db path with its own `layer_manifest` row, the resolver
  *   backend that answered, and the weights package version — and when one of those cannot be read it says

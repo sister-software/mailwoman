@@ -191,8 +191,9 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 
 /**
  * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads — structural typing so callers depend on
- * the shape, not the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The observability rung
- * (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and magnitude (`lift`).
+ * the shape rather than the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The
+ * observability rung (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and
+ * magnitude (`lift`).
  *
  * `share` is deliberately not on this interface. Within-parent share was measured at ~100% for the dominant class
  * everywhere, so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate) is the only

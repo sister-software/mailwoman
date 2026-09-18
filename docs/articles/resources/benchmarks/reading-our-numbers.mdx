@@ -45,7 +45,7 @@ answered at `admin`. The panel's own summary says so on the line under the score
 takes 30 out of 30 for street accuracy has been misled by a true number.
 
 There is a second edge on this, and our own script fell off it. A tier field reports where the
-resolution cascade _ended_, not whether it produced anything — so a row that returned no coordinate
+resolution cascade _ended_ rather than whether it produced anything — so a row that returned no coordinate
 still carries `admin`. Counting the field directly put three unresolved rows in the `admin` column of
 each of the first two Belgian arms, and the published table read `admin: 30` two lines under
 `returned a coordinate: 27`. The two rows disagreed about the same three addresses. The fix is to
@@ -69,7 +69,7 @@ building is correct, because the panel has no second opinion about the building.
 
 This is not a reason to discard the number — parsing and routing are most of what goes wrong, and a
 panel that isolates them is worth running. It is a reason to state the claim at the size it earned:
-"a French address that exists in BAN resolves to its BAN rooftop", not "our French geocoding is
+"a French address that exists in BAN resolves to its BAN rooftop" rather than "our French geocoding is
 accurate to one meter".
 
 **What to ask:** where did the evaluation addresses come from, and where did the reference coordinates
@@ -115,7 +115,7 @@ Three mechanisms break the extrapolation:
 - **The gazetteer is read from disk.** A warm page cache and a cold one give different numbers for the
   same query, and our panels run warm — the same databases were open moments earlier.
 
-Timing here is a sanity check on the order of magnitude, not a throughput specification. Measure on
+Timing here is a sanity check on the order of magnitude rather than a throughput specification. Measure on
 your own hardware, with your own data root, at your own concurrency.
 
 **What to ask:** was the model load counted, what was the concurrency, and was the cache warm?
@@ -135,7 +135,7 @@ carrying a wrong parse underneath. A page that reports only the aggregate is not
 thing you would have had to debug.
 
 **A result file records the versions it ran against.** Each one records `versions.mailwoman`,
-`versions.model` — the resolved artifact filename, not the package alias — and `versions.gazetteer`.
+`versions.model` — the resolved artifact filename rather than the package alias — and `versions.gazetteer`.
 A reader whose re-run disagrees with ours needs those three to tell data drift from code drift, and
 without them a differing number is uninterpretable rather than informative. The French file also
 records its BAN release, on the committed panel, because that is a property of the addresses.

@@ -14,7 +14,7 @@ Three compounding failures, all demonstrated live this week:
 ## Goals
 
 - **Mechanical read-only enforcement**: a sealed artifact cannot be reopened read-write, at the OS layer, with a clear error message.
-- **First-clone usefulness**: one self-documenting command namespace where `--help` is the data pipeline; the canonical coverage recipe lives in code as defaults, not in a manifest that lags or an artifact you reverse-engineer.
+- **First-clone usefulness**: one self-documenting command namespace where `--help` is the data pipeline; the canonical coverage recipe lives in code as defaults rather than in a manifest that lags or an artifact you reverse-engineer.
 - **Recipe ≡ artifact**: a full rebuild from the recorded recipe reproduces the shipped artifact (blocked by a verify step that checks _structure_, notcounts).
 - **Endgame**: `scripts/` contains only release-it hooks, CI smoke, and the eval harness. No builders, no mutators.
 

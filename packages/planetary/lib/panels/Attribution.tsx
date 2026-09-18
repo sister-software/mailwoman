@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Attribution from the pipeline's manifest, not from a string in the app: the manifest names the sources a build
+ *   Attribution from the pipeline's manifest rather than from a string in the app: the manifest names the sources a build
  *   read and the nomenclature snapshot date, so the line changes when the archives do and never drifts from them.
  */
 

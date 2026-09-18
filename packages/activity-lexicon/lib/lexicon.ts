@@ -125,7 +125,7 @@ function auditAttestation(entry: ActivityPhraseEntry, byPhrase: ReadonlyMap<stri
 
 			if (query !== phrase && !query.includes(` ${phrase} `) && !query.startsWith(`${phrase} `)) {
 				return [
-					`phrase ${named} cites committed query ${stringifyJSON(attestation.detail)}, which does not contain it as a subject`,
+					`phrase ${named} cites committed query ${stringifyJSON(attestation.detail)}, which omits it as a subject`,
 				]
 			}
 

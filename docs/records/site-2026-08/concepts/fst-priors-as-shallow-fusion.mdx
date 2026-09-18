@@ -116,7 +116,7 @@ eval harness (`mailwoman/eval-harness/parity-corpus.ts`). What's
 missing is the production wire: `createRuntimePipeline` and the CLI
 have no `fstStreetMorphology` option today, so this prior doesn't run
 in a default `mailwoman parse`. Everything below describes the
-mechanism as built and eval-tested, not the shipped default path.
+mechanism as built and eval-tested rather than the shipped default path.
 
 The prior is a TWO-pass bias:
 
@@ -127,7 +127,7 @@ flowchart LR
 ```
 
 For `5th Avenue` in a real US address (where the user typed it as part of
-an address, not a venue name):
+an address rather than a venue name):
 
 - Pass 1: `Avenue` matches the morphology FST. Bias `Avenue` toward
   `B-street_suffix` AND `B-street_prefix` (we don't know position
@@ -139,8 +139,7 @@ an address, not a venue name):
 The negative-bias-on-adjacent is the critical piece. It's what
 prevents the v0.6.1-style dep_loc hallucinations: when synth-street
 training pushed the model toward "decompose mode," the morphology
-prior at inference says "the token next to an affix is street-shaped,
-not dep_loc-shaped." See
+prior at inference says "the token next to an affix is street-shaped rather than dep_loc-shaped." See
 [street-supplement-architecture.md](./street-supplement-architecture.mdx)
 for the layered design.
 

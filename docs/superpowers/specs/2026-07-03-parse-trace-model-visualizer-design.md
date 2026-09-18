@@ -144,7 +144,7 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - Models without the locale head: `localeLogits`/`detectedSystem` absent, renderer hides the gauge.
 - Channel-off classifiers (no anchor lookup / lexicon configured): `anchor`/`gazetteer` absent;
   renderer shows the channel band as "not fed" rather than zeros — an unfed channel is a
-  diagnostic fact (the #566/#685 OOD class), not an empty one.
+  diagnostic fact (the #566/#685 OOD class) rather than an empty one.
 - CLI `--trace` on a pipeline whose classifier lacks `traceParse` (stale compiled tree, foreign
   classifier): envelope ships without the `neural` key + a stderr note — never a crash.
 
@@ -166,5 +166,5 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - Resolver/gazetteer candidate traces (increment 4 reserves the key; design when it lands).
 - Any change to training-side Python or the ONNX export.
 - Exposing attention weights or other _inside-the-graph_ tensors — the trace covers the model's
-  I/O contract and the decode pipeline around it, not transformer internals. (Netron already
+  I/O contract and the decode pipeline around it rather than transformer internals. (Netron already
   serves the op-graph view; revisit only if a concrete need appears.)

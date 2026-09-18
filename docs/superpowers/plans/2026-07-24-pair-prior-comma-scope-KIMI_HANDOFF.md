@@ -133,7 +133,7 @@ names are BUILT from real place names, so naive windows hit real index pairs):**
 4. **Structural vetoes stronger than a marker list.** The confound windows are almost always
    INSIDE a span the model itself labels venue/street/house_number as-written. Veto any window
    that overlaps a first-pass span whose argmax is in `{venue, street, unit, house_number}` at
-   confidence above a threshold? (Distinct from Q1: this uses the first pass only as a veto, not
+   confidence above a threshold? (Distinct from Q1: this uses the first pass only as a veto rather than
    as a segmenter — failure mode analysis welcome.)
 5. **The determiner/shape cue.** FSA confounds skew toward `The X Arms`, `X Academy`, `X Cafe` —
    head-noun-final English compounds. Is a lightweight shape check (definite article prefix,

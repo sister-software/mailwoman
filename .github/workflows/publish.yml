@@ -2,44 +2,44 @@
 #
 # WHY TWO PHASES (2026-07-23): the "Production Integrity" ruleset on `main` requires every change
 # to arrive via a PR with a green `test` check — which rejects the old release-it direct push
-# (GH013; see the night-2 postmortem, docs/articles/evals/2026-07-23-night-2-postmortem.md). The
+# (GH013. see the night-2 postmortem, docs/articles/evals/2026-07-23-night-2-postmortem.md). The
 # release therefore splits at the merge boundary:
 #
 #   PHASE 1 — mode=prepare (dispatch with a version): bump every workspace manifest on a
 #   `release/v<version>` branch (`mwops release prepare-version` — no git side effects of its
 #   own), open the release PR, dispatch the Test workflow against the branch (required because
 #   GITHUB_TOKEN-created PRs never trigger `on: pull_request` workflows — GitHub's anti-recursion
-#   rule), and enable auto-merge. The PR merges itself the moment `test` goes green; no human click
+#   rule), and enable auto-merge. The PR merges itself the moment `test` goes green. no human click
 #   is required, so a solo night shift can still release end-to-end.
 #
-#   PHASE 2 — mode=publish (dispatch AFTER the release PR has merged): tag the merged commit,
+#   PHASE 2 — mode=publish (dispatch after the release PR has merged): tag the merged commit,
 #   create the GitHub release, fetch the weight binaries from Hugging Face, and publish every
-#   workspace via OIDC. Idempotent by construction (--tolerate-republish; tag/release creation
+#   workspace via OIDC. Idempotent by construction (--tolerate-republish. tag/release creation
 #   skipped when they already exist), so re-dispatching after a partial failure is always safe —
-#   this same mode IS the recovery path (the old publish_only input).
+#   this same mode is the recovery path (the old publish_only input).
 #
 # Auth: npm Trusted Publishing (OIDC). No NPM_TOKEN secret needed in this workflow — npmjs.com is
 # configured to accept publishes from this exact workflow file (path:
 # .github/workflows/publish.yml). The `id-token: write` permission on the publish job is what lets
 # GitHub Actions mint the OIDC token npm verifies against.
 #
-# Publishes ALL packages — code AND the neural-weights-* — entirely from CI via OIDC, so no npm
+# Publishes all packages — code and the neural-weights-* — entirely from CI via OIDC, so no npm
 # credentials live anywhere. The weights workspaces ship real model.onnx + tokenizer.model
-# binaries; the "Materialize weight artifacts from Hugging Face" step pulls them from the PUBLIC HF
+# binaries. the "Materialize weight artifacts from Hugging Face" step pulls them from the PUBLIC HF
 # bucket (the same files the demo loads, no auth) before publish. Prerequisite for a real publish
 # run: the model for the card version must already be staged on HF — push it with `mailwoman release
 # hf` (HF token, run on the operator's host) first.
 #
 # THE ARTIFACT RECIPE IS NOT IN THIS FILE (#1894). Materialization lives in
 # `@mailwoman/release-kit` (`mwops release fetch-hf-weights`, lib/weights/fetch-hf-weights.ts) and the
-# tarball audit in lib/pack/verify-tarball.ts; this workflow orchestrates them, and
+# tarball audit in lib/pack/verify-tarball.ts. this workflow orchestrates them, and
 # `yarn release:preflight --source hf` runs the same two locally with no dispatch. Every path that was a hand-maintained list of shell copies here went stale at least once
 # — most recently at the workspace regroup, which cost the v9.2.0 reduce three of its four dispatches.
 #
 # A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
-# workflow artifacts — inspection copies only. This workflow NEVER publishes clients: registry
+# workflow artifacts — inspection copies only. This workflow never publishes clients: registry
 # publishing lives in publish-python.yml (PyPI Trusted Publishing) and publish-cargo.yml,
-# dispatched separately by the operator. Its failure DOES conclude this workflow failed, as a
+# dispatched separately by the operator. Its failure does conclude this workflow failed, as a
 # receipt on the release run — the npm packages stay published either way. See the job's own
 # comment and RELEASING.md "Client packages".
 name: NPM Publish
@@ -81,7 +81,7 @@ env:
   ONNXRUNTIME_NODE_INSTALL: skip
 
 # Serialize publish runs. Don't cancel an in-flight run — a prepare may be mid-push and a publish
-# may be mid-tarball; killing either leaves a partial state a human then has to unwind.
+# may be mid-tarball. killing either leaves a partial state a human then has to unwind.
 concurrency:
   group: publish
   cancel-in-progress: false
@@ -137,13 +137,13 @@ jobs:
           if git tag -l "v${VERSION}" | grep -q .; then
             echo "::error::tag v${VERSION} already exists — pick a different version"; exit 1
           fi
-          if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1; then
+          if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1. then
             echo "::error::mailwoman@${VERSION} is already on npm — pick a different version"; exit 1
           fi
           yarn oxfmt package.json '**/package.json'
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
 
-      # The man page embeds the release version in its .TH line, so EVERY bump stales it — v9.2.0's
+      # The man page embeds the release version in its .TH line, so every bump stales it — v9.2.0's
       # release PR failed its test run on exactly that and needed a manual regeneration push (#1891).
       # Compile first: the generators spawn the compiled CLI, and a clean checkout has no out/ to
       # trust. Runs on dry runs too, so the dry-run diff below shows the generated surfaces.
@@ -162,11 +162,11 @@ jobs:
       - name: Open the auto-merging release PR
         if: ${{ !inputs.dry_run }}
         env:
-          # RELEASE_PR_TOKEN (fine-grained PAT: THIS repo only, contents + pull-requests write) makes
+          # RELEASE_PR_TOKEN (fine-grained PAT: this repo only, contents + pull-requests write) makes
           # the release PR belong to a TRUSTED HUMAN actor, so `on: pull_request` workflows run
           # unprompted — the 7.8.0 reduce stalled in `action_required` when a bot-PR Test run started
           # requiring manual approval, and the approval policy must stay STRICT for outsiders (the
-          # Test legs run on the self-hosted lab fleet; never auto-run stranger code there). Fallback
+          # Test legs run on the self-hosted lab fleet. never auto-run stranger code there). Fallback
           # when the secret is absent: GITHUB_TOKEN + the explicit Test dispatch below.
           GH_TOKEN: ${{ secrets.RELEASE_PR_TOKEN || secrets.GITHUB_TOKEN }}
           HAS_RELEASE_PR_TOKEN: ${{ secrets.RELEASE_PR_TOKEN != '' }}
@@ -195,7 +195,7 @@ jobs:
           git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
           PR_URL=$(gh pr create --base main --head "${BRANCH}" \
             --title "release: v${VERSION}" \
-            --body "Automated release PR (publish.yml mode=prepare). Version bump across the root + all $(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.length") workspaces. Auto-merges when the required \`test\` check passes; then dispatch \`publish.yml\` with mode=publish to tag + npm-publish.")
+            --body "Automated release PR (publish.yml mode=prepare). Version bump across the root + all $(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.length") workspaces. Auto-merges when the required \`test\` check passes. then dispatch \`publish.yml\` with mode=publish to tag + npm-publish.")
           echo "release PR: ${PR_URL}"
           if [ "${HAS_RELEASE_PR_TOKEN}" != "true" ]; then
             # GITHUB_TOKEN-created PRs don't trigger `on: pull_request` workflows (anti-recursion),
@@ -223,7 +223,7 @@ jobs:
     # provenance attestation from self-hosted runners outright — E422 "Unsupported GitHub Actions
     # runner environment: \"self-hosted\". Only \"github-hosted\" runners are supported when
     # publishing with provenance" (this failed the whole v7.6.0 publish loop on 2026-07-23, run
-    # 30030865677; tag/release had already been created — mode=publish's idempotency covered the
+    # 30030865677. tag/release had already been created — mode=publish's idempotency covered the
     # recovery). Nothing in this job needs lab data: the weights come from the HF fetch step.
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -256,7 +256,7 @@ jobs:
       # mixed versions. The comparison is the `version-sync` check in @mailwoman/repo-health rather
       # than a heredoc: embedded JS in YAML is the one code in this repo no compiler, linter or test
       # reads, which is how this workflow's other hand-maintained paths went stale after the
-      # workspace regroup. A passing check has established that the root's version IS every release
+      # workspace regroup. A passing check has established that the root's version is every release
       # workspace's version, so the root manifest is read for the number.
       - name: Verify version sync on main
         id: version
@@ -271,7 +271,7 @@ jobs:
       # OIDC, so no npm credentials live anywhere.
       #
       # The recipe is `mwops release fetch-hf-weights` (release-kit's lib/weights/fetch-hf-weights.ts), shared
-      # byte for byte with `yarn release:preflight --source hf` (#1894). It derives WHAT to materialize from each weights
+      # byte for byte with `yarn release:preflight --source hf` (#1894). It derives what to materialize from each weights
       # package's `files` array minus what git already tracks — the same predicate verify-tarball.ts
       # refuses a publish over — so it cannot fall behind a manifest the way this step's hand-written
       # copy list did: the v9.2.0 reduce published 49 of 51 workspaces before the audit refused
@@ -289,15 +289,15 @@ jobs:
         run: yarn mwops release fetch-hf-weights
 
       # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
-      # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
+      # exists and is non-empty. this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
       # bucket by an earlier release is present, non-empty, and wrong — which is exactly what happened to
       # pair-index-gb.bin, whose staged copy sat three increments behind the repo (19,209 pairs vs 20,126) while the
       # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
       # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
       #
-      # Selected through a package script, never by physical filename: the v9.2.0 reduce's SECOND dispatch died here
+      # Selected through a package script, never by physical filename: the second v9.2.0 dispatch died here
       # because this line still named the pre-regroup path and Vitest matched zero files. The script's filter is the
-      # test's NAME, so the suite survives a move; Vitest exits 1 on an empty selection, so a rename fails loudly
+      # test's NAME, so the suite survives a move. Vitest exits 1 on an empty selection, so a rename fails loudly
       # rather than passing vacuously.
       - name: Verify staged pair indexes match their model cards
         run: yarn ci:test:pair-index-parity
@@ -325,7 +325,7 @@ jobs:
             git tag -a "v${VERSION}" -m "Release v${VERSION}"
             git push origin "v${VERSION}"
           fi
-          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+          if gh release view "v${VERSION}" >/dev/null 2>&1. then
             echo "GitHub release v${VERSION} already exists (recovery re-run) — skipping"
           else
             gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
@@ -373,13 +373,13 @@ jobs:
           echo "All workspaces published at v${{ steps.version.outputs.version }}."
 
       # THE DRY RUN IS THE PREFLIGHT (#1894). It stages the tracked tree in an isolated root, materializes
-      # the same Hugging Face artifacts a real publish fetches, then packs and audits ALL 51 release
+      # the same Hugging Face artifacts a real publish fetches, then packs and audits all 51 release
       # tarballs through the same packWorkspaceForPublish + verifyTarball path the publish loop above
       # uses — one dry-run contract, identical to the real one but for the destination. It writes nothing
       # outside its own staging root: no tag, no release, no registry write, and the checkout is left
       # byte-identical.
       #
-      # Unlike the compile-only leg it replaces, this DOES require the version's weights to be staged on
+      # Unlike the compile-only leg it replaces, this does require the version's weights to be staged on
       # HF. That is the point: a preview that skipped the dependency the real run has is precisely the
       # weaker contract #1894 was opened over — the old leg finished with `yarn compile` and passed
       # through all three of the v9.2.0 failures.
@@ -398,8 +398,8 @@ jobs:
   # ITS FAILURE IS THE RELEASE RUN'S CONCLUSION, AND THAT MEANS A RECEIPT — NOT A ROLLBACK (#1892).
   # The job carries no `continue-on-error`, so a red client generation makes the whole workflow run
   # conclude failed, on purpose and by the only mechanism Actions offers. Read that conclusion as: the
-  # npm packages ARE published (this job runs after `publish` by `needs:`, and published versions are
-  # immutable), and what failed is the generated Python + Rust surface for that version. The remedy is
+  # npm packages are published (this job runs after `publish` by `needs:`, and published versions are
+  # immutable), and what failed is the generated Python + Rust surface for that version. The action is
   # to fix the generator and dispatch publish-clients.yml — never to unpublish or re-publish the release.
   #
   # Written down because the earlier note here said the opposite ("it can't turn a working npm release
@@ -414,7 +414,7 @@ jobs:
       - X64
     timeout-minutes: 20
     # NOTE: this job occupies the workflow-level `publish` concurrency group. During an incident:
-    # cancel THIS job from the Actions UI (always safe — it publishes nothing) to free the queue.
+    # cancel this job from the Actions UI (always safe — it publishes nothing) to free the queue.
     # Least privilege: no pushes, no OIDC — neither `contents: write` nor `id-token: write`.
     permissions:
       contents: read

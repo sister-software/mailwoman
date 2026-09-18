@@ -10,16 +10,16 @@
  *   per-provider CSV (see `sdk/parsing.ts`) — NOT one row per (block, provider, technology) triple: when
  *   two Broadband Serviceable Locations in the same block file different speeds/flags for the same
  *   provider/technology, both rows survive `build-bdc.ts`'s materialize-time collapse (see that file's
- *   docstring. accepted FCC filing behavior, not a bug). `bdc_provider` is a small dictionary
+ *   docstring. accepted FCC filing behavior rather than a bug). `bdc_provider` is a small dictionary
  *   keyed on `provider_id`, populated by a later registry-join task — decision 8 keeps FRN/brand/
  *   holding-company resolution out of 2a's scope. The DB also embeds the layer-contract tables from
  *   `@mailwoman/core/layers` (manifest tier `shipped`, license `public-domain` — FCC BDC block-level
- *   availability data, at the granularity this layer ships, is US government public-domain data, not
+ *   availability data, at the granularity this layer ships, is US government public-domain data rather than
  *   redistribution-restricted. the CostQuest Fabric boundary this workspace never crosses is the
  *   licensing edge, see `bdc/README.md` — spine `h3` res 9 for availability rows, res 6 for coverage
  *   cells, matching poi.db's convention).
  *
- *   Clustering decision (implementer's pick — the brief allows either): a plain rowid table, not
+ *   Clustering decision (implementer's pick — the brief allows either): a plain rowid table rather than
  *   `WITHOUT ROWID`, and not a composite `(h3_cell, provider_id, technology_code)` primary key.
  *   `WITHOUT ROWID` warrants its keep on small, PK-probed rows — poi.db's clustered key and
  *   `layer_coverage`'s per-cell probe both read by their exact PK and nothing else, so folding the row
@@ -74,11 +74,11 @@ export interface BDCAvailabilityTable {
  * Provider dictionary keyed on `provider_id`. Populated by the registry join (2a decision 8) behind the optional
  * `BuildBDCOptions.providers` (`bdc/sdk/build-bdc.ts`'s `populateBDCProviderTable`); when that option is omitted (the
  * default), this table stays empty. No FK constraint against `bdc_availability.provider_id` — SQLite doesn't enforce
- * FKs without `PRAGMA foreign_keys`, and the join happens at read time, not write time.
+ * FKs without `PRAGMA foreign_keys`, and the join happens at read time rather than write time.
  *
- * **Decision 6 — this table is an explicitly LOSSY denormalization, not the source of truth.** `provider_id` is the PK
- * (one row per provider), but the FCC's BDC provider list lets one `provider_id` carry MULTIPLE `frn` values — and
- * conflicting `holding_company` strings — across its rows (`parseProviderList` preserves every one of them. see
+ * **Decision 6 — this table is an explicitly LOSSY denormalization rather than the source of truth.** `provider_id` is
+ * the PK (one row per provider), but the FCC's BDC provider list lets one `provider_id` carry MULTIPLE `frn` values —
+ * and conflicting `holding_company` strings — across its rows (`parseProviderList` preserves every one of them. see
  * `filer/sdk/provider-list.ts`). A single-row-per-provider table cannot express that cardinality. `filer.db`
  * (`@mailwoman/filer`) is the source of truth: it retains every `provider_id`↔`frn` (and
  * `provider_id`↔`holding_company_name`) edge, never folded or last-wins. When `bdc.db` is built with

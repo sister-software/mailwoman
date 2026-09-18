@@ -19,7 +19,7 @@
 - No pin drifts silently: a cached source whose size or SHA-256 differs from the lock file fails the build naming both values.
 - A test imports the package through its public exports; every module a test names gets an `exports` entry.
 - The fixture build runs under `test/integration/` (the `unit-slow` leg runs on the lab's self-hosted runners, which carry GDAL, tippecanoe and pmtiles; a missing tool fails the test with the tool's name).
-- Comments state invariants; the measurements below go in the source table, not in prose.
+- Comments state invariants; the measurements below go in the source table rather than in prose.
 - Branch: `git fetch origin main && git checkout -b feat/astrogeology origin/main`.
 
 ## Sources, measured 2026-09-07
@@ -705,7 +705,7 @@ node packages/astrogeology/out/cli.js fetch --body mars --kind nomenclature
 cat packages/astrogeology/sources.lock.json
 ```
 
-Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB; run on the lab, not in CI). The `fetch` command is written in Task 7; for this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
+Expected: two entries with today's snapshot date, byte counts near 23,842,450 and 5,413,387 (a nightly archive moves by a few kilobytes), and 64-character hashes. The DEMs are fetched in Task 6 (8.5 GB and 2.1 GB; run on the lab rather than in CI). The `fetch` command is written in Task 7; for this step, a three-line `node -e` over `downloadPinned` is acceptable if the command does not exist yet, but the lock content is what gets committed.
 
 ```bash
 git add packages/astrogeology
@@ -751,7 +751,7 @@ The declutter rule the spec asks for, as tippecanoe per-feature `minzoom`: a fea
 ```ts
 /**
  * The zoom at which a feature first appears, from its diameter in kilometres: ≥300 km at 0, ≥100 at 2, ≥30 at 4,
- * ≥10 at 6, everything else at 8. Cartographic decluttering, not ranking; a feature with no diameter (a region, a
+ * ≥10 at 6, everything else at 8. Cartographic decluttering rather than ranking; a feature with no diameter (a region, a
  * landing site) appears at 2.
  */
 export function minZoomForDiameter(diameterKm: number | undefined): number {

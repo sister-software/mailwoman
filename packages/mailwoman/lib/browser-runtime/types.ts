@@ -32,7 +32,7 @@ export interface FSTMatcherLike {
 		referential: number
 		/**
 		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article. Displayed, never
-		 * ranked on; `undefined` is absence, not 0.
+		 * ranked on; `undefined` is absence rather than 0.
 		 */
 		encyclopedic?: number
 	}>

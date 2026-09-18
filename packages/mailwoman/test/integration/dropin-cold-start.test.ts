@@ -81,8 +81,8 @@ const LIBPOSTAL_TEST_PORT = 29_381
 
 /**
  * Wall-clock budget for the missing-data preflight to exit. It fails fast (before touching the neural runtime), so this
- * is a generous ceiling, not the measured cost — see `mailwoman/commands/geocode.test.ts` for the node-boot baseline
- * (~2.7 s) this margins against.
+ * is a generous ceiling rather than the measured cost — see `mailwoman/commands/geocode.test.ts` for the node-boot
+ * baseline (~2.7 s) this margins against.
  */
 const PREFLIGHT_TIMEOUT_MS = 30_000
 
@@ -101,7 +101,7 @@ const HEALTHY_TIMEOUT_MS = 30_000
 const TEST_TIMEOUT_MS = 150_000
 
 /**
- * The `data pull candidate` step in the conditional suite streams ~1.65 GB. this budget is network-bound, not
+ * The `data pull candidate` step in the conditional suite streams ~1.65 GB. this budget is network-bound rather than
  * CPU-bound.
  */
 const PULL_TIMEOUT_MS = 600_000
@@ -183,8 +183,8 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 }
 
 /**
- * SIGTERM + wait for exit (bounded by a SIGKILL fallback) — asserts the process actually goes away, not just that it
- * answered once.
+ * SIGTERM + wait for exit (bounded by a SIGKILL fallback) — asserts the process actually goes away rather than just
+ * that it answered once.
  */
 async function stopServer(server: SpawnedServer): Promise<void> {
 	if (server.child.exitCode !== null || server.child.signalCode !== null) return
@@ -236,7 +236,7 @@ async function mcpRoundTrip(
 			if (!line) continue
 
 			// A partial line parses to null and is simply skipped — the next chunk completes it, and
-			// `server.stdout` accumulates the whole stream. Degrading is the contract here, not an error.
+			// `server.stdout` accumulates the whole stream. Degrading is the contract here rather than an error.
 			const message = tryParsingJSON<{ id?: number; result?: Record<string, unknown> }>(line)
 			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : undefined
 

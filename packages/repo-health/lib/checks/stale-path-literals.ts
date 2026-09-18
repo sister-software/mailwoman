@@ -59,7 +59,7 @@ const DERIVED_SEGMENTS = ["/out/", "/dist/", "/node_modules/", "/build/", "/.yar
 
 /**
  * A literal that is a repository path by shape. Rejects a glob, an interpolation placeholder, a URL, and anything
- * carrying whitespace — a sentence naming a directory is prose, not a path.
+ * carrying whitespace — a sentence naming a directory is prose rather than a path.
  */
 export function isRepositoryPathLiteral(text: string): boolean {
 	if (!REPOSITORY_ROOTS.some((root) => text.startsWith(root))) return false

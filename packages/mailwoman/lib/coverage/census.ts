@@ -103,7 +103,7 @@ export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boo
  */
 export interface CoverageMismatches {
 	/**
-	 * Rows in the corpus, not admitted by `country_weights` — trains on nothing. The Norway shape.
+	 * Rows in the corpus rather than admitted by `country_weights` — trains on nothing. The Norway shape.
 	 */
 	presentButDropped: string[]
 	/**
@@ -148,7 +148,7 @@ export interface CoverageReport {
 }
 
 /**
- * Where the cached corpus census lives. Under the data root rather than the repo: it describes a build artifact, not
+ * Where the cached corpus census lives. Under the data root rather than the repo: it describes a build artifact rather than
  * source, and it is regenerated rather than edited.
  */
 export function corpusCensusPath(): string {
@@ -412,7 +412,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 			}
 		}
 	} catch {
-		// An unreadable gazetteer is a missing column, not a failed report.
+		// An unreadable gazetteer is a missing column rather than a failed report.
 	}
 
 	return out

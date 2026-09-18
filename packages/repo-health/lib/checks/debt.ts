@@ -325,9 +325,9 @@ const UNCOUNTED = [
  * alternation is the boundary word. it stops before the North Yorkshire town and the surname. The second alternation
  * carries a negative lookahead for the letter runs that continue it into an unrelated English word ("advantage") and
  * into six place names. It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain the letters
- * across a camelCase boundary that appear in eval rows and records. those survive verbatim by construction, not by
- * allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
- * the utility, not the word.
+ * across a camelCase boundary that appear in eval rows and records. those survive verbatim by construction rather than
+ * by allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
+ * the utility rather than the word.
  *
  * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
  * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
@@ -341,10 +341,10 @@ const BANNED_VOCABULARY =
 /**
  * Where the banned word is allowed to survive, and why each one warrants it.
  *
- * THE COUNT IS OVER EVERY TRACKED TEXT FILE, not just `.ts`/`.tsx`. The first version of this counter scanned only
- * TypeScript, reported zero, and left 125 occurrences standing in prose, config, dictionaries and eval rows — including
- * three sentences in `AGENTS.md` that still told the next agent the old names were current. A vocabulary an agent reads
- * is a vocabulary an agent writes, so prose is in scope.
+ * THE COUNT IS OVER EVERY TRACKED TEXT FILE rather than just `.ts`/`.tsx`. The first version of this counter scanned
+ * only TypeScript, reported zero, and left 125 occurrences standing in prose, config, dictionaries and eval rows —
+ * including three sentences in `AGENTS.md` that still told the next agent the old names were current. A vocabulary an
+ * agent reads is a vocabulary an agent writes, so prose is in scope.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
 	[SELF, "the pattern above has to spell the words it bans"],
@@ -358,11 +358,11 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
 	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that
-	// rewriting a record falsifies it — but a record names PATHS and IDENTIFIERS, not measurements, and a
+	// rewriting a record falsifies it — but a record names PATHS and IDENTIFIERS rather than measurements, and a
 	// retired name in a record is read as a live one by the next agent. Every number, date and verdict is
 	// untouched. only the spelling of things that were renamed moved with them. Operator direction, and the
 	// reason given was the operative one: agents pick the vocabulary back up from prose.
-	// CONTENT, not vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
+	// CONTENT rather than vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
 	// `Bosshardt` and `Rashard` are real people's names. the eval rows are dated notes on committed board
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
@@ -465,7 +465,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 	}
 
 	// The banned vocabulary is counted over EVERY tracked text file rather than the TypeScript-only set above:
-	// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing, not by a list.
+	// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing rather than by a list.
 	for (const trackedPath of await trackedSourcePaths(context, { globs: ["*"], existingOnly: true })) {
 		const relativePath = relative(root, trackedPath)
 

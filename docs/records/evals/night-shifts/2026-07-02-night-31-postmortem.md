@@ -54,7 +54,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 ## The taxonomy arc (the night's biggest strategic finding)
 
 1. **Cross-locale offender taxonomy** over all 14 panels (posted to #375): the non-US tail is
-   **namesake collision, not coverage** — FI 300/1k, DK 167, CZ/SK 131, HR 94, SI 91, PL 75
+   **namesake collision rather than coverage** — FI 300/1k, DK 167, CZ/SK 131, HR 94, SI 91, PL 75
    namesake rows vs single-digit unique-misses. US: 13/2000 (its region tokens + adminCoherence
    already do this job; EU formats carry no region token).
 2. The shaped change **already exists**: `postcodeConsistency` (#370 change A, default-off).
@@ -78,12 +78,12 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
 
 ## What went well
 
-- **Checks killed two plausible-looking runs** and each kill produced a mechanism, not a shrug.
+- **Checks killed two plausible-looking runs** and each kill produced a mechanism rather than a shrug.
   Total GPU for both falsifications ≈ $4.
 - **Verify-before-verdict fired four times on MY OWN claims:** the probe grade that was secretly
   the baseline (missing ONNX download), the caps-tail hypothesis (read-falsified same night, #919),
   the case-aug coverage claim (#829 correction — `normalizeCase` is caps-only), and the
-  postcodeConsistency null (traced to data, not plumbing).
+  postcodeConsistency null (traced to data rather than plumbing).
 - **Agents compounding:** four dispatched, four delivered (OA fetch ×5 countries incl. a
   city-less-trap dodge; #914 with real format-audit findings; #473 at check with two WOF-TW data
   findings; #916 which verify-before-verdicted its own issue and then caught the live demo bug).

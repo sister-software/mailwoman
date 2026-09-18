@@ -35,7 +35,7 @@
 #   - PASS: train_loss stable past step 2000 (no climb >20% from basin minimum)
 #     AND val_macro_F1 ≥ 0.35 at step 2000
 #     AND per-tag F1 trajectory shows no single-tag collapse.
-#   - FAIL: any of the above — diagnose tokenizer/corpus next, not recipe.
+#   - FAIL: any of the above — diagnose tokenizer/corpus next rather than recipe.
 #
 # See docs/articles/concepts/dual-loss-curvature-conflict.md for the full
 # technical write-up of the diagnostic + the cooperative-vs-conflict model.

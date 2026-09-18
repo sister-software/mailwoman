@@ -24,7 +24,7 @@
 #
 # #1349 context (the addendum in the recipe memo): this run is the locality channel's first actual
 # training — every prior "trained" locality receipt was a frozen random marker (trainer fix #1350).
-# G1's locality bars are therefore floors against the MARKER's own measured readings, not against a
+# G1's locality bars are therefore floors against the MARKER's own measured readings rather than against a
 # trained channel. a G1 miss is read against the addendum before any iteration.
 #
 # PRE-REGISTERED CHECKS (graded per save from 40k on. the ladder wording inherits v3.23/v3.24):

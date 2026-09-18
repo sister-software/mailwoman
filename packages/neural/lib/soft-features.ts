@@ -59,7 +59,7 @@ export interface SoftFeatures {
 	/**
 	 * Street-type evidence channel (Option-A bundle, Phase 2) — present iff `streetTypeLexicon` was supplied. Painted by
 	 * the same generic painter as the gazetteer channel (the lexicons share one schema); no choreography — the bundle's
-	 * anti-over-trust discipline is the train-side curriculum, not a decode-side transform.
+	 * anti-over-trust discipline is the train-side curriculum rather than a decode-side transform.
 	 */
 	streetType?: SoftFeatureChannel
 	/**

@@ -106,7 +106,7 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	// pipeline emits.
 	//
 	// An UNKNOWN country still passes: dropping the slug there would take the street tier away from every US address whose
-	// country never resolved, which is the failure #1787 exists to avoid, not to cause.
+	// country never resolved, which is the failure #1787 exists to avoid rather than to cause.
 	if (resolvedCountry !== null && resolvedCountry !== "US") return null
 
 	return regionToStateSlug(regionValue, regionResolverName)
@@ -152,9 +152,9 @@ export interface RegionDatabaseCacheEntry extends RegionDatabases {
 
 /**
  * Opens + CACHES per-state situs/interpolation lookups so a batch geocoding many addresses in one state opens that
- * state's (possibly multi-GB) databases once, not once per row. Versioned-data aware (#485): paths resolve through the
- * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
- * when a new version is published. Call {@link close} when done to release every cached handle.
+ * state's (possibly multi-GB) databases once rather than once per row. Versioned-data aware (#485): paths resolve
+ * through the `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic
+ * switchover when a new version is published. Call {@link close} when done to release every cached handle.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
  * the #2029-async manifest read + `resolveDatabasePath` for every US state/territory slug and records what exists;

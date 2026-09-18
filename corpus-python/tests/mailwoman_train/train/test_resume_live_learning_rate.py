@@ -1,4 +1,4 @@
-"""A resumed run trains at the LIVE config's learning rates, not the checkpoint's.
+"""A resumed run trains at the LIVE config's learning rates rather than the checkpoint's.
 
 `optim.load_state_dict()` overwrites every param group's `lr` and `initial_lr` with the values the
 CHECKPOINT saved, and `scheduler.load_state_dict()` does it again to the scheduler's base rates. So

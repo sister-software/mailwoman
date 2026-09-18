@@ -127,7 +127,8 @@ export function usePlaceAutocomplete({
 	/**
 	 * The last COMPLETED fetch, keyed by the query that produced it. Visibility is DERIVED from this during render rather
 	 * than pushed through sync setStates in the effect — the effect's only job is the async fetch, so every state write
-	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure, not by exception.
+	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure rather than by
+	 * exception.
 	 */
 	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
 	/**

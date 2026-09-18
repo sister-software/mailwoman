@@ -25,7 +25,7 @@
 # SOURCE PROVENANCE (eval-honesty): identical corpus to v2 — train rows are real non-Vermont US OA
 # skeletons with designators INJECTED in diverse formats. the real-in-the-wild designator check is
 # data/eval/external/unit-real-designators.jsonl (34 curated OOD cases, the TRUSTWORTHY lens — the VT
-# in-distribution number was a v1 mirage). Read the arena, not the VT number, at the check.
+# in-distribution number was a v1 mirage). Read the arena rather than the VT number, at the check.
 #
 # PRE-REGISTERED CHECK (stop at 20k. the v2 verdict reframed the floors as RECOVERY targets):
 #   - `unit` F1 >= 80% on the real-designator eval — bank most of v2's 95.4% (floor was 20%; v1=60%).

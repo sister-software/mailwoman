@@ -61,10 +61,10 @@ export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>
 /**
  * Whether the statement carries `IF NOT EXISTS`.
  *
- * Required, not defaulted: the databases divide into ACCUMULATIVE builds, where one shared database is filled country
- * by country in successive runs and the second run must find the table already there, and single-country REBUILDS,
- * which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact instead of
- * a compile error.
+ * Required rather than defaulted: the databases divide into ACCUMULATIVE builds, where one shared database is filled
+ * country by country in successive runs and the second run must find the table already there, and single-country
+ * REBUILDS, which drop and recreate. Silently defaulting either way turns a mismatched call site into a wrong artifact
+ * instead of a compile error.
  */
 export interface PostcodeLocalityDDLOptions {
 	ifNotExists: boolean

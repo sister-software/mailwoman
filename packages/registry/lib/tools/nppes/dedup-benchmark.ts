@@ -13,7 +13,7 @@
  *   against the NPI grouping (pairwise P/R/F1 + adjusted Rand).
  *
  *   Honest reading (per the epic): NPI-as-truth is CONSERVATIVE. A cluster that merges two NPIs is a
- *   candidate "same entity, two NPIs" surfaced for review, not an error we adjudicate. and a single
+ *   candidate "same entity, two NPIs" surfaced for review rather than an error we adjudicate. and a single
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
  *   as a recall miss. We resolve and report. interpretation is the consumer's.
  *
@@ -65,7 +65,7 @@ import { stateOption } from "#tools/shared"
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap
-	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the COMMAND's factory config, not tool options.
+	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the COMMAND's factory config rather than tool options.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -225,7 +225,7 @@ export async function nppesDedupBenchmark(
 
 	// Truth labels: NPI-level (the conservative held-out NPI = record.id) and entity-level (the
 	// site-level subpart-collapsed id that rides on attributes.entityTruth). Scoring the same clusters
-	// both ways isolates how much of the apparent over-merge is NPI over-segmentation, not model error.
+	// both ways isolates how much of the apparent over-merge is NPI over-segmentation rather than model error.
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 	const orgNameLabel = buildOrgNameGrain(npiPrimary)

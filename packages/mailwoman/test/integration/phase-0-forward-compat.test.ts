@@ -8,7 +8,7 @@
  *   `municipality`, …) without throwing, without type assertions, and without an empty
  *   `ruleClassifiers` list tripping any registry.
  *
- *   If this test ever breaks, the abstraction is wrong — fix it now, not in Phase 6.
+ *   If this test ever breaks, the abstraction is wrong — fix it now rather than in Phase 6.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"

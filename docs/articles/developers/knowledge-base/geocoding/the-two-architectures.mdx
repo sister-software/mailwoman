@@ -69,12 +69,12 @@ queried as text.
 - **Every script, immediately.** The index stores text. A Korean place name and a Polish one are the
   same kind of document, and neither needed a locale rule written for it.
 - **A ranked list is the right shape for autocomplete.** A search box wants five plausible
-  completions, not one confident answer, and this architecture produces five by construction.
+  completions rather than one confident answer, and this architecture produces five by construction.
 
 **What it costs.** The ranking happens against the whole corpus at query time, so the corpus wants to
 be resident and the ranking function has to be tuned against all of it at once — a change that helps
 one country's recall can cost another's precision without announcing itself, and you find out from the
-aggregate. And the answer is a document, not a decomposition: you learn which record matched, not
+aggregate. And the answer is a document rather than a decomposition: you learn which record matched rather than
 which part of your string matched what. If you needed to know that `Ave` was a street suffix rather than part of a venue
 name, this architecture never formed that opinion.
 
@@ -82,7 +82,7 @@ name, this architecture never formed that opinion.
 
 Label the string first. Decide that this span is a house number, this one a street, this one a
 locality, this one a postcode — without consulting any place database, because that decision is about
-how the words are being _used_, not about which places exist. Then run one constrained lookup per
+how the words are being _used_ rather than about which places exist. Then run one constrained lookup per
 labeled span against a gazetteer: not "what matches this string" but "what locality carries this
 name, inside this region".
 
@@ -96,7 +96,7 @@ labeling half without the lookup half, which is why it is a parser rather than a
 
 **What it is good at:**
 
-- **A decomposition, not a match.** You get back which piece of the input was the street and which was
+- **A decomposition rather than a match.** You get back which piece of the input was the street and which was
   the town, with offsets into your original string. Anything downstream that needs fields rather than
   a point — deduplication, validation, formatting, record matching — needs exactly this.
 - **Answers that carry their own provenance.** Each resolved span identifies the gazetteer record it

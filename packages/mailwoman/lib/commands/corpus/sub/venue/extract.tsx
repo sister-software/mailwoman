@@ -8,7 +8,7 @@
  *
  *   Wave 1 did this with an ad-hoc script because it ran once. Wave 2 runs it per locale, and the
  *   country stamp is an argument nobody can infer from the file — a Geofabrik extract's country is a
- *   property of the invocation, not of a feature — so it belongs behind a flag rather than in shell
+ *   property of the invocation rather than of a feature — so it belongs behind a flag rather than in shell
  *   history.
  *
  *   ```sh

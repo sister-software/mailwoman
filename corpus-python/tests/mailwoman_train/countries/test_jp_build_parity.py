@@ -54,7 +54,7 @@ SOURCE_SCHEMA = pa.schema(
     ]
 )
 
-#: (prefecture, municipality, street, number) — the branches, not a sample. 神戸市 and 宮崎市 both
+#: (prefecture, municipality, street, number) — the branches rather than a sample. 神戸市 and 宮崎市 both
 #: hash to bucket 98, so they are the held-out board here and everything else is the training pool.
 SOURCE_ROWS: list[tuple[str, str, str, str]] = [
     ("東京都", "八王子市", "八島町二丁目", "3-16"),  # chōme + compact: every register available

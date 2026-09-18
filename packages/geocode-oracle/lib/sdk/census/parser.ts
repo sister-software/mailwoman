@@ -32,7 +32,7 @@ import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census/ty
  * it is the mechanism.
  *
  * A consequence worth carrying into a gauntlet case: a Census coordinate is routinely 20–100 m from the building, and
- * further on a long rural segment. Pin `expectToleranceM` against that, not against a rooftop assumption.
+ * further on a long rural segment. Pin `expectToleranceM` against that rather than against a rooftop assumption.
  */
 export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
 
@@ -43,7 +43,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  * house-number/street split, and it is deliberately not used here. Reaching it means taking a dependency on
  * `@mailwoman/corpus`, which brings `parquet-wasm`, `apache-arrow`, `@mailwoman/ban`, `spliterator` and the rest of the
  * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two HTTP
- * calls. The dependency is what is wrong, not the sharing.
+ * calls. The dependency is what is wrong rather than the sharing.
  *
  * The shapes also differ. The corpus regex is tuned for US CSV extract rows with hand-entry drift, so it admits a
  * trailing letter and a hyphenated half (`123A`, `40-12`). A Census `matchedAddress` is machine-normalized USPS output
@@ -71,7 +71,7 @@ function joinParts(...parts: Array<string | undefined>): string | undefined {
  *
  * - `street_prefix` ← `preDirection`. The tag means the directional in front of the name, which is exactly this slot.
  *   `preType` deliberately does not land here: `AVENUE` in `Avenue of the Americas` is part of how the street is
- *   written, not a prefix modifier, and a parser reading that input emits it inside `street`.
+ *   written rather than a prefix modifier, and a parser reading that input emits it inside `street`.
  * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`. The words that make up the name as written,
  *   in written order.
  * - `street_suffix` ← `suffixType` + `suffixDirection`. mailwoman has no separate suffix-directional tag, and the two are
@@ -173,7 +173,7 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		// `addressMatches` entirely — which is why a caller wanting to know how good one is reads
 		// `raw.tigerLine` and the address range rather than a flag.
 		partialMatch: false,
-		// `tigerLine.tigerLineId` identifies a street SEGMENT, not a place, so it is not a place ID.
+		// `tigerLine.tigerLineId` identifies a street SEGMENT rather than a place, so it is not a place ID.
 		// It stays on `raw`.
 		placeID: null,
 		plusCode: null,

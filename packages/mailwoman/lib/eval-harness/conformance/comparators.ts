@@ -104,8 +104,8 @@ export interface ComparatorReading {
 }
 
 /**
- * Populated component entries, dropping absent and blank values. A blank string is an absent component, not a component
- * whose value is the empty string.
+ * Populated component entries, dropping absent and blank values. A blank string is an absent component rather than a
+ * component whose value is the empty string.
  */
 function populatedComponents(result: GauntletResult): Record<string, string> {
 	const out: Record<string, string> = {}

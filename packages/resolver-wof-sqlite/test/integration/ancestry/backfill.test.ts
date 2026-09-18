@@ -52,7 +52,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	const orphanID = 85_977_539
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(orphanID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(orphanID, orphanID) // self only
-	// A country (top-level) with only-self ancestry — must be skipped, not queried for geojson.
+	// A country (top-level) with only-self ancestry — must be skipped rather than queried for geojson.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'country')").run(85_633_793)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(85_633_793, 85_633_793)
 
@@ -207,7 +207,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region. The
-	// artifact matching that is correct, not truncated — and because it has a country ancestor it is
+	// artifact matching that is correct rather than truncated — and because it has a country ancestor it is
 	// not a candidate at all, so no geojson probe happens for it.
 	const id = 101_734_391
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)

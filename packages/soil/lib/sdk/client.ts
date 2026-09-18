@@ -93,7 +93,7 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 		const { data } = await this.fetch<string>({
 			method: "POST",
 			url: SDA_POST_REST_URL,
-			// TEXT, not JSON, and that is the whole trap. A JSON response type hands a failure body to a JSON parser,
+			// TEXT rather than JSON, and that is the whole trap. A JSON response type hands a failure body to a JSON parser,
 			// which either throws something unrelated to what went wrong or — on a 200 — yields nothing at all.
 			responseType: "text",
 			headers: { "Content-Type": "application/json" },

@@ -37,8 +37,8 @@ const FRN_ZETA = toFRN("0004444444")!
 
 /**
  * Row A: a fully-populated 499 filing — FRN present, both company fields present, every attribute-containing field
- * populated. Row B: an unregistered filer (no FRN — legitimate per decision 3, NOT malformed) with most optional fields
- * blank.
+ * populated. Row B: an unregistered filer (no FRN — legitimate per decision 3 rather than malformed) with most optional
+ * fields blank.
  */
 function form499FixtureRows(): Form499Row[] {
 	return [
@@ -992,7 +992,7 @@ describe("buildFilerDatabase", () => {
 				match_score: 0.9,
 			})
 
-			// The precondition: the same fact also lands as a filer_family row, not just the edge above.
+			// The precondition: the same fact also lands as a filer_family row rather than just the edge above.
 			const familyRows = await db
 				.selectFrom("filer_family")
 				.selectAll()
@@ -1070,7 +1070,7 @@ describe("buildFilerDatabase", () => {
 		 *
 		 * Every case below goes through the real builder and reads the score off the sealed artifact. Three distinct
 		 * values, asserted against each other as well as against their literals — pin the score back to a constant and the
-		 * ordering assertions die, not just the value ones.
+		 * ordering assertions die rather than just the value ones.
 		 */
 		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
@@ -1109,7 +1109,7 @@ describe("buildFilerDatabase", () => {
 
 			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
 				// The case the abstention cannot see: 499 carries only the LLC, Exhibit 21 discloses the Inc.
-				// Exactly one FRN matches, so an edge is written — at the weakest score, not the ceiling.
+				// Exactly one FRN matches, so an edge is written — at the weakest score rather than the ceiling.
 				expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
 			})
 

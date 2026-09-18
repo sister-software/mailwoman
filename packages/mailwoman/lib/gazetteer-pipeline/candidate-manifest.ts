@@ -16,7 +16,7 @@
  *   thing the flat form cannot — the lab holds thirteen candidate builds and about ten admin builds, and
  *   which pairs with which is currently recorded nowhere.
  *
- *   AN UNPROVENANCED ANCESTOR IS REPORTED, NOT HIDDEN. Every admin build that predates phase 3 has no
+ *   AN UNPROVENANCED ANCESTOR IS REPORTED rather than HIDDEN. Every admin build that predates phase 3 has no
  *   manifest, so the chain terminates in `unknown` and says so. Substituting the file's name would look
  *   like provenance and carry none.
  */
@@ -86,7 +86,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Inherited from the ancestor's terms, not re-derived: the candidate carries the admin gazetteer's rows,
+		// Inherited from the ancestor's terms rather than re-derived: the candidate carries the admin gazetteer's rows,
 		// so it carries the admin gazetteer's obligations. ODbL is share-alike either way.
 		tier: LayerTier.BuildLocal,
 		license: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",

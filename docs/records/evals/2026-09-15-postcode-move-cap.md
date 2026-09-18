@@ -70,7 +70,7 @@ coordinate set survives on disk; the four above are what does. FR is the substit
 | PL  |   150 |    1.52 |   160.9 |   662.2 |        1.33 |         5.4 |       662.2 |                    16 |     16 |       0 |
 
 Distances in km. Locality-match is identical between the two arms on all four sets (FR 98.1%, US
-98.0%, CZ 93.3%, PL 96.0%) — the pass changes which INSTANCE of a name answers, not which name.
+98.0%, CZ 93.3%, PL 96.0%) — the pass changes which INSTANCE of a name answers rather than which name.
 
 **Rows step 3 changed: 0 of 5,300.** Every arm from `--postcode-max-move-km 0` upward returns a
 row-for-row identical answer to the unbounded one, on all four sets. All 213 changed rows come from

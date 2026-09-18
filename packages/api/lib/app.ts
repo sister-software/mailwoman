@@ -127,9 +127,9 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 	// Safety net: an engine fault answers the native envelope, never a crash. `detail` carries the raw message —
 	// this surface is ours to design, so (unlike the vendor-constrained drop-in envelopes) we can be helpful.
 	app.onError((error, c) => {
-		// A malformed request body is a client-side syntax error, not a server fault — Hono's zod-openapi
+		// A malformed request body is a client-side syntax error rather than a server fault — Hono's zod-openapi
 		// validator throws before a route's own hook ever sees the body, so it lands here instead of the
-		// per-route 400s in routes.ts. Answer 400, not the 500 net (which stays reserved for engine faults).
+		// per-route 400s in routes.ts. Answer 400 rather than the 500 net (which stays reserved for engine faults).
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
 			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}
@@ -138,7 +138,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 	})
 
 	// Ahead of the handlers (which buffer the body into memory) so an oversized POST is rejected before that
-	// buffering happens, not after — mirrors the libpostal precedent.
+	// buffering happens rather than after — mirrors the libpostal precedent.
 	app.use(
 		"/v1/*",
 		bodyLimit({

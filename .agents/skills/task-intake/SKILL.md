@@ -25,7 +25,7 @@ State the steps before touching anything. Two situations, and say which you are 
 - **It does not** — Claude Code leaves the task tools out of sessions on Fable 5 / Opus 4.8 /
   Sonnet 5 and later by default. Then the ISSUE's task list is the todo list: keep it current with
   `gh issue edit` as steps complete. Opting a session back in is `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`
-  in the session env — the operator's call, not yours.
+  in the session env — the operator's call rather than yours.
 
 ## Step 2 — create the issue from the template's fields
 
@@ -92,6 +92,6 @@ From here every `TodoWrite` rewrites the issue's marker-delimited block via the
 ## Step 4 — close out
 
 - Check every box, or say on the issue why a box stays open. An unchecked box with no comment reads
-  as forgotten, not deferred.
+  as forgotten rather than deferred.
 - The PR body says `Closes #<n>` — the PR template asserts the linked issue's task list is checked.
 - Unlink: `rm -f .claude/state/linked-issue`.

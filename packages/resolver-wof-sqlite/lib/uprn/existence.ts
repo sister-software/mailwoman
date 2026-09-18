@@ -20,9 +20,9 @@ import type { UPRNLookup } from "#uprn/lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, UPRN_H3_RESOLUTION, uprnH3Cell } from "#uprn/schema"
 
 /**
- * The identity fold, on purpose: this probe keys on a COORDINATE, not a name, so there is no string folding for the
- * builder and the probe to disagree about. Passing the same identity as both `probeFold` and `layerFold` records that
- * the fold axis is not in play here, rather than silently omitting the check. It is not a stub.
+ * The identity fold, on purpose: this probe keys on a COORDINATE rather than a name, so there is no string folding for
+ * the builder and the probe to disagree about. Passing the same identity as both `probeFold` and `layerFold` records
+ * that the fold axis is not in play here, rather than silently omitting the check. It is not a stub.
  */
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 

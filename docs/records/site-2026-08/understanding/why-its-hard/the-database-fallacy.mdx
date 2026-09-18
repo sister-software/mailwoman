@@ -37,15 +37,15 @@ Each is built for a different purpose: postal delivery (USPS), land registration
 
 OSM's `addr:*` tags are volunteer-contributed, uneven in coverage, and structurally different from government gazetteers. OSM tags individual buildings (`addr:housenumber=12`, `addr:street=République`) rather than mailing addresses. An apartment building with 50 units is one OSM node with one housenumber. The mailing addresses for those 50 units (Apt 1A through Apt 5J) are not in OSM.
 
-OSM is a collaborative map of the physical world, not an address database — it was never designed to be one.
+OSM is a collaborative map of the physical world rather than an address database — it was never designed to be one.
 
 ### The union of all sources
 
-If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset, you get a superset that still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources, not independent. Combining them doesn't fill the gaps — it makes the known-unknowns more visible.
+If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every state-level parcel dataset, you get a superset that still has gaps. Rural routes, informal settlements, new construction, addresses in administrative transition — these are systematically underrepresented in every source because they are hard to collect. The union is larger than any single source but the missingness is correlated across sources rather than independent. Combining them doesn't fill the gaps — it makes the known-unknowns more visible.
 
 ## Fallacy 2 — Addresses are not coordinates
 
-An address is a **social protocol for directing a human courier**, not a geographic coordinate. Multiple protocols coexist on the same building:
+An address is a **social protocol for directing a human courier** rather than a geographic coordinate. Multiple protocols coexist on the same building:
 
 | System                  | Address for 350 Fifth Avenue, New York  |
 | ----------------------- | --------------------------------------- |
@@ -55,11 +55,11 @@ An address is a **social protocol for directing a human courier**, not a geograp
 | Building management     | Empire State Building, 350 Fifth Avenue |
 | What a tourist types    | Empire State Building, NYC              |
 
-All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment, not a database join.
+All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment rather than a database join.
 
 ### The ZIP code problem
 
-ZIP codes are **carrier routes**, not areas. USPS draws them for delivery efficiency, not for geographic coherence:
+ZIP codes are **carrier routes** rather than areas. USPS draws them for delivery efficiency rather than for geographic coherence:
 
 - ZIP codes change when carriers retire and routes get redrawn.
 - ZIP codes can overlap (different carriers serve different sides of the same street).

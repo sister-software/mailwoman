@@ -116,7 +116,7 @@ export interface AncestorsTable {
 /**
  * `place_population` — `id → wof:population`, split off `spr` so a population-rank join is a single indexed probe.
  * Written by the build/augment ingest + the GeoNames backfill. read by the candidate build's `neg_rank`. WOF carries
- * population for ~15% of localities. absent = unknown, not zero.
+ * population for ~15% of localities. absent = unknown rather than zero.
  */
 export interface PlacePopulationTable {
 	id: number

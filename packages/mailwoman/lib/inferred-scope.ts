@@ -19,7 +19,7 @@
  *   evidence the text is foreign-shaped, never a resolved country — re-pointing to GB for a Chinese address would
  *   trade one wrong filter for another), and it never fires on an EXPLICIT caller scope (that contract belongs to
  *   #1735's pre-scope). Abstention-filling was measured out separately: unscoping empty results won 2 of 28 fills on
- *   the graded run, so absence stays honest — this check changes which candidates RACE, not whether silence becomes an
+ *   the graded run, so absence stays honest — this check changes which candidates RACE rather than whether silence becomes an
  *   answer.
  */
 

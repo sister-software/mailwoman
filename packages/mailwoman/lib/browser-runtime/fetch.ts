@@ -6,7 +6,7 @@
  *   The fetch the browser runtime loads its artifacts through. The data origin resets a long download now and then
  *   (measured: 1 of 18 cold loads lost the 38 MB model to `net::ERR_CONNECTION_RESET` 4.9 s in, and 2 of 16 loads
  *   failed under a two-attempt retry that covered the connection alone), and a reset that far in rejects the BODY
- *   read, not the `fetch()` call. So the body is buffered here, inside the retry, and the loader receives a response
+ *   read rather than the `fetch()` call. So the body is buffered here, inside the retry, and the loader receives a response
  *   whose bytes are already complete. An HTTP status is never retried: a 404 is an answer, and the loaders decide what
  *   an absent artifact means.
  */

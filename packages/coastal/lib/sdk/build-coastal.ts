@@ -454,7 +454,7 @@ async function runBatchedIngest(
 		}
 
 		// Each layer numbers its own `OBJECTID` from 1, so the range is per layer. The upper bound is deliberately open —
-		// `ogrinfo` reports a count, not a maximum id, and a range that stopped at the count would drop every feature past
+		// `ogrinfo` reports a count rather than a maximum id, and a range that stopped at the count would drop every feature past
 		// a gap in the numbering.
 		let from = 1
 

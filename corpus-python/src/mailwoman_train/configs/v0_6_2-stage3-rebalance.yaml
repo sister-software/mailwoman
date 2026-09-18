@@ -5,7 +5,7 @@
 #   1. synth-street weight 2.0 → 0.5
 #      Reduces the "decompose mode" gradient pressure that v0.6.1 picked up.
 #      NOT going lower than 0.5 — the model still needs to learn legitimate US
-#      street decomposition. Counter-distribution comes from #2, not from
+#      street decomposition. Counter-distribution comes from #2 rather than from
 #      depressing the synth-street signal further.
 #
 #   2. New `synth-no-street` source at weight 1.0 (122K rows)
@@ -34,7 +34,7 @@
 #   5. Early-eval check at 20K steps: if dep_loc hallucinations > 100 against
 #      the v0.6.0 baseline JSON, abort and bump synth-no-street row count
 #      (don't drop synth-street further). The eval pipeline must run against
-#      a 20K checkpoint, not just 100K.
+#      a 20K checkpoint rather than just 100K.
 #
 # Promotion decision tree at 100K:
 #

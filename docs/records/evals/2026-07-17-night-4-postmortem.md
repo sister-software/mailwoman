@@ -44,7 +44,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   0.758 (-1.1pp, CI-overlapping). Pre-registration named br a guard -> v391 does not auto-promote;
   ship/hold is an operator handoff item. The 2k (v390) was strictly additive; the 8k traded.
 - 05:21 — phase-4a rerank v1 found CRASHED AT IMPORT 45min earlier (neural/semi-markov-decode.ts is
-  on the archived feat/727-span-head branch, not main — my "phases 1-3 on main" was half-right: python
+  on the archived feat/727-span-head branch rather than main — my "phases 1-3 on main" was half-right: python
   scorer merged, JS decoder didn't). Liveness checks were fooled by the watcher's self-matching pgrep.
   Re-ran from a branch worktree.
 - ~05:20 (receipt 7f46415a @ 05:27) — PHASE-4A RESULT (the arc's central question): **rerank@1 = seg@1 = 0.5768, delta +0.
@@ -135,7 +135,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   (50 'direct'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
   since it was reduce); stash@{1} = 'WIP on fix/965-check-hard-country'. Neither is tonight's work; I
   left both intact (did not drop). stash@{0} needs manual reconciliation or a drop — operator's call.
-- failure mode: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
+- failure mode: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000` rather than `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught twice: at the 05:03 checkpoint, and again at 05:48 when four
   fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
@@ -157,7 +157,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   phase-4c pitch.
 - **Two latent main-branch hazards surfaced and got handled**: the excision's deleted arena harness
   (broke every check battery — fixed, PR #1153) and the export sidecar gap (would have blocked the
-  8k oracle read — fixed inline). Both found by running the pipeline, not by inspection.
+  8k oracle read — fixed inline). Both found by running the pipeline rather than by inspection.
 
 ## What could've gone better
 
@@ -181,24 +181,24 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   precedents), independent, and feeds the span head's inputs. Numsplice's failure does NOT
   contraindicate it: that was the NUMERIC manifold (shared bare/contextful digits); letter
   diacritic splices shipped clean three times.
-- Noted as historical, not re-litigated: plan #1134's tail still names the 0.90 parity floors as
+- Noted as historical rather than re-litigated: plan #1134's tail still names the 0.90 parity floors as
   the swap check; superseded by the 2026-07-17 operator criterion ruling + the merged swaps + the
-  deletion. The arc now feeds model quality / n-best / plan-5 retrain, not a swap unblock.
+  deletion. The arc now feeds model quality / n-best / plan-5 retrain rather than a swap unblock.
 
 ## Open questions
 
 - Operator rulings still pending: M4 (NZ tier), M2 (postcode-precision floor value), CJK scope,
   deepparse-data counsel bundling.
-- **#32 / #1142 importance (scoped tonight, not started — needs an operator decision):** three
+- **#32 / #1142 importance (scoped tonight rather than started — needs an operator decision):** three
   defects, different ship paths. (1) The stale FST (`fst-global-priority.bin` 2026-05-28 vs DB
   2026-07-07: rome 0.378→0.860, madrid 0.138→0.909) is a pure artifact rebuild from the current DB
   — BUT it changes a shipped INFERENCE artifact (feeds `neural/fst-prior.ts`), so it's measure-
-  before-ship (parity delta), not a blind rebuild; shippable alone. (2) `place_importance` never
+  before-ship (parity delta) rather than a blind rebuild; shippable alone. (2) `place_importance` never
   built (82% of importance is population-fallback-zero) is a data build (Wikipedia importance +
   log-pop fallback per `importance-vs-population.mdx`). (3) The matched/importance-0.0 overload (the
   [[feedback-meaning-of-zero]] class: unknown≠unimportant) is a MODEL FEATURE-ENCODING change
   (carry `matched` and `importance` as separate features) → needs a RETRAIN to consume it, so it
-  rides a span-arc retrain, not a standalone fix. Recommended sequencing: rebuild FST + measure
+  rides a span-arc retrain rather than a standalone fix. Recommended sequencing: rebuild FST + measure
   (cheap, this shift or morning) → build place_importance (data) → fold the matched/importance split
   into the next span retrain (v3.10.x line). Piecemeal-shipping (1) alone is a half-measure the
   issue explicitly frames as one of three; hold for the operator to sequence.
@@ -227,7 +227,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   `semi-crf-transitions.json` (that's `package_weights.export_semi_crf_transitions`, a separate
   path). The phase-4c/PR-#1154 k-best decode needs the sidecar, so the 8k package build must route
   through package_weights or export_onnx must be extended to emit it. Harmless for the 2k BIO-path grade.
-- **PRs awaiting operator merge** (both green, not self-merged — new runtime surface + eval tooling):
+- **PRs awaiting operator merge** (both green rather than self-merged — new runtime surface + eval tooling):
   #1153 (arena-harness neural-only, unblocks the check battery — merge first, main's battery is broken
   without it), #1154 (span-decode surface to main — the phase-4c consumer). Then #1152 (P1 design doc).
 - **Phase-4c** (`docs/superpowers/specs/2026-07-17-727-phase4c-street-name-evidence.md`): build

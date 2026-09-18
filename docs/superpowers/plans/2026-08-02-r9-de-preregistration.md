@@ -5,7 +5,7 @@ never data: the pair index is hard-blocked on the resolved locale's country, so 
 inside another locale's package can never fire. Germany is the first locale to get its own
 **carrier package**, which is what unblocks the rest.
 
-## Source: WOF, not a postal register
+## Source: WOF rather than a postal register
 
 Deutsche Post routes `PLZ Stadt` and carries **no Ortsteil field**, so there is no postal source to
 harvest — the same situation as the US, and the opposite of France, where BAN's `nom_ld` IS the
@@ -34,7 +34,7 @@ nothing is a mechanism bug** — the R6 lesson, now applied rather than rediscov
 - **B-R9.3 (positive side).** 60 sampled pairs in German address shape: **60/60 emit, 60/60
   tag-correct.**
 - **D-R9.4 (disclosure).** A fusion fix worth naming: without the index, `Venloer Str. 300,
-Ehrenfeld, 50823 Köln` fused the locality as `"Ehrenfeld Köln"` — a wrong span, not merely a
+Ehrenfeld, 50823 Köln` fused the locality as `"Ehrenfeld Köln"` — a wrong span rather than merely a
   missing one. With it, the two split correctly.
 
 ## The carrier package

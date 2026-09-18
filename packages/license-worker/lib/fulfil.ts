@@ -160,7 +160,7 @@ export async function fulfilInvoice(
 		}
 	}
 
-	// The line's own period, not the subscription's current one: a replayed or backfilled invoice after a later renewal
+	// The line's own period rather than the subscription's current one: a replayed or backfilled invoice after a later renewal
 	// must mint the period it paid for, never the newer one.
 	const periodEnd = line.period?.end
 

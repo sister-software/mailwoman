@@ -60,7 +60,7 @@ smallest counterfactual: apply the region constraint → order inverts
 The interiority boundary, stated directly: inside the weights there are no reasons to recover.
 Accounts live at the boundaries — what was fed, retrieved, conditional, ranked — and when one bottoms out at
 "the model chose X with margin m and every channel silent," that is the class (the model flew
-blind), and the fix is evidence, not archaeology in the logits.
+blind), and the fix is evidence rather than archaeology in the logits.
 
 ## 4. Shapes and confidence
 
@@ -136,7 +136,7 @@ attention-as-explanation.
 
 ## 8. What is already landed (as of 2026-08-17)
 
-- `variable_isolation` rename — the confound check now claims setup hygiene, not causation
+- `variable_isolation` rename — the confound check now claims setup hygiene rather than causation
   (the vocabulary bug beneath it was #1715).
 - `evidence.ts` — absent / silent / fired channel states + the starvation flag; on every
   `mwdev_trace` row (#1718).
@@ -148,7 +148,7 @@ attention-as-explanation.
 - `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
   boundaries, seven mechanism-state shapes as documented predicates, the five-change counterfactual sweep,
   and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
-  `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
+  `calibration: "none"` rather than the normalized posterior §4 describes — the scoring layer arrives with
   the v2 conformal calibration, which is what a posterior's numbers would have to mean.
   Coverage bound found while building it: the resolver-interior trace (#1721) records the walk's own
   `#lookupAndPick` only, so a row answered by the post-walk span-rescore carries a resolved

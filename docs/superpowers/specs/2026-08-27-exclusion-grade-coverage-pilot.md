@@ -131,7 +131,7 @@ that transfers to another region unmeasured.
 - Cells outside the region get **no row at all**. Not completeness 0: the measurement says nothing
   about the region's outside, and a missing row is the contract's word for unknown.
 - 60 subject rows and 138 reference rows fell outside the interior cell set. They are counted and
-  reported, not silently dropped.
+  reported rather than silently dropped.
 - The shipped `poi.db` is unchanged — 158,813 cells, all `source_present`, `supportsExclusion` false,
   file mtime and size as they were.
 
@@ -149,7 +149,7 @@ Two smaller limits, both measured rather than argued:
 
 - **Class tail.** 8 features in the extract carry `healthcare=pharmacy` without `amenity=pharmacy`
   (0.24% of 3,308). The taxonomy's declared predicate is `amenity=pharmacy` and that is what both
-  sides use. `shop=chemist` (83 features — a parapharmacie, not an officine) is correctly outside the
+  sides use. `shop=chemist` (83 features — a parapharmacie rather than an officine) is correctly outside the
   class on the OSM side, and Overture's sibling `drugstore` category holds 0 rows in the region, so
   the class boundary agrees on both sides.
 - **Cell assignment at the boundary.** A row's coverage cell is `cellToParent` of its res-9 cell,

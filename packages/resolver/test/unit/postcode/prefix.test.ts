@@ -104,7 +104,7 @@ describe("derivePostcodePrefix — the derivation laws", () => {
 	})
 
 	it("abstains on codes too short to carry a prefix", () => {
-		// "B3" is a GB area, not a unit-containing code — no 3-character unit to strip.
+		// "B3" is a GB area rather than a unit-containing code — no 3-character unit to strip.
 		expect(derivePostcodePrefix("B3", "GB")).toBeNull()
 		expect(derivePostcodePrefix("12", "US")).toBeNull()
 		expect(derivePostcodePrefix("", "GB")).toBeNull()

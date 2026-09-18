@@ -5,7 +5,7 @@
  *
  *   #743/#193 — fold GeoNames bilingual / alt-language place-names into a WOF/unified admin DB as
  *   first-class places. The hard-filter recall gap on bilingual countries (the address says
- *   "Karjaa" but the table holds the Swedish "Karis") is missing alt-LANGUAGE names, not missing
+ *   "Karjaa" but the table holds the Swedish "Karis") is missing alt-LANGUAGE names rather than missing
  *   places: the WOF/Overture `names` carried only the primary, so the candidate build's Latin-alias
  *   explode (build-candidate pass 2) had nothing to widen. GeoNames' per-country dump carries the
  *   variants inline (the Karis row's `alternatenames` includes "Karjaa").
@@ -87,7 +87,7 @@ export interface GeonamesIngestProgress {
 	 */
 	places: number
 	/**
-	 * True when the country's `<CC>.txt` dump was missing — the country is skipped, not fatal.
+	 * True when the country's `<CC>.txt` dump was missing — the country is skipped rather than fatal.
 	 */
 	skipped: boolean
 	/**
@@ -133,11 +133,11 @@ async function parseAlternateNamesV2(
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
 	// 6 isColloquial, 7 isHistoric, 8 from, 9 to.
 	//
-	// Two passes, because historic-ness is a fact about the name, not the row: GeoNames splits one
+	// Two passes, because historic-ness is a fact about the name rather than the row: GeoNames splits one
 	// spelling across rows — Malabo carries "Santa Isabel" as (es, unflagged) and as (no-language,
 	// isHistoric=1, to=1973). Officialness must see the flags from every row for the spelling, or the
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
-	// Do not condition on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
+	// Do not condition on isPreferredName instead — it's sparse annotation rather than a signal (Turku's sv "Åbo"
 	// is unflagged. FI has 1,746 flags across the whole dump).
 	//
 	// Both passes stream the file rather than sharing one materialized array: Norway's V2 dump is 33 MB,
@@ -221,7 +221,7 @@ export async function ingestGeonamesAliases(
 		 * alias rows gain their language tag, `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
 		 * (language is CLDR-official for the country, colloquial/historic excluded — the rule the #936 risk probe measured
 		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides which rows
-		 * exist. V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
+		 * exist. V2 only decorates them. Missing file = the pre-#936 untagged behavior rather than an error.
 		 */
 		alternateDir?: PathBuilderLike
 	}
@@ -326,7 +326,7 @@ export async function ingestGeonamesAliases(
 		// GeoNames dump columns (0-indexed): 0 geonameid, 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon,
 		// 6 feature_class, 7 feature_code, 10 admin1 code, 14 pop.
 		//
-		// `header: false` — the dump is headerless, so row 1 is a place, not column names.
+		// `header: false` — the dump is headerless, so row 1 is a place rather than column names.
 		const wanted = new Set<number>()
 		const adminRows: string[][] = []
 

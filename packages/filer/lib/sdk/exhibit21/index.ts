@@ -37,8 +37,8 @@ export interface ParsedSubsidiary {
 }
 
 /**
- * {@linkcode parseExhibit21}'s result. `unparseable` is a COUNT, not a list of the offending text — criterion 3 only
- * requires knowing abstention happened and how often, not what was abstained from.
+ * {@linkcode parseExhibit21}'s result. `unparseable` is a COUNT rather than a list of the offending text — criterion 3
+ * only requires knowing abstention happened and how often rather than what was abstained from.
  */
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
@@ -199,7 +199,7 @@ function subsidiariesFromTable(
 	const subsidiaries: ParsedSubsidiary[] = []
 	let unparseable = 0
 
-	// An empty <tr></tr> — formatting cruft, not a data row either way, and not a column's worth of evidence.
+	// An empty <tr></tr> — formatting cruft rather than a data row either way, and not a column's worth of evidence.
 	const present = extractedRows.filter((row) => row.length)
 	const rawWidth = widestRow(present)
 	const rows = padAndDropBlankColumns(present)
@@ -418,10 +418,10 @@ const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
  * 2. A trailing `(Jurisdiction)` parenthetical — the common nested-list-item convention.
  * 3. Exactly one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is not split this way (a legal name can itself
  *    contain a comma, e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
- *    decision 6 abstains from the split, not from recording the line. Nor is a single comma split when the text after
- *    it is just a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
- *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and "Inc." is
- *    not a place a comma could plausibly be introducing.
+ *    decision 6 abstains from the split rather than from recording the line. Nor is a single comma split when the text
+ *    after it is just a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName`
+ *    reduces `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and
+ *    "Inc." is not a place a comma could plausibly be introducing.
  *
  * Falls through to `{name: <the whole cleaned line>}` when none of the above apply — an honest "no jurisdiction found",
  * never a fabricated one. The one exception is a 3+-column 2+-space-gap split (`name jurisdiction 100%`): that's an
@@ -464,9 +464,9 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 }
 
 /**
- * A leading bullet or list-marker glyph — markup convention, not part of a name. Stripped from a candidate line before
- * the name/jurisdiction split runs (module docstring, "Line/list refinements"): `"• Bandwidth.com CLEC, LLC (Delaware,
- * United States)"` must become `"Bandwidth.com CLEC, LLC (Delaware, United States)"` before
+ * A leading bullet or list-marker glyph — markup convention rather than part of a name. Stripped from a candidate line
+ * before the name/jurisdiction split runs (module docstring, "Line/list refinements"): `"• Bandwidth.com CLEC, LLC
+ * (Delaware, United States)"` must become `"Bandwidth.com CLEC, LLC (Delaware, United States)"` before
  * {@linkcode splitCandidateLine} ever sees the (fabricated, tag-stripping-artifact) 2+-space gap the bullet leaves
  * behind — otherwise the trailing-parenthetical rule never gets a chance and the bullet itself is read as the name.
  */
@@ -474,9 +474,9 @@ const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
 
 /**
  * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name — see the
- * module docstring's "Line/list refinements" paragraph. Deliberately whole-string patterns, not keyword sniffing, for
- * the same reason `KNOWN_HEADER_LABELS` (`exhibit21-vocabulary.ts`) is an exact-match set: substring sniffing on
- * "subsidiaries" would misfire on a company actually named that.
+ * module docstring's "Line/list refinements" paragraph. Deliberately whole-string patterns rather than keyword
+ * sniffing, for the same reason `KNOWN_HEADER_LABELS` (`exhibit21-vocabulary.ts`) is an exact-match set: substring
+ * sniffing on "subsidiaries" would misfire on a company actually named that.
  */
 const TITLE_LINE_PATTERNS = [
 	/^exhibit\s*21(\.\d+)?(\s*[-–—:]?\s*list of subsidiaries)?$/i,
@@ -563,8 +563,8 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
  * `shentel-2025.htm` states its subsidiary list as block text outside two such decorative tables. committing to the
  * (empty) table strategy the instant any `<table>` tag exists would silence the real list this document states. A table
  * with even one real non-blank cell still commits to the table strategy as before — reading a real table's data with
- * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory, not this
- * check's.
+ * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory rather than
+ * this check's.
  */
 function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 	return tables.every((rows) => rows.every((row) => row.every((cell) => cell.text === "")))

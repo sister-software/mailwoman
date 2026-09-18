@@ -56,7 +56,7 @@ export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: numb
 }
 
 /**
- * Collect all resolver-attributed nodes (we want per-placetype names, not just the most-specific).
+ * Collect all resolver-attributed nodes (we want per-placetype names rather than just the most-specific).
  */
 export function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
@@ -79,7 +79,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
-		// INTERPRETATIONS on the same node, not separate children. Surface each resolved interpretation as
+		// INTERPRETATIONS on the same node rather than separate children. Surface each resolved interpretation as
 		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
 		// interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{

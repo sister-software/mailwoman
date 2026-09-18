@@ -104,8 +104,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	#cooldownWithResolvers: PromiseWithResolvers<void> | null = null
 	#requestCountWithinCooldown = 0
 	/**
-	 * When the CURRENT budget window opened — the instant of its first dispatch, not of the last one. The cooldown is
-	 * measured from here, which is what makes `requestsPerMinute` mean requests per MINUTE.
+	 * When the CURRENT budget window opened — the instant of its first dispatch rather than of the last one. The cooldown
+	 * is measured from here, which is what makes `requestsPerMinute` mean requests per MINUTE.
 	 */
 	#windowStartedAt = 0
 
@@ -135,7 +135,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#retryPolicy = resolveRetryPolicy(config.retry)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
-		// THE PACING LIMIT LIVES IN THE ADAPTER, not in `fetch()`.
+		// THE PACING LIMIT LIVES IN THE ADAPTER rather than in `fetch()`.
 		//
 		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
 		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
@@ -243,11 +243,11 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * interceptor. N callers invoked in the same turn all cleared the limit before any response came back to set a
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
 	 *
-	 * The pacer is re-acquired on every pass of the loop, not taken once up front. A grant is a claim on a specific
-	 * instant. blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
-	 * the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms minimum
-	 * when both limits were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
-	 * cooldown wait, which is the safe direction) and takes a fresh one for the instant we actually dispatch.
+	 * The pacer is re-acquired on every pass of the loop rather than taken once up front. A grant is a claim on a
+	 * specific instant. blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant
+	 * spends it the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms
+	 * minimum when both limits were configured together. Re-acquiring discards the stale grant (the pacer under-issues by
+	 * one per cooldown wait, which is the safe direction) and takes a fresh one for the instant we actually dispatch.
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
 		for (;;) {
@@ -295,9 +295,9 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#requestCountWithinCooldown++
 
 		if (this.#requestCountWithinCooldown >= requestsPerMinute) {
-			// Wait out the REMAINDER OF THE MINUTE, not `MS_PER_MINUTE / requestsPerMinute`.
+			// Wait out the REMAINDER OF THE MINUTE rather than `MS_PER_MINUTE / requestsPerMinute`.
 			//
-			// The original computed `(60000 / N) - elapsed`, which is the spacing between two requests, not the length
+			// The original computed `(60000 / N) - elapsed`, which is the spacing between two requests rather than the length
 			// of the budget window — so N dispatches went out back to back and the client waited 60/N seconds before
 			// releasing another N. Measured on a bare client at `requestsPerMinute: 10`, 20-call fan-out: arrivals
 			// `[0 x10, 6000 x10]` — 20 inside one sliding minute against a budget of 10, a sustained 100/minute. A

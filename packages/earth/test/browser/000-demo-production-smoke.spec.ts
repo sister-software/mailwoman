@@ -3,10 +3,10 @@
  *   `version-parity.yml` confirmed the demo's PINNED VERSION tracked npm, and stayed green for three days while the
  *   demo served no WOF hits, no FST, and no street tier — version parity is not functional parity. Every one of those
  *   three failures produced zero console errors. the only symptom was degraded results. So this smoke grades the
- *   RESULTS, not the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this) against the
- *   deployed app daily via `MAILWOMAN_EARTH_URL`. It also runs in the local build check like every other browser spec,
- *   so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up all three
- *   tiers at once:
+ *   RESULTS rather than the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this)
+ *   against the deployed app daily via `MAILWOMAN_EARTH_URL`. It also runs in the local build check like every other
+ *   browser spec, so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up
+ *   all three tiers at once:
  *
  *   - 1600 Pennsylvania Ave NW → the STREET tier (situs/interp extracts) + an address_point rooftop.
  *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade and the #942/#961 postal-compound floor. If either regresses to

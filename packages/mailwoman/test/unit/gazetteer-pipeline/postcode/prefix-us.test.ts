@@ -127,7 +127,7 @@ describe("the US arm's exclusions", () => {
 
 	it("excludes null island without losing the unit from the count", () => {
 		expect(built.excludedUnits["nullIsland"]).toBe(1)
-		// The prefix still says the source enumerates two codes — `unitCount` is a claim about the postal system, not
+		// The prefix still says the source enumerates two codes — `unitCount` is a claim about the postal system rather than
 		// about how many coordinates survived our hygiene.
 		expect(nodeFor("300")?.unitCount).toBe(2)
 		expect(nodeFor("300")?.lat).toBeCloseTo(1.5, 6)

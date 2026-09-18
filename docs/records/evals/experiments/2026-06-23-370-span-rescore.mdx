@@ -11,7 +11,7 @@ tags:
 
 The competitive benchmark (the vs-Nominatim/Pelias scorecard, PR #775) put a number on where we lose to Nominatim and Pelias in Europe, and it wasn't precision. When mailwoman resolves an EU address its centroid is tight (p50 1–3 km). The gap is **no-result** — on the messy multi-order EU panel, mailwoman returns nothing for ~45% of addresses where the competitors return something. So the question for closing the gap isn't "place it more accurately." It's "place it at all."
 
-This is the story of one change against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate, not the label, decide.
+This is the story of one change against that tail: a post-hoc **span-rescore** (#370). Falsify first, then build — and let the coordinate rather than the label, decide.
 
 ## Where the tail comes from
 
@@ -37,7 +37,7 @@ top-1 (resolver-ranked, postcode-disambiguated): p50 1.8 km · p90 12 km
 best-of-5 (ceiling if disambiguation is perfect):  p50 1.4 km · p90  5 km
 ```
 
-p50 1.8 km. The swap is real coordinate-recall, not a same-name mirage. Build it. (And note the division of labor the buckets already imply: PL/CZ/AT own the swap tail; IT and FR have **zero** swaps — their unresolved rows are pure coverage gap, a job for more gazetteer, not a rescore.)
+p50 1.8 km. The swap is real coordinate-recall rather than a same-name mirage. Build it. (And note the division of labor the buckets already imply: PL/CZ/AT own the swap tail; IT and FR have **zero** swaps — their unresolved rows are pure coverage gap, a job for more gazetteer rather than a rescore.)
 
 ## The build, and the knob that was backwards
 
@@ -61,7 +61,7 @@ On real OpenAddresses the gold locality is the _longer, more specific_ name, and
 
 PL — the biggest swap locale — goes to **56 of 56 recovered, all gold, p50 1.8 km, p90 8 km**. Solved.
 
-## Grade the coordinate, not the string
+## Grade the coordinate rather than the string
 
 71% "right" by gold-string undersells it, because the string metric counts `Santa Eulália` against a gold of `Santa Eulália Viz` as a miss — when it's a 1 km miss. The direct read is the coordinate, at the benchmark's right-place bar:
 
@@ -88,7 +88,7 @@ With the check on, the IT story flips directly: from 4 recoveries all wrong (p50
 | coord p90                  |    206 km |       **145 km** |
 | >100 km mis-fires          |        33 |           **29** |
 
-The check's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country check can't supply). That's a coverage limit, not a design flaw: the check's reach grows automatically as the postcode gazetteer fills in, with no code change.
+The check's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country check can't supply). That's a coverage limit rather than a design flaw: the check's reach grows automatically as the postcode gazetteer fills in, with no code change.
 
 ## Production wiring + the end-to-end result (#780)
 
@@ -109,10 +109,10 @@ The strategic read, stated precisely (a trade-show claim has to survive a hostil
 | mailwoman + change |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
 | Nominatim (#775)   |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
 
-So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country check can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The direct claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
+So with the change on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed rather than closed) and AU (the cross-state problem the country check can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails) rather than a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-change _below_ 79%. **The direct claim: the change makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
 
-One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
+One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code rather than only source unit tests.
 
 ## What stays off
 
-The rescore stays **default-off**. What remains before default-**on** is a decision, not a build: flip `ResolveOpts.spanRescore` (the +16 pp recall against the ~17% >25 km mis-fire is the trade), and widen postcode coverage so the check reaches CZ/AU (IT today). The harness — `rescore-ceiling-probe.ts` (falsifier), `span-rescore-validate.ts` (standalone), `span-rescore-e2e.ts` (wired) — regrades any of those changes.
+The rescore stays **default-off**. What remains before default-**on** is a decision rather than a build: flip `ResolveOpts.spanRescore` (the +16 pp recall against the ~17% >25 km mis-fire is the trade), and widen postcode coverage so the check reaches CZ/AU (IT today). The harness — `rescore-ceiling-probe.ts` (falsifier), `span-rescore-validate.ts` (standalone), `span-rescore-e2e.ts` (wired) — regrades any of those changes.

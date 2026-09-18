@@ -6,11 +6,11 @@
  *   ladder (`赵光三分场二十九队`: the Zhaoguang farm, No. 3 sub-farm, No. 29 production team), labeled by rule and aligned
  *   character by character for the CJK sibling model.
  *
- *   THE LABELS ARE A READING OF THE SUFFIX, NOT A GUESS. Every generic that ends an ordinal unit (`分场`, `大队`, `队`,
+ *   THE LABELS ARE A READING OF THE SUFFIX rather than A GUESS. Every generic that ends an ordinal unit (`分场`, `大队`, `队`,
  *   `连`, `团`, `组`, `场部`) is in `@mailwoman/core/locale/zh-cn-units`' one table, and the same table reads the span back
  *   after decode. The whole ordinal chain is one `locality_unit` span. the named head it belongs to (`赵光`, `孟定农场`) is
  *   `dependent_locality`; a province, city or county written in front of it takes `region`, `locality`, `subregion`; a
- *   Latin admin tail (`, Heilongjiang, China`) takes `region` and `country`. A row with no chain is skipped, not labeled:
+ *   Latin admin tail (`, Heilongjiang, China`) takes `region` and `country`. A row with no chain is skipped rather than labeled:
  *   `红卫大队` is a village name whose generic carries no ordinal, and `苗辽林场` is a named forest farm.
  *
  *   WHERE THE ROWS COME FROM. `--input` is a JSONL of `{ raw, country }` rows — the shape of `data/coarse-placer/*.jsonl`,
@@ -177,7 +177,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 			}
 
 			// Verbatim only: every value above is a substring of `raw`, so an edit-distance match would mean this file
-			// has a bug, not that the source spells something differently.
+			// has a bug rather than that the source spells something differently.
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0], { tokenizer, maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {

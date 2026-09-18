@@ -115,7 +115,7 @@ describe("auditReposRoot — layouts", () => {
 	it("reports a missing root as empty rather than throwing", async () => {
 		const root = await reposRoot()
 
-		// A caller auditing a machine that has never synced must get an answer, not an exception.
+		// A caller auditing a machine that has never synced must get an answer rather than an exception.
 		const audit = await auditReposRoot(root("nope"))
 
 		expect(audit.repos).toEqual([])

@@ -15,7 +15,7 @@
  *        non-trivial counts (output ≥ 50, corpus ≥ 200).
  *   2. **Label-vacuum tokens.** Token labeled with a tag that has zero instances in the corpus for that
  *        token, despite the token being well-represented in the corpus. Stronger signal than #1 —
- *        we're introducing a novel association, not shifting a distribution.
+ *        we're introducing a novel association rather than shifting a distribution.
  *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in the output while
  *        the same token_bigram has a different majority label_bigram in the corpus. The "5th Avenue"
  *        with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.

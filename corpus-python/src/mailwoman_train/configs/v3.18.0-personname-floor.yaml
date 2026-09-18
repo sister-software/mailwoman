@@ -10,7 +10,7 @@
 # THE ONE VARIABLE: locality-surface-lexicon-v3.json — 1-token surfaces in libpostal given_names ∪
 # surnames ∪ per-language personal_titles need importance ≥ 0.45 (metropolis tier: paris/lyon/nancy
 # stay — they're in the name lists too. a blanket exclusion would kill them). 242,584 entries.
-# C-verdict instrumentation carried: grade the heal+case grid, not just raw.
+# C-verdict instrumentation carried: grade the heal+case grid rather than just raw.
 #
 # PRE-REGISTERED (grade_evidence_bundle, step 3000):
 #   1. THE ORIGINAL BAR: locality marginal (zero=locality, asis, raw) ≥ −0.020 on alnum-hn (v3.17

@@ -22,7 +22,7 @@
  *   ({@link ATTESTED_FRACTION}) rather than as the corpus.
  *
  *   ── THE PER-REGION IDENTIFIER RULE, AND WHY IT IS NOT COSMETIC ───────────────────────────────────
- *   `Gate A12` is a rendering, not a string anyone wrote down: all but 13 of Great Britain's 658
+ *   `Gate A12` is a rendering rather than a string anyone wrote down: all but 13 of Great Britain's 658
  *   `aeroway=gate` features are unnamed and carry only a `ref`. The lexicon therefore ships a
  *   distribution, and it differs by country far more than the shared English vocabulary suggests —
  *   GB gates are 71% bare digits and JP 89%, FR and DE are ~60% letter-digit (`A37`, `B05`), and ES
@@ -34,7 +34,7 @@
  *   A promotion names a designator, a phrase and a locale, because the same token is a designator in
  *   one language and a disaster in another: `hall` is 0-of-3,273 in Great Britain and 35-of-40 in
  *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A REJECTED pair
- *   generates NEGATIVES in that locale instead — en-US `wing` rows are Red Wing, not units.
+ *   generates NEGATIVES in that locale instead — en-US `wing` rows are Red Wing rather than units.
  *
  *   `shape: "identifier-required"` is honoured as the ledger's docstring demands: de-DE `halle` is
  *   emitted only as `Halle <identifier>`, never bare and never after a modifier, because its 168-hit
@@ -196,7 +196,7 @@ export const SUBVENUE_LEGS: readonly SubVenueLeg[] = [
 /**
  * En-US has no OSM extract, so its identifier distribution has to be borrowed. GB is the borrow, and the leg's `region`
  * says so literally rather than in a comment: the two English-speaking aviation systems number their gates the same way
- * (GB 71% bare digit) and poi.db — the only US source in reach — carries names, not refs, so it cannot supply a
+ * (GB 71% bare digit) and poi.db — the only US source in reach — carries names rather than refs, so it cannot supply a
  * distribution of its own. Recorded here because it is the one place a leg's `region` is not its own country.
  */
 export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
@@ -223,7 +223,7 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
  * share is `12 / 156.5 = 7.67%`, and `train_rows_per_epoch` is 1,000,000. So the epoch draws **76,677 rows** from this
  * recipe output, and anything smaller runs dry mid-epoch. 120,000 clears that with room for a config that drops a
  * source or raises the reps. (For contrast: `synth-fr-bare-street` is 10,803 rows at 12.0 reps per row, so it exhausts
- * 14% into its own nominal share every epoch — a precedent for the reps, not for the size.)
+ * 14% into its own nominal share every epoch — a precedent for the reps rather than for the size.)
  */
 export const RECOMMENDED_ROW_COUNT = 120_000
 
@@ -721,7 +721,7 @@ async function buildLegPools(
 		const prefixes = leg.postcodePrefixes
 		const filtered = context.filter((t) => prefixes.some((p) => (t.postcode ?? "").startsWith(p)))
 
-		// A leg that filters itself empty is a build-time fact worth failing on, not a silent fallback
+		// A leg that filters itself empty is a build-time fact worth failing on rather than a silent fallback
 		// to the parent locale's rows under a different `locale` stamp.
 		if (!filtered.length) {
 			throw new Error(

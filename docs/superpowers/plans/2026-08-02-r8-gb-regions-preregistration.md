@@ -16,7 +16,7 @@ Scotland is clean — Edinburgh 117, Glasgow 105, Aberdeen 8, Dundee 4. The othe
 
 1. **579 England rows carry an empty parent.** A pair with no parent cannot fire and cannot be
    audited; they are dropped rather than shipped as dead weight.
-2. **1,489 Welsh parents are civil parishes, not post towns** — `Pontypridd Community`,
+2. **1,489 Welsh parents are civil parishes rather than post towns** — `Pontypridd Community`,
    `Llanelli Rural`, `Llanddeiniolen Community`. This is the "Cardiff 33" oddity R2 flagged and
    deferred. The register names the parish that way; an address never does. Dropping them would
    discard half of Wales, so the administrative suffix is **stripped** instead, recovering a real

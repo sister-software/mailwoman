@@ -12,7 +12,7 @@
  *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
  *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
  *
- *   Baselines are REGISTERED, not restated here — see `baselines.json` (profiles `v264`, `v301`)
+ *   Baselines are REGISTERED rather than restated here — see `baselines.json` (profiles `v264`, `v301`)
  *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
  *   instruments read wrong. The night-3 read: the naive re-decode is WORSE at rank 1 than the token
  *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%

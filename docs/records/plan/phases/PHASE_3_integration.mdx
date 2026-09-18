@@ -44,7 +44,7 @@
 - [ ] Exposes `infer(tokenIDs: number[]): Promise<number[][]>` returning logits per token
 - [ ] Handles batching (group multiple sections for one inference call)
 - [ ] Configurable execution provider (CPU default, CUDA via env var)
-- [ ] Lazy loading: model loads on first `infer` call, not on construction (unless `warmup: true`)
+- [ ] Lazy loading: model loads on first `infer` call rather than on construction (unless `warmup: true`)
 
 ### 4. BIO decoding
 
@@ -96,7 +96,7 @@ The first Ship of Theseus step.
   - `country`: from `rule_only` to `neural_preferred` with `confidence_threshold: 0.8`
 - [ ] Run the full test suite + golden set eval
 - [ ] Verify on the golden set that `country` accuracy improved (or held) and no other component regressed
-- [ ] If anything regresses, revert the policy change and investigate. The migration is blocked on metrics, not on intent.
+- [ ] If anything regresses, revert the policy change and investigate. The migration is blocked on metrics rather than on intent.
 
 ▶ Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Tier 2 trains.
 

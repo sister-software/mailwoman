@@ -18,10 +18,10 @@
  *   overlay changes the prior. This tool cannot see that, so `--refuse-country` is how the caller states which locales
  *   the read could not speak for.
  *
- *   Every id must match a row. An id that matches nothing is an ERROR, not a skip: a promote list is transcribed from
+ *   Every id must match a row. An id that matches nothing is an ERROR rather than a skip: a promote list is transcribed from
  *   a log, and a typo that silently promotes nothing reads exactly like a list that was already applied.
  *
- *   Rows are read from the case files rather than through `loadRegressionCases`, which does not record which file a row
+ *   Rows are read from the case files rather than through `loadRegressionCases`, which omits the source file for a row
  *   came from. Deriving that from the id would guess — `sg-register-block-…` lives in `register.jsonl` but
  *   `ve-f5-caracas-…` lives in `family-locality-postcode.jsonl` — and a wrong guess writes a row into a file it does
  *   not belong to.

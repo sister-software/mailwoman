@@ -173,7 +173,7 @@ describe("resolvePairIndexForText — per-parse selection among the loaded index
 		const opt = resolvePairIndexForText(loaded, "10 Downing Street, London SW1A 2AA")
 
 		expect(opt).toEqual({ index: gb.resolver })
-		expect(opt!.index).toBe(gb.resolver) // the same retained instance, not a copy
+		expect(opt!.index).toBe(gb.resolver) // the same retained instance rather than a copy
 	})
 
 	test("US text selects the us index", () => {

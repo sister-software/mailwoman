@@ -12,7 +12,7 @@
  *   supplies one semantic observation and re-runs; #1930 reads the two runs against these numbers. None
  *   of them may choose a row or define "better" after a result is visible, so the definition is content-
  *   hashed into `probe-freeze.json` and {@linkcode loadProbeDefinition} REFUSES a definition whose hash
- *   has moved. The refusal is at load, not only in CI: a ruler that can be edited between the two arms
+ *   has moved. The refusal is at load rather than only in CI: a ruler that can be edited between the two arms
  *   measures nothing, and a test that runs an hour later cannot un-measure it.
  *
  *   THE COMPARATOR IS THE BOARD'S OWN. `poi_board_assembled_answer` is {@linkcode gradeCase} from
@@ -184,7 +184,7 @@ export interface ProbeMetric {
 }
 
 /**
- * The frozen decision thresholds. Numbers, not adjectives, and all of them `>=` bars over stated denominators.
+ * The frozen decision thresholds. Numbers rather than adjectives, and all of them `>=` bars over stated denominators.
  */
 export interface ProbeThresholds {
 	/**

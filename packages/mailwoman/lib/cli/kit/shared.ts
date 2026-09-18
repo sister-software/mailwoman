@@ -448,7 +448,7 @@ export function runProcessOrFail(
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
  * - Weights present but the encoder FAILED to load (corrupt / partial bundle, a bad explicit path) → the underlying error
- *   is surfaced, not swallowed.
+ *   is surfaced rather than swallowed.
  *
  * `onDegrade` receives the warning line. callers send it to stderr so piped stdout parsing is unaffected.
  */

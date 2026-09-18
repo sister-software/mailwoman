@@ -55,7 +55,7 @@ training_image = (
         # v0.9.3 graph. INVARIANT: the int8 graph (opset + quant op scheme) must stay
         # within what the pinned `onnxruntime-web` native WebGPU EP runs on Metal (the
         # JSEP int8-dequant slice bug — the neural web runner uses onnxruntime-web/webgpu). A bump
-        # here that raises the opset or changes the quant scheme is a Safari decision, not
+        # here that raises the opset or changes the quant scheme is a Safari decision rather than
         # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # Query the live image set with `modal run -m launch.train_remote::versions`.
         # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (GHSA-hwpq-hmq9-wj77,
@@ -79,7 +79,7 @@ training_image = (
         "onnxruntime==1.29.0",
         "onnxscript==0.7.2",
         # --- non-graph deps
-        # sentencepiece is PINNED, not floored (2026-08-01). It was `>=0.2.0` under a comment saying
+        # sentencepiece is PINNED rather than floored (2026-08-01). It was `>=0.2.0` under a comment saying
         # unpinned floors are fine here — that assumption was false, because SP decides the token IDS
         # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
         # digit runs ("...555" segments ['55','5'] under 0.2.1 and ['5','55'] under 0.2.2), which fired

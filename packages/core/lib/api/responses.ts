@@ -234,8 +234,8 @@ function responseReason(status: number): string {
  * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` resolved the chain with `undefined` was wrong for
  * every shape axios actually produces: the old `if (!response) throw` ran before that `switch`, and axios never
  * attaches a `response` to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 — a
- * misclassified 500, not a `TypeError` at the caller. Note the `return` arms were not unreachable in general, only
- * unreachable via axios: reaching the `switch` required a response to be present, and an error carrying both a
+ * misclassified 500 rather than a `TypeError` at the caller. Note the `return` arms were not unreachable in general,
+ * only unreachable via axios: reaching the `switch` required a response to be present, and an error carrying both a
  * `response` and `ECONNABORTED` did resolve with `undefined`. Stock adapters never pair those, but this repo's own
  * `axiosLikeError(message, code, config, response)` helper builds that shape in one argument. No regression follows
  * from any of this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.

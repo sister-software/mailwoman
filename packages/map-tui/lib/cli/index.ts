@@ -125,7 +125,7 @@ async function main(): Promise<number> {
 
 	let opened: TileSource
 
-	// A bad `--tiles` path is a usage error, not a crash — the guard stays around the open, and ownership passes to the
+	// A bad `--tiles` path is a usage error rather than a crash — the guard stays around the open, and ownership passes to the
 	// `using` declaration only once the open succeeded.
 	try {
 		opened = await openTiles(args.tiles)

@@ -44,7 +44,7 @@ For each match it produces a small set of adjustments to the per-piece scores:
   `I-locality` on the pieces it covers.
 - **A penalty on the competing labels.** The same match subtracts from street, house number and
   venue on those same pieces, because a span that names a known town is evidence against those
-  readings, not merely evidence for its own.
+  readings rather than merely evidence for its own.
 
 Those adjustments are added to the scores the model produced, and the sum is what the decoder reads.
 That pattern has a name — shallow fusion, borrowed from speech recognition, where an acoustic model's
@@ -60,7 +60,7 @@ decisive. The index gets a vote in proportion to how little the model had to say
 
 Three details are worth knowing because they explain behavior you can observe.
 
-**Match length changes how hard the penalty bites, not how large the bonus is.** Length here is
+**Match length changes how hard the penalty bites rather than how large the bonus is.** Length here is
 counted in words. A one-word match is weak evidence, because surnames, common words and street heads
 are place names somewhere, and a match spanning several words is stronger, because coincidence gets
 less likely with every word. The default response is to discount the penalty on the competing
@@ -94,7 +94,7 @@ model has labels for: country, region, locality, postcode. The index itself hold
 querying `Boston` returns neighborhood entries alongside the locality — and every entry outside those
 four contributes nothing, because there is no label for the bonus to land on.
 
-**It carries administrative names, not streets and not venues.** A gazetteer of specific street names
+**It carries administrative names rather than streets and not venues.** A gazetteer of specific street names
 would be several million more entries and is not what ships. There is a separate, much smaller
 vocabulary of generic street-type words — `avenue`, `rue`, `straße` — and that one is a different
 mechanism from this page's, with a different wiring status. Venue names are open-ended and are not in
@@ -105,7 +105,7 @@ named after a place, and that is the case the index has the least to say about.
 are not. If the parse is wrong in a way a place-name lookup would fix, the index is
 not the thing that will fix it.
 
-**It is a prior, not a stage, so its absence is silent.** The runtime pipeline loads the index from
+**It is a prior rather than a stage, so its absence is silent.** The runtime pipeline loads the index from
 the weights package on its first call and passes it to every parse. A classifier you construct and
 call directly receives nothing, and the parse still succeeds — it is worse, without announcing it,
 on exactly the inputs the index exists for. A bare `Hollywood` comes back as a street without it and

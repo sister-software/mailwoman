@@ -39,7 +39,7 @@ The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%
 
 5. **The model tags a trailing city as a postcode.** Facing the postcode-then-city order, the model puts `Toulouse` (postcode:0.77, locality:0.06) and `Sena` (postcode:0.53) in the postcode slot, so the locality drops entirely. But `Toulouse` has no digit, and postcodes contain a digit in every locale we handle — so the span-logit aggregation now drops the `postcode` and `house_number` candidates for any digit-less span, and the reconciler picks the real component. That alone recovered eight French cities and most of the Spanish tail.
 
-6. **Accented capitals weren't proper nouns.** `startsCapitalized` tested `/^[A-Z]/`, so `Évellys` and `Étagnac` — leading `É` — were invisible to the grouper, never proposed, never recovered. Making it Unicode-aware (`\p{Lu}`) brought FR to a clean 100%. The lone holdout is `La Florida`, where the model's `Florida → region` prior is strong enough to win the slot outright; one row, and a model problem, not a rule one.
+6. **Accented capitals weren't proper nouns.** `startsCapitalized` tested `/^[A-Z]/`, so `Évellys` and `Étagnac` — leading `É` — were invisible to the grouper, never proposed, never recovered. Making it Unicode-aware (`\p{Lu}`) brought FR to a clean 100%. The lone holdout is `La Florida`, where the model's `Florida → region` prior is strong enough to win the slot outright; one row, and a model problem rather than a rule one.
 
 ## What this means for the plan
 
@@ -47,6 +47,6 @@ The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%
 - **JUST-FLIP is alive and clean.** The German city-state recovery the dual-role work ships is matched by joint decoding doing it in-model, and now without collateral on any native-order locale.
 - **The flip shipped.** Joint-decode is now the default decode path ([#427](https://github.com/sister-software/mailwoman/issues/427)): `jointReconcile` defaults to `true`, and `jointReconcile: false` (or the deprecated `forceJointReconcile: false`) forces the legacy argmax sort. The full unit suite (1660 tests) and the integration suite (439 tests) pass on the flip. Callers without a phrase grouper or a `parseWithLogits` classifier fall back to argmax automatically, so the change reaches only the joint-capable path it was measured on.
 
-So Phase II did its job and then some. The question Phase I left open — "can the phrase grouper ever cover multi-word spans well enough to flip?" — has a measured yes, and the residual is a single model-prior row, not a 34% cliff.
+So Phase II did its job and then some. The question Phase I left open — "can the phrase grouper ever cover multi-word spans well enough to flip?" — has a measured yes, and the residual is a single model-prior row rather than a 34% cliff.
 
 _Harness: `scripts/eval/joint-vs-argmax.ts` (regression rows dumped via `MW_DUMP_REGRESSIONS=1`). Per-locale JSON under `docs/articles/evals/data/`._

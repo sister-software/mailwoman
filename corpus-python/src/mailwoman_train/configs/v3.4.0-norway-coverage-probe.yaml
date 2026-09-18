@@ -15,7 +15,7 @@
 #
 # PRE-REGISTERED READ (written before the numbers exist):
 #   PRIMARY (the operator's question) — the brief's Norwegian rows: does the STREET stop reading as a
-#     locality? `Epleskogen 39A` / `Tindvegen nedre 44B` -> street, not locality. If the street reads
+#     locality? `Epleskogen 39A` / `Tindvegen nedre 44B` -> street rather than locality. If the street reads
 #     correctly, coverage is the fix and an 8k run (init_from v264, full recipe) becomes a ship
 #     candidate. If the street still reads as locality after 2k of Norway-inclusive training, either
 #     coverage alone is insufficient or 2k off v310 cannot overwrite the "never saw Norway" prior —

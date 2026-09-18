@@ -15,7 +15,7 @@ This measures it.
 
 ## The setup
 
-For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate**, not string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. Grading the string alone would score both as wins, which is exactly the failure mode "measure first" is guarding against.
+For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate** rather than string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. Grading the string alone would score both as wins, which is exactly the failure mode "measure first" is guarding against.
 
 Two normalization tiers, measured separately because their risk is not the same:
 
@@ -32,7 +32,7 @@ baseline exact recall          = 883/972 (90.8%)
 
 Two things flip the intuition.
 
-First, the headline recall is **90.8%, not the recorded 88%** — confirming #734's read that the old number was depressed by a Lithuanian eval-extraction artifact, not a real coverage hole. (Lithuania isn't in this panel, so it can't drag the number here.)
+First, the headline recall is **90.8% rather than the recorded 88%** — confirming #734's read that the old number was depressed by a Lithuanian eval-extraction artifact rather than a real coverage hole. (Lithuania isn't in this panel, so it can't drag the number here.)
 
 Second, the **risky change is the safe one, and the safe change does nothing.** The structural suffixes (`b.`, `im`) recover zero rows here — those are Austrian/Swiss forms that don't appear in this panel (an AT/CH panel would be needed to measure them). The trailing-token strip, the one flagged collision-risky, recovers **14 Portuguese localities at zero collisions**:
 

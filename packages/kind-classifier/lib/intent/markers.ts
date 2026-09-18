@@ -8,8 +8,8 @@
  *
  *   Three of the four intent kinds can raise their marker here, from the string alone. The fourth —
  *   `bare_toponym`'s `declared_ambiguity` — cannot: its trigger is the dominance margin of the
- *   RESOLVED candidate list, which does not exist yet at Stage 2.5. That one is raised by
- *   `mailwoman/query-intent.ts` after the resolve, against the measured 0.5-log10 threshold. The split is
+ *   RESOLVED candidate list. Stage 2.5 does not have that list yet. `mailwoman/query-intent.ts` raises the marker
+ *   after the resolve, against the measured 0.5-log10 threshold. The split is
  *   deliberate and it is why this module never emits `declared_ambiguity`: a marker that asserted
  *   ambiguity from the string alone would be declaring that every bare city name is ambiguous, which
  *   is false 89.1% of the time (the measured table behind `DECISIVE_MARGIN_LOG10`).
@@ -52,7 +52,7 @@ export function deriveIntentMarkers(
 	const markers: QueryIntentMarker[] = []
 
 	if (fired.has("route_pair")) {
-		// Whitespace-only split, not `wordsOf`: `route_pair` inputs are comma-free by construction (a comma
+		// Whitespace-only split rather than `wordsOf`: `route_pair` inputs are comma-free by construction (a comma
 		// disqualifies the kind), and the tokens are re-joined verbatim into the message.
 		const tokens = ctx.input.normalized.trim().split(/\s+/)
 

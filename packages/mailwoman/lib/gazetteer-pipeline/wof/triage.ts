@@ -130,7 +130,8 @@ export interface TriageRow {
 	latitude: number
 	longitude: number
 	/**
-	 * The record's own population, or 0 when the artifact carries none. Zero here is WOF's absence, not a measured zero.
+	 * The record's own population, or 0 when the artifact carries none. Zero here is WOF's absence rather than a measured
+	 * zero.
 	 */
 	population: number
 	currencyClass: CurrencyClass

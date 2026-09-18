@@ -19,7 +19,7 @@
 #      Training and inference painting — one computation, no skew.
 #   2. Feed: synth-po-box-cedex 1.5→1.75 (share parity vs v385. the bundle-less feed control read
 #      fr.cedex 79.8 / us.street 77.4 — BOTH deploc-feed deficits, independent of the bundle).
-#   HELD BACK (pre-registered next change, not in this run): evidence-noise curriculum (paint false
+#   HELD BACK (pre-registered next change rather than in this run): evidence-noise curriculum (paint false
 #   evidence at rate p to teach discounting) — deployed only if the fed-vs-ablated golden gap
 #   survives the v5 retrain.
 #

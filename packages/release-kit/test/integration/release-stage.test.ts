@@ -63,7 +63,7 @@ describe("checkReleaseListIdentity", () => {
 		const identity = await checkReleaseListIdentity(root)
 
 		// The en-au class: a workspace outside the release list with no stated reason is FROZEN, and the
-		// failure must carry its name, not "expected 3, found 2".
+		// failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
 	})

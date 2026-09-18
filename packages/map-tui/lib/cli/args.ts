@@ -43,7 +43,7 @@ const MIN_ZOOM = 0
  */
 const MAX_ZOOM = 24
 
-// True geographic bounds, not Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
+// True geographic bounds rather than Web-Mercator's ±85.05113: the flag accepts any real latitude, and the browser clamps
 // the CENTER to the projection's MERCATOR_LATITUDE_LIMIT itself (see ./browser.ts) — rejecting 87 here would refuse a
 // value the viewport handles fine.
 const MIN_LAT = -90

@@ -48,7 +48,7 @@ I'd rather you hear the limits from me than discover them in production.
 
 Rooftop precision, the actual building rather than the neighborhood, currently fires only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver lands you at an administrative or postcode centroid, which is the right town and the right ZIP but not the right doorstep. The big cloud vendors beat us on global rooftop coverage, decisively, and I'm not going to pretend otherwise. If you need a rooftop in Lagos today, call Google.
 
-Mapbox, to its credit, does ship on-device geocoding, but it's their native mobile SDK, and it's reverse geocoding (coordinate to address) rather than forward. So I'll keep the claim precise: the only geocoder that runs the full forward pipeline, in a browser, with no server. Narrow as that sounds, it's a space nobody else occupies. And there's no batch endpoint and no SLA yet; this is infrastructure you embed, not a hosted service you page.
+Mapbox, to its credit, does ship on-device geocoding, but it's their native mobile SDK, and it's reverse geocoding (coordinate to address) rather than forward. So I'll keep the claim precise: the only geocoder that runs the full forward pipeline, in a browser, with no server. Narrow as that sounds, it's a space nobody else occupies. And there's no batch endpoint and no SLA yet; this is infrastructure you embed rather than a hosted service you page.
 
 None of which changes the thing in the network tab. You typed an address, you got a building, and nobody else saw it.
 

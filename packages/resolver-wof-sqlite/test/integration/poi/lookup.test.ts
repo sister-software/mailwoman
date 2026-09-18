@@ -9,7 +9,7 @@
  *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
  *   ring budget, including the only `museum`-category rows in the fixture), and one uncategorized
  *   named row ("Pier 39") for the FTS name path. All twelve rows land in the FINAL `poi` table via
- *   typed Kysely inserts — not the `poi_stage` mirror, which is the builder's concern, not the
+ *   typed Kysely inserts — not the `poi_stage` mirror, which is the builder's concern rather than the
  *   reader's.
  */
 
@@ -254,7 +254,7 @@ describe("POILookup", () => {
 
 		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
 		// Both Q38076 rows surface: the near Springfield one and the ~280 km Chicago one — the brand path is a
-		// brand-wide fetch, not a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
+		// brand-wide fetch rather than a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
 		expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
 		expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
 		expect(hits[0]!.categoryID).toBe("fast_food")

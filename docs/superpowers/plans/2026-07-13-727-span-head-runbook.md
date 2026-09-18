@@ -9,7 +9,7 @@ messy input) points at structured span prediction.
 
 ## Staged path (cheapest falsifier first — the #825 lesson)
 
-0. **Fork option (a) — DONE (v256, 2026-07-13).** Schedule, not capacity. v257 (full 8k gentle)
+0. **Fork option (a) — DONE (v256, 2026-07-13).** Schedule rather than capacity. v257 (full 8k gentle)
    became the first stable candidate. Residual = the boundary-absorption class, so stage 1 proceeds.
 1. **GLiNER-lite probe — DONE, CONFIRMED POSITIVE (v260, 2026-07-14).** Added a training-only
    span-boundary aux head to `model.py` (`use_span_boundary_head`): per-token BCE on span START
@@ -31,7 +31,7 @@ messy input) points at structured span prediction.
 2. **FSemi-CRF head** — the confirmed next arc (stage-1 exhausted the cheap change). The full #727
    design: span enumeration + filtered semi-Markov decode, so the model scores whole (start, end,
    type) spans instead of per-token tags. Architecture change: new export path, #378 browser-SLO
-   check, capability-manifest rework — a deliberate multi-night arc, not a probe. Keep the stage-1
+   check, capability-manifest rework — a deliberate multi-night arc rather than a probe. Keep the stage-1
    span-boundary head (`use_span_boundary_head`) as a co-trained auxiliary; it's free and helps.
    **Stage-2 is now fully scoped — see `2026-07-15-727-stage2-kbest-plan.md`** (night-3): k-best
    decode + resolver rerank ratified by the operator, design consult-reviewed, and the zero-training
@@ -82,7 +82,7 @@ Fixed — the boundary class, including the arc's own archetype:
 not fixed — the **bare-fragment polarity class** (66% of street failures, night-3 partition).
 `Rue Montmartre` → `locality`. This is option C's target (kind-posterior soft channel +
 recall-weighted street loss) and was deliberately out of Phase 1's scope. Its survival is the plan's
-prediction holding, not a surprise.
+prediction holding rather than a surprise.
 
 ### Why "Rue" doesn't already clue the model (the 2026-07-15 operator question — MEASURED)
 
@@ -92,12 +92,12 @@ use it — **but a strong toponym under outvotes it, and a house number is what 
 ```
 Rue Montmartre        → Rue Montmartre : locality        ✗   (Montmartre IS a Paris district)
 Rue de Rome           → Rue:street de:street Rome:locality ✗ (Rome IS a city)
-Avenue Victor Hugo    → Avenue:street  Victor Hugo:street ✓  (a person, not a place — no number needed!)
+Avenue Victor Hugo    → Avenue:street  Victor Hugo:street ✓  (a person rather than a place — no number needed!)
 12 Rue Montmartre     → 12:hn  Rue:street_prefix  Montmartre:street  ✓
 8 Rue de Rome, Paris  → 8:hn  Rue:street_prefix  de/Rome:street  Paris:locality  ✓
 ```
 
-**The house number is the anchor, not the prefix.** Measured on `paris-streets.jsonl` (v264, ship
+**The house number is the anchor rather than the prefix.** Measured on `paris-streets.jsonl` (v264, ship
 config): contextful/homonym **6/6**, the operator's "particularly tricky" list **9/10** — the exotic
 morphology (`Chat-qui-Pêche`, `l'Hôtel-de-Ville`, `18-Juin-1940`) is not the problem — while
 bare-fragment/famous is **3/15** and `Avenue des Champs-Élysées` returns the **empty string**.
@@ -119,7 +119,7 @@ One variable per run. fp32 for any CRF/transition learning (bf16 NaN scar). Grad
 gold's default-flip awaits operator ratification. Treadmill guard applies across this arc too:
 two opposite-direction failures = stop and fork, don't tune. **A mis-specified probe is not a
 treadmill** — repairing an LR that was never chosen for the thing it trains is fixing the
-instrument, not oscillating a knob (v3.0.0 → v3.0.1 is the worked example).
+instrument rather than oscillating a knob (v3.0.0 → v3.0.1 is the worked example).
 
 ## What unblocks when floors pass
 

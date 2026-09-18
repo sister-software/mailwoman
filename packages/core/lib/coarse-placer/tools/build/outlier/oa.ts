@@ -12,7 +12,7 @@
  *
  *   Discipline (per the #244 scoping note + DeepSeek consult):
  *
- *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
+ *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT rather than random: whole families are held out (Nordic, Baltic, …) so a
  *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families
  *       feed train/val/test(indist); HELDOUT families go only to the dedicated test file.
  *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
@@ -144,7 +144,7 @@ export async function buildOutlierOA(
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message rather than a file.
 			report?.(`  ${cc}: SKIP (${errorMessage(error).split("\n")[0]})`)
 
 			return []

@@ -13,7 +13,7 @@
  *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
  *     siblings present) is excluded with the correct sibling tag surviving. 4 real Gauntlet spans
  *     (US 1600/3080/1200 via their region, PR 3499 via the territory-mapped country) + 9 synthesized
- *     US/PR 4-digit rows = 13/13. The MX and ES rows are DOCUMENTED ABSTENTIONS, not in the
+ *     US/PR 4-digit rows = 13/13. The MX and ES rows are DOCUMENTED ABSTENTIONS rather than in the
  *     denominator — MX has no country token ("Tabasco" is not a `matchSubdivision` key), and ES has
  *     no codex address system at all.
  *   - **B1-3** — confound protection ≤2% false exclusions: "Sydney NSW 2000, Australia" stays
@@ -150,7 +150,7 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 
 			expect(verdict.excluded).toEqual([code])
 			expect(verdict.confirmed).toEqual([])
-			// Digit-only → the correct sibling tag survives: house_number, not a dangling postcode.
+			// Digit-only → the correct sibling tag survives: house_number rather than a dangling postcode.
 			const span = tagged(roots, "house_number")[0]
 			expect(span?.value).toBe(code)
 			expect(tagged(roots, "postcode")).toEqual([])

@@ -59,9 +59,10 @@ export interface POIPhraseMatch {
 	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the claim holds
 	 * everywhere.
 	 *
-	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched, not
-	 * the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the claim
-	 * holds. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has resolved.
+	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched rather
+	 * than the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the
+	 * claim holds. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has
+	 * resolved.
 	 */
 	countryScope?: readonly string[]
 }
@@ -192,7 +193,7 @@ export function matchPOISubject(
 		const subject = trimmed.slice(0, separator.index).trim()
 
 		// Subjects only grow as the scan moves right — once over budget, later splits are too. Whitespace-only
-		// split, not `wordsOf`: a comma inside a subject is real content here, not a separator to erase.
+		// split rather than `wordsOf`: a comma inside a subject is real content here rather than a separator to erase.
 		if (subject.split(/\s+/).length > MAX_SUBJECT_TOKENS) break
 
 		const hits = lookup(subject, locale)
@@ -277,9 +278,9 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * "drinking fountain".
  *
  * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
- * is excluded: a bare "Starbucks" is a name lookup, not a category, and the taxonomy id a category marker promises to
- * carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case, which would
- * make the marker's `categoryID` evidence a lie.
+ * is excluded: a bare "Starbucks" is a name lookup rather than a category, and the taxonomy id a category marker
+ * promises to carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case,
+ * which would make the marker's `categoryID` evidence a lie.
  */
 export function createScorePOICategory(
 	lookup: POIPhraseLookup,

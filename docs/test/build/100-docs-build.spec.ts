@@ -5,7 +5,7 @@
  *
  *   Build-health check. Runs the real production build (`docusaurus build`) and asserts it both
  *   succeeds and emits no warnings/errors — most importantly Docusaurus's broken-anchor /
- *   broken-link warnings, which only surface during the static-site-generation phase, not during
+ *   broken-link warnings, which only surface during the static-site-generation phase rather than during
  *   typecheck or bundling.
  *
  *   This runs as the Playwright `build` project (see playwright.config.ts), building into a throwaway
@@ -34,8 +34,8 @@ const DOCS_ROOT = resolvePath(__dirname, "../..")
 const processEnv = process.env
 
 /**
- * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/` for the browser
- * specs. building the health check there too would clobber the served site.
+ * Build into a throwaway dir rather than the workspace `build/`. The Playwright webServer serves `build/` for the
+ * browser specs. building the health check there too would clobber the served site.
  */
 const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 
@@ -47,7 +47,7 @@ const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 const PROBLEM_MARKERS = [/\[ERROR\]/, /\[WARNING\]/, /Broken link/i, /Error: /]
 
 test.describe("docs build", () => {
-	// A cold production build is minutes, not seconds — the project-level timeout (see config) covers
+	// A cold production build is minutes rather than seconds — the project-level timeout (see config) covers
 	// it. this is a belt-and-braces guard for the single test body.
 	test.setTimeout(600_000)
 

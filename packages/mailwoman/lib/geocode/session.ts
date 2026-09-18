@@ -227,7 +227,7 @@ export interface GeocodeRun {
 	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` on a session that ATTEMPTED one
 	 * (present even when the attempt threw, so the phases always sum to `total`). MEASURED here rather than read off a
 	 * `PipelineResult`, because this path never builds one: these are the phases the session actually runs, so a caller
-	 * rendering them is reading its own clock, not a neighbouring path's.
+	 * rendering them is reading its own clock rather than a neighbouring path's.
 	 */
 	timing: PipelineTiming
 	/**
@@ -512,7 +512,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const classifier = routed.primary
 
 	// #1497: the prior the geocode path has never had. Loaded from the classifier's own weights-package sibling, the
-	// same artifact `runPipeline` auto-loads — one source, not a second resolution ladder. A failure degrades to
+	// same artifact `runPipeline` auto-loads — one source rather than a second resolution ladder. A failure degrades to
 	// `undefined`, which is exactly the pre-#1497 behaviour.
 	let fst: FSTMatcherLike | undefined
 	let streetMorphology: FSTMatcherLike | undefined
@@ -691,7 +691,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
-	// release the per-input path gets. ORDER inside the guard is the contract, not an implementation detail:
+	// release the per-input path gets. ORDER inside the guard is the contract rather than an implementation detail:
 	// a coarse-placer or --bias failure still reports after the gazetteer, weights and resolver-package
 	// checks, never in front of them.
 	let placer: CoarsePlacer | undefined
@@ -823,7 +823,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// code's own format is harder evidence than the locale hint. An explicit --default-country
 		// still wins (checked first, same as #912), and the bare 5-digit family implies no countries
 		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
-		// A script-routed input ran on the family classifier, not the locale's: the locale then says nothing about the
+		// A script-routed input ran on the family classifier rather than the locale's: the locale then says nothing about the
 		// address's country, and its inferred scope (`--locale en-US` → US) would starve every lookup for a kanji or
 		// Hangul line. An explicit --default-country is the operator's and stays.
 		const routedAway = (await routed.forInput(input)) !== routed.primary
@@ -927,7 +927,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	return {
 		initTiming,
-		// The paths the FST block above actually opened, not the ones it was asked for — see `GeocodeSession.artifacts`.
+		// The paths the FST block above actually opened rather than the ones it was asked for — see `GeocodeSession.artifacts`.
 		artifacts: {
 			...(fst && classifier.fstPath ? { fstPath: classifier.fstPath } : {}),
 			...(streetMorphology && classifier.streetMorphologyPath

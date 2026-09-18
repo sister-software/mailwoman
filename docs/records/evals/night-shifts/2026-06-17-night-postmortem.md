@@ -27,7 +27,7 @@ itself (geocoder callers → `", "` + #690) cascades to a dedup-GBT re-train →
 
 The ES/IT postcode-anchor "gap" is largely OBE — a GeoNames backfill already closed it (ES 98.5% / IT 90%
 placed). Overture ES adds a marginal +1.5% at equal accuracy; IT/TW Overture-blocked (0% postcode fill).
-**Meta-finding (#470):** Overture's value is the address-POINT layer, not the postcode/postal-city aux
+**Meta-finding (#470):** Overture's value is the address-POINT layer rather than the postcode/postal-city aux
 tables (geography-dependent fill). Reusable extractor shipped (#701).
 
 ### 4. The #1 parser change — boundary-instability extract (#375, the capstone)

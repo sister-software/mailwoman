@@ -189,9 +189,9 @@ export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof type
  * The `SELECT` term and `LEFT JOIN` a name lookup needs in order to CARRY `encyclopedic` onto its results, probed
  * against `schemaName`'s `place_importance`.
  *
- * THE PROBE IS A COLUMN, NOT A TABLE, and that is the whole reason this lives here rather than beside a caller's other
- * table probes. The pre-split table exists and holds a single conflated `importance` column whose value is a Wikipedia
- * score on some rows and a population proxy on others, with nothing in the row to say which — reading that as
+ * THE PROBE IS A COLUMN rather than A TABLE, and that is the whole reason this lives here rather than beside a caller's
+ * other table probes. The pre-split table exists and holds a single conflated `importance` column whose value is a
+ * Wikipedia score on some rows and a population proxy on others, with nothing in the row to say which — reading that as
  * encyclopedic would surface the exact confusion ROAD_TO_V9 §2 exists to end.
  *
  * There is deliberately no ORDER BY counterpart, and there should never be one: §2's policy is that this score is
@@ -245,11 +245,11 @@ export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
  * tolerance is a few ULP of the score's own magnitude. a genuine Wikipedia value that close to the population curve is
  * not distinguishable from it by any consequence.
  *
- * MEASURED, not reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`): 1,543,753 rows
- * split **1,410,657 fallback / 133,096 encyclopedic**, and the arithmetic closes on itself — 1,410,657 + 108,861
- * (encyclopedic rows that also have a population) = 1,519,518, which is exactly the count of `place_population` rows
- * with `population > 0`, i.e. every row the fallback pass could have written. The remaining 24,235 encyclopedic rows
- * have no population row at all. Under the exact-equality rule, Node found zero mismatches within one ULP, so the
+ * MEASURED rather than reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`):
+ * 1,543,753 rows split **1,410,657 fallback / 133,096 encyclopedic**, and the arithmetic closes on itself — 1,410,657 +
+ * 108,861 (encyclopedic rows that also have a population) = 1,519,518, which is exactly the count of `place_population`
+ * rows with `population > 0`, i.e. every row the fallback pass could have written. The remaining 24,235 encyclopedic
+ * rows have no population row at all. Under the exact-equality rule, Node found zero mismatches within one ULP, so the
  * tolerance changes no classification on this database — it only makes the answer runtime-independent.
  *
  * Referential is not read out of the legacy column under any branch — it is always re-derived from population, because

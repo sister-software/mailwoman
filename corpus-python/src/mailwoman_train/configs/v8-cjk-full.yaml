@@ -50,7 +50,7 @@
 #     record is the finding that says the CN rows cost something.
 #   * CN half: per-tag F1 for `locality_unit` and `dependent_locality` on the 11 CN val rows every eval
 #     step (train_log.csv), and span exact-match on the 14 rows of cn-board.jsonl at the end. n is small
-#     and the bar is stated as a READING, not a check: the rows are the register's whole labeled supply.
+#     and the bar is stated as a READING rather than a check: the rows are the register's whole labeled supply.
 #     The zh-CN gauntlet rows stay improvement targets until a serving path exists. The val stream
 #     draws from the same source multinomial as train, so the 11 CN val rows are pulled about 2% of
 #     val pulls with restarts (≈ 400 pulls at val_rows 20011, each row ≈ 36 times); the F1 is over 11

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What moving a country between admin sources would involve — computed, not remembered.
+ *   What moving a country between admin sources would involve — computed rather than remembered.
  *
  *   Every failure in the thread that produced this was a COORDINATION failure rather than a hard one. A
  *   repository name landed in a destination slot and 65 GB arrived. A filter went missing. The recipe has

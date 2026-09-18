@@ -1,4 +1,4 @@
-# === v3.6.0-no-fragment-b4b — Track B, knob 1: RAISE THE BARE-STREET RATIO. 2k PROBE, NOT a ship. ===
+# === v3.6.0-no-fragment-b4b — Track B, knob 1: RAISE THE BARE-STREET RATIO. 2k PROBE rather than a ship. ===
 #
 # PRE-REGISTERED READ (written before the numbers exist. graded on the Norway digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
@@ -27,7 +27,7 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does not re-drift — v3.3.0 lost -1.7pp overall (weight
 #         dilution); this run must hold FR OVERALL >= ~0.725 (v310 0.733). If FR drifts again, knob 2
-#         (no-fragment weight relative to fr-fragment) is the next one-at-a-time probe, not this one.
+#         (no-fragment weight relative to fr-fragment) is the next one-at-a-time probe rather than this one.
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
 #         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
 #

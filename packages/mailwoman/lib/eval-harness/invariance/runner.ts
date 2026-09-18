@@ -7,7 +7,7 @@
  *   metamorphic-invariance check meant to run in every probe grade — not just the release Gauntlet's
  *   heavier resolver-level metamorphic layer (`gauntlet/cases/metamorphic.ts`, which asserts on assembled
  *   COORDINATES and is release-eval weight). This suite asserts on decoded PARSE COMPONENTS only (no
- *   resolver, no gazetteer DB), which is what keeps it cheap: a handful of pipeline calls per row, not
+ *   resolver, no gazetteer DB), which is what keeps it cheap: a handful of pipeline calls per row rather than
  *   geocode-and-resolve round trips.
  *
  *   Parses run through the PRODUCTION path — `createRuntimePipeline`, the same staged pipeline the API
@@ -30,10 +30,10 @@
  *   Two more regression-mode classes, both reported and non-blocking:
  *
  *   - GAINED: the candidate holds a pair the baseline violated — a capability that went 0/207 → 205/207
- *     is a gain, not a violation (it gets its own report section, never the check).
+ *     is a gain rather than a violation (it gets its own report section, never the check).
  *   - gained-capability residual: a violation on a row whose baseline ORIGINAL parse carried no critical
  *     component (street/house_number/postcode) while the candidate's does — the baseline never had the
- *     row's core capability, so the pair is "gained but not register-flat", not a lost capability.
+ *     row's core capability, so the pair is "gained but not register-flat" rather than a lost capability.
  */
 
 import { compareComponents, CRITICAL_TAGS, VERDICT_SEVERITY, type Verdict } from "#eval-harness/invariance/compare"
@@ -54,14 +54,14 @@ export { DEFAULT_SUITE_PATH, loadSuite, type InvarianceRow } from "#eval-harness
 
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
-// resolves against the CWD the CLI is invoked from (the repo root), not `import.meta.dirname`.
+// resolves against the CWD the CLI is invoked from (the repo root) rather than `import.meta.dirname`.
 //#region parse function construction
 
 //#region the run
 
 /**
- * `GAINED` is a regression-mode class, not a comparison class: the candidate held a pair the baseline violated — a
- * capability the baseline lacked, not a regression. It never counts toward the check.
+ * `GAINED` is a regression-mode class rather than a comparison class: the candidate held a pair the baseline violated —
+ * a capability the baseline lacked rather than a regression. It never counts toward the check.
  */
 export type OutcomeVerdict = Verdict | "GAINED"
 
@@ -150,7 +150,7 @@ function compareForTransform(
 /**
  * True when any CRITICAL_TAGS value is present (non-blank). The row-level gained-capability detector in
  * `runInvarianceSuite` keys on this: a baseline whose ORIGINAL parse carries no critical component never parsed the
- * row's core address — everything the candidate does afterwards is a gain, not a loss.
+ * row's core address — everything the candidate does afterwards is a gain rather than a loss.
  */
 function hasCriticalComponent(components: Record<string, string>): boolean {
 	return CRITICAL_TAGS.some((tag) => (components[tag] ?? "").trim().length)
@@ -269,17 +269,17 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 				if (candidateOutcome.verdict === "INVARIANT" && baselineResult.verdict !== "INVARIANT") {
 					// Gained-capability class (#1516): the candidate holds a pair the baseline violated.
-					// A capability that went 0/207 → 205/207 is a gain, not a violation — it is reported
+					// A capability that went 0/207 → 205/207 is a gain rather than a violation — it is reported
 					// in its own section below and never touches the check.
 					outcome.verdict = "GAINED"
 				} else {
-					// Severity-aware, not severity-blind: a violation is pre-existing only if the candidate's verdict
+					// Severity-aware rather than severity-blind: a violation is pre-existing only if the candidate's verdict
 					// is not worse than the baseline's on this same (row, transform) pair — INVARIANT < DEGRADED <
 					// LOST. Treating two non-INVARIANT verdicts as pre-existing regardless of severity would let a
 					// candidate `LOST` slide through as "non-blocking" whenever the baseline merely DEGRADED on the
 					// same pair: baseline drops a non-critical `unit` on comma-drop, candidate drops the CRITICAL
-					// `house_number` on the identical pair — that must check, not hide.
-					// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
+					// `house_number` on the identical pair — that must check rather than hide.
+					// v1 is verdict-severity matching only rather than content-diff matching: it doesn't check whether the
 					// candidate's `LOST` is the same underlying break as the baseline's `LOST` (e.g. same tag, same kind
 					// of corruption) — only that it's no worse in kind. A future tightening could require the diffs
 					// to name the same tag before calling two LOSTs "the same" pre-existing gap.
@@ -335,7 +335,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		`  INVARIANT ${counts.invariant}   DEGRADED ${counts.degraded}${options.baselineParse ? ` (${newCounts.degraded} new)` : ""}   LOST ${counts.lost}${options.baselineParse ? ` (${newCounts.lost} new)` : ""}${options.baselineParse ? `   GAINED ${counts.gained}` : ""}`
 	)
 
-	// GAINED is a regression-mode class, not a violation — the candidate held a pair the baseline violated.
+	// GAINED is a regression-mode class rather than a violation — the candidate held a pair the baseline violated.
 	const violations = outcomes.filter((o) => o.verdict !== "INVARIANT" && o.verdict !== "GAINED")
 
 	if (violations.length) {

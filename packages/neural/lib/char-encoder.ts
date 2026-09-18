@@ -10,7 +10,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks. the row truncated to S units and padded with
  *   all-PAD unit rows carrying attention 0. A CJK model never meets SentencePiece: this is its whole tokenizer.
  *
- *   Code points, not UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
+ *   Code points rather than UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
  *   and must be one unit here. iterating the string with `Array.from` is what keeps the two encoders producing the same
  *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
  *

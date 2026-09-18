@@ -10,7 +10,7 @@ verified-with: mailwoman v6.1.0
 
 You have a coordinate and you want the IANA timezone it lands in — `America/New_York`, `Asia/Tokyo`. The [`@mailwoman/timezone-lookup`](https://www.npmjs.com/package/@mailwoman/timezone-lookup) package does the point-in-polygon for you, over [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder) polygons in a `node:sqlite` database. The UTC offset comes from `Intl`, so there's no tz-database dependency to keep patched.
 
-Two costs to name up front. It's **server-side** — the polygon test runs over `node:sqlite`, so this is a backend lookup, not a browser one. And you build the database once from the boundary release before the first lookup.
+Two costs to name up front. It's **server-side** — the polygon test runs over `node:sqlite`, so this is a backend lookup rather than a browser one. And you build the database once from the boundary release before the first lookup.
 
 ## Build the database
 

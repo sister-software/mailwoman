@@ -124,7 +124,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > Georgia US (the Spanish verb matched a US town namesake); Bubble Tea → "Bubble Bubble", AU;
 > Shinjuku Pigalle → Tokyo. The class needs venue-kind detection + POI tier + the #1039 confidence
 > floor; coordinates = BAN rooftops of the actual venues (provenance: ban:fr release=2026-05-18).
-> Tolerance is metro-scale — the win condition is "lands in greater Paris or declines", not rooftop.
+> Tolerance is metro-scale — the win condition is "lands in greater Paris or declines" rather than rooftop.
 
 <details><summary>Rows</summary>
 
@@ -148,7 +148,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > — measured 2026-07-15: `rue` 0.149 / `boulevard` 0.167 / `place` 0.169 are themselves
 > gazetteer places, so raising importance would start biasing STREET-TYPE WORDS toward locality).
 > The 30 currently-FAILING bare-fragment forms deliberately do NOT live here — this file is the
-> executable bug log, not a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
+> executable bug log rather than a wish list; they live in eval-harness/fixtures/paris-streets.jsonl.
 
 <details><summary>Rows</summary>
 
@@ -274,7 +274,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > ── The non-GB dependent-locality instances (campaign R9–R11), counted so each locale's win cannot
 > silently regress. Every one of these emitted NOTHING before its artifact shipped, and three of
 > the four additionally emitted a WRONG span — the locality fused with the sub-locality — so these
-> rows protect against a return to corrupt output, not merely to missing output.
+> rows protect against a return to corrupt output rather than merely to missing output.
 >
 > They grade through their own weights overlay (OVERLAY_LOCALE_BY_COUNTRY in harness.ts). Without
 > that mapping they would run against base en-US, find no pair index for their country, and fail
@@ -446,7 +446,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > PROMOTION 2026-08-05: with `postcodeCountryCoherence` default-ON, `fr-rivoli-us-scoped` and
 > `de-linden-us-scoped` are COUNTED (`status: pass`) — leaving a rescued row at `improvement_target` after the
 > default changes turns a counted guarantee into a tracked note. `gb-downing-us-scoped` stays an
-> improvement_target: its blocker is a GB postcode parse under the en-GB overlay, not the resolver (see its
+> improvement_target: its blocker is a GB postcode parse under the en-GB overlay rather than the resolver (see its
 > own note), so #42 cannot reach it at any default.
 >
 > Every coordinate below was measured through the compiled CLI at 2026-08-05 against the 2026-08-04 gazetteer,
@@ -618,7 +618,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > **2026-08-06 follow-up (#1507 / #1516).** Two corrections to the paragraph above and one addition to the
 > batch itself.
 >
-> The WARNING was wrong, not the grading. Those overlays ship no binary on purpose (en-gb under the #1476
+> The WARNING was wrong rather than the grading. Those overlays ship no binary on purpose (en-gb under the #1476
 > mitigation; en-nz has no WOF NZ postcode database to build one from), and the warning fired on
 > `requires.anchor.required` — a statement about the shared ENCODER that every overlay inherits — once per
 > PROCESS, naming no package. So one overlay's deliberate absence printed a line that reads as the PRIMARY
@@ -840,14 +840,14 @@ carrying its own margin note below rather than a shared header.
 > #833 — RESOLVED by admin descendant-consistency (#263). The greedy walk resolved region "ME" to
 > Messina (IT, by population), "Portland" found nothing under it, and the result fell back to the
 > Sicilian centroid. The fix re-picks the (region, locality) pair where the locality descends from a
-> same-named region candidate — Portland descends from Maine, not Messina. No country prior, no list.
+> same-named region candidate — Portland descends from Maine rather than Messina. No country prior, no list.
 
 ### `us-portland-or`
 
 `cases/us/regression.jsonl` · `source: bug:#833`
 
 > #833 sibling — a different namesake collision (region "OR" → Ourense, Spain), guards that the fix
-> generalizes across countries (IT for ME, ES for OR), not just one province.
+> generalizes across countries (IT for ME, ES for OR) rather than just one province.
 
 ### `us-augusta-me`
 
@@ -869,7 +869,7 @@ carrying its own margin note below rather than a shared header.
 `cases/ge/regression.jsonl` · `source: bug:#267`
 
 > #266/#267 — international coverage. "Georgia" the country shadows the populous US state; the GeoNames
-> admin fold (#267 data) + the country-candidate reconcile (#267 resolver) land Tbilisi in Georgia, not
+> admin fold (#267 data) + the country-candidate reconcile (#267 resolver) land Tbilisi in Georgia rather than
 > US Georgia. Guards the gap-country admin hierarchy + the foreign-capital-vs-US-state collision fix.
 
 ### `intl-batumi-georgia`
@@ -878,7 +878,7 @@ carrying its own margin note below rather than a shared header.
 
 > #1023 — a SECOND Georgian city on the exact path the Tbilisi fix repairs. "Georgia" parses as
 > `region` (it names a US state), so a non-capital Georgian city ("Batumi") must ride
-> reconcileAdminPair's matchCountry fall-through, NOT the greedy walk. Guards against a future admin
+> reconcileAdminPair's matchCountry fall-through rather than the greedy walk. Guards against a future admin
 > rebuild re-breaking the country-vs-US-state class for anything but the one capital already pinned.
 
 ### `us-savannah-georgia`
@@ -896,7 +896,7 @@ carrying its own margin note below rather than a shared header.
 
 > #1023 sibling-path guard — the country-vs-US-town namesake via the EXPLICIT-country path (#822),
 > the disjoint half of the namesake family. "Lebanon" parses as `country` (region=null), so
-> "Beirut, Lebanon" rides applyExplicitCountryCoherence, not reconcileAdminPair. Broadens the class
+> "Beirut, Lebanon" rides applyExplicitCountryCoherence rather than reconcileAdminPair. Broadens the class
 > beyond Georgia (Lebanon has populous US-town namesakes — Lebanon PA/TN/OH) so a regression in
 > EITHER coherence pass is caught.
 

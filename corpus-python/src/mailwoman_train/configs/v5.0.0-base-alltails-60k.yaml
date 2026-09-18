@@ -43,7 +43,7 @@
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows the fine-tunes broke must hold — gb-venue-ye-three-lords,
 #      gb-lex-cafe-st-marys, gb-op2-four-seasons-cjk;
-#   4. IMPROVEMENT metric, not check: the 4 ve_city_postcode_trailing_state rows and in_structured.
+#   4. IMPROVEMENT metric rather than check: the 4 ve_city_postcode_trailing_state rows and in_structured.
 #
 # A from-scratch run is not guaranteed to beat a tuned production model, and this one has one seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the

@@ -14,7 +14,7 @@ The market hands you two tools for this, and each one solves a different half of
 
 ## The two tools, and the halves they skip
 
-The first tool is a string matcher. Splink, Zingg, dedupe, the fuzzy-match block inside Tamr or Tilores: you feed them name and address columns and they score how similar the text is. This is the obvious move, and used as the _whole_ answer it inherits an obvious flaw. Text similarity is not place similarity. Two doors down the same street is one character apart. The same building written two different ways can be string-distant. You spend the next month tuning a threshold that's too loose in the cities and too tight in the suburbs, and it's never right in both at once. (We took this apart line by line in [Match where it is, not how it's spelled](/research/match-where-it-is-not-how-its-spelled); the short version is that `Jyllandsgade 15` and `Jyllandsgade 75` score 0.96 similar and sit 650 meters apart, and no threshold saves you from that.)
+The first tool is a string matcher. Splink, Zingg, dedupe, the fuzzy-match block inside Tamr or Tilores: you feed them name and address columns and they score how similar the text is. This is the obvious move, and used as the _whole_ answer it inherits an obvious flaw. Text similarity is not place similarity. Two doors down the same street is one character apart. The same building written two different ways can be string-distant. You spend the next month tuning a threshold that's too loose in the cities and too tight in the suburbs, and it's never right in both at once. (We took this apart line by line in [Match where it is rather than how it's spelled](/research/match-where-it-is-not-how-its-spelled); the short version is that `Jyllandsgade 15` and `Jyllandsgade 75` score 0.96 similar and sit 650 meters apart, and no threshold saves you from that.)
 
 That doesn't make strings useless. Names are some of the best evidence you have, and in a minute I'm going to argue you should lean on them hard. The catch is narrower: a string only knows how a record is spelled, never where it sits, so it can't be the thing you _block_ on. Hold that thought.
 
@@ -28,7 +28,7 @@ Here's the part the key vendors are quiet about. At `1504 Taub Loop` in Houston,
 
 Placekey's own FAQ states: it "operates as a universal join key rather than a matching service… it doesn't perform record linkage itself." Read that as the spec, because it is one. A key is where the problem starts. Same building is where the interesting question begins: same building, different company name on the door, are these one entity or two?
 
-That question needs a probability, not a bucket.
+That question needs a probability rather than a bucket.
 
 ## The missing half: a number you can read, and the humility to abstain
 
@@ -62,7 +62,7 @@ It runs on your machine. Open source, your infrastructure, no per-record meter. 
 
 And the boundaries, because the angles above only hold if I'm upfront about these. Placekey _does_ embody place-identity matching; angle four is the rebuttal, but the overlap is real. Melissa ships patented coordinate-proximity matching, so "nobody touches a coordinate" would be a lie; our narrower, true claim is that we make the _calibrated_ coordinate the primary evidence in a probabilistic model. Splink has the label-free baseline at far more scale. The enterprise incumbents beat us on raw volume, multi-domain mastering, support, and decades of name-matching lore. What none of them put together is open, label-free, geocode-first, with the geocoder and the linker in one auditable stack. That's the difference, and it's a real one.
 
-Whatever the matcher surfaces is a candidate for review, not a verdict. What a correlation means, and whether it means anything, is your call.
+Whatever the matcher surfaces is a candidate for review rather than a verdict. What a correlation means, and whether it means anything, is your call.
 
 ```bash
 npm install @mailwoman/registry

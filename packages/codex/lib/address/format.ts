@@ -51,9 +51,9 @@ export interface FormatAddressOptions {
 	/**
 	 * Which of the country's two orders to render in, or unset to read it off the components themselves.
 	 *
-	 * Eight countries write an address two ways, and which one a dict wants is a property of the VALUES, not of the
-	 * country: `21 Jordan Road, Jordan, Kowloon` is the English register and `九龍佐敦佐敦道21號` is the Chinese one, both Hong
-	 * Kong. Rendering either through one country-keyed layout prints one of them in an order nobody writes.
+	 * Eight countries write an address two ways, and which one a dict wants is a property of the VALUES rather than of
+	 * the country: `21 Jordan Road, Jordan, Kowloon` is the English register and `九龍佐敦佐敦道21號` is the Chinese one, both
+	 * Hong Kong. Rendering either through one country-keyed layout prints one of them in an order nobody writes.
 	 *
 	 * A caller holding a parse tree has the better answer and should pass it — every span carries the script it is
 	 * written in. This option is that hand-off.

@@ -43,7 +43,7 @@ export { detectPairIndexCountry, resolvePairIndexCountry, resolvePairIndexForTex
  * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
  */
 /**
- * Absent asset — a soft-feed sibling that was never published, not a failure.
+ * Absent asset — a soft-feed sibling that was never published rather than a failure.
  */
 const HTTP_NOT_FOUND = 404
 
@@ -158,9 +158,9 @@ export interface LoadFromURLsOptions {
 	 * {@link PairIndexResolver} and retained ({@link LoadResult.pairIndexes}), tagged by its header country. The
 	 * selection of which index biases a given parse is a per-parse decision — see
 	 * {@link LoadResult.selectPairIndexForText}, which runs locale-hint over the input text — because one loaded
-	 * classifier serves inputs from multiple countries and the country is a property of the text, not the load. (#1300's
-	 * load-time single-index country restriction is superseded. the `country` load-option below survives as an optional
-	 * config-default posture pin.)
+	 * classifier serves inputs from multiple countries and the country is a property of the text rather than the load.
+	 * (#1300's load-time single-index country restriction is superseded. the `country` load-option below survives as an
+	 * optional config-default posture pin.)
 	 */
 	pairIndexURLs?: readonly string[]
 	/**
@@ -240,10 +240,10 @@ export interface LoadFromURLsOptions {
 /**
  * Fetch + decode the postcode anchor binaries TOLERANTLY, then merge the ones that loaded.
  *
- * Each `postcode-<cc>.bin` is optional: the postcode anchor is a soft ranking channel, not a required model input, so a
- * single missing/404 binary must never reject the whole classifier load. This is the fix for the 2026-07 demo outage —
- * `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and the old throwing
- * `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
+ * Each `postcode-<cc>.bin` is optional: the postcode anchor is a soft ranking channel rather than a required model
+ * input, so a single missing/404 binary must never reject the whole classifier load. This is the fix for the 2026-07
+ * demo outage — `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and
+ * the old throwing `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
  * `loadNeuralClassifierFromURLs` → `runtime.ready` never fired → the demo input stayed permanently disabled even though
  * the model, tokenizer, and the other two postcode binaries were all fine.
  *
@@ -251,7 +251,7 @@ export interface LoadFromURLsOptions {
  * URL + the failure. merge the successes via {@link mergeAnchorLookups}. If all fail, return `undefined` — identical to
  * the no-`postcodeBinaryURLs`-configured path, so the classifier still loads (anchor-off identity, ranking degrades
  * slightly but nothing blocks). A PRESENT-but-corrupt binary (bad magic) throws inside `PostcodeBinaryResolver`; that
- * is caught here too and treated as a skip — a garbage optional asset should degrade, not brick the demo.
+ * is caught here too and treated as a skip — a garbage optional asset should degrade rather than brick the demo.
  */
 async function loadPostcodeAnchorLookup(
 	urls: readonly string[],

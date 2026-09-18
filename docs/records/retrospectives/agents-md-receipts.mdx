@@ -37,7 +37,7 @@ when it dropped out — in the repo and on npm — while every sibling moves on.
 release` reports success, because from its side there was nothing to do.
 
 `@mailwoman/neural-weights-en-au` was the worked example, and it is now IN the list — so read this for
-the mechanism, not for a live defect. It sat outside the list while public and already on npm: siblings
+the mechanism rather than for a live defect. It sat outside the list while public and already on npm: siblings
 reached 9.1.0, en-au held 9.0.0 in `package.json` and on npm, and nothing failed. The cost was not the
 one it looks like, and the difference was worth measuring rather than reasoning out — `npm view
 @mailwoman/neural-weights-en-au@9.0.0 dependencies` answered `{"@mailwoman/neural-weights-en-us":
@@ -98,7 +98,7 @@ So after a move, sweep for QUOTED literals whose first path segment is a workspa
 imports, which the compiler already checks. `.husky/`, `run:` blocks, CLI flag defaults and test
 skip-guards are where they hide. Two shapes look stale and are not: a data-root-relative path (
 `data-bundles.ts`'s `localPath`, paired with a `remotePath`), and a package specifier —
-`import("mailwoman/gazetteer-pipeline")` is the `mailwoman` package's subpath export, not a directory,
+`import("mailwoman/gazetteer-pipeline")` is the `mailwoman` package's subpath export rather than a directory,
 and prefixing it with `packages/` breaks it.
 
 CodeQL reacts to a bulk rename by re-raising every existing alert at its new path, and dismissals do
@@ -148,7 +148,7 @@ have questioned:
 The common shape is that each failure is indistinguishable from a real absence, and absence is typically
 what the question was about — so the wrong answer arrives looking like a discovery. Three rules follow.
 Prefer a reader that ERRORS on a requested-but-missing column over one that omits it. When a projection
-drops a field, the consumer that needed it gets `unchanged`, not a type error, so carry the whole payload
+drops a field, the consumer that needed it gets `unchanged` rather than a type error, so carry the whole payload
 or name what you dropped. And `?? 0`, optional chaining and a bare `.filter()` all convert _"I could not
 read this"_ into _"there is none of it"_ — at a measurement boundary that is a lie, and the cheap
 insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One corpus file read
@@ -173,12 +173,12 @@ thing is the placetype — and `placetype = 'postalcode'` is a contract that the
 would have ranked the UAE the third best-covered postcode locale in the artifact, and every coverage figure drawn from
 that tier would have carried the claim.
 
-So there are three distinct failure modes, not two. **Under-claiming** is abstention. **Over-claiming confidence** is
+So there are three distinct failure modes rather than two. **Under-claiming** is abstention. **Over-claiming confidence** is
 the result presented as clean, which `declared_ambiguity` exists to report. **Claiming the wrong KIND** is this one,
 and it is invisible to both: the answer is fully backed, correctly retrieved, and about a different sort of thing than
 it says. The tell is never in the answer; it is in whether the world has the category at all.
 
-It was found by drawing real rows out of the built artifact to set up a before/after measurement, not by reading the
+It was found by drawing real rows out of the built artifact to set up a before/after measurement rather than by reading the
 country list — the list looked fine, as a list of ISO codes will. Same method point as the two receipts below: an
 aggregate that agrees with itself is not evidence, and a row you can read is.
 
@@ -207,7 +207,7 @@ rule that covers it was already written, one section below: re-measure a surpris
 path.
 
 **The scoping error.** The first census reported 540,259 rows across 9 countries, because it counted
-over `DEFAULT_GEONAMES_COUNTRIES` — the alias fold's own 161. That is one consumer's list, not the reach
+over `DEFAULT_GEONAMES_COUNTRIES` — the alias fold's own 161. That is one consumer's list rather than the reach
 of the defect; the currency backfill, the label-point anchor adjudication and the corpus adapters each
 read the same dumps for their own country sets. Re-measuring over every dump on disk found Russia,
 Vietnam, Iraq, Iran, Kazakhstan, Belarus and Jordan as well. **A count inherits the scope of whatever
@@ -240,18 +240,18 @@ number was a typo or a stale file; both were the right file counted at the wrong
 ratio is what says so.
 
 **The derived rate survived and its denominator did not.** Kana decides Japanese on 4.5% of ROWS (178 of
-3,982), not 3.0% of FIELDS (356 of 11,946). The conclusion the rate supports — that kana is too rare in
+3,982) rather than 3.0% of FIELDS (356 of 11,946). The conclusion the rate supports — that kana is too rare in
 this set to decide the language, so a script rule must abstain rather than guess — holds either way,
 which is exactly why nothing caught it: a number can be wrong by 3× and still argue for the same thing.
 
 The rule this instantiates is already written — count at the unit the model reads — and the addition is
 the detector: **when a re-derived count differs from the old one by a small exact integer factor, the
-unit moved, not the data.** A stale file gives a ragged difference; a changed unit gives 2×, 3×, or a
+unit moved rather than the data.** A stale file gives a ragged difference; a changed unit gives 2×, 3×, or a
 reciprocal of one.
 
 ## The `node_modules` reach-around census — 2026-08-06
 
-**The rule is not "don't use `node:path`."** The 2026-08-06 triage counted **1,095 `join`/`resolve` call sites across 244 files**, and the split is the useful part: 20 node_modules reach-arounds, 48 data-root assembly, 25 module-relative, and **1,002 legitimate** — `mkdtemp` scratch dirs (127), test fixtures (420), and in fact dynamic filesystem work (455): CLI `--out` flags, walking a user-supplied tree, composing under a root a caller threaded in. Banning the import would flag 1,075 correct lines to catch 20. Two shapes that look like violations and are not: a LOCAL root alias derived once from `mailwomanDataRoot()` and composed from thereafter (`scripts/copy-weights.ts` — the concern is re-deriving the root, not composing from it, and its `resolve(repoRoot, …)`-vs-`resolve(dataRoot, …)` contrast is required), and a probe that reads a FOREIGN project's install layout on purpose (`scripts/smoke-clean-install.ts` — `import.meta.resolve` would answer from the monorepo's graph, which is the exact thing a clean-install smoke must not consult).
+**The rule is not "don't use `node:path`."** The 2026-08-06 triage counted **1,095 `join`/`resolve` call sites across 244 files**, and the split is the useful part: 20 node_modules reach-arounds, 48 data-root assembly, 25 module-relative, and **1,002 legitimate** — `mkdtemp` scratch dirs (127), test fixtures (420), and in fact dynamic filesystem work (455): CLI `--out` flags, walking a user-supplied tree, composing under a root a caller threaded in. Banning the import would flag 1,075 correct lines to catch 20. Two shapes that look like violations and are not: a LOCAL root alias derived once from `mailwomanDataRoot()` and composed from thereafter (`scripts/copy-weights.ts` — the concern is re-deriving the root rather than composing from it, and its `resolve(repoRoot, …)`-vs-`resolve(dataRoot, …)` contrast is required), and a probe that reads a FOREIGN project's install layout on purpose (`scripts/smoke-clean-install.ts` — `import.meta.resolve` would answer from the monorepo's graph, which is the exact thing a clean-install smoke must not consult).
 
 ## Defects in the input tail — the 2026-08-02 audit
 
@@ -263,7 +263,7 @@ reciprocal of one.
 
 ## A threshold fitted to a failing population — the 2026-09-14 span-rescore arc
 
-**A rule fitted to the rows that are failing measures whatever defect is producing the failures, not the
+**A rule fitted to the rows that are failing measures whatever defect is producing the failures rather than the
 quantity the rule names.** The span-rescore audit of #2266 counted 34 of 453 frozen rows decided from a
 proper sub-span and found what looked like a clean separation: sorted by the share of the query the
 recovered span covers, **every row under 57% was wrong and every row at or above was correct** bar two.

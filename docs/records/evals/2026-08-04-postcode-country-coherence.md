@@ -22,11 +22,11 @@ record lands the mechanism and measures it.
 surfaced as `--postcode-country-coherence` on `parse` and `geocode` and as an opt-in pin on
 `eval oa-resolver`.
 
-**The boundary is a pre-walk SCOPE decision, not a post-walk re-pick.** Its three sibling coherence passes
+**The boundary is a pre-walk SCOPE decision rather than a post-walk re-pick.** Its three sibling coherence passes
 (`applyAdminCoherence` #263, `applyExplicitCountryCoherence` #822, `applyRegionCountryCoherence`) run
 after the greedy walk and swap the wrong node pair for the right one. That shape cannot work here.
 What needs correcting is the walk's country _scope_, and the scope poisons three things a post-walk
-pass cannot reach: the postcode node's own resolution (Addison, not Paris 1er), the
+pass cannot reach: the postcode node's own resolution (Addison rather than Paris 1er), the
 `applyPostcodeConsistency` fallback that then drags the locality onto it, and the hard `country`
 filter on every other admin lookup. So the verdict is taken once, before the first lookup, and
 replaces `state.defaultCountry` for the whole walk.
@@ -43,7 +43,7 @@ replaces `state.defaultCountry` for the whole walk.
 
 Consistency = the postcode resolves in that country and an EXACT-matching same-named locality sits
 within `thresholdKm` (default 25) of it. Non-exact locality hits contribute nothing — a generous FTS match
-("Paris" → "Parish") is evidence about the index, not about the country.
+("Paris" → "Parish") is evidence about the index rather than about the country.
 
 Two bounds fall out of the candidate set being codex-shaped. A country with no codex module can never
 be proposed: the gazetteer holds `75001` in PL, and this pass will never return PL. And a shape no
@@ -167,13 +167,13 @@ abstains and leaves the (still wrong, still `postcode_city_mismatch`-flagged) US
 not invent a country to explain a contradiction.
 
 P19 `London, Ontario` carries no postcode, so the mechanism is inert by construction — the defect the
-diagnosis flagged (Ontario tagged `locality`, not `region`, so `applyRegionCountryCoherence` never
+diagnosis flagged (Ontario tagged `locality` rather than `region`, so `applyRegionCountryCoherence` never
 fires) is untouched and still wants its own ticket.
 
 ### Leg A′ — the lowercase register
 
 The same 22 inputs lower-cased. **Every row is identical to Leg A, OFF and ON.** Expected — the pass
-keys on gazetteer name matching, not case — but the register is where user queries live, so
+keys on gazetteer name matching rather than case — but the register is where user queries live, so
 it gets measured rather than assumed.
 
 ### Leg B — candidate gazetteer, `--default-country US` pinned
@@ -192,12 +192,12 @@ Identical to Leg A except three rows, all of which resolve to the extract set ra
 
 ### 4.1 Why P04 and P07 abstain on the production extract set
 
-Both are DATA abstentions, not mechanism failures, and each was measured rather than reasoned to:
+Both are DATA abstentions rather than mechanism failures, and each was measured rather than reasoned to:
 
 - **P04 `Munchen`.** On the FTS backend, `findPlace({text:"Munchen", country:"DE"})` returns `München`
   with `exactMatch: FALSE` — the FTS exact-match tier does not fold `ü` → `u`. The pass requires an
   exact match, so it abstains. The candidate backend keys on `name_key = "munchen"` and does fold it,
-  which is why Leg B fixes the row. The gap is in the FTS exact-match tiering, not here.
+  which is why Leg B fixes the row. The gap is in the FTS exact-match tiering rather than here.
 - **P07 `M5V 3L9`.** The production extract set has **zero** CA postcode rows reachable as
   `placetype: "postalcode"`. Nothing to be coherent with. `candidate.db` carries 843,739 of them.
 
@@ -212,7 +212,7 @@ Both fail toward abstention, which is the designed direction.
 - The confound board holds. 22 cases × 2 backends × 2 registers, and **not one case is made worse**.
   The four adversarial rows that would hurt most (Addison TX, Paris TX, Berlin NH, Athens GA) are all
   untouched, and untouched _by the cheap exit_ — the pass never even asks the foreign country.
-- The abstention behaviour is real, not theoretical: P04, P07, P20 and P21 abstain for four different
+- The abstention behaviour is real rather than theoretical: P04, P07, P20 and P21 abstain for four different
   reasons (diacritic folding, missing extract, contradictory pair, contradictory pair).
 - The cost is bounded and mostly zero: 2 lookups when the default is coherent, ≤8 when it is not,
   none at all without a postcode + locality + `defaultCountry`.
@@ -246,13 +246,13 @@ question. What remains open is narrower:
    D-rule's standard check has no leg for it. §6 is an oa-resolver measurement, which is the right
    instrument for a resolver change but is not the check the release process runs.
 2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
-   backend disagree about what an exact match is (`Munchen` → `München` is exact on one, not the
+   backend disagree about what an exact match is (`Munchen` → `München` is exact on one rather than the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on
    which gazetteer is attached needs that difference measured on the FTS path too, or the diacritic
    gap fixed.
 3. **Every number here is Latin-script, three countries.** DE/ES/IT/JP have codex postcode shapes and
    are untested at scale. The confound board covers DE by hand and nothing else.
-4. **The 800-pair survey is inherited, not re-run.** The original zero-border-crossing claim comes from
+4. **The 800-pair survey is inherited rather than re-run.** The original zero-border-crossing claim comes from
    the 2026-08-03 out-of-tree prototype. §6 supersedes it with 28,000 evaluations against the shipped
    code, so this is bookkeeping rather than a gap — but the two should not be cited as independent
    confirmations of each other. They are the same claim, measured twice, the second time properly.
@@ -266,14 +266,14 @@ The evidence for default-on is otherwise strong and unusually clean. 28,000 pair
 US/FR/GB and both mis-scope directions produce **zero false positives**, and — the part that matters
 more than the zero — 1,240 domestic rows in fact fell past the cheap exit and had every alternative
 country tried, so the zero is not an artifact of the mechanism never running. The rescue rate lands at
-88–99% and equals the resolvable-pair count exactly, so the failure mode is abstention, not error. The
+88–99% and equals the resolvable-pair count exactly, so the failure mode is abstention rather than error. The
 whole confound board is untouched, including the four rows designed to break it (Addison TX, Paris TX,
 Berlin NH, Athens GA).
 
 One caution against over-reading the result rate: the rescue leg simulates a _uniformly_ mis-scoped
 default, which is the demo/CLI reality (locale `en-US` → `US` on every query) but overstates how frequently
 this fires in production traffic that already carries a correct country. The right way to read §6 is
-"when the default is wrong, this fixes ~9 in 10 of them and breaks none", not "this improves 9 in 10
+"when the default is wrong, this fixes ~9 in 10 of them and breaks none" rather than "this improves 9 in 10
 addresses".
 
 **Separately, and worth its own ticket:** this is now the only thing in the tree that can override
@@ -321,7 +321,7 @@ own absence.
 The rescue rate equals the domestic coherent-default count exactly, in all three panels (2,963 / 879 /
 8,918). That is not a coincidence and it is the mechanism's cleanest property: it rescues precisely the
 set of pairs whose geometry is resolvable at all, and abstains on the rest. Its recall ceiling is the
-gazetteer's, not a tuning parameter's.
+gazetteer's rather than a tuning parameter's.
 
 **Across all six legs — 28,000 pair evaluations, three countries, both mis-scope directions — the
 false-positive count is 0.**

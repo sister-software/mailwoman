@@ -3,7 +3,7 @@
     cd corpus-python
     modal run -m launch.train_remote::<name> [--flag value ...]
 
-MODULE MODE, not a file path. Modal imports a file path as a TOP-LEVEL module with the file's own
+MODULE MODE rather than a file path. Modal imports a file path as a TOP-LEVEL module with the file's own
 directory on `sys.path`, which makes `launch` unimportable and every `from .x import y` in this
 package an ImportError; `-m` imports it as `launch.train_remote` with the package intact. The
 launcher is a package because a single file grew to fifty-seven near-identical sync functions and

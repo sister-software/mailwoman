@@ -62,7 +62,8 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
  *
  * Precedence on a phrase that matches both a category and a brand: the category wins. Deterministic, and intentional —
  * `@mailwoman/poi-taxonomy`'s categories are the curated set. a brand phrase collision (none observed in the shipped
- * table as of the 2026-07-20 build) would be a data quality bug in the brand table, not a case to special-case here.
+ * table as of the 2026-07-20 build) would be a data quality bug in the brand table rather than a case to special-case
+ * here.
  */
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)

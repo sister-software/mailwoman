@@ -13,7 +13,7 @@
  *   copy against the authored one. this checks the same equality from the TypeScript side, so an edit made here is
  *   caught by `yarn test` rather than only by a suite somebody may not run.
  *
- *   It lives in this package, not in codex, because codex is deliberately zero-dependency and the check needs a repo
+ *   It lives in this package rather than in codex, because codex is deliberately zero-dependency and the check needs a repo
  *   root resolver. The consumer is the right home for a cross-language contract the consumer depends on.
  */
 

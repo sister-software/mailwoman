@@ -10,7 +10,7 @@
  *   existed (`docs/engineering/reference/layer-contract.mdx`); it had simply never been rolled out past
  *   `poi.db` and four OSM databases.
  *
- *   DERIVED FROM THE RUN, NOT FROM THE RECIPE. `source` is composed from the rows each fold ACTUALLY
+ *   DERIVED FROM THE RUN rather than FROM THE RECIPE. `source` is composed from the rows each fold ACTUALLY
  *   ingested, so a build that reads no Overture rows does not claim Overture as a source. That is the
  *   #1015 lesson in its narrowest form: the manifest that lagged did so because it recorded an intention,
  *   and the real recipe had to be reconstructed from the artifact's synthetic-id ranges afterwards.

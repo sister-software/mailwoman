@@ -6,7 +6,7 @@
  *   Host control widgets injected into the geocoder via the `GeocoderPanels` injection point: the device-location
  *   proximity-bias row (`panels.bias`) and the two opt-in display toggles (`panels.aboveResult`) — calibrated
  *   confidence + dev mode. Host-owned because the state they carry (geolocation permission, the calibrated view, the
- *   dev-mode drawer) is a host concern, not a package one.
+ *   dev-mode drawer) is a host concern rather than a package one.
  */
 
 import type React from "react"

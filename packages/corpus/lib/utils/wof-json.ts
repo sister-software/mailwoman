@@ -175,8 +175,8 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
  *
  * `repoDir` may point at a single cloned `whosonfirst-data-*` repo or at a parent directory holding several such repos
  * (the corpus pipeline clones all four into a shared `wof/repos/` root and runs the adapter against that root).
- * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're alternate-geometry exports, not new
- * records.
+ * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're alternate-geometry exports rather
+ * than new records.
  *
  * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file doesn't poison a 3 GB
  * walk. Adapters can add stricter validation downstream if they need it.

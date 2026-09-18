@@ -5,7 +5,7 @@
  *
  *   The design tokens every consumer of `@mailwoman/react` reads. This file is the source of record; `tokens.css` is
  *   its compiled output and is generated, never hand-edited. `styleframe dtcg export` publishes the same values as
- *   W3C DTCG JSON for Figma and any other tool — DTCG is the interchange format here, not the input, because
+ *   W3C DTCG JSON for Figma and any other tool — DTCG is the interchange format here rather than the input, because
  *   `styleframe dtcg import` is a one-shot code generator rather than a build step.
  *
  *   THREE LAYERS, and a component rule may read only the middle one. Primitives are raw values with no opinion about
@@ -124,7 +124,7 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 //#region Shape and motion
 
 /**
- * SPACING IS A SCALE, not a guess.
+ * SPACING IS A SCALE rather than a guess.
  *
  * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations — 0.05rem, 0.35rem, 0.65rem, 1.1rem
  * — each picked by eye at the moment it was written and none of them relatable to any other. A tail of near-misses like
@@ -161,7 +161,7 @@ const easingStandard = variable("easing-standard", "cubic-bezier(0.4, 0, 0.2, 1)
 const easingDecelerate = variable("easing-decelerate", "cubic-bezier(0, 0, 0.2, 1)")
 
 /**
- * Safe-area insets belong to the chrome, not to each component that happens to sit near an edge. They stay CSS
+ * Safe-area insets belong to the chrome rather than to each component that happens to sit near an edge. They stay CSS
  * expressions because `env()` resolves per device and has no static value.
  */
 variable("safe-area-top", "env(safe-area-inset-top, 0px)")

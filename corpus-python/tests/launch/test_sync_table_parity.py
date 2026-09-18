@@ -90,7 +90,7 @@ def test_every_verified_package_path_exists() -> None:
 
 
 def test_every_corpus_version_can_be_read_off_the_table() -> None:
-    """A version must be enumerable, not just present.
+    """A version must be enumerable rather than just present.
 
     While each transfer spelled its version into two literal paths, the set of corpus versions the
     launcher knows about existed only as substrings and nobody could list it. `corpus()` records the

@@ -24,7 +24,7 @@ import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 
 /**
  * The layers whose features carry a place name. Protomaps names its label layers `<theme>_label` and its settlement
- * layers `places_*`; anything else in the style is geometry, not a label a visitor can read and point at.
+ * layers `places_*`; anything else in the style is geometry rather than a label a visitor can read and point at.
  */
 const LABEL_LAYER = /_label|^places_/
 

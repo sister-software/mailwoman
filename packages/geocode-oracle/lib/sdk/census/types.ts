@@ -118,7 +118,7 @@ export interface CensusTigerLine {
 	 *
 	 * @pattern ^\d+$
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- the Census API's own wire key, not a name we chose. renaming it to `tigerLineID` would silently read `undefined` off every response.
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- the Census API's own wire key rather than a name we chose. renaming it to `tigerLineID` would silently read `undefined` off every response.
 	tigerLineId: string
 }
 

@@ -29,8 +29,8 @@ import { isShapeExcludedPostcode } from "#postcode/shape-coherence"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "#span-rescore"
 
 /**
- * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record, not a dump. The count past the cap is
- * reported in `candidatesTruncated`, so absence of a row is never silent.
+ * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record rather than a dump. The count past the
+ * cap is reported in `candidatesTruncated`, so absence of a row is never silent.
  */
 const TRACE_CANDIDATE_CAP = 10
 
@@ -405,12 +405,12 @@ export async function applySpanRescore(
 		value: hit.text,
 		start: hit.start,
 		end: hit.end,
-		// No model confidence for a post-hoc recovery. a mid-tier value marks it as recovered, not asserted.
+		// No model confidence for a post-hoc recovery. a mid-tier value marks it as recovered rather than asserted.
 		confidence: 0.5,
 		children: [],
 	}
 
-	// #1537: the same-span namesake runner-ups, not an empty list. A name the model reads as a `street`
+	// #1537: the same-span namesake runner-ups rather than an empty list. A name the model reads as a `street`
 	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the only thing that
 	// resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the
 	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.

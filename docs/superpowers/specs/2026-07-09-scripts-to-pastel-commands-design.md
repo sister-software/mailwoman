@@ -30,7 +30,7 @@ Every table row = one thin `.tsx` in `mailwoman/commands/…` wrapping a `run()`
 | `corpus golden promote`     | `corpus/scripts/promote-golden.ts`                                                                                                         | `corpus/tools/golden-promote.ts`                                        |
 | — (fold)                    | `corpus/scripts/run-corpus-build.ts`                                                                                                       | duplicate of existing `corpus run` (`runAdapter`) — verify, then delete |
 
-The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
+The source enum makes `fetch` one command rather than nine. Existing `mailwoman/corpus-tools/` (3 files backing align-extract/stats/overlay-manifest commands) migrates into `corpus/tools/` in the same phase so the corpus workspace owns all corpus logic — commands repoint, `mailwoman` already depends on `@mailwoman/corpus`.
 
 ### `mailwoman dev` (new group)
 
@@ -47,7 +47,7 @@ The source enum makes `fetch` one command, not nine. Existing `mailwoman/corpus-
 
 ### `mailwoman eval` (new group)
 
-Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data, not code).
+Logic lands in **`mailwoman/eval-harness/`** — deliberate deviation from owning-workspace: no workspace owns evals, and a private evals workspace can't be a dependency of the published CLI. Follows the `gazetteer-pipeline` precedent. Check-threshold JSONs (`scripts/eval/checks/*.json`) and fixtures move with it; the ledger (`evals/scores-by-version.json`) stays at repo root (data rather than code).
 
 | Command                      | Source script                                                                               |
 | ---------------------------- | ------------------------------------------------------------------------------------------- |
@@ -118,7 +118,7 @@ All four `bin` entries leave `resolver-wof-sqlite/package.json`. `build-fts-cli.
 
 ## 3. The dedupe program (2026-07-09 survey; counts = in-scope call sites)
 
-New core helpers follow the acronym-casing convention (`readJSONL`, not `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
+New core helpers follow the acronym-casing convention (`readJSONL` rather than `readJsonl`) so they don't join the #875 debt. Phase 0 lands the core helpers; later phases consume them as each script migrates — **no big-bang rewrite of untouched scripts**; a script's dedupe happens when it migrates (probes headed for `diagnostic/` are not rewritten).
 
 | #   | Concern                                                       | Sites                     | Destination                                                                                        |
 | --- | ------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |

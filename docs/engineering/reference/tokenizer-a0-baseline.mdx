@@ -47,7 +47,7 @@ Eval fixture: 43 hand-curated lines covering CJK / Cyrillic / Armenian / Greek /
 
 The v0.1.0 tokenizer was trained on a corpus that included **Who's On First admin-name variants**. WOF ships place names in dozens of scripts — Tokyo appears as `Tokyo` _and_ `東京` _and_ `Tōkyō` _and_ in Cyrillic transliteration, all in the same admin record. Mailwoman v0.1.0's training pipeline pulled these admin records to populate Stage 6 lookups, and the tokenizer training scanned the same data.
 
-The result: v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero, not because the corpus had real coverage of those scripts but because **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation set**.
+The result: v0.1.0's byte-fallback rate on Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari was effectively zero rather than because the corpus had real coverage of those scripts but because **the place-name admin variants accidentally taught the tokenizer enough sub-pieces to avoid byte-fallback on a small evaluation set**.
 
 When we moved to `corpus-v0.3.0` (US DOT NAD + WOF postalcode + cleaner US/FR address rows), those incidental admin-name variants stopped being in the tokenizer training set. A0 — trained on the same en-US + fr-FR mass without the WOF admin leakage — has effectively no non-Latin coverage. Hence the regressions you see in the table.
 

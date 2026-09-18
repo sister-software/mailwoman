@@ -30,7 +30,7 @@ describe("APIClient: disposal", () => {
 	it("reaches a caching storage whose asyncDispose lives on the prototype", async () => {
 		let disposeCount = 0
 
-		// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain, not an own property.
+		// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain rather than an own property.
 		// The pre-migration predicate (Object.hasOwn on the instance) never matched this shape,
 		// leaving cache disposal as dead code.
 		const storagePrototype = {
@@ -151,7 +151,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("still throttles a serial run", async () => {
-		// The FULL MINUTE, not `60000 / requestsPerMinute`. This constant used to be 30_000 — the spacing between two
+		// The FULL MINUTE rather than `60000 / requestsPerMinute`. This constant used to be 30_000 — the spacing between two
 		// requests — which encoded the very defect it read as guarding: a budget of 2 released 2, waited 30s, released
 		// 2 more, i.e. 4/minute against a stated 2. Measured on a bare client at `requestsPerMinute: 10`, a 20-call
 		// fan-out arrived `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
@@ -543,7 +543,7 @@ describe("APIClient: a caller-supplied adapter cannot bypass the check", () => {
 		// `mergeConfig` lets a request-level `adapter` win over the instance default, and the check lives in that
 		// instance adapter — so before this was stripped, three concurrent calls made 3 dispatches, took 0 grants and
 		// slept 0 times. The cache interceptor's own adapter swap is unaffected: it happens inside the interceptor
-		// chain on the merged config, not through this entry point.
+		// chain on the merged config rather than through this entry point.
 		const clock = new VirtualClock()
 		const dispatches: number[] = []
 

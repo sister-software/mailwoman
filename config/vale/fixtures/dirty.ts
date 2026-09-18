@@ -13,6 +13,7 @@
 // Here it is: `the gate` and `a seam`.
 
 // A dosage is not a metric; describe the measured rows.
+// Anchored, not bare.
 
 // `ReifiedShorthand.yml` runs over source comments through the same config, and each
 // clause below must trip it: the probe confirmed the guard, the guard holds, we recover the win

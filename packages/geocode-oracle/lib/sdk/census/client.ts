@@ -62,7 +62,7 @@ export const CENSUS_GEOCODER_BASE_URL = "https://geocoding.geo.census.gov/geocod
  *
  * SOURCING, stated precisely because it could not be verified: the Census Bureau publishes no rate limit for the
  * single-address geocoding endpoints. It does cap the separate BATCH endpoint at 10,000 records per submission, which
- * is a size limit rather than a rate. So this number is a politeness posture toward a free public service, not a
+ * is a size limit rather than a rate. So this number is a politeness posture toward a free public service rather than a
  * published ceiling — the same footing `BDC_DEFAULT_REQUESTS_PER_MINUTE` is on, and for the same reason it is a DEFAULT
  * rather than a clamp.
  *
@@ -82,7 +82,7 @@ const MS_PER_MINUTE = 60_000
  * Shorter than the Google client's thirty because the answer is versioned rather than stable. `Public_AR_Current` is
  * re-issued from MTDB twice a year, and a re-issue can move an interpolated coordinate along its segment or reassign
  * the segment entirely. A week bounds how long a run can be reading pre-roll answers, and costs nothing — the requests
- * are free, and the cache exists here to spare a slow public service, not a bill.
+ * are free, and the cache exists here to spare a slow public service rather than a bill.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -214,7 +214,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	 * Geocode an address and return every TIGER match, best first.
 	 *
 	 * `locations/*` — the address + coordinate only. Use {@linkcode CensusGeocoderClient.lookupGeography} when the census
-	 * block/tract attributes are wanted too. it is a different endpoint, not a flag on this one.
+	 * block/tract attributes are wanted too. it is a different endpoint rather than a flag on this one.
 	 */
 	public async lookupAddress(input: CensusGeocoderInput): Promise<OracleGeocodeResult<CensusAddressMatch>[]> {
 		const { path, params } = buildQuery(input, "locations")
@@ -243,7 +243,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	/**
 	 * Issue one lookup and parse its matches, raising a 404 when there are none.
 	 *
-	 * A NO-MATCH IS AN ERROR HERE, not an empty array, and the choice is deliberate: it makes "the address did not
+	 * A NO-MATCH IS AN ERROR HERE rather than an empty array, and the choice is deliberate: it makes "the address did not
 	 * geocode" land on the same `error.status` branch a caller already writes for every other client in this repo, rather
 	 * than as a second success shape only this one has. The empty response is still CACHED (see
 	 * {@linkcode isCacheableCensusBody}) — the error is raised after the interceptor has persisted the body, so a repeat

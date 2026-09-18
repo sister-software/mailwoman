@@ -18,10 +18,10 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
  *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
  *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
- * Suppression is by SURFACE, not by term: `region` still links, and so does a multi-word phrase that merely contains a
- * suppressed word, like the FST alias `finite-state transducer` (contains "state", still links in full). Multi-word
- * terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what keeps them
- * out of this list.
+ * Suppression is by SURFACE rather than by term: `region` still links, and so does a multi-word phrase that merely
+ * contains a suppressed word, like the FST alias `finite-state transducer` (contains "state", still links in full).
+ * Multi-word terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what
+ * keeps them out of this list.
  */
 const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
@@ -77,7 +77,7 @@ const config: Config = {
 		// The four faces that paint above the fold, preloaded. Without these the chain is
 		// HTML -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
 		// font byte on a warm cache. with `font-display: swap` on every face that is a guaranteed flash of the
-		// fallback plus a full-page reflow. `preconnect` above only removes the handshake, not the discovery.
+		// fallback plus a full-page reflow. `preconnect` above only removes the handshake rather than the discovery.
 		// Any face not listed here still loads lazily off the stylesheet, which is what we want for the other 44.
 		...(
 			[
@@ -369,7 +369,7 @@ const config: Config = {
 						{ label: "Earth", href: "https://earth.mailwoman.ai/" },
 						{ label: "Field notes", to: "/research" },
 						// /training is a published page with no other route into it since the navbar
-						// was trimmed back to the doors. This is the smallest fix for that, not a
+						// was trimmed back to the doors. This is the smallest fix for that rather than a
 						// considered placement — revisit when the Resources door lands.
 						{ label: "Training", to: "/training" },
 					],

@@ -26,8 +26,8 @@ One document holds six tables, and all six are required — a hand-authored file
 
 Three properties hold by construction:
 
-- **No numeric field exists anywhere.** Not a strength, not a confidence, not a count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`) and the package exports no order over it, because a number on an authored relationship is a ranking weight whatever it is called.
-- **Authored, observed, and derived are three types, not three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
+- **No numeric field exists anywhere.** Not a strength rather than a confidence rather than a count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`) and the package exports no order over it, because a number on an authored relationship is a ranking weight whatever it is called.
+- **Authored, observed, and derived are three types rather than three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
 - **A derived fact carries its provenance structurally.** It has no `source` field: its `derivation` plus its `inputs` are the provenance, and every input carries source provenance in turn. A source string can be copied onto a record that did not come from it; an input list either resolves or the document does not validate.
 
 Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly — `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, `toDerivedFactID`. The brands are compile-time only; the strings survive JSON untouched.
@@ -64,7 +64,7 @@ pharmacy               isA healthcare_facility          affords obtain_medicatio
 activity
 obtain_medication      isA activity
 
-affords                establishment → activity, not transitive, not symmetric
+affords                establishment → activity rather than transitive rather than symmetric
 poi-taxonomy pharmacy  → the pharmacy concept
 ```
 
@@ -76,7 +76,7 @@ node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packag
 
 [`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where each external category id was read from. A reviewed amendment admitted a first breadth wave — a `drugstore` concept, a US-scoped `affords` assertion on it, and a second `poi-taxonomy` mapping — and all three are authored, under the same provenance discipline. One activity therefore reaches two establishment classes, which is what the schema was shaped to express and what the POI branch searches as a union.
 
-Measured, not promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
+Measured rather than promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
 
 ## Design commitments
 
@@ -93,7 +93,7 @@ Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not 
 
 The operating rule for the whole boundary is one sentence: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
 
-Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts, not a service.
+Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts rather than a service.
 
 ## Where the full design lives
 

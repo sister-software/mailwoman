@@ -213,7 +213,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 		if (existing) return existing
 
 		// Seed every rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
-		// measurable source at all is dropped by the caller, not left implicit here.
+		// measurable source at all is dropped by the caller rather than left implicit here.
 		const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
 		for (const rung of LADDER) {

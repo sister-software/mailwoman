@@ -9,7 +9,7 @@
  *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
  *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
  *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that and exits 0 — this command is a debug probe, not a strict
+ *   fell through) reports that and exits 0 — this command is a debug probe rather than a strict
  *   POI-only parser.
  *
  *   Exit-code contract:
@@ -130,7 +130,7 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
-		// Every member needs a tag, not just one: a union emitted from the subset that happens to carry `osmTag` is a
+		// Every member needs a tag rather than just one: a union emitted from the subset that happens to carry `osmTag` is a
 		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 

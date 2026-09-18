@@ -36,31 +36,31 @@ export const ANCHORED_CHILD_MAX_WORDS = 4
 /**
  * Bias magnitude used when neither the index nor the caller supplies one. Real usage always has `index.delta` (the
  * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration), so this is a
- * defensive fallback, not a tuned value.
+ * defensive fallback rather than a tuned value.
  */
 export const DEFAULT_DELTA = 1
 
 /**
- * Structural-marker words: a candidate window immediately followed by one of these is the HEAD of a street/venue name,
- * not a standalone place reference. Each entry's rationale is the specific false-positive class it closes (the rung-3
- * venue-confound board):
+ * Structural-marker words: a candidate window immediately followed by one of these is the HEAD of a street/venue name
+ * rather than a standalone place reference. Each entry's rationale is the specific false-positive class it closes (the
+ * rung-3 venue-confound board):
  *
  * - `house` — venue/building-name suffix: "Church House", "Manor House".
  * - `road` / `street` — street-type suffix: "Church Road", "Church Street".
  * - `flat` — unit designator following a street/venue head: "Church Flat 2".
  * - `court` — venue/building-name suffix (also a common street-type in some registers): "Church Court".
  *
- * Not exhaustive by design — this closes the specific classes the rung-3 evidence surfaced, not every conceivable
- * street/venue suffix. Widening the table is a future tunable (same discipline as `fst-prior.ts`'s length-scaling
- * knobs): add an entry with its own rationale line, don't silently grow the set.
+ * Not exhaustive by design — this closes the specific classes the rung-3 evidence surfaced rather than every
+ * conceivable street/venue suffix. Widening the table is a future tunable (same discipline as `fst-prior.ts`'s
+ * length-scaling knobs): add an entry with its own rationale line, don't silently grow the set.
  */
 export const STRUCTURAL_MARKER_WORDS: ReadonlySet<string> = new Set(["house", "road", "street", "flat", "court"])
 
 /**
  * A bare house-number shape ("5", "12a", "104b") — the successor CLASS the marker table's rationale calls out alongside
  * the fixed word list: a window followed by what looks like a house number reads as a numbered-street head ("Church
- * 5"-style patterns in some registers), not a place name. Same suppression rationale as the fixed words, expressed as a
- * shape test instead of a literal set (a house number is not enumerable).
+ * 5"-style patterns in some registers) rather than a place name. Same suppression rationale as the fixed words,
+ * expressed as a shape test instead of a literal set (a house number is not enumerable).
  */
 export function looksLikeHouseNumber(token: string): boolean {
 	return /^\d+[a-z]?$/.test(token)
@@ -70,15 +70,15 @@ export function looksLikeHouseNumber(token: string): boolean {
  * Venue-title prepositions (BETA REFINEMENT, 2026-07-24 — v2 battery bar-2 regression): when the word-group immediately
  * PRECEDING the child window folds to one of these, the TRANSITION adjustment (TRANSITION-BETA) is withheld for that
  * hit — the EMISSION bias stays exactly as-is. Rationale: an immediately-preceding "at"/"of" marks a LEXICALIZED venue
- * title ("New Inn at Hoff", "Church of St Mary") — the embedded place name is part of the venue's own name, not an
- * address field. Address syntax introduces dependent localities POSITIONALLY (field order, adjacency to the post town),
- * never prepositionally, so a prepositional predecessor is venue-title evidence and the entry-path bonus must not tip a
- * near-miss into a false positive (the measured trigger: "New Inn at Hoff, Appleby-In-Westmorland" — the β=5 entry
- * bonus alone flipped it, failing the venue-anchored ≤4/6500 bar by one row). Interior place-name prepositions ("Barrow
- * upon Soar", "Knott End on Sea") are unaffected by construction — this is a PREDECESSOR check, not a membership test
- * on the child's own words. No predecessor (child at the string/segment start) → no suppression. LIST GROWTH requires a
- * per-word rationale line (the same widening discipline as {@link STRUCTURAL_MARKER_WORDS}); long-term the list derives
- * from register statistics (#1296).
+ * title ("New Inn at Hoff", "Church of St Mary") — the embedded place name is part of the venue's own name rather than
+ * an address field. Address syntax introduces dependent localities POSITIONALLY (field order, adjacency to the post
+ * town), never prepositionally, so a prepositional predecessor is venue-title evidence and the entry-path bonus must
+ * not tip a near-miss into a false positive (the measured trigger: "New Inn at Hoff, Appleby-In-Westmorland" — the β=5
+ * entry bonus alone flipped it, failing the venue-anchored ≤4/6500 bar by one row). Interior place-name prepositions
+ * ("Barrow upon Soar", "Knott End on Sea") are unaffected by construction — this is a PREDECESSOR check rather than a
+ * membership test on the child's own words. No predecessor (child at the string/segment start) → no suppression. LIST
+ * GROWTH requires a per-word rationale line (the same widening discipline as {@link STRUCTURAL_MARKER_WORDS});
+ * long-term the list derives from register statistics (#1296).
  *
  * - `at` — venue-title locative: "New Inn at Hoff", "The Mill at Glynhir".
  * - `of` — venue-title genitive: "Church of St Mary", "House of Bruar".
@@ -155,13 +155,13 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
 
 /**
  * Compute the segment index of every entry in `nonEmptyGroups`, by counting literal `,` characters in `inputText` that
- * fall strictly before each group's first piece's start offset (offsets, not piece-text inspection, so this is robust
- * to however the tokenizer happened to attach a comma piece to its neighboring word group — `groupPiecesIntoWords`
- * absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own piece span can land inside
- * either group depending on tokenization. counting commas strictly before a group's own start offset sidesteps that
- * ambiguity entirely). Shared by {@link buildSegmentWindows} (to know where segment boundaries fall) and
- * {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the same segment or has already crossed
- * into the next one — see the module docstring's "Marker suppression" section).
+ * fall strictly before each group's first piece's start offset (offsets rather than piece-text inspection, so this is
+ * robust to however the tokenizer happened to attach a comma piece to its neighboring word group —
+ * `groupPiecesIntoWords` absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own piece
+ * span can land inside either group depending on tokenization. counting commas strictly before a group's own start
+ * offset sidesteps that ambiguity entirely). Shared by {@link buildSegmentWindows} (to know where segment boundaries
+ * fall) and {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the same segment or has
+ * already crossed into the next one — see the module docstring's "Marker suppression" section).
  *
  * Without `inputText` (or an input with no commas at all), every group falls in segment 0.
  */
@@ -233,8 +233,8 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
  * Anglo-format assumption. Directly measured: "…, Pinsonnac, 12210 Montpeyroux" applied=false, while the same row with
  * the postcode removed applied=true and emitted dependent_locality=Pinsonnac.
  *
- * Membership is per-country and deliberately narrow: an entry is earned by a codex postcode shape plus a confound
- * board, not by the country merely writing the postcode first. FR/DE/ES/IT have all cleared that bar. A country absent
+ * Membership is per-country and deliberately narrow: an entry is earned by a codex postcode shape plus a confound board
+ * rather than by the country merely writing the postcode first. FR/DE/ES/IT have all cleared that bar. A country absent
  * from this set is not an oversight to be corrected in passing — en-IN, for one, is absent because the PIN goes last,
  * so the trailing-postcode strip already folds its parent segment correctly.
  */

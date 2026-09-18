@@ -24,7 +24,7 @@ decode over LEARNED span scores beat the token decode?_ — is answered **yes**.
 
 ## The secondary read confirms the diagnosis, notthe outcome
 
-The v3.0.0 write-up called the failure _under-training, not falsification_, on the strength of a loss
+The v3.0.0 write-up called the failure _under-training rather than falsification_, on the strength of a loss
 that was still falling at 2k with raw span NLL ~35. One variable (the head's LR) tested that claim:
 
 |               | step 400 | step 2000 | shape                           |
@@ -51,7 +51,7 @@ mis-specified, exactly as diagnosed, and repairing it changed the answer complet
 - **`Rue Montmartre` → locality is still wrong**, and that is _expected_: it is the bare-fragment
   recall class (66% of street failures, night-3 partition), which the span head was never going to
   fix. It is option C's target (kind-posterior soft channel + recall-weighted loss) and is
-  deliberately out of Phase 1's scope. Its survival here is the plan's prediction holding, not a
+  deliberately out of Phase 1's scope. Its survival here is the plan's prediction holding rather than a
   surprise.
 
 ## Bonus finding: the span loss improved the BIO head

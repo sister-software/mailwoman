@@ -28,7 +28,7 @@ board 3 (the no digit board) against the SHIPPED-v310 baselines registered befor
 | pc-first-hn        | guard (ceiling)  |                0.940 |                    0.945 |     +0.5 ✓ |
 | slash-hn           | monitored        |                0.650 |                    0.655 |       +0.5 |
 
-The pre-registered bar: _"bare-street-hn rises materially... clear motion, not the complete improvement. If it
+The pre-registered bar: _"bare-street-hn rises materially... clear motion rather than the complete improvement. If it
 does not move at 2k, the license-transfer hypothesis is wrong and a full run is not warranted."_
 
 **+1.7pp with the two intervals almost entirely overlapping is not clear motion.** The bar is not
@@ -51,11 +51,11 @@ win the extract is required to guard. A full 8k run would have more room to ampl
 **Deconfounded (2026-07-16, same session):** re-reading board 2 on **shipped v310** in the same
 session, same harness, same int8 export gives `0.733` overall — **identical to the T2 verdict**, cell
 for cell (bare-street 0.715, admin-street-homonym 0.517). So the v310 baseline is stable
-session-to-session and the v330 drift is **real, not cross-session quantization noise.** That
+session-to-session and the v330 drift is **real rather than cross-session quantization noise.** That
 strengthens the do-not-escalate call. The specificity is the tell: it is the FR **fragment** classes
-— the ones fr-fragment fixed — that drift, not the board at random, which points at **weight
+— the ones fr-fragment fixed — that drift rather than the board at random, which points at **weight
 dilution**: `synth-no-fragment` @ 12.0 crowds fr-fragment's relative share over 2k steps, and the
-model drifts back toward its pre-fr-fragment reading. So B4b is two knobs, not one — the bare-street
+model drifts back toward its pre-fr-fragment reading. So B4b is two knobs rather than one — the bare-street
 ratio _and_ the no-fragment weight relative to fr-fragment — and they must be probed one at a time.
 
 ## Two reasons not to escalate, and one caveat
@@ -70,7 +70,7 @@ not have its own 2k-vs-8k trajectory on a board, so I cannot say whether +1.7pp 
 check a decision — so the call goes to the operator rather than being made by a bar I cannot defend.
 What I will not do is _relax_ the bar I wrote in order to launch the 8k myself.
 
-## The likely reason it barely moved — a named hypothesis, not a knob spun
+## The likely reason it barely moved — a named hypothesis rather than a knob spun
 
 B0 established the mechanism: the failing Norwegian rows have the **street mistagged as a locality**,
 and the digit follows it (`Hallingrudveien 32` → locality + postcode). The fix is therefore the same
@@ -79,13 +79,13 @@ requires the street to appear _without a number at all_, so the model cannot lea
 
 This extract's `--bare-street-prob` defaults to **0.30**: only 30% of its signal rows are pure bare
 streets; the other 70% are `{street} {number}`, a form the model mostly already handles (board 3's
-bare-street-hn is already 0.693, not 0.215 like French was). So the extract spends most of its weight
+bare-street-hn is already 0.693 rather than 0.215 like French was). So the extract spends most of its weight
 on a class that is not broken and little on the one that is.
 
 **The testable next move is to raise the bare-street ratio** so the extract hits the street→locality
 confusion directly, the way fr-fragment did. That is one config knob. Per the treadmill guard I am
 not spinning it solo at 2k — it is a hypothesis for the operator or the next shift, to be
-pre-registered and probed, not tuned in the dark.
+pre-registered and probed rather than tuned in the dark.
 
 ## What stands regardless
 

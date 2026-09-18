@@ -82,9 +82,9 @@ import { normalizeComponent } from "#eval-harness/per/tag-f1"
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
  * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x. ONNX inputs `anchor_features`/`gazetteer_features`)
  * were trained with these channels live, so honest inference must feed them. The lookup is keyed by the input's own
- * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
- * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
- * out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
+ * postcode — always available at eval time. Why this is a DEFAULT rather than opt-in (the bug this file used to have):
+ * when these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity").
+ * That's out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
  * (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0, region↔locality flip
  * — while the morphology tags (street/house_number/venue) that don't lean on the anchor channel survive. The result
  * looks like a per-version model regression but is purely a harness OOD artifact: both v1.5.0 and v1.7.0 crater
@@ -156,8 +156,8 @@ interface GoldenRow {
  *
  * `foldStreetParts: false` is the v0.1.3 convention (the 2026-08-06 relabel): that answer key labels US streets SPLIT —
  * `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
- * comparing measures the harness, not the model. The v9.0.0 promotion eval read exactly that as an 0.4pp `us.street`
- * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
+ * comparing measures the harness rather than the model. The v9.0.0 promotion eval read exactly that as an 0.4pp
+ * `us.street` regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
  * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its
  * convention cannot be graded under the wrong one by accident.
  */

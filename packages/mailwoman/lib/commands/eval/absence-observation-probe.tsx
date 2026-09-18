@@ -19,7 +19,7 @@
  *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md` for the build command.
  *
  *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, a
- *   missing coverage layer, a missing database. A recorded BREACHED is a result, not a crash, and it is
+ *   missing coverage layer, a missing database. A recorded BREACHED is a result rather than a crash, and it is
  *   the result the asymmetry claim is graded on.
  */
 

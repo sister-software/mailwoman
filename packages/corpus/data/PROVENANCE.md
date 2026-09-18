@@ -54,7 +54,7 @@ reproduce. The generator is byte-deterministic and oxfmt is too, so the artifact
 the same fetch outputs. `sub-venue-lexicon.test.ts` pins determinism directly.
 
 The extract JSONLs and the `.osm.pbf` files are build inputs under
-`$MAILWOMAN_DATA_ROOT/sub-venue/`, not committed.
+`$MAILWOMAN_DATA_ROOT/sub-venue/` rather than committed.
 
 ### Sources, as of the committed build (2026-08-05)
 
@@ -75,7 +75,7 @@ contains no OSM geometry and no OSM row. What survives the OSM leg is surface CO
 a substantial extraction from a database, so this table is not treated as a Derived Database. That
 reading matches `osm/README.md`'s posture that the ODbL obligation rides on the built recipe output
 rather than on code. **A corpus recipe output built from OSM rows IS a derived work, and that question is still not
-settled** — it gates step 4, not this table.
+settled** — it gates step 4 rather than this table.
 
 ### What the sources are FOR, and what each cannot do
 
@@ -85,14 +85,14 @@ Overture and OSM fail differently, which is why both are read.
   `airport_terminal` category against 4 in the whole Great Britain OSM extract, and 3 of those 4 are a
   street called CONCOURSE WAY. **But poi.db is four countries** — US 11,521,612 / CA 794,418 /
   FR 721,352 / MX 644,316, and nothing else (measured 2026-08-05). It can attest en-US, en-CA, fr-FR
-  and es-MX and nothing else, so a zero count in it is evidence of absence in four countries, not in
+  and es-MX and nothing else, so a zero count in it is evidence of absence in four countries rather than in
   the world.
 - **OSM** reaches any region with a Geofabrik extract, and carries the `name:<lang>` family, which is
   where every non-Latin surface in this table comes from. What it does not carry is a curated notion
   of "interior": 3,204 of Great Britain's 3,273 `hall` hits sit on a `public_transport=platform`,
   because a British bus stop is named after the village hall it stands outside.
 
-The Overture category set is measured, not guessed. A full scan of all 13,681,698 rows counted, per
+The Overture category set is measured rather than guessed. A full scan of all 13,681,698 rows counted, per
 category, how many named rows carry a designator token; the ranking is not what a category name
 predicts. `gas_station` leads the entire table with 12,996 hits, every one of them `station` inside
 "Holiday Station" or "Chevron Station Seward", and `shoe_store` contributes 708 hits of `wing` because
@@ -112,7 +112,7 @@ and a `hall` on a terminal is a hall.
 
 ### Head nouns: what the curation pass needed before it could start
 
-Wikidata gives the ENCYCLOPAEDIC name of a concept, not the designator as addressed. Q849706's
+Wikidata gives the ENCYCLOPAEDIC name of a concept rather than the designator as addressed. Q849706's
 Spanish label is `terminal aeroportuaria`; the form on an envelope is `Terminal`. That is why wave 1
 shipped 1,014 uncurated surfaces and could promote none of them — there was nothing promotable in the
 table. Two derivations run before the harvest:
@@ -200,7 +200,7 @@ en-US, and because it is not in the shipped list, the rejection has teeth: the r
 
 ### Identifier shapes are per-region now
 
-`Gate A12` is a rendering, not a string anyone wrote down: all 658 Great Britain `aeroway=gate`
+`Gate A12` is a rendering rather than a string anyone wrote down: all 658 Great Britain `aeroway=gate`
 features but 13 are unnamed and carry only a `ref`. The table therefore carries a distribution rather
 than a phrase list — and the distribution turns out to differ by country far more than the shared
 vocabulary suggests, so a recipe generating `Gate <ref>` for a French address has to sample France's:

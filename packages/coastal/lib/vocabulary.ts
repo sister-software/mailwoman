@@ -18,7 +18,7 @@
  *   of all twelve published layers rather than of one, taken from the 2024 geodatabase — a domain read from
  *   a single layer is a domain that throws on the day another layer carries its ninth value.
  *
- *   BLANK IS A SINGLE SPACE, NOT AN EMPTY STRING. Every "blank" value in this product is `" "`, on 87 rows
+ *   BLANK IS A SINGLE SPACE rather than AN EMPTY STRING. Every "blank" value in this product is `" "`, on 87 rows
  *   across the twelve layers — the same 87 that carry `published = 0`, and all of them on SMP layers (13 to
  *   16 per layer. the NFI layers have none). A reader testing `=== ""` finds nothing and reports the
  *   anomalous rows as ordinary ones.

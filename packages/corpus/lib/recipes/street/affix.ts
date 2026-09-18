@@ -571,7 +571,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 			const M = mlPool.length
 			let mlGuard = 0
 
-			// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `M > 0` is an invariant guard against an empty pool, not a progress condition
+			// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- `M > 0` is an invariant guard against an empty pool rather than a progress condition
 			while (M > 0 && balanceEmitted < multilocaleCount && mlGuard++ < multilocaleCount * 10) {
 				const t = mlPool[Math.floor(random() * M)]!
 				const { raw, components } = renderBalanceRow(t)

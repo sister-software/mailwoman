@@ -18,7 +18,7 @@
  *   consumer passes its TileJSON URL (`tiles.mailwoman.ai/race-dots-la.json`) to
  *   `createRaceDotsSource`.
  *
- *   The dot is a _representation_, not a record: a random position inside the block, standing in for
+ *   The dot is a _representation_ rather than a record: a random position inside the block, standing in for
  *   ~N real people of that category. It says nothing about any individual address.
  */
 

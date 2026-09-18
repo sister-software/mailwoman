@@ -451,9 +451,9 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
  * The two FST sources, which need a warm session to learn which artifact the decoder would read.
  *
  * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will actually feed the prior, and it
- * is right to: `artifacts` reports what a session READ, not what it could have. A lookup wants the artifact the decoder
- * would consult, so it asks for an engine that loads one — resolving the path any other way would answer about an FST
- * no runtime configuration reads.
+ * is right to: `artifacts` reports what a session READ rather than what it could have. A lookup wants the artifact the
+ * decoder would consult, so it asks for an engine that loads one — resolving the path any other way would answer about
+ * an FST no runtime configuration reads.
  */
 async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =

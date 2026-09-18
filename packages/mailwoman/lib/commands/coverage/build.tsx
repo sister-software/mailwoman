@@ -28,7 +28,7 @@ import {
 
 /**
  * The coarsest and finest H3 resolutions the library defines. A cell index outside 0–15 is not a
- * resolution the H3 bindings can address, so this bound is the format's, not a tuning choice.
+ * resolution the H3 bindings can address, so this bound is the format's rather than a tuning choice.
  */
 const MAX_H3_RESOLUTION = 15
 

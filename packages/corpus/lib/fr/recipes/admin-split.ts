@@ -27,7 +27,7 @@
  *   construction: rows carry a real postcode token in `raw` + a `postcode` component, so the
  *   training loader paints the anchor feature onto that span automatically. The trailing-postcode
  *   anchor REINFORCES the FR split (FR postcode is trailing, unlike German PLZ-leading — the v0.9.2
- *   scar is positional, not universal).
+ *   scar is positional rather than universal).
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

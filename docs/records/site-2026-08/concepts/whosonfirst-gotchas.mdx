@@ -14,7 +14,7 @@ If youwant to understand how Mailwoman's resolver queries WOF at runtime, see [R
 
 ## What WOF is
 
-WOF is a gazetteer — a structured database of **places**. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each record gets:
+WOF is a gazetteer — a structured database of **places**. Not addresses rather than roads rather than buildings. _Places_: countries, regions, counties, cities, neighborhoods, venues. Each record gets:
 
 - A stable numeric ID
 - A parent-child hierarchy
@@ -75,7 +75,7 @@ Key observations:
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called [Brooklyn Integers](https://brooklynintegers.com/) — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity or infer anything from the numeric value.
+WOF IDs are issued by a service called [Brooklyn Integers](https://brooklynintegers.com/) — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential rather than geographically meaningful, and not sortable. They'reunique numbers. This is fine for lookup but means you can't reason about "near" places by ID proximity or infer anything from the numeric value.
 
 ### Supersession chains
 

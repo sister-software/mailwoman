@@ -10,7 +10,7 @@
  *   side sheet that opened over the control that opened it, a footer strip that covered the bottom sheet's last rows,
  *   a compass mounted nowhere, two panels sharing an edge.
  *
- *   IT ASSERTS GEOMETRY AND REACHABILITY, NOT APPEARANCE. Whether the glass is the right colour is a judgement. that
+ *   IT ASSERTS GEOMETRY AND REACHABILITY rather than APPEARANCE. Whether the glass is the right colour is a judgement. that
  *   two controls do not occupy the same pixels, and that every panel can be closed by someone holding a phone, are
  *   facts a machine can hold.
  */

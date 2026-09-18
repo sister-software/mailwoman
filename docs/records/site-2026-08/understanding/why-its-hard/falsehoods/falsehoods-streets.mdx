@@ -27,7 +27,7 @@ Pelias's `street` classifier uses a suffix dictionary to identify street tokens:
 
 ### "The descriptor is at the end."
 
-French addresses place the descriptor at the beginning: `rue de Rivoli`, `avenue des Champs-Élysées`, `place de la Concorde`. Spanish: `Calle Mayor`. Italian: `Via Roma`. German: `Hauptstraße`. The Anglophone "Street at the end" pattern is the exception, not the rule.
+French addresses place the descriptor at the beginning: `rue de Rivoli`, `avenue des Champs-Élysées`, `place de la Concorde`. Spanish: `Calle Mayor`. Italian: `Via Roma`. German: `Hauptstraße`. The Anglophone "Street at the end" pattern is the exception rather than the rule.
 
 This is a structural problem for rule-based classifiers. A US-trained parser expects `[number] [street name] [street type] [city] [state] [zip]`. A French address is `[number] [street type] [street name] [postcode] [city]`. Every positional assumption is wrong. The parser must either maintain per-locale ordering rules or learn ordering from data.
 
@@ -73,7 +73,7 @@ The staged pipeline addresses the falsehoods in layers:
 
 **Locale check (Stage 2)** detects the language/script family before classification. A French address triggers French ordering expectations (postcode before locality, street type before street name). A Japanese address skips street classification entirely and routes to block-based component tags. The classifier does not need to handle every locale's ordering — it only needs to handle the locale the check has detected.
 
-**Phrase grouper (Stage 2.7)** proposes spans based on structural cues, not dictionaries. `Gondel 2695` would be proposed as a single span (no whitespace, no punctuation boundary) — the grouper does not need to know that "26" and "95" have different semantic roles. The classifier then types the span, and the Joint Decoder (Stage 5) can split it if needed.
+**Phrase grouper (Stage 2.7)** proposes spans based on structural cues rather than dictionaries. `Gondel 2695` would be proposed as a single span (no whitespace, no punctuation boundary) — the grouper does not need to know that "26" and "95" have different semantic roles. The classifier then types the span, and the Joint Decoder (Stage 5) can split it if needed.
 
 **The classifier (Stage 3)** learns street-name distributions from corpus co-occurrence. A token following a house-number-shaped token and preceding a locality-shaped token is likely a street, regardless of suffix. A token like `Piccadilly` that appears frequently in street contexts will be classified as `street` even without a suffix — not because it matches a dictionary, but because the training data consistently labels it as `street`.
 

@@ -144,7 +144,7 @@ export class TimezoneLookup implements Disposable {
  */
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
-		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
+		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe rather than Array#find
 		const name = lookup.explore(lat, lon)
 
 		if (!name) return {}

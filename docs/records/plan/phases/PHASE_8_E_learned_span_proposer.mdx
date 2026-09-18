@@ -1,6 +1,6 @@
 # Phase 8 Thread E — learned span proposer (v0.5.1 candidate)
 
-**Status:** scoped, not implemented. v0.5.0 ships the rule-based phrase grouper (`@mailwoman/phrase-grouper`); this doc lays out the learned counterpart for v0.5.1 (or v0.5.0 stretch, time permitting).
+**Status:** scoped rather than implemented. v0.5.0 ships the rule-based phrase grouper (`@mailwoman/phrase-grouper`); this doc lays out the learned counterpart for v0.5.1 (or v0.5.0 stretch, time permitting).
 
 **Branch / package convention:** `feat/v0.5.1-learned-span-proposer`; new workspace `@mailwoman/phrase-grouper-learned` (or extension of the existing workspace blocked by an env / opts flag).
 
@@ -47,7 +47,7 @@ The reconciler weighs phrase proposals against classifier proposals against reso
 
 ## When to ship
 
-- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget and the rule-based grouper proves to need the assist on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). Triggered by the v0.5.0 eval, not pre-committed.
+- **v0.5.0 stretch:** if Thread C (classifier retrain) finishes inside the GPU budget and the rule-based grouper proves to need the assist on a meaningful share of the eval (e.g. non-Latin queries show poor proposals). Triggered by the v0.5.0 eval rather than pre-committed.
 - **v0.5.1 fallback:** if v0.5.0 ships on the rule version alone. Allocate ~3-5 days of compute + engineering for the learned version once the corpus is in place.
 
 ## Out of scope for this doc

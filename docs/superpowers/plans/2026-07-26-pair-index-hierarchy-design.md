@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-26 · **Status:** design + built probe artifact (survey candidate #3,
 `2026-07-26-static-index-opportunities.md`) · **Branch:** `feat/night-pair-hierarchy` ·
-**Scope:** design + probe, not a ship — no decode wiring, no default changes, no weights-package
+**Scope:** design + probe rather than a ship — no decode wiring, no default changes, no weights-package
 changes.
 
 **Dual mandate (why this artifact, per ROAD_TO §8):** the same (child, parent) pair set serves
@@ -33,7 +33,7 @@ cover.
 
 ## Design decisions
 
-### D1 — one artifact per (country, edge-type), not one multi-edge artifact
+### D1 — one artifact per (country, edge-type) rather than one multi-edge artifact
 
 `pair-index-<childTag>-<parentTag>-<cc>.bin` (probe: `pair-index-locality-region-us.bin`). Rationale:
 
@@ -131,7 +131,7 @@ length-prefixed pair key; `serializePairIndex`'s duplicate assert stays the back
    discipline, inverted: the probe pins the one value that is inert).
 2. Filename `pair-index-locality-region-<cc>.bin` does not match the loader's auto-wire pattern
    (`pair-index-<cc>.bin` as a weights-package sibling).
-3. Location `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/` — the data root, not a weights
+3. Location `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/` — the data root rather than a weights
    workspace; nothing ships from there.
 
 ## Measured sizes (2026-07-26, admin-global-priority.db)
@@ -173,7 +173,7 @@ changes per edge is only calibration and the emission target (the entry tag alre
 The (locality, region) edge has a sharper confound profile than dep-loc: region names are a small
 closed set, so the pair hit fires on nearly every "city, state"-shaped input — δ must be small and
 the value may live mostly in the transition term (β) and in namesake disambiguation ("Portland,
-Maine" vs "Portland, Oregon" both hit; the pair prior contributes locality-boundary evidence, not
+Maine" vs "Portland, Oregon" both hit; the pair prior contributes locality-boundary evidence rather than
 parent choice). Calibration protocol identical to Task 7's: held-out register/OA rows + confound
 boards, δ swept, value shipped in the header.
 
@@ -191,7 +191,7 @@ boards, δ swept, value shipped in the header.
    single-segment communes with no parent present; bar = byte-stable (no-parent → no probe hit by
    construction).
 3. **Byte-stability populations:** all non-target tier-1 presets flag-ON must be byte-identical
-   (the D-rule); the anchored path is additive-only against a zero matrix, so this is a check, not
+   (the D-rule); the anchored path is additive-only against a zero matrix, so this is a check rather than
    a hope.
 4. **Ledger:** flip-attribution via the existing `TRACE_PRIOR_KINDS` entry; eval rows named per
    population, no aggregate-only verdicts.
@@ -289,7 +289,7 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
 
 1. **Reader mode: DEFER the binary-search/offset-table work.** The training consumer reads once per
    run; the decode consumer may never exist — the bundle arc absorbed the locality-evidence role
-   input-side, and the productionization plan's Phase 4 is about RETIRING decode priors, not adding
+   input-side, and the productionization plan's Phase 4 is about RETIRING decode priors rather than adding
    one. No speculative implementation: if a decode use materializes, the offset table is one
    absence-tolerant header key away (the slot the design already reserves).
 2. **namePolicy v2 (eng-preferred): no for the pair artifacts.** +30k mostly-duplicate rows, and

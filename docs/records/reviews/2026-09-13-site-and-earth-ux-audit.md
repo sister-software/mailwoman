@@ -122,7 +122,7 @@ second confident wrong answer about this one symptom, and the pattern is worth n
 
 **Fact, from source.** Inference runs on the page's main thread.
 `packages/neural/lib/web/onnx-runner.ts:140` creates the session with
-`executionProviders: ["webgpu", "wasm"]` in the page, not a worker. The gazetteer is in a worker
+`executionProviders: ["webgpu", "wasm"]` in the page rather than a worker. The gazetteer is in a worker
 (sql.js-httpvfs).
 
 **Fact, from the tests.** The camera is right — `place-render.node.test.ts` (10 tests) covers the
@@ -139,7 +139,7 @@ whole page life. That measurement cannot carry the claim:
 - Resource Timing holds **250 entries by default** and drops the rest silently. This page fetches the
   model, the tokenizer, six lexicons, the postcode binaries, eight pair indexes, the sqlite range reads
   and several dozen terrarium elevation tiles. The buffer is long gone before a vector tile is asked
-  for, so "three entries" measures the buffer, not the network.
+  for, so "three entries" measures the buffer rather than the network.
 - And the tiles come from the host that was counted:
   `packages/tile-worker/lib/protomaps/index.ts:72` builds the template as
   `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
@@ -149,7 +149,7 @@ whole page life. That measurement cannot carry the claim:
 **2026-09-14, measured at last — and the repro does not survive it.** Instrumented the live page with
 a longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
 
-- **1 long task in 66 seconds, 174 ms total.** The main thread is idle, not saturated. That kills the
+- **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated. That kills the
   main-thread theory outright.
 - **11 animation frames in 66 seconds, with a 52.9-second gap between two of them.**
 - `document.visibilityState === "hidden"` for the whole session.
@@ -211,7 +211,7 @@ Footer → Training renders a run picker with **35 raw internal run ids** (`v0.8
 `v1.0.2-consolidation-run8-s42`, …), four preselected, an auto-refresh countdown, a Linear/Log toggle,
 and an empty chart reading "No data points". The config already admits the placement is provisional:
 
-> `docs/docusaurus.config.ts:340` — "…This is the smallest fix for that, not a considered placement — revisit when the Resources door lands."
+> `docs/docusaurus.config.ts:340` — "…This is the smallest fix for that rather than a considered placement — revisit when the Resources door lands."
 
 Either hold it behind the Resources door until it has real data, or drop the footer link.
 
@@ -301,8 +301,7 @@ Four fixes, in order of payoff:
 4. 48 faces are declared, 6 load. Worth trimming the declaration set or splitting the rarely-used
    stretches into a second sheet.
 
-Minor, same file: the proportional font's bucket path is misspelled — `/fonts/IoveskaNexus/…` (Iovesk**a**,
-not Iosevka) while the mono path is spelled correctly. It 200s today, so it is a rename-hazard, not a bug.
+Minor, same file: the proportional font's bucket path is misspelled — `/fonts/IoveskaNexus/…` (Iovesk**a** rather than Iosevka) while the mono path is spelled correctly. It 200s today, so it is a rename-hazard rather than a bug.
 
 ---
 
@@ -427,7 +426,7 @@ build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
   `var(--ifm-color-info-contrast-background, …)` pattern sits ten lines above four rules that skip it.
 - ~~`docs/src/components/TrainingCharts/styles.module.css:176` — `min-width: 600px` forces horizontal
   overflow on a phone.~~ WITHDRAWN: its parent `.chartWrapper` already carries `overflow-x: auto`, so the
-  600px scrolls the chart in its own container, not the document. The rule is correct as written.
+  600px scrolls the chart in its own container rather than the document. The rule is correct as written.
 - Homepage cards clip their mono example lines mid-string with a hard truncation — no ellipsis, no fade:
   `"apt 4b 350 5th ave new york ny 10118" → unit=house-street·` and
   `type an address → components, coordinate, and the source it`.
@@ -494,7 +493,7 @@ Left alone deliberately:
   tokens. Neither is canonical yet; merging them means settling what a sheet header is across two
   components, which is more than a sweep.
 - `MapControlStackProps.side` has no consumer and `.mw-map-control-stack--left` is therefore unreachable;
-  `MapSearchBarProps.trailing` is used only by a story. Both are library surface, not dead product code.
+  `MapSearchBarProps.trailing` is used only by a story. Both are library surface rather than dead product code.
 
 **Environment note.** The node on the workspace VM is 22.23.2 while `.nvmrc` pins 24.18.0, so `ci:test:fast`
 reports 167 failing files on `AsyncDisposableStack is not defined` and `mwops health` cannot parse
@@ -513,7 +512,7 @@ browser suites need Playwright browsers that VM has no egress to fetch.
 | Pixel lengths that should scale with type                           | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
 | Stage hues on the timing bar, raw hex                               | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
 
-**The one that was a defect, not untidiness.** The bars and the About legend painted `#22c55e / #f59e0b /
+**The one that was a defect rather than untidiness.** The bars and the About legend painted `#22c55e / #f59e0b /
 #ef4444`; the span ribbon and the containment tree painted `#1aa84d / #e6a800 / #d8504a`. So the legend that
 explains the confidence colours used colours the results table does not, and the comment above the span
 rules said _"The tier tints match `.mw-conf__bar--high/--mid/--low`."_ Raw hex also meant the tiers did not
@@ -563,7 +562,7 @@ scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LAT
 
 ---
 
-## Judgment call, not a defect
+## Judgment call rather than a defect
 
 `docs/research/authors.yml` publishes field notes under **"Playpen Agent — Autonomous Researcher"**
 alongside Teffen. Worth a deliberate decision about how that authorship is framed on a public research

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Metamorphic Gauntlet (CheckList INV/DIR/BAND) — the un-gameable layer. It asserts RELATIONS between
- *   outputs, not stored expected values, so a curated corpus can't breed false trust here.
+ *   outputs rather than stored expected values, so a curated corpus can't breed false trust here.
  *
  *   - INV (invariance, ≤1m): a label-preserving perturbation (casing, whitespace, trailing punctuation,
  *       expanded↔abbreviated suffix) must not move the assembled coordinate or tier. A drift is a
@@ -292,12 +292,12 @@ const BAND: Perturbation[] = [
 /**
  * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
  * retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
- * the FR street-type swap below is a RESOLVER gap, not a model one, and it is a finding, not a reflex xfail (see note).
- * A new deterministic INV break belongs here with a tracked note, never silently conditional. The #1002 FR
- * `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer (street_norm
- * expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup — fixed by
- * enabling Stage-1 `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp. EN
- * suffixes deliberately untouched). Keep the anti-rot loop honest: a new deterministic INV break belongs here with a
+ * the FR street-type swap below is a RESOLVER gap rather than a model one, and it is a finding rather than a reflex
+ * xfail (see note). A new deterministic INV break belongs here with a tracked note, never silently conditional. The
+ * #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer
+ * (street_norm expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup —
+ * fixed by enabling Stage-1 `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp.
+ * EN suffixes deliberately untouched). Keep the anti-rot loop honest: a new deterministic INV break belongs here with a
  * tracked note, never silently conditional. The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its
  * rooftop) was removed 2026-08-12 when the anti-rot loop flagged it newly passing — the comma-free base now holds its
  * rooftop.
@@ -313,7 +313,7 @@ const KNOWN_INV_XFAIL = new Map<string, string>()
 /**
  * All measured anchor-OFF/gazetteer-OFF (the harness default. the weights package ships no anchor artifacts). The
  * gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
- * may hold with the retrieval channels ON — tracked here as the anchor-off floor, not a claim about production.
+ * may hold with the retrieval channels ON — tracked here as the anchor-off floor rather than a claim about production.
  */
 // Empty on the shipped stack. An entry belongs here only while a BAND perturbation misses deterministically. the
 // self-check names an entry that has started passing, and it leaves then (the Damrak locality pair left once the
@@ -526,7 +526,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	// The check fails on new regressions only. A newly-passing xfail is a bookkeeping nudge, not a failure.
+	// The check fails on new regressions only. A newly-passing xfail is a bookkeeping nudge rather than a failure.
 	const pass = invFails === 0 && dirFails === 0 && bandFails === 0
 	const trackedTotal = xfailHit.size + bandXfailHit.size
 

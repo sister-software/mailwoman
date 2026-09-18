@@ -23,7 +23,7 @@
  *     - `geocode` + `batch` are wired only when a gazetteer is resolvable (a candidate.db under
  *       `$MAILWOMAN_DATA_ROOT/wof`, an explicit `$MAILWOMAN_CANDIDATE_DB`, or FTS admin extracts via
  *       `$MAILWOMAN_WOF_DB` / the conventional `wof/` extract paths). Absent → `@mailwoman/api` answers
- *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade, not a crash).
+ *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade rather than a crash).
  *     - When the weights themselves are unresolvable, `parse` is absent and `/v1/parse` answers `501`.
  *
  *   The container always listens on port 3000 on 0.0.0.0. remap with `docker run -p <host>:3000`. The

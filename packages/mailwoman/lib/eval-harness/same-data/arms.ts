@@ -62,7 +62,8 @@ export interface ArmRowResult {
 	selection: string | null
 	/**
 	 * True when the selection equals the row's gold place id. Always false for an abstention, including in the
-	 * withheld-gold stratum — abstention is scored there through the abstention metrics, not by calling it a selection.
+	 * withheld-gold stratum — abstention is scored there through the abstention metrics rather than by calling it a
+	 * selection.
 	 */
 	correct: boolean
 	/**

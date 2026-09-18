@@ -14,7 +14,7 @@
  *   85,330 features fit inside the default bound. the bound ships anyway, because determinism by construction
  *   is not the same fact as determinism by luck.
  *
- *   THE VOCABULARY IS A CENSUS, NOT A CHECK. The declared generic-type domain is closed and the source
+ *   THE VOCABULARY IS A CENSUS rather than A CHECK. The declared generic-type domain is closed and the source
  *   already breaks it — `N/A` appears on 4 rows and in no domain — so an undeclared value is RECORDED as
  *   observed-but-undeclared rather than throwing. That is the opposite of the sibling layers' rule and it is
  *   the publisher's own doing: refusing here would refuse the Department's own data. What does throw is a
@@ -259,7 +259,7 @@ export async function ingestZoningChunk(
 				}
 			}
 
-			// COVERAGE IS DERIVED FROM THE UNCOMPACTED CLASSIFICATION, not from the stored rows. A compacted parent spans
+			// COVERAGE IS DERIVED FROM THE UNCOMPACTED CLASSIFICATION rather than from the stored rows. A compacted parent spans
 			// several coverage cells and `addCoverageCells` handles that, but the fringe is where this product's cells almost
 			// all are — so counting off the stored rows and counting off the classification agree here, and the classification
 			// is the one that cannot be changed by a compaction decision.

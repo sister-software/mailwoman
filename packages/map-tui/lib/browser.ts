@@ -381,8 +381,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Pans relative to where the drag STARTED, not the previous motion report. Accumulating per-report deltas would
-	 * drift, since each one is rounded to a whole cell.
+	 * Pans relative to where the drag STARTED rather than the previous motion report. Accumulating per-report deltas
+	 * would drift, since each one is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
 		const anchor = this.drag

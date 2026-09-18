@@ -72,7 +72,7 @@ purely _which_ addresses each parser resolves correctly at all.
 
 Headline: **neural locality-match 96.1%, region-match 100.0%** on 10,000 real US
 addresses, resolved 100.0%; coord p50 2.4km / p90 10.6km / p99 25.0km
-(admin-centroid tier — median is centroid-to-address distance, not a geocoding
+(admin-centroid tier — median is centroid-to-address distance rather than a geocoding
 miss). Neural's largest margin over the Pelias parser is **IA +7.9pp** (suburban/
 rural midwest); the weakest state for both is VT (rural-northeast, sparse gazetteer
 coverage), where neural still leads 87.1% vs 85.7%.
@@ -91,20 +91,20 @@ make that class of error impossible.)
   scale, independent of the gazetteer's own id scheme — the credibility check the
   WOF-bootstrap number couldn't give.
 - It **does not** measure street/house precision (the resolver is admin-level;
-  coord error reflects centroid-to-point distance, not a geocoding miss).
+  coord error reflects centroid-to-point distance rather than a geocoding miss).
 - Region-match required a name↔abbrev map: resolved regions carry the gazetteer's
   canonical full name ("California", "District of Columbia") while OA carries the
   USPS abbreviation ("CA", "DC"). An early reduce scored region-match at 30% purely
-  from that mismatch — a matcher bug, not a resolver one; fixed in the runner.
+  from that mismatch — a matcher bug rather than a resolver one; fixed in the runner.
 
 ## Resolver change that landed with this
 
 `core/resolver/resolve.ts` now stamps `metadata.resolver_name` (the resolved
 place's canonical gazetteer name) alongside `resolver_score`. Without it the eval
-could only compare against the parser's own text span, not the place the resolver
+could only compare against the parser's own text span rather than the place the resolver
 chose — so it couldn't tell a right-name/wrong-place resolution from a
 correct one. The name is also generally useful to consumers (display the canonical
-name, not the raw input span).
+name rather than the raw input span).
 
 ## Reproduce
 

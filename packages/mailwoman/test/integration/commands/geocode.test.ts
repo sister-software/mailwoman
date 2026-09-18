@@ -90,7 +90,7 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode"], {
 					encoding: "utf8",
-					// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
+					// Set a bogus WOF path so the command fails on arg validation rather than on missing DB.
 					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})

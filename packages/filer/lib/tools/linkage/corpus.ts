@@ -91,7 +91,8 @@ function evalForm499Row(
  *   canonicalize identically and are not the same company. Nothing in this crosswalk may merge them.
  * - **One registrant holding two FRNs** (`9100000010`/`9100000011`, joined by a shared `bdc_provider_id` in
  *   {@linkcode buildLinkageEvalProviderRows}), where only the second of the two discloses the parent. Its family
- *   membership therefore has to be found through the registrant, not through whichever FRN happens to sort first.
+ *   membership therefore has to be found through the registrant rather than through whichever FRN happens to sort
+ *   first.
  * - **Two filers reporting the same management company** (`9100000003`/`9100000012`) — the case the management-exclusion
  *   decision in the module docstring exists to handle.
  *
@@ -260,7 +261,7 @@ export interface LinkageEvalRegistrant {
 	/**
 	 * Every `filer_node` id whose family memberships belong to this registrant: its FRN nodes plus any `bdc_provider_id`
 	 * node the provider list ties to one of them. The prediction reads all of these — a parent disclosed on one
-	 * registration is a fact about the company, not about that one registration.
+	 * registration is a fact about the company rather than about that one registration.
 	 */
 	nodeIDs: string[]
 }

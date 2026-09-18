@@ -111,7 +111,7 @@ def test_epoch_covers_the_large_source_once_and_cycles_the_small_one(tmp_path: P
 
 def test_realized_share_is_stable_between_stream_halves(tmp_path: Path) -> None:
     """Quantified stationarity: at weights 1:1 the small source's realized share must sit
-    near 0.5 in both halves of the stream, not ~1.0-then-0.0."""
+    near 0.5 in both halves of the stream rather than ~1.0-then-0.0."""
     corpus = _write_corpus(
         tmp_path,
         {"part-big.parquet": _rows("big", 120), "part-small.parquet": _rows("small", 12)},

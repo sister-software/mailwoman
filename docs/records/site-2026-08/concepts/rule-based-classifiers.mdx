@@ -34,7 +34,7 @@ Each classifier:
 
 ## A worked example — the postcode classifier
 
-Probably the simplest classifier. Postcodes are a regex problem, not a machine learning problem.
+Probably the simplest classifier. Postcodes are a regex problem rather than a machine learning problem.
 
 ```ts
 const US_POSTCODE = /^\d{5}(-\d{4})?$/  // 10118 or 10118-1234
@@ -107,7 +107,7 @@ Notes:
 
 - **Determinism.** Same input, same output, every time. No retraining, no random initialization.
 - **Easy to fix.** A bug in a regex is one line. A bug in a neural model is a retraining run.
-- **No data required.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries, not a multi-GB model.
+- **No data required.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries rather than a multi-GB model.
 - **Fast.** Pattern matching is microseconds per address. The whole parse runs in milliseconds.
 - **Explainable.** Every proposal carries a `source_id`. A consumer that sees `rule:postcode:us` on a wrong proposal knows exactly where to look.
 

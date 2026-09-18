@@ -12,7 +12,7 @@
  *   ranking begins, so a coarse placer that already called this address FR at confidence
  *   0.9999908844 has nothing to promote — a soft re-rank downstream of a hard filter is inert by
  *   construction. Population then picks Paris, Texas (pop 24,969). With the postal extracts attached
- *   the answer gets WORSE, not merely wrong: the postcode resolves to the US row (ZIP 75001,
+ *   the answer gets WORSE rather than merely wrong: the postcode resolves to the US row (ZIP 75001,
  *   Addison TX), `applyPostcodeConsistency` finds no Paris within its 50 km check (the nearest is
  *   143.8 km), and falls the locality coordinate back to the ZIP point. See
  *   `docs/records/evals/2026-08-03-postcode-locality-scoping.md` for the instrumented diagnosis.
@@ -29,12 +29,12 @@
  *   three times (`applyAdminCoherence` #263, `applyExplicitCountryCoherence` #822,
  *   `applyRegionCountryCoherence`), just keyed on the postcode instead of a region or country token.
  *
- *   ## Why it runs before the walk, not after
+ *   ## Why it runs before the walk rather than after
  *
  *   Its three siblings are post-walk re-picks: the walk resolves greedily, they swap the wrong node
  *   pair for the right one. That shape cannot work here, because the thing to correct is the walk's
  *   COUNTRY SCOPE, and the scope poisons three separate things a post-walk pass cannot reach — the
- *   postcode node's own resolution (Addison, not Paris 1er), the `applyPostcodeConsistency` fallback
+ *   postcode node's own resolution (Addison rather than Paris 1er), the `applyPostcodeConsistency` fallback
  *   that then drags the locality onto it, and the `country` filter on every other admin lookup. So
  *   this pass is a pre-walk SCOPE decision: it runs once, before the first lookup, and replaces
  *   `state.defaultCountry` for the whole walk. Everything downstream — including the three post-walk
@@ -112,7 +112,7 @@ import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Default check radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured.
- * the confound board returned identical verdicts at 15, 25 and 50, so this is a floor choice, not a tuned one.
+ * the confound board returned identical verdicts at 15, 25 and 50, so this is a floor choice rather than a tuned one.
  */
 export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
 
@@ -214,17 +214,18 @@ const MAX_LOCALITY_VALUES = 3
  * case-insensitively deduplicated. Two passes so a real locality always beats a dependent one regardless of tree
  * order.
  *
- * Document order is required, not cosmetic. The original stack-pop traversal visited the last node first, so on `92
- * Laurell Road, Gander, NL A1V 0A9` — where the model tags both `Gander` and the province abbreviation `NL` as
+ * Document order is required rather than cosmetic. The original stack-pop traversal visited the last node first, so on
+ * `92 Laurell Road, Gander, NL A1V 0A9` — where the model tags both `Gander` and the province abbreviation `NL` as
  * localities — the pass keyed its whole country verdict on "NL", whose only exact locality-band bearer is an alias of
  * Nal, Afghanistan, and the walk resolved a Newfoundland street 10,000 km away. The FIRST-written locality is the one
  * the address is about.
  *
- * All values matter, not just the first. On `Calle Mayor 12, Aravaca, 28023 Madrid` the model tags both `Aravaca` and
- * `Madrid` as localities; `Aravaca` is a neighbourhood the locality band cannot see, while `Madrid` carries the ES pair
- * verdict (the ES 28023 row sits 9.6 km from the Madrid locality row). A pass keyed on a single value bets the whole
- * country verdict on whichever one a traversal order happens to pick — first-only re-scoped that address to the US ZIP
- * 28023 centroid in North Carolina. So the verdict rungs try each value in order until one produces evidence.
+ * All values matter rather than just the first. On `Calle Mayor 12, Aravaca, 28023 Madrid` the model tags both
+ * `Aravaca` and `Madrid` as localities; `Aravaca` is a neighbourhood the locality band cannot see, while `Madrid`
+ * carries the ES pair verdict (the ES 28023 row sits 9.6 km from the Madrid locality row). A pass keyed on a single
+ * value bets the whole country verdict on whichever one a traversal order happens to pick — first-only re-scoped that
+ * address to the US ZIP 28023 centroid in North Carolina. So the verdict rungs try each value in order until one
+ * produces evidence.
  */
 export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): string[] {
 	const out: string[] = []
@@ -263,7 +264,7 @@ function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out:
 /**
  * Over-fetch for the UNSCOPED holder probes (#24). Postcodes are bounded and small — the 2026-08-10 candidate
  * gazetteer's most-shared code carries 12 rows across 8 countries — so 20 sees every bearer and the postcode holder set
- * is COMPLETE, not a sample. Locality names are not bounded that way (`rampur` has 1,096 rows, `bara` spans 42
+ * is COMPLETE rather than a sample. Locality names are not bounded that way (`rampur` has 1,096 rows, `bara` spans 42
  * countries), so 30 is a population-first WINDOW: it can only ever hide a country, which turns a "more than one
  * country" abstention into a false "exactly one". The explicit default-country probe below is what closes that gap for
  * the case that matters (the address is domestic after all).
@@ -290,8 +291,8 @@ const MAX_CANDIDATE_COUNTRIES = 12
  * on, available for one lookup, and it is EXHAUSTIVE for postcodes at the measured cardinality.
  *
  * `exactMatch !== false` is the admission bar: a fuzzy postcode hit is a different postcode (the 2026-08-05 Code-Point
- * lesson — `BT3 9QQ` trigram-matching Sheffield's `S3 9QQ`), and a fuzzy locality hit is evidence about the index, not
- * about the country. Backends that do not stamp the flag leave it undefined and still contribute.
+ * lesson — `BT3 9QQ` trigram-matching Sheffield's `S3 9QQ`), and a fuzzy locality hit is evidence about the index
+ * rather than about the country. Backends that do not stamp the flag leave it undefined and still contribute.
  */
 async function countriesHolding(
 	backend: ResolverBackend,
@@ -415,7 +416,7 @@ export async function findPostcodeCountryScope(
 	// `state.defaultCountry` for the whole walk, so `Venezuela` itself is then probed inside Colombia and
 	// answers nothing — the address comes back with no country, having named one.
 	//
-	// Deliberately a hard abstention on the presence of the token, not a test of whether the named country
+	// Deliberately a hard abstention on the presence of the token rather than a test of whether the named country
 	// agrees. A pass that re-decided between the two would be the same inference wearing a tie-break, and
 	// this file's own discipline is that a contest it cannot settle abstains. Whether the named country is
 	// SPELLED correctly is a separate question, owned by the walk's own country lookup.

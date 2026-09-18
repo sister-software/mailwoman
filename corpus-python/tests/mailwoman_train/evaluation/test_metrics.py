@@ -30,8 +30,7 @@ def test_per_tag_support_counts_b_and_i():
 
 
 def test_macro_excludes_zero_support_and_O():
-    # Perfect predictions on the present component labels → macro should be exactly 1.0,
-    # not diluted by the dozens of absent tags (po_box, cedex, …) or inflated by "O".
+    # Perfect predictions on the present component labels → macro should be exactly 1.0 rather than diluted by the dozens of absent tags (po_box, cedex, …) or inflated by "O".
     true = _ids("B-locality", "I-locality", "B-region", "O")
     r = token_f1(true.clone(), true, num_labels=NUM)
     assert abs(r["macro_f1"] - 1.0) < 1e-6

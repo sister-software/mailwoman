@@ -91,8 +91,8 @@ export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {
 /**
  * Stream every département file and collect distinct (lieu-dit, commune) pairs.
  *
- * Reads the full national dump (~26M rows), so this is minutes, not seconds — the caller is a build command, never a
- * request path.
+ * Reads the full national dump (~26M rows), so this is minutes rather than seconds — the caller is a build command,
+ * never a request path.
  */
 export async function extractLieuDitPairs(banDir: string): Promise<LieuDitExtractResult> {
 	const files = await enumerateBANDeptFiles(banDir)

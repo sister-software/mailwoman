@@ -104,7 +104,7 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 			contents.destroy()
 
-			// Wait for the teardown to finish, not merely to start. `destroy()` returns before yauzl has released its read,
+			// Wait for the teardown to finish rather than merely to start. `destroy()` returns before yauzl has released its read,
 			// and the archive's own disposer runs next: it then raises `Cannot close while reading in progress` on the
 			// early-exit path this reader documents as supported.
 			await closed

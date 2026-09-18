@@ -23,7 +23,7 @@ The real publish ran **alphabetically + fail-fast**: 21 workspaces reached 4.14.
 
 Measured the span-rescore change (#370) with the `-20j` candidate gazetteer (CZ/PT/AU/AT postcodes) on clean EU+AU OA coords (demo resolver, n=40/locale). The change reaches **beyond IT**: rescore lifts PT 80→83, PL 85→88, AT 70→73, CZ 93→95 @25km (IT/AU flat); aggregate 83→85%, no-result 5→3%.
 
-**The standing-run** (the leak fix made it crash-free, so Nominatim got clean steady-paced data — no repeat of the earlier 0%-null corruption): mailwoman (v4.14.0 + rescore + `-20j`) vs Nominatim on the same clean EU+AU panel — **mailwoman+rescore ALL @25km 86% vs Nominatim 80%**, no-result **3% vs 17%**. mailwoman wins IT (98/73), PT (83/45), FR (95/63), CZ (95/85); Nominatim wins PL (98/88), AT (98/73), AU (100/75). **mailwoman now BEATS Nominatim on the EU+AU aggregate**, a reversal of the 06-23 cross-harness "EU trails 59 vs 79" — the `-20j` gazetteer + rescore change close the gap. **The strongest case yet for re-staging `-20j` to R2 (#213).** Caveat: this is the demo `-20j` config (pending the R2 re-stage), not the shipped CLI resolver.
+**The standing-run** (the leak fix made it crash-free, so Nominatim got clean steady-paced data — no repeat of the earlier 0%-null corruption): mailwoman (v4.14.0 + rescore + `-20j`) vs Nominatim on the same clean EU+AU panel — **mailwoman+rescore ALL @25km 86% vs Nominatim 80%**, no-result **3% vs 17%**. mailwoman wins IT (98/73), PT (83/45), FR (95/63), CZ (95/85); Nominatim wins PL (98/88), AT (98/73), AU (100/75). **mailwoman now BEATS Nominatim on the EU+AU aggregate**, a reversal of the 06-23 cross-harness "EU trails 59 vs 79" — the `-20j` gazetteer + rescore change close the gap. **The strongest case yet for re-staging `-20j` to R2 (#213).** Caveat: this is the demo `-20j` config (pending the R2 re-stage) rather than the shipped CLI resolver.
 
 ### Validated: the shipped v192's calibration (the precision-change thesis transfers)
 
@@ -46,7 +46,7 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 ## What went well
 
 - **Salvage-first paid off.** `competitive-benchmark.ts` already had `messify()` + @25km grading + Nominatim; `core/decoder/calibration.ts` already exposed `createCalibrator`; the 06-23 showcase already had a span-level abstention curve. PRIMARY A is the result-level extension of existing pieces.
-- **verify-before-verdict fired three times, all live.** (1) The "mailwoman beats Nominatim on AU" read was a rate-limit artifact (AU 100% null) — caught by the per-locale + cache-null analysis. (2) The triage census's DELETE list was too aggressive (flagged 4 provenance/runbook-referenced scripts + 2 test-referenced ones) — per-file grep verification pulled them back. (3) The `us.postcode 86.9` check fail was a stale-compile phantom, not a v192 regression (re-graded 97.5 clean).
+- **verify-before-verdict fired three times, all live.** (1) The "mailwoman beats Nominatim on AU" read was a rate-limit artifact (AU 100% null) — caught by the per-locale + cache-null analysis. (2) The triage census's DELETE list was too aggressive (flagged 4 provenance/runbook-referenced scripts + 2 test-referenced ones) — per-file grep verification pulled them back. (3) The `us.postcode 86.9` check fail was a stale-compile phantom rather than a v192 regression (re-graded 97.5 clean).
 - **Incremental checkpointing recovered a crashing collector.** The confidence-discrimination run died twice to an onnxruntime leak at ~380 parses; the per-row `--rows-out` checkpoint let it resume and finish without re-fetching.
 
 ## What could have gone better
@@ -58,7 +58,7 @@ main's clean-install smoke test has been **red since #215** (resolver extraction
 
 ## Decisions made autonomously
 
-- **Shipped v4.14.0 (the v192 AU model) to npm** — check-clean + canary-clear + dry-run-green, the operator's enabling actions (Trusted Publishing, resolver deps) all pointed at it. The published 4.13.0 state was already broken (the resolver/spatial skew), so shipping was the FIX, not new risk; waiting would have left npm broken longer.
+- **Shipped v4.14.0 (the v192 AU model) to npm** — check-clean + canary-clear + dry-run-green, the operator's enabling actions (Trusted Publishing, resolver deps) all pointed at it. The published 4.13.0 state was already broken (the resolver/spatial skew), so shipping was the FIX rather than new risk; waiting would have left npm broken longer.
 - **Dry-run conditional the irreversible publish**: ran `publish.yml dry_run=true` (green) before the real run. After the real run's partial failure, the documented `publish_only=true` recovery restored spatial + resolver.
 - **Merged the prep PR into known-red main** — the red was the pre-publish broken-state smoke, which the release itself repairs; the PR's own content was clean.
 - **PRIMARY A pivot** from "beat Nominatim on messy" (premise unsupported + competitor data corrupted) to "the precision change, mailwoman-only, pitched to precision-critical routing." Confirmed by DeepSeek (019ef808).

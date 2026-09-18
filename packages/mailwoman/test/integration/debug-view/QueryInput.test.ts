@@ -54,7 +54,7 @@ describe("wordStart", () => {
 	it("is whitespace-delimited, so punctuation inside a token is not a boundary", () => {
 		// The addresses this field edits are full of commas. stopping at one would make ⌥⌫ take half a word.
 		expect(wordStart("3215 SE Clinton St, Portland", 28)).toBe(20)
-		// A trailing space is skipped first, so this takes `St,` whole — comma included, not stopping before it.
+		// A trailing space is skipped first, so this takes `St,` whole — comma included rather than stopping before it.
 		expect(wordStart("3215 SE Clinton St, ", 20)).toBe(16)
 	})
 })
@@ -161,7 +161,7 @@ describe("applyKey", () => {
 			cursor: 28,
 		})
 
-		// CRLF collapses to one space, and a stray control character inside the run is dropped, not the run.
+		// CRLF collapses to one space, and a stray control character inside the run is dropped rather than the run.
 		expect(applyKey({ value: "", cursor: 0 }, "a\r\nb\u0000c", key())).toEqual({ value: "a bc", cursor: 4 })
 	})
 

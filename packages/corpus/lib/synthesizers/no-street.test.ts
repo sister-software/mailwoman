@@ -107,7 +107,7 @@ describe("synthesizeNoStreetRow", () => {
 
 		expect(row).not.toBeNull()
 		expect(row!.components.country).toBeDefined()
-		// Country surface form is the canonical / colloquial name, not the ISO code.
+		// Country surface form is the canonical / colloquial name rather than the ISO code.
 		expect(row!.components.country!.length).toBeGreaterThan(2)
 		expect(hasAnyStreetSideTag(row!.components)).toBe(false)
 	})

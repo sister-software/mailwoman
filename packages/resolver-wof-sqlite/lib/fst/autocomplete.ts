@@ -149,7 +149,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
 		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
-		// The dedupe key is the DISPLAY name, not the token path: two surfaces of one name must still collapse. (#587)
+		// The dedupe key is the DISPLAY name rather than the token path: two surfaces of one name must still collapse. (#587)
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
 	})
 

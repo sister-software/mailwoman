@@ -8,15 +8,15 @@
  *   lexicon artifact under the data root), one committed output. the subset is a pure filter, so a
  *   regenerate against the same input is byte-identical.
  *
- *   ── Why a COMPOSED measure, not the venue ratio alone ────────────────────────────────────────────
+ *   ── Why a COMPOSED measure rather than the venue ratio alone ────────────────────────────────────────────
  *   The survey's headline finding is that venue-frequency alone is toponym-saturated: famous-place
  *   tokens appear 35–60× denser in venue names than in place names ("Café de Paris", "Hotel México"),
  *   so `paris` scores a venue ratio of 0.973 — higher than `comer`'s 0.954 — while meaning nothing
  *   venue-like. Three bars compose the filter, and each kills a distinct false-positive family:
  *
  *   • {@linkcode VENUE_RATIO_MIN} + {@linkcode POI_FREQ_MIN} — the token is attested in venue names
- *     at rate, not by accident of a small denominator.
- *   • {@linkcode TOP_CLASS_SHARE_MIN} (and `top_class ≠ "other"`) — the token predicts a CLASS, not
+ *     at rate rather than by accident of a small denominator.
+ *   • {@linkcode TOP_CLASS_SHARE_MIN} (and `top_class ≠ "other"`) — the token predicts a CLASS rather than
  *     just "venues generally". This is what makes an entry a hint a consumer can act on.
  *   • {@linkcode PLACE_RATE_PPM_MAX} — the toponym suppressor. The falsifier's named street-fork
  *     false positives sit at 6.8–17.4 ppm in place names (catherine 6.8, augusta 11.2, mexico 12.2,
@@ -28,7 +28,7 @@
  *   'catherine', 'savile', …) and none of the toponym family ('paris', 'mexico'). `comer` — the
  *   torture entry that motivated the survey — does not pass: its category mass splits across
  *   food/retail/other (top class share 0.46), which is exactly the composed-measure honesty the
- *   trained-channel design needs. it stays with that deferred change, not in this table.
+ *   trained-channel design needs. it stays with that deferred change rather than in this table.
  *
  *   Run: `node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json`
  *   (committed JSON is oxfmt-clean, the repo law). The source artifact is data-root local (built by

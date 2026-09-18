@@ -19,7 +19,7 @@
  *   No coordinates: the output feeds the PARSER ({@link ../gnaf/adapter}, #208) — teaching the model
  *   AU's postcode-first / house-number-last word order, the gap `scripts/eval/au-order-probe.ts`
  *   pinned (65%→87% if the parse were order-robust). The parser needs the address string +
- *   component labels, not lat/lon.
+ *   component labels rather than lat/lon.
  *
  *   Output: component tuples as JSONL, consumed by the `gnaf` corpus adapter (which renders them in
  *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is

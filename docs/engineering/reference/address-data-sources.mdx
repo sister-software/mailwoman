@@ -70,7 +70,7 @@ Measured GeoNames postal against the gap in the WOF postcode data (the postcodes
 | ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
 | NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
 
-So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use, so its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, not for postcodes.)
+So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use, so its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work rather than for postcodes.)
 
 ### The modern entrant: Overture Maps
 
@@ -88,11 +88,11 @@ For an AGPL product, license terms decide more than coverage does:
 | Overture      | CDLA-Permissive 2.0     | attribution                                                                          |
 | OpenStreetMap | ODbL                    | attribution + share-alike on derived databases — the spicy one; can pull copyleft on |
 
-So the gradient argues for **GeoNames + Overture + OpenAddresses** as the supplements, and treating OSM carefully (derived signals, not the shipped DB).
+So the gradient argues for **GeoNames + Overture + OpenAddresses** as the supplements, and treating OSM carefully (derived signals rather than the shipped DB).
 
 ### Integrity discipline
 
-Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there), not as imported foreign-id entities. WOF stays the anchor and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there) rather than as imported foreign-id entities. WOF stays the anchor and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
 
 ---
 
@@ -1010,7 +1010,7 @@ State-level public databases of licensed professionals (with practice/office add
 
 ### Wisconsin
 
-- Business entity search: Wisconsin Department of Financial Institutions (DFI) — https://apps.dfi.wi.gov/apps/corpsearch/search.aspx — query-only (note: DFI, not SoS)
+- Business entity search: Wisconsin Department of Financial Institutions (DFI) — https://apps.dfi.wi.gov/apps/corpsearch/search.aspx — query-only (note: DFI rather than SoS)
 - Notary registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch/SearchCriteria.aspx — query-only
 - Charity registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch is for notaries; charities at https://apps.dfi.wi.gov/ice/berg/Registration/OrganizationCredentialSearch.aspx (select Charitable Organizations 800) — query-only
 - Lobbyist registry: Wisconsin Ethics Commission (Eye on Lobbying) — https://lobbying.wi.gov/ — query-only

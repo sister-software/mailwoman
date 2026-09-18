@@ -132,7 +132,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneA = exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
-	// THE HOLE IS A SEPARATE PART, not a nested ring — which is how the real service encodes it on the features that carry
+	// THE HOLE IS A SEPARATE PART rather than a nested ring — which is how the real service encodes it on the features that carry
 	// one, and the encoding a nesting-aware reader turns into a second zoned area.
 	const holed: MultiPolygonRings = [
 		[exteriorRing(lon, lat + 2 * FIXTURE_SIDE, lon + FIXTURE_SIDE, lat + 3 * FIXTURE_SIDE)],

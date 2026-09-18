@@ -30,14 +30,13 @@ mwdev_arc candidate=<staged candidate root> \
           shape=from-scratch | fine-tune
 ```
 
-`candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/`,
-not the package directory itself. A root that is not staged is refused rather than falling through to
+`candidate` and `control` are the ROOT that CONTAINS `node_modules/@mailwoman/neural-weights-<locale>/` rather than the package directory itself. A root that is not staged is refused rather than falling through to
 the installed weights — do not "fix" that refusal by pointing it one level deeper.
 
 The full protocol, and why the controls come first, is the `training-arc` skill. Read it before
-launching a run, not after grading one.
+launching a run rather than after grading one.
 
-## Use the warm tools, not a probe script
+## Use the warm tools rather than a probe script
 
 Every tool below holds the engines in-process. A `for` loop spawning the CLI per address pays a cold
 model load each time and cannot see spans, confidence, provenance or retrieval — which is why probe
@@ -95,7 +94,7 @@ done
 
 **FAIL outright** on all-locality or all-`O` output, on garbage (tokenizer/model mismatch), or on
 `grouper-audit` nodes appearing in the XML — the audit injecting where the model should cover is a
-coverage gap, not a pass.
+coverage gap rather than a pass.
 
 Anything short of outright collapse is not a verdict. Six US rows cannot clear or condemn a model;
 take it to the board.

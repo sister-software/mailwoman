@@ -27,7 +27,7 @@ parent. So the bar's population is empty by construction:
 | `gb-golden.jsonl`          |  120 | `dependent_locality` × 69  |                   **0** |
 | `nz-suburb-golden.jsonl`   |  300 | `dependent_locality` × 246 |                   **0** |
 
-That is a real finding, not a technicality: the construction argument the design rests on is not
+That is a real finding rather than a technicality: the construction argument the design rests on is not
 reachable by any instrument built from shipped artifacts. The only pair indexes in the tree whose
 child tag has ≥2 allowed parents are the hierarchy-probe artifacts
 (`pair-index-locality-region-{us,fr}.bin`, child tag `locality`, allowed parents
@@ -87,7 +87,7 @@ the document claims, and it is worth naming that the general board would have hi
 > Bar: **≤2% parent-tag false positives**, the shipped GB floor B-R5.2 used for the child.
 
 Graded as the FPs the parent bias CREATES — a row correct with the bias off and wrong with it on.
-A row already wrong at off is a pre-existing child-side defect, not this bar's business.
+A row already wrong at off is a pre-existing child-side defect rather than this bar's business.
 
 **Broad homonym board (120 rows,** including the five named rows: `Buffalo, New York`,
 `Springfield, Washington`, `Vancouver, Washington`, `Kansas City, Kansas`,
@@ -108,7 +108,7 @@ residual FP class. The parent bias adds nothing to it at any δ through 20.
 
 **Verdict: PASS** (0.00% vs ≤2%).
 
-## B-4 — parent δ is calibrated, not inherited
+## B-4 — parent δ is calibrated rather than inherited
 
 > Bar: **a δ exists that clears B-2 and B-3 simultaneously**.
 
@@ -207,7 +207,7 @@ parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` �
 **Shipped default-on at δ=5 for us/gb/nz/fr**, carried in the artifact header (`PairIndexHeader.parentDelta`)
 exactly as `delta` and `transitionBeta` are, so the classifier auto-wires it with no code that knows
 which locale is which. `de`/`in`/`es`/`it` ship without the key: no board has graded the parent side
-there, and the D-rule's answer to an unmeasured locale is a per-locale check, not an inherited magnitude.
+there, and the D-rule's answer to an unmeasured locale is a per-locale check rather than an inherited magnitude.
 `MAILWOMAN_PAIR_PARENT_DELTA` still overrides the header, for sweeps.
 
 ### Check receipts on the per-record mechanism
@@ -236,7 +236,7 @@ fold names a US state, gold from the admin gazetteer's ancestry:
 | 5 (from the header) | **60/60 (100%)** | 60/60 (100%) |
 
 Child-only is flat across both legs — only the parent moves, the same shape the derived mechanism showed
-(11/60 → 59/60). This is a REBUILD, not a replay: the original board builders were gitignored scratchpad
+(11/60 → 59/60). This is a REBUILD rather than a replay: the original board builders were gitignored scratchpad
 scripts and no longer exist, so the row set differs and the two numbers are not strictly comparable.
 
 The named row, directly: `brooklyn, new york, ny` parses `dependent_locality=Brooklyn, locality=New York,

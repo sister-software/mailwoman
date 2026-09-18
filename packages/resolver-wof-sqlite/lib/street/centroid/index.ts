@@ -81,7 +81,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 		this.#locale = opts.streetLocale ?? "fr"
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `street_centroid` table this lookup is a no-op miss, not a crash (mirrors the address-point reader).
+		// `street_centroid` table this lookup is a no-op miss rather than a crash (mirrors the address-point reader).
 		if (hasTable(this.#db, "street_centroid")) {
 			this.#byPostcode = prepareGet(
 				this.#db,

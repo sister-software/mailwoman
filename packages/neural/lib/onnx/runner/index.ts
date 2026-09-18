@@ -96,7 +96,8 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
 export const DEFAULT_INTRA_OP_THREADS = 2
 
 /**
- * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's, not a runtime check.
+ * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's rather than a runtime
+ * check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
 	return { data: tensor.data as Float32Array, dims: tensor.dims }

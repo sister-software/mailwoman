@@ -19,7 +19,7 @@
  *   Both halves of the fix live here. {@linkcode gbOutwardFromKey} derives the outward by SHAPE — the
  *   inward code is always the trailing three characters of the space-stripped form, so the same rule
  *   reads both databases. {@linkcode keyFloorViolation} makes an empty or catastrophically-degraded build
- *   a REFUSAL: a magnitude never carries its own absence, so zero keys is a failure, not a product.
+ *   a REFUSAL: a magnitude never carries its own absence, so zero keys is a failure rather than a product.
  *
  *   The GB key set is a deliberate mirror of the TRAINING lookup's GB half
  *   (`mailwoman/gazetteer-pipeline/anchor-lookup.ts::loadGBCodePoint` + `addGBOutwardKeys`): every unit
@@ -39,7 +39,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
  * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`); the outward district is everything before
- * it. Structural, not a guess — and unlike a space split it holds on a database that stores the glued form.
+ * it. Structural rather than a guess — and unlike a space split it holds on a database that stores the glued form.
  */
 const GB_INWARD_LENGTH = 3
 
@@ -66,7 +66,8 @@ export interface PostcodeBinarySource {
 	database: string
 	/**
 	 * The granularity a browser asset dir should hold, when the train-faithful build is too large for one. Absent for a
-	 * country whose full key set already fits — the size note the command prints is keyed on this, not on the country.
+	 * country whose full key set already fits — the size note the command prints is keyed on this rather than on the
+	 * country.
 	 */
 	browserGranularity?: GBGranularity
 }

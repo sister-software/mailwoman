@@ -89,7 +89,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Today.** Viterbi decoder shipped to JavaScript runtime 2026-05-23 — `neural/viterbi.ts` with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible at JS runtime, even on the v3.0.0 weights (the structural mask is built from the labels list, no retraining required). Composes additively with learned CRF transitions when a future weights release ships them. The span re-reader is not built; v0.6.0 candidate.
 
-**Future.** The re-reader can be a fine-tuned head on the same encoder (cheap) or a small dedicated model (more expensive, higher ceiling). Either way it stays additive: it can only propose new alternatives, never delete existing ones. Constraint-based, not narrowing.
+**Future.** The re-reader can be a fine-tuned head on the same encoder (cheap) or a small dedicated model (more expensive, higher ceiling). Either way it stays additive: it can only propose new alternatives, never delete existing ones. Constraint-based rather than narrowing.
 
 ## Stage 5 — Cross-component reconcile (solver, deterministic today)
 
@@ -106,11 +106,11 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 6 — Resolve with candidates (deterministic + retrieval)
 
-**What it does.** Takes the final component bundle and queries the WOF gazetteer. Returns a ranked list of candidates, not a single point.
+**What it does.** Takes the final component bundle and queries the WOF gazetteer. Returns a ranked list of candidates rather than a single point.
 
 **Failures it owns.**
 
-- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list, not pretend one is correct.
+- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The right answer is to surface the list rather than pretend one is correct.
 
 **Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) and surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 

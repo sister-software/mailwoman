@@ -11,7 +11,7 @@
  *   consumer reads that as an absence rather than an error. The list is now derived from the register, and this check
  *   is what keeps the register and the declaration from becoming two lists again.
  *
- *   IT CHECKS MEMBERSHIP, NOT EVIDENCE. The table's third column is prose with citations — coordinate panels, n, issue
+ *   IT CHECKS MEMBERSHIP rather than EVIDENCE. The table's third column is prose with citations — coordinate panels, n, issue
  *   links — and generating that from JSON would move paragraphs into a config to satisfy a parser. The doc owns the
  *   evidence. the register owns which countries each tier holds. this refuses a disagreement in either direction.
  *

@@ -35,7 +35,7 @@ test("isAuStateAbbreviation: case-insensitive (abbreviations arrive from raw tex
 
 test("isAuStateAbbreviation: false for non-AU / malformed / non-string input", () => {
 	expect(isAuStateAbbreviation("CA")).toBe(false) // US abbreviation
-	expect(isAuStateAbbreviation("New South Wales")).toBe(false) // full name, not abbreviation
+	expect(isAuStateAbbreviation("New South Wales")).toBe(false) // full name rather than abbreviation
 	expect(isAuStateAbbreviation("NSWX")).toBe(false)
 	expect(isAuStateAbbreviation("")).toBe(false)
 	expect(isAuStateAbbreviation("  NSW  ")).toBe(false) // not trimmed by the predicate

@@ -20,7 +20,7 @@ sidebar_position: 3
 
 ## Section order
 
-1. `# Title` — a task, not a noun phrase.
+1. `# Title` — a task rather than a noun phrase.
 2. **Lead.** What the reader will hold at the end, plus the reading time.
 3. **Prerequisites.** Versions, downloads, and every hard constraint that would break a step below.
 4. **Steps.** Numbered `##` sections. One command or one edit each. Real output pasted under each.
@@ -54,7 +54,7 @@ const records = await ingestRows(
 	{ geocodeAddress }
 )
 
-// resolveEntities is synchronous and returns a ResolveResult, not a bare array.
+// resolveEntities is synchronous and returns a ResolveResult rather than a bare array.
 const { entities } = resolveEntities(records)
 
 await writeFile("clinics.geojson", JSON.stringify(toGeoJSON(entities)))

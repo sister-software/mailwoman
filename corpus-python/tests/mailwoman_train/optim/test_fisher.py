@@ -147,7 +147,7 @@ def test_large_lambda_brakes_the_drift(tmp_path: Path) -> None:
     unbraked twin on the same stream.
 
     (λ is bounded by SGD stability — λ·F·lr must stay < 2 — so the memo's "λ→∞ freezes" is asserted
-    as a strong RELATIVE brake at a large-but-stable λ, not a literal fixed point.)
+    as a strong RELATIVE brake at a large-but-stable λ rather than a literal fixed point.)
     """
 
     def tune(lam: float) -> torch.nn.Module:

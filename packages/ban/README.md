@@ -8,7 +8,7 @@ government register (26M addresses) instead of the sparse community fallback (OS
 
 It is the French counterpart of the 50-state US situs layer (#1012). It closes the measured FR rooftop
 gap: commune resolution was already ~99% @25 km, but @1 km sat at ~37% and was _flat_ from clean to messy
-input — the flatness is the tell of a coverage ceiling, not a parse problem. BAN is the coverage.
+input — the flatness is the tell of a coverage ceiling rather than a parse problem. BAN is the coverage.
 
 ## The licensing boundary
 

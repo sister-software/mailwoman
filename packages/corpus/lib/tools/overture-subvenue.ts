@@ -13,7 +13,7 @@
  *   curated venue-interior naming. OSM's `aeroway=terminal` is a building footprint that usually
  *   carries the AIRPORT's name. The two sources fail differently, so both are read.
  *
- *   ── THE CATEGORY SET IS MEASURED, NOT GUESSED ────────────────────────────────────────────────────
+ *   ── THE CATEGORY SET IS MEASURED rather than GUESSED ────────────────────────────────────────────────────
  *   A full scan of all 13,681,698 rows (2026-08-05, poi.db vintage 2026-05-20.0) counted, per
  *   category, how many named rows carry a designator token. The ranking is not what a category name
  *   predicts — `gas_station` leads the whole table with 12,996 hits, every one of them the token
@@ -52,10 +52,10 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  *
  * - `gas_station` (12,996 hits) — all `station` inside a brand name (Holiday Station, Chevron Station Seward).
  * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls, which are venues rather than sub-venues.
- * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier, not interior structure.
+ * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier rather than interior structure.
  * - `building_supply_store` (4,030) — `building` inside "Allied Building Products".
  * - `jehovahs_witness_place_of_worship` (2,334) — every hit is "Kingdom Hall of Jehovah's Witnesses".
- * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a CONFOUND BOARD entry, not a source.
+ * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a CONFOUND BOARD entry rather than a source.
  * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution; `campus_building` is the
  *   interior subset and is kept instead.
  * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name. Venue tier,

@@ -14,7 +14,7 @@
 
 - Lands after the shell plan and the runtime-homes plan; rebase onto both.
 - A moved or renamed name gets no compatibility re-export.
-- Behaviour parity, not redesign: the seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
+- Behaviour parity rather than redesign: the seven browser specs that pass on the docs page pass on the app, on the real assets, before the docs page is retired.
 - `packages/earth` never imports `@mailwoman/docs` or `docs/**`; `packages/**` never imports `@mailwoman/docs`.
 - Docs keep working after every task: `cd docs && yarn build` exits 0.
 - `process.env` never read directly; `node:*` only under `core/lib/fs`.
@@ -123,7 +123,7 @@ yarn workspace @mailwoman/earth build > /tmp/earth-build.log 2>&1; echo "EXIT=$?
 yarn workspace @mailwoman/earth preview
 ```
 
-Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning names a `node:` specifier on the static graph; `yarn mwops health bundle-graph` says which package, and the fix is a condition there, not an alias here.
+Open `http://localhost:7780/?q=Chicago,%20IL`: the model loads from `public.mailwoman.ai`, the query resolves to the Chicago locality with a marker. A Vite "externalized for browser compatibility" warning names a `node:` specifier on the static graph; `yarn mwops health bundle-graph` says which package, and the fix is a condition there rather than an alias here.
 
 ```bash
 git add packages/earth packages/site-kit docs

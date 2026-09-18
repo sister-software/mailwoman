@@ -121,12 +121,12 @@ import 192 ms | model 690 ms | open db 1 ms | first geocode 226 ms | total 1109 
 
 Three things to take from that.
 
-**Opening the gazetteer costs 1 ms.** A 1.65 GB SQLite file is memory-mapped, not read, so the file's
+**Opening the gazetteer costs 1 ms.** A 1.65 GB SQLite file is memory-mapped rather than read, so the file's
 size does not appear in the cold start at all. Geocoding adds about 100 ms of cold start over parsing,
-and all of it is the extra module graph, not the database.
+and all of it is the extra module graph rather than the database.
 
 **Loading the model is 70% of the cold start and cannot be moved.** It is one ONNX session build over a
-39 MB graph. Warm requests do not pay it, so the change is instance lifetime, not code.
+39 MB graph. Warm requests do not pay it, so the change is instance lifetime rather than code.
 
 **Resident set lands near 375 MB parse-only and 425 MB with a resolver.** Size the instance above that
 rather than at it — the parse-only figure moved between 369 MB and 407 MB across five runs on an idle
@@ -134,7 +134,7 @@ box.
 
 ## 4. Build the classifier once, outside the handler
 
-Everything above is per-instance, not per-request, which only holds if the handler does not rebuild it.
+Everything above is per-instance rather than per-request, which only holds if the handler does not rebuild it.
 Build at module scope so a warm invocation reuses the session and the open database:
 
 ```js
@@ -228,11 +228,11 @@ The `onnxruntime` check is the one that catches a trim that went too far.
 
 ## Limits
 
-- **The data root has to be a filesystem, not an object store.** SQLite needs `pread` on a local file
+- **The data root has to be a filesystem rather than an object store.** SQLite needs `pread` on a local file
   descriptor. S3 behind a userspace mount works and is slow; a network filesystem with real
   random reads works. There is no HTTP-range gazetteer client in the Node runtime today.
 - **250 MB unzipped is not reachable.** The trimmed tree is 303 MB before weights. On AWS Lambda that
-  means container images or a layer, not a zip.
+  means container images or a layer rather than a zip.
 - **One instance is one CPU-bound worker.** Inference blocks the JavaScript thread, so a single instance
   serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
   [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.

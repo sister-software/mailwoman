@@ -12,10 +12,10 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * never regenerated — notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*`
  * variants. Their committed parquets carry whatever label format was current when they were first built.
  *
- * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed corpora must be RE-ALIGNED,
- * not regenerated — feed the canonical source back through the same `alignRow` the from-source build uses, so the spans
- * land in the new format with zero drift. That is exactly what this does: canonical jsonl in → labeled jsonl out, one
- * `alignRow` per row, quarantine on miss.
+ * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed corpora must be RE-ALIGNED
+ * rather than regenerated — feed the canonical source back through the same `alignRow` the from-source build uses, so
+ * the spans land in the new format with zero drift. That is exactly what this does: canonical jsonl in → labeled jsonl
+ * out, one `alignRow` per row, quarantine on miss.
  *
  * It is the uniform counterpart to `tools/overlay/kryptonite.ts` (which couples to a base manifest and writes parquet
  * directly). Output goes to jsonl so it joins the same jsonl-to-parquet path every other overlay uses.

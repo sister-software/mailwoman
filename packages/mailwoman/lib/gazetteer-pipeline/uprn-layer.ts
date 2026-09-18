@@ -34,7 +34,7 @@
  *   against OS's published digest, an exact header match (schema drift fails loudly), the accounting
  *   identity `read = inserted + malformed + duplicate` with malformed and duplicate both expected
  *   zero, and a row floor (the 2026-08 extract holds 41,629,393 rows. the product only grows, so a count
- *   under the floor means a truncated read, not a smaller Britain).
+ *   under the floor means a truncated read rather than a smaller Britain).
  *
  *   ## Coverage
  *
@@ -122,7 +122,7 @@ const OPEN_UPRN_COLUMN_COUNT = 5
  * What `GB` means on this product: England, Scotland and Wales — the Downloads API publishes a single `GB` area, and
  * the product derives from AddressBase Premium, whose scope is GB. Northern Ireland's property identifiers are
  * administered by Land & Property Services (Pointer) and appear in no OS OpenData product, so the layer's NI hole is a
- * licensing fact, not a data-quality one — the same boundary `CODEPOINT_COVERAGE_NOTE` records for postcodes.
+ * licensing fact rather than a data-quality one — the same boundary `CODEPOINT_COVERAGE_NOTE` records for postcodes.
  */
 export const OPEN_UPRN_COVERAGE_NOTE =
 	"OS Open UPRN covers Great Britain only (England, Scotland, Wales — the product's single Downloads-API area is GB). " +
@@ -203,7 +203,7 @@ export interface OpenUPRNPoint {
  *
  * The file is CRLF-terminated (the G-NAF lesson: strip the `\r` at the reader boundary, or the last column — here
  * `LONGITUDE` — silently carries it into every value). Quote-free by construction: every field is numeric, so a plain
- * comma split is exact, not an assumption about lucky data.
+ * comma split is exact rather than an assumption about lucky data.
  *
  * The UPRN must be a literal digit string (≤12 digits in the wild, so always a safe integer); the WGS84 columns 4–5 are
  * taken and the OSGB36 columns 2–3 deliberately ignored (see the module docstring).
@@ -376,7 +376,7 @@ function decodeProvenanceText(bytes: Uint8Array): string {
  *
  * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed size exactly — the dated
  * acquisition directory is the cache, and the size check is what tells a completed extraction from one that died
- * mid-write. (Byte size, not mtime: the zip's entries carry mode 000 and a 2026 timestamp, neither of which says
+ * mid-write. (Byte size rather than mtime: the zip's entries carry mode 000 and a 2026 timestamp, neither of which says
  * anything about our copy's completeness.)
  */
 export async function extractOpenUPRN(options: {

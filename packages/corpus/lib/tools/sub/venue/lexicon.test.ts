@@ -183,7 +183,7 @@ test("surfacesFromWikidata maps QIDs to designators and drops untagged and unkno
 })
 
 test("surfacesFromWikidata: nothing it produces is curated", () => {
-	// The required invariant. A Wikidata class label is a CONCEPT NAME, not an addressed
+	// The required invariant. A Wikidata class label is a CONCEPT NAME rather than an addressed
 	// designator (`puerta de embarque` vs `Puerta`), so promotion is a human act.
 	expect(surfacesFromWikidata(wikidataFixture).every((s) => !s.curated)).toBe(true)
 })

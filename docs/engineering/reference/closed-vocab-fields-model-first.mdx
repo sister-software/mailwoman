@@ -31,10 +31,10 @@ That doc carries the source capability tiers and the positive-evidence-only rule
 
 ## Why not a deterministic overlay — the reasoning
 
-**The over-firing was a data artifact, not a model limitation.** The night-9 `country`
+**The over-firing was a data artifact rather than a model limitation.** The night-9 `country`
 recipe output was almost entirely _trailing-country_ rows, so the model learned one cheap
 shortcut — "trailing token ⇒ country" — and tagged cities and regions as countries (49
-F1, 23% precision). That is a skewed training distribution, not a transformer+CRF ceiling.
+F1, 23% precision). That is a skewed training distribution rather than a transformer+CRF ceiling.
 Context-sensitive token classifiers (BERT+CRF, LUKE, BLINK) routinely resolve gazetteer
 homographs from local context; "Atlanta, Georgia" → region vs "Tbilisi, Georgia" →
 country is the _canonical_ job of a context-sensitive tagger.
@@ -54,7 +54,7 @@ override is precisely the substitution we ruled out.
 downstream, so wanting a hard guarantee is sound — but the place to enforce it is the
 **resolver, using calibrated confidence** (we ship isotonic `conf=`): if the model is
 low-confidence _and_ the gazetteer has an unambiguous match, the resolver may prefer the
-lookup as a candidate. That is a downstream re-rank at the resolution layer, not a
+lookup as a candidate. That is a downstream re-rank at the resolution layer rather than a
 parser substitution — the same safety, at the right layer.
 
 ## Revised taxonomy (three tiers, all model-first)
@@ -62,11 +62,11 @@ parser substitution — the same safety, at the right layer.
 The night-9 "open-vocab → train / closed-vocab → deterministic" split was too coarse; the
 partition that matters is by _what the field needs to learn_:
 
-| Tier                                                 | Fields                                   | Treatment                                                                                                                                         |
-| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                             |
-| **Closed-vocab, no homographs, starved**             | `po_box`, `cedex`                        | also a coverage recipe — they were starved, not unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit`  |
-| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature |
+| Tier                                                 | Fields                                   | Treatment                                                                                                                                               |
+| ---------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage recipe + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                   |
+| **Closed-vocab, no homographs, starved**             | `po_box`, `cedex`                        | also a coverage recipe — they were starved rather than unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
+| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage recipe **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature       |
 
 The deterministic _override_ appears in none of them.
 
@@ -83,12 +83,12 @@ representation (same implementation as the postcode anchor), and the model decid
 - **Known-homograph flag** — "this surface form is _also_ a US state / region name." This
   is the single highest-value bit: it tells the model "context is non-negotiable here,
   don't fall back on a shortcut." Produced statically by intersecting the country and
-  region gazetteers. Expected to _improve_ `region` precision, not dent it.
+  region gazetteers. Expected to _improve_ `region` precision rather than dent it.
 - **Optional entity-type embedding** — a small learned vector encoding the signal type
   (is-country / country+region-homograph / cedex / po_box). Near-zero cost; lets the model
   learn distinct behaviors per signal.
 
-The matcher (codex) is reused, not discarded — it stops overriding and starts informing.
+The matcher (codex) is reused rather than discarded — it stops overriding and starts informing.
 
 ## Data + training recipe
 
@@ -139,7 +139,7 @@ Two paradigms divide the space:
 | **libpostal**              | `country`/`po_box` are _learned_ labels, same footing as everything                                                                       | input feature + training-data generator (end-to-end; inherits the over-fire risk) |
 | **deepparse**              | learned labels, configurable tag set                                                                                                      | — (no overlay)                                                                    |
 | **Pelias Parser**          | dictionary classifiers + cartesian solver                                                                                                 | fully deterministic (no ML to inform)                                             |
-| **Pelias Placeholder**     | deterministic WoF hierarchy resolution downstream of the parse                                                                            | a resolution layer, not span re-tagging                                           |
+| **Pelias Placeholder**     | deterministic WoF hierarchy resolution downstream of the parse                                                                            | a resolution layer rather than span re-tagging                                    |
 | **Nominatim**              | `countrycodes` is a hard filter; special phrases                                                                                          | deterministic overlays on search                                                  |
 | **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                    | validation/format engine, no free-text parse                                      |
 | **Airmail**                | parserless by default; small BERT to aid malformed queries; country baked into a flat content field at index time, S2 cells for hierarchy | OSM `key=value` as a separate deterministic _index-time_ tag channel              |

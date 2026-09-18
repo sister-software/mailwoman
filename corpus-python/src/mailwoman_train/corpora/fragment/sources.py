@@ -57,7 +57,7 @@ def collect_oa_pairs(
     names), so a street-only fragment recipe would teach "context-free name = street". The
     established family (si-bare-village / fr-bare-street) balances polarity. fragments balance
     with bare-locality twins so the discriminant the model can learn is morphology/lexical
-    identity, not fragment-ness.
+    identity rather than fragment-ness.
     """
     rng = random.Random(f"{SEED}:{locale_dir}")
     pairs: dict[str, str] = {}

@@ -17,7 +17,7 @@
  *   case's top-level `country` field is routing metadata — `routing.ts:28` reads it to pick a locale
  *   — never an assertion. So a row can name Venezuela, answer with the country dropped, and pass.
  *
- *   TRUTH IS THE ROW'S OWN `country` FIELD, NOT A REGEX OVER THE INPUT. The first version of this
+ *   TRUTH IS THE ROW'S OWN `country` FIELD rather than A REGEX OVER THE INPUT. The first version of this
  *   census matched country NAMES in the string and reported 9 contradictions. 7 of the 9 were the
  *   parser being right — `China Red` is a restaurant in Manchester, `Luxembourg House` a building in
  *   London, `Masala India` a curry house in Leyton, `Venezuela` a street in San Juan. That is the

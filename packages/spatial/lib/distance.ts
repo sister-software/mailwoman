@@ -114,8 +114,8 @@ export function greatCircleDistance(
  * every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
  *
  * Unlike {@link haversine}, this is pure math with NO Null-Island sentinel: `(0, 0)` is the Gulf of Guinea — a real
- * point, not "missing coordinate". That sentinel convention belongs to the `GeoPointInput` object form (where a 0/0
- * input means "no coordinate"), not to a raw scalar distance.
+ * point rather than "missing coordinate". That sentinel convention belongs to the `GeoPointInput` object form (where a
+ * 0/0 input means "no coordinate"), not to a raw scalar distance.
  *
  * @category Position
  */
@@ -137,8 +137,8 @@ export const M2_PER_KM2 = 1_000_000
 /**
  * Metres from a point to a line SEGMENT, with longitude scaled for the latitude so the two axes are comparable.
  *
- * MEASURE TO THE EDGE, NOT TO THE NEAREST VERTEX. A point a centimetre from a long edge can be metres from every vertex
- * of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
+ * MEASURE TO THE EDGE rather than TO THE NEAREST VERTEX. A point a centimetre from a long edge can be metres from every
+ * vertex of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
  * near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. That is the difference
  * between "two channels rendered the same edge slightly differently" and "the conversion is wrong".
  *
@@ -170,10 +170,10 @@ export function segmentDistanceMetres(
  * Metres from a point to the nearest ring EDGE of an areal geometry — `Infinity` when the geometry bounds no area or
  * carries no segment.
  *
- * To the edge, not to the nearest vertex: a point a centimetre from a long edge can be metres from every vertex of it,
- * so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one near-miss
- * read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. Every polygon layer's two-path
- * verification measures its boundary tolerance with this.
+ * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can be metres from every vertex
+ * of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
+ * near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. Every polygon layer's
+ * two-path verification measures its boundary tolerance with this.
  *
  * @category Position
  */

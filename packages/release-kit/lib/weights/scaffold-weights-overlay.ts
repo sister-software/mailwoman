@@ -126,7 +126,7 @@ export async function scaffoldWeightsOverlay(
 				directory: `packages/neural-weights-${slug}`,
 			},
 			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
-			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
+			// relative path, which fails after unpacking — and a data-only overlay has no use
 			// for a dev script anyway.
 			files: [
 				"model-card.json",
@@ -200,7 +200,7 @@ await materializeDevOverlay({
  *   the locale writes its postcode BEFORE the locality, it needs entries in
  *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
  *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
- *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug}, not
+ *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug} rather than
  *   for whichever locale you read first.
  */
 
@@ -210,7 +210,7 @@ await materializeDevOverlay({
 	locale: "${slug}",
 	pairIndex: {
 		country: "${country}",
-		// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
+		// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at rather than
 		// a measurement of this one.
 		delta: 10,
 		transitionBeta: 5,

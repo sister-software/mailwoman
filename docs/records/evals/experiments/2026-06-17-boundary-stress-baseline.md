@@ -51,7 +51,7 @@ caught two things, only one of them a true problem:
   Lyon are 95–99% **locality** in the FR data, so familiar dept-diverse FR cities are kept. **DE** yielded
   no locality-dominant towns (German cities are street-dominated too, "Berliner Straße"), so
   house-number-after-street is FR-only (DE's native order is covered by `synth-german`). Net: every extract
-  locality now agrees with the base — the contradiction is gone, not deferred.
+  locality now agrees with the base — the contradiction is gone rather than deferred.
 
 ## Reading
 
@@ -64,7 +64,7 @@ caught two things, only one of them a true problem:
 ## So what
 
 The extract puts the gold boundary on diverse realizations of these shapes. The locality vocabulary is now
-base-derived (the #511 contradiction is resolved, not deferred), so the extract is retrain-ready. The
+base-derived (the #511 contradiction is resolved rather than deferred), so the extract is retrain-ready. The
 retrain's success criterion (the `v1.6.0-boundary-stress` recipe check): move these four numbers up
 (street_suffix 41.7 → ≥55, comma-less street 47 → ≥65, fr-prefix 55 → ≥70, hn-after 51.3 → ≥65) without
 regressing the clean canonical per-locale F1 (the US/FR/DE regression check) and the affix floors — one variable,

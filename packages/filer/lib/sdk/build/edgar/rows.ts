@@ -101,7 +101,7 @@ export function processEdgarSubsidiaryRow(
 	const canonicalSubsidiaryName = canonicalizeOrganizationName(row.subsidiaryName)?.canonical
 	const matchedFRNs = canonicalSubsidiaryName ? (frnsByCanonicalLegalName.get(canonicalSubsidiaryName) ?? []) : []
 
-	// Corroboration — INFERENCE, not authority, and only when UNAMBIGUOUS (exactly one match). Zero matches: nothing
+	// Corroboration — INFERENCE rather than authority, and only when UNAMBIGUOUS (exactly one match). Zero matches: nothing
 	// more to write, the disclosure edge above is the whole fact. Two or more: a genuine name collision across
 	// distinct FRNs — abstain rather than guess which one, same as resolveCIKCandidates never silently narrowing a
 	// tie. Grading the survivors is not a substitute for abstaining on a
@@ -112,7 +112,7 @@ export function processEdgarSubsidiaryRow(
 	const matchedFRNNodeID = mintFRNNodeID(matched.frn, context)
 	insNode.run(matchedFRNNodeID, FilerIdentifierType.FRN, matched.frn)
 
-	// the score reflects what this match actually knows, not a flat 0.92 on every link — see
+	// the score reflects what this match actually knows rather than a flat 0.92 on every link — see
 	// scoreEdgarSubsidiaryMatch. `evidence` carries both raw spellings now, so a reader can see for itself what the
 	// score is grading rather than having to take the number on faith.
 	const matchScore = scoreEdgarSubsidiaryMatch(row.subsidiaryName, matched.legalName)

@@ -121,7 +121,7 @@ export interface GauntletCaseTable {
 	 * Absent (the normal case) = the derived ladder decides. It exists for the two classes no threshold fixes:
 	 * TERRITORIES, whose ancestry is politically rather than geographically shaped, and DUAL-ROLE places (#402), where
 	 * one name is both a locality and its own county and the ladder double-counts a rung. A corpus that needed many of
-	 * these would be telling you the derivation is wrong, not that the rows are special.
+	 * these would be telling you the derivation is wrong rather than that the rows are special.
 	 */
 	ablation_expect: string | null
 	/**
@@ -134,8 +134,8 @@ export interface GauntletCaseTable {
 	locale: string | null
 	/**
 	 * 1 = this row's expected outcome is NO COORDINATE — the resolver abstains rather than answering. The grade inverts:
-	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must
-	 * abstain, not fall through to a world-fuzzy candidate. the abstain pin is the contract, and lands re-pinned to real
+	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain
+	 * rather than fall through to a world-fuzzy candidate. the abstain pin is the contract, and lands re-pinned to real
 	 * coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null

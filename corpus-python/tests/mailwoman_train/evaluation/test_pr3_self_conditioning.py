@@ -153,7 +153,7 @@ def test_conditioning_off_emits_no_locale_logits_and_ignores_locale_ids():
     enc = _build_encoder(use_locale_conditioning=False)
     assert enc.locale_head is None and enc.locale_film is None
     b = _stub_batch(2, 8)
-    # Passing locale_ids to an unconditioned encoder is harmless (ignored, not an error) — the
+    # Passing locale_ids to an unconditioned encoder is harmless (ignored rather than an error) — the
     # data loader always emits them now, so the off path must tolerate them.
     out = enc(
         input_ids=b["input_ids"],

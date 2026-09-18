@@ -13,9 +13,9 @@
  *   source (it denotes participation in a program). Three buckets fall out per entity:
  *
  *   - **enrolled** — resolves to both an eligibility and a funding record.
- *   - **eligible, not enrolled** — an eligibility record with no funding record resolving to it (the
+ *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
  *       ANTI-JOIN).
- *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
+ *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
  *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
@@ -158,7 +158,7 @@ export interface ReconciliationReportOptions {
 	 */
 	scopeNote?: string
 	/**
-	 * A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT).
+	 * A paragraph about the scorer choice (e.g. why the FS baseline rather than the dedup GBT).
 	 */
 	scorerNote?: string
 	/**
@@ -166,14 +166,15 @@ export interface ReconciliationReportOptions {
 	 */
 	sampleNote?: string
 	/**
-	 * How many "eligible, not enrolled" rows to spot-check. Default 15.
+	 * How many "eligible rather than enrolled" rows to spot-check. Default 15.
 	 */
 	spotCheckLimit?: number
 }
 
 /**
  * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join spot-check, and — always,
- * by construction — the neutral caveat. The deliverable is the anti-join SET, not a rate, and never an allegation.
+ * by construction — the neutral caveat. The deliverable is the anti-join SET rather than a rate, and never an
+ * allegation.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result

@@ -2,7 +2,7 @@
 
 2026-07-31. Operator observation + Claude. Two things: one concrete gap in Phase 3 that a worked
 analysis exposed, and one thesis about where this architecture generalizes. The first is actionable
-now; the second is explicitly **a thesis, not a roadmap commitment** — see §4 on scope discipline.
+now; the second is explicitly **a thesis rather than a roadmap commitment** — see §4 on scope discipline.
 
 ## 1. What the WOW analysis demonstrated
 
@@ -50,7 +50,7 @@ identity (a regulator-assigned ID), physical plant (geocoded, because siting req
 claims (service territory or availability), and transactions (because transfers need approval). The
 layers join badly on purpose, and geocoded entity resolution is what makes them join.
 
-direct ranking of second verticals by data quality, not by market attractiveness:
+direct ranking of second verticals by data quality rather than by market attractiveness:
 
 - **Electric and gas utilities — the strongest fit by a wide margin.** EIA Form 860 is plant-level and
   geocoded with owner identity (a direct ASR analog); EIA Form 861 carries utility service territories
@@ -65,7 +65,7 @@ direct ranking of second verticals by data quality, not by market attractiveness
 The abstraction, stated directly: **mailwoman is a geocoded entity-resolution substrate for
 regulated-monopoly public record.** The address parser is the joining primitive because these
 datasets key on addresses and coordinates and nothing joins directly without one. That framing
-explains why the geocoder is the foundation rather than the product — and it is a framing, not a
+explains why the geocoder is the foundation rather than the product — and it is a framing rather than a
 pivot.
 
 ## 4. Scope discipline (binding on this note)
@@ -78,7 +78,7 @@ This note is a thesis with one actionable extraction. To keep it from becoming a
   telecom vertical has a paying customer or a published artifact proving the thesis. One vertical
   proven beats two half-built, and the discipline that got 2a and 2b shipped was narrow phases with
   pre-registered checks.
-- **The delivery shape is already right.** The BDC spec's "the interface is an agent, not a form"
+- **The delivery shape is already right.** The BDC spec's "the interface is an agent rather than a form"
   holds here: the customer-facing product is an agent with a deterministic, provenance-carrying tool
   belt. This analysis is what that workflow looks like when the substrate exists — which is evidence
-  the MCP surface is the correct delivery mechanism, not a reason to build something new.
+  the MCP surface is the correct delivery mechanism rather than a reason to build something new.

@@ -294,7 +294,7 @@ def test_iter_train_files_falls_back_to_glob_when_manifest_missing(tmp_path: Pat
 
 
 def test_iter_train_files_raises_when_neither_source_yields_files(tmp_path: Path):
-    """No manifest, no train/ parquet files → caller-visible FileNotFoundError, not silent empty."""
+    """No manifest, no train/ parquet files → caller-visible FileNotFoundError rather than silent empty."""
     corpus = tmp_path / "empty"
     (corpus / "train").mkdir(parents=True)
     with pytest.raises(FileNotFoundError):

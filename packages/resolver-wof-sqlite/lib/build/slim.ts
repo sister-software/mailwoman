@@ -220,7 +220,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		// `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev match by
 		// querying `names` (`#exactMatchIDs`), but the slim DB drops `names` for size — so the
 		// browser resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
-		// exact-abbrev tiering ("VT" → Vermont, not a token-matching foreign region) instead of the
+		// exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region) instead of the
 		// demo's hardcoded region-abbreviation map (since deleted). Sourced from the `language='abbr'` rows
 		// `add-region-abbrevs.ts` wrote, already filtered to surviving spr ids via the names copy. The
 		// table is always created (empty when the source predates the abbrev enrichment) so the

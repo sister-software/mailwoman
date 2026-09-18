@@ -11,7 +11,7 @@
  *   Fixtures are built directly against an in-memory `filer.db` (nodes/edges/attributes/cluster rows inserted
  *   straight through Kysely) — the same convention `schema.test.ts` and `cluster-filers.test.ts` use — EXCEPT
  *   for criterion 1's builder-guard sub-tests, which go through {@linkcode buildFilerDatabase} on purpose (the
- *   guards under test live there, not in the schema).
+ *   guards under test live there rather than in the schema).
  *
  *   Criterion 2 in particular is a fixture built by hand (filer_cluster rows written directly, never via
  *   `cluster-filers.ts`'s `clusterAuthoritativeComponents`/`clusterInferredLinks`) — per the task brief, this
@@ -75,7 +75,7 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 const MANIFEST: FilerManifestTable = {
 	name: "filer",
 	version: "2026-Q1",
-	// 2, not 1 — filerLookup now unconditionally queries filer_family and refuses
+	// 2 rather than 1 — filerLookup now unconditionally queries filer_family and refuses
 	// a manifest reporting a schema_version that predates it (see the dedicated schema-version-guard test below).
 	schema_version: 2,
 	source: "form-499,bdc-provider-list",
@@ -391,7 +391,7 @@ describe("§7-3a criteria", () => {
 
 			// Fixture-built directly — exactly as `clusterAuthoritativeComponents` would leave it, two
 			// separate authoritative clusters — never via cluster-filers.ts itself, so this test asserts
-			// filerLookup's own reading contract, not clustering internals (already covered by cluster-filers.test.ts).
+			// filerLookup's own reading contract rather than clustering internals (already covered by cluster-filers.test.ts).
 			await db
 				.insertInto("filer_cluster")
 				.values([
@@ -477,8 +477,8 @@ describe("§7-3a criteria", () => {
 		 * relationship)` and differing only in `assertion`/`match_score` (and the `source` that separates them under the
 		 * PK). One is a Form 499 filing that names the filer's own holding company. the other is a matcher's conclusion
 		 * about the same membership. Drop either field from `filerLookup`'s projection and `.distinct()` folds the two into
-		 * a single entry — this test then dies on the length assertion, not just on a field comparison, which is what makes
-		 * it an assertion rather than a shape snapshot.
+		 * a single entry — this test then dies on the length assertion rather than just on a field comparison, which is
+		 * what makes it an assertion rather than a shape snapshot.
 		 */
 		it("filerLookup.families reports an INFERRED family membership separately from an AUTHORITATIVE one for the same family — never folded together (criterion 2, on filer_family)", async () => {
 			using db = openMemory()
@@ -526,7 +526,7 @@ describe("§7-3a criteria", () => {
 
 			const result = await filerLookup(db, { frn: toFRN("8080808080")!, asOf: "2026-06-01" })
 
-			// THE ASSERTION: two entries, not one. A caller can tell the filed disclosure from the guess.
+			// THE ASSERTION: two entries rather than one. A caller can tell the filed disclosure from the guess.
 			expect(result.families).toEqual([
 				{
 					family_id: FAMILY_CHECK2,
@@ -1282,7 +1282,7 @@ describe("§7-3b criteria", () => {
 			expect(result1.families).toHaveLength(1)
 			expect(result2.families).toHaveLength(1)
 
-			// Same family_id — proves the two spellings really did canonicalize together, not a coincidence of
+			// Same family_id — proves the two spellings really did canonicalize together rather than a coincidence of
 			// the fixture.
 			const sharedFamilyID = result1.families[0]?.family_id
 			expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
@@ -1402,11 +1402,11 @@ describe("§7-3b criteria", () => {
 		 * `(from_node_id, relationship, source, valid_from)` without pinning which edge target names the family, and a node
 		 * carrying two holding-company edges that share that 4-tuple (the documented decision-6 shape —
 		 * `ProviderListRow.holdingCompany`'s own docstring: "one providerID can legitimately carry different holdingCompany
-		 * strings across rows") leaks every name matching the tuple into every family_id the node happens to touch, not
-		 * just the one each edge actually names. That is a FALSE RELATIONSHIP CLAIM — a family reporting a holding company
-		 * it never reported — reproduced here end to end on both shapes that collide on the tuple: the provider-list path
-		 * (one providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path (one FRN, two rows,
-		 * the identical lastFiledAt).
+		 * strings across rows") leaks every name matching the tuple into every family_id the node happens to touch rather
+		 * than just the one each edge actually names. That is a FALSE RELATIONSHIP CLAIM — a family reporting a holding
+		 * company it never reported — reproduced here end to end on both shapes that collide on the tuple: the
+		 * provider-list path (one providerID, two holdingCompany values, one shared file-level validFrom) and the 499 path
+		 * (one FRN, two rows, the identical lastFiledAt).
 		 *
 		 * The scoping is achieved by joining on the persisted `filer_family.naming_node_id` rather than re-canonicalizing
 		 * edge targets at read time, but these two tests are mechanism-independent: they fail with the identical
@@ -1831,7 +1831,7 @@ describe("§7-3b criteria", () => {
 
 			// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
 			// one, per clusterAuthoritativeComponents's own contract) — but never the FRN's cluster: the
-			// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary, not same_entity, so
+			// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary rather than same_entity, so
 			// readAuthoritativeGroups correctly never unions it with anything.
 			const cikCluster = await db
 				.selectFrom("filer_cluster")

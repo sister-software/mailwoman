@@ -11,7 +11,7 @@
  *   element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as
  *   `"Acme FiberLLC"`, a name that appears nowhere in the document. Reach for the sanitizer from a module
  *   that already sanitizes. its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,
- *   against `htmlparser2`'s 12 ms), which is priced for sanitizing, not for reading a table.
+ *   against `htmlparser2`'s 12 ms), which is priced for sanitizing rather than for reading a table.
  */
 
 import { Parser } from "htmlparser2"
@@ -70,8 +70,8 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
  *
  * Markup between two text runs inserts one separator, and only where the source states none — so `<td>a</td><td>b</td>`
  * separates into two values while `a <b>b</b>` stays single-spaced, and neither fabricates the 2+-space run a caller
- * would read as a column boundary. A run of markup is one separation, not one per tag: `</p><p>` inserts a single
- * break. An element in `lineBreakElements` makes that separator a newline, unconditionally — a line boundary the
+ * would read as a column boundary. A run of markup is one separation rather than one per tag: `</p><p>` inserts a
+ * single break. An element in `lineBreakElements` makes that separator a newline, unconditionally — a line boundary the
  * document states is not a spacing judgment.
  */
 export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<string>): string {

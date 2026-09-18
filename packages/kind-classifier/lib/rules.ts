@@ -7,7 +7,7 @@
  *   and returns a confidence score in [0, 1], or 0 if the rule doesn't fire.
  *
  *   Bitter-lesson-safe: only universal structural patterns — no place-name dictionaries. ~1 small
- *   regex set per new locale, not 50K dictionary entries.
+ *   regex set per new locale rather than 50K dictionary entries.
  */
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"

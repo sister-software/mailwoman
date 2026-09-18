@@ -23,7 +23,7 @@ Paris target class, n=63, production config, int8 vs int8, one variable off v310
 span decode loses to the BIO argmax of the model it is attached to. v301's within-model margin
 was +0.38pp; on a corpus that teaches bare streets it is **−3.2pp**.
 
-## Why this is the end, not a tuning problem
+## Why this is the end rather than a tuning problem
 
 The head trained correctly and we verified it before reading anything:
 

@@ -10,7 +10,7 @@ full Gauntlet clean: shipped 6.4.0 fails it.
 
 On the way to shipping the digit-ownership model, the pre-ship Gauntlet's metamorphic layer flagged a
 `comma-drop` invariant break that per-tag F1 and the parity boards never surface — it grades the
-assembled coordinate, not labels:
+assembled coordinate rather than labels:
 
 ```
 INV[comma-drop]  "1600 Pennsylvania Ave NW, Washington DC"
@@ -22,7 +22,7 @@ Dropping the comma moved the result ~2 km — from the rooftop to the DC admin c
 `Washington` into the street span (`street="Pennsylvania Ave NW Washington"`, no locality), so the
 address-point lookup missed and the result fell back a tier. This is **pre-existing** — shipped 6.4.0
 fails it byte-identically; v310 and the digit-ownership model parse it the same way. Whitespace-only
-(comma-free) input is 64% of the parity gold, so this is a common shape, not an edge case.
+(comma-free) input is 64% of the parity gold, so this is a common shape rather than an edge case.
 
 ## The fix
 
@@ -45,7 +45,7 @@ the original xfail list). Regression, metamorphic, and held-out all pass: **VERD
 The second change is the `synth-no-fragment` extract at its all-length long-number boost — the corpus change
 that teaches the street/number boundary, so a bare `Nordtømmesvegen 178` reads `house_number 178` rather
 than a postcode. On the Norwegian digit board, `bare-street-hn` moves 0.693 → 0.733 (+4pp), the `bare-pc`
-the bare-postcode class stays at 1.000, and the contextful classes hold. The change is a clean net-positive, not a
+the bare-postcode class stays at 1.000, and the contextful classes hold. The change is a clean net-positive rather than a
 trade — the tokenizer-level alternative (a number-piece vocab splice) cleared more on-board but failed the
 golden check on five tags, so it was not shipped.
 

@@ -95,8 +95,8 @@ describe("the checked read", () => {
 	/**
 	 * The shortfall branch is DEFENCE IN DEPTH and no file content reaches it: with quote handling off, the TSV reader
 	 * yields one record per non-empty line for every input, which is what the cases above establish. It exists to catch a
-	 * reader whose options regress — the defect it was written for was a default, not a file — so the test drives the
-	 * branch directly rather than inventing content that cannot produce it.
+	 * reader whose options regress — the defect it was written for was a default rather than a file — so the test drives
+	 * the branch directly rather than inventing content that cannot produce it.
 	 */
 	it("raises rather than answering short, naming both counts", async () => {
 		const missing = String(dir.resolve("gone.txt"))

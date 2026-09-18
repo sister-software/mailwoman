@@ -66,11 +66,11 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	expect(result.inserted).toBe(3)
 	expect(result.byCountry).toEqual({ CZ: 2, PL: 1 })
-	// The meaning-of-zero rule: a country with no dump is a NAMED absence, not a zero row.
+	// The meaning-of-zero rule: a country with no dump is a NAMED absence rather than a zero row.
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync:
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync:
 	// root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
@@ -151,7 +151,7 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
 	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump. They are a building
-	// reference, not a postal code, and folding them stored 178,171 rows under a placetype that means
+	// reference rather than a postal code, and folding them stored 178,171 rows under a placetype that means
 	// something else.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })

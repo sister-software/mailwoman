@@ -32,7 +32,7 @@ than the last.
 
 ## Exemplar paragraph
 
-> Reading an address by hand is two questions, not one. First you decide where the pieces start and stop —
+> Reading an address by hand is two questions rather than one. First you decide where the pieces start and stop —
 > `1600 Amphitheatre Parkway` is one piece, `Mountain View` is another — and only then do you decide what
 > each piece is. The phrase grouper (stage 2.7) is the first of those questions on its own. It proposes
 > spans with a kind hypothesis and a confidence, so the model at stage 3 answers "what type is this proposed
@@ -54,8 +54,8 @@ groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale
 
 ## Checks before commit
 
-- The rule-world analog appears before the statistical term, not after it.
+- The rule-world analog appears before the statistical term rather than after it.
 - Each term is defined in one sentence at first use, and the registry link carries the rest.
-- The page states what the design gives up, not only what it gains.
+- The page states what the design gives up rather than only what it gains.
 - No steps, no contract tables. Those belong on a `guide` or a `reference` page, linked from Related.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

@@ -41,8 +41,8 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
 /**
  * The reader the live check uses: an OGC API Features bbox query against the EA's own service.
  *
- * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision is
- * made in {@link readServiceZone} against those rings — comparing the artifact's verdict against a bare "the service
+ * The service answers a BBOX rather than a point, so this returns what it published nearby and the containment decision
+ * is made in {@link readServiceZone} against those rings — comparing the artifact's verdict against a bare "the service
  * returned something here" would pass on any polygon within eleven metres.
  */
 export function createEAServiceReader(client: Pick<EAFloodClient, "fetch">): ServiceFeatureReader {

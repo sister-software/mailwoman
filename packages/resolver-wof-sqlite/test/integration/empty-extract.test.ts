@@ -5,7 +5,7 @@
  *
  *   Regression test for #568: a present-but-tableless extract (an interrupted build, or a stray 0-byte
  *   file a `sqlite3 <missing>.db "…"` diagnostic created) must make the street-level lookups a
- *   no-op MISS, not throw `no such table` at construction and take down a whole state's geocode.
+ *   no-op MISS rather than throw `no such table` at construction and take down a whole state's geocode.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

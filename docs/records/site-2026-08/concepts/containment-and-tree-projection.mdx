@@ -125,7 +125,7 @@ structurally weird:
   doesn't know how to handle this)
 
 These are "labels correct, structure wrong" failures. They show up in
-the tree, not in per-tag recall. A tree validator (planned, not yet
+the tree rather than in per-tag recall. A tree validator (planned rather than yet
 shipped — see
 [corpus-poisoning-vulnerability.md](./corpus-poisoning-vulnerability.mdx)'s
 deferred items) would check the AddressTree's structural validity as a
@@ -155,7 +155,7 @@ into either ontology directly.
   in WOF doesn't carry over — the decoder picks one.
 - **Cross-address linkage.** The tree is per-address. If you parse a
   list of addresses and want to detect that they all share the same
-  locality, that's a resolver concern, not a decoder one.
+  locality, that's a resolver concern rather than a decoder one.
 - **Disagreement resolution.** If the BIO sequence has two locality
   spans that disagree (say one is "Brooklyn" and one is "New York" in
   the same input), the tree builder produces both as separate spans

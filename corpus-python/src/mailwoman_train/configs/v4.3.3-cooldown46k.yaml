@@ -15,7 +15,7 @@
 #
 # EVERYTHING ELSE IS v4.3.3 VERBATIM — same corpus (v0.18.1), same v1 affix lexicon (the label
 # contradiction is deliberately retained: this branch isolates the SCHEDULE variable. the
-# corrected v2-lexicon feed belongs to the next fresh base, not here). The loader is the
+# corrected v2-lexicon feed belongs to the next fresh base rather than here). The loader is the
 # repaired substrate (stationary sampler, clean val) — noted, unavoidable, and strictly
 # better-defined than the parent's non-stationary epochs.
 #

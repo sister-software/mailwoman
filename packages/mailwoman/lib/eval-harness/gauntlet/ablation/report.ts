@@ -55,13 +55,14 @@ function cellKey(component: string, locale: string): string {
 /**
  * Render the map: a global per-component summary, then the component × locale matrix over the locales carrying at least
  * `minLocaleRows` rows, then the tail locales in long form. The matrix is bounded on purpose — 29 countries × 9
- * components is a table nobody reads, and folding the tail is only acceptable because it is PRINTED, not dropped.
+ * components is a table nobody reads, and folding the tail is only acceptable because it is PRINTED rather than
+ * dropped.
  */
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
 	 * The per-row outcomes behind `cells`. Needed because percentiles do not aggregate: a global p90 has to be taken over
-	 * the pooled displacements, not over the per-cell p90s. Pass `[]` to render the matrix alone.
+	 * the pooled displacements rather than over the per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {

@@ -7,7 +7,7 @@
  *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
  *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), named
- *   after the sorting town Royal Mail routes it through, not after a county or a constituent
+ *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
  *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
  *   département from the first two digits. The only honest thing we _can_ derive is which of the
  *   four UK countries an area predominantly falls in — and even that has border exceptions:
@@ -15,7 +15,7 @@
  *   - **TD** (Galashiels) and **SY** (Shrewsbury) straddle the Scotland/England and Wales/England
  *       borders respectively. each is assigned to its MAJORITY country here (TD → Scotland, SY →
  *       Wales). A handful of individual postcodes on the wrong side of the line are a gazetteer
- *       concern, not a thing this coarse table tries to model.
+ *       concern rather than a thing this coarse table tries to model.
  *
  *   So this is the ROYAL MAIL area→country mapping, and the fact that it needs a hand-built
  *   non-England set with documented border fudges — rather than a tidy prefix rule — is exactly why

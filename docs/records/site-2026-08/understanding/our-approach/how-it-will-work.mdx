@@ -58,12 +58,12 @@ The A1 tokenizer halved byte-fallback on multi-script addresses (36.7% → 18.2%
 
 The C-train — the full classifier training run that would produce v0.5.0 weights — has not converged. Four training attempts using the v0.5.0 recipe all diverged with the same fingerprint seen in v0.4.0: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate.
 
-The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse, not CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy alone, keep the CRF as an inference-time structural decoder with the frozen mask.
+The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse rather than CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy alone, keep the CRF as an inference-time structural decoder with the frozen mask.
 
 Resolution path:
 
 1. **CE-only smoke (in progress).** 2,000-step constant-LR run with `crf_loss_weight=0.0`. Check: no loss climb past step 2,000 AND val_macro_f1 ≥ 0.35.
-2. **If CE-only stable → full 50K C-train.** Quality ceiling TBD — the result is stability, not quality. Quality gains come from recipe knobs (class weights, source weights, longer training) that were unsafe under dual-loss.
+2. **If CE-only stable → full 50K C-train.** Quality ceiling TBD — the result is stability rather than quality. Quality gains come from recipe knobs (class weights, source weights, longer training) that were unsafe under dual-loss.
 3. **If CE-only diverges → bisect tokenizer/corpus.** A1 tokenizer + corpus-v0.4.0 vs v0.1 tokenizer + corpus-v0.4.0. Isolate the destabilizer.
 4. **Parallel: reconcile integration.** Wire joint decode as the default Stage 5 path behind a feature flag. Evaluate against kryptonite catalogue + golden v0.1.2. Check: +15pp exact-match on kryptonite, ≤1pt macro_F1 regression on golden.
 
@@ -92,7 +92,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 ### What stays the same
 
 - **Rule classifiers are not replaced.** They stay deterministic, fast, and reliable. The neural classifier warrants each component one at a time.
-- **The model stays small.** The transformer is staying at roughly 9 million parameters. the result comes from better architecture (phrase grouper, joint decode) and better training, not from scaling up.
+- **The model stays small.** The transformer is staying at roughly 9 million parameters. the result comes from better architecture (phrase grouper, joint decode) and better training rather than from scaling up.
 - **Browser support is a hard constraint.** The pipeline must stay under ~60MB cold load. The demo is the canary.
 - **Locale parity is tracked but not urgent.** The en-us model has had the most attention. fr-fr will catch up, ja-jp is the validation stress test.
 
@@ -100,7 +100,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 
 - **Multi-language understanding.** We are not training a model that reads prose in 50 languages. We are training one that labels tokens in addresses for the locales we ship.
 - **Generative output.** The neural classifier labels existing tokens. It does not write text.
-- **Replacing upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It is a complementary project, not a competitor.
+- **Replacing upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It is a complementary project rather than a competitor.
 
 ## See also
 

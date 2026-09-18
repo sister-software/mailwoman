@@ -20,8 +20,7 @@
  *   with and maps to is not a category this route can say anything about. The coverage half answers "may a
  *   miss here be read as absence" — {@linkcode supportsExclusion} over the cell's own basis, never over
  *   `completeness` alone, because `source_present` records that the source returned rows and says nothing
- *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence,
- *   not absence, and that asymmetry is the whole contract.
+ *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence rather than absence, and that asymmetry is the whole contract.
  *
  *   A COVERAGE LAYER IS CLASS-SCOPED, AND THE TABLE DOES NOT SAY SO. `layer_coverage` carries a
  *   completeness per cell and no class, so a completeness measured over pharmacies would license an
@@ -38,7 +37,7 @@
  *   same reading as the single-class case: the searched set has to be the surveyed class. Widening the
  *   layer to survey the second class is what would make such a cell decidable again.
  *
- *   THE COVERAGE RESOLUTION IS DERIVED, NOT ASSUMED. `layer_manifest.spine_keys.h3.resolution` states the
+ *   THE COVERAGE RESOLUTION IS DERIVED rather than ASSUMED. `layer_manifest.spine_keys.h3.resolution` states the
  *   resolution the layer's ROWS are keyed at (res 9 for `poi.db`); the coverage cells are coarser (res 6).
  *   A reader that probed coverage at the manifest's resolution would miss every cell and read the misses
  *   as unsurveyed — a false negative shaped exactly like the real absence this route exists to detect. So
@@ -211,8 +210,8 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"basis_supports_no_exclusion",
 	/**
-	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval
-	 * question, not an absence.
+	 * The layer holds rows in the cell, so the cell is not empty. Whether the search reached them is a retrieval question
+	 * rather than an absence.
 	 */
 	"cell_not_empty",
 	/**

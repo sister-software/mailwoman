@@ -67,7 +67,7 @@ A **Health Professional Shortage Area (HPSA)** designation for primary care requ
 
 A **Medically Underserved Area (MUA)** designation uses a composite **Index of Medical Underservice (IMU)** that combines the provider-to-population ratio, the poverty rate, the infant mortality rate, and the elderly population percentage into a single score. An IMU of 62.0 or below qualifies for designation. (HRSA Bureau of Health Workforce, "Scoring Shortage Designations," 2024; _Healthcare shortage area_, Wikipedia.)
 
-The IMU and HPSA score are, in the terminology of this system, _expected-density models with equity weighting_. They estimate where facilities "should" be given population and need, measure the shortfall, and quantify the severity. The HRSA designation appears in the FCC Rural Health Care program — providers apply for funding under RHC specifically on the basis of being in or serving HPSA/MUA areas. So the designation is itself a column in the data we're correlating, not only background.
+The IMU and HPSA score are, in the terminology of this system, _expected-density models with equity weighting_. They estimate where facilities "should" be given population and need, measure the shortfall, and quantify the severity. The HRSA designation appears in the FCC Rural Health Care program — providers apply for funding under RHC specifically on the basis of being in or serving HPSA/MUA areas. So the designation is itself a column in the data we're correlating rather than only background.
 
 ---
 
@@ -86,7 +86,7 @@ The coarse-placer (#244) extends this to the country level: a tiny linear classi
 
 That is already a spatial expectation model. It is already live.
 
-What changes at the matcher scale is that "spatial expectation" operates not on individual place candidates but on facility counts across a region. Instead of "which Berlin is the right one?" you're asking "how several primary care practices should serve a county with 40,000 residents and a median income below the federal poverty level?" The data is coarser; the question is about a distribution, not a point.
+What changes at the matcher scale is that "spatial expectation" operates not on individual place candidates but on facility counts across a region. Instead of "which Berlin is the right one?" you're asking "how several primary care practices should serve a county with 40,000 residents and a median income below the federal poverty level?" The data is coarser; the question is about a distribution rather than a point.
 
 The connection between the two scales is that both are the same Bayesian move applied at different granularities:
 
@@ -99,13 +99,13 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## Where this lands in the open work
 
-**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible, not enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations are exactly this precomputed — a column in the data (the FCC forms explicitly reference HPSA status). Using them means we don't have to recompute the expected density ourselves; we inherit it from the federal designation system.
+**`#621` — coverage reconciliation (eligibility ↔ enrollment anti-join)** is where the regional expected-density model becomes a concrete deliverable. The anti-join — "eligible rather than enrolled" — surfaces every provider or facility that should appear in the FCC RHC enrollment data but doesn't. That is already a deviation from expectation. The density model adds a second, coarser layer: only "which individual entity is missing?" but "which geographic areas have fewer enrolled providers than their population would predict?" The HRSA HPSA/MUA designations are exactly this precomputed — a column in the data (the FCC forms explicitly reference HPSA status). Using them means we don't have to recompute the expected density ourselves; we inherit it from the federal designation system.
 
 **`#618` — multi-source cross-dataset correlation** is where inverse-address-frequency weighting does its heaviest work. The NPPES registry alone has 4.8 GB of provider records, several at shared institutional addresses (hospitals, clinics, care systems). A shared address among several records is a high-frequency value and should contribute near-zero evidence to a match decision. The `withTermFrequency` mechanism in `match/tf.ts` and `match/fellegi-sunter.ts` handles this automatically — the term-frequency table is built from the dataset at match time, so a shared-building address automatically gets its weight suppressed without any hand-tuning.
 
-**`#602` / `#603` — config auto-tuning and selective models** are where a regionally-aware density weight might eventually live. A population-weighted distance threshold — the "50 m same-building" bucket that's right downtown but too tight in a rural county — is one concrete change. The geocoder already knows the density context (WOF hierarchy + population data); the matcher can condition its distance comparisons on that context. This is a tunable config surface, not a new model: it's the kind of adjustment that AutoER's sampling-based tuner (AutoER, IEEE Access 2025, ~100 trials to recover >95% of exhaustive search) can find automatically once the surface is exposed.
+**`#602` / `#603` — config auto-tuning and selective models** are where a regionally-aware density weight might eventually live. A population-weighted distance threshold — the "50 m same-building" bucket that's right downtown but too tight in a rural county — is one concrete change. The geocoder already knows the density context (WOF hierarchy + population data); the matcher can condition its distance comparisons on that context. This is a tunable config surface rather than a new model: it's the kind of adjustment that AutoER's sampling-based tuner (AutoER, IEEE Access 2025, ~100 trials to recover >95% of exhaustive search) can find automatically once the surface is exposed.
 
-**`#615` — real-data validation (epic)** is the check the density model must pass through. The NPPES NPI dedup benchmark gives us a measurable ground truth; the coverage reconciliation (#621) gives us the product output. The density expectation model is most useful after the basic matcher is graded — it is a signal to layer on top of a working resolution pipeline, not a prerequisite for it.
+**`#615` — real-data validation (epic)** is the check the density model must pass through. The NPPES NPI dedup benchmark gives us a measurable ground truth; the coverage reconciliation (#621) gives us the product output. The density expectation model is most useful after the basic matcher is graded — it is a signal to layer on top of a working resolution pipeline rather than a prerequisite for it.
 
 ---
 
@@ -115,9 +115,9 @@ The density model is not on the critical path. The critical path is: get the cla
 
 Two specific pieces are worth building early because they're essential to the anti-join's interpretability, notanalytical color:
 
-1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join, not a model.
+1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join rather than a model.
 
-2. **Surface address frequency in the match score attribution.** The per-pair contribution breakdown in `match/fellegi-sunter.ts` (`PairScore.contributions`) already attributes every match-weight to a field. When the term-frequency adjustment suppresses an address match because the building is shared, that suppression should be visible in the output: `address: weight=0.2 (shared-building penalty)`. This is reporting infrastructure, not new math — the `contributions` array is already there.
+2. **Surface address frequency in the match score attribution.** The per-pair contribution breakdown in `match/fellegi-sunter.ts` (`PairScore.contributions`) already attributes every match-weight to a field. When the term-frequency adjustment suppresses an address match because the building is shared, that suppression should be visible in the output: `address: weight=0.2 (shared-building penalty)`. This is reporting infrastructure rather than new math — the `contributions` array is already there.
 
 The 2SFCA accessibility index and a full Central Place Theory-based expected-facility model are downstream: useful for characterizing coverage gaps once the entity resolution is working, but not needed to ship the anti-join.
 
@@ -125,11 +125,11 @@ The 2SFCA accessibility index and a full Central Place Theory-based expected-fac
 
 ## The line between what we measure and what it means
 
-Every number this system produces — the accessibility index, the anti-join membership, the deviation from expected facility density — is a measurement. What a coverage gap means, what causes it, or what should be done about it is the data consumer's domain, not ours. We surface candidate links and reconciled entity sets; the analyst decides what the deviation implies.
+Every number this system produces — the accessibility index, the anti-join membership, the deviation from expected facility density — is a measurement. What a coverage gap means, what causes it, or what should be done about it is the data consumer's domain rather than ours. We surface candidate links and reconciled entity sets; the analyst decides what the deviation implies.
 
 That line reflects the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) is worth building precisely because it makes that analysis tractable — not because it answers the question for the analyst, but because it asks the question precisely.
 
-The spatial expectation model, at both scales, is how we keep that line exact: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. Interpreting that departure is the analyst's job, not ours.
+The spatial expectation model, at both scales, is how we keep that line exact: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. Interpreting that departure is the analyst's job rather than ours.
 
 ---
 

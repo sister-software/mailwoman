@@ -33,11 +33,11 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 3. **The model release version is the NEXT UNIFIED number — verify, don't assume.** A _code-only_
    release bumps the packages but not the card (the card version tracks the model). So the card can
    lag the package version (e.g. card 4.11.0 while npm is at 4.12.0). **Run `npm view mailwoman
-version` AND `git tag -l 'v4.*'` and take the next number after the LATEST published**, not card+1.
+version` AND `git tag -l 'v4.*'` and take the next number after the LATEST published** rather than card+1.
 4. **The CI workflow FETCHES weights from HF** at `en-us/v<cardVersion>/`. A model release has a hard
    prerequisite: stage the weights to HF FIRST (Step 2). A code-only release skips this (the card
    version is unchanged → CI re-fetches the existing model).
-5. **Dry-run before real**, and **verify the published tarball's md5**, not the workspace file (the
+5. **Dry-run before real**, and **verify the published tarball's md5** rather than the workspace file (the
    materialized `model.onnx` can be a stale post-dry-run leftover).
 
 ---
@@ -86,7 +86,7 @@ For a **model release**, on a branch off current `main`:
    en-us and en-gb — en-gb's #397 guard is what proves the pair moved together.
 
    `weights.tokenizer` / `weights.tokenizerVersion` change only when the tokenizer changed.
-   Confirm by md5, not by run name: a from-scratch run reuses the shipped tokenizer unless the recipe replaces it, and
+   Confirm by md5 rather than by run name: a from-scratch run reuses the shipped tokenizer unless the recipe replaces it, and
    assuming otherwise stages the wrong one into the bundle.
 
 5. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
@@ -130,7 +130,7 @@ node packages/mailwoman/out/cli/index.js release hf v<target> \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
   --country-lexicon data/gazetteer/country-surface-lexicon-v1.json \
   --label "v<target> — <one-liner>" --description "<what changed + headline metrics>"
-# Do NOT pass --set-default — that repoints the DEMO (Step 5), not the npm publish.
+# Do NOT pass --set-default — that repoints the DEMO (Step 5) rather than the npm publish.
 ```
 
 The script self-verifies each artifact is reachable via HTTPS. Confirm `en-us/v<target>/model.onnx`
@@ -167,7 +167,7 @@ gh run watch <rid> --exit-status --interval 15
 - The HF weight fetch + preflight run in **phase 2** (mode=publish), so HF staging must be complete
   before that dispatch; phase 1 needs no binaries.
 
-## Step 4 — verify the ship (the published tarball, not the workspace)
+## Step 4 — verify the ship (the published tarball rather than the workspace)
 
 ```bash
 for p in mailwoman @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-en-us @mailwoman/neural-weights-fr-fr; do
@@ -175,7 +175,7 @@ for p in mailwoman @mailwoman/core @mailwoman/neural @mailwoman/neural-weights-e
 done
 git fetch origin main --tags && git tag -l v<target> && git log origin/main -1 --oneline  # release: v<target>
 
-# THE decisive check — the bundled model is the trained artifact, not a stale one:
+# THE decisive check — the bundled model is the trained artifact rather than a stale one:
 cd /tmp && rm -rf vp && mkdir vp && cd vp
 npm pack @mailwoman/neural-weights-en-us@<target> >/dev/null 2>&1
 tar xzf *.tgz && md5sum package/model.onnx       # MUST equal the Step-1 int8 md5

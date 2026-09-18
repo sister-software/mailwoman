@@ -40,8 +40,8 @@ export interface SpanResolution {
 	lat?: number
 	lon?: number
 	/**
-	 * How many candidates the retrieval considered. Breadth, not correctness — a span that won from 40 is less settled
-	 * than one that won from 2, even when both picked the same place.
+	 * How many candidates the retrieval considered. Breadth rather than correctness — a span that won from 40 is less
+	 * settled than one that won from 2, even when both picked the same place.
 	 */
 	candidates?: number
 }

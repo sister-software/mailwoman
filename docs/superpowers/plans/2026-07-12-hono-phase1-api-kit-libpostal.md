@@ -4,14 +4,14 @@
 
 **Goal:** Stand up the `@mailwoman/api-kit` plumbing workspace and migrate `@mailwoman/libpostal` from express to Hono + `@hono/zod-openapi`, with the OpenAPI document emitted from the route table and the handwritten `libpostal/openapi.yaml` retired through a spec-parity check.
 
-**Architecture:** Per the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`): code-first, one direction — Zod schemas next to routes, spec emitted, never handwritten. libpostal is the pattern-prover (smallest drop-in). api-kit ships **only what libpostal consumes** in this phase (node serve wrapper + doc-emit helpers); the error envelope, GeoJSON atoms, and metrics hooks land in later phases with their first consumers (photon / native API). Deliberate deferral, not a gap.
+**Architecture:** Per the approved spec (`docs/superpowers/specs/2026-07-12-hono-api-surface-design.md`): code-first, one direction — Zod schemas next to routes, spec emitted, never handwritten. libpostal is the pattern-prover (smallest drop-in). api-kit ships **only what libpostal consumes** in this phase (node serve wrapper + doc-emit helpers); the error envelope, GeoJSON atoms, and metrics hooks land in later phases with their first consumers (photon / native API). Deliberate deferral rather than a gap.
 
 **Tech Stack:** hono `^4.12.29`, `@hono/zod-openapi` `^1.4.0` (re-exports Zod 4 as `z` with `.openapi()` metadata), `@hono/node-server` `^2.0.8`, zod `^4.4.3` (already used by `core`/`mailwoman`), vitest.
 
 ## Global Constraints
 
 - **Vendor wire shapes are immutable**: response bodies, error bodies (`{ "error": "query is required" }` etc.), status codes (200/400/500/501), and CORS header behavior must match `libpostal/index.ts` on main exactly. The engine interface (`LibpostalEngine`, `ParseMatch`) is public API and must not change.
-- **No express shims**: `createLibpostalRouter` is deleted, not deprecated (operator decision 2026-07-12 — vendor wire compat is the only legacy binding). Rides the next-major train.
+- **No express shims**: `createLibpostalRouter` is deleted rather than deprecated (operator decision 2026-07-12 — vendor wire compat is the only legacy binding). Rides the next-major train.
 - `erasableSyntaxOnly` — no `enum`, no constructor parameter properties. Relative imports carry explicit `.ts` extensions; `rewriteRelativeImportExtensions` handles `out/`.
 - **Both exports maps** on every touched `package.json`: dev map (`node` → `.ts` first) AND `publishConfig.exports` (no `node` condition). A subpath in only one map is a release bug.
 - Acronym casing: whole camelCase components — `attachOpenAPIDocs`, `emitOpenAPIDocuments`, never `attachOpenApiDocs`.
@@ -350,7 +350,7 @@ git commit -m "feat(api-kit): serveNode wrapper + OpenAPI doc emit helpers"
 - Consumes: `z` from `@hono/zod-openapi` (dep added in Task 4 Step 1 — add it now if running tasks strictly in order: `"@hono/zod-openapi": "^1.4.0"` in `libpostal/package.json` dependencies, then `yarn install`).
 - Produces:
   - `libpostal/engine.ts`: `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent[]`, `LibpostalEngine` — **moved verbatim from `index.ts`, zero signature changes** (public API).
-  - `libpostal/schema.ts`: `ParseRequestSchema`, `ExpandRequestSchema`, `LibpostalComponentSchema`, `ParseResponseSchema`, `ExpandResponseSchema`, `ErrorSchema` (exact names — Task 4 imports them). Query-parameter schemas live in `routes.ts` beside their routes — they're route metadata, not reusable wire shapes.
+  - `libpostal/schema.ts`: `ParseRequestSchema`, `ExpandRequestSchema`, `LibpostalComponentSchema`, `ParseResponseSchema`, `ExpandResponseSchema`, `ErrorSchema` (exact names — Task 4 imports them). Query-parameter schemas live in `routes.ts` beside their routes — they're route metadata rather than reusable wire shapes.
 
 - [ ] **Step 1: Move the engine block.** Reduce `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents`, and `LibpostalEngine` (lines ~18–66 of `libpostal/index.ts`) verbatim into new `libpostal/engine.ts` with the standard copyright header and the docstring: engine contract + the `ComponentTag` → libpostal-label mapping (libpostal-specific knowledge lives here; the engine yields raw Mailwoman matches).
 
@@ -359,7 +359,7 @@ git commit -m "feat(api-kit): serveNode wrapper + OpenAPI doc emit helpers"
 Wire-shape notes carried from the express implementation (immutable):
 
 - `query`/`address` are **optional at the schema layer**; the handler enforces presence so the 400 body is exactly `{ "error": "query is required" }` / `{ "error": "address is required" }` — never a Zod-shaped validation error.
-- Objects use Zod's default strip mode, **not** `.strict()` — express tolerated extra keys (the old yaml's `additionalProperties: false` overpromised; adjudicated in Task 5).
+- Objects use Zod's default strip mode rather than `.strict()` — express tolerated extra keys (the old yaml's `additionalProperties: false` overpromised; adjudicated in Task 5).
 
 ```ts
 /**
@@ -619,7 +619,7 @@ test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", 
 	expect(res.headers.get("access-control-allow-origin")).toBeNull()
 })
 
-test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async () => {
+test("root: GET / serves a friendly HTML banner rather than a bare 404 (#1022)", async () => {
 	const app = createLibpostalApp(fixtureEngine)
 	const res = await app.request("/")
 	expect(res.status).toBe(200)
@@ -914,7 +914,7 @@ Expected: all tests pass (3 engine + 12 app).
 - [ ] **Step 8: Compile + commit**
 
 Run: `yarn compile`
-Expected: clean. If anything else in the repo imported `createLibpostalRouter`, it surfaces here — the only known consumer is `libpostal/cli.ts` (Task 6); fix any stragglers by migrating them to `createLibpostalApp`, not by re-adding the export.
+Expected: clean. If anything else in the repo imported `createLibpostalRouter`, it surfaces here — the only known consumer is `libpostal/cli.ts` (Task 6); fix any stragglers by migrating them to `createLibpostalApp` rather than by re-adding the export.
 
 ```bash
 git add libpostal yarn.lock

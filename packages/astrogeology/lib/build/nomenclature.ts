@@ -6,7 +6,7 @@
  *   The nomenclature build: shapefile rows out of the pinned archive, features through `featureFromSourceRow`, NDJSON
  *   with a per-feature minimum zoom, and one `tippecanoe` run into a PMTiles archive.
  *
- *   THE ROW READER READS ATTRIBUTES, NOT GEOMETRY. The shapefile's CRS is the body's own (`GCS_Moon_2000`,
+ *   THE ROW READER READS ATTRIBUTES rather than GEOMETRY. The shapefile's CRS is the body's own (`GCS_Moon_2000`,
  *   `GCS_Mars_2000`), PROJ refuses to relate it to WGS84, and the GeoJSON writer insists on WGS84 output. So the
  *   transport declares the source as WGS84 on both sides, which makes the writer copy the numbers through untouched.
  *   the label is on the transport only. The values the build reads are the row's `center_lon`, `center_lat` and the
@@ -62,7 +62,7 @@ export async function* readNomenclatureRows(
 
 /**
  * The declutter table: the smallest diameter, in kilometres, that appears at each zoom, largest first. A feature
- * smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}. Cartographic decluttering, not ranking.
+ * smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}. Cartographic decluttering rather than ranking.
  */
 const DECLUTTER_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom: number]> = [
 	[300, 0],

@@ -14,10 +14,11 @@ import type { AddressNode } from "#decoder/types"
  * over any node shape carrying `children`, so the eval harness's flat nodes and the admin-coherence tree walk the same
  * way the decoder's do — the one implementation the #2163 sweep replaced every hand-rolled LIFO walk with.
  *
- * The order is material, not a convenience. `find` over this walk decides which of two same-tag spans becomes a named
- * result slot, and the flat component map (`decodeAsJSON`) keeps the first span in text order. A LIFO walk once yielded
- * siblings reversed, so `Village of Fae, Camino Real, …` answered `venue: "Camino Real"` in the named slot while the
- * component map said `Village of Fae`, and four board rows failed on the slot alone. One order, the text's, for both.
+ * The order is material rather than a convenience. `find` over this walk decides which of two same-tag spans becomes a
+ * named result slot, and the flat component map (`decodeAsJSON`) keeps the first span in text order. A LIFO walk once
+ * yielded siblings reversed, so `Village of Fae, Camino Real, …` answered `venue: "Camino Real"` in the named slot
+ * while the component map said `Village of Fae`, and four board rows failed on the slot alone. One order, the text's,
+ * for both.
  */
 export function* walkNodes<T extends { children?: readonly T[] }>(roots: readonly T[]): Generator<T> {
 	const stack = roots.toReversed()

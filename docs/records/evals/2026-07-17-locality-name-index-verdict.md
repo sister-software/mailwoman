@@ -56,9 +56,9 @@ prior cannot outvote a distribution it is added to uniformly.
    weakly in exactly the overlapping gaps above. An atlas-conditional flat bias throws that signal away and
    replaces it with a constant.
 
-2. **The check reads pieces, not surfaces.** The en-us SentencePiece tokenizer fragments the FR city
+2. **The check reads pieces rather than surfaces.** The en-us SentencePiece tokenizer fragments the FR city
    names this defect targets: `Marseille→"e"`, `Nantes→"es"`, `Grenoble→"ble"`, `Strasbourg→"bourg"`,
-   `Turin→"in"`. The terminal _piece_ the prior would key on is a subword, not the locality surface, so
+   `Turin→"in"`. The terminal _piece_ the prior would key on is a subword rather than the locality surface, so
    a piece-level lexicon lookup never fires on half the target class (count at the unit the model reads).
    A char/word-level lookup re-imports the phrase-grouper's boundary problem.
 
@@ -87,9 +87,9 @@ parses and scores each against the atlas:
   thoroughfare literally named `du Chevaleret Paris`? No → B is atlas-inconsistent.
 - For the false-positive `15 Rue de Paris`: parse B (`street="de Paris"`) **is** atlas-consistent —
   `Rue de Paris` is a real thoroughfare in several communes — so the arbiter keeps it. Same terminal
-  token, opposite verdict, because the evidence is joint, not lexical.
+  token, opposite verdict, because the evidence is joint rather than lexical.
 
-This is the interface **B1 (#727 stage-2)** should consume — a per-candidate-parse evidence vector, not
+This is the interface **B1 (#727 stage-2)** should consume — a per-candidate-parse evidence vector rather than
 a per-token clue:
 
 ```
@@ -105,7 +105,7 @@ The arbiter prefers the candidate maximizing `street_in_locality + locality_exis
 `street_as_named`-only reading — positive evidence only, no global veto (the digit-ownership scar).
 Tier discipline holds: WOF supplies `locality_exists` but never street existence; BAN/BAG (Tier A) is
 the proving ground for the two street signals. This is the same shape the cascade-viability probe landed
-on (2026-07-17): _the atlas judges parses, not tokens._
+on (2026-07-17): _the atlas judges parses rather than tokens._
 
 ## Verdict
 

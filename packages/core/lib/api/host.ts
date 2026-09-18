@@ -17,7 +17,7 @@ export function canonicalHostname(url: URL): string {
 }
 
 /**
- * The status a refused request reports — the request itself is malformed for this client, not the upstream.
+ * The status a refused request reports — the request itself is malformed for this client rather than the upstream.
  */
 const HTTP_BAD_REQUEST = 400
 

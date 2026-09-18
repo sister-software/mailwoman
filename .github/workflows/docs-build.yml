@@ -20,8 +20,8 @@ name: Docs
 
 on:
   # The site bundles the runtime embed and generates the OpenAPI documents at build time, so a change in one
-  # of these packages changes the built output; a change anywhere else does not reach it. The two lists below
-  # are the same list, and each entry is measured, not remembered: the packages a docs source file imports
+  # of these packages changes the built output. a change anywhere else does not reach it. The two lists below
+  # are the same list, and each entry is measured rather than remembered: the packages a docs source file imports
   # directly (`grep -rhoE 'from "(@mailwoman/[a-z-]+|mailwoman)' docs/src docs/plugins docs/scripts | sort -u`)
   # plus the three drop-in packages whose CLIs `docs/package.json`'s prebuild runs for their OpenAPI documents.
   # A transitive dependency (the resolver behind the runtime embed, say) is deliberately not listed: the docs
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@v7
 
       # Change detection replaces the trigger-level `paths:` filter (see the `on:` comment). On a
-      # pull_request, this computes whether any path the site reads changed; the heavy steps below
+      # pull_request, this computes whether any path the site reads changed. the heavy steps below
       # run only when it did. On push/workflow_dispatch the filter is skipped and the steps run
       # unconditionally (the push trigger already path-filtered the event, and dispatch is manual).
       # This keeps the job — and therefore its status check — reported on EVERY PR.
@@ -138,12 +138,12 @@ jobs:
       #
       # --strict since the docs-reorg Task 5 skeleton cutover: the flag selects the six-role
       # frontmatter contract (docs/scripts/docs/frontmatter/contract.ts) and enforces `role:` on
-      # EVERY published page, rather than the legacy seven-role vocabulary that only required one
+      # every published page, rather than the legacy seven-role vocabulary that only required one
       # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
       # because that corpus predated the contract and failed the check wholesale. Voice and
       # section rules that the check cannot see live in docs/engineering/writing-system.md.
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
-      # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
+      # type:module without breaking the Docusaurus SSR bundle. see docs/scripts/package.json.)
       - name: Docs structure checks
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check/docs-structure.ts --strict
@@ -166,7 +166,7 @@ jobs:
 
       # Whole-corpus run — every tracked Markdown/MDX file under docs/ except the intentional Vale
       # failure fixtures. This includes published pages, records, plans, research, static reports,
-      # and docs-side skills. The count will drift as pages are added; the point that matters does
+      # and docs-side skills. The count will drift as pages are added. the point that matters does
       # not — this step runs against the whole corpus rather than changed files.
       - name: Prose lint
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'

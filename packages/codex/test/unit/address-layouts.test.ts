@@ -153,7 +153,7 @@ describe("the skeleton matches libaddressinput", () => {
 	})
 
 	it("reads a `fmt` into the same vocabulary the layouts use", () => {
-		// The US skeleton is the one every reader knows, so it is the fixture that proves the reader, not the table.
+		// The US skeleton is the one every reader knows, so it is the fixture that proves the reader rather than the table.
 		expect(skeletonOfFormat("%N%n%O%n%A%n%C, %S %Z")).toEqual([
 			["attention"],
 			["venue"],

@@ -4,9 +4,9 @@
 
 Mailwoman is on the right strategic track. The strongest idea in the project is still the Pelias-style split between parsing and resolving, updated for a modern TypeScript/runtime world: a small contextual parser proposes possibilities, deterministic structure supplies cheap priors, and a resolver/gazetteer checks world coherence. That direction is better than either "rules forever" or "one model does everything."
 
-The current work is a measured step forward, but mostly as architecture and instrumentation, not yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
+The current work is a measured step forward, but mostly as architecture and instrumentation rather than yet as model-quality proof. The v0.5.0 scaffolding - QueryShape, kind classification, phrase grouping, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding - is the right shape. The expensive next step should not be "run the full fresh-slate train again and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes per-subset checks before spending H100/LLM/human-labeling budget at scale.
 
-Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis, not as a release train.
+Recommended posture: continue, but narrow the next cycle. Treat the next spend as validation of the pipeline hypothesis rather than as a release train.
 
 ## Historical context
 
@@ -96,7 +96,7 @@ The project has made real progress, but the model metrics are not yet a green li
 - Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
 - Golden v0.1.2 includes adversarial transliteration rows the model was not trained for; that is useful as a stress test but misleading as a headline denominator unless separately weighted.
 
-The next expensive run needs predefined acceptance subsets, not a single headline F1. Minimum:
+The next expensive run needs predefined acceptance subsets rather than a single headline F1. Minimum:
 
 - rule-only baseline
 - neural-only argmax
@@ -127,7 +127,7 @@ That means the bottleneck is no longer architecture ideation. It is training-sys
 
 Do not add a learned phrase proposer, span re-reader, larger hidden size, or label expansion until this is stable.
 
-### 5. Synthetic corpus validation catches alignment, not semantics
+### 5. Synthetic corpus validation catches alignment rather than semantics
 
 The substring validator is correctly treated as critical. But it only proves annotated values appear in raw strings. It does not prove the labels are complete, semantically correct, or distributionally sane.
 
@@ -140,11 +140,11 @@ Given v0.5.0 divergence, the synthetic additions need more scrutiny before they 
 - run semantic spot checks on a sampled batch
 - require source-specific gradient/loss dashboards
 
-LLM data is useful here, especially for kryptonite cases, but it should enter as a weighted adversarial curriculum, not as an unexamined corpus expansion.
+LLM data is useful here, especially for kryptonite cases, but it should enter as a weighted adversarial curriculum rather than as an unexamined corpus expansion.
 
 ### 6. Rule-based structural layers must stay bounded
 
-QueryShape and phrase-grouper are justified because they encode structural facts, not gazetteer knowledge. But there is a slippery slope: venue marker lists, street suffix dictionaries, and phrase heuristics can become the same long-tail implementation the project is trying to escape.
+QueryShape and phrase-grouper are justified because they encode structural facts rather than gazetteer knowledge. But there is a slippery slope: venue marker lists, street suffix dictionaries, and phrase heuristics can become the same long-tail implementation the project is trying to escape.
 
 The rule should be explicit:
 
@@ -174,7 +174,7 @@ If a new phrase-grouper rule needs a large dictionary or a bug-specific exceptio
 
 - Make `docs/articles/plan/v0-5-0-shipped.md` the temporary authoritative record, then reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, and concept pages against it.
 - Move from "model F1" checks to "pipeline outcome" checks: parse exact match, top-k resolver recall, graceful failure, and calibration.
-- Treat `reconcileSpans` as an integration priority, not a future idea.
+- Treat `reconcileSpans` as an integration priority rather than a future idea.
 - Promote `predict_top_k` from Python training support into TypeScript/browser runtime support.
 - Use synthetic data as a controlled source with explicit weights, notextra rows.
 - Create an explicit "expensive run preflight" checklist that must pass before rented GPU time.

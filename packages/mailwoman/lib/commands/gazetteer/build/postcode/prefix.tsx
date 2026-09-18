@@ -39,7 +39,7 @@ import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode/prefix"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
- * is a build output, not a file anything edits in place.
+ * is a build output rather than a file anything edits in place.
  */
 const SEALED_MODE = 0o444
 
@@ -208,7 +208,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		await movePath(tmpPath, outPath)
 		await changeMode(outPath, SEALED_MODE)
 
-		// ── Self-verifying readback: B3-1's bar, graded by re-reading the FILE, not the buffer still in
+		// ── Self-verifying readback: B3-1's bar, graded by re-reading the FILE rather than the buffer still in
 		// memory. Reading the buffer would verify the serializer against itself and prove nothing about
 		// what landed on disk — the whole point of a round-trip bar.
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))

@@ -2,7 +2,7 @@
 # (Claude-owned. operator go 2026-07-28 "alright let's continue", after the Decision-B analysis.)
 #
 # WHAT THE DECISION-B ANALYSIS SHOWED (record: .superpowers/sdd/progress.md 2026-07-28): the two
-# ablated-column golden deficits are FEED-PASSENGER damage, not bundle damage — (1) the po-box
+# ablated-column golden deficits are FEED-PASSENGER damage rather than bundle damage — (1) the po-box
 # regression is Canadian alphanumeric-postcode rows (box number stolen as postcode. 93-vs-9
 # asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are ALL
 # trailing-directional reduces ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
@@ -29,7 +29,7 @@
 #   G4 gauntlet ×3 (fed weights-cache).
 #   G5 golden ABLATED (the formatted-mode ship column): all v6.0.0-shipped-baseline floors — no
 #      named-watch exemptions this time. v385's food means v385's floors, full stop.
-#   G5b golden FED (recorded, not ship-blocking under Decision A): the fragment-mode-on-formatted
+#   G5b golden FED (recorded rather than ship-blocking under Decision A): the fragment-mode-on-formatted
 #      read. feeds the future misroute-cost check (misroute rate × this harm).
 #   G6 canary: recorded under both modes. zero-flip required only in the formatted/ablated mode
 #      (Decision A routes these full-address rows there in production).

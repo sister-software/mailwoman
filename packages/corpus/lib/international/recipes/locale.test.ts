@@ -174,7 +174,7 @@ describe("readTuples (OA CSV parse)", () => {
 			[
 				OA_HEADER,
 				// CITY and DISTRICT name the same place (differing only in case) — the ES CNIG `poblacion ==
-				// municipio` majority case (the address point sits in the municipio's own main town, not a
+				// municipio` majority case (the address point sits in the municipio's own main town rather than a
 				// pedanía). Must not surface as dependent_locality === locality.
 				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
 				// Genuinely distinct CITY/DISTRICT still produces dependent_locality (the districtAsLocality

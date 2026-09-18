@@ -32,7 +32,7 @@ fired-1–99 "weak" pieces) would add 5.5 MB — and that band is practiced, so 
 The change as surveyed — "embedding is ~72.5% of params at ≤24% utilization" implying a
 half-size-class prune — **does not exist**. 3.7 MB at the cost of a permanent id-remap coupling
 between tokenizer.model and model.onnx (a new invariant surface every future fine-tune, splice,
-and the browser loader must respect) is a bad trade. Not built, not shipped.
+and the browser loader must respect) is a bad trade. Not built rather than shipped.
 
 Provenance of the bad number: the 2026-07-30 synthesis line "(shipped-eval utilization ~6.7%,
 ceiling 24%)" — the research agent's raw measurement basis wasn't committed, so it can't be
@@ -40,7 +40,7 @@ audited; plausibly a small sample or the 48k base vocab rather than the full 73,
 spliced vocab against the full feed. The shipped-eval 6.7% figure is directionally consistent
 with our narrower fixture-only sweep; the "ceiling" was not. **Lesson (standing): a survey
 number that feeds a task list gets re-derived from primary data before the task spends real
-effort — this probe's first step was exactly that, which is why it cost ~1 hour, not a build.**
+effort — this probe's first step was exactly that, which is why it cost ~1 hour rather than a build.**
 
 ## What survives
 
@@ -50,7 +50,7 @@ effort — this probe's first step was exactly that, which is why it cost ~1 hou
 - The telemetry: `$MAILWOMAN_DATA_ROOT/scratch-vocab-prune/utilization-v0150-venue.npz`
   (+ sidecar, eval-fired.json, eval-texts.json). Direct input to the CJK Phase-3 full-vocab
   rebuild and any v9 tokenizer-sizing decision — vocab right-sizing belongs at TOKENIZER
-  TRAINING time (where the model learns whatever vocab exists), not post-hoc surgery.
+  TRAINING time (where the model learns whatever vocab exists) rather than post-hoc surgery.
 - The 13.7% never-fired band is real but small; the 100–999 band (37.2%) says the mid-frequency
   tail is the vocab's working mass — an argument AGAINST aggressive vocab shrinkage in any
   future retrain, notagainst this prune.

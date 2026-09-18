@@ -27,4 +27,4 @@ Candidate lines may use a parenthesized jurisdiction, a tab or two-or-more-space
 split. A suffix that is only a corporate designator is part of the company name, never a jurisdiction.
 
 The parser returns every confident `{name, jurisdiction?}` plus the count it declined to parse. Missing jurisdiction is
-represented by an absent property, not an empty string and never an inferred place.
+represented by an absent property rather than an empty string and never an inferred place.

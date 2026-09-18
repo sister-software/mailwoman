@@ -36,7 +36,7 @@ export type WOFPlacetype =
  * One candidate match for a place lookup.
  *
  * `score` is the post-boost ranking number — higher is better, but the scale is implementation- defined. Callers should
- * treat it as ordinal, not absolute.
+ * treat it as ordinal rather than absolute.
  *
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally compatible with
  * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSQLitePlaceLookup` satisfies the generic `ResolverBackend` contract
@@ -58,8 +58,8 @@ export interface PlaceCandidate {
 	/**
 	 * The place's IMMEDIATE ancestor id — the `candidate_ancestor` row at depth 1.
 	 *
-	 * Absent means the artifact carries no ancestors sidecar, not that the place is a root: an artifact predating the
-	 * sidecar answers no lineage at all, and the two readings must stay apart (meaning-of-zero).
+	 * Absent means the artifact carries no ancestors sidecar rather than that the place is a root: an artifact predating
+	 * the sidecar answers no lineage at all, and the two readings must stay apart (meaning-of-zero).
 	 *
 	 * It is what lets a consumer see that two candidates in one answer denote one settlement at two admin tiers. The
 	 * gazetteer carries 285,478 populated localities that share a folded name with a `localadmin` within 5 km, and
@@ -117,7 +117,8 @@ export interface PlaceCandidate {
 	 * blended importance (encyclopedia-derived where the concordance matched, a population-derived proxy elsewhere).
 	 * Emitted only by the candidate-table backend, and only when the artifact measured this place — absent is UNMEASURED,
 	 * never zero. Consumed by `rankByImportance` (`resolver/toponym-prior.ts`) for the bare-toponym class. See
-	 * `candidate-schema.ts` → `CandidateTable.importance` for why the blend, not the strict channel, is what ships.
+	 * `candidate-schema.ts` → `CandidateTable.importance` for why the blend rather than the strict channel, is what
+	 * ships.
 	 */
 	importance?: number
 	/**

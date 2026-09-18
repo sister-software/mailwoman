@@ -17,8 +17,8 @@
  *
  *   - **A candidate's regressions are `candidate − null`, not `candidate − shipped`.** Touching the base costs rows
  *     before the new extract is read at all — measured at 10 of 649 on `v440-step-060000`, paid inside the first 1,000
- *     steps and flat to 4,000. Eighteen regressions where the null has ten is eight attributable, not eighteen.
- *   - **A self-control that is not 0 invalidates the session, not the row.** If the shipped model graded through the
+ *     steps and flat to 4,000. Eighteen regressions where the null has ten is eight attributable rather than eighteen.
+ *   - **A self-control that is not 0 invalidates the session rather than the row.** If the shipped model graded through the
  *     candidate path disagrees with itself, no candidate number from that rig means anything, and reporting one
  *     anyway is how a harness bug becomes a model finding.
  *

@@ -84,7 +84,7 @@ The model is a sequence labeler, so each tag becomes two per-token labels: `B-<t
 token of a span and `I-<tag>` for each continuation. One further label, `O`, marks a token outside
 every component.
 
-The union of 25 tags therefore spans 51 possible labels. That is the schema's capacity, not any one
+The union of 25 tags therefore spans 51 possible labels. That is the schema's capacity rather than any one
 model's output alphabet.
 
 ## What the shipped model emits
@@ -100,7 +100,7 @@ in the model card as `architecture.num_labels`.
 
 Nine tags are in the schema and outside the shipped Latin head: `street_prefix_particle`, `attention`,
 and the seven Japanese tags. A parse from the shipped model never returns them. Reading them from a
-response means you are running a different head, not that the input lacked them.
+response means you are running a different head rather than that the input lacked them.
 
 `@mailwoman/neural-weights-en-us` is the base model, and the `fr-fr`, `en-gb`, `en-nz`, `de-de`,
 `es-es`, `it-it` and `en-in` packages overlay it with locale data rather than replacing the encoder.

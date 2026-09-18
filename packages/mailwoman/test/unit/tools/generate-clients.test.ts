@@ -14,7 +14,7 @@ import {
  *   Cheap unit coverage for `generate-clients.ts`'s pure logic only — the surface list + the
  *   template-string builders (pyproject.toml, `__init__.py`, Cargo.toml, `lib.rs`). The pipeline
  *   itself (`generateClients`) is spawn-heavy end to end (node CLIs, `uvx`, `uv build`, `cargo
- *   check`) — that's covered by an actual local run and by the client-generation CI job, not
+ *   check`) — that's covered by an actual local run and by the client-generation CI job rather than
  *   re-simulated here with mocks. What is worth pinning cheaply:
  *   that the four-surface list stays in sync, and that the generated file templates actually
  *   interpolate the version and name every module — a typo here (e.g. forgetting the `mailwoman`
@@ -77,7 +77,7 @@ test("emitterCLIPath resolves every surface to the compiled bin its manifest dec
 	for (const surface of CLIENT_SURFACES) {
 		const cli = await emitterCLIPath(surface)
 
-		// Inside the workspace, not at a repo-root segment named for it — the 2026-08-14 regroup's shape.
+		// Inside the workspace rather than at a repo-root segment named for it — the 2026-08-14 regroup's shape.
 		expect(cli.split(sep)).toContain("packages")
 		expect(cli.split(sep)).toContain(surface)
 

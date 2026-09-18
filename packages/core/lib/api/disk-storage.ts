@@ -161,7 +161,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const parsed = tryParsingJSON<StorageValue>(raw)
 
 			if (parsed === null) {
-				// A truncated or hand-edited entry is a miss, not a crash — re-fetching is always safe.
+				// A truncated or hand-edited entry is a miss rather than a crash — re-fetching is always safe.
 				logger.warn(`Discarding an unreadable cache entry for ${key}.`)
 
 				await removeEntry(key)

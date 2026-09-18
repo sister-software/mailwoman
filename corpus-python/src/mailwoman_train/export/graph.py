@@ -6,7 +6,7 @@ answers computed without it. That is the #566/#685 trap, and it is why the unsup
 below raise instead of exporting a reduced graph.
 
 Every feature input requests a dynamic dim 0 and dim 1 (batch, sequence) and a fixed dim 2 — the
-feature width is a property of the lexicon the channel was built from, not of the input.
+feature width is a property of the lexicon the channel was built from rather than of the input.
 """
 
 from __future__ import annotations
@@ -75,7 +75,7 @@ class ExportGraph:
 def detect_channels(model: nn.Module) -> Channels:
     """Read the channel flags off the model.
 
-    Off the MODEL, not off a config: a checkpoint is resumed and re-exported long after the config
+    Off the MODEL rather than off a config: a checkpoint is resumed and re-exported long after the config
     that built it has moved on, and the graph has to match the weights.
     """
     return Channels(

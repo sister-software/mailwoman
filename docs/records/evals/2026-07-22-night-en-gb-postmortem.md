@@ -9,13 +9,13 @@ Conn handed 04:42 UTC with ship authority (check-conditional); wrapped early —
 - **Acquisition wave** (~13.7 GiB, all provenance-manifested): BR CNPJ 2026-07 (6.3 GiB, bairro confirmed), MX DENUE (548 MiB), GB EPC domestic (6.0 GiB), ONSPD, OS Open UPRN. Catalog corrections folded into `.notes/data-sources.md` (CNPJ WebDAV move; EPC Bearer auth).
 - Issues filed: #1247 (stale STAGE2 label tests), #1248 (`_merge` silent unknown-key drop).
 
-## The headline finding: resurrection is a _window_, not a switch
+## The headline finding: resurrection is a _window_ rather than a switch
 
 The arc's science, in four runs (full record: config headers + `.superpowers/sdd/task-8-report.md`):
 
 | Run              | Recipe                                        | Decode dep-loc (NZ / GB)                | Raw-BIO (GB)                           | Verdict                                                                                                                         |
 | ---------------- | --------------------------------------------- | --------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| probe-1 (2k)     | changes + synth-gb 6.0 (~1.3% dep-loc stream) | 0/246 · 0/69                            | 2/69, gap 4.61                         | starved, not dead                                                                                                               |
+| probe-1 (2k)     | changes + synth-gb 6.0 (~1.3% dep-loc stream) | 0/246 · 0/69                            | 2/69, gap 4.61                         | starved rather than dead                                                                                                        |
 | probe-2 (2k)     | one var: synth-gb 36.0 (~6.6%)                | **3/246 · 1/69 — first emissions ever** | 12/69, min gap 0.000                   | mechanism confirmed; skew costs (us −0.8pp, bare-locality 0.60)                                                                 |
 | feed (8k)        | one var: 4-locale split at same density       | 0/246 · 0/69                            | 0/69, gaps worsened                    | skew costs recovered (bare-locality 0.988) but tag re-buried                                                                    |
 | checkpoint sweep | (no GPU)                                      | flat zero all checkpoints               | **peak 5/69 @ 2k → monotonic decline** | **RE-BURIAL: hot classifier LR is a ~2k resurrection window, after which the 93% negative mass re-buries the tag at hot speed** |
@@ -40,7 +40,7 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 
 ## What could've gone better
 
-- **The run-A misadjudication** (~5 min A100 wasted on a byte-identical rerun): I called "instrument failure" from a maxΔ row comparison — the wrong instrument at 384 dims (element scale ~0.07). Cosine similarity settled it in one command. Lesson memorized: _cosine, not maxΔ, for re-init verification_.
+- **The run-A misadjudication** (~5 min A100 wasted on a byte-identical rerun): I called "instrument failure" from a maxΔ row comparison — the wrong instrument at 384 dims (element scale ~0.07). Cosine similarity settled it in one command. Lesson memorized: _cosine rather than maxΔ, for re-init verification_.
 - **Layer-blind grading nearly killed the arc:** probe-1's 0-emission was measured at production decode, which hides sub-margin signal ("JSON hides gaps" — again). The operator's raw-BIO instinct was the arc's important correction.
 - Three agents parked on background-job monitors instead of polling (known SDD lesson; re-briefing cost ~4 round-trips — the blocking-poll pattern should go into the dispatch template).
 
@@ -48,7 +48,7 @@ The null condition is **not** met — the tag is learnable; the _schedule_ is wr
 
 - Probe-2 → feed escalation composition (4-locale split at held density) — operator had green-lit multi-locale direction.
 - No training iteration after the feed fail (treadmill guard) — sweep diagnostic only, fork documented instead.
-- ES semantics preserved via new source name + explicit flag; findLastIndex formatter fix landed with the ES extract's first-match drift documented, not rebuilt.
+- ES semantics preserved via new source name + explicit flag; findLastIndex formatter fix landed with the ES extract's first-match drift documented rather than rebuilt.
 - Selective staging of `train_remote.py` (our 3 sync fns committed; operator's `sync_latam_br` restored untouched to the working tree).
 
 ## Addendum (08:00–09:30 UTC): the fork is launch-ready

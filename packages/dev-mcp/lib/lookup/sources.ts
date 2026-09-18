@@ -39,10 +39,10 @@ import { type PlaceIDProvenance, placeIDProvenance } from "#place-id-provenance"
 /**
  * How many rows a probe returns per query before it stops.
  *
- * PER PROBE, not per query: a source that reads several extracts on several routes binds this to each one, so a set of
- * six extracts on two routes can return up to twelve times this number. Every probe therefore reports `returned` beside
- * `matched` — the count the source actually holds, measured by its own COUNT rather than inferred from the list —
- * because a truncated list whose length is presented as a total reads as coverage it does not have.
+ * PER PROBE rather than per query: a source that reads several extracts on several routes binds this to each one, so a
+ * set of six extracts on two routes can return up to twelve times this number. Every probe therefore reports `returned`
+ * beside `matched` — the count the source actually holds, measured by its own COUNT rather than inferred from the list
+ * — because a truncated list whose length is presented as a total reads as coverage it does not have.
  */
 const DEFAULT_ENTRY_LIMIT = 10
 
@@ -60,7 +60,7 @@ const CandidateRoute = {
 	Exact: "exact",
 	/**
 	 * The key with a locality qualifier removed ("Lenk im Simmental" → `lenk`). Primary-name rows only, matching the
-	 * runtime: a stripped probe that answers through an alias is a scrape, not a qualifier match.
+	 * runtime: a stripped probe that answers through an alias is a scrape rather than a qualifier match.
 	 */
 	QualifierStrip: "qualifier-strip",
 	/**
@@ -243,7 +243,7 @@ export function lookupCandidate<DB>(
 		let found = probe(exactKey)
 
 		// The runtime's own extra keys, IN ITS ORDER. The whitespace fold comes first because `findPlace`
-		// applies it at the top, before the cascade — and the order is required, not cosmetic: measured
+		// applies it at the top, before the cascade — and the order is required rather than cosmetic: measured
 		// against the shipped candidate.db, "1012 LG" strips to `1012` and resolves the NL PC6 unit to the
 		// 4-digit stem in NL *and* DK, while its own row sits under `1012lg`. Strip-first coarsens a hit it
 		// should never have reached.
@@ -371,8 +371,8 @@ export function lookupCandidate<DB>(
 }
 
 /**
- * The fields {@link diffCandidateRows} compares on a row present in both artifacts — the ranking-relevant columns, not
- * the identity ones (those are the match key).
+ * The fields {@link diffCandidateRows} compares on a row present in both artifacts — the ranking-relevant columns rather
+ * than the identity ones (those are the match key).
  */
 const CANDIDATE_DELTA_FIELDS = ["importance", "population", "is_primary", "name_role"] as const
 
@@ -384,7 +384,7 @@ export interface CandidateDelta {
 	/**
 	 * Rows the primary artifact returned that the compare artifact did not, and the reverse. Identity is `(spr_id, name)`
 	 * — several names ride one key per place, and a refolded artifact re-keys Overture-minted ids, so a twin appearing on
-	 * both sides of this pair is usually the same settlement under a new id, not two places.
+	 * both sides of this pair is usually the same settlement under a new id rather than two places.
 	 */
 	only_in_a: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
 	only_in_b: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
@@ -514,8 +514,8 @@ const SPR_COLUMNS =
 	"spr.is_current, spr.is_deprecated, pop.population AS population"
 
 /**
- * LEFT, not INNER: a place with no `place_population` row must still appear, carrying `population: null`. An inner join
- * would drop it and the miss would read as the extract not holding the place at all.
+ * LEFT rather than INNER: a place with no `place_population` row must still appear, carrying `population: null`. An
+ * inner join would drop it and the miss would read as the extract not holding the place at all.
  */
 const SPR_JOINS = "LEFT JOIN place_population pop ON pop.id = spr.id"
 
@@ -541,9 +541,9 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
 /**
  * Probe the WOF admin + postcode extracts — the source data behind the FTS backend, and behind `candidate.db`'s build.
  *
- * Read this next to `candidate`: a string the candidate table misses and this one holds is a BUILD gap, not a data gap.
- * `Sultan Qaboos` is the worked example — absent from `candidate.db`, reached here through the FTS index's `alt_names`
- * column as `مدينة السلطان قابوس` in OM.
+ * Read this next to `candidate`: a string the candidate table misses and this one holds is a BUILD gap rather than a
+ * data gap. `Sultan Qaboos` is the worked example — absent from `candidate.db`, reached here through the FTS index's
+ * `alt_names` column as `مدينة السلطان قابوس` in OM.
  *
  * Two routes, because one index cannot answer both halves. The `place_search` FTS5 content is populated with
  * `is_current != 0 AND is_deprecated = 0` applied at BUILD time, so it can never show a deprecated record. the `names`
@@ -859,7 +859,7 @@ export interface PostcodeLookupOptions {
 
 /**
  * Probe the postcode→anchor artifact the classifier feeds the model — the `postcode-<cc>.bin` sibling in the resolved
- * weights package, not a gazetteer.
+ * weights package rather than a gazetteer.
  *
  * The key is `span.replace(" ", "").toUpperCase()`, the train painter's normalization, which is what makes `SW1A 2AA`
  * reachable at all. Two readings this must keep apart:
@@ -879,7 +879,7 @@ export function lookupPostcodeAnchor(
 	return queries.map((query) => {
 		const key = query.replaceAll(/\s+/g, "").toUpperCase()
 		// An alnum run cannot span a non-alphanumeric character, so a query carrying one can only be keyed
-		// under `shaped`. This is the scan's definition, not a heuristic about postcode shapes.
+		// under `shaped`. This is the scan's definition rather than a heuristic about postcode shapes.
 		const reachableByScan = options.spanMode === "shaped" || !/[^\p{L}\p{N}]/u.test(query.trim())
 		const rows = resolver.lookup(key)
 

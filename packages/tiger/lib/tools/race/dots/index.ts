@@ -12,7 +12,7 @@
  *   `tippecanoe` layer hint) ready for `tippecanoe -o race-dots.pmtiles`.
  *
  *   Point-in-polygon uses `@turf/boolean-contains` (ships with `@mailwoman/tiger`). The dot is a
- *   _representation_, not a record: a random position inside the block it belongs to, standing in
+ *   _representation_ rather than a record: a random position inside the block it belongs to, standing in
  *   for `per` real people of that category. It says nothing about any individual address.
  *
  *   Build the input DB first: `mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db` then

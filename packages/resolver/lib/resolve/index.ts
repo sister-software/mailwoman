@@ -8,8 +8,7 @@
  *
  *   The walk is parent-constraint-aware: when a parent node resolves to a place id, its children's
  *   lookups are scoped to descendants of that parent. This dramatically narrows the search space
- *   for ambiguous names — `Springfield` under a resolved `Illinois` parent resolves to the IL one,
- *   not the MA one.
+ *   for ambiguous names — `Springfield` under a resolved `Illinois` parent resolves to the IL one rather than the MA one.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -283,11 +282,11 @@ class WOFResolver implements Resolver {
 		// Admin descendant-consistency (#263): default-ON (#895 settled drift D1; `false` opts out). Re-pick a
 		// (region, locality) pair so the locality descends from the region — runs before postcode-consistency
 		// (it resolves the locality the postcode pass may then refine) and before the street tiers (which key
-		// off the postcode/street, not the admin coordinate this adjusts). Byte-stable when nothing fell
+		// off the postcode/street rather than the admin coordinate this adjusts). Byte-stable when nothing fell
 		// through or the backend lacks `ancestors`.
 		if (opts.adminCoherence !== false) {
 			// First: a parent-fallback pick whose lineage names another region is un-resolved, so the passes below
-			// and the admin ladder read it as the fall-through it is, not as a resolved namesake elsewhere.
+			// and the admin ladder read it as the fall-through it is rather than as a resolved namesake elsewhere.
 			applyParentFallbackContradiction(newRoots)
 			await applyAdminCoherence(newRoots, this.#backend)
 			// #822 — same joint-consistency family, inverse trigger: an explicit country token whose resolved
@@ -305,7 +304,7 @@ class WOFResolver implements Resolver {
 		// Postcode-consistency (#370 "Change A"): default-ON (promoted 2026-07-04 — the corrected check:
 		// FI 231/0, SI 37/6, CZ 47/2, US byte-flat. see the ResolveOpts docstring). After the admin walk
 		// (needs both the locality and the postcode resolved) and before the street tiers (which key off
-		// the postcode/street, not the locality coordinate this adjusts). `false` opts out, byte-stable.
+		// the postcode/street rather than the locality coordinate this adjusts). `false` opts out, byte-stable.
 		if (opts.postcodeConsistency !== false) {
 			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyThresholdKm ?? 50, opts.postcodeConsistencyMaxMoveKm)
 		}
@@ -618,7 +617,7 @@ class WOFResolver implements Resolver {
 		// vector per row. The no-sink walk talks to the frozen no-op recorder — zero per-event branches.
 		const rec = state.traceSink ? createNodeTraceRecorder(state.traceSink) : NOOP_TRACE_RECORDER
 
-		// The query is SNAPSHOT, not bound live. `emit` reads `ctx.query.parentID` at the END of the walk, and the
+		// The query is SNAPSHOT rather than bound live. `emit` reads `ctx.query.parentID` at the END of the walk, and the
 		// parent-fallback retry `delete`s that key mid-lookup — so binding the object itself lets a later mutation
 		// rewrite history. That is how 196 lookups which every one of them carried a parent came out of the
 		// constraint census reading `parentID: absent`.
@@ -874,7 +873,7 @@ class WOFResolver implements Resolver {
 
 		// Admin-containment partition (#1717 stage 2): the last soft re-rank, after the anchor/fame keys
 		// above, because the qualifier is the address's own text — evidence, which outranks a prior. The
-		// backend already put contained rows first. this second partition is required, not belt-and-
+		// backend already put contained rows first. this second partition is required rather than belt-and-
 		// braces: `rankByImportance` just re-ordered the exact tier by fame, and Richmond, Virginia
 		// outscores Richmond, North Yorkshire on importance — without this the change loses exactly where
 		// fame disagrees with the qualifier (the shared-function partition, tier-safe + stable, so it can
@@ -952,7 +951,7 @@ class WOFResolver implements Resolver {
 		rec.emit({ id: top.id, name: top.name, source: "ranked" })
 
 		// The trace stamps (#1717 stage 2 / #1719's rule): an opted-in mechanism that cannot fire — a
-		// pre-sidecar artifact, an incapable backend — must say so in the result, not degrade silently.
+		// pre-sidecar artifact, an incapable backend — must say so in the result rather than degrade silently.
 		// The parse-side census cannot see resolver mechanisms, so these stamps are its census surface.
 		// admin_containment asserts a question was asked. variant_alias_exemption (#1893) asserts the
 		// winning candidate reached the top because the exemption spared it the cross-country penalty —

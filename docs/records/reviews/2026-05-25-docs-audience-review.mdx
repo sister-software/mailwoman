@@ -57,7 +57,7 @@ A reader arriving at the docs has no way to answer "what works right now?" The i
 - `v0-5-0-shipped.md` — detailed but buried in the plan directory
 - `how-it-works-now.md` — says what the pipeline looks like, but mixes shipped and in-progress features
 - `how-it-will-work.md` — lists what's in progress, some of which contradicts `how-it-works-now.md`
-- Several blog posts — written from a specific moment, not maintained
+- Several blog posts — written from a specific moment rather than maintained
 - `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, `STAGES.md` — each with its own status header, some stale
 
 **Fix: Create one operational status page** (`/docs/status`) that tells a reader in 60 seconds:
@@ -104,7 +104,7 @@ A first-time reader reading about the "staged pipeline" (six runtime stages) and
 
 **Fix:** A terminology reconciliation sweep. Pick one namespace and stick to it everywhere that isn't a historical artifact with a date stamp. Rename the eval filenames. Update `STAGES.md` header. Add a prominent note in `plan/README.md` about the old naming.
 
-### 4. The blog posts are a serial narrative, not standalone articles
+### 4. The blog posts are a serial narrative rather than standalone articles
 
 Each blog post assumes the reader has read the previous one. This works for a dedicated subscriber but is hostile to search-driven traffic. A reader who lands on "two voices arguing" from a "machine learning debugging for beginners" search gets:
 
@@ -123,7 +123,7 @@ The content itself is strong — the "two voices" post in particular could be a 
 Several blog posts contain substantive technical explanations that belong in the docs:
 
 - The v0.4.0 retrospective contains the definitive explanation of the cosine-LR meta-bug, the NAD source-rebalance effect, and the false-negative bucketing methodology — all referenced from `how-it-works-now.md` via external links
-- The "taming WOF" post is the project's best explanation of Who's On First's structural gotchas, but it lives in the blog, not in the concepts articles
+- The "taming WOF" post is the project's best explanation of Who's On First's structural gotchas, but it lives in the blog rather than in the concepts articles
 - The "two voices" post contains the clearest explanation of dual-loss gradient dominance, which the concepts articles reference but don't fully replicate
 
 This means the most accessible and well-written versions of key technical explanations are in a part of the site (the blog) that readers don't treat as reference material.
@@ -233,7 +233,7 @@ There are several pages a new reader would expect that don't exist:
    - npm packages and versions
    - Model weight versions and known F1 limits
    - Browser demo capability
-   - Feature flag status (opt-in, default, scaffold-only, not started)
+   - Feature flag status (opt-in, default, scaffold-only rather than started)
    - Active experimentation
    - Known regressions with direct severity ratings
 

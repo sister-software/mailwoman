@@ -21,7 +21,7 @@
  *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
  *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
  *   départements = 16 rows. DE has no manifest holdout). Abort/de-risk per the plan: a held-out
- *   set below 1000 rows is reported as UNTRUSTED, not scored.
+ *   set below 1000 rows is reported as UNTRUSTED rather than scored.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/honest-eval.run.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\

@@ -204,7 +204,7 @@ export interface TIGERPropertyRecord<GeoID extends string = string> {
 	/**
 	 * The tabulated block's housing unit count.
 	 *
-	 * Note: This is the number of housing units in the block, not the number of people.
+	 * Note: This is the number of housing units in the block rather than the number of people.
 	 *
 	 * @type {integer}
 	 * @title Housing Units

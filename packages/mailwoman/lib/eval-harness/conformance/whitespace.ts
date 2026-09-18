@@ -12,7 +12,7 @@
  *   hand-typed line arrives with the comma tight against the next word. All of them name the same building
  *   as the evenly-spaced form a curator typed into the board, and Stage 1 exists to make them one string.
  *
- *   THE LAW IS STATED OVER THE PIPELINE, NOT OVER {@link "@mailwoman/normalize"}. `collapseWhitespace` folding
+ *   THE LAW IS STATED OVER THE PIPELINE rather than OVER {@link "@mailwoman/normalize"}. `collapseWhitespace` folding
  *   a run to one ASCII space is a unit fact about one module. that the ANSWER does not move is a fact about
  *   the whole path, and only the second one is what a caller relies on. A row here therefore grades on the
  *   axis its own committed board row is graded on — the entity, the coordinate, or the parse — and never on
@@ -27,7 +27,7 @@
  *   NEWLINE IS OUT OF THIS LAW, AND THE REASON IS MECHANICAL. `collapseWhitespace` folds `[ \t]` runs to one
  *   ASCII space and PRESERVES `\n`/`\r`, because `@mailwoman/query-shape`'s segmentation grammar reads a
  *   newline as a segment separator on a par with a comma. Swapping a space for a newline therefore
- *   re-segments the query on purpose. it is a claim about the segmentation grammar, not about spacing. A tab
+ *   re-segments the query on purpose. it is a claim about the segmentation grammar rather than about spacing. A tab
  *   is the opposite case and belongs here twice over: the same grammar treats a RAW tab as a separator too,
  *   and the collapse is what stops one from reaching it — so the `tabbed` arm is the executable statement
  *   that the collapse still shields that grammar.
@@ -200,8 +200,8 @@ export const WHITESPACE_TRANSFORMATION_BY_NAME: Record<WhitespaceTransformationN
  *
  * Every non-whitespace character survives, in its original order, so this is the strongest available statement of the
  * scope rule: a whitespace transformation preserves token content and token order. `\s` rather than `[ \t]` on purpose
- * — the key is a comparison surface, not a transformation, and a pair that swapped a space for a newline must still
- * come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
+ * — the key is a comparison surface rather than a transformation, and a pair that swapped a space for a newline must
+ * still come out equal here so {@linkcode classifyWhitespaceTransformation} can refuse it by name.
  */
 export function whitespaceBlindKey(text: string): string {
 	return text.replaceAll(/\s+/gu, "")

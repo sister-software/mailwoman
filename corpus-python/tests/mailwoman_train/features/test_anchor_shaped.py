@@ -59,7 +59,7 @@ LOOKUP_H = {"12345": ({"US": 1.0}, 42.81, -73.93)}
 
 
 def test_gold_path_paints_nothing_on_leading_house_number():
-    # GOLD: 12345 is labeled house_number, not postcode → the anchor never fires at TRAIN.
+    # GOLD: 12345 is labeled house_number rather than postcode → the anchor never fires at TRAIN.
     feats, confs = realign_anchor_to_pieces(RAW_H, TOKENS_H, LABELS_H, PIECES_H, LOOKUP_H)
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)

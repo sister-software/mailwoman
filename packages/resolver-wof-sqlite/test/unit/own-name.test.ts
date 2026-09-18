@@ -33,7 +33,7 @@ describe("isOwnNameVariant — the measured census contests", () => {
 		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative: the query
 		// means Cancún, Mexico, and the penalty must keep protecting it.
 		expect(isOwnNameVariant("чанчунь", "cancun")).toBe(false)
-		// Augsburg's Latin name `augusta` is a different name, not an orthography of "Augsburg".
+		// Augsburg's Latin name `augusta` is a different name rather than an orthography of "Augsburg".
 		expect(isOwnNameVariant("augsburg", "augusta")).toBe(false)
 		// West Bay, Cayman Islands carrying alias "West End" — different name.
 		expect(isOwnNameVariant("west bay", "west end")).toBe(false)
@@ -43,7 +43,7 @@ describe("isOwnNameVariant — the measured census contests", () => {
 		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor. the panel's
 		// `41 Weraroa Road, Levin` row needs Levin NZ to keep winning the primary side.
 		expect(isOwnNameVariant("lievin", "levin")).toBe(false)
-		// Derry/Londonderry is a dual name, not a variant — its own follow-up on #1882.
+		// Derry/Londonderry is a dual name rather than a variant — its own follow-up on #1882.
 		expect(isOwnNameVariant("derry", "londonderry")).toBe(false)
 	})
 

@@ -26,7 +26,7 @@ Per-component F1 scores are the standard metric for sequence-labeling models. A 
 
 The easy reading: v0.4.0 regressed on country and postcode. Ship the previous version.
 
-The accurate reading, after bucketing the 1,217 postcode false-negatives and 194 country false-negatives into failure categories, reveals that the headline regressions are mostly **eval artifacts**, not real model degradation.
+The accurate reading, after bucketing the 1,217 postcode false-negatives and 194 country false-negatives into failure categories, reveals that the headline regressions are mostly **eval artifacts** rather than real model degradation.
 
 ## The false-negative bucketing methodology
 
@@ -34,7 +34,7 @@ For every component where F1 moves more than a few points between releases, manu
 
 ### Pattern 1: Adversarial eval entries
 
-The golden set contains entries chosen specifically to break the parser — multi-script addresses, ambiguous locality names, prefix-honorific homographs. If the model has a known limitation (e.g., the v0.1.0 tokenizer's byte-fallback on non-Latin scripts) and the golden set includes entries that exercise that limitation, then F1 deltas on those entries are measuring **whether the limitation got fixed**, not whether the new weights are better or worse.
+The golden set contains entries chosen specifically to break the parser — multi-script addresses, ambiguous locality names, prefix-honorific homographs. If the model has a known limitation (e.g., the v0.1.0 tokenizer's byte-fallback on non-Latin scripts) and the golden set includes entries that exercise that limitation, then F1 deltas on those entries are measuring **whether the limitation got fixed** rather than whether the new weights are better or worse.
 
 In v0.4.0's case, 92% of the country false-negatives were adversarial transliteration entries:
 
@@ -53,7 +53,7 @@ When the model emits nothing for a component that the golden set expects, the fa
 
 In v0.4.0, 65% of postcode false-negatives were empty predictions on mid-position postcodes like `Paris 75008`. The NAD downweight (the most aggressive change in the source rebalance) removed "postcode-first" positional patterns from the training mix. The model learned to tag mid-position numeric tokens as `house_number` instead of `postcode`.
 
-This is a real regression — the recipe change had an unintended side effect — but it's a training-data distribution problem, not a model architecture problem. It suggests a targeted fix (bump NAD weight back up, synthesize component-order permutations) rather than a rollback.
+This is a real regression — the recipe change had an unintended side effect — but it's a training-data distribution problem rather than a model architecture problem. It suggests a targeted fix (bump NAD weight back up, synthesize component-order permutations) rather than a rollback.
 
 ### Pattern 3: Label confusion
 
@@ -65,7 +65,7 @@ These are actual model errors. They suggest the label vocabulary is ambiguous fo
 
 The model gets the label right but the span wrong. In v0.4.0, 6% of postcode false-negatives were boundary-slip cases: `LE TRÉPORT, 76470` → model predicted `", 7647"` for postcode. The tag was correct (`postcode`) but the span included the preceding comma and space, and sometimes truncated the final digit.
 
-This is a decoder problem, not a model problem — no retraining required. The fix (trimming spans past leading/trailing non-word characters) landed in the decoder without touching the model weights.
+This is a decoder problem rather than a model problem — no retraining required. The fix (trimming spans past leading/trailing non-word characters) landed in the decoder without touching the model weights.
 
 **The discipline:** always ask whether the failure is a model problem or a decoder problem. Decoder fixes are cheap and don't require a retrain. several "model regressions" turn out to be decoder bugs on closer inspection.
 
@@ -73,7 +73,7 @@ This is a decoder problem, not a model problem — no retraining required. The f
 
 The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artifact in the eval pipeline. A few rules:
 
-- **Adversarial entries belong in their own set.** Report F1 with and without them. The adversarial set is a stress test, not a release check.
+- **Adversarial entries belong in their own set.** Report F1 with and without them. The adversarial set is a stress test rather than a release check.
 - **Golden-set versions are pinned.** Every eval report references a specific golden-set version. If the golden set is expanded, the old reports are not retroactively recomputed — that would falsify the historical record.
 - **Annotation noise is real.** At typical 1% annotator error rates in human-labeled NER data, a 0.5–1.5pt macro_F1 shift can be noise. When a regression lands in this band, manually inspect the disagreement entries before deciding.
 - **Small eval sets amplify noise.** 4,535 entries means a 1pt macro_F1 regression is ~45 flipped entries. At 1% annotator error, the false-positive rate on "regression detected" is ~10%.
@@ -88,7 +88,7 @@ The 2026-06-08 `honest-eval` run made the cost concrete: on the leakage-free Ver
 
 Random evaluation flatters the model: the corpus covers the same towns the eval tests, so component recall is partly memorization. The corpus holds specific regions out of training (`corpus/src/split.ts` `defaultHoldouts()`: VT/WY/ND for US, Corse/Lozère/Creuse for FR). OpenAddresses rows in that held-out geography test the model on places it has never seen — the only unbiased estimate of generalization. Require a minimum held-out set size (we use 1,000 rows) and report it `UNTRUSTED` below that rather than scoring noise.
 
-### Grade by the coordinate, not the string
+### Grade by the coordinate rather than the string
 
 Three metrics survive a name collision:
 
@@ -100,7 +100,7 @@ Three metrics survive a name collision:
 
 ### When aggregate and functional disagree, functional wins
 
-The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing _why_ the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue, not noise — the same lesson the parser side learned, on the resolver side.
+The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing _why_ the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue rather than noise — the same lesson the parser side learned, on the resolver side.
 
 ## Oracle substitution: where the error lives
 
@@ -108,14 +108,14 @@ Per-component F1 and coordinate error tell you _how much_ is wrong. They don't t
 
 Which stage you oracle decides what you learn:
 
-- **Oracle the model's output** — feed the resolver the _gold_ tags. "If parsing were perfect, how good is the coordinate?" The surviving error is the resolver-and-gazetteer's ceiling, not the model's. This is how you answer "is this a tagging problem or a coverage problem?": hand the resolver the true locality for a row it gets wrong — if it _still_ misses, the place isn't findable in the gazetteer (coverage or name-mismatch) and no model improvement can touch it; if it suddenly resolves, the tag was the bottleneck.
+- **Oracle the model's output** — feed the resolver the _gold_ tags. "If parsing were perfect, how good is the coordinate?" The surviving error is the resolver-and-gazetteer's ceiling rather than the model's. This is how you answer "is this a tagging problem or a coverage problem?": hand the resolver the true locality for a row it gets wrong — if it _still_ misses, the place isn't findable in the gazetteer (coverage or name-mismatch) and no model improvement can touch it; if it suddenly resolves, the tag was the bottleneck.
 - **Oracle the retrieval** — feed the model _perfect_ anchor/gazetteer hints. "If retrieval were perfect, how good is the parse?" The surviving error is the model's own ceiling, independent of how good the gazetteer is.
 
 Run both and you've decomposed the total error across the model and the atlas — the measurable form of the question "has the model caught up to its database?" The gap between _oracle-X_ and _everything-perfect_ is X's share of the error; the gap between _oracle-X_ and _current_ is everyone-else's share.
 
 Two cautions:
 
-- **It is an upper bound, always optimistic.** The oracle is perfect; the real stage never is. "Oracle locality → coord p50 1km" means _1km is the best the resolver could do given perfect parsing_, not a number you will ship.
+- **It is an upper bound, always optimistic.** The oracle is perfect; the real stage never is. "Oracle locality → coord p50 1km" means _1km is the best the resolver could do given perfect parsing_ rather than a number you will ship.
 - **Inject at the right interface.** A gold locality _string_ (the model's output level) tests the resolver; a gold resolved _place-ID_ (skipping the resolver) tests only the coordinate math. Match the injection point to the stage you want to isolate.
 
 The negative form of the same experiment is worth naming, because it bit us: _removing_ a signal and watching a metric crater tells you how hard a stage leans on that signal. Scoring an anchor-trained model with its retrieval channels _absent_ collapsed the admin tags (country, region, locality, postcode) to near-zero — which, read backwards, measured how essential those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-06-18-v150-vs-v170-head-to-head.md) is where that surfaced). Oracle substitution is the same idea run forwards: add a perfect signal and read the ceiling.
@@ -124,7 +124,7 @@ The negative form of the same experiment is worth naming, because it bit us: _re
 
 A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) for the full framework. The eval-relevant lessons:
 
-- **Constant-LR smokes, not cosine.** Cosine decay hides divergence under a near-zero learning rate. A verdict smoke that uses cosine decay will report "stable" even when the recipe would diverge under sustained peak LR. v0.4.0's cosine-LR meta-bug cost five training runs before it was diagnosed.
+- **Constant-LR smokes rather than cosine.** Cosine decay hides divergence under a near-zero learning rate. A verdict smoke that uses cosine decay will report "stable" even when the recipe would diverge under sustained peak LR. v0.4.0's cosine-LR meta-bug cost five training runs before it was diagnosed.
 - **Full-run batch geometry.** A smoke that runs at a different effective batch size than the full run is testing a different gradient-noise regime. The smoke's "pass" verdict is not transferable.
 - **Run smokes before expensive retrains.** The smoke framework exists to catch divergence, NaN, and sampler starvation before they cost a full GPU run. It's the cheapest experiment in the training loop.
 

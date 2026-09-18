@@ -4,7 +4,7 @@
 collection of every standing legal question (operator, 2026-07-30: "do your best and I'll forward
 it over when the project pays for one"). Each item carries the question, the facts we
 verified ourselves, and what we're doing in the meantime. Items are ordered by how much shipped
-product they check. This file is the single source — new legal questions land here, not in
+product they check. This file is the single source — new legal questions land here rather than in
 scattered plan docs.
 
 ## 1. ODbL — the osm/ workspace publish-block + OSM-derived corpus quarantine
@@ -110,7 +110,7 @@ the table file; sourcing the equivalences from GREEN data instead avoids it.
 ## 6. Taiwan (green with mechanics)
 
 OGDL-Taiwan-1.0 on the municipal 門牌 data: attribution failure voids the license **ab initio**,
-and agencies may withdraw data (§5.2). Mechanics, not questions: ship the ~21-entry per-agency
+and agencies may withdraw data (§5.2). Mechanics rather than questions: ship the ~21-entry per-agency
 attribution manifest in the package and pin/archive the snapshots. Chunghwa Post 3+3 postcodes
 are RED (no distribution/adaptation grant) — we do not ship them; flag if a TW postcode feature
 is ever wanted.
@@ -126,7 +126,7 @@ nothing closes self-serve — but the text should be first in line when counsel 
 
 The AU G-NAF EULA bars compiling mailing lists without deliverability verification. Fine for
 parser training; becomes live only if a customer uses output for mailing-list generation —
-a terms-of-use rider on OUR license docs, not a blocker.
+a terms-of-use rider on OUR license docs rather than a blocker.
 
 ## 9. Lite artifact line (GTM D1 — the six L-markers)
 
@@ -138,11 +138,11 @@ on the free channel) and marks every point where an instrument would be needed.
    so it is a personal-data collection. Notice text at point of collection, retention period for
    the download log, and whether the privacy page's "architecturally does not collect" framing
    needs a written carve-out. Checks the form going up.
-2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code, not
+2. **L2 — the instrument the Lite key is issued under.** Not the AGPL (that governs our code rather than
    a compiled database) and not the commercial license. Needs a short data-use notice carrying the
    attribution condition and sitting correctly on top of the upstream licenses.
 3. **L3 — can we condition a compiled artifact whose inputs are public domain?** The working
-   assumption is that the attribution condition rides the download agreement, not a copyright
+   assumption is that the attribution condition rides the download agreement rather than a copyright
    claim over facts; EU database-compilation right vs US contract likely differ. **This is the
    required question for the whole Lite line.**
 4. **L4 — the WOF license, and it is fact-finding first.** The repo contradicts itself: the

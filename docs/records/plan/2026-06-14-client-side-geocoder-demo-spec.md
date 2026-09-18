@@ -26,7 +26,7 @@ The index B-tree is depth 4, so a lookup descends ~6 pages ≈ **24 KB**, out of
 total file size is irrelevant to lookup cost — that is the entire point of byte-range over an indexed
 SQLite. **If CA works, every state works**, exactly as the plan predicted. A full geocode fires a few
 such lookups (situs by postcode, situs by locality fallback, interp), so the data-fetch cost is a
-handful of round-trips ≈ low-hundreds of KB, RTT-bound (~350 ms/query same-region from the spike), not
+handful of round-trips ≈ low-hundreds of KB, RTT-bound (~350 ms/query same-region from the spike) rather than
 byte-bound.
 
 ### One data layer tuning note
@@ -71,12 +71,12 @@ server path); the browser has always resolved async.
 The situs/interp handles are sql.js-httpvfs workers (one per loaded state, lazy by parsed region),
 exactly like the WOF one the demo already opens.
 
-### Is a Web Worker still wanted? Yes — but as an enhancement, not a necessity
+### Is a Web Worker still wanted? Yes — but as an enhancement rather than a necessity
 
 The cascade is heavy (ONNX + several sync-XHR byte-range walks); on a cold cache it can block the main
 thread long enough to jank the typeahead and the map. So **moving the whole cascade into a Web Worker
 is still the right call** for UI responsiveness — but it is now an _optimization_ layered on a correct
-async main-thread implementation, not the thing that makes correctness possible. Build the async street
+async main-thread implementation rather than the thing that makes correctness possible. Build the async street
 tier first (it works on the main thread, like today's WOF resolve), then lift it into a worker. If/when
 lifted, the page↔worker contract is:
 
@@ -133,7 +133,7 @@ The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggest
 counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
 _locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
 → "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
-extracts, not the admin FST. Three direct options, in increasing cost:
+extracts rather than the admin FST. Three direct options, in increasing cost:
 
 1. **Place-level typeahead only** (ship now): wire the existing FST autocomplete into the search box.
    Suggests cities/regions; the user types the full street themselves. Lowest cost, real value.
@@ -156,14 +156,14 @@ epic — it is more than "wire the existing feature," which is the nuance worth 
    `index.tsx` runs it before `runCascade` and falls back to admin on a null. Main-thread async — no
    worker needed for correctness.
 3. **Host MI first** (229 MB — smallest) byte-range; wire the street tier on Michigan end-to-end; verify
-   via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full extract) on a real
+   via `run-docs` that the browser issues **Range** requests (pulls ~KB rather than the full extract) on a real
    geocode. The check — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
 4. **Add NY, then CA**; measure CA's real in-browser geocode latency against the < 3 s budget.
 5. **UX (#377):** map pin + calibrated-radius circle (the per-region factor from
    `data/calibration/interp-radius-conformal.json`) + tier caption; span-highlight by tag; resolved-
    hierarchy tree; per-stage timing; place-level autocomplete typeahead (option 1).
 6. **Lift the cascade into a Web Worker** (UI responsiveness) + a **Service Worker** with the capped
-   cache. Both are enhancements over the working main-thread version, not prerequisites.
+   cache. Both are enhancements over the working main-thread version rather than prerequisites.
 
 ## What's done headless vs. what needs a browser
 
@@ -173,7 +173,7 @@ whose correctness is only observable in a browser (Range requests fired, WASM lo
 need extracts served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
 stress extract, and does the sync `find()` contract force a worker — are **both retired here** (it does;
 it doesn't, because the demo's cascade is already async). So the remaining work is execution against a
-de-risked spec, not open questions.
+de-risked spec rather than open questions.
 
 ## Sources
 

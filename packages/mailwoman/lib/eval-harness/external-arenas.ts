@@ -34,7 +34,7 @@
  *
  *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (×3) and `summarize-arenas.run.ts` — are
- *   `lib/dev-tools/` residents, not eval legs, and de-shelling them is a separate job. `zx`
+ *   `lib/dev-tools/` residents rather than eval legs, and de-shelling them is a separate job. `zx`
  *   therefore survives here while it is gone from `promotion-eval.ts`.
  */
 

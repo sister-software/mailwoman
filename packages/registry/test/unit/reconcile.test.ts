@@ -54,9 +54,9 @@ describe("reconcileCoverage", () => {
 		const result = reconcileCoverage(
 			[
 				entity("a", ["nppes", "fcc"]), // enrolled
-				entity("b", ["nppes"]), // eligible, not enrolled
-				entity("c", ["txhhsc"]), // eligible, not enrolled
-				entity("d", ["fcc"]), // funded, not eligible
+				entity("b", ["nppes"]), // eligible rather than enrolled
+				entity("c", ["txhhsc"]), // eligible rather than enrolled
+				entity("d", ["fcc"]), // funded rather than eligible
 				entity("e", ["mystery"]), // excluded — no role
 			],
 			CONFIG

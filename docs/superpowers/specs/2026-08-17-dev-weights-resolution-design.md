@@ -79,7 +79,7 @@ but has no binaries, probe the overlay before throwing.
 layout; it does not know `release.config.json` exists. The dev link command, which is monorepo-only, reads
 the recipe and writes the overlay.
 
-The overlay is a DERIVED artifact, not a register: rebuilt from the recipe, verified against the card's
+The overlay is a DERIVED artifact rather than a register: rebuilt from the recipe, verified against the card's
 `files_md5`. By the runbook's own criterion — `wof-build-manifest.json` is a LOG because it can be
 re-derived — it cannot lag in the #1015 sense. A stale entry fails its digest check rather than being
 believed.
@@ -87,7 +87,7 @@ believed.
 Consequence worth stating: nothing symlinks into a tracked package directory any more. That is the shared
 cause of three known hazards — `yarn test` mutating tracked directories as a side effect of
 `weights.test.ts`, the `fs.copyFile`-through-a-symlink trap in `copy-weights.ts`, and the publish tarball
-symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its cause is gone, not its
+symlink refusal (`YN0035`). **The `publish-workspace.ts` dereference net stays.** Its cause is gone rather than its
 value; AGENTS.md says do not remove it, and a net whose hazard is merely unlikely is still the net.
 
 ### 3. Sibling reporting, because the rung trades a loud failure for a quiet one

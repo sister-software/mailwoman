@@ -137,7 +137,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * A source a checkout has not cached yields nothing, after saying so. A lab holds the archives for the countries it has
  * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
  * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with no tuples at all
- * still throws. that is the case where the cache, not the recipe, is the problem.
+ * still throws. that is the case where the cache rather than the recipe, is the problem.
  *
  * @category CSV
  */

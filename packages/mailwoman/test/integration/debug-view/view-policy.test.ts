@@ -29,7 +29,7 @@ describe("initialZoomForTier", () => {
 	})
 
 	it("reads the DEEPEST admin node, not the country at the far end", () => {
-		// "Portland, Oregon" resolved to its locality: z11, not the whole-country z4 the tail read gave.
+		// "Portland, Oregon" resolved to its locality: z11 rather than the whole-country z4 the tail read gave.
 		expect(initialZoomForTier(resultOf("admin", ["locality", "region", "country"]))).toBe(11)
 		expect(initialZoomForTier(resultOf("admin", ["dependent_locality", "locality", "region", "country"]))).toBe(11)
 

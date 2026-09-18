@@ -6,7 +6,7 @@
 
 ## The idea in one paragraph
 
-The decoder consults the gazetteer _as it parses_: candidate word-spans of the input are probed against a precomputed **index of (child-place, parent-place) pairs** built from authoritative registers (PPD for GB; LINZ for NZ later). A two-sided hit — child span + parent span co-occurring in the same input, pair present in the country's index — adds a calibrated log-bias δ to the corresponding tag's emissions before Viterbi. Presence boosts; absence is neutral (positive evidence only — register absence is coverage gap, not fact). This surfaces a placetype's _conditional_ prevalence ("this parent has children of this type") to a small model at decode time — the structural information giant parsers provide with parameters.
+The decoder consults the gazetteer _as it parses_: candidate word-spans of the input are probed against a precomputed **index of (child-place, parent-place) pairs** built from authoritative registers (PPD for GB; LINZ for NZ later). A two-sided hit — child span + parent span co-occurring in the same input, pair present in the country's index — adds a calibrated log-bias δ to the corresponding tag's emissions before Viterbi. Presence boosts; absence is neutral (positive evidence only — register absence is coverage gap rather than fact). This surfaces a placetype's _conditional_ prevalence ("this parent has children of this type") to a small model at decode time — the structural information giant parsers provide with parameters.
 
 ## Evidence (zero-GPU ladder on frozen checkpoints; full record `.superpowers/sdd/task-8-report.md`)
 
@@ -35,17 +35,17 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 
 ## Resolved questions (were open in rev 1)
 
-| Question                 | Resolution                                                                                                                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Segmenting               | word-span windows (fst-prior pattern); comma-stripped board re-run decides empirically; #727 k-best predicted unnecessary (Kimi pre-registered prediction — test, don't assume) |
-| Decode-order interaction | safe by construction (heal votes over post-prior emissions); two registered TEST classes: bias-united word stays united; encoder-confident word stays vetoed                    |
-| Checkpoint               | full battery decides; **feed-8k @ δ=6.0 (95.5/100, guards measured) is a peer option**, not a fallback to feed-2k (100/100, guards partial, digit trade reduces both ways)      |
-| NZ packaging             | hold (see decision 8)                                                                                                                                                           |
-| Multi-word names         | window-size percentile question, answered in the builder task                                                                                                                   |
+| Question                 | Resolution                                                                                                                                                                        |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Segmenting               | word-span windows (fst-prior pattern); comma-stripped board re-run decides empirically; #727 k-best predicted unnecessary (Kimi pre-registered prediction — test, don't assume)   |
+| Decode-order interaction | safe by construction (heal votes over post-prior emissions); two registered TEST classes: bias-united word stays united; encoder-confident word stays vetoed                      |
+| Checkpoint               | full battery decides; **feed-8k @ δ=6.0 (95.5/100, guards measured) is a peer option** rather than a fallback to feed-2k (100/100, guards partial, digit trade reduces both ways) |
+| NZ packaging             | hold (see decision 8)                                                                                                                                                             |
+| Multi-word names         | window-size percentile question, answered in the builder task                                                                                                                     |
 
 ## Parallel training-side experiment (DeepSeek's surviving recommendation)
 
-**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission without re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis, not a check.
+**cRT probe** (config-only, ~5 min GPU): `freeze_encoder: true` + hot classifier LR + dep-loc-heavy stream, 2k→8k. Pre-registered: does classifier-only + balanced stream hold emission without re-burial at 8k? If yes → better base weights, smaller δ, less bias dependence; composes with (never replaces) the pair prior. DeepSeek's "cRT recovers the window" is a logged hypothesis rather than a check.
 
 ## Plan (tasks; expand to TDD step level next)
 

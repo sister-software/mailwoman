@@ -25,7 +25,7 @@ disaster. The board's number was real but partial.
 
 Two design moves, each measured:
 
-1. **Street-splice, not tree-replace.** Override only the tokens the winning segmentation labels
+1. **Street-splice rather than tree-replace.** Override only the tokens the winning segmentation labels
    street-family; argmax owns locality/region/postcode/house_number. This alone recovered most of
    the loss (fr exact −1.4pp) but still cost fr street −2.7pp — the span head over/under-extends the
    street on clean multi-component inputs where the BIO head is better.

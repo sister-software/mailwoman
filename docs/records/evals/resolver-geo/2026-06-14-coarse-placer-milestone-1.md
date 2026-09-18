@@ -40,7 +40,7 @@ IT 92.8, ES 90.9. The errors are the expected ones — ES↔IT↔DE (European La
 ## The wall (and why milestone 2 is the point)
 
 The threshold-only abstention does **not** solve out-of-distribution. Off-map scripts — Cyrillic,
-Armenian, Greek, none of them among the 11 trained countries — are **confidently mis-classified**, not
+Armenian, Greek, none of them among the 11 trained countries — are **confidently mis-classified** rather than
 abstained:
 
 ```
@@ -79,7 +79,7 @@ numeric/punctuation n-grams in a real address otherwise pull an off-map input to
 
 1. **The Latin-off-map residual.** Off-map COUNTRIES in Latin script (Poland, Turkey, Brazil…) still
    mis-place — they share the script with the in-map European 11 and the other training is non-Latin. The
-   fix is full off-map _addresses_ (OpenAddresses for more countries), not place names.
+   fix is full off-map _addresses_ (OpenAddresses for more countries) rather than place names.
 2. **Script/continent heads** — the design wants (script, continent, coarse-region); script is
    deterministic, continent is a grouping, coarse-region routes extract loading.
 3. **Shrink + ship** — int8-quantize (≈720 KB), wire as the first pipeline stage + the #243 query-type

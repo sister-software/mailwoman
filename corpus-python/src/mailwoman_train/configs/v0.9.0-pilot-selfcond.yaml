@@ -43,7 +43,7 @@ data:
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
   # US/FR/DE — the three-way pilot. FR comes from the `ban` source (Base Adresse Nationale),
-  # DE from `synth-german`. country_weights is an acceptance filter, not a count balancer. the MIX
+  # DE from `synth-german`. country_weights is an acceptance filter rather than a count balancer. the MIX
   # is steered by source_weights below.
   country_weights:
     US: 1.0
@@ -90,7 +90,7 @@ model:
   crf_normalization: per_sequence
   label_smoothing: 0.1
   # PR3: the headline change. Self-conditioning on. the aux locale loss is a genuine but
-  # secondary objective behind the per-token BIO task. num_locales is derived from labels, not set
+  # secondary objective behind the per-token BIO task. num_locales is derived from labels rather than set
   # here (it can't drift from the aux-target vocabulary).
   use_locale_conditioning: true
   locale_loss_weight: 0.3

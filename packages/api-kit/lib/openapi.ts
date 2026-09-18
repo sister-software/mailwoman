@@ -113,8 +113,8 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
  * default 3.1.0), then either print it to stdout or write it to `out`. Always compact (single-line) JSON — never
  * pretty-printed — so the stdout form is a stable `startsWith('{"openapi":"3.1.0"')` smoke check, matching what a live
  * `/openapi.json` response looks like. `out`'s parent directory is created if missing (the docs build writes into a
- * gitignored, not-yet-existing `docs/static/openapi/`). One place owns this so the four emitters can't drift out of
- * lockstep with each other.
+ * gitignored rather than-yet-existing `docs/static/openapi/`). One place owns this so the four emitters can't drift out
+ * of lockstep with each other.
  */
 export async function printOpenAPIDocument(
 	app: OpenAPIHono,
@@ -138,7 +138,7 @@ export async function printOpenAPIDocument(
  *
  * Takes the schema rather than owning one, because each drop-in's error envelope reproduces the wire shape of the
  * project it replaces — Nominatim's differs from libpostal's, and both are recorded decisions rather than drift. What
- * repeats between them is this four-line descriptor, not the shape it wraps.
+ * repeats between them is this four-line descriptor rather than the shape it wraps.
  */
 export function errorContent<S>(description: string, schema: S) {
 	return {

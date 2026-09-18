@@ -7,7 +7,7 @@ geographic split + #373 PIP-containment). Numbers are written by the harness, ne
 
 Every resolver number we have ever quoted shares a flaw: the eval set and the training corpus
 cover the same places. A model that has seen Springfield, Illinois a thousand times in training
-will "resolve" it on the eval — but that is recall of a memorized place, not generalization. And
+will "resolve" it on the eval — but that is recall of a memorized place rather than generalization. And
 the headline metric made it worse. We graded resolution by **locality name-match**: did the
 resolved place carry the same name string as the gold? That question is blind to the failure that
 matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
@@ -75,7 +75,7 @@ the fix makes the resolver pick the right _instance_.
 Note the PIP-containment numbers. Even after the fix, locality-PIP is 29.7%, because 37% of the
 correctly-resolved Vermont localities are WOF **point geometry** (no polygon can contain a point),
 and WOF's small-town polygons are tight while OpenAddresses ascribes rural addresses to the town
-they are nearest, not the town whose boundary encloses them. That is why the scorecard leads with
+they are nearest rather than the town whose boundary encloses them. That is why the scorecard leads with
 region-match and coordinate error — both checkable for 100% of rows — and reports locality-PIP only
 alongside its polygon-coverage denominator. Raw locality-PIP would silently count un-PIP-able points
 as failures.
@@ -102,7 +102,7 @@ functional check wins — and chasing the disagreement found the deeper bug.
 
 ## The resolution — repair ancestry from `wof:hierarchy`
 
-The ancestry gap is a build artifact, not a source gap. NYC's source geojson carries a full
+The ancestry gap is a build artifact rather than a source gap. NYC's source geojson carries a full
 `wof:hierarchy` (region_id 85688543 = New York in every one of its five borough branches); it is
 only `wof:parent_id` that is `-4`, and `build-unified-wof`'s parent_id-closure follows nothing but
 parent_id. So `scripts/backfill-ancestors-from-hierarchy.ts` reads `wof:hierarchy` for every
@@ -125,7 +125,7 @@ regression is gone, with NYC resolving to New York City again. Net-positive on r
 
 Two things are worth saying about what this fix is. It is parser-agnostic: the harness runs both
 the neural parser and the v0 (Pelias-style rules) parser through the same resolver, and the fix
-lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer, not
+lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer rather than
 the parser. And once the resolver is direct, the neural parser keeps its edge over v0 on geography
 it never trained on:
 

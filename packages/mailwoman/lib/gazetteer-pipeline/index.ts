@@ -32,7 +32,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate, mailwomanDataRoot } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
-// DYNAMICALLY inside the functions (the geocode.tsx convention), not at module load, so that merely
+// DYNAMICALLY inside the functions (the geocode.tsx convention) rather than at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
 // when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
@@ -58,7 +58,7 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  *
  * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM Northern Ireland database + the
  *   GeoNames-postal tail database (nine countries) + Overture postcode centroids (CA + the EU-coverage locales).
- *   Missing databases are skipped, not fatal.
+ *   Missing databases are skipped rather than fatal.
  *
  * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
  * never published, so on every machine but the one that built it the `pathExists` filter in
@@ -88,7 +88,7 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
 	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract). A miss on a
-	// BT code means NOT ATTESTED IN OSM, not that the code does not exist. since #1480 an unknown postcode
+	// BT code means NOT ATTESTED IN OSM rather than that the code does not exist. since #1480 an unknown postcode
 	// abstains, so the partial database is strictly additive.
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
@@ -130,9 +130,9 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 /**
  * `<data-root>/wof`, where the admin DB, candidate DB, postcode databases, and the convention symlink live.
  *
- * This helper and its two siblings below compose with path-ts's `resolvePath`, not `node:path`'s `join` — the same
- * builder `wofExtractPaths` (`core/utils/data-root.ts`) uses for the identical shape, a caller-supplied root plus a
- * fixed subdirectory. It also makes the return ABSOLUTE, which the docstrings above have always claimed: the default
+ * This helper and its two siblings below compose with path-ts's `resolvePath` rather than `node:path`'s `join` — the
+ * same builder `wofExtractPaths` (`core/utils/data-root.ts`) uses for the identical shape, a caller-supplied root plus
+ * a fixed subdirectory. It also makes the return ABSOLUTE, which the docstrings above have always claimed: the default
  * root is absolute, so `join` only differed for a caller that passed a relative `--data-root`, and for that caller it
  * silently produced a cwd-relative path the sealed-artifact swap would then resolve somewhere else.
  */
@@ -268,8 +268,8 @@ export interface FoldOptions {
 
 /**
  * How many of the dropped country codes the coverage-loss error names before eliding. The realistic miss is the whole
- * fold minus a handful (161 → 14 in the #1514 incident), so the list is there to make the SHAPE of the mistake obvious,
- * not to enumerate it — a dozen codes plus the count does that on one terminal line.
+ * fold minus a handful (161 → 14 in the #1514 incident), so the list is there to make the SHAPE of the mistake obvious
+ * rather than to enumerate it — a dozen codes plus the count does that on one terminal line.
  */
 const DROPPED_COUNTRIES_SHOWN = 12
 
@@ -335,7 +335,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
 	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo
 	// stamps the source mode onto a fresh copy — or writes through an existing destination keeping
-	// its mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
+	// its mode. Remove any stale copy, then restore the write bit: the copy is fold staging rather than the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
 	await removePathIfPresent(opts.adminOut)
 	await copyFileTo(opts.adminIn, opts.adminOut)

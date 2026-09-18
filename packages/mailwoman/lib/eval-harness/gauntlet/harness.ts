@@ -43,7 +43,7 @@ export interface GauntletDeps extends Disposable {
 	 * be varying the instrument along with the query. The walk does zero trace bookkeeping when nobody asks, so the plain
 	 * {@linkcode GauntletDeps.geocode} stays exactly as costly as it was.
 	 *
-	 * `resolver` is `[]` when the walk performed no lookup — a measured absence, not a missing record.
+	 * `resolver` is `[]` when the walk performed no lookup — a measured absence rather than a missing record.
 	 */
 	geocodeTraced(
 		input: string,
@@ -114,7 +114,7 @@ export interface GauntletDepsOptions {
  * and a pin that cannot be switched here has never been through the D-rule's standard instrument.
  *
  * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence` boolean pins forwarded verbatim into
- * the resolve): a pin here is a DEFAULT-OVERRIDE, not a new mechanism — every field maps 1:1 onto a
+ * the resolve): a pin here is a DEFAULT-OVERRIDE rather than a new mechanism — every field maps 1:1 onto a
  * {@linkcode geocodeAddress} dep of the same name, and an absent field leaves the production default in force.
  *
  * `undefined` means "production default", not "off": the library defaults are the thing under test, so the pin only
@@ -213,7 +213,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
 	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins. describing only what it returns is how
 	// a pinned run prints as "production defaults" and two different configurations produce identical pin logs. That
-	// is precisely the failure this surface exists to prevent, so every pin is named here, not just the boolean ones.
+	// is precisely the failure this surface exists to prevent, so every pin is named here rather than just the boolean ones.
 	// A non-boolean pin prints its VALUE. `spanRescoreWeakResolution` has three of them and they grade different
 	// configurations, so collapsing them to `ON` is the identical-logs failure this function exists to prevent.
 	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) =>
@@ -269,8 +269,8 @@ export interface GauntletGeocodeOpts {
  * different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not this guard's
  * job) — the model file itself is always present here (the caller `existsSync`-conditional it).
  *
- * The md5 it receives is of the model `resolveWeights` returned, not of a path spelled out here: the guard must check
- * the artifact the run will actually grade, or it checks nothing the run depends on.
+ * The md5 it receives is of the model `resolveWeights` returned rather than of a path spelled out here: the guard must
+ * check the artifact the run will actually grade, or it checks nothing the run depends on.
  */
 async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolvePath("packages/neural-weights-en-us/model-card.json")
@@ -379,7 +379,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		: undefined
 
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
-	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
+	// loadFromWeights symlink can point at an old training base rather than the shipped model) is never silent.
 	//
 	// The default path ASKS THE RESOLVER rather than naming a directory. It used to read
 	// the en-us weights package's model path outright, which was the same file the loader below would pick only
@@ -447,7 +447,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// BASE en-US package, which carries no pair index for that country — so its dependent locality silently never
 	// fires and the row looks like a model failure. That exact artifact burned an afternoon in R1, when 53 operator
 	// probes read "dependent_locality never emitted" while the mechanism was fine and the INSTRUMENT was base-only.
-	// #1516 second half: a grading environment must STATE its artifact expectations, not discover them in a
+	// #1516 second half: a grading environment must STATE its artifact expectations rather than discover them in a
 	// degraded number. A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own —
 	// the run simply scores lower, and the operator reads a model regression. Checked for the base locale plus
 	// every overlay the corpus can route to (the map above), because the anchor artifact is per-package.
@@ -488,7 +488,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				warnedOverlays.add(overlayLocale)
 
 				console.error(
-					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message, not a data file.
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message rather than a data file.
 					`[gauntlet] ⚠ ${overlayLocale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
 						`grading ${caseCountry} cases BASE-ONLY (no pair-index/deploc prior). ` +
 						`For production-true grading, include @mailwoman/neural-weights-${overlayLocale.toLowerCase()} in the weights cache.`
@@ -752,7 +752,8 @@ export interface GauntletResult {
 	 * The RESOLVED admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}. Not asserted by any
 	 * case: it carries the gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder is
 	 * synthesized from (the undeleted case's resolved place → its WOF ancestry). Only entries the resolver actually
-	 * decorated appear here, so an empty array means the run resolved nothing admin-grade — absence, not a flat world.
+	 * decorated appear here, so an empty array means the run resolved nothing admin-grade — absence rather than a flat
+	 * world.
 	 */
 	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
 	/**

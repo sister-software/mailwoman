@@ -308,7 +308,7 @@ export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] }
 			const haystack = query.normalizedQuery.toLowerCase()
 
 			if (throwingKeys.some((key) => haystack.includes(key))) {
-				// Logged before the throw so the record is every query the provider RECEIVED, not only the ones
+				// Logged before the throw so the record is every query the provider RECEIVED rather than only the ones
 				// it answered — a consult that failed is still a consult, and a log that omits it under-counts.
 				options.log?.push(query)
 

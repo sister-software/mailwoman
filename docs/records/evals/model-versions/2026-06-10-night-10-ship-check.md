@@ -65,7 +65,7 @@ Run B dips 2–3pp whole-parse-strict vs v4.1.0. Two caveats, then the direct re
 small whole-parse cost consistent with the stated street/unit re-baselines. The noisy-arena
 lead (the lens that matters for real traffic) holds at **+19pp over v0**. The grown
 `v0-only` cells are exactly the arbitration layer's (#478) target — this is more headroom
-for it, not a new problem. Follow-up filed to add gaz support to the arena harness for a
+for it rather than a new problem. Follow-up filed to add gaz support to the arena harness for a
 true-config measurement.
 
 ## Repairs finding (#486)

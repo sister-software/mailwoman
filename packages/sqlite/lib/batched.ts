@@ -23,7 +23,7 @@ export interface BatchedTransaction {
 	/**
 	 * Best-effort `ROLLBACK`, and it must never replace the real error: a build runs with the journal off (nothing is
 	 * ever published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees why the
-	 * ingest stopped, not that a scratch file was tidied.
+	 * ingest stopped rather than that a scratch file was tidied.
 	 */
 	rollbackQuietly(): void
 }

@@ -42,8 +42,8 @@ export function sqljsBaseURL(siteBaseURL: string): string {
 /**
  * Per-state street extract URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted
  * byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB extract, so they're loaded
- * lazily by parsed region, not bundled. Independent of the locale/version WOF asset layout (street extracts are
- * per-state, not per-model-version).
+ * lazily by parsed region rather than bundled. Independent of the locale/version WOF asset layout (street extracts are
+ * per-state rather than per-model-version).
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
 	// National (non-US) extracts live under their country at a DATED path (immutable Cache-Control means
@@ -76,8 +76,8 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**
  * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT — it changes when
- * WOF/Overture coverage is rebuilt, not on every model release — so it lives on its own dated path, not under
- * `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
+ * WOF/Overture coverage is rebuilt rather than on every model release — so it lives on its own dated path rather than
+ * under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
  * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
  * gazetteer".
  */
@@ -286,10 +286,10 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * re-uploaded. the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
- * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the SITE, not fetched per model release, and it THROWS
- * on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request is a
- * property of the deployed site, not of the release the visitor selected — pinning it per release entry would let a
- * schema-3 reader ask for a schema-1 generation.
+ * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the SITE rather than fetched per model release, and it
+ * THROWS on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request
+ * is a property of the deployed site rather than of the release the visitor selected — pinning it per release entry
+ * would let a schema-3 reader ask for a schema-1 generation.
  *
  * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN PLACE at the un-versioned path, and
  * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme

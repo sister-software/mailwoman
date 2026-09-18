@@ -331,7 +331,7 @@ class LinearChainCRF(nn.Module):
         Complexity: ``O(B * T * N² * K * log(N * K))`` where N=num_tags, K=k, T=seq_len.
         For N=21, K=5, T=128, B=32 this is ~10M ops — negligible compared to the encoder
         forward pass. Implemented per-row on CPU after `.cpu()` to keep the topk + backtrack
-        readable. the call site is inference, not training, so GPU residency doesn't matter.
+        readable. the call site is inference rather than training, so GPU residency doesn't matter.
         """
         if k < 1:
             raise ValueError(f"k must be >= 1, got {k}")

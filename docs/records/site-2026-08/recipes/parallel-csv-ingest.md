@@ -10,7 +10,7 @@ verified-with: mailwoman v6.1.0
 
 Someone hands you a national dataset as a single CSV — the NPPES provider registry (millions of rows), an FCC broadband availability drop, a state address export. You need every row normalized into the same shape, and ideally a coordinate on each one. Two things stand in the way: the file won't fit in memory, and geocoding a million addresses one after another takes hours. This recipe is the shape that handles both — a streaming normalize core you can hold in your head, plus an optional threaded geocode stage you bolt on only when the per-row cost warrants it.
 
-## Start with a stream, not a file
+## Start with a stream rather than a file
 
 `normalizeCSV` (from `@mailwoman/registry`) takes a path and a column mapping and hands back an async iterable of `SourceRecord`s. It reads the header, then yields one normalized record per row — it never holds more than a row or two in memory, so the file size doesn't matter.
 
@@ -40,7 +40,7 @@ The instinct with a million rows is "throw it on all my cores." That instinct is
 
 Dispatching a row to a worker thread and getting the result back costs something fixed — serialize the row out, deserialize the result in, a few microseconds of structured-clone either way. Normalizing a row costs about the same. So threading the normalize step spends a microsecond to save a microsecond: you'd run it across eight cores and watch it get _slower_, because the main thread now spends all its time packing and unpacking messages. We measured exactly this on light CSV work — 0.3–0.9× of single-threaded. Don't thread the cheap stage.
 
-Geocoding is the opposite. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer — milliseconds, not microseconds, a thousand times the dispatch cost. There the fixed overhead vanishes into the work, and threads pay off. So the split writes itself: **normalize on the main thread, geocode in workers.**
+Geocoding is the opposite. Each address runs a neural parse and several lookups against a multi-gigabyte gazetteer — milliseconds rather than microseconds, a thousand times the dispatch cost. There the fixed overhead vanishes into the work, and threads pay off. So the split writes itself: **normalize on the main thread, geocode in workers.**
 
 ## Compose them, and filter in between
 
@@ -78,7 +78,7 @@ A worker can't receive your geocoder — a 4 GB SQLite handle and a loaded neura
 Two consequences worth holding onto:
 
 - **The DB is opened per worker, read-only.** Each worker opens its own handle to the same gazetteer file; the OS page cache is shared underneath, so you're not paying for N copies of the data, but you _are_ paying for N readers contending on it (more on that next).
-- **Records arrive in completion order, not input order.** A pool finishes rows as workers free up, so don't zip the output back onto your input by position. Re-key by `record.id` — which is why the mapping always carries one.
+- **Records arrive in completion order rather than input order.** A pool finishes rows as workers free up, so don't zip the output back onto your input by position. Re-key by `record.id` — which is why the mapping always carries one.
 
 ## Don't reach for all your cores
 
@@ -94,7 +94,7 @@ A sweep over real NPPES addresses on a 16-core box, single 4 GB gazetteer:
 |       4 |     47 rows/s |     1.1× |
 |       6 |     43 rows/s |       1× |
 
-Throughput peaks at two workers and _declines_ from there — by six, you're back to single-threaded, having spent six cores to get there. Capping per-worker inference threads didn't move it either; the ceiling is the shared database, not the CPU. So treat `concurrency` as something you sweep for your data and your disk, starting low. The result of threading geocode is real but modest (~1.4×), and the way to lose it is to ask for more.
+Throughput peaks at two workers and _declines_ from there — by six, you're back to single-threaded, having spent six cores to get there. Capping per-worker inference threads didn't move it either; the ceiling is the shared database rather than the CPU. So treat `concurrency` as something you sweep for your data and your disk, starting low. The result of threading geocode is real but modest (~1.4×), and the way to lose it is to ask for more.
 
 If your gazetteer fits in RAM, or you've attached it across disks, your curve will sit higher — measure it. The default (`min(4, cores)`) is deliberately conservative so the out-of-the-box behavior helps rather than thrashes.
 

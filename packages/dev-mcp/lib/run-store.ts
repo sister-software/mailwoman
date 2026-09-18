@@ -9,7 +9,7 @@
  *   as running it the first time, and on a 420-row panel with an external arm it also costs the external service 420
  *   requests it has already answered. A stored run makes the second comparison free.
  *
- *   **It is a CACHE, not a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
+ *   **It is a CACHE rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
  *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
  *   not a lost result — it is a result that has to be re-measured, which is the correct cost for something nobody wrote
  *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
@@ -71,9 +71,9 @@ export interface RecordedAnswer {
 /**
  * One stored run.
  *
- * `payload` is whatever the producing tool returned, opaque here — this module owns storage and retention, not the
- * shape of a result. `answers` is the one exception, and it is explicit rather than dug out of the payload: it is the
- * replay index `{kind:"recorded"}` reads, and a store that had to know a result's internals to find it would break
+ * `payload` is whatever the producing tool returned, opaque here — this module owns storage and retention rather than
+ * the shape of a result. `answers` is the one exception, and it is explicit rather than dug out of the payload: it is
+ * the replay index `{kind:"recorded"}` reads, and a store that had to know a result's internals to find it would break
  * every time a result grew a field.
  */
 export interface StoredRun {

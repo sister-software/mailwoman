@@ -14,7 +14,7 @@
 
 ## Global Constraints
 
-- **Pre-registered check floors (set before any check run; do not adjust to green a failing check — a miss is an adjudication, not a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
+- **Pre-registered check floors (set before any check run; do not adjust to green a failing check — a miss is an adjudication rather than a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
 - **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse entry point** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
 - **Wire contracts:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
 - **Goldens are readonly** — checks read them, never rewrite them.
@@ -242,7 +242,7 @@ Reuse the loaded module/classifier for the geocode stack below instead of import
  * @author Teffen Ellis, et al.
  *
  *   Plan-2 check: the neural `/v1/parse` engine vs the phase-0 rules golden
- *   (mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl). Structured comparison, not
+ *   (mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl). Structured comparison rather than
  *   byte-equality (spec §Projection layer, Plan-2 amendment 3): pre-registered per-label agreement
  *   floors after case-folding + street assembly. Skips when neural weights are absent (CI).
  */

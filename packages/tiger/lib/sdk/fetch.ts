@@ -199,7 +199,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
 	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
-	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail, not a path one.
+	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail rather than a path one.
 	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download CACHE stays
 	// vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")

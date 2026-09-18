@@ -161,7 +161,7 @@ export async function jsonlToParquet(
 	let rows = 0
 	let lineNo = 0
 
-	// TextSpliterator, not JSONSpliterator: the staging write below streams the RAW line bytes to
+	// TextSpliterator rather than JSONSpliterator: the staging write below streams the RAW line bytes to
 	// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
 	// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
 	// same as readline's crlfDelay:Infinity did.

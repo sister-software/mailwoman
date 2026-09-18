@@ -127,7 +127,7 @@ export interface RecordInputs {
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row DENOTING the gold place, not only the ids the concordance linked. Off by default, and the
+	 * Withhold every row DENOTING the gold place rather than only the ids the concordance linked. Off by default, and the
 	 * default is what keeps `same-data-resolver-v1` and `prominence-floor-v1` byte-stable on a re-record.
 	 *
 	 * Why it exists: the gold identity set is built from the `gn:id` concordance, and the gazetteer carries **285,478 of

@@ -127,7 +127,7 @@ keys and casing: `dms` becomes `DMS` with `lng` instead of `lon`, `qiblaBearing`
 `callingCode` becomes `callingcode`, `currency.isoCode` becomes `currency.iso_code`, and the sun times
 nest under `apparent`.
 
-Which one to emit is decided by the consumer, not by preference. An existing OpenCage client parses
+Which one to emit is decided by the consumer rather than by preference. An existing OpenCage client parses
 `annotations.DMS.lng` and will not find `annotations.dms.lon`.
 
 ## 3. Know what the OpenCage projection drops
@@ -171,7 +171,7 @@ const annotate = composeAnnotators(annotators)
 
 Every field on `AnnotationSet` is optional, so a missing database shows up as a missing key rather than
 as an error. That is the same reason a magnitude of zero and an unmeasured magnitude have to be
-distinguished by the caller: no `timezone` key means "no annotator filled it", not "this coordinate has
+distinguished by the caller: no `timezone` key means "no annotator filled it" rather than "this coordinate has
 no timezone".
 
 ## Verify
@@ -192,11 +192,11 @@ If you see one and not the other, the annotator list you composed is not the one
 
 ## Limits
 
-- **`toOpenCage` is a projection, not a round trip.** There is no `fromOpenCage`. Keep the
+- **`toOpenCage` is a projection rather than a round trip.** There is no `fromOpenCage`. Keep the
   `AnnotationSet` if you need to emit both shapes.
 - **`toSchemaOrg` exists and is lossier still.** `@mailwoman/annotations` also exports a schema.org
   JSON-LD projection, which drops tiers, confidence and provenance by design. It is for structured-data
-  markup, not for data exchange.
+  markup rather than for data exchange.
 - **The date matters and defaults to now.** Sun times are computed for `input.date`, which defaults to
   the current instant per annotator. Pin it whenever you compare outputs or write a test.
 - **Annotators run concurrently and later ones win on key collisions.** Two annotators filling the same

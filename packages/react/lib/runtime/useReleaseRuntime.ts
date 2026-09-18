@@ -271,7 +271,7 @@ export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = Releas
 		void (async () => {
 			try {
 				// Release the outgoing bundle before building its replacement, so the two models are never resident at
-				// once — the peak is what kills a tab, not the steady state.
+				// once — the peak is what kills a tab rather than the steady state.
 				const outgoing = liveAssetsRef.current
 
 				liveAssetsRef.current = null

@@ -31,7 +31,7 @@ describe("isJapaneseAdminSuffix", () => {
 
 	it("rejects non-suffixes and multi-character input", () => {
 		expect(isJapaneseAdminSuffix("X")).toBe(false)
-		expect(isJapaneseAdminSuffix("東京都")).toBe(false) // a name, not a lone suffix
+		expect(isJapaneseAdminSuffix("東京都")).toBe(false) // a name rather than a lone suffix
 		expect(isJapaneseAdminSuffix(123)).toBe(false)
 	})
 })

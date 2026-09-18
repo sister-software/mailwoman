@@ -6,7 +6,7 @@ structure whose states/entries encode the containment hierarchy (so one prefix w
 lexical continuations and admin ancestors/descendants) novel, or does it have a name?
 
 Tags: **[S]** = search-verified this session (source in the register at the end). **[M]** = from
-memory / training knowledge, not re-verified. Anything published after 2025 is flagged inline.
+memory / training knowledge rather than re-verified. Anything published after 2025 is flagged inline.
 
 ---
 
@@ -23,13 +23,13 @@ list<i64>` on every serving feature, used at autocomplete time to render "Rego P
 [S]. The encoding itself has textbook names: materialized path / Dewey labels [S]. Embedding
 non-lexical structure _in the trie nodes_ so the walk prunes on it also has an academic name — Roy &
 Chakrabarti's **"materialized trie"** (SIGMOD 2011) puts spatial summaries in trie nodes [S] — but
-that is geometry, not an admin graph. What I could not find anywhere, under any name: a completion
+that is geometry rather than an admin graph. What I could not find anywhere, under any name: a completion
 automaton treated as the _enumeration surface for the containment graph itself_ — where the same
 artifact family (FST + typed child→parent edge table + per-parent child-type distribution) answers
 "what strings continue this prefix", "what contains this completion", and "what kinds of children
 does this parent have" as one index discipline. The nearest practitioner art is CMS-grade
 query-time joins ("show the term's parents next to the suggestion", Drupal modules) [S]; the nearest
-academic art embeds geometry, not ancestry. So: not novel as parts — twofishes got 80% of the way in
+academic art embeds geometry rather than ancestry. So: not novel as parts — twofishes got 80% of the way in
 2012 and nobody named it — but the unification, the PCN1 child-distribution direction, and using the
 walk itself for descendant enumeration have no established name. If you need a name to cite against,
 the direct construction is **"top-k completion with materialized-path payloads"**, with Roy &
@@ -49,15 +49,15 @@ Chakrabarti's "materialized trie" as the closest academically named ancestor.
   the context value to the suggest value with a `CONTEXT_SEPARATOR` — i.e., contexts are encoded
   into the _key space_ (prefix position) so `ContextQuery` can filter/boost at query time [S].
 - **Elasticsearch geo context**: a completion entry's geo context is encoded as a **geohash prefix**
-  (precision 1–12, default 6) baked into the index; matching is tile membership, not distance [S].
+  (precision 1–12, default 6) baked into the index; matching is tile membership rather than distance [S].
   This is the one mainstream case of a _containment hierarchy living inside the completion
   automaton's key bytes_ — geohash prefixes nest, so a coarser cell is literally a prefix of a finer
-  one. But it is (a) spatial cells, not admin ancestry, and (b) a filter key, never an enumerated
+  one. But it is (a) spatial cells rather than admin ancestry, and (b) a filter key, never an enumerated
   output — the suggester never _returns_ the cell chain.
 - **BurntSushi `fst` crate**: keys map to `u64` values; "outputs are stored along the path such that
   the correct value is returned when all outputs are summed" [S]. Output composition is algebraic
   (sums over paths), which is what makes prefix-sharing of values possible — and also why the value
-  type is a number, not a structure. Payload semantics are entirely the caller's problem. Tantivy
+  type is a number rather than a structure. Payload semantics are entirely the caller's problem. Tantivy
   uses it exactly that way: FST maps term → TermOrdinal, a side table maps ordinal → posting-list
   offset [S]. Opaque again.
 - **marisa-trie / LOUDS lineage**: MARISA is a Patricia trie whose edge labels are themselves stored
@@ -94,7 +94,7 @@ no counterpart in this family.
 - Ancestry: **computed at query time, spatially.** `coalesce` stacks phrase matches across separate
   per-placetype indexes (country, region, place, …) by testing whether their tile covers overlap —
   "Paris" grids align with "France" grids [S]. The returned context chain is the byproduct of
-  spatial stacking plus a reverse-context lookup, not a stored chain. Language handling: per-key
+  spatial stacking plus a reverse-context lookup rather than a stored chain. Language handling: per-key
   128-bit language annotation bitmask, penalty for cross-language matches [S] — a coarse word-role
   lens, per key not per role.
 
@@ -148,7 +148,7 @@ no counterpart in this family.
   uses the parent lists for display and containment during scoring [S]. This is a per-entry
   materialized parent-id chain inside a geocoder's autocomplete index — 2012, GeoNames-shaped,
   never named as a technique. Differences from ours: ids point into a feature store (one indirection
-  per ancestor, not zero); chain is variable-length list, not fixed-slot; no typed edge/label
+  per ancestor rather than zero); chain is variable-length list rather than fixed-slot; no typed edge/label
   sidecars; project dormant.
 
 ### Verdict
@@ -170,7 +170,7 @@ a population-anchored referential score (twofishes has `population`+`boost`, coa
   called the **materialized trie (MT)**: "MT uses trie as the main index structure, and incorporates
   spatial information into the node of trie" for spatial pruning during the prefix walk [S]. This is
   the closest _named_ academic idea to "hierarchy in the completion structure's bones" — but the
-  material embedded is geometric summaries, and the purpose is pruning, not enumeration of an admin
+  material embedded is geometric summaries, and the purpose is pruning rather than enumeration of an admin
   graph. **Does not cover** admin ancestry at all.
 - **IR-tree family** (and R*-IF, KR*-tree, WIR-tree, LBAK-tree, S2I, IL-Quadtree): R-trees whose
   nodes carry pseudo-document/inverted-file summaries for top-k spatial-keyword queries [S]. Spatial
@@ -180,11 +180,11 @@ a population-anchored referential score (twofishes has `population`+`boost`, coa
 - **QAC literature**: Cai & de Rijke's 2016 QAC survey and successors treat completion ranking,
   personalization, spatial bias — no hierarchy-graph enumeration [M].
 - **KG entity type-ahead**: Wikidata's `wbsearchentities` returns id, label, description, matched
-  alias, score — description is prose disambiguation, not a chain; no P131 (admin ancestry)
+  alias, score — description is prose disambiguation rather than a chain; no P131 (admin ancestry)
   materialization [S]. DBpedia Lookup returns ranked resources with ontology **classes** attached
   and supports `QueryClass` filtering [S] — completions carrying _type_ ancestry (rdf:type up the
   ontology), the closest KG analog, but type hierarchy ≠ containment hierarchy and it's a filter/
-  decoration, not an enumerable graph. Freebase-era suggest widgets returned "notable type" one-line
+  decoration rather than an enumerable graph. Freebase-era suggest widgets returned "notable type" one-line
   disambiguation [M]. The old Wikidata Entity Suggester recommends _properties_ (statistical
   co-occurrence), unrelated [S].
 - Post-2025 flag: **C², cache-conscious succinct tries with adaptive unary path compression, arXiv
@@ -209,7 +209,7 @@ instinct.
   decided by prefix/byte comparison; ORDPATH adds insert-friendliness via careting [S]. Fixed-slot
   (one column per level) is the degenerate flat version: GeoNames' admin1–admin4 code columns [S],
   Pelias `parent.*` [S], WOF's `wof:hierarchy` (an array of ancestor-id maps materialized in every
-  record; note WOF allows _multiple_ hierarchies per place — it's a DAG, not a tree) [M], Overture
+  record; note WOF allows _multiple_ hierarchies per place — it's a DAG rather than a tree) [M], Overture
   divisions: `parent_division_id` plus a materialized `hierarchies` field; division_area "repeats
   the subtype, names, country, and region properties of the division it belongs to" [S]. Overture
   added division admin-level surfacing to its API in July 2026 [S — post-2025].
@@ -259,14 +259,14 @@ an actual open design choice; see "What to borrow."
 - **GeoNames alternateNames**: per-name ISO-639 code **plus role flags** — `isPreferredName`,
   `isShortName`, `isColloquial`, `isHistoric`, and pseudo-language codes `post` (postal), `iata`/
   `icao`/`faac`, `abbr`, `link`, `fr_1793` [S]. This is the most role-articulate open gazetteer
-  name model — yet it still has **no "translation-gloss, not a name" flag**; a Hungarian `Tó` row
+  name model — yet it still has **no "translation-gloss rather than a name" flag**; a Hungarian `Tó` row
   on Lake County is representable and indistinguishable from an actual Hungarian exonym.
 - **WOF names**: BCP-47/RFC 5646 with privateuse tags inherited from Yahoo GeoPlanet's single-letter
   types — `x_preferred`, `x_variant` ("well-known unofficial variant"), `x_colloquial` ("Big
   Apple", also accent-stripped forms), plus abbreviation type A ("NYC") [S]. The docs do not address
   distinguishing translations of common nouns from actual names [S] — and the MCP romp measured the
   consequence: 364 `names` rows on Lake County MN, all dictionary translations of "lake", all
-  shaped exactly like legitimate alias rows (that's WOF/GeoPlanet inheritance, not our bug).
+  shaped exactly like legitimate alias rows (that's WOF/GeoPlanet inheritance rather than our bug).
 - **OSM's editorial answer**: the Names / Multilingual-names policy _bans the data_ rather than
   modeling it — `name:*` must be names in actual use; bulk imports of transliterations from
   Wikipedia and "manufactured" names not in regular use are explicitly listed as things to avoid
@@ -275,7 +275,7 @@ an actual open design choice; see "What to borrow."
 - **libpostal**: per-language dictionary _files as role tables_ — `street_types.txt`,
   `stopwords.txt`, `directionals`, `honorifics`, `venue types`, `ambiguous_expansions.txt` ("E" →
   East or E Street) — with per-entry canonical expansions [S]. This is surface→role-per-language,
-  the exact shape a word-role table needs, but it covers address _vocabulary_, not toponym alias
+  the exact shape a word-role table needs, but it covers address _vocabulary_ rather than toponym alias
   roles.
 - **Japanese**: Geolonia's normalize-japanese-addresses parses 都道府県/市区町村/町丁目 levels via
   regex + its own canonical address data, handling prefecture-suffix variants and completing
@@ -285,15 +285,14 @@ an actual open design choice; see "What to borrow."
 - **Folding hazards**: ICU folding (UTR#30) is deliberately locale-blind; Turkic I/ı needs
   Turkish-specific case mapping (`foldTurkic` exists separately in ICU) — ES/OpenSearch docs and
   CirrusSearch carve Turkish out by hand [S]. Carmen's per-key 128-bit language bitmask with
-  cross-language penalties [S] is the only autocomplete-index-level language lens found — key-level,
-  not role-level.
+  cross-language penalties [S] is the only autocomplete-index-level language lens found — key-level rather than role-level.
 
 ### Verdict
 
 **Covers:** per-name language+role _flags_ (GeoNames, WOF) and per-language surface→role
 _dictionaries_ (libpostal); editorial exclusion of glosses (OSM); rule-based suffix-role handling
 (Japanese parsers). **Does not cover:** any system that explicitly models "this surface is a
-translation-gloss of a common noun, not a referring name" as a machine-readable role, or that
+translation-gloss of a common noun rather than a referring name" as a machine-readable role, or that
 conditions index membership on it. The role-lens table (surface × language/script → role) has
 assembled precedents but no existing instance. The `to` defect class is unmodeled everywhere; the
 anomaly signal we measured (221 keys on a 63-person neighborhood) appears to be novel as a
@@ -317,15 +316,14 @@ discriminator.
   is sitting unused.
 - **Reversed-token indexing**: Lucene `ReverseStringFilter` / Solr `ReversedWildcardFilterFactory` —
   index `country` as `yrtnuoc` (with marker) so leading-wildcard becomes trailing [S]. The dumb,
-  proven trick for "match from the right." A reversed _word-token_ FST (tokens reversed, not
+  proven trick for "match from the right." A reversed _word-token_ FST (tokens reversed rather than
   characters) is the same trick one level up; no named instance found at word level over a
   gazetteer.
 - **AnalyzingInfixSuggester** (Lucene, McCandless 2013): abandons the FST entirely — indexes each
   token position so the query prefix can match _any token_, i.e., solves "user typed a middle word"
   by inverted index rather than automaton [S].
 - **Carmen**: forward-only. Degens/prefix bins expand _rightward_; a query token matches a phrase
-  only from its start (subquery permutation bitmasks handle word order at the multi-index level,
-  not within a phrase) [S/M]. No before-direction structure.
+  only from its start (subquery permutation bitmasks handle word order at the multi-index level rather than within a phrase) [S/M]. No before-direction structure.
 - **Published gazetteer word-adjacency indexes** (the PIX1 shape — (child-word, parent-word) →
   typed edge): **none found** under any framing tried (gazetteer bigram index, place-name
   collocation index, word adjacency gazetteer). The nearest things are n-gram language models over
@@ -336,7 +334,7 @@ discriminator.
 **Covers:** the _mechanics_ of leftward/anywhere entry are thoroughly named — suffix automaton,
 factor automaton, reversed-token index, infix suggester. Pick one and cite it. **Does not cover:**
 adjacency with _typed placetype semantics_ on the edge (PIX1's (surface, surface) → edge-type is a
-gazetteer-semantic object, not a stringological one). The before-direction enumeration ("what can
+gazetteer-semantic object rather than a stringological one). The before-direction enumeration ("what can
 precede 'york'") is prior art; "what can precede it _and what containment relation does that
 predecessor stand in_" is not.
 
@@ -359,8 +357,7 @@ predecessor stand in_" is not.
   build time (not guarded at decode time) — which is our existing curation doctrine; the role table
   is its data backbone. Populate `gloss` from the measured anomaly signal (key-count vs prominence
   mismatch — 221 keys / pop 63) plus the WOF tell we already observed: a names-row set that spans
-  100+ languages with per-language _different_ surfaces on a low-prominence place is a dictionary,
-  not an alias set. No prior art models this; it is ours to name.
+  100+ languages with per-language _different_ surfaces on a low-prominence place is a dictionary rather than an alias set. No prior art models this; it is ours to name.
 - Carmen's per-key language bitmask [S] is the cheap runtime half worth copying: keep a language
   mask per FST place entry so a locale-hinted query can penalize out-of-locale role hits without a
   table lookup.
@@ -443,7 +440,7 @@ Search-verified [S]:
 29. Overture divisions: parent_division_id + materialized `hierarchies`; division_area repeats parent names; admin-levels in API July 2026 — Overture docs/blog. (Post-2025 items: this, C² arXiv 2606.16104, photon 2026 sizing, 2025 ASR papers.)
 30. CMS-land "hierarchical autocomplete" = query-time joins showing term parents (Drupal modules, ES forum thread) — no completion-structure encoding anywhere.
 
-From memory [M], not re-verified this session:
+From memory [M] rather than re-verified this session:
 a. Carmen degens superseded by fuzzy-phrase crate (repo deleted; changelog fragments only).
 b. WOF `wof:hierarchy` = array of ancestor-maps per record, multiple hierarchies allowed (DAG) — well-established WOF schema knowledge; docs page not re-fetched.
 c. Pelias autocomplete admin boosting details; QAC survey (Cai & de Rijke 2016); Freebase suggest "notable type"; Dietz 1982 pre/post-order labeling; twofishes prefix index storage (Mongo/HFile).

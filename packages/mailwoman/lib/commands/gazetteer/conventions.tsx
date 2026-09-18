@@ -9,8 +9,7 @@
  *   `meta` row), the same distributable-asset shape as `postcode-locality-intl.db`.
  *
  *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
- *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id,
- *   not the whole table paged into memory). Per the provenance-first design value: every row
+ *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id rather than the whole table paged into memory). Per the provenance-first design value: every row
  *   carries `source` provenance, and a convention that names a strategy this build doesn't register
  *   is rejected here, loudly, rather than silently no-opping at runtime.
  *
@@ -141,7 +140,7 @@ const GazetteerConventions: CommandComponent<typeof spec> = ({ options }) => {
 			description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
 			schema_version: "1",
 			source:
-				"Authored profiles compiled from data/conventions/conventions.json (built from source, not a prebuilt dump)",
+				"Authored profiles compiled from data/conventions/conventions.json (built from source rather than a prebuilt dump)",
 			rows: String(rows.length),
 			strategies_known: [...KNOWN].join(","),
 		}

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's TOPONYM-REGISTER rows — inputs whose difficulty is the NAME, not the shape.
+ *   The hard-case board's TOPONYM-REGISTER rows — inputs whose difficulty is the NAME rather than the shape.
  *
  *   The four classes here are the ways one surface can mean several places, ordered by what decides:
  *
@@ -116,7 +116,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		expectID: 101_715_829,
 		toleranceM: CITY_TOL,
 		bugRef: "#833",
-		note: "#833's surface with the region SPELLED OUT and the comma removed — the abbreviation-free path, which does not benefit from region-abbrev recognition.",
+		note: "#833's surface with the region SPELLED OUT and the comma removed — the abbreviation-free path, which gains no benefit from region-abbrev recognition.",
 	},
 	//#endregion
 

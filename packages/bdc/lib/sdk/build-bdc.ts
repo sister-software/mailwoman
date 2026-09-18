@@ -28,7 +28,7 @@
  *      is true. The default (NULL `location_id`) mode collapses at MATERIALIZE time via `SELECT DISTINCT`
  *      over every column EXCEPT `location_id` — that is, to one row per distinct (geoid, provider_id,
  *      technology_code, max_advertised_download_speed, max_advertised_upload_speed, low_latency,
- *      business_residential_code) TUPLE, NOT one row per (geoid, provider_id, technology_code) triple.
+ *      business_residential_code) TUPLE rather than one row per (geoid, provider_id, technology_code) triple.
  *      When every BSL in a block shares identical speeds/flags for a given provider/technology (the
  *      common case), those two are the same thing and the collapse yields exactly one row per triple.
  *      But when BSLs at the same triple carry different speeds/flags (a real, accepted FCC filing
@@ -100,7 +100,8 @@ const STAGE_BATCH_SIZE = 10_000
 
 /**
  * The manifest's `attribution` — names the FCC as the source, then copies the Fabric-boundary sentence verbatim from
- * `bdc/README.md`'s "CostQuest Fabric boundary" section (backticks stripped — this is plain prose, not markdown).
+ * `bdc/README.md`'s "CostQuest Fabric boundary" section (backticks stripped — this is plain prose rather than
+ * markdown).
  */
 export const BDC_ATTRIBUTION =
 	"FCC Broadband Data Collection. This workspace never ingests, ships, or derives data from the Fabric: " +
@@ -129,7 +130,7 @@ export interface BuildBDCOptions {
 	 */
 	asOfDate: string
 	/**
-	 * `git rev-parse --short HEAD` — passed in by the command, not read from the repo here.
+	 * `git rev-parse --short HEAD` — passed in by the command rather than read from the repo here.
 	 */
 	buildSHA: string
 	/**
@@ -180,9 +181,9 @@ export interface BuildBDCResult {
 	/**
 	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
 	 * (`includeLocationIDs: false`) mode this is per DISTINCT (geoid, provider_id, technology_code, speeds, low_latency,
-	 * business_residential_code) tuple, not per BSL — multiple BSLs at the same (geoid, provider_id, technology_code)
-	 * triple collapse to one row only when their speeds/flags also match. BSLs at the same triple with differing
-	 * speeds/flags survive as separate rows (see the module docstring).
+	 * business_residential_code) tuple rather than per BSL — multiple BSLs at the same (geoid, provider_id,
+	 * technology_code) triple collapse to one row only when their speeds/flags also match. BSLs at the same triple with
+	 * differing speeds/flags survive as separate rows (see the module docstring).
 	 */
 	rows: number
 	/**
@@ -260,7 +261,7 @@ interface BDCStageRow {
  *
  * `csvPath` is optional and used only to name the offending file in a thrown error (the direct-buffer unit tests call
  * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
- * below is required, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
+ * below is required rather than defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
  * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
  * to that NOT NULL column as SQLite `NULL`, `INSERT OR IGNORE` then drops the row without a constraint error, and every
  * dropped row gets counted as `deduped` — the entire file's rows vanish silently, misreported as ordinary dedup. A
@@ -326,8 +327,8 @@ async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): A
 /**
  * Rows per `INSERT` batch when populating `bdc_provider`. Far smaller than {@link STAGE_BATCH_SIZE}: that constant
  * tunes `bdc_availability`'s multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small
- * per-provider dictionary (thousands of rows, not millions) inserted through Kysely's typed `insertInto` — this batches
- * only to stay comfortably under SQLite's bound-parameter ceiling, not for throughput.
+ * per-provider dictionary (thousands of rows rather than millions) inserted through Kysely's typed `insertInto` — this
+ * batches only to stay comfortably under SQLite's bound-parameter ceiling rather than for throughput.
  */
 const PROVIDER_INSERT_BATCH_SIZE = 500
 
@@ -564,7 +565,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
 		// IMPORTANT — this is not a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
 		// same triple with differing speeds/flags are not the same tuple, so `SELECT DISTINCT` does not merge them —
-		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug. see the module
+		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted rather than a bug. see the module
 		// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 		const stageStmt = options.includeLocationIDs
 			? db.prepare(
@@ -653,7 +654,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		progress("geoid index (index-after-load — see schema.ts)")
 		await createBDCGeoidIndex(db)
 
-		// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
+		// Coverage is SOURCE-LEVEL rather than survey completeness — same convention build-poi.ts documents: a res-6 cell we
 		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
 		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
 		const coverageCells = sourcePresentCoverageCells(coverage)

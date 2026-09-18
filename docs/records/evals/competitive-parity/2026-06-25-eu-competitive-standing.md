@@ -40,7 +40,7 @@ postcodes the #370 check needs).
 The cross-harness estimate had us trailing ~−4pp; the same-harness truth is +7pp
 ahead. The earlier number was a harness artifact.
 
-The per-locale split is the positioning story, not noise. mailwoman wins broad
+The per-locale split is the positioning story rather than noise. mailwoman wins broad
 and large where OSM street addresses are sparse — IT (100 vs 73), PT (83 vs 45),
 FR (95 vs 63), CZ (95 vs 85). Nominatim wins the dense-OSM locales — PL (98 vs
 90), AT (98 vs 73), AU (100 vs 75). A geocoder built on a parser + a gazetteer

@@ -23,7 +23,7 @@ The only intended differences from v0.3.0 were:
 - **§3** `model.class_weights: {O: 1.0, B-country: 2.0, ..., B-venue: 0.5, ...}` (was uniform).
 - **§4** Source weights rebalanced: `usgov-nad: 2.0 → 1.0`; `wof-admin: 1.0 → 2.0`; `wof-postalcode: 1.0 → 2.0`.
 
-§2 (longer training to step 5000+ floor) and §5 (JS-side Viterbi + model-card label loading) were process improvements, not loss-surface changes. §5 had shipped before training. §6 was "reuse existing corpus" — non-action.
+§2 (longer training to step 5000+ floor) and §5 (JS-side Viterbi + model-card label loading) were process improvements rather than loss-surface changes. §5 had shipped before training. §6 was "reuse existing corpus" — non-action.
 
 ## Run-by-run
 
@@ -43,7 +43,7 @@ Diverged step 1000. Same fingerprint. Step-750 checkpoint at macro_f1 0.37 prese
 
 `configs/v0_4_0-lr1.5e4.yaml`. By this point the bisect pattern was visible: 5e-4 → step 750, 3e-4 → step 1000. A pure-LR explanation predicted lr=1.5e-4 → step 1875 (linear) or ~step 2200 (proportional). It diverged at step 2000.
 
-A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe, not the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
+A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe rather than the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
 
 ### Runs 4 & 5 — ablations at lr=5e-4
 
@@ -126,11 +126,11 @@ France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              �
 
 This is v0.3.0's documented non-Latin-byte-fallback failure mode. The v0.4.0 weights did not regress this subset; the eval suite is counting v0.3.0's known failure modes against v0.4.0. After excluding adversarials, country FN drops 194 → ~16.
 
-**The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
+**The country −0.07 F1 regression is mostly a golden-set adversarial-weighting artifact rather than a real recipe regression.**
 
 ## The decoder sidecar
 
-The bio_slip class (6% of postcode FN) is a decoder bug, not a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
+The bio_slip class (6% of postcode FN) is a decoder bug rather than a model bug. The model's BIO tag attribution is correct; the emitted span includes leading/trailing punctuation tokens. Fixed in `core/decoder/build-tree.ts` (commit `c72ab4c` on main):
 
 ```ts
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {

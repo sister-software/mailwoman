@@ -12,7 +12,7 @@ import type { OpenCageAnnotations } from "@mailwoman/annotations"
 
 /**
  * Output serialization formats Nominatim supports. `jsonv2` is the modern default. `jsonld` is the Mailwoman extension
- * (#1052) — schema.org `Place` JSON-LD, not part of upstream Nominatim.
+ * (#1052) — schema.org `Place` JSON-LD rather than part of upstream Nominatim.
  */
 export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
 
@@ -96,7 +96,7 @@ export interface NominatimLookupParams {
 
 /**
  * Whether an artifact could state its own provenance. `unreadable` is kept apart from `absent` because "we could not
- * open it" is a fault to chase, not a rebuild to schedule.
+ * open it" is a fault to chase rather than a rebuild to schedule.
  */
 export type NominatimManifestState = "present" | "absent" | "unreadable"
 

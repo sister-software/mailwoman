@@ -9,7 +9,7 @@
  *
  *   NOTE — this is deliberately not a bit-exact port of CPython's MT19937. The source scripts draw
  *   their rows with SQL `ORDER BY RANDOM()` (already non-deterministic across runs) and the
- *   postcodes are synthetic shape-data ("the model learns the SHAPE, not the exact mapping"), so a
+ *   postcodes are synthetic shape-data ("the model learns the SHAPE rather than the exact mapping"), so a
  *   byte-identical random stream adds nothing observable. What is preserved is what matters: a
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
@@ -118,7 +118,7 @@ const GLIBC_LCG_INCREMENT = 12_345
  * and neither is substitutable for the other.
  *
  * Kept because the published conformal thresholds were selected under this one. Prefer {@link mulberry32} for anything
- * new. this exists to reproduce an artifact, not to generate numbers well.
+ * new. this exists to reproduce an artifact rather than to generate numbers well.
  */
 export function makeGlibcLcgFloat64(seed: number): () => number {
 	let state = seed

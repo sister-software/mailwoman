@@ -29,11 +29,11 @@ artifact, notthe ones that formally embed the layer manifest:
   run it on your own disk; we distribute nothing.
 - **private** — your own data, conforming to the same schema, loaded from
   `$MAILWOMAN_DATA_ROOT`, never leaving your machine.
-- **planned** — designed, not built. Listed so the roadmap is legible, marked so nobody plans
+- **planned** — designed rather than built. Listed so the roadmap is legible, marked so nobody plans
   around vapor.
 
 **Cadence** is direct rather than aspirational. Most of these are rebuilt when coverage changes or
-an ingest bug is fixed, not on a schedule. Where that is the case, the entry says so.
+an ingest bug is fixed rather than on a schedule. Where that is the case, the entry says so.
 
 Every artifact is a **sealed** SQLite file: built to a temp path, verified, swapped into place,
 then `chmod 0444`. Updates are full rebuilds. Nothing here is a live database you write to.
@@ -132,7 +132,7 @@ published derivative is `candidate.db` above.
 describes a **1.09 GB, seven-country** build with 1,288,749 places and seven FST binaries. It was
 last touched on 2026-05-28, at package version 0.5.4, and every number in it is a snapshot of that
 date. The current build is global (244 countries) and only four FST locales are still produced.
-Treat the card as history, not as a description of anything you can download today.
+Treat the card as history rather than as a description of anything you can download today.
 
 :::
 
@@ -181,7 +181,7 @@ shipped `poi.db` is not it. Queries that need infrastructure abstain with
 
 ## US situs extracts — `address-points-us-<st>.db`
 
-The precision tier for the United States: an exact building coordinate, not a street estimate and
+The precision tier for the United States: an exact building coordinate rather than a street estimate and
 not a city centroid.
 
 **Contents.** One `address_point` table per state, carrying normalized and raw street, house
@@ -392,13 +392,13 @@ this page they are a **first-party artifact** — we trained them, so their lice
 Hugging Face-facing READMEs list only the AGPL half; the `package.json` and model card carry the
 dual form and are authoritative.
 
-| Package                               | Role                    | npm   | Unpacked |
-| ------------------------------------- | ----------------------- | ----- | -------- |
-| `@mailwoman/neural-weights-en-us`     | the self-contained base | 8.3.0 | ~72 MB   |
-| `@mailwoman/neural-weights-en-gb`     | data-only overlay       | 8.3.0 | ~12 MB   |
-| `@mailwoman/neural-weights-fr-fr`     | data-only overlay       | 8.3.0 | ~17 MB   |
-| `@mailwoman/neural-weights-en-nz`     | data-only overlay       | 8.3.0 | ~8 MB    |
-| `@mailwoman/neural-weights-base-latn` | parked, not published   | 7.8.1 | —        |
+| Package                               | Role                         | npm   | Unpacked |
+| ------------------------------------- | ---------------------------- | ----- | -------- |
+| `@mailwoman/neural-weights-en-us`     | the self-contained base      | 8.3.0 | ~72 MB   |
+| `@mailwoman/neural-weights-en-gb`     | data-only overlay            | 8.3.0 | ~12 MB   |
+| `@mailwoman/neural-weights-fr-fr`     | data-only overlay            | 8.3.0 | ~17 MB   |
+| `@mailwoman/neural-weights-en-nz`     | data-only overlay            | 8.3.0 | ~8 MB    |
+| `@mailwoman/neural-weights-base-latn` | parked rather than published | 7.8.1 | —        |
 
 **Contents.** The en-US package carries the model (`model.onnx`), the SentencePiece tokenizer, the
 model card, calibration tables, the US postcode FST, the en-US and street-morphology FST gazetteer
@@ -428,13 +428,13 @@ model's own lineage. Most releases are code-only; promoting a newly trained mode
 is a deliberate, larger operation. The model's own identity lives in `model_lineage` on the card.
 
 **Note on card drift.** The overlay model cards are not auto-bumped at release, so their `version`
-fields lag the base. Read `model_lineage` and `files_md5`, not the overlay card's version number.
+fields lag the base. Read `model_lineage` and `files_md5` rather than the overlay card's version number.
 
 ---
 
 ## Broadband filings — `bdc.db` (planned)
 
-**Status: designed, not built.** Phase 2a of the broadband-plausibility vertical. Listed so the
+**Status: designed rather than built.** Phase 2a of the broadband-plausibility vertical. Listed so the
 shape is public; nothing exists to download.
 
 **Intended contents.** FCC Broadband Data Collection availability filings at census-block grain:
@@ -465,12 +465,12 @@ work happens at public block granularity plus the address spine we already own.
 
 - **Build inputs.** Postcode extracts, `tiger.db`, the durable GeoNames alias fold, and the raw
   Overture parquet extracts are intermediates that feed the artifacts above. They are documented
-  in the build runbooks, not here.
+  in the build runbooks rather than here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make
   the demo work; see the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
 - **Your data.** A `private`-tier layer conforming to the same contract — a CRM export, survey
   notes, parcel relationships — joins the same query surface and never leaves your machine. That
-  is a supported posture, not a product we sell.
+  is a supported posture rather than a product we sell.
 
 ## See also
 

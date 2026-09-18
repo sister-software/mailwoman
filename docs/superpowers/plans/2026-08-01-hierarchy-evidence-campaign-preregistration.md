@@ -19,7 +19,7 @@ current ward lookup (`WD ... 05_25.csv`) carries both probe targets (Nine Elms E
 Islandmagee N08000826). London extraction executed: live postcodes in the 8 London postal areas,
 LAD filter E09*, wd25cd → ward name → **459 (ward, London) pairs**
 (`scratch-gbvenue/london-ward-pairs.jsonl`), incl. Nine Elms + the Clapham ward family. Boundary
-recorded: "Clapham North" is a neighborhood, not a ward — ward grain covers part of the
+recorded: "Clapham North" is a neighborhood rather than a ward — ward grain covers part of the
 neighborhood class; the residual wants a finer source (OS Open Names) in a later increment. NI:
 ward names exist (N08*) but the PAIR parent needs post towns — an outcode→post-town table is the
 missing piece, deferred. IE: license survey still open (Tailte Éireann/logainm).
@@ -36,8 +36,8 @@ the conditional prior has real discriminative mass, confirming the census artifa
 the neighborhood class the ward grain missed — no OS Open Names acquisition needed. Quality
 profile of the direct-parent extraction (667 distinct GB surfaces under the London locality):
 101 are law-1 directional-led/-trailed ("East Acton", "Bromley North") — the exact class that
-truncated "3rd Ave NE"; they need the ambiguity-class treatment, not blanket inclusion. and the
-extraction needs ANCESTOR CLOSURE, not direct parent: "Clapham North" routes to London via its
+truncated "3rd Ave NE"; they need the ambiguity-class treatment rather than blanket inclusion. and the
+extraction needs ANCESTOR CLOSURE rather than direct parent: "Clapham North" routes to London via its
 borough (the WOF-hierarchy shape), so the extractor must accept any-ancestor-London (locality or
 E09 borough). Pre-registered bar for the neighborhood increment: fold-collision audit vs the
 existing 19,615 pairs + a held-out board incl. the law-1 subset graded for venue-confound FPs
@@ -45,7 +45,7 @@ before the artifact ships them.
 
 **Fold-collision audit of the 667 (2026-08-01):** 243 already resolve in the current artifact
 (PPD ∪ boroughs ∪ wards), **424 fresh**, of which 56 are law-1 directional. Two structural
-findings for the increment's design: (a) "Clapham North" is WOF-typed **locality**, not
+findings for the increment's design: (a) "Clapham North" is WOF-typed **locality** rather than
 neighborhood — the dual-role class (#402); locality-under-London pairs are a separate,
 riskier ambiguity class and do not ride this increment; (b) the ancestor-closure and
 direct-parent extractions coincide at 667 — London neighborhood records parent directly.
@@ -90,10 +90,10 @@ change nobody measured.
 - **B-C3 (marginal value over PIX1).** Of sampled GB dep-loc links whose (child, parent) misses the
   shipped pair index, **≥ 20%** have a census node with nonzero dependent-locality share. Near 0%
   would mean the census covers only what the index already covers, and the rung closes NEGATIVE.
-- **D-C4 (required disclosure, not a pass/fail bar).** Report the census's dep-loc mass on the
+- **D-C4 (required disclosure rather than a pass/fail bar).** Report the census's dep-loc mass on the
   56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
   London parent: **the census cannot discriminate at span level by construction.** That is the
-  finding to state directly, not to bury — it is precisely why the census is a parent-scoped prior
+  finding to state directly rather than to bury — it is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
 ### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it
@@ -105,7 +105,7 @@ so the only children this source contributes under a locality parent are the dep
 class itself. The country base rate lands at 65.6% dependent_locality / 34.4% locality, and every
 covered parent — London, Manchester, Birmingham alike — reads share 100.0%, lift 1.5×.
 
-**B-C2 therefore reads 1.5× against a 2.0× bar. Recorded as a MISS of the metric, not of the
+**B-C2 therefore reads 1.5× against a 2.0× bar. Recorded as a MISS of the metric rather than of the
 mechanism.** The pre-registration exists to stop exactly the move of without output swapping in a
 friendlier statistic, so the miss stands in the record.
 
@@ -144,7 +144,7 @@ in the small/middle tail, where the median parent has two.
 drew (child, parent) links from WOF, and the census is built from WOF under an inclusion rule that
 admits a parent precisely because it has such a child. Every sampled parent was therefore in the
 census by construction. The reading (20,186 of 22,843 links miss the shipped pair index; 97.1% of
-those misses have census parent coverage) is recorded as void, not as a pass.
+those misses have census parent coverage) is recorded as void rather than as a pass.
 
 The one fact in it that is not circular, because it concerns the other artifact: **the shipped pair
 index resolves only 2,657 of WOF's 22,843 GB dependent-locality links — 11.6%.** The tail this arc
@@ -171,7 +171,7 @@ dependent locality: 56.8% of towns, **77.5% of rows**.
 
 The gap between unweighted and weighted coverage (54% → 74%) is the useful part: the census speaks
 for the towns where the mail volume is. The uncovered half is the small-town tail, where WOF has no
-neighborhood records — coverage, not fact, and the reader treats it as neutral.
+neighborhood records — coverage rather than fact, and the reader treats it as neutral.
 
 **Rung outcome: the artifact ships, un-wired, with its ceiling stated.**
 

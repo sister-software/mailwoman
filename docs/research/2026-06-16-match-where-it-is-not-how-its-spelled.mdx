@@ -1,6 +1,6 @@
 ---
 slug: match-where-it-is-not-how-its-spelled
-title: "Match where it is, not how it's spelled"
+title: "Match where it is rather than how it's spelled"
 authors: [playpen-agent]
 tags: [record-matching, geocoding, architecture]
 date: 2026-06-16
@@ -36,11 +36,11 @@ Here is the same matching decision, scored two ways:
 
 String-first draws its decision boundary vertically: spell it close enough and it is a match, regardless of where on Earth the two records sit. Geocode-first draws it horizontally: near is plausible, far is no, and the spelling only breaks ties between neighbours. The two traps — the same place wearing different costumes, the different places wearing nearly the same one — live in the corners where those boundaries disagree. Geocode-first gets both right. The image above is the same Fellegi-Sunter scorer with real per-field weights, run twice: once seeing only the name, once seeing distance too. Geography carries the heavier evidence by design.
 
-So we stopped matching the costume. [Mailwoman](https://mailwoman.ai) is a calibrated street-level geocoder — give it a messy line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. Once you have that, entity resolution changes shape. You match on the resolved place: the coordinate, the canonical key, the admin hierarchy. The string becomes evidence, not identity.
+So we stopped matching the costume. [Mailwoman](https://mailwoman.ai) is a calibrated street-level geocoder — give it a messy line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. Once you have that, entity resolution changes shape. You match on the resolved place: the coordinate, the canonical key, the admin hierarchy. The string becomes evidence rather than identity.
 
 Three things change, and they drive the rest.
 
-**Blocking becomes a partition, not a search cluster.** The expensive part of matching a million records is not scoring a pair — it is finding the pairs worth scoring without comparing all 500 billion of them. The textbook answer is a search cluster: stand up Elasticsearch, index everything, query for candidates. Geocode-first replaces that infrastructure with a single pass through the data. Two records falling into the same ~5 km cell are candidates; everything else is skipped. The geocoder already did the partition. We have measured the matcher resolving half a million records in about a minute in one Node process on commodity hardware, against a baseline that requires standing up a search index — no server, no Docker, no process to keep alive. The number is what it is; the architecture is what matters.
+**Blocking becomes a partition rather than a search cluster.** The expensive part of matching a million records is not scoring a pair — it is finding the pairs worth scoring without comparing all 500 billion of them. The textbook answer is a search cluster: stand up Elasticsearch, index everything, query for candidates. Geocode-first replaces that infrastructure with a single pass through the data. Two records falling into the same ~5 km cell are candidates; everything else is skipped. The geocoder already did the partition. We have measured the matcher resolving half a million records in about a minute in one Node process on commodity hardware, against a baseline that requires standing up a search index — no server, no Docker, no process to keep alive. The number is what it is; the architecture is what matters.
 
 **Distance becomes a feature you can calibrate.** Same building: ~30 meters. Same block: ~300 meters. The geocoder knows its own error — rooftop points are tight, interpolated points looser, centroids looser still — so distance evidence can be weighted by placement quality. A string matcher has no equivalent. It can tell you two streets are spelled similarly. It cannot tell you whether they are the same building.
 
@@ -56,17 +56,17 @@ Resolving across the three datasets is where the architecture shows its purpose.
 
 Once stitched, you can ask the question the fragmented data was hiding: which entities appear in the eligibility sources but not the funding ones? That anti-join is what someone currently finds by squinting at a map. We produce it as a layer that drops onto the map directly.
 
-A careful word on that, because it matters. We produce the reconciliation, not the conclusion. An entity in the "eligible, not enrolled" set is a candidate for review, not an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates. What a correlation means is the analyst's call.
+A careful word on that, because it matters. We produce the reconciliation rather than the conclusion. An entity in the "eligible rather than enrolled" set is a candidate for review rather than an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates. What a correlation means is the analyst's call.
 
 ## The number was lying too
 
 To measure deduplication within the registry we needed ground truth. The registry hands you a gift: a stable, government-issued ID on every provider. Grade your clusters against it, count disagreements, done. Clean, objective, unarguable.
 
-It is also wrong, and wrong in the direction that makes you look bad. That ID is a registration number, not an organization number — one hospital system holds a separate registration for every billing subpart. Baylor College of Medicine shows up four times at a single address. So when the matcher does the correct thing and fuses those four records into one entity, the registration-number ruler scores those pairings as over-merges. You get penalized for being right. The better the matcher, the worse the number looks.
+It is also wrong, and wrong in the direction that makes you look bad. That ID is a registration number rather than an organization number — one hospital system holds a separate registration for every billing subpart. Baylor College of Medicine shows up four times at a single address. So when the matcher does the correct thing and fuses those four records into one entity, the registration-number ruler scores those pairings as over-merges. You get penalized for being right. The better the matcher, the worse the number looks.
 
-Grade the same clusters — identical output, not a different model — against a ruler that collapses same-organization records at the same building, and the F1 climbs without touching a line of code:
+Grade the same clusters — identical output rather than a different model — against a ruler that collapses same-organization records at the same building, and the F1 climbs without touching a line of code:
 
-![Dedup F1 climbing across four truth grains — NPI 53.6%, site 55.3%, org-name 60.7%, coordinate 68.1% — for the shipped scorer, on identical clusters. The climb is the ruler getting more precise, not the model changing.](/img/dedup-yardstick.svg)
+![Dedup F1 climbing across four truth grains — NPI 53.6%, site 55.3%, org-name 60.7%, coordinate 68.1% — for the shipped scorer, on identical clusters. The climb is the ruler getting more precise rather than the model changing.](/img/dedup-yardstick.svg)
 
 We froze the hardest cases — co-located records with near-identical names that the registration ID splits apart — and adjudicated them one at a time: **120 of 120 were the same real-world organization.** Zero were two unrelated outfits wrongly fused. The thing we had been logging as our biggest error class was, almost entirely, the matcher being right and the yardstick being too literal.
 
@@ -80,6 +80,6 @@ And 68.1% is still a C-grade F1. The yardstick argument contextualizes the numbe
 
 You could bolt a geocoder onto a record-linkage library and get some of this. What you cannot get is the integration — the same calibrated geocoder feeding the blocking, weighting the distance evidence, and running in one process with no external service.
 
-That last part is architectural, not merely convenient. Geo-blocking is what lets candidate generation run in-process at all; a string matcher needs the search cluster precisely because it cannot partition the problem cheaply. Geocode-first removes the reason the cluster existed. The whole pipeline — parse, geocode, block, score, cluster — installs with `npm install` and runs as a function call. No Elasticsearch, no Docker, no server to keep alive. For a compliance team with a folder of CSVs and no infrastructure budget, that is the difference between a project and an afternoon.
+That last part is architectural rather than merely convenient. Geo-blocking is what lets candidate generation run in-process at all; a string matcher needs the search cluster precisely because it cannot partition the problem cheaply. Geocode-first removes the reason the cluster existed. The whole pipeline — parse, geocode, block, score, cluster — installs with `npm install` and runs as a function call. No Elasticsearch, no Docker, no server to keep alive. For a compliance team with a folder of CSVs and no infrastructure budget, that is the difference between a project and an afternoon.
 
-That is the bet. Match the location, not the spelling, and the coordinate system does the rest.
+That is the bet. Match the location rather than the spelling, and the coordinate system does the rest.

@@ -2,7 +2,7 @@
 
 Each of these answers a question the local machine cannot. The volume's container and CLI views are
 divergent, so `modal volume ls` is not evidence about what a run will see. the image's resolved
-versions are decided when Modal last built the layer, not by `pyproject.toml`; and the torch-
+versions are decided when Modal last built the layer rather than by `pyproject.toml`; and the torch-
 dependent tests skip on the local venv, so a loss-path change is unverified until it runs here.
 
     modal run -m launch.train_remote::debug_volume

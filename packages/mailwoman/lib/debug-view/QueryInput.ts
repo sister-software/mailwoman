@@ -13,7 +13,7 @@
  *     LETTER. `ink-text-input`'s handler guards only ctrl+C, so every other ctrl chord falls through to its insert
  *     branch and types the letter: holding alt and pressing backspace appended a `w`.
  *   - **Meta+backspace (`\x1b\x7f`)** arrives correctly flagged (`key.backspace` + `key.meta`, empty input) and is
- *     then treated as a plain backspace — one character, not one word.
+ *     then treated as a plain backspace — one character rather than one word.
  *
  *   Both are the same defect: the modifier is delivered and ignored. So the rule here is inverted — an unhandled
  *   ctrl/meta chord is dropped, never inserted. A control byte can only ever reach the value as an edit.
@@ -231,7 +231,7 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 
 	if (!focus) return createElement(Text, { wrap: "truncate-end" }, value)
 
-	// The inverted cell is a whole CODEPOINT, not a UTF-16 unit: `slice(cursor, cursor + 1)` over `🏠` inverts half a
+	// The inverted cell is a whole CODEPOINT rather than a UTF-16 unit: `slice(cursor, cursor + 1)` over `🏠` inverts half a
 	// surrogate pair and paints `�` under the cursor.
 	const safeCursor = clampCursor(value, cursor)
 	const point = value.codePointAt(safeCursor)

@@ -27,9 +27,9 @@ import { assertISODate } from "#sdk/guards"
  *
  * On the 499 path this is called only from inside the caller's `if (row.frn)` truthy check — an empty string is falsy
  * in JS, so that branch is already skipped before this function is ever reached there. the guard is unreachable on that
- * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
- * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
- * the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
+ * path rather than merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`,
+ * never `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route
+ * — but the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
  * different, unrelated providers each carrying a blank `frn` would silently mint and share one degenerate `frn:` node —
  * a false identity link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
@@ -103,7 +103,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt`
  * would silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces — a
  * time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision
- * 7 exists to prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
+ * 7 exists to prevent. Guarded here — in the builder rather than in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
  * are required for this artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
  * non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
@@ -124,8 +124,8 @@ export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowInd
 /**
  * Requires + ISO-validates {@link BuildFilerOptions.validFrom} — called once, up front, only when a provider-list source
  * is actually supplied. Fails fast, before any file/DB I/O, matching the "pass at least one … source" options-level
- * guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an options contract
- * violation, not a malformed data row), so it is validated at the same point in the function, not lazily inside the
+ * guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an options contract violation
+ * rather than a malformed data row), so it is validated at the same point in the function rather than lazily inside the
  * provider-row loop.
  */
 export function assertProviderValidFrom(validFrom: string | undefined): string {

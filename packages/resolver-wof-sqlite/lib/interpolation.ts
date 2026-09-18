@@ -19,7 +19,7 @@
  *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a MISS — the
  *   statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
  *   match must agree on a single postcode or the lookup ABSTAINS (a common street name spanning
- *   towns is ambiguity, not an answer).
+ *   towns is ambiguity rather than an answer).
  *
  *   Standalone for now — core tier wiring (`resolution_tier: "interpolated"` after the
  *   exact-point fall-through) is a noted follow-up on #483, so the `find()` shape mirrors
@@ -191,7 +191,7 @@ export class StreetInterpolator<
 		}
 
 		// Degrade gracefully on an empty/tableless extract (interrupted build, stray 0-byte file): with no
-		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
+		// `street_segment` table this interpolator is a no-op miss rather than a crash that loses the state (#568).
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
 
@@ -246,13 +246,13 @@ export class StreetInterpolator<
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
-		// ANSWER, not merely no rows — a wrong-register key can cover the number in far-away towns and
+		// ANSWER rather than merely no rows — a wrong-register key can cover the number in far-away towns and
 		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows. the Brooklyn answer
 		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
-			// A given ZIP that scopes to nothing is a MISS, not a statewide guess: the retry was
+			// A given ZIP that scopes to nothing is a MISS rather than a statewide guess: the retry was
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
@@ -284,7 +284,7 @@ export class StreetInterpolator<
 		const parityMatched = preferred.length > 0
 
 		// No scope given: the covering ranges must agree on one postcode or the lookup abstains — a
-		// name spanning towns is ambiguity, not an answer. Counted over the PARITY pool, not all
+		// name spanning towns is ambiguity rather than an answer. Counted over the PARITY pool rather than all
 		// rows: a section-line boundary road carries a different ZIP per side ("east 13 mile road"
 		// is Fraser 48026 odd / Roseville 48066 even), and the opposite side can never hold the
 		// number it would otherwise veto. When several postcodes survive parity, the caller's

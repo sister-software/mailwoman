@@ -18,7 +18,7 @@
  *
  *   Credentials come from `RCLONE_S3_*` in the typed private env, consumed through rclone's `:s3:`
  *   connection-string form. **No `rclone.conf` is involved**, so the NOTICE about one being absent is
- *   expected output, not a fault — it is suppressed here so it stops being read as an error.
+ *   expected output rather than a fault — it is suppressed here so it stops being read as an error.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

@@ -5,7 +5,7 @@
  *
  *   The external client against a scripted wire — the real parsing, the real refusals, no network.
  *
- *   The bodies below are shortened captures of what the three engines actually answer, not shapes invented from their
+ *   The bodies below are shortened captures of what the three engines actually answer rather than shapes invented from their
  *   documentation. A parser tested against its author's idea of the format is a parser tested against nothing.
  */
 

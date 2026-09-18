@@ -1,11 +1,11 @@
 # Order-robustness retrain — v0.9.4 (#327, the v0.9.3 follow-up). One variable vs v0.9.3-de-regiontail:
 # DUAL-INJECTION of the postcode anchor (model.inject_first_token=true) — the anchor is pooled and ALSO
-# injected at position 0, not only at the postcode span. Same corpus (v0.4.3-de-regiontail, region tail),
+# injected at position 0 rather than only at the postcode span. Same corpus (v0.4.3-de-regiontail, region tail),
 # anchor ON, self-cond ON, v0.7.2 recipe, seed 42. Only the model flag changes.
 #
 # WHY. v0.9.2 (both-order) + v0.9.3 (region tail) both left the anchor-ON international gap ~flat (intl
 # 44.5/44.7 vs native 82-84). The corpus change is EXHAUSTED: three lines agree the ceiling is the
-# anchor's STRUCTURE, not the data — anchor-OFF is order-agnostic (~48% both orders), forcing the
+# anchor's STRUCTURE rather than the data — anchor-OFF is order-agnostic (~48% both orders), forcing the
 # posterior to DE=1.0 left intl at 44.5%, and the region tail moved region-tagging (0→~40%) but not
 # locality. The per-token anchor at the TRAILING postcode (international order) fires on the wrong side
 # of the locality. PIP-containment confirms the intl gap is a real geographic miss (57% vs native 96%),

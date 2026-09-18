@@ -120,9 +120,9 @@ PRAGMA journal_mode = WAL;
  */
 /**
  * Refuse a `pl_block` built before the H1 columns existed. `createTable(...).ifNotExists()` leaves an older table as it
- * is, and the next load would fail on the first insert with a message about a column, not about the cause. The table is
- * derived (the redistricting command reloads it state by state), so the action is a rebuild: drop it and re-run
- * `mailwoman tiger redistricting` for each state you hold. Databases are never patched in place.
+ * is, and the next load would fail on the first insert with a message about a column rather than about the cause. The
+ * table is derived (the redistricting command reloads it state by state), so the action is a rebuild: drop it and
+ * re-run `mailwoman tiger redistricting` for each state you hold. Databases are never patched in place.
  */
 async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {
 	const columns = await sql<{ name: string }>`select name from pragma_table_info('pl_block')`.execute(db)

@@ -115,8 +115,8 @@ const FUZZY_PENALTY = 0.6
 /**
  * Class-aware edit-distance-1 variants of a postcode string: deletions, same-class substitutions (digit↔digit,
  * letter↔letter), same-class insertions, and adjacent transpositions. Restricting substitutions/insertions to the
- * character's class mirrors how humans mistype or OCR a postcode (a digit becomes another digit, not a letter) and
- * keeps the candidate set small.
+ * character's class mirrors how humans mistype or OCR a postcode (a digit becomes another digit rather than a letter)
+ * and keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>
@@ -168,7 +168,7 @@ export function normalizePostcode(raw: string): string {
 		s = s.replace(" ", "")
 	}
 
-	// Dutch: gazetteer stores 1012LM, not 1012 LM
+	// Dutch: gazetteer stores 1012LM rather than 1012 LM
 	return s
 }
 
@@ -314,7 +314,7 @@ export function extractPostcodeAnchors(
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 
-		// Exact first. then the GB outward fallback (structural, not a guess). then edit-distance-1.
+		// Exact first. then the GB outward fallback (structural rather than a guess). then edit-distance-1.
 		let hits = resolver.lookup(normalized)
 		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 

@@ -44,12 +44,12 @@ function commaDrop(raw: string): string | null {
 //#region abbreviation-swap
 
 /**
- * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road) — the spec's own wording, not the
- * full `normalize/abbreviations.ts` dictionary the gauntlet's metamorphic layer uses. Keeping it small and separate
- * means this suite exercises a different, independent perturbation source than the gauntlet — two implementations of
- * the same literature class, not one shared with an inherited bug. FR/DE street types (Rue, Boulevard, Straße, …) are
- * deliberately OUT OF SCOPE for this table. a row without an Ave/St/Rd token gets no abbreviation-swap case (documented
- * per-row in suite.jsonl).
+ * Small, deliberately narrow EN street-suffix table (Ave↔Avenue, St↔Street, Rd↔Road) — the spec's own wording rather
+ * than the full `normalize/abbreviations.ts` dictionary the gauntlet's metamorphic layer uses. Keeping it small and
+ * separate means this suite exercises a different, independent perturbation source than the gauntlet — two
+ * implementations of the same literature class rather than one shared with an inherited bug. FR/DE street types (Rue,
+ * Boulevard, Straße, …) are deliberately OUT OF SCOPE for this table. a row without an Ave/St/Rd token gets no
+ * abbreviation-swap case (documented per-row in suite.jsonl).
  */
 const LONG_TO_SHORT = new Map([
 	["avenue", "Ave"],
@@ -64,8 +64,8 @@ const SHORT_TO_LONG = new Map([
 ])
 
 /**
- * Suffix words (both long and short spellings) the Saint-prefix look-ahead treats as "this is a street suffix, not a
- * name".
+ * Suffix words (both long and short spellings) the Saint-prefix look-ahead treats as "this is a street suffix rather
+ * than a name".
  */
 const STREET_SUFFIX_WORDS = new Set(["avenue", "ave", "street", "st", "road", "rd"])
 
@@ -86,9 +86,9 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  *    Portland, ..."). This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even though
  *    both have "St" followed by a capitalized non-suffix word.
  * 2. The next token must be capitalized and not itself a street-suffix word or a secondary-address designator — the shape
- *    of "St Andrews", "St Ives", "St Bedes". This is a FOLLOWING-token heuristic, not a positional one: a Saint-prefix
- *    isn't always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token, not index 0 — a
- *    purely positional guard misses it and corrupts the name).
+ *    of "St Andrews", "St Ives", "St Bedes". This is a FOLLOWING-token heuristic rather than a positional one: a
+ *    Saint-prefix isn't always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token rather
+ *    than index 0 — a purely positional guard misses it and corrupts the name).
  *
  * Known limits: this still can't distinguish a genuine Saint-prefix from a street-suffix "St" immediately followed,
  * mid-phrase (no comma), by an ordinary capitalized word that ISN'T a designator or suffix — e.g. a street literally
@@ -155,8 +155,8 @@ function abbreviationSwap(raw: string): string | null {
  * an `abbreviation-swap` pair before comparing: the transform legitimately changes what text a span-extraction parser
  * copies into `street`/`street_suffix` (that's the point of it — "Ave" swapped to "Avenue" should reappear as
  * "Avenue"), so comparing raw values would flag the transform's own intended effect as a false violation.
- * Canonicalizing both sides to long-form isolates a real divergence (the model picking a different span, not just
- * echoing the swapped spelling) from the expected text change.
+ * Canonicalizing both sides to long-form isolates a real divergence (the model picking a different span rather than
+ * just echoing the swapped spelling) from the expected text change.
  */
 export function canonicalizeAbbreviations(value: string): string {
 	return value
@@ -225,8 +225,8 @@ function trailingPunct(raw: string): string | null {
  * but with a paired delimiter instead of a single trailing char. Mirrors a real, mundane input shape: an address
  * copy-pasted out of a spreadsheet cell or CSV field that still carries its enclosing quotes. Always applicable (every
  * string can be wrapped). A correct decode path strips the wrap (boundary-trim, see `core/decoder/build-tree.ts`'s
- * `trimBoundary`) and recovers the identical components — this is a genuine metamorphic invariance, not a semantic
- * change, so a violation here is a real paired-punctuation regression.
+ * `trimBoundary`) and recovers the identical components — this is a genuine metamorphic invariance rather than a
+ * semantic change, so a violation here is a real paired-punctuation regression.
  */
 function wrapInQuotes(raw: string): string | null {
 	return `"${raw}"`

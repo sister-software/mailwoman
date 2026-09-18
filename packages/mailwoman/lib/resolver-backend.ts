@@ -73,7 +73,7 @@ export async function resolveCandidateDBPath(
  * The WOF admin database set a caller should probe: an explicit comma-separated list, then `$MAILWOMAN_WOF_DB` (the
  * HealthRouter multi-database convention), else {@link wofExtractPaths}'s default set.
  *
- * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract, not this
+ * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract rather than this
  * function's. `createGeocodeSession` filters with `pathExists` and throws when nothing survives; `mailwoman doctor`
  * reports each absence. a probe wants to say which database it could not open. Sharing the SELECTION is the point: a
  * caller that reads only `wofExtractPaths` silently probes different databases than the runtime on any box where the
@@ -91,8 +91,8 @@ export function resolveWOFDatabasePaths(explicit?: string, dataRoot: PathBuilder
 
 /**
  * Resolve the postal-city-alias-db path from an explicit option then `$MAILWOMAN_POSTAL_CITY_ALIAS_DB` (#475);
- * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time,
- * not at query time).
+ * undefined if unset or missing. Only consulted on the FTS backend (the candidate backend folds aliases at build time
+ * rather than at query time).
  */
 export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<string | undefined> {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
@@ -189,8 +189,9 @@ export async function createResolverBackend(
 
 /**
  * Where the committed capital-status reference lives (`mailwoman gazetteer capitals` writes it). Repo-relative because
- * the file ships with the SOURCE tree, not the data root: it is small, committed, and versioned with the ranking code
- * that interprets it. Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on #1880.
+ * the file ships with the SOURCE tree rather than the data root: it is small, committed, and versioned with the ranking
+ * code that interprets it. Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on
+ * #1880.
  */
 export function conventionCapitalsPath(): string {
 	return String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"))

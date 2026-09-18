@@ -6,7 +6,7 @@
  *   Fixture-scale cover for the FST build stamp and the freshness check.
  *
  *   Everything here runs on a three-state FST and a 12-byte "source database", because the thing under
- *   test is a comparison, not a gazetteer. The one property that does need a real artifact — that the
+ *   test is a comparison rather than a gazetteer. The one property that does need a real artifact — that the
  *   trailer can be read by seek without buffering 317 MB — is exercised structurally: the fixture
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
@@ -34,7 +34,7 @@ afterAll(() => TMP[Symbol.asyncDispose]())
 
 /**
  * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real string table, edge table and
- * place table between the header and the trailer — the trailer offset must be computed, not guessed.
+ * place table between the header and the trailer — the trailer offset must be computed rather than guessed.
  */
 function fixtureMatcher(): FSTMatcher {
 	return FSTMatcher.fromNodes([

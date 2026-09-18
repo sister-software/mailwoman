@@ -63,7 +63,7 @@ function readCell(cell: Element): TableCell {
 	const content = htmlToLayoutText(render(cell.children), BLOCK_ELEMENTS)
 
 	// Each block is collapsed and a block with no text is dropped: a `<td>` padded with `&#160;` states one
-	// block, not two, and a caller comparing a header label against a fixed set needs single spaces.
+	// block rather than two, and a caller comparing a header label against a fixed set needs single spaces.
 	const blocks = TextSpliterator.from(content, { skipEmpty: true })
 		.toArray()
 		.map(normalizeWhitespace)
@@ -77,7 +77,7 @@ function readCell(cell: Element): TableCell {
  * table at all (the caller decides what to do with a document that is not tabular). A row with no `<td>`/`<th>` at all
  * — formatting cruft, an empty `<tr></tr>` — reads as `[]`, never `null`.
  *
- * Every top-level table is returned, not just the first: a source that splits one logical table across sibling
+ * Every top-level table is returned rather than just the first: a source that splits one logical table across sibling
  * page-break tables is common, and only the first such table carries a header row.
  */
 export function extractTableRows(html: string): TableCell[][][] | null {

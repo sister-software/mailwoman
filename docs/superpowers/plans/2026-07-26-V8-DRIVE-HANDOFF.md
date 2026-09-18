@@ -14,7 +14,7 @@ the operator-only decisions, and the non-negotiable discipline.
 
 - **FST arc:** #1315 street-context check, #1317 trailing-locality prior (opt-in), #1318 per-locale FST
   distribution (default-on). #1319 wrap (release-staging fix + roadmap + retirement tracking).
-- **Track F (correctness): SATISFIED.** #1143 CLOSED (waived to training #1102, not a decode bug),
+- **Track F (correctness): SATISFIED.** #1143 CLOSED (waived to training #1102 rather than a decode bug),
   #1058/#1041/#1056 closed. This is one of the three reduce checks — already done.
 - **Release implementation is outage-safe.** `scripts/copy-weights.ts` now materializes `fst-<locale>.bin`
   into the weights packages (VERIFIED end-to-end: packs a real 3.8M file, zero symlinks in the
@@ -31,7 +31,7 @@ rides v8.x minors or checks itself.
 
 ---
 
-## Check 1 — Track A: the breaking-change batch (mechanical; a focused session, not an arc)
+## Check 1 — Track A: the breaking-change batch (mechanical; a focused session rather than an arc)
 
 One **documented PR train**, a migration note per item, **no behavior change** (the publish guard +
 tarball verification run unchanged — behavior must not move in this track). The audit is the task —
@@ -62,11 +62,11 @@ en-gb/en-nz overlays; the fr-fr→en-us base). What's **unbuilt** is the _formal
   per-country overlay bundles. Work = packaging, card schema, and release-train wiring (the lockstep
   freshness guards generalize).
 - **Script-routed extract router** — the non-Latin future (Track C) hangs off this; the router decides
-  by script, not by locale guess.
+  by script rather than by locale guess.
 - **The calibration runbook, first-class** — the per-country recipe (pair-index build + self-check
   probes, δ-sweep, β decision, venue-confound + golden boards, comma-drop metamorphic, invariance,
   card + ledger rows) currently lives as tribal knowledge in `task-8-report.md`; v8 makes it a doc
-  in `CONTRIBUTING_MODEL_WORK` so country N+1 is a recipe, not an arc.
+  in `CONTRIBUTING_MODEL_WORK` so country N+1 is a recipe rather than an arc.
 
 **Check:** one existing overlay country rebuilt onto the attached layout with **byte-identical parse
 output on its golden boards**, and the release train publishes the attached family green. Scope it as

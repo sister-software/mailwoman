@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Lead with the observed result, not a greeting. State facts, not
+        Lead with the observed result rather than a greeting. State facts rather than
         judgments. Rules: `.claude/output-styles/mailwoman-development.md`. Preserve the
         original spelling, punctuation, casing, and script of every address.
   - type: dropdown
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Expected result
       description: The correct output, per component or coordinate.
-      placeholder: venue 3 Mien; street 64 Middlesex St; London E1 7EZ
+      placeholder: venue 3 Mien. street 64 Middlesex St. London E1 7EZ
     validations:
       required: true
   - type: textarea
@@ -79,7 +79,7 @@ body:
         The measured quantity with its denominator, threshold, artifact, and
         comparison arm. Name the tool that produced it (the mwdev_* suite, or
         the CLI command and version). A measured zero states the coverage it
-        was measured across; an unknown says the system did not measure.
+        was measured across. an unknown says the system did not measure.
       placeholder: |
         41/58 rows resolved on the board subset (baseline 40/58).
         The one differing row is `07691 Portopetro, Illes Balears, Spain`.
@@ -91,7 +91,7 @@ body:
     attributes:
       label: Artifacts under test
       description: Model or weights version, gazetteer artifact, WOF repo vintage (mwdev_provenance), commit.
-      placeholder: "@mailwoman/neural-weights-en-us v0.9.9; gazetteer candidate.db; HEAD abc1234"
+      placeholder: "@mailwoman/neural-weights-en-us v0.9.9. gazetteer candidate.db. HEAD abc1234"
     validations:
       required: true
   - type: textarea

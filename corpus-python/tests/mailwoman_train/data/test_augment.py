@@ -404,7 +404,7 @@ def test_punct_drop_preserves_interior_apostrophe():
 
 
 def test_punct_drop_removes_standalone_punct_token():
-    """A comma that is its own whitespace token is dropped from tokens/labels, not left empty."""
+    """A comma that is its own whitespace token is dropped from tokens/labels rather than left empty."""
     row = {
         "raw": "Portland , OR",
         "tokens": ["Portland", ",", "OR"],

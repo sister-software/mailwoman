@@ -11,7 +11,7 @@ records the measurement and the opt-in wiring that ships it._
 The definition of done is "street-level coordinate **with a calibrated confidence radius**." Coverage is
 handled by the situs + interpolation cascade (national, as of 2026-06-14). Confidence is the radius the
 geocoder reports. A radius is only meaningful if it's calibrated: if we say "±87 m" it should contain the
-truth ~90% of the time, not 72%. Otherwise the number is decoration.
+truth ~90% of the time rather than 72%. Otherwise the number is decoration.
 
 ## The measurement
 
@@ -44,7 +44,7 @@ as interpolation did, is the dangerous direction.)
 ## What ships
 
 An **opt-in, byte-stable** calibration multiplier — the resolver stays calibration-agnostic (the factor
-is a property of the calibration set, not the geometry), and the caller supplies it:
+is a property of the calibration set rather than the geometry), and the caller supplies it:
 
 - `ResolveOpts.interpolationRadiusCalibration?: number` — when set, `applyInterpolation` reports
   `uncertainty_m = round(raw × factor)` and preserves the raw value under `uncertainty_raw_m`. Absent =
@@ -60,7 +60,7 @@ is a property of the calibration set, not the geometry), and the caller supplies
   per-`interpolation_method` or per-segment-length-bucket Q̂ rather than one global scalar.
 - **Make it a loadable artifact.** Today the factor is a CLI constant. The principled home is a
   calibration artifact (like the isotonic `conf=` calibrator, #59) the resolver/CLI loads — so re-calibration
-  is a data swap, not a code change.
+  is a data swap rather than a code change.
 - **Abstention router (#244)** is the remaining confidence piece: when the calibrated radius exceeds a
   threshold, return the coarser admin tier instead of a falsely-precise street point. The 403 no-hit rows
   already abstain to admin; #244 generalizes that to a confidence-conditional downgrade.

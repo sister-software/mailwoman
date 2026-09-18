@@ -1,6 +1,6 @@
 # v0.7.0b calibration — GENTLER label smoothing (iteration 2 of the 2-cap).
 #
-# Staged, not launched. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
+# Staged rather than launched. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
 # reduced overconfidence-on-wrong 86.3%→66.6% but did not improve the primary
 # harness pass rate (14.6%→13.8%) and regressed house_number recall −6.0pp and
 # street −2.9pp on the held-out TEST (>2pp check). See the night-3 postmortem §0c.

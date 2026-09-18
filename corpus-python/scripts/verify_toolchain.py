@@ -25,7 +25,7 @@ the failure the pyproject comment warns about — and it happened, so this scrip
 
 This script asserts they agree, and (when the heavy ML deps are actually installed) that the
 installed versions match the pins too. It needs none of torch/onnx to run the cross-file checks, so
-it is a cheap CI guard — run it in the lint/CI lane, not just on a train machine.
+it is a cheap CI guard — run it in the lint/CI lane rather than just on a train machine.
 
 Run: ``python corpus-python/scripts/verify_toolchain.py`` (exit 0 = consistent, 1 = drift).
 """
@@ -165,7 +165,7 @@ def _ruff_dev_pin() -> str | None:
 def _ruff_call_site_versions() -> dict[Path, set[str]]:
     """Every ruff version each call site asks `uvx` for. A file naming none is reported by its caller.
 
-    A file with no match is a real finding, not a skip: it means the call site moved or the command
+    A file with no match is a real finding rather than a skip: it means the call site moved or the command
     was respelled, and this check would then pass over a copy it no longer reads.
     """
     return {path: set(RUFF_UVX_RE.findall(path.read_text())) for path in RUFF_CALL_SITES}

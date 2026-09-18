@@ -39,13 +39,13 @@ when the neural parser is out of distribution on a locale, the anchor still geol
 - **IT placement attempted, then dropped.** Built `admin-it.db` and ran the backfill, but a functional
   spot-check caught bad source data: 73% of WOF IT postcodes are orphans with no parent, and some of the
   rest link to the wrong place — Milan's `20121` points at Riomaggiore, a Cinque Terre village 150 km away
-  in Liguria. IT stays membership-only; placement is blocked on WOF data quality, not on our pipeline. The
+  in Liguria. IT stays membership-only; placement is blocked on WOF data quality rather than on our pipeline. The
   experiment was reverted (the extract is back to the clean DE/FR state; nothing IT-related reached a PR).
 
 ## What went well
 
 - The gazetteer was nearly free. `build-unified-wof` already accepted `--placetypes postalcode`, and the
-  resolver already resolved postcodes for the US extract. Most of the anchor was assembly, not invention.
+  resolver already resolved postcodes for the US extract. Most of the anchor was assembly rather than invention.
 - Probing the data before building saved a wasted afternoon. A first look at the cloned DE repo showed
   coordinate-less stubs, so the centroid-backfill design existed before any code did, rather than as a
   patch after a useless gazetteer shipped.
@@ -53,7 +53,7 @@ when the neural parser is out of distribution on a locale, the anchor still geol
   resolves to US, French dept 94, and German PLZ 94xxx all at once. Count-weighting would have confidently
   picked the wrong country; the soft posterior leaves the disambiguation to the parser's city tokens.
 - The tests seed their own fixture extracts, so the suite runs in CI without the data volume.
-- A functional spot-check, not an aggregate metric, caught the bad IT data. The `27% placed` number alone
+- A functional spot-check rather than an aggregate metric, caught the bad IT data. The `27% placed` number alone
   looked merely low; eyeballing three Italian cities showed Milan resolving to Liguria, which is what
   turned "ship IT at low coverage" into "do not ship IT." Functional tests over metrics, again.
 
@@ -73,7 +73,7 @@ when the neural parser is out of distribution on a locale, the anchor still geol
   build and never pull a prebuilt dump. I held that line, which is why DE placement stops at ~66% rather
   than reaching for OpenAddresses point aggregation. That trade is the operator's to revisit, so it became
   an open question rather than a silent choice.
-- **The coarse ancestor fallback is a flag, not a default.** It lifts the Berlin/Saxony sample from 34% to
+- **The coarse ancestor fallback is a flag rather than a default.** It lifts the Berlin/Saxony sample from 34% to
   84% placed but loosens the median from 2.8 km to 7.5 km. Rather than bake one operating point in, the
   `--repos` flag is the knob and both numbers are documented.
 - **Ship US/NL/FR/DE; let the data decide the rest.** NL got added once the survey showed it was clean;

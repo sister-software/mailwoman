@@ -115,8 +115,8 @@ export type RankedRow<R> = R & {
  * {@link SEAT_PLACETYPE} row carrying a real population outranks every other placetype. Omit the map and every row
  * scores 0, the term cancels, and the order is exactly the population-then-scan-order it was before.
  *
- * The tie it exists for is a DUPLICATE, not a contest. A district and its identically-named seat town are stored as two
- * rows carrying the same population, so `neg_rank` is equal to the bit and `referential` follows it
+ * The tie it exists for is a DUPLICATE rather than a contest. A district and its identically-named seat town are stored
+ * as two rows carrying the same population, so `neg_rank` is equal to the bit and `referential` follows it
  * (`referentialFromPopulation` is a pure function of population). Turkey's `Of` is the measured case — locality
  * 8114738869649 and its parent county 8837168432019 both hold population 44212 — and 358 locality/parent-county pairs
  * across 15 countries share the shape in `admin-global-priority.db` (TR 162, CA 77, US 47, HR 24, DO 14). Without the
@@ -167,7 +167,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	//
 	// #1882 exemption (opt-in): a `name_role = 'variant'` alias is the holder's own primary name in another
 	// orthography (`Брэст` → `brest`, `George Town` → `georgetown` — the build's own-name detector), so the
-	// query is naming that place, not colliding with it. the penalty exists for the coincidental-collision
+	// query is naming that place rather than colliding with it. the penalty exists for the coincidental-collision
 	// class ("Çançun"/`cancun`), which the detector's measured threshold keeps un-stamped. An artifact
 	// predating the role column carries no 'variant' rows, so the flag no-ops there by construction.
 	const wouldPenalize = (r: R): boolean =>

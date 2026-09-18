@@ -124,7 +124,7 @@ export async function goldSetSample(
 
 	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
 
-	// Deterministic spread sample of N (stride, not head — avoid file-order bias, the dedup-ceiling lesson).
+	// Deterministic spread sample of N (stride rather than head — avoid file-order bias, the dedup-ceiling lesson).
 	const stride = Math.max(1, Math.floor(hard.length / N))
 	const sample = hard.filter((_, i) => i % stride === 0).slice(0, N)
 	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)

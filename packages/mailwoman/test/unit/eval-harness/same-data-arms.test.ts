@@ -7,7 +7,7 @@
  *   contradiction, one withheld gold. It exists to prove the harness catches the two failures that would
  *   otherwise be invisible in a real run.
  *
- *   A replay miss records `error` rather than an abstention: the fixture refused, not the resolver, and the
+ *   A replay miss records `error` rather than an abstention: the fixture refused rather than the resolver, and the
  *   scorer excludes the row from every metric so the abstention counts stay about the resolver.
  *
  *   An unequal fixture is caught over what the arms read rather than over the file — `assertEqualEvidence`

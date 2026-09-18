@@ -15,7 +15,7 @@ _own_ definitions rather than anyone's judgment:
   or it does not, arithmetically.
 - **`low_latency`** — the BDC data model has this flag precisely because round-trip latency is a
   service-defining property that speed alone hides. Geostationary satellite fails it on orbital
-  geometry, which is physics, not preference.
+  geometry, which is physics rather than preference.
 
 So the product never has to characterize any technology as good or bad. It reports: _of the N filings
 in this block, M meet the FCC's 100/20 benchmark with the low-latency flag set._ That is a citable,
@@ -42,7 +42,7 @@ this project can produce, because the provider is the sole source of both statem
 
 Operator-observed worked example (2026-07-31, a residential address on Plumbrook Rd, Sterling
 Heights, MI 48313 — house number deliberately omitted; it is a private home, and the filings below
-are block-grain public record, not a statement about that household):
+are block-grain public record rather than a statement about that household):
 
 | Filer                     | FRN        | Provider ID | Filed            | Provider's own channel               |
 | ------------------------- | ---------- | ----------- | ---------------- | ------------------------------------ |
@@ -54,7 +54,7 @@ drew a "filings diverge in both directions" conclusion from them. What the corre
 shows is narrower and cleaner:
 
 - **Comcast: filed 2000, markets 2000 — exact agreement.** The self-check corroborates the filing.
-- **WOW: filed 1200, own site reports the address unserviceable — an availability divergence, not a
+- **WOW: filed 1200, own site reports the address unserviceable — an availability divergence rather than a
   speed one.** The disagreement is about _whether service exists at all_, which is a different (and
   more consequential) axis than throughput.
 
@@ -63,7 +63,7 @@ Two design consequences follow, and the second is a correction of the first revi
 1. **Availability divergence and speed divergence are separate comparisons.** A design that only
    diffs advertised speed misses the case that matters most here. Compare serviceability first;
    compare speed only where both sides agree service exists.
-2. **Direction-neutrality stays, but as precaution, not as an observed finding.** The corrected
+2. **Direction-neutrality stays, but as precaution rather than as an observed finding.** The corrected
    example does not demonstrate under-claiming. Filings could still understate for mundane reasons —
    a vintage predating a speed upgrade, conservative reporting — so the comparison remains
    `filed_exceeds_channel` / `channel_exceeds_filed` / `agree` rather than a one-way over-claim
@@ -80,7 +80,7 @@ the standard; it does not infer that a filer misapplied it.
 
 Note also that the Comcast case is technologically self-consistent: "fiber to the street, coax to the
 home" is HFC, which _is_ the filed cable technology code. Divergence lives in the speed and
-availability fields, not the technology field — worth encoding so the check doesn't flag correct
+availability fields rather than the technology field — worth encoding so the check doesn't flag correct
 technology reporting as a mismatch.
 
 **Salvage:** `isp-nexus/universe/sync/experiments/pluck-att.ts` + `fcc/labels/` already implement this
@@ -106,10 +106,10 @@ This is not a data-quality complaint; it is a **schema requirement**:
    `as_of`), and a family rollup query must take a date. An untimed family graph will confidently
    report today's ownership against a filing from two vintages ago and be wrong in a way nobody can
    see.
-2. **Vintage skew must be reported, not silently reconciled.** When a `filingLandscape` result at
+2. **Vintage skew must be reported rather than silently reconciled.** When a `filingLandscape` result at
    vintage V is joined to a family rollup current at date D, the output states both. Where the skew
    spans a known ownership change, that fact is surfaced alongside the answer.
-3. **M&A is a first-class event, not noise.** Consolidation is frequent enough in this sector that
+3. **M&A is a first-class event rather than noise.** Consolidation is frequent enough in this sector that
    "the filer of record no longer exists as an independent entity" is a routine state. The spine
    should be able to say so — it is one of the more useful things it can say — sourced to the
    transaction record, with no characterization of the transaction.
@@ -123,7 +123,7 @@ Consumer-facing aggregators (allconnect and peers) blend filing data with Ookla 
 which is why their pages resolve to state/city generalities rather than address truth: the
 measurement layer has no address grain either.
 
-Performance data is a legitimate fourth axis (it observes what was delivered, not what was
+Performance data is a legitimate fourth axis (it observes what was delivered rather than what was
 claimed), but the sources diverge sharply on licensing and that decides which is usable:
 
 - **Ookla Open Data** — believed **non-commercial** licensed (CC BY-NC-SA family). If so it is
@@ -134,13 +134,13 @@ claimed), but the sources diverge sharply on licensing and that decides which is
 
 Neither M-Lab nor MBA gives address grain; both give area-level distributions. The direct use is
 therefore _corroboration at area grain_: "filed gigabit service in a block whose measured
-distribution has never exceeded X" is a coverage-qualified observation, not a verdict about any
+distribution has never exceeded X" is a coverage-qualified observation rather than a verdict about any
 address.
 
 ## 4. What this changes downstream
 
 - **2b (now):** no change required. The bundle's `evidence_found` union and `coverage_detail` axis
-  states already accommodate additional axes; adding them later is additive, not a rebuilt.
+  states already accommodate additional axes; adding them later is additive rather than a rebuilt.
 - **3d competition surface:** the three-number progression of §1 becomes the headline output, and the
   benchmark filter is a first-class query parameter.
 - **C5:** the label scraper serves double duty — pricing _and_ availability corroboration.

@@ -36,8 +36,8 @@ of OA rows where argmax never does. **Keep retired** — parked decision resolve
 **B — coarse-placer M3 (#581):** int8 quantization (3.15 MB → 0.79 MB, 4×, **−0.01pp** accuracy) +
 `CoarsePlacer.fromArtifactDir` loader (9 tests). The Latin-off-map experiment: real off-map addresses
 make trained countries **23% → 100%** handled at zero in-map cost, but it **doesn't generalize** to
-unseen countries — a data-breadth ceiling, not a method failure (Overture's ALPHA addresses theme is
-sparse). direct finding, not promoted.
+unseen countries — a data-breadth ceiling rather than a method failure (Overture's ALPHA addresses theme is
+sparse). direct finding rather than promoted.
 
 **C — multi-region interp recalibration (#584):** The conformal interp-radius factor (1.70, #569) is a
 **Texas artifact**. Measured across 12 states (situs OA/NAD as non-circular ground truth for TIGER
@@ -48,7 +48,7 @@ seed per-region calibration table + reusable tooling. PR-and-flag (wiring per-re
 
 **D — autocomplete (CLI #547 + algorithm fix #588 + demo typeahead in #585):** The CLI was already
 shipped (#547, 21 tests); the plan's "unwired" was outdated. Wiring it into the demo surfaced (per
-DeepSeek's hint) that the FST `autocomplete` was **token-level, not char-level** — "New Yor" → "Denver",
+DeepSeek's hint) that the FST `autocomplete` was **token-level rather than char-level** — "New Yor" → "Denver",
 and "New" → "New London" ×4 (no name-dedup, off ranking). Fixed it (**#588**): on a failed walk, walk
 the complete prefix and prefix-filter continuations by `startsWith(partial)`; added per-branch importance
 capping (`PER_BRANCH = 4`) + opt-in `dedupeByName`; 7 synthetic unit tests. Now `New Yor`→New York,
@@ -92,7 +92,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   v0 here (77.3 vs 75.7) and is far more resilient (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
   _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation change is reducing neural
-  span over-extension (kin to #555 / Saint-Albans), not a span proposer.
+  span over-extension (kin to #555 / Saint-Albans) rather than a span proposer.
 - **#591 — reconcile-default docs sweep.** Three source-of-truth docs (`status.mdx`, `api.mdx`,
   `STAGES.mdx`) still called joint reconcile the default decode path — stale since #566 retired it. The
   2026-06-11 codex review had flagged exactly this; night-11 fixed it to the then-current default-on
@@ -115,8 +115,8 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   the whole marquee before a line of demo wiring; the Overture off-map _probe_ found the data ceiling
   before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
   proposer?" with a measured _no_ before anyone reopened that code — and reframed the change (neural span
-  over-extension, not a proposer) in the bargain.
-- **The marquee works.** The biggest risk item shipped browser-verified, not as a "foundation +
+  over-extension rather than a proposer) in the bargain.
+- **The marquee works.** The biggest risk item shipped browser-verified rather than as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
 
 ## What could've gone better
@@ -162,11 +162,11 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **Coarse-placer breadth (B)?** A full OpenAddresses off-map pull would close the Latin residual; worth
   the data acquisition?
 - **Promote anything?** Nothing was promoted to a shipped default tonight (all PR-and-flag). The
-  marquee demo is a docs deploy, not a model release.
+  marquee demo is a docs deploy rather than a model release.
 - **Autocomplete typeahead — fixed and shipped (#588 + #585), address-level variant deferred.** My first
   wire surfaced (confirming DeepSeek's hint that "there's more here than described") that the FST
-  `autocomplete` was **token-level, not char-level**: "New Yor" returned garbage ("Denver"), and even
-  complete tokens had quality issues ("New" → "New London" ×4, not New York — no name-dedup, off
+  `autocomplete` was **token-level rather than char-level**: "New Yor" returned garbage ("Denver"), and even
+  complete tokens had quality issues ("New" → "New London" ×4 rather than New York — no name-dedup, off
   importance ranking). Rather than ship a demo that fails the hostile-interviewer test, I fixed the
   algorithm: when the FST walk fails on a partial last token, walk the complete prefix and prefix-filter
   continuations by `startsWith(partial)`; added per-branch importance capping (`PER_BRANCH = 4`, fixes
@@ -187,7 +187,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
     **#588 before #585** (so the typeahead wires against the fixed `fst-autocomplete.ts`), **#590**
     (punctuation eval), **#591** (reconcile-default docs), **#586** (this postmortem). All eleven are
     branched off pre-#579 `main`, so each needs an "Update branch"/rebase to pick up the lockfile before
-    its own CI can pass — that's expected, not a per-PR problem.
+    its own CI can pass — that's expected rather than a per-PR problem.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
   address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB extract).
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;

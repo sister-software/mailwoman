@@ -74,13 +74,13 @@ score(S, T, H | x)  =  Σ_{(i,j,t) ∈ S} φ(i, j, t)   +   Σ_{(h,d,r) ∈ H} �
 ```
 
 maximized **jointly**. The stages of the intuitive pipeline — lexical cues, candidate spans,
-guarded entities, inter-span grammar, address semantics — are the _terms of one objective_, not
+guarded entities, inter-span grammar, address semantics — are the _terms of one objective_ rather than
 sequential decisions: the overlapping name candidates in
 `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` cannot be
 committed before the inter-span grammar runs, because which candidates are real is decided by which
 segmentation makes the whole address cohere.
 
-**Atomicity is a signature restriction, not a prohibition on internal grammar.** `φ(i, j, t)` may
+**Atomicity is a signature restriction rather than a prohibition on internal grammar.** `φ(i, j, t)` may
 read anything inside `x[i..j]`, internal syntax included. `ψ` reads spans only as atoms. No term
 crosses a span boundary. A parser is free to know that `of` in `Port of Spain` is an adposition;
 that knowledge raises `φ` for the whole span as a well-formed toponym and contributes nothing to any
@@ -93,7 +93,7 @@ under `PARENT_OF`, with `REL=address` equal to the resolver's containment set an
 containment contract: a POI under a POI (`Cafe at St Mary's` located at
 `Church of St Mary the Virgin`). `containment.ts:61` gives `venue` the parents
 `["street", "locality"]` only; the Heathrow sub-venue case was handled by widening `unit`'s
-parents, not by a venue→venue edge. Adding that production is schema work and is tracked here
+parents rather than by a venue→venue edge. Adding that production is schema work and is tracked here
 rather than assumed.
 
 ## 3. Toponym-internal grammar, and the vocabulary for it
@@ -183,7 +183,7 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
 | `St Andrew Undershaft Church, St Mary Axe, London EC3A 8BN`                         | two labels inside segment 1; `locality="London"` deleted while its postcode survives                     | C4 + C5                                |
 | `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` | mid-phrase `region`/`locality` fragments; no POI-under-POI production                                    | C4 + C5 + the missing venue→venue edge |
 | `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`                       | `Indiranagar → venue`; note the candidate's `Karnataka → region` is the template-conformant reading      | C5                                     |
-| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6, not C4                             |
+| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6 rather than C4                      |
 
 ## 7. Empirical support
 
@@ -198,7 +198,7 @@ violates, and the taxonomy is thereafter read from evaluation rather than argued
    attributed against a placebo run sharing base, seed, and steps — while `Unter den Linden`, the
    city splits, and the GB venue cluster (the same abstract constraint, other surface families)
    did not move. Emissions memorize constraint instances; the transfer radius is representational
-   similarity, not the rule's scope.
+   similarity rather than the rule's scope.
 3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
    taught _text in the trailing position is administrative_; v4.8.0 applied that along the
    positional axis and destroyed venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
@@ -238,6 +238,6 @@ parses it should forbid.
    nested `Spain` country hit at the FST layer: both land as per-token bias and the token-factorized
    decoder resolves them token-locally — the §4 subsidy, confirmed at the code rather than presumed.
    The §9.2 ablation therefore cannot be expressed as an FST-side switch; suppression of covered
-   sub-span clues would be new behavior, not the removal of an existing preference.
+   sub-span clues would be new behavior rather than the removal of an existing preference.
 4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
    production, with a board row as its acceptance test.

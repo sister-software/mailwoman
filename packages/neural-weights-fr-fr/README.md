@@ -69,7 +69,7 @@ Parsing free-text French postal addresses into structured components
 (country, region, locality, dependent_locality, postcode, subregion, cedex,
 venue, street, house_number) for **geocoding** — resolving a parsed address to
 coordinates via a gazetteer/resolver. The model is the parsing front-end of that
-pipeline, not a standalone geocoder.
+pipeline rather than a standalone geocoder.
 
 ## Ship-config requirement (read before using)
 
@@ -85,7 +85,7 @@ session with the anchor input zero-filled. Every eval here is
 
 ## Evaluation
 
-We grade the **assembled coordinate** (the resolved place), not raw label-F1 in
+We grade the **assembled coordinate** (the resolved place) rather than raw label-F1 in
 isolation. For FR, the model resolves addresses well when given the correct
 default country (the gazetteer holds ~114k FR places); on a real FR sample the
 neural front-end out-parses the rules baseline it replaces on locality-match.

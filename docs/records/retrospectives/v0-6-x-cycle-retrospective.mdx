@@ -58,7 +58,7 @@ infrastructure layer that v0.7 will sit on top of:
   cycle start.
 - **Per-token confidence probe** — revealed the binding constraint that
   recipe tuning was masking: 81% of wrong predictions land at ≥ 0.9
-  confidence. The model is decisively wrong, not uncertain.
+  confidence. The model is decisively wrong rather than uncertain.
 - **Stage 3 fold for eval** — collapses `street_prefix` + `street` +
   `street_suffix` into a single `street` span for Stage 2 golden-set
   comparison. Without this, v0.6.2's correct decomposition of "Main St"
@@ -126,13 +126,13 @@ present" still produces a parse the resolver can't use).
 
 DeepSeek turn 11 changed mind from turn 7 on this point: the v0.6.2b
 ship recommendation was wrong because it was conditional against per-tag
-recall, not the harness.
+recall rather than the harness.
 
-### 3.3 The model is overconfident, not undertrained
+### 3.3 The model is overconfident rather than undertrained
 
 The per-token confidence probe found 81% of WRONG predictions land at
 ≥ 0.9 confidence on both v0.6.2 and v0.6.2b. This is calibration
-crisis-level — the model is decisively wrong, not uncertain. Two
+crisis-level — the model is decisively wrong rather than uncertain. Two
 implications:
 
 - **It explains v0.6.x fragility.** An overconfident model amplifies
@@ -146,7 +146,7 @@ implications:
   so a confident wrong emission locks the whole sequence into a wrong
   path. Calibrate first, then add CRF.
 
-### 3.4 Postcode failures are endemic, not exotic
+### 3.4 Postcode failures are endemic rather than exotic
 
 The
 [postcode-only diagnostic](../evals/model-versions/2026-05-29-postcode-diagnostic.mdx)
@@ -156,7 +156,7 @@ SentencePiece fragments multi-token alphanumeric postcodes into pieces
 the model can't span, and the model labels SOME of the pieces as
 postcode but not all.
 
-This is a tokenizer concern, not a schema concern. Adding more JP / KR /
+This is a tokenizer concern rather than a schema concern. Adding more JP / KR /
 BR coverage (system-multiplicity) does not fix it. v0.7 needs to address
 postcodes at the character or FST level.
 
@@ -185,11 +185,11 @@ For the record, so future-us doesn't relitigate these:
   CE-only because of the bf16 NaN issue in CRF transitions. The
   [fp32-CRF fix](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx) is
   verified — but enabling CRF on top of v0.6.x's overconfident model
-  would have amplified the failure, not fixed it.
+  would have amplified the failure rather than fixed it.
 - **Model capacity was not the binding constraint.** 29.3M params, 6
   layers × 384 hidden, trained from scratch. Whether this is undersized
   is unknown — but the failures we measured were calibration
-  failures, not capacity ceilings.
+  failures rather than capacity ceilings.
 
 ## 5. v0.7 plan
 
@@ -263,7 +263,7 @@ This is the entry point for v0.8's system-multiplicity work
   safety net but no longer controls the ship decision.
 - **Held-out test set methodology.** v0.1.2 split 90/10 dev/test. Test
   read exactly once per release. Closes decision-side test-set leakage.
-- **Synthesis-as-supplement, not synthesis-as-primary.** Small targeted
+- **Synthesis-as-supplement rather than synthesis-as-primary.** Small targeted
   extracts, weight < 0.25, one-and-done. Real data is the primary fix for
   distributional gaps. v0.6.x's 100K+ row synthesis was the wrong
   philosophy.

@@ -1,6 +1,6 @@
 ---
 title: Postcodes and ZIP Codes
-description: What a postcode encodes — a path through a sorting network, not an outline on the ground — and why the polygon you drew from one is somebody's approximation.
+description: What a postcode encodes — a path through a sorting network rather than an outline on the ground — and why the polygon you drew from one is somebody's approximation.
 role: explanation
 ---
 
@@ -21,7 +21,7 @@ and it encodes what they need in the order they need it.
 The US structure runs from east to west. The first digit is "a general geographic area of the
 nation, '0' in the east, moving to '9' in the west"; the next two are regional areas; the final two
 are specific post offices ([USPS](https://facts.usps.com/decoding-the-zip-code/)). That is where the
-five digits stop — at a post office, not at a building. The `+4` extension then names something
+five digits stop — at a post office rather than at a building. The `+4` extension then names something
 smaller, and the Postal Service's own list of what it can name is the useful part: "a side of a
 street between intersections, both sides of a street between intersections, a building, a floor or
 group of floors in a building, a firm within a building, a span of boxes on a rural route, or a group
@@ -60,7 +60,7 @@ discrete addresses tied to delivery points, including specific housing unit loca
 a point-based dataset unsuitable for mapping …"
 ([Census](https://www.census.gov/programs-surveys/geography/guidance/geo-areas/zctas.html)). The
 Bureau generalized census blocks into areas so that ZIP-keyed statistics could be mapped at all. The
-areas are the Bureau's construction, not a Postal Service boundary, and the same page states that the Postal Service "assigns ZIP Code ranges to regional post offices, which in turn assign ZIP
+areas are the Bureau's construction rather than a Postal Service boundary, and the same page states that the Postal Service "assigns ZIP Code ranges to regional post offices, which in turn assign ZIP
 Codes to delivery routes."
 
 The UK admits the same thing from the other direction: "postcode boundaries mostly do not align with
@@ -69,7 +69,7 @@ other geographic boundaries," and they move as addresses are built and mail volu
 
 So the errors are structural rather than incidental. A rural code covers a route, and its centroid
 sits wherever the route's addresses happen to average out. A box-only code centers on the post
-office, not on the homes of the people who rent the boxes. A code that spans a town line belongs to
+office rather than on the homes of the people who rent the boxes. A code that spans a town line belongs to
 two municipalities and neither of their outlines.
 
 ## What this costs a parser

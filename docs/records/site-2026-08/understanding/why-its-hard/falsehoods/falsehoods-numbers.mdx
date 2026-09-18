@@ -58,7 +58,7 @@ Hong Kong: `15/F, Cityplaza 3, 14 TaiKoo Wan Road, Island East, HKSAR`. The buil
 
 **libpostal** uses a CRF trained on OpenStreetMap address data. Its `house_number` tag covers `\d+[A-Za-z]?` patterns and hyphenated ranges. It does not handle fractions, spelled-out numbers, or negative building numbers. The CRF's transition model can learn that a token following a street name is likely a house number, but the per-token classification cannot learn that `1/2` following `43rd` is a continuation of the house number — the tokenizer splits on `/` and the CRF sees `[43rd] [1] [/] [2]` as four independent tokens.
 
-**Pelias** uses a regex-based `house_number` classifier: `^\d{1,10}[a-zA-Z]?$`. This rejects zero, fractions, negative numbers, and spelled-out numbers. Pelias also has a `street` classifier that handles prefixed and suffixed street types, but no mechanism for disambiguating "Minusone Priory Road" from a building-number-plus-street pattern. The solver's penalty system can override the `house_number` classification on `Minusone` if the surrounding context suggests it's part of the street, but this is a heuristic, not a learned distribution.
+**Pelias** uses a regex-based `house_number` classifier: `^\d{1,10}[a-zA-Z]?$`. This rejects zero, fractions, negative numbers, and spelled-out numbers. Pelias also has a `street` classifier that handles prefixed and suffixed street types, but no mechanism for disambiguating "Minusone Priory Road" from a building-number-plus-street pattern. The solver's penalty system can override the `house_number` classification on `Minusone` if the surrounding context suggests it's part of the street, but this is a heuristic rather than a learned distribution.
 
 **Google's API** handles these cases reasonably well in practice — it returns a geocode for `0 Egmont Road` — but the confidence score drops for these inputs, and the API does not explain how it arrived at the result. The user cannot tell whether Google recognized `0` as a building number or fell back to street-level geocoding.
 
@@ -75,7 +75,7 @@ The reconciler (Stage 5) helps with the "Ten Post Office Sq vs 10 Post Office Sq
 ## What Mailwoman still can't do
 
 - **Fractions as tokens.** SentencePiece tokenizes `½` as a single unicode token — good. But `43 1/2` becomes `[43] [1] [/] [2]` — the same problem the CRF had. The phrase grouper can propose `43 1/2` as a span, but only if the training data contains enough fraction-format addresses for the grouper's heuristics to learn the pattern.
-- **Negative numbers as part of street names.** "Minusone Priory Road" requires the model to learn that "Minusone" followed by "Priory Road" is a street name, not a building number. This is learnable from corpus co-occurrence, but the corpus must contain examples of word-prefix street names (which are rare in US address data).
+- **Negative numbers as part of street names.** "Minusone Priory Road" requires the model to learn that "Minusone" followed by "Priory Road" is a street name rather than a building number. This is learnable from corpus co-occurrence, but the corpus must contain examples of word-prefix street names (which are rare in US address data).
 - **Leading-zero apartments.** The model can learn that `001` is a valid unit identifier if the corpus contains unit-tagged addresses with leading zeros. Without unit-level tagging in the training data, the model sees `001` as a number and may classify it as a house number rather than a unit.
 
 ## References

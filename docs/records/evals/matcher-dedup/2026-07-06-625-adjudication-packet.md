@@ -277,7 +277,7 @@ noted inline.
 
 **Findings:**
 
-1. **Two-thirds of the residual "over-merge" is the yardstick, not the model.** With 14 of 21
+1. **Two-thirds of the residual "over-merge" is the yardstick rather than the model.** With 14 of 21
    clusters adjudicated same-entity, the actual over-merged-cluster count drops 21 → 7 — the
    matcher's true org-grain quality is materially above the measured 68.8% F1 (consistent with the
    ~1.6% irreducible-ceiling estimate).
@@ -286,6 +286,6 @@ noted inline.
    and in most, the AUTHORIZED OFFICIAL also agrees (the roll-up operator signs everything). The
    auth-official discriminator is actively harmful on exactly this class: it corroborates the wrong merge.
 3. **The next change writes itself:** when org names disagree strongly and the only agreements are
-   address + official, that pattern is management-company evidence, not identity evidence — a
+   address + official, that pattern is management-company evidence rather than identity evidence — a
    corroboration rule (or a GBT feature: `official-agree × org-disagree × address-shared`) targeting
    precisely the 7 remaining clusters. Filed on #625.

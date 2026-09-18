@@ -40,7 +40,7 @@ improvement_target   403   32.0%
 known_fail             1    0.1%
 ```
 
-So the denominator is 857, not 1,261, and the per-country reading gets worse rather than better:
+So the denominator is 857 rather than 1,261, and the per-country reading gets worse rather than better:
 
 ```
 countries with at least one CHECKING row   99 of 130
@@ -109,7 +109,7 @@ regression is detectable_ — GB 152, FR 67, DE 16 are three of the four best-co
 only to GB, so that reading does not hold either. Either the list is wrong or the D-rule's scope grew past tier 1
 without `SCOPE.mdx` recording it, and only the operator can say which.
 
-Scope of the claim: `runArc` is a maintainer diagnostic, not the release pipeline. The promotion battery and the
+Scope of the claim: `runArc` is a maintainer diagnostic rather than the release pipeline. The promotion battery and the
 regression board may catch a US regression by other means; what is measured here is that the constant encoding
 "unconditionally" does not name its primary locale.
 
@@ -154,7 +154,7 @@ these subsets are deliberate — but it is the shape to expect a twelfth locale 
 One class of absence is correctly handled and is recorded here so it is not re-reported: `HARD_PLACE_COUNTRY_SAFELIST`
 and `MEASURED_COUNTRY_COVERAGE` omit CN, IN, JP and NZ, and their docstrings say absence means the soft prior with
 no recall regression, with the measurement that kept FI (69.5%) and PL (77.8%) out cited in place. Absence there is
-a measured state, not a gap.
+a measured state rather than a gap.
 
 ## Script cannot carry the CJK distinction, except for Korean
 
@@ -196,7 +196,7 @@ SG        66
 planet problem in one line: retrieval reaches a million Indian places, and nothing measures whether the answers
 are right.
 
-### One reading here was the instrument, not the data
+### One reading here was the instrument rather than the data
 
 `mwdev_sources` reports **NL = 28** for this artifact, against 19,812 in the `-coverage` generation. Taken at face
 value that reads as the promoted gazetteer losing the Netherlands. It has not:

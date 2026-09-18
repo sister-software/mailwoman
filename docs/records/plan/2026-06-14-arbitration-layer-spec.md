@@ -7,7 +7,7 @@ design, and — the critical correction — the check the reconcile retirement p
 
 ## Why this matters (unchanged)
 
-Parity is a **pipeline property, not a model property**. The arena scorecard's `v0-only` column (whole
+Parity is a **pipeline property rather than a model property**. The arena scorecard's `v0-only` column (whole
 parses the old rules system gets that the neural pipeline drops) is the gap. Calibrated per-component
 arbitration closes it **by construction** — the pipeline keeps whichever source is right per component,
 so it can't score below v0 on any component v0 wins.
@@ -62,7 +62,7 @@ priored by input shape, decided on calibrated confidence, with abstention as a f
    without code edits. `applyPreferenceFilters` is the dedup core — keep the preferred source when it has
    a survivor, fall back otherwise.
 3. **Reconcile (the span-level joint decode).** With #565 landed and the repair-divergence fix, reconcile
-   is a _candidate-producing_ stage feeding the registry, not a silent default. Its value is OOD locales
+   is a _candidate-producing_ stage feeding the registry rather than a silent default. Its value is OOD locales
    (it keeps a mangled street string intact); its danger is the US fusion (now fixed).
 4. **Calibrated confidence (the currency).** All cross-source comparison uses the calibrated posterior
    (#59 isotonic), never raw logits — the only way rule-confidence and neural-confidence are comparable.
@@ -97,7 +97,7 @@ original re-check (#427) omitted.
 
 No retrain. No new classifiers. Wiring + tests + config over implementation that exists. The coarse-placer
 (#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
-signal, not trained.
+signal rather than trained.
 
 _References: `2026-06-10-DEEP-DIVE-REVIEW.md` §2; the reconcile retirement
 `docs/articles/evals/2026-06-14-reconcile-retirement.md`; the interp calibration

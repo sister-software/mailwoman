@@ -20,11 +20,11 @@ architecture conceding it can't generalize). Two rules fall out of that and are 
 
 - **Every row carries `source` provenance** — where it came from / why it exists. (We don't store a
   literal "weight"; the point is that what each entry is responsible for stays _visible_ and
-  accountable, not that there's a numeric column.)
+  accountable rather than that there's a numeric column.)
 - **A convention that names a strategy this build doesn't register is rejected at BUILD time, loudly**
   (and, defensively, surfaced as a one-time `console.warn` at dispatch rather than silently skipped).
 - A convention that starts needing a **blacklist of poison entries** is a signal to fix the strategy
-  or the model, not to grow the list.
+  or the model rather than to grow the list.
 
 ## Schema
 
@@ -69,8 +69,7 @@ node scripts/build-conventions.ts \
 ```
 
 `scripts/build-conventions.ts` validates each entry (numeric unique `wof_id`, non-empty `source`,
-known strategy names, known `scoringWeights` keys) before writing — a typo'd strategy fails the build,
-not a production query.
+known strategy names, known `scoringWeights` keys) before writing — a typo'd strategy fails the build rather than a production query.
 
 ## Status
 

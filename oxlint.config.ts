@@ -23,7 +23,7 @@ const config = createOxlintConfig({
 	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
 	unnamedThresholds: true,
 	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
-	// from — provenance, not a restatement of the identifier. Scoped to EXPORTED only: on the local
+	// from — provenance rather than a restatement of the identifier. Scoped to EXPORTED only: on the local
 	// SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`,
 	// `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader
 	// more than the missing comment did. Public surface is where a reader has no other context.

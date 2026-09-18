@@ -13,7 +13,7 @@
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those. the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by BUILD RECIPE, not by WOF's contents — which is COVERAGE, not fact (the
+ *   artifact by BUILD RECIPE rather than by WOF's contents — which is COVERAGE rather than fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
@@ -86,7 +86,7 @@ export const WOF_PLACETYPES = [
  *
  * `county`/`macrocounty` project onto `subregion` here, the US reading. Ireland writes county as an address line ("Co.
  * Kerry"), where the same rows project onto `region`; that per-locale re-projection belongs to the IE census instance
- * when it is built, not to this table, because a single global map cannot be right for both.
+ * when it is built rather than to this table, because a single global map cannot be right for both.
  */
 export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>> = {
 	// Locality backbone — the census denominator for everything below it.
@@ -135,7 +135,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	custom: null,
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto one tag. An intersection is
 	// a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole address record consumed by
-	// the kind-classifier and the resolver's address-point tiers, not a span role.
+	// the kind-classifier and the resolver's address-point tiers rather than a span role.
 	intersection: null,
 	address: null,
 }
@@ -158,7 +158,7 @@ export interface PlacetypeCensusBuildResult {
 	 */
 	countryTotals: Partial<Record<ComponentTag, number>>
 	/**
-	 * Parent→child links counted (the census's row mass, not its node count).
+	 * Parent→child links counted (the census's row mass rather than its node count).
 	 */
 	links: number
 	/**

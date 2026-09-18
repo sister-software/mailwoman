@@ -105,7 +105,7 @@ export interface DeclaredArtifact {
  * making no claim about its files, and inheriting the base's manifest would attribute `postcode-us.bin` to it.
  *
  * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
- * all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
+ * all three meaning "this package declares no such artifact", which is a legal posture rather than a fault.
  */
 export async function readDeclaredArtifactFile(
 	packageDir: PathBuilderLike | undefined,
@@ -147,7 +147,7 @@ export async function readDeclaredArtifactFile(
 /**
  * Read + parse a `model-card.json` into a plain object, or `undefined` when the card is absent, unreadable, or not an
  * object — the shared DEFENSIVE preamble of every card reader below. Each reader keeps its own "present but corrupt"
- * checks: a malformed declared contract is a loud artifact bug, not a silent re-default.
+ * checks: a malformed declared contract is a loud artifact bug rather than a silent re-default.
  */
 async function readModelCardObject(
 	modelCardPath: PathBuilderLike | undefined
@@ -245,7 +245,7 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
  * Read the structured `requires` block from a `model-card.json` (#718). DEFENSIVE: returns `undefined` when the card is
  * absent, unreadable, or has no `requires` field (callers then INFER the required channels from the ONNX graph — see
  * `inferRequiredChannelsFromInputs`). Throws only when the field is present but corrupt (not an object, or a channel
- * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug, not a silent
+ * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug rather than a silent
  * re-default.
  */
 /**
@@ -369,7 +369,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * Read the `capabilities` block from a `model-card.json` (#718/#719). DEFENSIVE, mirroring `readRequiredChannels`:
  * returns `undefined` when the card is absent, unreadable, or has no `capabilities` field (a pre-#718 card → the
  * loader's delta check is skipped, back-compat). Throws only when the field is present but not an object — a corrupt
- * declared contract is a loud artifact bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a
+ * declared contract is a loud artifact bug rather than a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
@@ -462,7 +462,7 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
  * card whose label vocab matches that default by construction).
  *
  * Validates shape: must be a non-empty array of strings. Throws on a present-but-malformed `labels` field — a card that
- * emits e.g. `labels: 21` rather than `labels: [...]` is a corrupted artifact and should be loud, not silently
+ * emits e.g. `labels: 21` rather than `labels: [...]` is a corrupted artifact and should be loud rather than silently
  * re-defaulted.
  */
 export async function readLabelsFromModelCard(

@@ -20,7 +20,7 @@
  *   2. **stranded-dependent** — a strict dependent tag (one that is meaningless without a structural
  *        anchor) whose anchor type is entirely absent from the tree. Geographic containers
  *        (postcode / locality / region / street / venue / po_box) are deliberately not checked: a
- *        postcode-only or city-only input is a degenerate-but-valid parse, not a violation.
+ *        postcode-only or city-only input is a degenerate-but-valid parse rather than a violation.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

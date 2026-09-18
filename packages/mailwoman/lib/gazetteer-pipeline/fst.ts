@@ -13,7 +13,7 @@
  *   never inserted as a bias key. This is the ASR-contextual-biasing "prune the bias list" discipline
  *   and Carmen's index-time token hygiene: the hazard is removed from the artifact rather than
  *   guarded at decode time, so it cannot misfire on lowercase, comma-free, any-locale input. The FST
- *   is a bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so
+ *   is a bias list rather than the gazetteer of record — the resolver's candidate tables are untouched, so
  *   excluded places stay findable. they just stop nudging the decoder on degenerate keys.
  *
  *   Exclusion sources are the shipped libpostal dictionaries (`core/data/libpostal/dictionaries/`):
@@ -77,9 +77,9 @@ export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 
 /**
- * Function-word surfaces the libpostal dictionaries MISS. Each entry carries its justification — this list is curated,
- * not a dumping ground. a candidate belongs here only when it is a common function word in a served language whose
- * libpostal stopword file lacks the bare form.
+ * Function-word surfaces the libpostal dictionaries MISS. Each entry carries its justification — this list is curated
+ * rather than a dumping ground. a candidate belongs here only when it is a common function word in a served language
+ * whose libpostal stopword file lacks the bare form.
  */
 export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 	// Dutch/Danish preposition ("op de hoek", "op til") — absent from libpostal nl/da stopwords.txt as

@@ -17,7 +17,7 @@ export default meta
 type Story = StoryObj<typeof BackendControl>
 
 /**
- * Resolved to WebGPU, not forcing WASM.
+ * Resolved to WebGPU rather than forcing WASM.
  */
 export const WebGPU: Story = {
 	args: { activeBackend: "webgpu (28 MB int8)", forceWASM: false, onForceWASMChange: () => {} },

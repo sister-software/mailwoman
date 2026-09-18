@@ -344,7 +344,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 			record.payload =
 				(flags & ENTRY_FLAG_PAYLOAD_JSON) === ENTRY_FLAG_PAYLOAD_JSON
-					? // oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf (see the metadata() note): core's JSON helpers cost ~11 MB of shipped data, and corrupt payload bytes should throw, not soft-fail.
+					? // oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf (see the metadata() note): core's JSON helpers cost ~11 MB of shipped data, and corrupt payload bytes should throw rather than soft-fail.
 						(JSON.parse(UTF8_DECODER.decode(payloadBytes)) as JSONValue)
 					: payloadBytes
 		}

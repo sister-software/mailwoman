@@ -12,7 +12,7 @@
  *   — `latLngToCell` → `shortCellToInt` (the SHARED `@mailwoman/spatial` 48-bit packer, never
  *   reimplemented), then the same per-cell probe SQL, ring-by-ring dedup, and a final haversine sort.
  *   Keep the two readers in lockstep. a probe-semantics cross-check against the Node reader lives in
- *   the PR description, not in this tree (throwaway verification script, not shipped).
+ *   the PR description rather than in this tree (throwaway verification script rather than shipped).
  *
  *   CATEGORY-ONLY, matching the runbook: no FTS name search, no brand search — the multi-hop demo
  *   path is deliberately excluded from this tester.
@@ -86,7 +86,7 @@ export interface POISearchOpts {
 	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer: a live cross-check against a real
 	 * Springfield-IL cafe cluster found its NEAREST hit only at k=3, so a smaller default returned zero results for a
 	 * perfectly ordinary query). Still well under the Node reader's 12-ring/~4 km default — the tester issues one
-	 * explicit-click search, not a per-keystroke probe, so the request count stays bounded either way.
+	 * explicit-click search rather than a per-keystroke probe, so the request count stays bounded either way.
 	 */
 	maxRings?: number
 	limit?: number
@@ -107,7 +107,7 @@ const DEFAULT_LIMIT = 10
 /**
  * Category-only k-ring search. Probes `opts.center`'s res-9 cell, expanding ring-by-ring (deduping cells already
  * probed) until `limit` rows are on hand after a completed ring or `maxRings` is exhausted, then haversine-sorts the
- * pool. Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss, not a throw.
+ * pool. Returns `[]` for a category the DB's dictionary doesn't carry — a clean miss rather than a throw.
  */
 export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearchOpts): Promise<POISearchHit[]> {
 	const limit = Math.max(1, opts.limit ?? DEFAULT_LIMIT)

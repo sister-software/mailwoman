@@ -31,7 +31,7 @@ export interface CORESRegistration {
 	/**
 	 * The organization the registered contact belongs to. In practice this is where the BRAND appears when it differs
 	 * from the legal name — `"WOW! Internet, Cable and Phone"` against a legal name of `"Knology Total Communications,
-	 * Inc."` — which makes it a genuinely independent name surface, not a duplicate of `entityName`.
+	 * Inc."` — which makes it a genuinely independent name surface rather than a duplicate of `entityName`.
 	 */
 	contactOrganization?: string
 	contactName?: string
@@ -101,8 +101,8 @@ const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", 
  * too: those mark addresses, emails and phone numbers, where re-casing corrupts rather than tidies. Entity-form
  * initialisms are restored to upper case afterwards ({@linkcode UPPERCASE_TOKENS}).
  *
- * This is a display-level tidy, not a matching normalizer. Anything joining on these values must still go through
- * `canonicalizeOrganizationName` — re-casing does not fold `INC` and `Inc.` together.
+ * This is a display-level tidy rather than a matching normalizer. Anything joining on these values must still go
+ * through `canonicalizeOrganizationName` — re-casing does not fold `INC` and `Inc.` together.
  */
 export function recaseUniform(value: string): string {
 	if (CASE_SENSITIVE_PUNCTUATION_PATTERN.test(value)) return value
@@ -127,7 +127,7 @@ export function recaseUniform(value: string): string {
  *
  * Returns `null` — never a stub record, and never a throw — when the page carries no recognizable registration table,
  * or when its `FRN:` row disagrees with the FRN that was requested. Both are ordinary: CORES serves a search form for
- * an unknown FRN, and an abstention here is a fact the caller counts, not an error it handles.
+ * an unknown FRN, and an abstention here is a fact the caller counts rather than an error it handles.
  *
  * **The FRN cross-check is the required part.** Without it a page served for the wrong entity — a redirect, a cached
  * response for a different query, a truncated document — would be attributed to the FRN that was asked for, which is a

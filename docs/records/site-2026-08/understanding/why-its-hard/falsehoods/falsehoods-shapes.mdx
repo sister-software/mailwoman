@@ -16,9 +16,9 @@ _An address is not always a point on a map, a polygon, or a discrete building. I
 
 ### "An address is a lat/lon point."
 
-Postcodes, rural routes, and descriptive addresses all represent areas or paths, not points. A ZIP code centroid in rural Montana is off by 10-15 miles from any actual delivery point. The centroid is a convenience for map rendering, not a geographic truth about the address.
+Postcodes, rural routes, and descriptive addresses all represent areas or paths rather than points. A ZIP code centroid in rural Montana is off by 10-15 miles from any actual delivery point. The centroid is a convenience for map rendering rather than a geographic truth about the address.
 
-The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons — they are carrier routes, not areas. A ZIP code follows the path a carrier walks.
+The US Census Bureau's ZIP Code Tabulation Areas (ZCTAs) generalize ZIP codes into polygons, but ZCTAs are explicitly NOT USPS ground truth. USPS does not publish ZIP code boundaries as polygons — they are carrier routes rather than areas. A ZIP code follows the path a carrier walks.
 
 UK postcodes cover ~15 addresses on average — effectively points. But UK postcode sectors (the first half of the postcode, e.g., `SW1A`) cover neighborhoods. The same postcode system produces both point-level and area-level resolution depending on which part you use.
 
@@ -30,7 +30,7 @@ No address is a polygon in the geospatial sense. A building footprint is a polyg
 
 Buildings with multiple addresses (apartment buildings, office towers) are one polygon with several address labels. A single-family home is one polygon with one address label. A rural route is a path with several address labels distributed along it. A PO box is an address label with no spatial object at all — it exists only at the post office counter.
 
-Geocoders that return a polygon for an address are returning the polygon of the spatial object the address is associated with (a building, a parcel, a ZIP code approximation). The address itself is the label, not the shape.
+Geocoders that return a polygon for an address are returning the polygon of the spatial object the address is associated with (a building, a parcel, a ZIP code approximation). The address itself is the label rather than the shape.
 
 ### "An address is a discrete building."
 
@@ -38,10 +38,10 @@ An address can represent:
 
 - A specific apartment within a building (same building footprint, different address).
 - A floor of an office tower (same lat/lon, different vertical coordinate).
-- A PO box at a post office (the address is at the post office, not at the recipient's home).
-- A mailbox on a rural route (the address is a point along a path, not a building).
+- A PO box at a post office (the address is at the post office rather than at the recipient's home).
+- A mailbox on a rural route (the address is a point along a path rather than a building).
 - A berth in a marina (the address is a slip of water between docks).
-- A campsite in a national park (the address is a designated area, not a structure).
+- A campsite in a national park (the address is a designated area rather than a structure).
 - A grid coordinate in Mannheim, Germany (`R 5, 6-13` — block R, row 5, buildings 6-13, no street).
 - A distance marker: `50 miles West of Socorro, New Mexico` — no building, a point relative to a known place.
 - A descriptive location: `From where the Chinese restaurant used to be, two blocks down, half a block toward the lake` — no fixed reference, entirely relational.
@@ -52,14 +52,14 @@ Z-dimension matters. Buildings have floors, and different floors can have differ
 
 - **Below ground.** Basement apartments, underground parking, subway stations, wine cellars, bomb shelters, data centers. `123 Main St, Basement` is a different delivery point from `123 Main St, Apt 1` — same building footprint, different vertical position, possibly different entrance.
 - **Above ground.** Floor 50 of a skyscraper. The Empire State Building has different ZIP+4 codes for different floors and tenants. A geocode to the building centroid places all addresses at the same coordinate. A geocode with floor-level resolution places Floor 50 at 200 meters above ground level — but no geocoder returns elevation data.
-- **Sky lobbies.** Some skyscrapers have separate entrance lobbies at ground level and sky lobbies at transfer floors. A delivery to "85th Floor, 1 World Trade Center" may route through the sky lobby on the 64th floor, not the ground floor. The address's entrance is at elevation.
+- **Sky lobbies.** Some skyscrapers have separate entrance lobbies at ground level and sky lobbies at transfer floors. A delivery to "85th Floor, 1 World Trade Center" may route through the sky lobby on the 64th floor rather than the ground floor. The address's entrance is at elevation.
 - **Underground complexes.** Tokyo Station has a city's worth of retail and office space underground, with addresses that resolve to the surface station coordinates. Montreal's RÉSO (underground city) connects 1,600 shops and 200 restaurants — all with surface addresses, all functionally underground.
 
 ### "An address doesn't share its lat/lon with another address."
 
 A shopping mall at one lat/lon can have 100+ addresses — one per store. An office tower can have one address per floor, per suite, or per tenant. Each address shares the same horizontal coordinates but differs in vertical position or internal routing.
 
-A marina has addresses for each berth — the berths are adjacent, not stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad — same lat/lon to within 10 meters, differentiated by pad number.
+A marina has addresses for each berth — the berths are adjacent rather than stacked, but they share approximate coordinates and differ by a few meters. A trailer park has addresses for each pad — same lat/lon to within 10 meters, differentiated by pad number.
 
 A post office with PO boxes has hundreds of addresses (the PO box numbers) all at one lat/lon — the post office building. Geocoding a PO box to the post office building is correct at the building level but wrong for the recipient's actual location.
 
@@ -67,7 +67,7 @@ A post office with PO boxes has hundreds of addresses (the PO box numbers) all a
 
 Houseboats, ships, and mobile homes have addresses that move. A houseboat moored at a marina changes coordinates when it relocates. A cruise ship employee's address follows the ship's itinerary. A mobile home moved to a new park gets a new address even though the physical structure is the same.
 
-Offshore platforms have addresses but not fixed coordinates relative to land. A North Sea oil platform's address is its name and block number, not a lat/lon on a standard map projection. Military forward operating bases have addresses that exist only as long as the base exists.
+Offshore platforms have addresses but not fixed coordinates relative to land. A North Sea oil platform's address is its name and block number rather than a lat/lon on a standard map projection. Military forward operating bases have addresses that exist only as long as the base exists.
 
 Douglas Perreault's condo in Florida changed address three times in a few years — same physical location, four different written addresses due to post office changes and block renaming.
 
@@ -89,23 +89,23 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 
 **The resolver (Stage 6) returns each candidate's placetype alongside its coordinates.** A WOF record has a `placetype` (country, region, locality, neighborhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
 
-**The resolver returns top-K candidates, not a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver does not pretend that there is one correct coordinate for an ambiguous address.
+**The resolver returns top-K candidates rather than a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver does not pretend that there is one correct coordinate for an ambiguous address.
 
-**Vertical resolution is outside Mailwoman's scope.** The schema has a `unit` tag for apartment and suite numbers, but the resolver does not model elevation. A `unit=4B` address resolves to the building centroid, not Floor 4, Unit B. Vertical resolution requires building-interior data (floor plans, unit layouts) that no open gazetteer provides. This is a commercial address verification problem (SmartyStreets, Melissa Data), not an open-source parser problem.
+**Vertical resolution is outside Mailwoman's scope.** The schema has a `unit` tag for apartment and suite numbers, but the resolver does not model elevation. A `unit=4B` address resolves to the building centroid rather than Floor 4, Unit B. Vertical resolution requires building-interior data (floor plans, unit layouts) that no open gazetteer provides. This is a commercial address verification problem (SmartyStreets, Melissa Data) rather than an open-source parser problem.
 
 **Moving addresses are outside Mailwoman's scope.** A houseboat's current berth is a resolver question — the parser correctly extracts `Berth 42, Marina del Rey` as a location component, but the resolver needs a current marina database to map that to coordinates. The parser's job is structural — "this is a location reference" — not "this is where it currently is."
 
 ## What Mailwoman still can't do
 
 - **Vertical disambiguation.** Two addresses at the same building but different floors resolve to the same coordinate. The `unit` tag preserves the floor/apartment information in the output, but the resolver does not use it for spatial disambiguation.
-- **Non-building addresses.** `50 miles West of Socorro` — the parser can identify "Socorro" as a locality reference, but "50 miles West of" is a relative offset that requires spatial computation, not gazetteer lookup. Mailwoman's resolver does not compute relative offsets from gazetteer points.
-- **Shape output.** The resolver returns a coordinate and optionally a bounding box from WOF. It does not return the building footprint, the parcel boundary, or the ZIP code area. Shape-level output requires a spatial database (PostGIS, Elasticsearch with geo_shape), not a SQLite point-in-polygon index.
-- **Elevation data.** WOF does not include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate, which is a GIS operation, not a resolver operation.
+- **Non-building addresses.** `50 miles West of Socorro` — the parser can identify "Socorro" as a locality reference, but "50 miles West of" is a relative offset that requires spatial computation rather than gazetteer lookup. Mailwoman's resolver does not compute relative offsets from gazetteer points.
+- **Shape output.** The resolver returns a coordinate and optionally a bounding box from WOF. It does not return the building footprint, the parcel boundary, or the ZIP code area. Shape-level output requires a spatial database (PostGIS, Elasticsearch with geo_shape) rather than a SQLite point-in-polygon index.
+- **Elevation data.** WOF does not include elevation. Address-level elevation requires a DEM (Digital Elevation Model) lookup at the coordinate, which is a GIS operation rather than a resolver operation.
 
 ## References
 
 - [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.mdx)
 - [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
-- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions, not polygons
+- [What is a postcode?](../../the-problem/what-is-a-postcode.mdx) — postcodes as routing instructions rather than polygons
 - [What is a ZIP Code and how is it structured?](../../the-problem/what-is-a-zip-code.mdx) — why ZIP codes don't have boundaries
 - [How can a building have two addresses?](../../the-problem/how-can-a-building-have-two-addresses.mdx) — the vertical dimension of addressing

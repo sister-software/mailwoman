@@ -14,7 +14,7 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * character. Commas and semicolons remain separators.
  */
 /**
- * Tokens a gap may span and still be bridged. Wider gaps are separate spans, not one interrupted span.
+ * Tokens a gap may span and still be bridged. Wider gaps are separate spans rather than one interrupted span.
  */
 const MAX_BRIDGEABLE_GAP = 3
 
@@ -35,8 +35,8 @@ export interface BridgePunctuationOpts {
 	 * boundaries no merge may straddle: M2's crossing constraint, the bridge's mirror image (the bridge merges across
 	 * WEAK punctuation. this blocks merging across STRUCTURAL punctuation). A merge is blocked when either span boundary
 	 * falls inside the gap being bridged — e.g. an apostrophe-quoted name whose closing quote sits in an
-	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call, not the bridge's. only
-	 * gaps are policed.
+	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call rather than the bridge's.
+	 * only gaps are policed.
 	 */
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
 }

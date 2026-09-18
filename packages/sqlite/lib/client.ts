@@ -71,7 +71,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 		if (typeof source === "string" || source instanceof PathBuilder) {
 			const location = source.toString()
 			const options = optionsOrConfig as DatabaseSyncOptions | undefined
-			// node:sqlite checks the argument count, not the value: `new DatabaseSync(path, undefined)` throws.
+			// node:sqlite checks the argument count rather than the value: `new DatabaseSync(path, undefined)` throws.
 			const openArgs: [string, DatabaseSyncOptions?] = options ? [location, options] : [location]
 
 			database = new DatabaseSync(...openArgs)

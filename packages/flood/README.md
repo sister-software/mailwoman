@@ -19,7 +19,7 @@ Three readings, and keeping them apart is the whole job:
 
 Readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
 Zone 1 is defined by the Planning Practice Guidance as "all land outside Zones 2, 3a and 3b" — an
-absence, not a polygon — so inside England a location with no polygon is a designation, while
+absence rather than a polygon — so inside England a location with no polygon is a designation, while
 outside England the same emptiness is unknown. Wales, Scotland and Northern Ireland each have a
 different authority and a different zone scheme; Wales's four-zone TAN15 scheme is not
 interchangeable with England's.
@@ -107,11 +107,11 @@ and the build is bounded by construction.
 
 ## Traps this package exists to have already hit
 
-- **The published `flood_zone` values are `FZ2` and `FZ3`**, not "Flood Zone 2" / "Flood Zone 3".
+- **The published `flood_zone` values are `FZ2` and `FZ3`** rather than "Flood Zone 2" / "Flood Zone 3".
   The metadata prose describes the column the second way; the shipped geodatabase declares it as a
   3-character string. Measured over the whole file: 540,282 `FZ2`, 273,345 `FZ3`, 813,627 together.
   A builder written against the prose finds nothing.
-- **The source is EPSG:27700, not WGS84.** OSGB36 / British National Grid, in meters. Read as
+- **The source is EPSG:27700 rather than WGS84.** OSGB36 / British National Grid, in meters. Read as
   degrees it lands in the Gulf of Guinea. The ingest asserts the declared authority code and then
   asserts every reprojected vertex against the collection's own declared extent, which is what
   catches a coordinate-order mistake the projection check cannot see.
@@ -199,7 +199,7 @@ through 4 in a fresh process. A fourth died at feature 798284 after 798,000. Bot
 features. Neither failure is a property of the geometry.
 
 **The invariant, and where it lives.** A part with a non-degenerate bounding box touches at least one
-cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part**, not per
+cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part** rather than per
 feature: a per-feature check passes any multi-part feature whose other parts answered, and indexes it
 short with no error anywhere — the silent-absence shape this layer exists to refuse.
 
@@ -210,7 +210,7 @@ call-removal shortcuts — a part inside one cell, a part too narrow to contain 
 faster and are **not** what makes it correct. A build that completed only when fragmentation happened
 to stay low would not be reproducible.
 
-**Both live in `@mailwoman/spatial`, not here.** `classifyFeatureCells`, the zero-cell guard and the
+**Both live in `@mailwoman/spatial` rather than here.** `classifyFeatureCells`, the zero-cell guard and the
 ring blob under it are properties of h3-js and of byte layout rather than of this product, and
 `@mailwoman/soil` needs them unchanged — so they moved, and `sdk/cells.ts` and `rings.ts` re-export
 them. What stays in this package is what is zone-shaped: `FloodCellIndex` accumulates per zone code,
@@ -219,7 +219,7 @@ because the question asked of this layer is about the ZONE.
 ## License
 
 The layer ships at `tier: shipped` because OGL v3.0 permits redistribution with a named
-acknowledgement. The attribution string is the license condition, not decoration, and rides in
+acknowledgement. The attribution string is the license condition rather than decoration, and rides in
 `layer_manifest.attribution`:
 
 > © Environment Agency copyright and/or database right 2025. All rights reserved.

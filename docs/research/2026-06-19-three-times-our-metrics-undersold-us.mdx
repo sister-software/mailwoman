@@ -24,7 +24,7 @@ A metric that one record can swing by three and a half points isn't measuring a 
 
 The same week, the same eval told us our rural US locality resolution was a disaster: South Dakota matching 62%, Vermont 31%. That fit a story we already believed — the gazetteer is thin in rural states, the model can't resolve what isn't there — so it was easy to nod and file it under "known coverage gap."
 
-Then we pulled the misses. The resolver was landing the right place on nearly all of them. The problem was the scorer: it only counted a match if the resolved place was tagged `locality`, and New England-style civil towns are `localadmin` in our gazetteer, not `locality`. "Barre Town," "Saint Albans Town," every Vermont township — the resolver found them, and the metric threw them on the floor for having the wrong placetype label. Credit the group the resolver treats as a locality and Vermont goes from 31% to 93%, South Dakota from 62% to 98%. The model was fine. The data was fine. The ruler was bent.
+Then we pulled the misses. The resolver was landing the right place on nearly all of them. The problem was the scorer: it only counted a match if the resolved place was tagged `locality`, and New England-style civil towns are `localadmin` in our gazetteer rather than `locality`. "Barre Town," "Saint Albans Town," every Vermont township — the resolver found them, and the metric threw them on the floor for having the wrong placetype label. Credit the group the resolver treats as a locality and Vermont goes from 31% to 93%, South Dakota from 62% to 98%. The model was fine. The data was fine. The ruler was bent.
 
 ## Kilometers on paper, meters in production
 

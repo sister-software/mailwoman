@@ -12,7 +12,7 @@
  *   `resolveWeights` raises deterministically, without needing a real onnx graph). Each asserts that:
  *
  *   1. a warning lands on STDERR (never STDOUT — piped stdout parsing must stay clean), and
- *   2. degraded structural output is still produced on STDOUT with exit 0 (the fallback is kept, not
+ *   2. degraded structural output is still produced on STDOUT with exit 0 (the fallback is kept rather than
  *      turned into a hard-fail), and
  *   3. weights-ABSENT ("not found — install …") is distinguished from a weights LOAD error ("failed to
  *      load — Encoder error: …", the underlying cause surfaced rather than swallowed).
@@ -116,7 +116,7 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 		expect(code).toBe(0)
 		expect(stderr).toContain("neural weights not found")
 		expect(stderr).toContain(ABSENT_PACKAGE)
-		// The encoder-less structural fallback still produced output — not silent, not empty.
+		// The encoder-less structural fallback still produced output — not silent rather than empty.
 		const parsed = parseStdoutJSON(stdout) as Record<string, unknown>
 		expect(parsed).toBeTypeOf("object")
 		expect(parsed["postcode"]).toBe("10118")

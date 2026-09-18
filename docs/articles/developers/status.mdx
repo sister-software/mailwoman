@@ -27,7 +27,7 @@ Every artifact size below was measured on 2026-09-14 against the files this rele
 ## Version
 
 Every published workspace releases in lockstep on one version number, the model bundles included. A
-weights package version therefore tracks the release, not the model's own lineage.
+weights package version therefore tracks the release rather than the model's own lineage.
 
 | Fact                | Value                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
@@ -61,7 +61,7 @@ and build tooling, and they arrive as dependencies rather than as something you 
 ## Model artifacts
 
 `@mailwoman/neural-weights-en-us` publishes 15 files totalling 75,120,759 bytes (75.1 MB). That
-figure is the published tarball, not the working tree, and it is reproducible:
+figure is the published tarball rather than the working tree, and it is reproducible:
 
 ```bash
 npm view @mailwoman/neural-weights-en-us dist.unpackedSize dist.fileCount
@@ -138,7 +138,7 @@ next step turns it on.
 | Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                        |
 | The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                        |
 | One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |
-| Korean resolves no finer than the 시군구. No sub-county register has been adopted.         | None today. The constraint is data coverage, not engineering.                                                      |
+| Korean resolves no finer than the 시군구. No sub-county register has been adopted.         | None today. The constraint is data coverage rather than engineering.                                               |
 | The locale hint reports a single BCP-47 tag, so Han-script input is labeled `ja-JP`.       | Read the resolved country rather than the hint's locale when the input is Han-script.                              |
 | Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible; arbitrary translation is not performed.            |
 

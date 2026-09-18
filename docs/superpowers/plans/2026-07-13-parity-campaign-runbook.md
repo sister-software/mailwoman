@@ -6,7 +6,7 @@
 
 ## The consult's structure (kept / corrected / rejected)
 
-- **Kept:** fragment extract = confirmatory ASSAY, not the fix — the residual is span-head-shaped (converges with #727, independently). Anti-forgetting ranking: routed separate model (server tier) > Neutral-Residues adapters > plain extract + early-stop > freeze-encoder+head-only (insufficient capacity). Probe order by refutation cost. The read-out separator: token-F1 up while span-exact-match lags + trailing-number→postcode persists = span-head ceiling confirmed.
+- **Kept:** fragment extract = confirmatory ASSAY rather than the fix — the residual is span-head-shaped (converges with #727, independently). Anti-forgetting ranking: routed separate model (server tier) > Neutral-Residues adapters > plain extract + early-stop > freeze-encoder+head-only (insufficient capacity). Probe order by refutation cost. The read-out separator: token-F1 up while span-exact-match lags + trailing-number→postcode persists = span-head ceiling confirmed.
 - **Corrected (myopia):** a second encoder is server-tier only (pocket/WASM is size-conditional); the kind-classifier router is UNMEASURED on fragments — measure before betting on routing; the decode-time street-morphology FST bias channel already exists (off by default).
 - **Session's best find (blind-spot sweep + our own records):** the shipped bundle carries NO `crf-transitions.json` and CRF training diverged long ago (`crf_loss_weight=0.0` since v0.5.0) — decode runs on the structural BIO mask only. **Probe 0b: a transitions-only fine-tune (encoder frozen) is CPU-trainable and could suppress the trailing-number→postcode flip class as a pure decode-time sequence prior.** Nobody had this on the board.
 
@@ -25,7 +25,7 @@
 
 1. Probe 0: street recall on fragments improves; trailing-number→postcode confusion does not resolve (bias can't fix numeric-neighbor labels).
 2. Probe 1: fragment-dev token-F1 rises materially; span-exact-match lags severely; trailing-number→postcode persists → #727 ceiling confirmed.
-3. Router: fragment recall poor in ≥ a handful of locales; structured-address precision high (risk is recall, not precision).
+3. Router: fragment recall poor in ≥ a handful of locales; structured-address precision high (risk is recall rather than precision).
 
 Scoreboard (to fill): structural n/3 — quantitative: none registered (numbers were explicitly not solicited).
 

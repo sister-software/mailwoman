@@ -14,7 +14,7 @@
  *   the FCC's values are zero-padded 10-digit strings and `parseInt` would lose the leading zeros (decision
  *   1). `geoid` (column 10) is a string joining `TIGERBlockTable.GEOID` (decision 3).
  *
- *   ## Why the source is a resource, not a Buffer
+ *   ## Why the source is a resource rather than a Buffer
  *
  *   This read is STREAMING because the files do not fit the alternative. One state × one technology —
  *   `bdc_48_FibertothePremises_fixed_broadband_D25` — is 920 MB and 10,369,043 rows, and a national run

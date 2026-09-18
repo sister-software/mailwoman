@@ -134,8 +134,8 @@ export interface GoldenRelabelResult {
  * because the trailing word may belong to the name rather than to the street type.
  *
  * Chosen against the surfaces this golden set actually carries (park 6, green 5, hill 7, heights 3, hollow 3, brook 3,
- * pass 3 — the whole flagged class is 60 rows of 1,906), not from the whole 200-entry table: flagging every possible
- * name-head would mark a third of the corrections and stop being a review artifact.
+ * pass 3 — the whole flagged class is 60 rows of 1,906) rather than from the whole 200-entry table: flagging every
+ * possible name-head would mark a third of the corrections and stop being a review artifact.
  */
 // ── Byte-exact tail split ──────────────────────────────────────────────────
 
@@ -336,7 +336,7 @@ export function relabelGoldenStreetRow(
 	// Narrow on purpose: a name that happens to be a Pub-28 canonical is not interesting ("Mountain Rd",
 	// "Valley Dr", "Mills Ln" are ordinary streets, and flagging them buried the deck — 108 rows of noise
 	// on the first run). A name that is a bare DIRECTIONAL is: "East Rd" leaves `street: "East"`, which is
-	// a direction, not a name.
+	// a direction rather than a name.
 	if (isStreetDirectionalToken(name)) {
 		flags.push({
 			kind: "remainder-is-affix",

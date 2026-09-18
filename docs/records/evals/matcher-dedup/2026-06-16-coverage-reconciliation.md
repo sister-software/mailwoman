@@ -6,15 +6,15 @@ Scored with the Fellegi-Sunter baseline (`learnedScorer: false`): this is a cros
 
 ## The reconciliation
 
-| bucket                             | entities | meaning                                                            |
-| ---------------------------------- | -------: | ------------------------------------------------------------------ |
-| **enrolled**                       |       22 | resolves to an eligibility record and a funding record             |
-| **eligible, not enrolled**         |     2749 | eligibility record, no funding record resolved (the **anti-join**) |
-| **funded, not in eligibility set** |      572 | funding record, no eligibility record resolved                     |
+| bucket                                    | entities | meaning                                                            |
+| ----------------------------------------- | -------: | ------------------------------------------------------------------ |
+| **enrolled**                              |       22 | resolves to an eligibility record and a funding record             |
+| **eligible rather than enrolled**         |     2749 | eligibility record, no funding record resolved (the **anti-join**) |
+| **funded rather than in eligibility set** |      572 | funding record, no eligibility record resolved                     |
 
-Of the 2771 entities with an eligibility record, 0.8% also resolve to a funding record — a **floor**, not a coverage rate (imperfect resolution + any sampling only ever miss links, never invent them). The deliverable is the anti-join SET, not this percentage.
+Of the 2771 entities with an eligibility record, 0.8% also resolve to a funding record — a **floor** rather than a coverage rate (imperfect resolution + any sampling only ever miss links, never invent them). The deliverable is the anti-join SET rather than this percentage.
 
-## Anti-join spot-check — first 15 "eligible, not enrolled"
+## Anti-join spot-check — first 15 "eligible rather than enrolled"
 
 | entity    | sources        | name                                             | coordinate         |
 | --------- | -------------- | ------------------------------------------------ | ------------------ |
@@ -36,4 +36,4 @@ Of the 2771 entities with an eligibility record, 0.8% also resolve to a funding 
 
 ## The caveat that matters
 
-This is a **capped sample** (≤2000/source), so "eligible, not enrolled" includes entities that are enrolled in reality but whose funding record fell outside the sample — a **sampling artifact, not a finding**. At full scale the anti-join tightens, but it is still only a set of candidates. This is a **set-membership reconciliation, not a determination**. A missing funding record can mean the entity didn't apply, applied under a name we didn't resolve, is ineligible, or any number of things. We produce the reconciled join and surface the candidate set; **what a gap means, and whether to act on it, is entirely the data consumer's call.** Nothing here is an allegation.
+This is a **capped sample** (≤2000/source), so "eligible rather than enrolled" includes entities that are enrolled in reality but whose funding record fell outside the sample — a **sampling artifact rather than a finding**. At full scale the anti-join tightens, but it is still only a set of candidates. This is a **set-membership reconciliation rather than a determination**. A missing funding record can mean the entity didn't apply, applied under a name we didn't resolve, is ineligible, or any number of things. We produce the reconciled join and surface the candidate set; **what a gap means, and whether to act on it, is entirely the data consumer's call.** Nothing here is an allegation.

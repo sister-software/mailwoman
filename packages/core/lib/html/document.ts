@@ -8,7 +8,7 @@
  *   rather than content, `<script>`/`<style>` blocks that are neither — and every strategy downstream
  *   should reason about the same narrowed window rather than each re-deriving one.
  *
- *   Returns HTML, not text: the caller still has a document to parse. `#html/text` answers the text
+ *   Returns HTML rather than text: the caller still has a document to parse. `#html/text` answers the text
  *   question and `#html/tables` the grid question.
  */
 

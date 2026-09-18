@@ -15,7 +15,7 @@
  *   WHY THE GENERATORS ARE HASHED: on 2026-08-02 the workflow key hashed `release.config.json` and
  *   `data/gazetteer/*` but not the extractor, so a currency-filter change produced new artifacts
  *   while the cache served old ones and the pair-index↔card parity guard failed with
- *   `expected 47878 to be 49033`. The generating code is part of the input, not context around it.
+ *   `expected 47878 to be 49033`. The generating code is part of the input rather than context around it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

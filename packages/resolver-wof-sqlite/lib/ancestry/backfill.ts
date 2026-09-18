@@ -30,7 +30,7 @@
  *   A place whose `wof:hierarchy` genuinely stops short is not a candidate and needs no repair: the
  *   source is the authority on what a place should have. American Samoa's localities, for instance,
  *   have `{country_id, locality_id}` and no region in WOF itself — the artifact matching that is
- *   correct, not truncated.
+ *   correct rather than truncated.
  *
  *   The authoritative hierarchy is in the source geojson: `wof:hierarchy` is an array of branches,
  *   each a `<placetype>_id` → id map (region_id, county_id, country_id, …), fully populated even when
@@ -40,7 +40,7 @@
  *   Must run after populateAncestors and before the build freezes (VACUUM INTO), so the rows land in
  *   the shipped artifact — `scripts/build-unified-wof.ts` Phase 3 calls it inline. The standalone
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
- *   repair of an already-built DB. Idempotent by the per-pair existence check, not by the candidate
+ *   repair of an already-built DB. Idempotent by the per-pair existence check rather than by the candidate
  *   test: each (id, ancestor_id) is inserted at most once, so a second run over the same DB adds
  *   nothing.
  */
@@ -68,7 +68,7 @@ export interface AncestryBackfillResult {
 	rowsAdded: number
 	/**
 	 * Candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present locally) —
-	 * skipped, not an error.
+	 * skipped rather than an error.
 	 */
 	noGeojson: number
 }
@@ -130,8 +130,8 @@ function placetypeFromKey(key: string): string | null {
  * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy`
  * geojson, so probing them is pure waste: on a wide-coverage DB the country-less set is millions of Overture/GeoNames
  * leaf localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
- * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
- * skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
+ * ~40-minute one (their ancestry comes from the parent_id closure rather than this backfill). Correctness-preserving —
+ * the skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,

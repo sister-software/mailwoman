@@ -31,10 +31,10 @@ These are the architectures most production geocoders use, and for several appli
 the result when:
 
 - You are geocoding US addresses only.
-- You need administrative-level accuracy (city, state, postcode), not street-level.
+- You need administrative-level accuracy (city, state, postcode) rather than street-level.
 - Your volume is under 1 million addresses per month.
 - You can fall back to a paid API or manual review for failures.
-- You have a week, not a year.
+- You have a week rather than a year.
 - You do not need graceful degradation — a confident wrong answer is acceptable if it's rare enough.
 
 These conditions describe most geocoding use cases — for them, the simple architectures are the right choice. Mailwoman exists for the applications where they are not.
@@ -47,7 +47,7 @@ Mailwoman is the right choice when:
 - You serve international users with non-Anglophone address formats.
 - Your volume makes fallback costs material.
 - You cannot use a third-party API for privacy, regulatory, or cost reasons.
-- You need [calibrated confidence](../../concepts/confidence-calibration.mdx) — ambiguous inputs should surface their ambiguity, not produce a confident wrong answer.
+- You need [calibrated confidence](../../concepts/confidence-calibration.mdx) — ambiguous inputs should surface their ambiguity rather than produce a confident wrong answer.
 - You are willing to invest in infrastructure for long-term accuracy gains.
 
 ## See also

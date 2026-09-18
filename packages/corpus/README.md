@@ -56,7 +56,7 @@ directories. A directory owns its recipes, source adapters, acquisition tools, a
 
 Sources that deliberately span countries (OpenAddresses, GeoNames, Overture, OSM, and WOF) remain
 under `adapters/`, with their common fetching and processing utilities under `tools/`. Source kind
-is therefore a nested concern inside a country directory, not the package's organizing principle.
+is therefore a nested concern inside a country directory rather than the package's organizing principle.
 Tests live beside the module they cover: `fr/adapters/ban/adapter.test.ts` belongs with
 `fr/adapters/ban/adapter.ts`. Production compilation excludes `*.test.ts`; the test project includes
 the same pattern. Public subpaths use this same locale-first layout.
@@ -77,7 +77,7 @@ mailwoman corpus fetch geonames-postal
 ## Design
 
 - **BIO (Begin/Inside/Outside) labeling** over SentencePiece tokens.
-- **Character-offset aligned** — labels track the raw string, not the
+- **Character-offset aligned** — labels track the raw string rather than the
   normalized form, so the model learns real input distributions.
 - **Source-homogeneous subsets** — each training-data subset comes from one source, ordered by
   type, so eval splits are clean (no bleed between train and held-out).

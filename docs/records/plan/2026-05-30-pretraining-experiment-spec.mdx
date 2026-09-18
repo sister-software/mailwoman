@@ -27,7 +27,7 @@ corpus mixture — not the thing that's absent.
 
 ## The key property: pre-training adds zero bytes to the shipped model
 
-This is a **training-time phase, not a runtime component.** The lifecycle changes
+This is a **training-time phase rather than a runtime component.** The lifecycle changes
 from one phase to two:
 
 ```
@@ -68,10 +68,10 @@ scenario where CLM warrants a place is if mailwoman later wants a **generative r
 address _parsing_ + _rewriting_ in one model, reducing parcel re-routing ~43%). If
 that lands on the roadmap, adopt the biphasic CLM→MLM recipe rather than pure CLM:
 early CLM data-efficiency + a bidirectional MLM/RTD finish. For pure BIO tagging
-today, that's speculative future-proofing, not a current need.
+today, that's speculative future-proofing rather than a current need.
 
 **Note on calibration specifically:** no study isolates CLM-vs-MLM _downstream
-calibration_ — the result is from _pre-training presence_, not the
+calibration_ — the result is from _pre-training presence_ rather than the
 objective. The objective-independent calibration change is **label smoothing +
 temperature scaling** (already partially explored in v0.7.0). So: pre-train (any
 bidirectional objective) **and** keep label smoothing in the fine-tune.

@@ -103,7 +103,7 @@ const ENTRIES: PairIndexEntry[] = [
 ]
 
 /**
- * The edge a probe hit returns for each of {@link ENTRIES} — the whole typed edge, not half of it (schema 3).
+ * The edge a probe hit returns for each of {@link ENTRIES} — the whole typed edge rather than half of it (schema 3).
  */
 const DEP_LOC_UNDER_LOCALITY = { tag: "dependent_locality", parentTag: "locality" }
 const LOCALITY_UNDER_REGION = { tag: "locality", parentTag: "region" }
@@ -130,7 +130,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		const r = resolver()
 
 		// "london" is a child of "greater london" and a parent of "shoreditch"/"camden" — the probe key
-		// must be the full (child, parent) tuple, not just the child.
+		// must be the full (child, parent) tuple rather than just the child.
 		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
 	})
@@ -201,7 +201,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 	it("distinguishes pairs that would collide under naive concatenation", () => {
 		// Both entries would produce "new york ny" under space-join of child + parent,
-		// requiring the key to encode (child, parent) as a tuple, not a concatenation.
+		// requiring the key to encode (child, parent) as a tuple rather than a concatenation.
 		const collisionEntries: PairIndexEntry[] = [
 			{ child: "new york", parent: "ny", tag: "locality", parentTag: "region" },
 			{ child: "new", parent: "york ny", tag: "locality", parentTag: "region" },

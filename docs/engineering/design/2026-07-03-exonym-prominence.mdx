@@ -48,10 +48,10 @@ consults a single primary in a world with multilingual official names.**
    name rows the gazetteer already carries (`name_swe` for Turku, per WOF). Alias-exact remains
    the tier for abbreviations, colloquialisms, and historical forms. Turku becomes name-exact for
    "Åbo" and beats the hamlet on population _within_ the sub-tier; Paris Township stays
-   alias-exact (its "Paris" is a truncation, not an official name in another language);
+   alias-exact (its "Paris" is a truncation rather than an official name in another language);
    `ME → Maine` is untouched (abbreviations stay alias-tier, no name-exact competitor).
 
-## What option 3 needs (scoping, not commitment)
+## What option 3 needs (scoping rather than commitment)
 
 - Ingest: mark official-language name rows distinctly from alt/colloquial names (WOF's `name_*`
   language tags + `official` flags carry this; the candidate/FTS builders would carry one extra

@@ -8,7 +8,7 @@
  *   workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with.
  *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes. an interrupted run leaves
  *   every tracked file byte-identical because nothing ever writes into the checkout (see
- *   `stage.ts` for why staging, not try/finally, is the mechanism).
+ *   `stage.ts` for why staging rather than try/finally, is the mechanism).
  *
  *   Two sources, one audit. `--source repo` (the default) materializes weights from the machine's data
  *   root via the same `copyWeights` recipe the release path runs; `--source hf` reads the public

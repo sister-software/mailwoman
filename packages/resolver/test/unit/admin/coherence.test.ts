@@ -6,7 +6,7 @@
  *   Tests for #263 admin descendant-consistency (`opts.adminCoherence`). When a region resolves to a
  *   foreign namesake (greedy by population — "ME" → Messina, IT) and its child locality then finds
  *   nothing beneath it, re-pick the (region, locality) pair so the locality descends from a same-named
- *   region candidate ("Portland" → Maine, not Messina). Joint over the containment graph. no country
+ *   region candidate ("Portland" → Maine rather than Messina). Joint over the containment graph. no country
  *   prior, no list. Byte-stable when the flag is unset and when no consistent pair exists.
  */
 
@@ -345,7 +345,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 
 		const loc = localityOf(out)
 		expect(loc?.lat).toBeCloseTo(33.76, 2)
-		// Resolved in the walk, not by the coherence pass — no re-pick marker.
+		// Resolved in the walk rather than by the coherence pass — no re-pick marker.
 		expect(loc?.metadata?.["admin_coherence_repicked"]).toBeUndefined()
 		// The US-Georgia region decoration stands (not reverted).
 		const region = regionOf(out)

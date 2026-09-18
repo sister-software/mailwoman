@@ -96,7 +96,7 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 	// Component tree — synchronous, independent of WebGL.
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort. Its absence means no software WebGL here, not a component fault.
+	// GL surface — best-effort. Its absence means no software WebGL here rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return

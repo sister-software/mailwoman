@@ -16,9 +16,9 @@
  *
  *   Overpass is a volunteer-run public endpoint with a published fair-use policy. The acquisition is a
  *   SINGLE request whose response is written to a dated directory and never re-fetched. every later
- *   build reads that file. So the reproducibility artifact is the response, not the query — a rebuilt
+ *   build reads that file. So the reproducibility artifact is the response rather than the query — a rebuilt
  *   database from the same `response.json` is byte-comparable, while a re-query against a live OSM would
- *   not be (OSM changes hourly, and that is a feature of the source, not a defect of the build).
+ *   not be (OSM changes hourly, and that is a feature of the source rather than a defect of the build).
  *
  *   ## Why not `@mailwoman/poi-taxonomy`'s emitter
  *
@@ -52,7 +52,7 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
  * instance 504s — and on 2026-08-05 it was the wrong move. Three of three attempts returned HTTP 504: the whole-NI area
  * query at 97 s, the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox at 95 s that
  * `overpass-api.de` answered 200 in 8 s from the same machine minutes later. A mirror that cannot serve an 8-second
- * query is an unhealthy host, not a capacity answer. Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it
+ * query is an unhealthy host rather than a capacity answer. Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it
  * recovers. do not promote it to default on the strength of the wiki page.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
@@ -61,7 +61,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  * The one query. Verbatim, because its md5 goes into the database's provenance and a reader must be able to re-run
  * exactly this text.
  *
- * ## The spatial filter is a BBOX, not `area["ISO3166-2"="GB-NIR"]`
+ * ## The spatial filter is a BBOX rather than `area["ISO3166-2"="GB-NIR"]`
  *
  * The area form — `area["ISO3166-2"="GB-NIR"]->.ni. nwr(area.ni)["addr:postcode"~"^BT"].` — is the obvious way to write
  * this, and both attempts at it on 2026-08-05 ended in an HTTP 504 from `overpass-api.de`'s gateway. An `(area)` filter
@@ -175,10 +175,10 @@ export interface OverpassResponse {
  * `APIClient` per `AGENTS.md`: this is a small-body API request against a rate-limited volunteer host — the exact
  * population the rule binds. `minRequestIntervalMs` is set even though the acquisition issues one request, because an
  * unpaced client is a trap for the next caller who loops it. Retry is deliberately off (the `APIClient` default): an
- * Overpass 429/504 means the server is shedding load, and the correct response to that is to come back later by hand,
- * not to have a script re-issue a whole-region scan — which is exactly what happened on 2026-08-05, when the instance
- * flapped through five 504s and a 429 before answering. `timeout` is 10 minutes, comfortably past the query's own
- * `[timeout:300]` plus the transfer of a ~7 MB body (measured: 36 s end to end).
+ * Overpass 429/504 means the server is shedding load, and the correct response to that is to come back later by hand
+ * rather than to have a script re-issue a whole-region scan — which is exactly what happened on 2026-08-05, when the
+ * instance flapped through five 504s and a 429 before answering. `timeout` is 10 minutes, comfortably past the query's
+ * own `[timeout:300]` plus the transfer of a ~7 MB body (measured: 36 s end to end).
  */
 export function createOverpassClient(): APIClient {
 	return new APIClient({

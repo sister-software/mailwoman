@@ -37,7 +37,7 @@ and it is not concordance.
   mechanism collides twice.
 
 **So: new work in this arc is named `*Coherence` and described as joint-consistency.** Naming a
-mechanism `concordance` is a defect, not a preference.
+mechanism `concordance` is a defect rather than a preference.
 
 ## Part A — Inventory
 
@@ -60,7 +60,7 @@ directions it covers, so the design in Part C only proposes what is missing.
 **Three divergent copies of the shape table exist** (query-shape, neural, corpus-python), which
 `codex/postcode-systems.ts:11-15` explicitly anticipated and warned against. Each has a live reason —
 NL/IE/PT/PL have no codex module — so this is the AGENTS.md "a duplicate is a bug report about the
-shared tool" pattern: the shared tool is missing four countries, not four authors failing to find it.
+shared tool" pattern: the shared tool is missing four countries rather than four authors failing to find it.
 
 ### A.2 Prefix → region structure (direction 3)
 
@@ -128,7 +128,7 @@ false negative.
 
 ## Part B — Measurements
 
-Scripts in the session scratchpad; each number below is a run, not an estimate.
+Scripts in the session scratchpad; each number below is a run rather than an estimate.
 
 ### M-1: the exclusion population on the Gauntlet
 
@@ -146,7 +146,7 @@ shape-positive spans (deduped)               141
 STRATUM A — the 110 cases with ground truth
   shape-positive spans                       106
   TRUE postcodes                             100
-  EXCLUSION (shape-positive, not a postcode)   6   (5.7% of shape-positive spans)
+  EXCLUSION (shape-positive rather than a postcode)   6   (5.7% of shape-positive spans)
   shape-collision profile:  au|nz 5,  jp 1
 
   every exclusion span:
@@ -172,13 +172,13 @@ shape alone vs the system, on the 110 asserted codes
    `"15 07691"` two-token window matching the JP `NNN-NNNN` shape. Not one is a within-country
    confusion. An exclusion mechanism that runs after the country is known has 6 spans of headroom
    here, and the Gauntlet is a regression board whose pass rate is never a ship gauge — so this is a
-   ceiling on what the board can SHOW, not proof the defect is rare in the wild.
+   ceiling on what the board can SHOW rather than proof the defect is rare in the wild.
 2. **Shape alone cannot pin the system for half the codes.** 49 of 100 asserted codes are accepted
    by more than one system, and 10 by none (IE Eircode, SI, IM, and the other countries with no codex module).
    Any mechanism that treats "shape validity" as evidence of a specific country is reading a
    coin-flip. This is exactly why `findPostcodeCountryScope` abstains on ≥2 coherent countries
    (`postcode-country-coherence.ts:269`) rather than picking.
-3. **The 30-case Stratum B is the real gap in the board**, not in the mechanism. Those cases carry a
+3. **The 30-case Stratum B is the real gap in the board** rather than in the mechanism. Those cases carry a
    postcode-shaped span and assert no postcode, so no eval can currently tell whether the parser got
    it right. Filling `expectComponents.postcode` on them is a corpus task worth doing before any
    exclusion bar is graded.
@@ -214,7 +214,7 @@ check the resolver already trusts. The area letters are ~7× coarser (23 km medi
 the answer to a metro.
 
 The BT zero is not an artifact of my query. The database's own meta records it: `coverage_gap_northern_ireland`
-= "ZERO Northern Ireland (BT) postcodes — measured, not assumed", and
+= "ZERO Northern Ireland (BT) postcodes — measured rather than assumed", and
 `coverage_gap_northern_ireland_options` = BT centroids "CANNOT be filled from a free source" (ONSPD/NSPL
 carry them from LPS Pointer but carve them out of OGL).
 
@@ -236,7 +236,7 @@ whitespace-stripped compact form reads `BT4 1NY` as district `BT41`, which silen
 from the census and invents nine members. The outward must be derived as "compact minus the last
 three characters", the same rule M-2 uses.
 
-**80 districts, no coordinates.** So the NI tier of any mechanism here is an ANCESTRY tier, not a
+**80 districts, no coordinates.** So the NI tier of any mechanism here is an ANCESTRY tier rather than a
 coordinate tier: a BT district can assert "Northern Ireland" and a named district, and must assert
 nothing about where inside it. That is the shape mechanism 3's bar is written around.
 
@@ -296,7 +296,7 @@ facility-assigned code collapsing onto one point), and only 979 of 42,319 rows c
 `census-zcta-2024` centroid stamp — the rest are unstamped.
 
 **Consequence for the design:** a prefix→region artifact must be built from the numbering authority
-(USPS/Census ZCTA), NOT derived from the current postcode gazetteer's parentage. Deriving it from
+(USPS/Census ZCTA) rather than derived from the current postcode gazetteer's parentage. Deriving it from
 `spr.parent_id` bakes ~8% of firm-ZIP misattribution straight into the prior.
 
 ## Part C — The design
@@ -367,7 +367,7 @@ default-on risk. Record it as a negative and stop.
 **Change shape.** A retrieval-augmented prior in the resolver walk. Direction 2's REVERSE claim —
 an ambiguous name gains validity when the postcode contains it.
 
-**Where it lives.** The resolver walk, not the decoder. Concretely it generalizes the #741
+**Where it lives.** The resolver walk rather than the decoder. Concretely it generalizes the #741
 short-circuit (`resolver-wof-sqlite/candidate-lookup.ts:310-333`) from "US postal cities via a
 side-index table" to "any locality candidate, scored by whether the postcode's geometry contains or
 neighbors it". The #741 path stays as the exact-match fast path; this is the scoring rung beneath it,
@@ -401,11 +401,11 @@ outcome may be that mechanism 2 replaces #370 rather than joining it.
   mechanism is not doing what this document claims.
 - **B2-3 (the double-repair confound).** The same board run with `postcodeConsistency` on and off.
   Bar: **the two arms agree on ≥98% of cases.** Disagreement means the two passes are fighting, and
-  the promotion question becomes replace-or-check, not stack.
+  the promotion question becomes replace-or-check rather than stack.
 - **B2-4 (cost).** The rung adds one postcode lookup per locality query that misses the fast path.
   Bar: **≤15% p95 latency increase** on the demo preset. The candidate-table probe is the
   per-keystroke hot path (`core/resolver/types.ts`, the sync-by-interface carve-out); a prior that
-  costs a lookup there needs a number, not an assurance.
+  costs a lookup there needs a number rather than an assurance.
 
 **Kill condition.** B2-2 shows no gap between postcode-present and postcode-removed arms — the model
 and the population ranking were already carrying it, and the rung is dead weight.
@@ -438,7 +438,7 @@ interface PostcodePrefixHeader {
 	levels: readonly string[]
 	/** MD5s of the source artifact(s), for provenance — same discipline as PCN1's sourceMD5s. */
 	sourceMD5s: string[]
-	/** The NUMBERING AUTHORITY the prefixes came from, not the gazetteer they were joined to. */
+	/** The NUMBERING AUTHORITY the prefixes came from rather than the gazetteer they were joined to. */
 	source: string
 	buildDate: string
 	/**
@@ -518,8 +518,7 @@ separate evidence, because their radius profiles differ by 45×.
 - **B3-5 (no channel is fed an untrained value).** Before any decode wiring, confirm that no shipped
   weights bundle declares a channel this artifact would populate. Bar: **the offline probe path
   touches zero model inputs.** The GB hole cost 24 exact postcodes on gb-golden by feeding slot 4 a
-  value it was never trained on; that receipt is why this bar is written before the wiring exists,
-  not after.
+  value it was never trained on; that receipt is why this bar is written before the wiring exists rather than after.
 
 **Kill condition.** B3-2 misses at every prefix length — the prefix does not localize enough to beat
 abstention, and the GB outward number was a property of Code-Point Open rather than of postcodes.
@@ -560,7 +559,7 @@ stacking it into this arc violates one-variable-per-run.
 - **A default-on promotion for any of the three.** Each needs its own evidence record, the way #1477
   got one for postcode-country coherence.
 - **The three divergent shape tables.** A.1 names them and the four missing codex modules that caused
-  them. Collapsing them is the right fix and it is a codex task, not a mechanism.
+  them. Collapsing them is the right fix and it is a codex task rather than a mechanism.
 - **Fixing the two stale docstrings** (`resolve.ts:263`, `postcode-country-coherence.ts:71-72`) and
   the `runtime-flags.mdx:49` row. Named here so they are not lost; they belong to whoever next
   touches those files.

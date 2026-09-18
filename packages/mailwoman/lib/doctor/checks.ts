@@ -50,8 +50,8 @@ export interface DoctorCheck {
 	status: CheckStatus
 	detail: string
 	/**
-	 * What the reader LOSES while this check is not ok, in product terms ("geocode can only place you in the city, not on
-	 * the street"), not implementation terms. Present whenever `status !== "ok"` (#1577).
+	 * What the reader LOSES while this check is not ok, in product terms ("geocode can only place you in the city rather
+	 * than on the street"), not implementation terms. Present whenever `status !== "ok"` (#1577).
 	 *
 	 * A red line and a fix command say what to type. they never say whether typing it matters to the thing the reader was
 	 * actually trying to do. Every optional layer here is genuinely optional for SOMEONE, so a bare ✗ next to "POI layer"
@@ -288,7 +288,7 @@ const DATA_ROOT_CONSEQUENCE =
 	"database already installed elsewhere will not be found unless you point $MAILWOMAN_DATA_ROOT at it."
 
 /**
- * Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling, not parse.
+ * Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling rather than parse.
  */
 export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 	const base = { id: "data-root", label: "Data root", core: false }

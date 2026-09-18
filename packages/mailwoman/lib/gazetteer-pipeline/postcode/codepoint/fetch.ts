@@ -70,9 +70,9 @@ export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
  * only the OS line — the common mistake, and the one GeoNames' readme makes in reverse by naming only Royal Mail — is
  * not compliance.
  *
- * `year` is the year of YOUR publication, not the year of the OS release. OGL attribution tracks the redistribution.
- * That is the whole reason this is a function. The archive's own `Doc/licence.txt` in the 2026-05 extract reads `2026`
- * on all three lines.
+ * `year` is the year of YOUR publication rather than the year of the OS release. OGL attribution tracks the
+ * redistribution. That is the whole reason this is a function. The archive's own `Doc/licence.txt` in the 2026-05
+ * extract reads `2026` on all three lines.
  */
 export function codePointAttribution(year: number): string {
 	return [
@@ -165,7 +165,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  *
  * There is also no NI counterpart to Code-Point Open to fall back on. LPS's OSNI Open Data catalogue is 77 datasets,
  * all OGL v3, and contains boundaries, terrain, raster mapping and two gazetteers (place names, street names) — no
- * postcode centroids and no address points. That is a checked negative from the catalogue, not an assumption.
+ * postcode centroids and no address points. That is a checked negative from the catalogue rather than an assumption.
  *
  * So the real options are three, and only one of them is free:
  *

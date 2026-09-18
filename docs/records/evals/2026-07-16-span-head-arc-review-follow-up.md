@@ -5,7 +5,7 @@
 
 The three reviews converge on the architecture verdict: the span head is sound, the list is the
 product, the resolver-as-arbiter is dead for the class that needs arbitration, and the highest-EV
-next move is data, not architecture. What remains are two factual corrections, one open check
+next move is data rather than architecture. What remains are two factual corrections, one open check
 question, and a sequencing decision. This settles all four.
 
 ---
@@ -54,7 +54,7 @@ matrix is required before implementation (BAN: yes; BAG: yes; TIGER: spatial, ne
 which re-introduces a locality dependency; ZZ: absent). Score comparability with the CRF's
 normalization gets checked in review, per the thesis's own incomparable-scores antipattern.
 
-Longer-view framing: BAN is the first proving ground, not the abstraction. The abstraction is a
+Longer-view framing: BAN is the first proving ground rather than the abstraction. The abstraction is a
 source-tiered street-name evidence provider:
 
 ```
@@ -66,7 +66,7 @@ Tier A sources (authoritative street/address registers: BAN, BAG-like systems) c
 augmentation, and positive name-index bias. Tier B sources (road/address-range data: TIGER) can
 support scoped evidence only; global `"Main St"` evidence is weak, while `"Main St" + state/ZIP`
 may be useful. Tier C sources (admin gazetteers such as WOF) support locality/region/country
-evidence, not street existence; they are the famous-street-as-place trap. Tier D sources (OSM-like
+evidence rather than street existence; they are the famous-street-as-place trap. Tier D sources (OSM-like
 broad data) are useful for experiments and coverage gaps, but licensing, attribution, and local
 quality must check product use. No tier supplies global negative evidence.
 
@@ -75,7 +75,7 @@ quality must check product use. No tier supplies global negative evidence.
 All three reviews now rank BAN augmentation above option C. Reviewer A's self-consistency critique
 stands regardless: the kind classifier shares the encoder, so feeding its posterior back risks the
 model agreeing with itself on exactly the failing class. If option C is ever built, it conditions
-on the external `query-shape` structural signal, not the learned kind head.
+on the external `query-shape` structural signal rather than the learned kind head.
 
 ## 5. The converged sequence
 
@@ -109,23 +109,22 @@ caught by it.
 
 **Tier 2 — the BAN bare-street training extract.** 5–10% mix, short schedule, graded on the Tier-1c
 eval set. The same extraction script may produce both train and eval, but the split must be
-source-disjoint by normalized street surface before sampling, not merely row-disjoint. Add a
+source-disjoint by normalized street surface before sampling rather than merely row-disjoint. Add a
 full-address/contextful regression guard alongside the bare-fragment read; the extract only ships if
 it improves fragments without degrading normal addresses. _Pre-registered read: if the 17
 locality-refusals flip to street, the training-distribution hypothesis holds and option C becomes
-reinforcement, not rescue. If they don't move, the hypothesis is falsified and option C is
+reinforcement rather than rescue. If they don't move, the hypothesis is falsified and option C is
 vindicated as the correct level. Either result decides something the current analysis cannot._
 
 **Tier 3 — conditional on Tiers 1–2.** Name-index rerank (positive bias only) to collect list
 headroom; option C (external kind signal) only if polarity survives augmentation; MBR as the
-default consumer only if Tier-1d shows a real margin. Tune any name-index bias on held-out dev,
-not the Paris target fixture; positive-only evidence can still over-rank street readings if the
+default consumer only if Tier-1d shows a real margin. Tune any name-index bias on held-out dev rather than the Paris target fixture; positive-only evidence can still over-rank street readings if the
 offset is hand-fit to the known failures.
 
 ## 6. Ship decision
 
 Unanimous across reviews: the span decode ships **behind a flag**, valued for the list and the
-target class (+23.8pp Paris, oracle@5 0.905, +0.5% latency), not for rank-1 parity (+0.75pp, inside
+target class (+23.8pp Paris, oracle@5 0.905, +0.5% latency) rather than for rank-1 parity (+0.75pp, inside
 noise). It becomes the default path when a consumer collects the headroom — and Tier 1a decides
 whether the flag has a regression cost we haven't named yet.
 

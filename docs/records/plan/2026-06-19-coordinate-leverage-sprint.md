@@ -26,7 +26,7 @@ overhaul aimed at a defect that does not move the metric we ship on. That is the
 good-paper disguise.
 
 **Decision: the span-head / tokenizer thread is PARKED as future-enablement** for CJK/Cyrillic locales
-(where byte-fallback fertility blocks coverage we don't yet serve), not next-cycle work. If
+(where byte-fallback fertility blocks coverage we don't yet serve) rather than next-cycle work. If
 and when we commit to those scripts, the fertility diagnostic + GLiNER-style head come off the shelf.
 
 ## The decision this sprint resolves
@@ -51,12 +51,12 @@ For each query: join truth → WOF id (nearest-neighbour + name match). Then —
 1. **coverage-gap** — the true WOF id is **not in the gazetteer at all** → only data ingest helps; a
    reranker and a better retrieval are both inert here.
 2. **recall-gap** — the true id is in the gazetteer but **not in the resolver's top-k candidates** →
-   fix retrieval (raise _k_, relax the FTS/trigram threshold), not ranking.
+   fix retrieval (raise _k_, relax the FTS/trigram threshold) rather than ranking.
 3. **ranking-gap** — the true id **is in top-k but mis-ranked** (rank > 1) → this, and only this, is
    what a reranker can fix. **The ranking-gap fraction is the reranker's ceiling.**
 
 Run at **k = 5 / 10 / 20** (if recall-gap shrinks sharply as k grows, retrieval is too restrictive; if
-flat, the candidate is buried and retrieval needs a different strategy, not a wider beam).
+flat, the candidate is buried and retrieval needs a different strategy rather than a wider beam).
 
 ### Output schema — one row per locale
 
@@ -65,7 +65,7 @@ flat, the candidate is buried and retrieval needs a different strategy, not a wi
 | `locale`               | us, fr, de, …                                                                                  |
 | `query_volume_share`   | fraction of current query volume (and a second, strategic weighting — see below)               |
 | `coverage_gap_pct`     | errors where truth not in gazetteer                                                            |
-| `recall_gap_pct`       | truth in gazetteer, not in top-k                                                               |
+| `recall_gap_pct`       | truth in gazetteer rather than in top-k                                                        |
 | `ranking_gap_pct`      | truth in top-k, mis-ranked — **the reranker ceiling**                                          |
 | `parse_blocker_pct`    | (zero-DB locales only) parser fails to produce a clean locality+admin split when truth has one |
 | `coverage_blocker_pct` | (zero-DB locales only) `1 − parse_blocker_pct`                                                 |
@@ -95,7 +95,7 @@ the most informative single routing signal.
 > coverage-gap fraction is **< 20%**, build the reranker. Otherwise expand coverage — US-rural if the
 > coverage gap dominates there, EU-gazetteer if the strategic-weighted matrix shows the gap there.
 
-### DeepSeek's bet (a prediction to verify, not a fact)
+### DeepSeek's bet (a prediction to verify rather than a fact)
 
 Coverage wins: US `coverage_gap ≈ 12–15%`, `ranking_gap ≈ 3–5%` (reranker ceiling too small to move the
 US aggregate); EU `coverage_gap > 30%` → **EU gazetteer ingest is the binding strategic constraint.**
@@ -108,7 +108,7 @@ numbers the diagnostic exists to check.
 
 Ran `scripts/eval/three-gap-matrix.ts` on 10,000 OA-US rows. Faithful query (region `parentId` +
 postcode + parent-fallback, two-extract admin + postcode-locality), coordinate/name bucketing (rank of
-the right PLACE, not a specific WOF id — the first pass over-counted ranking gaps because WOF carries
+the right PLACE rather than a specific WOF id — the first pass over-counted ranking gaps because WOF carries
 duplicate ids for one place).
 
 | metric (k = 10)                | value      |
@@ -125,12 +125,12 @@ the reranker is dead on arrival** (ranking-gap 0.01% ≪ the 10% bar). DeepSeek'
 coverage gap is ~2% on this sample (it bet 12–15%).
 
 **The sharpening — what the coverage gap IS.** The dumped coverage-gap rows are almost all
-**township / CDP / civil-division granularity**, not "rural towns missing from WOF": `Monroe Twp`,
+**township / CDP / civil-division granularity** rather than "rural towns missing from WOF": `Monroe Twp`,
 `Saylor Twp`, `Bertram Twp` (Iowa civil townships); `Barre City` vs `Barre Town`, `Essex Town` vs
 `Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
 `Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
 township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
-coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), not a
+coverage change is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution) rather than a
 WOF re-ingest** — the places largely exist, they're modelled at a different granularity.
 
 **direct caveats (do not over-read):**
@@ -153,7 +153,7 @@ strategic fork below.
 Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
 v4.11.0 parse, `normalizeCase` on). The proxy is **blocked on whether the admin token is IN the
 input** (the first reduce wasn't, and wrongly flagged ES/IT/NL as parser-blocked — OA writes "street,
-postcode locality" and the province is implied by the postcode, not a token, so there is nothing to
+postcode locality" and the province is implied by the postcode rather than a token, so there is nothing to
 split). Corrected:
 
 | locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |
@@ -165,7 +165,7 @@ split). Corrected:
 | NL     | 2.9%                | —                           | 99% → **64.0%**            | coverage + parser polish        |
 
 **The finding overturns the simple "coverage wins for EU" narrative — and DeepSeek's "just ingest WOF"
-bet. The binding EU constraint is the PARSER, not (yet) coverage.** The model emits a locality almost
+bet. The binding EU constraint is the PARSER rather than (yet) coverage.** The model emits a locality almost
 always (98%+) but gets it _right_ only 21–64% outside FR (vs FR 97.7%, US ~98%). It's en-us-centric;
 only FR got a dedicated extract. Per locale:
 
@@ -182,22 +182,22 @@ only FR got a dedicated extract. Per locale:
 **Caveats (loc-correct is a FLOOR):** strict `normName` equality under-counts multi-token / bilingual /
 variant names — ES is additionally depressed by bilingual slash-truth (`Sant Vicent del Raspeig/San
 Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ IT/NL > DE > ES) is the
-trustworthy signal, not the absolute floors. OA samples are clean-ish; real traffic may differ.
+trustworthy signal rather than the absolute floors. OA samples are clean-ish; real traffic may differ.
 
 **Routing implication:** the EU multi-locale bet is a bigger, more parser-shaped lift than "ingest WOF"
 — per-locale parser readiness checks the coordinate before coverage can pay off. The lowest-friction
 EU coordinate win is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
 gap), directly reusing the FR-admin-split template.
 
-## The strategic fork (operator's call — surfaced, not assumed)
+## The strategic fork (operator's call — surfaced rather than assumed)
 
 Volume-weighting is **circular** for us. "US is ~65% of queries" is an artifact of what we currently
-serve (a US-centric model + US/DE/FR-only gazetteer), not where the strategic value is — mailwoman is
+serve (a US-centric model + US/DE/FR-only gazetteer) rather than where the strategic value is — mailwoman is
 positioned as a **sovereign, EU-first, multi-locale** alternative to Google geocoding. So the matrix is
 computed **twice**: current-volume-weighted (optimize the book we have) **and** EU-strategic-weighted
 (the book we're trying to win). If the two weightings route to different changes — likely: US says
 "reranker or US-coverage," EU says "gazetteer ingest" — that divergence is the strategic decision, and
-it is the operator's to make. The diagnostic's job is to make it explicit, not to pick.
+it is the operator's to make. The diagnostic's job is to make it explicit rather than to pick.
 
 ## Workstream B (conditional, post-diagnostic): the chosen change
 
@@ -206,10 +206,10 @@ in-distribution win cannot fool us (our GBM record-matcher's TX→CA over-fit + 
 scars):
 
 - **Leave-one-state-out / leave-one-region-out** splits (random splits leak geographic structure).
-- Full held-out set, **not** smokes (the 250-record smoke misled us 3×).
+- Full held-out set rather than smokes (the 250-record smoke misled us 3×).
 - **Feature-ablation as a lie detector:** pop-only (baseline) / name-only / hierarchy-only / full. A
   generalizable signal transfers across held-out states; an over-fit one only helps in training states.
-- **Pre-register per error class**, not aggregate p50 (which conflates the three gaps): right-name-
+- **Pre-register per error class** rather than aggregate p50 (which conflates the three gaps): right-name-
   wrong-instance "Springfield" (target ≥ 50% recovery), population-tiebreak (≥ 30%), hierarchy-conflict
   (≥ 70%, the easiest — the correct feature is directly observable), feature-type (< 5%, likely a
   retrieval fix).
@@ -222,7 +222,7 @@ pipeline per the existing national-situs / Overture work; or the FR-admin-split 
 
 ## Out of scope / parked
 
-- **Span-head + lower-fertility vocab (#727):** future-enablement for CJK/Cyrillic, not this sprint.
+- **Span-head + lower-fertility vocab (#727):** future-enablement for CJK/Cyrillic rather than this sprint.
   Coordinate-invisible today.
 - **The `enforceWordConsistency` decode-fix:** already shipped default-OFF; not revived here.
 - **A transformer reranker:** blocked behind the cheap LightGBM falsifier showing ranking-gap signal.
@@ -234,7 +234,7 @@ pipeline per the existing national-situs / Overture work; or the FR-admin-split 
 2. The matrix is re-weighted EU-strategic + the parse-blocker proxy is run on FR/DE/ES/IT samples.
 3. The reranker-vs-coverage-vs-multi-locale route is chosen — with the strategic fork resolved by the
    operator if the two weightings diverge.
-4. DeepSeek's numeric bet is confirmed or refuted against the actual matrix (logged, not hand-waved).
+4. DeepSeek's numeric bet is confirmed or refuted against the actual matrix (logged rather than hand-waved).
 
 ## Outcome (2026-06-20): coverage, confirmed at full scale
 
@@ -272,7 +272,7 @@ already-covered ES/IT/NL control, from the global WOF path):
 **The median coordinate is solved for 14 of 15 — interleaved with the ES/IT/NL control (1.5–2.2 km).**
 Built from the Overture divisions gazetteer plus the postcode anchor, zero GPU.
 
-The one outlier is **LT**, and it's an eval-data artifact, not a coverage gap: the DB carries 20,960
+The one outlier is **LT**, and it's an eval-data artifact rather than a coverage gap: the DB carries 20,960
 Lithuanian localities and `Vilnius` / `Kaunas` / `Klaipėda` resolve perfectly, but the LT _address_
 locality field carries settlement-type suffixes (`mstl.` / `m.` / `k.` = miestelis / miestas / kaimas),
 Lithuanian genitive declension (`Rumšiškių` vs the gazetteer's nominative `Rumšiškės`), and an `LT-`
@@ -283,7 +283,7 @@ The control rows (ES/IT/NL) are unchanged from the global WOF path — the Overt
 nothing. The remaining changes are **resolve-rate** (the 34–70% locales: more Overture/postcode
 coverage on the unresolved fraction) and the **p90 tail** (wrong-place name collisions — note IT, a
 covered control, also tails to 118 km, so this is a general resolver-ranking job: population tiebreak /
-postcode constraint, not specific to the new locales). Neither is a parser-retrain change.
+postcode constraint rather than specific to the new locales). Neither is a parser-retrain change.
 
 The staging DB (`admin-global-priority-eu.db`) is built and validated; promoting it to the shipped
 `admin-global-priority.db` is the conditional canonical-DB swap awaiting operator GO.

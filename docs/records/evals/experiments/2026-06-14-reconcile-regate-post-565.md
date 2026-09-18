@@ -97,7 +97,7 @@ structure that argmax keeps intact. On FR that is the `Rue de la <X>` / `Chemin 
 particle + core pattern — the merge collapses it and the street value falls apart (−13.7pp). On US
 multi-word residential streets it drops the span entirely (the 5.6% precondition break). Argmax avoids
 both failure modes for the same reason: it commits to the model's per-token decision instead of
-re-deriving a span from phrase proposals. This is design-level behavior of the reconcile path, not a
+re-deriving a span from phrase proposals. This is design-level behavior of the reconcile path rather than a
 second bundling bug to patch.
 
 ## Verdict — keep reconcile retired
@@ -110,7 +110,7 @@ helps FR" claim was an artifact of grading raw neural — the same blind spot th
 regression.
 
 Independent of the reconcile decision, the **argmax-FR street ceiling of 79.4%** is its own open
-question (and the FR street/region recall generally) — that is a model + FR-grouper matter, not a
+question (and the FR street/region recall generally) — that is a model + FR-grouper matter rather than a
 reconcile one, and is left to the FR parity track. Worth capturing as a learning item; not a
 prerequisite for this verdict.
 

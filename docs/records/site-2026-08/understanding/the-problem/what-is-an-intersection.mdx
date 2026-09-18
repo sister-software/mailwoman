@@ -55,7 +55,7 @@ Main St & Elm St
 
 The tokenizer splits on `&`, producing `[Main] [St] [&] [Elm] [St]`. The classifier sees two `St` tokens — both are street suffixes. The parser must:
 
-1. Recognize that `&` is an intersection conjunction, not a spacing artifact.
+1. Recognize that `&` is an intersection conjunction rather than a spacing artifact.
 2. Group `[Main] [St]` as one street name and `[Elm] [St]` as another.
 3. Assign `intersection_a` to the first and `intersection_b` to the second.
 
@@ -86,7 +86,7 @@ Japanese addresses do not use named streets with building numbers. An intersecti
 六本木交差点 (Roppongi Intersection)
 ```
 
-These are named intersections, not street pairs. A parser expecting `StreetA & StreetB` format will fail on Japanese intersection references. The JP-specific tags in Mailwoman's schema (`district`, `block`, `sub_block`) are designed to handle block-based addressing, but named intersections (交差点, kōsaten) are a separate concept that would need schema expansion.
+These are named intersections rather than street pairs. A parser expecting `StreetA & StreetB` format will fail on Japanese intersection references. The JP-specific tags in Mailwoman's schema (`district`, `block`, `sub_block`) are designed to handle block-based addressing, but named intersections (交差点, kōsaten) are a separate concept that would need schema expansion.
 
 ## How Mailwoman handles intersections
 
@@ -108,7 +108,7 @@ The intersection tags are part of the schema but the resolver path for intersect
 
 ## What intersections tell us about address structure
 
-Intersection addresses show that **the "housenumber + street" format is one convention among several**, not a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
+Intersection addresses show that **the "housenumber + street" format is one convention among several** rather than a universal requirement. A parser that assumes every address has a building number will fail on intersection queries. A parser that treats `intersection_a` and `intersection_b` as first-class components can handle both conventional and intersection addresses without architectural change.
 
 This is the same principle behind the Japanese street-free addressing system (Phase 6 of the implementation plan): the schema must accommodate address formats that do not fit the Anglophone "number + street + city" template. Intersections are the mildest version of this; block-based addressing (Japan) and informal addressing (rural areas, developing economies) are harder versions of the same problem. A schema that handles intersections without an architectural change is better positioned to handle those harder cases too.
 

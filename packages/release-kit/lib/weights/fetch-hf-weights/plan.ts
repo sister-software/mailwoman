@@ -10,7 +10,7 @@
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
  *   the operator's data root. both take a destination root and touch nothing else.
  *
- *   WHAT IS FETCHED IS DERIVED, NOT LISTED. A `neural-weights-<locale>` package's `files` array is its
+ *   WHAT IS FETCHED IS DERIVED rather than LISTED. A `neural-weights-<locale>` package's `files` array is its
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
  *   checkout already has. the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
@@ -149,7 +149,7 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 		const card = await readLocalJSONFile<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		for (const [filename, md5] of Object.entries(card.files_md5 ?? {})) {
-			// `$comment` keys carry the block's prose, not a checksum.
+			// `$comment` keys carry the block's prose rather than a checksum.
 			if (filename.startsWith("$") || typeof md5 !== "string") continue
 
 			const existing = declared.get(filename)

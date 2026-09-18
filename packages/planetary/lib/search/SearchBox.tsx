@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The search box: a combobox over the loaded artifact through the shared autocomplete hook and listbox, so the
- *   keyboard contract (arrows, Enter, Escape) and the ARIA wiring are the Earth geocoder's, not a second copy.
+ *   keyboard contract (arrows, Enter, Escape) and the ARIA wiring are the Earth geocoder's rather than a second copy.
  */
 
 import { MapSearchBar } from "@mailwoman/react/map/MapSearchBar"

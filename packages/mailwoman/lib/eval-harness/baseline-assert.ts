@@ -10,7 +10,7 @@
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
  *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
- *   meaning, not that the model got better. That two-sidedness is the whole point. a one-sided
+ *   meaning rather than that the model got better. That two-sidedness is the whole point. a one-sided
  *   check would have passed both incidents below.
  *
  *   Why it exists — two verdicts nearly went out wrong in a single arc, both from a harness
@@ -208,7 +208,7 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 
 /**
  * Check a harness's readings against a profile. Metric keys the profile doesn't map are ignored — a profile declares
- * what it can vouch for, not everything a harness happens to compute.
+ * what it can vouch for rather than everything a harness happens to compute.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)
@@ -225,8 +225,8 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 }
 
 /**
- * Check observations against the registry. An unregistered id is a violation, not a pass — an unverifiable reading is
- * exactly the state both incidents were in.
+ * Check observations against the registry. An unregistered id is a violation rather than a pass — an unverifiable
+ * reading is exactly the state both incidents were in.
  */
 export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
 	const file = await loadBaselineFile()

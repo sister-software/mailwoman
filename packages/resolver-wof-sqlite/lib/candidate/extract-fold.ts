@@ -77,7 +77,7 @@ export function foldExtract(ctx: {
 
 	using pc = new DatabaseClient<WOFDatabase>(extractPath, { readOnly: true })
 	const pcPtid = ptID(extractPlacetype)
-	// Per-extract, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
+	// Per-extract rather than the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
 	// below has nothing to join against unless this primary loop records what it staged.
 	const pcAttrs = new Map<number, PlaceAttrs>()
 	const regionOf = ctx.attrs ? extractRegionAncestry(pc, ctx.attrs) : new Map<number, number>()
@@ -183,7 +183,7 @@ export function foldExtract(ctx: {
 	// and `attrs` holds admin ids only, so a postcode extract could never reach it.
 	//
 	// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
-	// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
+	// alias rather than a canonical postcode name), the row stays denormalized onto the POSTCODE's own
 	// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
 	// with place 11201, it does not rename the place to its delivery city.
 	const hasNames = tableExists(pc, "names")

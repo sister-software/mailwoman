@@ -78,7 +78,7 @@ import { APIClient } from "./APIClient.ts"
 test("APIClient disposal reaches a caching storage whose asyncDispose lives on the prototype", async () => {
 	let disposeCount = 0
 
-	// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain, not an own property.
+	// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain rather than an own property.
 	// The pre-migration predicate (Object.hasOwn on the instance) never matched this shape,
 	// leaving cache disposal as dead code.
 	const storagePrototype = {
@@ -107,7 +107,7 @@ test("APIClient disposal reaches a caching storage whose asyncDispose lives on t
 })
 ```
 
-Implementer latitude: if `buildStorage`'s option or return types disagree with the sketch (axios-cache-interceptor's `AxiosStorage` shape), adapt the storage construction — the ESSENTIAL property is that `[Symbol.asyncDispose]` sits on the prototype chain, not as an own property, and that `caching.storage` type-checks (a `as never`/`as AxiosStorage` cast at the `caching:` boundary is acceptable in a test). Do not weaken the assertion.
+Implementer latitude: if `buildStorage`'s option or return types disagree with the sketch (axios-cache-interceptor's `AxiosStorage` shape), adapt the storage construction — the ESSENTIAL property is that `[Symbol.asyncDispose]` sits on the prototype chain rather than as an own property, and that `caching.storage` type-checks (a `as never`/`as AxiosStorage` cast at the `caching:` boundary is acceptable in a test). Do not weaken the assertion.
 
 - [ ] **Step 4: Run test to verify it fails**
 
@@ -128,7 +128,7 @@ with:
 import { isAsyncDisposable } from "async-init"
 ```
 
-(Import-group placement: `async-init` is a bare external import — it sorts with the other external packages at the top of the file, not with the relative imports; let `yarn oxlint --fix`/`yarn format` settle ordering.)
+(Import-group placement: `async-init` is a bare external import — it sorts with the other external packages at the top of the file rather than with the relative imports; let `yarn oxlint --fix`/`yarn format` settle ordering.)
 
 And replace line 165:
 
@@ -212,7 +212,7 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 }
 ```
 
-Semantics notes (document in the commit body, not code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
+Semantics notes (document in the commit body rather than code comments): `defaultRegistry.dispose()` aborts the registry's own signal before disposing, so the old timeout-path `abortController.abort(signal)` is redundant — by the time the timeout fires, the abort already happened at dispose entry. The old `inspect()` undisposed-count listing has no equivalent (the new registry doesn't expose its contents) and is dropped; the error line suffices. The registry is empty in practice today (nothing registers), so observable behavior is identical.
 
 - [ ] **Step 3: Verify the scripting suite + types**
 
@@ -350,7 +350,7 @@ https://claude.ai/code/session_01QTpYm118V3tGk4FRhKi8Sr
 
 ## Notes for the operator (not tasks)
 
-- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core` — the release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call, not this PR's.
+- **Semver:** removing the public `./lifecycle` subpath is breaking for `@mailwoman/core` — the release that ships this is a core major (or rides the next planned major, e.g. v8). The subpath's flagship exports were defective (guards inert), so external breakage is unlikely, but the version check is the release-time call rather than this PR's.
 - The historical spec/plan docs keep the `lifecycle-ts` name; the package on npm is `async-init@1.0.0`. Dated docs are point-in-time records — not renamed.
 
 ## Out of scope

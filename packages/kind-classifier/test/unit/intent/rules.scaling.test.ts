@@ -202,7 +202,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	const perQueryIntentUs = (withIntent * 1000) / (PASSES * prepared.length)
 	const ratio = withIntent / Math.max(baseline, 0.001)
 
-	// Printed, not only asserted: the docstring rule in AGENTS.md is that a measured claim carries its number, and this
+	// Printed rather than only asserted: the docstring rule in AGENTS.md is that a measured claim carries its number, and this
 	// is the number ROAD_TO_V9 §4's cost line is reporting.
 	// oxlint-disable-next-line no-console -- the measurement is the deliverable here.
 	console.log(

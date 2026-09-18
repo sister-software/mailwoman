@@ -28,7 +28,7 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point carries no street tag (the association gap. counted, not written).
+	 * `addr:street` — null when the point carries no street tag (the association gap. counted rather than written).
 	 */
 	street: string | null
 	postcode: string | null

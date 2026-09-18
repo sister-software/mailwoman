@@ -24,16 +24,16 @@
  *   subject is timing. The two node imports the reduced graph does meet (`node:fs/promises` in the
  *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are DYNAMIC and
  *   node-guarded, so marking them external is the entire accommodation. The cost of the reduction: the warm number is
- *   tokenize+infer, not tokenize+infer+decode — which is the model-only number the instrumentation
+ *   tokenize+infer rather than tokenize+infer+decode — which is the model-only number the instrumentation
  *   plan asked for, and the decoder is platform-free TS running identically on both hosts.
  *
  *   The demo additionally pulls the FST gazetteer (`fst-en-us.bin`, ~22 MB) through the runtime
  *   pipeline rather than through the neural loader. It is deliberately outside this accounting. add
  *   it here only alongside the pipeline stage that fetches it.
  *
- *   BUDGETS ARE REGRESSION TRIPWIRES, NOT TARGETS. They are set generously against the first run on
+ *   BUDGETS ARE REGRESSION TRIPWIRES rather than TARGETS. They are set generously against the first run on
  *   the lab workstation. A failure means the quantity moved a lot. the repair is to read the receipt
- *   this file prints, not to widen the constant.
+ *   this file prints rather than to widen the constant.
  *
  *   Byte budgets assert RAW bytes rather than wire bytes: raw is the artifact-size regression signal
  *   and is deterministic, while the wire number depends on the compressor. Both are reported,
@@ -79,9 +79,9 @@ const TOKENIZER_RAW_BYTES_BUDGET = 4_000_000
 
 /**
  * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`. Which variant it asks for is ORT's
- * decision at load time, not ours — the first run fetched the 22,867,301 B asyncify build — so the budget covers the
- * family rather than one file name. Compresses ~4× on the wire (5,580,159 B measured, against the live demo's 5.66 MB
- * brotli figure).
+ * decision at load time rather than ours — the first run fetched the 22,867,301 B asyncify build — so the budget covers
+ * the family rather than one file name. Compresses ~4× on the wire (5,580,159 B measured, against the live demo's 5.66
+ * MB brotli figure).
  */
 const ORT_WASM_RAW_BYTES_BUDGET = 40_000_000
 
@@ -93,7 +93,7 @@ const SQLITE_RUNTIME_RAW_BYTES_BUDGET = 8_000_000
 /**
  * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural runner + the SentencePiece core, minified).
  * The demo's own app JS is larger — it carries React and MapLibre on top of this — so read the budget as a floor moving
- * under the client, not as the page weight.
+ * under the client rather than as the page weight.
  */
 const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 
@@ -143,8 +143,8 @@ const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
  * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and WASM
  * linear memory outside the JS heap, so this number does not include the ~53 MB of artifact bytes the session holds nor
  * ORT's own arena — it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
- * Measured at ~10 MiB on the first run. the budget is the "something is retaining objects per parse" regression check,
- * not a memory target.
+ * Measured at ~10 MiB on the first run. the budget is the "something is retaining objects per parse" regression check
+ * rather than a memory target.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
 
@@ -201,15 +201,15 @@ const HTTPVFS_CHUNK_SIZE = 65_536
 /**
  * Chromium flags that let the WebGPU arm be attempted at all. Headless Chromium ships WebGPU behind this flag and
  * grants an adapter only where the host exposes a GPU, so on a headless CI box the probe still comes back empty and the
- * arm skips — which is the honest outcome, not a failure. The adapter's own identity goes in the receipt, because a
- * software adapter and a discrete GPU are different arms wearing the same name.
+ * arm skips — which is the honest outcome rather than a failure. The adapter's own identity goes in the receipt,
+ * because a software adapter and a discrete GPU are different arms wearing the same name.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
 /**
  * The candidate-table probe. `WOFCandidateTableLookup` issues this shape per resolve — a contiguous probe on the
- * `WITHOUT ROWID` B-tree keyed by `name_key` — and the range-fetch count is a property of that access pattern, not of
- * the SELECT list.
+ * `WITHOUT ROWID` B-tree keyed by `name_key` — and the range-fetch count is a property of that access pattern rather
+ * than of the SELECT list.
  */
 const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
@@ -260,8 +260,9 @@ const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
- * A LOCATOR for the onnxruntime-web asset directory, not the file the runtime will fetch: ORT picks its own `.wasm`
- * variant at load time, and the whole directory is mounted at `/ort/` so whichever it asks for is served and counted.
+ * A LOCATOR for the onnxruntime-web asset directory rather than the file the runtime will fetch: ORT picks its own
+ * `.wasm` variant at load time, and the whole directory is mounted at `/ort/` so whichever it asks for is served and
+ * counted.
  */
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
@@ -592,7 +593,7 @@ declare global {
 	var mwSLO: BrowserSLOAPI
 
 	/**
-	 * The sql.js-httpvfs UMD's own entry point. The lowercase `b` in `Db` is that library's export name, not ours.
+	 * The sql.js-httpvfs UMD's own entry point. The lowercase `b` in `Db` is that library's export name rather than ours.
 	 */
 	// oxlint-disable-next-line no-var -- see above.
 	var createDbWorker: (
@@ -875,7 +876,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 	const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
 
-	// The byte table is snapshotted here, not after the explicit fetches: onnxruntime-web pulls its
+	// The byte table is snapshotted here rather than after the explicit fetches: onnxruntime-web pulls its
 	// `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm when the gazetteer
 	// page opens, so an earlier snapshot reports both classes as zero — which reads as "this
 	// session downloads no WASM" rather than "the snapshot was early". Everything after this line
@@ -919,7 +920,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 /**
  * URLs for every evidence artifact the shipped web loader fetches beside the model — skipping the ones this weights
- * package does not ship, since an overlay's absence is a packaging fact, not a failure.
+ * package does not ship, since an overlay's absence is a packaging fact rather than a failure.
  */
 async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, origin: string): Promise<string[]> {
 	const candidates = [
@@ -1015,7 +1016,7 @@ function gazetteerRows(gazetteer: GazetteerMeasurement | null): string[] {
 	return [
 		`      ${gazetteer.requests} range requests / ${mebibytes} MiB   budget ${GAZETTEER_RANGE_REQUESTS_BUDGET} requests`,
 		`      open ${gazetteer.openMs.toFixed(0)} ms · ${gazetteer.rows.length} probes ${gazetteer.probeMs.toFixed(0)} ms · rows ${gazetteer.rows.join("/")}`,
-		"      loopback latency is a floor on the wire cost, not a WAN estimate — the COUNT is the durable number",
+		"      loopback latency is a floor on the wire cost rather than a WAN estimate — the COUNT is the durable number",
 	]
 }
 

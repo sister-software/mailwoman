@@ -17,7 +17,7 @@
  *   nothing.
  *
  *   ZONE 1 IS NOT IN THIS TABLE, BECAUSE IT IS NOT IN THE DATA. The Planning Practice Guidance defines it
- *   as "all land outside Zones 2, 3a and 3b" — an absence, not a polygon. It reaches a reader through
+ *   as "all land outside Zones 2, 3a and 3b" — an absence rather than a polygon. It reaches a reader through
  *   `layer_coverage` instead: inside England a cell the authority designated and no polygon covering the
  *   point is the Zone 1 designation. {@linkcode FLOOD_ZONE_1} carries its definition for that reading.
  *

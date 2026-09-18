@@ -1,6 +1,6 @@
 # License Launch Plan
 
-> **For agentic workers:** this plan is a runbook with an owner per step, not a sequence of code tasks. The code steps use checkbox (`- [ ]`) syntax; the operator steps are marked and stay open until the operator reports them done.
+> **For agentic workers:** this plan is a runbook with an owner per step rather than a sequence of code tasks. The code steps use checkbox (`- [ ]`) syntax; the operator steps are marked and stay open until the operator reports them done.
 
 **Goal:** Sell the first self-service commercial license: the sandbox proves the whole path on Stripe test mode, then production issues under a key a released mailwoman trusts.
 
@@ -74,7 +74,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECR
 
 ### Task 3: the sandbox end to end
 
-- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which does not exist yet, so read the session id from the URL and claim it from the sandbox by hand:
+- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which is still missing, so read the session id from the URL and claim it from the sandbox by hand:
 
 ```bash
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license

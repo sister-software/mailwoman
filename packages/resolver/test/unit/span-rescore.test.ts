@@ -109,7 +109,7 @@ const PLACES: FixturePlace[] = [
 	},
 	// The check anchor for the namesake group — resolves next to id 11 (IL).
 	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
-	// A lone namesake: one place, one name. The "absent, not empty" case.
+	// A lone namesake: one place, one name. The "absent rather than empty" case.
 	{
 		id: 20,
 		name: "Grudziądzek",
@@ -273,7 +273,7 @@ describe("findRescoreCandidate", () => {
 
 	it("#2266: a sub-span dropping a NAME word is refused under spanRescoreRequireContextRemainder", async () => {
 		// `Fort Worth` is absent from this fixture, as it was from the withheld-gold stratum. Shipped, the probe
-		// falls through to `Worth` and answers Worth, Illinois. The remainder `Fort` is a word of the name, not a
+		// falls through to `Worth` and answers Worth, Illinois. The remainder `Fort` is a word of the name rather than a
 		// subdivision code, so the rule refuses the truncation and the recovery abstains.
 		const backend = await makeBackend()
 
@@ -409,7 +409,7 @@ describe("findRescoreCandidate", () => {
 		// The live Moscow board: the backend returns Moscow RU FIRST (exactMatch via the "Moscow" alias
 		// row), but the old filter re-checked only the PRIMARY name folded to [a-z0-9 ] — norm("Москва")
 		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
-		// bearers. Population-first ranking was starved, not violated. recall fixes it with no ranking
+		// bearers. Population-first ranking was starved rather than violated. recall fixes it with no ranking
 		// change.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(30)

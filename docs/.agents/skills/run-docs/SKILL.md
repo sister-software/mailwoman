@@ -30,7 +30,7 @@ You don't need to build for dev. Two optional pre-steps:
 - **Explainer runtime assets.** The explainers that resolve (`PipelineExplorer`, `GuidedTour`, `POIExplorer`)
   read the model and the gazetteer from the public bucket at run time; the runtime-assets Docusaurus plugin stages
   the sql.js worker and the MapLibre worker automatically in `loadContent()` for both `yarn start` and
-  `yarn build`. The geocoder itself is the Earth app (`packages/earth`), not a docs page: `/demo`, `/debug` and
+  `yarn build`. The geocoder itself is the Earth app (`packages/earth`) rather than a docs page: `/demo`, `/debug` and
   `/trace` are redirect pages to https://earth.mailwoman.ai.
 
 - **Production build.** Static output to `build/`:
@@ -93,13 +93,13 @@ driver above is the right tool.
 
 ## Gotchas
 
-- **Docusaurus serves its 404 page with HTTP 200.** A `curl -o /dev/null -w '%{http_code}' http://localhost:7770/some/typo` returns `200` even though the page renders "Page Not Found." The driver's `check`/`smoke` commands sniff the rendered `<h1>` and flag this as `SOFT-404` — trust that, not the status code. If you're writing your own check, do the same.
+- **Docusaurus serves its 404 page with HTTP 200.** A `curl -o /dev/null -w '%{http_code}' http://localhost:7770/some/typo` returns `200` even though the page renders "Page Not Found." The driver's `check`/`smoke` commands sniff the rendered `<h1>` and flag this as `SOFT-404` — trust that rather than the status code. If you're writing your own check, do the same.
 - **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labeled "Docs" points there. The smoke list reflects this; don't add `/docs/` thinking it'll be a sanity check.
-- **`/research/` has a known React console error.** A research blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug, not driver flakiness — if you're not the one fixing it, ignore the `/research/` failure and check the other three routes individually.
+- **`/research/` has a known React console error.** A research blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug rather than driver flakiness — if you're not the one fixing it, ignore the `/research/` failure and check the other three routes individually.
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
-- **The dev server uses port 7770, not the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
-- **`networkidle` is required, not `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
-- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behaviour is tested in `packages/earth`, not here.
+- **The dev server uses port 7770 rather than the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
+- **`networkidle` is required rather than `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.
+- **`/demo/`, `/debug/` and `/trace/` are redirect pages.** They forward to https://earth.mailwoman.ai with the query intact; the geocoder's behaviour is tested in `packages/earth` rather than here.
 - **The driver does not launch or kill the dev server.** This is deliberate — Docusaurus's first build is slow and you'll typically run the driver 5–20 times against one server. Tear down explicitly with `pkill -f 'docusaurus start'` when done.
 
 ## Troubleshooting

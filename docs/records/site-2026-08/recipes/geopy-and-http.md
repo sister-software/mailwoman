@@ -64,7 +64,7 @@ print(loc.latitude, loc.longitude)
 print(loc.raw["address"])
 ```
 
-That prints a rooftop-level result — the query carried a house number, so the resolver returns the point, not a street or city centroid:
+That prints a rooftop-level result — the query carried a house number, so the resolver returns the point rather than a street or city centroid:
 
 ```text
 1600, Pennsylvania Avenue NW, Washington, DC, 20500

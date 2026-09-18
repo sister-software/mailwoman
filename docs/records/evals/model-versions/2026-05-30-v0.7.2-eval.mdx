@@ -3,7 +3,7 @@
 **Verdict: EXPERIMENTAL.** Best neural model to date and strictly dominates
 v0.6.0, but does not clear the ≥25% harness PROMOTE bar. Do not promote to
 default on the strict check; ship as experimental. The path to ≥25% is coverage
-and the resolver, not another recipe tweak.
+and the resolver rather than another recipe tweak.
 
 ## What v0.7.2 was
 
@@ -25,7 +25,7 @@ Base recipe, tokenizer (v0.6.0-a0), and everything else unchanged → F1 valid.
 
 **+5.1pp over v0.6.0** — the largest single-release harness gain of the v0.6/0.7
 cycle. v0 (rules) is at 93.7% on this suite, as expected (it's a Pelias/addressit
-port; see the capability map — neural is the robustness layer, not a better v0).
+port; see the capability map — neural is the robustness layer rather than a better v0).
 
 ### Intersection cluster — the retrain's target
 
@@ -81,8 +81,7 @@ needs a coverage extract (backlog B3'). Stays opt-in.
 
 - **Don't promote v0.7.2 to default on the strict check** (19.5% < 25%). But it
   _strictly dominates_ the current default (v0.6.0): +5.1pp harness, +7
-  intersections, per-tag check clean. Shipping it as **experimental** (model card,
-  not `defaultVersion`) is the right call — it's the best artifact we have and is
+  intersections, per-tag check clean. Shipping it as **experimental** (model card rather than `defaultVersion`) is the right call — it's the best artifact we have and is
   A/B-able. The promote-to-default decision is the operator's.
 - **The 25% bar is not a recipe-tuning problem.** Two cycles (v0.6.x, v0.7.x) of
   corpus tweaks have moved harness 14→19.5%. The remaining gap is (a) coverage of

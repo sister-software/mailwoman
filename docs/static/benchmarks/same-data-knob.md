@@ -28,6 +28,6 @@ refusal leaves exactly that — so the recovery re-issued the byte-identical loo
 The floor now refuses for real, and the remaining gap to `spanRescore: false` is span rescore answering
 the rows the floor never reached rather than the ones it refused.
 
-The magnitudes are this panel's, not a setting: every one of its 453 gold entities has population above
+The magnitudes are this panel's rather than a setting: every one of its 453 gold entities has population above
 15,151 and four of its five strata sit above 50,000, so a floor of 4.0 — population 10,000 — admits every
 correct answer here by construction. A panel whose gold all clears a floor cannot measure that floor.

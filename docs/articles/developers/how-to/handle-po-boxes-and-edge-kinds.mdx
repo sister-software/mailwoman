@@ -58,7 +58,7 @@ Eight kinds exist, and the classifier always returns the whole ranked list rathe
 | `poi_query`          | A category or brand plus a spatial anchor, when a POI lexicon is wired |
 | `vague`              | The floor, always present in `alternatives` at 0.3                     |
 
-The verdict is a possibility, not a constraint. `vague` at 0.3 is unconditional, so the second entry in
+The verdict is a possibility rather than a constraint. `vague` at 0.3 is unconditional, so the second entry in
 `alternatives` is the one worth reading.
 
 ## 2. PO boxes: they parse, they do not resolve to the box
@@ -143,7 +143,7 @@ mailwoman parse --debug "Corner of Broadway and 42nd Street, New York, NY" | jq 
 { "kind": "structured_address", "confidence": 0.9 }
 ```
 
-`structured_address`, not `intersection`. The intersection rule scores a flat 0.85 regardless of
+`structured_address` rather than `intersection`. The intersection rule scores a flat 0.85 regardless of
 evidence, and the structured-address rule scores 0.9 for anything with two or more segments — so adding
 a city and a state outranks it. Bare, the same phrase classifies as an intersection:
 

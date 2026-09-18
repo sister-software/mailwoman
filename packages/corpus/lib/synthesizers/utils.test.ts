@@ -556,7 +556,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	}
 
 	/**
-	 * The dotted po_box surface on the augmented copy — the span's substring, not the tokens.
+	 * The dotted po_box surface on the augmented copy — the span's substring rather than the tokens.
 	 */
 	const poBoxSurface = (row: LabeledRow): string => {
 		const i = row.span_tags!.indexOf("po_box")
@@ -731,7 +731,7 @@ describe("composeAdversarialRow", () => {
 		// The venue prefix: three tokens, all venue-labeled.
 		expect(result.row.tokens.slice(0, 3)).toEqual(["Buffalo", "Health", "Clinic"])
 		expect(result.row.labels.slice(0, 3)).toEqual(["B-venue", "I-venue", "I-venue"])
-		// The address half: the second "Buffalo" must be the locality, not venue.
+		// The address half: the second "Buffalo" must be the locality rather than venue.
 		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
 		expect(buffaloIndices).toHaveLength(2)
 		expect(result.row.labels[buffaloIndices[0]!]).toBe("B-venue")
@@ -767,7 +767,7 @@ describe("composeAdversarialRow", () => {
 
 	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
 		// Kryptonite case #3: apostrophe + St./Saint ambiguity. "P'tit" and "St." are inside
-		// the venue surface form, not a street_prefix or honorific in the address.
+		// the venue surface form rather than a street_prefix or honorific in the address.
 		const address = baseRow({
 			raw: "Montreal, QC H2X 1Y4",
 			country: "CA",
@@ -787,7 +787,7 @@ describe("composeAdversarialRow", () => {
 		// (period is a separator, apostrophe joins, accented chars are word chars).
 		expect(result.row.tokens[0]).toBe("P'tit")
 		expect(result.row.tokens[1]).toBe("St")
-		// Every venue token gets the venue label — the embedded "St" is venue, not
+		// Every venue token gets the venue label — the embedded "St" is venue rather than
 		// street_prefix.
 		const venueTokenCount = 5
 

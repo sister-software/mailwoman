@@ -100,7 +100,7 @@ export async function readCoordPanel(
  * `${locality}, ${region} ${postcode}` is the United States postal order and nothing else: it prints Japan's admin run
  * backwards, drops each country's own separator convention, and puts a postcode after a region in the systems that lead
  * with it. A surface that differs only in which components are present — a country name, a house number and a street —
- * is a dict, not a template.
+ * is a dict rather than a template.
  *
  * Answers `""` when no layout can write the country: 55 of the 252 shipped records carry no usable skeleton, and
  * reporting nothing for one of those is an absence rather than an invented order.
@@ -116,9 +116,9 @@ export function renderAdmin(place: PanelLocality, extra: ComponentDict = {}): st
 /**
  * The place's last word, when that word is a USPS suffix — the collision a US admin surface splits on (#2308).
  *
- * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical and every variant, not the curated name-prone subset.
- * The narrower list moves rows between buckets and moves every bucket's rate with them, so which bucket a row lands in
- * is a property of the word list, and the word list has to be the whole table.
+ * Membership is `US_STREET_SUFFIX_LOOKUP`: every Pub-28 canonical and every variant rather than the curated name-prone
+ * subset. The narrower list moves rows between buckets and moves every bucket's rate with them, so which bucket a row
+ * lands in is a property of the word list, and the word list has to be the whole table.
  */
 export function suffixTail(locality: string): string | undefined {
 	const last = locality

@@ -52,7 +52,7 @@ function escapeQL(value: string): string {
 }
 
 /**
- * Escape regex metacharacters — the `~` operator's value is a regex, not a literal.
+ * Escape regex metacharacters — the `~` operator's value is a regex rather than a literal.
  */
 function escapeQLRegex(value: string): string {
 	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))

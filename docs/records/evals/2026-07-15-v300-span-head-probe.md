@@ -1,5 +1,5 @@
 ---
-title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained), not falsified
+title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained) rather than falsified
 ---
 
 # v3.0.0-span-head 2k probe — the head never trained; the check does not adjudicate
@@ -13,7 +13,7 @@ title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained), not falsified
 > diagnostic (is the loss decreasing?), then fork to the operator.
 
 **Result: the check reads fail, but it does not adjudicate the arc.** Per the pre-registered
-diagnostic, this is **under-trained, not falsified** — and the direct call is the fork, which is why
+diagnostic, this is **under-trained rather than falsified** — and the direct call is the fork, which is why
 this doc exists rather than a relaunch.
 
 ## What ran
@@ -35,7 +35,7 @@ Channel-starved (see the caveat below) — **relative comparison only**:
 | token@1 (BIO argmax)       | 93/267 = **0.348** |
 | seg@1 (semi-Markov argmax) | 1/267 = **0.004**  |
 
-## Why this is under-training, not falsification
+## Why this is under-training rather than falsification
 
 The pre-registered diagnostic is "is the loss even decreasing?". It is, and it is nowhere near
 converged:

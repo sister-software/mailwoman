@@ -15,14 +15,14 @@
  *   Two measurements shape {@link extractAttestedPhrases}, and both are the reason it is safe to run
  *   over raw OSM at all:
  *
- *   **A feature's `name` is usually the VENUE's name, not a sub-venue phrase.** On the Berlin extract
+ *   **A feature's `name` is usually the VENUE's name rather than a sub-venue phrase.** On the Berlin extract
  *   (2,060 matched features) a `railway=platform` is named `Stendaler Straße` and an `amenity=university`
  *   is named `Hertie School`; across 250,116 named Great Britain features only 6,003 (2.40%) contain a
  *   designator token at all. So names are not harvested wholesale — a name contributes only when it
  *   CONTAINS a phrase already in the surface index, which is what makes `Terminal E (Untere Ebene)`
  *   evidence and `Otto Lilienthal Flughafen Berlin Tegel` not.
  *
- *   **A matched phrase belongs to the record the PHRASE names, not the record the ROW carries.**
+ *   **A matched phrase belongs to the record the PHRASE names rather than the record the ROW carries.**
  *   Attributing every hit to `row.designatorID` — the rule that matched the FEATURE — produced `west →
  *   platform`, `hall → platform` and `biggin → platform` on the GB extract, because a bus stop tagged
  *   `public_transport=platform` is named "Village Hall" or "West Kensington"; 108 of 133 OSM-derived
@@ -88,10 +88,10 @@ export function classifyIdentifier(ref: string): string {
 /**
  * How many real `ref` values each {@link IdentifierShape} keeps.
  *
- * Eight, not "all" and not one. The field exists so a recipe author can see what a class actually CONTAINS — GB's
- * `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`), which one example would have hidden and
- * which the class name does not say. Eight fits a terminal line and covers the variety inside every class the GB
- * extract produced. The COUNT lives in `observations`; this is a sample, not a census.
+ * Eight rather than "all" and not one. The field exists so a recipe author can see what a class actually CONTAINS —
+ * GB's `other` class turned out to be semicolon multi-values (`1.2.3`, `13.14`), which one example would have hidden
+ * and which the class name does not say. Eight fits a terminal line and covers the variety inside every class the GB
+ * extract produced. The COUNT lives in `observations`; this is a sample rather than a census.
  */
 const IDENTIFIER_EXAMPLES_PER_SHAPE = 8
 

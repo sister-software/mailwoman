@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The cold trial of the get-started pages: prove their pasted transcripts against a real consumer install, not the
+ * @file The cold trial of the get-started pages: prove their pasted transcripts against a real consumer install rather than the
  *   monorepo's hoisted `node_modules`. A workspace-linked dev tree resolves things a stranger's `npm install` never
  *   would (a sibling package, a locale overlay), which is the trap `smoke-clean-install` exists for too.
  *
@@ -128,7 +128,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	await using tmp = await temporaryDirectory("mw-get-started-")
 	const tarDir = String(tmp.resolve("tarballs"))
 	const project = String(tmp.resolve("project"))
-	// doctor's own "data root does not exist" branch needs the directory to be missing, not empty.
+	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
 	const doctorRoot = String(tmp.resolve("doctor-root-absent"))
 
 	await makeDirectories(tarDir, project)

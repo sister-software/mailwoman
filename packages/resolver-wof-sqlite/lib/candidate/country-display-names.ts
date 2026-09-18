@@ -22,8 +22,9 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
  * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
  *
- * `is_primary = 0`: these are NAMES THE WORLD USES, not the country's canonical name. The display `name` stays whatever
- * the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming it.
+ * `is_primary = 0`: these are NAMES THE WORLD USES rather than the country's canonical name. The display `name` stays
+ * whatever the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming
+ * it.
  *
  * Returns the row count so the caller can report it — a zero means ICU supplied nothing, which is a different fact from
  * the pass not having run.

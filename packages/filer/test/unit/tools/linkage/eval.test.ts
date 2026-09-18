@@ -5,7 +5,7 @@
  *
  *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Criterion 4's structural requirements
  *   live here — the truth field's absence from the withheld run's input (asserted against the same
- *   `buildFilteredEvalInputs()` helper the eval itself calls, not a parallel copy), and reproducibility — plus
+ *   `buildFilteredEvalInputs()` helper the eval itself calls rather than a parallel copy), and reproducibility — plus
  *   a positive control: the control run's perfect score is asserted, so stubbing
  *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the real
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
@@ -71,7 +71,7 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
 async function runEval(): Promise<FilerLinkageEvalResult> {
-	// The PROMISE is what is cached, not its value: `??=` on an awaited call would run the eval once per concurrent
+	// The PROMISE is what is cached rather than its value: `??=` on an awaited call would run the eval once per concurrent
 	// caller, and the point of the memo is that it runs once.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
@@ -250,11 +250,11 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const northbridgeFirst = labelFor("Northbridge Holdings LLC", "Southgate Capital Partners LLC")
 		const southgateFirst = labelFor("Southgate Capital Partners LLC", "Northbridge Holdings LLC")
 
-		// The full joined label, not a substring: the id set is what gets published, and `toContain(":northbridge")`
+		// The full joined label rather than a substring: the id set is what gets published, and `toContain(":northbridge")`
 		// would pass just as on a label that had lost the other parent.
 		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
 
-		// Equal to each other and equal to the full expected set — the label is a property of the registrant, not of
+		// Equal to each other and equal to the full expected set — the label is a property of the registrant rather than of
 		// which source happened to be read first.
 		expect(northbridgeFirst).toBe(expected)
 		expect(southgateFirst).toBe(expected)
@@ -269,7 +269,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 describe("the corpus's own invariants", () => {
 	it("never restates one row's holdingCompany inside another row's name fields", () => {
 		// The corpus docstring claims withholding cannot be defeated through a name field that happens to repeat a
-		// parent's name. Nothing checked it, and the leakage census could not see it: a legal name is an attribute, not
+		// parent's name. Nothing checked it, and the leakage census could not see it: a legal name is an attribute rather than
 		// an ownership row, so a restated parent would sail past the check and quietly feed the entity-resolution pass.
 		const rows = buildLinkageEvalForm499Rows()
 		const parents = rows.map((row) => row.holdingCompany).filter((name) => name !== "")
@@ -379,7 +379,7 @@ describe("filerLinkageEval — the withheld run (the measurement)", () => {
 		expect(withheld.score.predictedPositivePairs).toBe(0)
 		expect(withheld.score.precision).toBeNull()
 		expect(withheld.score.recall).toBe(0)
-		// I2: undefined, not zero — "claimed nothing" is not "claimed wrongly".
+		// I2: undefined rather than zero — "claimed nothing" is not "claimed wrongly".
 		expect(withheld.score.f1).toBeNull()
 	})
 
@@ -580,7 +580,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 						.values({
 							from_node_id: `frn:${frn}`,
 							to_node_id: INJECTED_FAMILY_ID,
-							// ParentCompany, not Subsidiary: `schema.ts` defines the TARGET as what it is TO the source, and
+							// ParentCompany rather than Subsidiary: `schema.ts` defines the TARGET as what it is TO the source, and
 							// `build-filer.ts` follows that convention. `from: frn → to: cik` with `Subsidiary` would assert the
 							// CIK is the FRN's subsidiary — the inverse of what a parent-CIK importer means.
 							relationship: FilerRelationship.ParentCompany,

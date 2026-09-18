@@ -46,8 +46,8 @@ export interface ReadOGRLayerIdentityOptions {
 	 */
 	layer?: string
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change, not a variation to
-	 * absorb.
+	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * to absorb.
 	 */
 	expectEPSG: number
 	/**
@@ -92,7 +92,7 @@ const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 
 /**
  * Ordinates in a 2D extent: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D or degenerate extent this reader
- * does not understand, not a 2D one with something missing.
+ * does not understand rather than a 2D one with something missing.
  */
 const EXTENT_ORDINATES = 4
 

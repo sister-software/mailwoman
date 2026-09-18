@@ -39,7 +39,7 @@ public web:
   control, no `exportsAsCsv` endpoint. Probing
   `findtreatment.gov/locator/exportsAsCsv` and
   `findtreatment.samhsa.gov/locator/exportsAsCsv` returns the SPA HTML
-  shell, not CSV.
+  shell rather than CSV.
 - `samhsa.gov/data/data-we-collect/n-sumhss-…` returns 403 on direct
   HTTP fetch (Cloudflare-class blocking); accessible interactively only
   after per-dataset EULA acceptance, and what it ships
@@ -58,13 +58,12 @@ public web:
   sitting idle, and reinstating it the day a compatible CSV reappears
   is one one-line change to `corpus/src/adapters/index.ts`.
 - **Rewrite against N-SUMHSS PUF (rejected).** The PUF is
-  per-facility survey microdata (service mix, capacity, modalities),
-  not a venue-name + two-line postal-address record. Rewriting against
+  per-facility survey microdata (service mix, capacity, modalities) rather than a venue-name + two-line postal-address record. Rewriting against
   it would lose the only training signal this adapter exists to
   contribute — the `street1` / `street2` narrative sub-tenant chaos
   ("Suite C, behind main building") — and would be a parallel,
   weaker NPPES.
-- **Find via FOIA / SAMHSA dev channels (deferred, not chosen).**
+- **Find via FOIA / SAMHSA dev channels (deferred rather than chosen).**
   The data exists (the locator UI is backed by it); the access path is
   not in our hands on a useful timeline. Worth keeping on the
   follow-up list but not blocking on.

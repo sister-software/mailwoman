@@ -23,7 +23,7 @@
  *   {@linkcode APIClient}.
  *
  *   Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule
- *   deliberately does not touch: they are string contracts, not identifiers we chose.
+ *   deliberately does not touch: they are string contracts rather than identifiers we chose.
  */
 
 /**

@@ -5,7 +5,7 @@
 # `source_weights` block is BYTE-IDENTICAL to v5.3.0's and its corpus is v5.3.0's plus eight
 # parquets — so every difference between the two arms is named in `source_reps` below.
 #
-# v5.0.0-base-alltails-60k.yaml at seed 42 is the LINEAGE reference, not the attribution control.
+# v5.0.0-base-alltails-60k.yaml at seed 42 is the LINEAGE reference rather than the attribution control.
 # Against v5.0.0 this arm carries a third delta neither `corpus_dir` nor `source_reps` names:
 # `synth-reviewed-postcode-tail: 0.05` over v0.28.0's 22 reviewed Venezuelan rows, which is v5.3.0's
 # whole treatment riding along. Read any movement on the four `ve_city_postcode_trailing_state` rows
@@ -68,7 +68,7 @@
 #                    convention: the whole unit line is `po_box`, APO/FPO/DPO the locality, AA/AE/AP
 #                    the region.
 #
-# F1 is what BLOCKS a ship, not a target: `COMER parís.méxico`, the two `parís.méxico` rows and the two
+# F1 is what BLOCKS a ship rather than a target: `COMER parís.méxico`, the two `parís.méxico` rows and the two
 # GB `*-hill` rows must clear before any default-on ship. F4 rides its proven #1569 weight unchanged
 # (synth-suffix-boundary 2.5) — do not raise it chasing F1. that was measured not to move.
 #
@@ -260,7 +260,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
+  # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 =
   # 417,339 draws, 5.4% of the run. The big register sources take one pass each because they carry
   # their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the

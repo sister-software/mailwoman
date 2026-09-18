@@ -19,7 +19,7 @@
  *   ## Measured against the 2026-08-05 acquisition
  *
  *   12,327 elements (2,752 nodes · 9,458 ways · 117 relations), every one of them carrying both an
- *   `addr:postcode` and a coordinate — so `skippedNoCoordinate` is a MEASURED zero here, not an untested
+ *   `addr:postcode` and a coordinate — so `skippedNoCoordinate` is a MEASURED zero here rather than an untested
  *   path. 1 malformed value. 4,757 distinct valid unit postcodes across 80 districts and 250 sectors.
  */
 

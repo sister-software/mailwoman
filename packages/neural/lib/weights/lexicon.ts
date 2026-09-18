@@ -24,7 +24,7 @@ import { readRequiredChannels } from "#weights/channels"
  * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`). Serving therefore fed the channel a
  * different lexicon generation than training painted, and nothing said so: the v6 file exists, the channel loads, the
  * parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
- * workaround that only exists because the filename, not the card, was the contract.
+ * workaround that only exists because the filename rather than the card, was the contract.
  *
  * The contract is now the card: `requires.<channel>.lexicon` NAMES the artifact the model trained against, and
  * {@linkcode resolveEvidenceLexicon} resolves that. The legacy filenames stay as the back-compat answer for a card that
@@ -86,7 +86,7 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  * closing #1511: a data-only overlay that ships no lexicon of its own would start resolving the base package's, which
  * silently turns both evidence channels on for every overlay in the repo (de-de, es-es, it-it, en-in, en-nz, fr-fr) in
  * one commit, on locales no board has graded. An overlay that wants the bundle links its own copy and says so in its
- * `files` array. that is one locale's measured decision, not seven unmeasured ones.
+ * `files` array. that is one locale's measured decision rather than seven unmeasured ones.
  */
 export async function resolveEvidenceLexicon(
 	channel: EvidenceLexiconChannel,
@@ -124,7 +124,7 @@ export async function resolveEvidenceLexicon(
 
 	const shipped = await shippedLexiconGenerations(packageDir, prefix)
 
-	// Nothing of this family anywhere → plain absence, not a mismatch (rung 2).
+	// Nothing of this family anywhere → plain absence rather than a mismatch (rung 2).
 	if (!shipped.length) return undefined
 
 	throw new LexiconVersionMismatchError(

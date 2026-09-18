@@ -289,7 +289,7 @@ const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
 
 describe("the place binding of a country-scoped claim (#1999)", () => {
 	// The US-scoped drugstore claim is about US establishments. a French anchor is where the search looks, so the claim
-	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens, not the place.
+	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens rather than the place.
 	it("drops a scoped category at an anchor outside its scope, and records what fell out", async () => {
 		const stage = createPOIIntentStage({
 			lookup: prescriptionLookup,
@@ -389,7 +389,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
 	})
 
-	// A category two authorities reach stays when either holds at the anchor. the scope is on the claim, not the id.
+	// A category two authorities reach stays when either holds at the anchor. the scope is on the claim rather than the id.
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
 		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
 

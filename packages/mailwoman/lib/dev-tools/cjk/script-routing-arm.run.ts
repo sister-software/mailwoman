@@ -13,9 +13,9 @@
  *   the line it sits in is not written in that script. This is the rule the router ships (`carriesFamilySegment`), so
  *   the rows it lists as newly routed are the ones a whole-input fold would still send to the Latin model.
  *
- * WHAT THIS MEASURES IS THE CLASSIFIER, NOT THE PIPELINE. Each arm calls `parse` directly, so normalization, the phrase
- * grouper and the resolver are all absent and the absolute scores here are not the board's. Both arms run through the
- * identical harness, so the COMPARISON is sound and the direction is what the probe reports.
+ * WHAT THIS MEASURES IS THE CLASSIFIER rather than THE PIPELINE. Each arm calls `parse` directly, so normalization, the
+ * phrase grouper and the resolver are all absent and the absolute scores here are not the board's. Both arms run
+ * through the identical harness, so the COMPARISON is sound and the direction is what the probe reports.
  *
  * Run:
  *

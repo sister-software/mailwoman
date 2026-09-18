@@ -52,18 +52,18 @@ The decisive, config-independent signal is the **total-entity column**:
    over-merging.
 
 There is no GBT link threshold that matches FS's cross-source links at ≥ FS precision **without**
-over-merging. This is structural, not a tuning miss: the GBT's strongest features
+over-merging. This is structural rather than a tuning miss: the GBT's strongest features
 (`spatial-exact × name/org-disagree`) **replace** the FS weight, so a true cross-source pair (same
 place, names differ across sources) lands in the same logit band as an actual dedup over-merge (same
 place, different co-located provider). One threshold cannot separate the two when the objectives are
-opposite — which is the definition of needing a different model, not a different cutoff.
+opposite — which is the definition of needing a different model rather than a different cutoff.
 
 **FS stays pinned for the cross-source flows** — it is the recall-correct _and_ best-precision tool
 here, by design. The only way to "do better than FS" (#655) is a **cross-objective retrain**
 (option 2): a GBT trained on the cross-source objective, where `spatial-exact × name-disagree` carries
 the _opposite_ sign. That is blocked on cross-source labels, which don't exist (no shared key) — it
 needs a weak-label pipeline (e.g. phone/NPI-corroborated FS-high-confidence links as positive seeds,
-non-co-located pairs as negatives). That is a project, not a tweak; it is **not** started here.
+non-co-located pairs as negatives). That is a project rather than a tweak; it is **not** started here.
 
 ## Caveats
 
@@ -80,7 +80,7 @@ non-co-located pairs as negatives). That is a project, not a tweak; it is **not*
 
 ## Bottom line
 
-Option 1 (re-threshold the dedup GBT) **does not work** — measured, not assumed. Keep FS pinned for
+Option 1 (re-threshold the dedup GBT) **does not work** — measured rather than assumed. Keep FS pinned for
 cross-source discovery. #655's remaining content is option 2 (a weak-label cross-objective retrain),
 which is a scoped project blocked on building cross-source weak labels — or, equally defensible, close
 #655 as "the GBT is dedup-only by design; FS is the correct cross-source tool."

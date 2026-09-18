@@ -19,7 +19,7 @@ describe("isCanadianProvinceCode", () => {
 	it("accepts ISO 3166-2:CA codes, case-insensitively", () => {
 		expect(isCanadianProvinceCode("QC")).toBe(true)
 		expect(isCanadianProvinceCode("on")).toBe(true)
-		expect(isCanadianProvinceCode("CA")).toBe(false) // a US state, not a Canadian subdivision
+		expect(isCanadianProvinceCode("CA")).toBe(false) // a US state rather than a Canadian subdivision
 	})
 })
 

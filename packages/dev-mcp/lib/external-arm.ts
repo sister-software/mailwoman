@@ -14,7 +14,7 @@
  *
  *   Three refusals it makes on its own account:
  *
- *   1. **It never starts anything.** An endpoint that is not already up is a refusal with the reason, not a run that
+ *   1. **It never starts anything.** An endpoint that is not already up is a refusal with the reason rather than a run that
  *      scores every row as a miss. Spec §7's open question 7, resolved the conservative way: this surface gathers
  *      evidence and does not change state anything else reads, and "the benchmark rig was down" is a fact about the
  *      box that must reach the reader instead of arriving disguised as an arm that lost.
@@ -58,10 +58,10 @@ const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstree
 /**
  * Minimum spacing between two dispatches to an external arm, in milliseconds.
  *
- * A JUDGEMENT, not a measurement, and stated as one: these endpoints are self-hosted, so no upstream publishes a rate
- * for them and there is no limit to honour. What the interval provides is that a 400-row loop cannot saturate a service
- * sharing this box's memory bandwidth with the resident gazetteer — 20 dispatches per second is far above what a
- * sequential comparison reaches anyway, so it costs a well-behaved run nothing and bounds a pathological one.
+ * A JUDGEMENT rather than a measurement, and stated as one: these endpoints are self-hosted, so no upstream publishes a
+ * rate for them and there is no limit to honour. What the interval provides is that a 400-row loop cannot saturate a
+ * service sharing this box's memory bandwidth with the resident gazetteer — 20 dispatches per second is far above what
+ * a sequential comparison reaches anyway, so it costs a well-behaved run nothing and bounds a pathological one.
  *
  * Set through `minRequestIntervalMs` rather than `requestsPerMinute` deliberately: AGENTS.md records that the budget
  * budget alone does not deliver N requests per minute (measured at 100/min for `requestsPerMinute: 10`), and the
@@ -145,7 +145,7 @@ export interface ExternalArmIdentity {
 	version: string | null
 	/**
 	 * Where {@link ExternalArmIdentity.version} came from. `caller-declared` means the endpoint would not confirm it and
-	 * the caller asserted it — a claim on the record, not an observation.
+	 * the caller asserted it — a claim on the record rather than an observation.
 	 */
 	version_source: "endpoint" | "caller-declared" | null
 	data_vintage: string | null
@@ -219,9 +219,9 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * parsing its answer through our reimplementation's idea of the format would make it blind to exactly the divergences
  * the comparison is for. RFC 7946 is shared ground. a drop-in's schema is a claim under test.
  *
- * A feature whose geometry is not a point is a no-result with a reason, not a skip to the second feature: the protocol
- * scores position one, and an engine that answered with an unplaceable feature has said something different from an
- * engine that answered with nothing.
+ * A feature whose geometry is not a point is a no-result with a reason rather than a skip to the second feature: the
+ * protocol scores position one, and an engine that answered with an unplaceable feature has said something different
+ * from an engine that answered with nothing.
  */
 function readGeoJSONTop(body: unknown, typeKey: string): ExternalAnswer {
 	const features = (body as Partial<GeoFeatureCollection<unknown, Record<string, unknown>>> | null)?.features
@@ -421,7 +421,7 @@ export class ExternalGeocoderClient extends APIClient {
 			statusHTTP = status.status
 			statusPath = this.#protocol.statusPath
 		} catch (error) {
-			// A status path that answers 404 is a fact about the implementation, not about reachability, so the probe
+			// A status path that answers 404 is a fact about the implementation rather than about reachability, so the probe
 			// continues to the search path. Only a transport-class failure means "not up", and the search attempt below
 			// is what settles that.
 			statusHTTP = readErrorStatus(error)

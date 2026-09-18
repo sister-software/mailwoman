@@ -11,7 +11,7 @@
 # SINGLE VARIABLE vs v0_7_1-intersection.yaml: the `synth-intersection` recipe output
 # (part-intersection.parquet on the volume) is regenerated to ~58% BARE (no tail) +
 # the "@" connector + more connector variety. Weight held at 0.2 (the model already
-# learned intersections at 0.2 — format was the gap, not weight. and 0.2 keeps the
+# learned intersections at 0.2 — format was the gap rather than weight. and 0.2 keeps the
 # synthesis-as-supplement discipline of weight < 0.25). New output_dir so v0.7.1's
 # checkpoints survive.
 #

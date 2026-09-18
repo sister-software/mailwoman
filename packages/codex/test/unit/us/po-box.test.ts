@@ -46,7 +46,7 @@ test("matchPOBox: splits the designator phrase from the id, preserving surface c
 	expect(matchPOBox("P.O. Box 12-A")).toEqual({ matched: "P.O. Box", id: "12-A" })
 	expect(matchPOBox("Post Office Box 7")).toEqual({ matched: "Post Office Box", id: "7" })
 	expect(matchPOBox("Drawer 5")).toEqual({ matched: "Drawer", id: "5" })
-	expect(matchPOBox("PO Box #99")).toEqual({ matched: "PO Box", id: "99" }) // '#' consumed, not part of id
+	expect(matchPOBox("PO Box #99")).toEqual({ matched: "PO Box", id: "99" }) // '#' consumed rather than part of id
 	expect(matchPOBox("123 Main St")).toBeNull()
 })
 

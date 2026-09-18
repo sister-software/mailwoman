@@ -51,9 +51,9 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A JUDGEMENT, not a measurement — there is no experiment that fixes it. It is set at 1% because that is roughly the `n
- * = 300` mark (`1 − 0.05^(1/300) = 0.99%`), i.e. the point where a zero rests on a set larger than any panel anyone has
- * assembled by hand here. The 2026-08-15 probe used 10, whose bound is 25.9%.
+ * A JUDGEMENT rather than a measurement — there is no experiment that fixes it. It is set at 1% because that is roughly
+ * the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`), i.e. the point where a zero rests on a set larger than any panel
+ * anyone has assembled by hand here. The 2026-08-15 probe used 10, whose bound is 25.9%.
  */
 const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
 

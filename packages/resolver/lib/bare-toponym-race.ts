@@ -89,7 +89,7 @@ export async function bareCountryCandidate(
 
 		const top = hits[0]
 
-		// The placetype check is required, not paranoia: a backend that ignores the filter
+		// The placetype check is required rather than paranoia: a backend that ignores the filter
 		// (several test stubs, and any future partial implementation) would otherwise hand this
 		// race a LOCALITY row wearing a country costume, and the repick would demote the real pick.
 		return top && top.placetype === "country" && top.exactMatch !== false ? top : null

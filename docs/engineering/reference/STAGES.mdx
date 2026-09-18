@@ -12,7 +12,7 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
   - **Shipped, soft-signal (#244):** Stage 1.5 (coarse-placer country router). Off in the bare `core` coordinator (byte-stable); wired **on by default** in the `mailwoman` package. Runs after normalize, feeds the resolver's `anchorPosterior` re-rank — never the classifier.
   - **Shipped, opt-in (retired as default 2026-06-14, #566):** Stage 5 (joint reconcile). Was default-on when the phrase grouper + a `parseWithLogits` classifier were wired, but graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% — so **argmax is now the default decode**. Code + A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
-  - **Shipped but not wired as factory default:** Stage 2 (`locale-hint` workspace exists, not in `createRuntimePipeline` factory).
+  - **Shipped but not wired as factory default:** Stage 2 (`locale-hint` workspace exists rather than in `createRuntimePipeline` factory).
   - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
   - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
@@ -154,7 +154,7 @@ export interface LocaleHint {
 	/** Detector's confidence, 0..1. */
 	confidence: number
 
-	/** Alternative locales with confidence — possibilities, not constraints. */
+	/** Alternative locales with confidence — possibilities rather than constraints. */
 	alternatives: Array<{ locale: LocaleTag; confidence: number }>
 
 	/** Detection source: caller hint took precedence, vs. detected from input. */
@@ -186,7 +186,7 @@ export interface LocaleHintStage {
 **Open questions.**
 
 - Hand-rolled rule classifier vs trained model? Recommend: trained model — small, fast, and gets better with the corpus we already have (each row carries `locale`).
-- Where do non-shipped locales fall back? Recommend: nearest-locale heuristic — a Polish input falls back to `en-US` weights with a low-confidence flag, not an error.
+- Where do non-shipped locales fall back? Recommend: nearest-locale heuristic — a Polish input falls back to `en-US` weights with a low-confidence flag rather than an error.
 
 ## Stage 2.5 — Kind classifier
 
@@ -259,7 +259,7 @@ export interface PhraseGrouper {
 
 Per "possibilities not constraints", the grouper emits overlapping proposals freely (e.g. `Saint Petersburg` surfaces as a single `LOCALITY_PHRASE` AND as two single-token `LOCALITY_PHRASE`s) — the reconciler picks the best non-overlapping subset.
 
-**Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). Bitter-lesson-safe — no place-name dictionaries. Wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline` (hard dep in v0.5.0, not an opt-in shim — there are no v0.4.0 users to migrate). Result surfaced on `PipelineResult.phraseProposals`.
+**Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). Bitter-lesson-safe — no place-name dictionaries. Wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline` (hard dep in v0.5.0 rather than an opt-in shim — there are no v0.4.0 users to migrate). Result surfaced on `PipelineResult.phraseProposals`.
 
 **Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output contract; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../../records/plan/phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
@@ -591,7 +591,7 @@ These don't belong to one stage; they affect composition.
 
 1. **Cancellation.** Every stage accepts an `AbortSignal`. Should partial results be returned on abort, or just `undefined`? Recommend: partial results (a normalized + locale-detected + kind-classified input is useful even if classification was cancelled).
 2. **Caching.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator; configurable size.
-3. **Telemetry.** `PipelineTiming` is per-call. Should we also expose per-stage success rates and per-stage error counters? Recommend: yes, but as a plug-in observability hook, not baked into the core interface.
+3. **Telemetry.** `PipelineTiming` is per-call. Should we also expose per-stage success rates and per-stage error counters? Recommend: yes, but as a plug-in observability hook rather than baked into the core interface.
 4. **Streaming.** Today the pipeline is request/response. For autocomplete workflows, would a streaming variant ever ship? Recommend: not in v1. The fast path covers most of the autocomplete case via cheap repeated calls.
 5. **Server vs browser parity.** Every stage must run in both. The `locale-hint` and kind classifier should be small enough to bundle; the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
 

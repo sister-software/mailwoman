@@ -27,7 +27,7 @@ test("GeoPoint.from: an out-of-lat-range longitude is still just the longitude",
 	expect(point.latitude).toBe(34.0522)
 })
 
-// The axis order is fixed, not inferred. Until 2026-08-05 the constructor ran a 2-tuple through
+// The axis order is fixed rather than inferred. Until 2026-08-05 the constructor ran a 2-tuple through
 // `inferGeoJSONCoordOrder`, which transposes the pair when the first magnitude is in [-90, 90] and
 // the second is not. That fires on a [latitude, longitude] pair only where |longitude| > 90 — the
 // Americas and the Pacific — so the same caller mistake was silently repaired in Dallas and silently

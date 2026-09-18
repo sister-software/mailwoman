@@ -20,7 +20,7 @@ output coordinate.
    `postcode_area_resolution` strategy, which is inert in this configuration, and the
    name-match fallback that runs never reads it.
 
-2. **Texas wins because of `--locale`, not the postcode.** `--locale` defaults to `en-US`, which
+2. **Texas wins because of `--locale` rather than the postcode.** `--locale` defaults to `en-US`, which
    the CLI turns into `ResolveOpts.defaultCountry = "US"`, which becomes a hard `spr.country = 'US'`
    WHERE clause. The candidate pool is all-US before ranking begins; population then picks Paris TX
    (24,969). The coarse placer had already called this address **FR at confidence 0.9999908844** and
@@ -37,7 +37,7 @@ output coordinate.
    pairs (400 US ZIP+city, 400 FR CP+commune) it crossed a border **zero** times.
 
 5. **A second-order finding, verified twice:** once the postal extracts are attached — which is what
-   `mailwoman geocode` does by default — `defaultCountry=US` makes the answer _worse_, not merely
+   `mailwoman geocode` does by default — `defaultCountry=US` makes the answer _worse_ rather than merely
    wrong. `mailwoman geocode "12 Rue de Rivoli, 75001 Paris"` returns **32.960001, -96.838499 —
    Addison, Texas**, because postcode-consistency falls the locality back to the ZIP-75001 point.
 
@@ -94,8 +94,7 @@ The chain, each link measured:
 3. In `#lookupAndPick` the precedence is
    `parentResolved?.country ?? countryHint ?? state.defaultCountry ?? state.hardCountry`
    (`resolve.ts:968-972`). **`defaultCountry` sits above `hardCountry`.**
-4. `#fuzzyNameMatch` turns that into `where.push("spr.country = ?")` (`lookup.ts:632`). Hard filter,
-   not a boost.
+4. `#fuzzyNameMatch` turns that into `where.push("spr.country = ?")` (`lookup.ts:632`). Hard filter rather than a boost.
 5. Within the surviving exact tier, #905 makes population the primary key. Paris TX (24,969) beats
    Paris TN (10,343) and Paris KY (10,089).
 
@@ -213,20 +212,20 @@ Prototyped out-of-tree against the live gazetteer, over the public `findPlace` s
 
 Verdicts were identical at 15, 25 and 50 km checks — the mechanism is not check-tuned.
 
-| postcode | locality      | verdict                            | distance | note                            |
-| -------- | ------------- | ---------------------------------- | -------: | ------------------------------- |
-| 75001    | Paris         | **FR** `#1159322569` 48.857,2.343  |   0.8 km | the case under investigation    |
-| 75001    | Addison       | **US** `#101725671` 32.959,-96.836 |   0.3 km | the literal collision           |
-| 75460    | Paris         | **US** `#101725293` 33.669,-95.544 |   5.7 km | the real Paris TX ZIP           |
-| 62701    | Springfield   | **US** `#85940429` 39.771,-89.654  |   3.3 km | the brief's ZIP confound        |
-| 10115    | Berlin        | **DE** `#101909779` 52.502,13.402  |   3.6 km | another 5-digit collision       |
-| 10117    | Berlin        | **DE** `#101909779`                |   2.0 km |                                 |
-| 10001    | New York      | **US** `#85977539`                 |   8.4 km |                                 |
-| 90210    | Beverly Hills | **US** `#85923701`                 |   2.8 km |                                 |
-| 75008    | Paris         | **FR** `#1159322569`               |   2.8 km | another arrondissement          |
-| 75001    | Springfield   | ABSTAIN                            |        — | wrong-for-the-city postcode     |
-| 75001    | Berlin        | ABSTAIN                            |        — | wrong-for-the-city postcode     |
-| 06260    | Saint-Pierre  | ABSTAIN                            |        — | recall miss, not a wrong answer |
+| postcode | locality      | verdict                            | distance | note                                   |
+| -------- | ------------- | ---------------------------------- | -------: | -------------------------------------- |
+| 75001    | Paris         | **FR** `#1159322569` 48.857,2.343  |   0.8 km | the case under investigation           |
+| 75001    | Addison       | **US** `#101725671` 32.959,-96.836 |   0.3 km | the literal collision                  |
+| 75460    | Paris         | **US** `#101725293` 33.669,-95.544 |   5.7 km | the real Paris TX ZIP                  |
+| 62701    | Springfield   | **US** `#85940429` 39.771,-89.654  |   3.3 km | the brief's ZIP confound               |
+| 10115    | Berlin        | **DE** `#101909779` 52.502,13.402  |   3.6 km | another 5-digit collision              |
+| 10117    | Berlin        | **DE** `#101909779`                |   2.0 km |                                        |
+| 10001    | New York      | **US** `#85977539`                 |   8.4 km |                                        |
+| 90210    | Beverly Hills | **US** `#85923701`                 |   2.8 km |                                        |
+| 75008    | Paris         | **FR** `#1159322569`               |   2.8 km | another arrondissement                 |
+| 75001    | Springfield   | ABSTAIN                            |        — | wrong-for-the-city postcode            |
+| 75001    | Berlin        | ABSTAIN                            |        — | wrong-for-the-city postcode            |
+| 06260    | Saint-Pierre  | ABSTAIN                            |        — | recall miss rather than a wrong answer |
 
 **No pair was consistent in more than one country.** Not one needed a tiebreak.
 
@@ -260,12 +259,12 @@ Two of those rows hide separate defects that this investigation surfaced and did
 
 - **`Springfield, IL 62701` does not produce a locality node at all.** Measured tree:
   `region="IL"`, `postcode="62701"`, **`street="Springfield"`**. The parser tags Springfield as a
-  street. Any locality-side mechanism is inert here for that reason, not because the scoping is
+  street. Any locality-side mechanism is inert here for that reason rather than because the scoping is
   right. As a bare `(62701, Springfield)` pair the pass returns US at 3.3 km.
 - **`London, Ontario` is already wrong on both settings.** Under `defaultCountry=US` it resolves
   `locality=Ontario` → Ontario, **California** (pop 182,457) and `locality=London` → London,
   **Ohio**. Under `--default-country none` it goes to London, **GB** (pop 8.8 M). "Ontario" is
-  tagged `locality`, not `region`, so `applyRegionCountryCoherence` — which exists precisely to
+  tagged `locality` rather than `region`, so `applyRegionCountryCoherence` — which exists precisely to
   rescue "Montreal QC" — never fires. Worth its own ticket.
 
 ## 5. Is it feasible?
@@ -301,7 +300,7 @@ short of covering this case.
 Measured effect of removing the default entirely (`--default-country none`): all four target cases
 correct, including the BAN rooftop at 1 m. The cost is that `London, Ontario` and bare `Paris` fall
 to population-first-global ranking, which is the regression class the locale default exists to
-prevent. So the direct framing is a narrowing of the default's scope, not its removal — and the
+prevent. So the direct framing is a narrowing of the default's scope rather than its removal — and the
 narrowing predicate wants measuring on the resolver gauntlet before anyone believes a number in it.
 
 ---

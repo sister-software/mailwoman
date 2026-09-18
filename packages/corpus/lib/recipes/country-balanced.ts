@@ -13,13 +13,13 @@
  *        negatives (teach O-emission, the precision floor).
  *   2. Homograph CONTRAST pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
  *        Peru, Turkey) rendered both ways: as `country` (foreign-city context) and as the US
- *        `region`/`locality` (US-ZIP context). Teaches that the label is CONTEXTUAL, not
+ *        `region`/`locality` (US-ZIP context). Teaches that the label is CONTEXTUAL rather than
  *        positional.
  *   3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country code
  *        (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
  *
  *   `--golden` emits a held-out synthetic val over the VT (US) + Berlin (DE) holdouts. This is a
- *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output, not
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output rather than
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  */
@@ -107,7 +107,7 @@ const SOURCES: readonly CountrySource[] = [
 		region: "",
 		order: "fr",
 	},
-	// ES uses the Spanish IGN schema, not the OA standard columns — skipped here (codex still recognizes
+	// ES uses the Spanish IGN schema rather than the OA standard columns — skipped here (codex still recognizes
 	// "España"/"Spain"). A dedicated IGN adapter is a follow-up.
 	{
 		zip: dataRootPath("oa-cache", "it__countrywide.zip"),

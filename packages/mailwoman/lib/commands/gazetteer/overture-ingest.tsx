@@ -23,7 +23,7 @@
  *   exact for what we materialized and costs no second remote scan.
  *
  *   Progress streams to stderr. the final summary is on stdout. The per-country Parquet + the
- *   fill-rates report are written DIRECTLY under `<out>/<release>/` (Parquet/JSON artifacts, not a
+ *   fill-rates report are written DIRECTLY under `<out>/<release>/` (Parquet/JSON artifacts rather than a
  *   SQLite DB — no atomic temp-swap applies); this preserves the original
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */

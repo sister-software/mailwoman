@@ -80,7 +80,7 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 		{ child: "Marseille", parent: "Bouches-du-Rhône", expect: "present" },
 		// Cross-country negative control.
 		{ child: "Rennes", parent: "Illinois", expect: "absent" },
-		// Wrong-région control: Brest is in Bretagne, not Normandie.
+		// Wrong-région control: Brest is in Bretagne rather than Normandie.
 		{ child: "Brest", parent: "Normandie", expect: "absent" },
 	],
 }
@@ -205,7 +205,7 @@ async function main(): Promise<void> {
 			fail(`header delta ${header.delta} != 0 — a probe artifact must be uncalibrated`)
 		}
 
-		// Against the reader's own constant, not a re-typed literal — this script and the format cannot disagree.
+		// Against the reader's own constant rather than a re-typed literal — this script and the format cannot disagree.
 		if (header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
 			fail(
 				`header schemaVersion ${header.schemaVersion} != ${KNOWN_SCHEMA_VERSION} ` +

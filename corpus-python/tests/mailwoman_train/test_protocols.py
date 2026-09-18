@@ -36,7 +36,7 @@ def test_train_callback_protocol_declares_the_expected_members() -> None:
 
 
 def test_every_country_builder_already_carries_the_constants() -> None:
-    """`CountryModule` names constants the builders declare today, not ones a move would invent."""
+    """`CountryModule` names constants the builders declare today rather than ones a move would invent."""
     for builder in COUNTRY_BUILDERS:
         assert isinstance(builder.LABEL_SET_NAME, str), builder.__name__
         assert isinstance(builder.BOARD_BUCKET_MIN, int), builder.__name__

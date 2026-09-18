@@ -19,7 +19,7 @@
    */
   ```
 - `erasableSyntaxOnly`; tabs; relative imports with explicit `.ts` extensions; acronym casing (`categoryID`, `osmTag`, `emitOverpassQL`); DB/wire snake_case rule does not apply here (no DB).
-- **Byte-identity invariant:** with `poiQueryKind` unset/false, no code path may alter any existing result — the default `classifyKind` export must be untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be absent (optional field never set), not `undefined`-valued.
+- **Byte-identity invariant:** with `poiQueryKind` unset/false, no code path may alter any existing result — the default `classifyKind` export must be untouched, `stages.poiIntent` must be unset, and `PipelineResult.poiIntent` must be absent (optional field never set) rather than `undefined`-valued.
 - `kind-classifier` must not import `@mailwoman/poi-taxonomy` (dependency direction: lexicon is injected). `core` must not import it either. Only `mailwoman/` may.
 - Both exports maps rule applies to any new subpath (none planned — new mailwoman files are internal modules re-exported from `mailwoman/index.ts` only if a task says so).
 - Work in `/home/lab/Projects/mailwoman-exotic-poi`, branch `feat/poi-pipeline` (based on post-#1180 main; installed + compiled).
@@ -323,7 +323,7 @@ describe("lookup without a locale", () => {
 - [ ] **Step 2: Run to verify failure**
 
 Run: `yarn vitest run poi-taxonomy/lookup.test.ts`
-Expected: the osmTag test fails (`osmTag missing on hospital`); the no-locale test may already pass — that is fine, it is a pin, not a change.
+Expected: the osmTag test fails (`osmTag missing on hospital`); the no-locale test may already pass — that is fine, it is a pin rather than a change.
 
 - [ ] **Step 3: Add the field to `poi-taxonomy/types.ts`** (in `CategoryRecord`, after `basicLabel`):
 
@@ -1136,7 +1136,7 @@ In `docs/articles/plan/reference/runtime-flags.mdx`, Default-OFF table (after th
 
 - [ ] **Step 3: Verify**
 
-Run: `yarn compile` (parse.tsx is TSX — compiled, not type-stripped; a stale out/ would mask errors) then `node mailwoman/out/cli.js parse "hospital" --debug 2>&1 | head -20` — output must be unchanged vs. main (flag is off in the CLI's default pipeline; no `poiIntent` key appears).
+Run: `yarn compile` (parse.tsx is TSX — compiled rather than type-stripped; a stale out/ would mask errors) then `node mailwoman/out/cli.js parse "hospital" --debug 2>&1 | head -20` — output must be unchanged vs. main (flag is off in the CLI's default pipeline; no `poiIntent` key appears).
 Expected: compile clean; CLI output has no poiIntent field.
 
 - [ ] **Step 4: Format and commit**
@@ -1166,4 +1166,4 @@ git log -1 --oneline
 
 - Task 4 Step 5b: the file's lazy stage wiring (placeCountry/streetEvidence resolve on first call) is why the plan mandates the **inline-spread** `parseAnchor` form — it reads `stages` at call time, immune to mutation ordering. Do not "optimize" it into a pre-built anchorStages object.
 - Deferred to Plan 3 (do not build here): the poi.db executor, brand table + brand detection wiring, `variant-aliases` slang→taxonomy wiring, the landmark-leader abstain path, ResolveOpts kind-threading, MCP server, API/photon response variants.
-- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time, not merge time (flag ships off; register row records the promotion check).
+- The golden-2pp / demo-preset check applies at DEFAULT-FLIP time rather than merge time (flag ships off; register row records the promotion check).

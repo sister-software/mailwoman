@@ -86,7 +86,7 @@ describe("isPlacetypeFallback", () => {
 
 	it("is true only for a MACRO widening inside the request's own group", () => {
 		expect(isPlacetypeFallback("region", "macroregion")).toBe(true)
-		// A same-group sibling that is not a macro level is a match, not a widening.
+		// A same-group sibling that is not a macro level is a match rather than a widening.
 		expect(isPlacetypeFallback("locality", "borough")).toBe(false)
 	})
 

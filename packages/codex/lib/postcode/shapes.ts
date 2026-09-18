@@ -13,13 +13,13 @@
  *   Hand-mirrored, they drifted twice — the IE Eircode row was TS-only for a month, the BR CEP row
  *   for five weeks — and each time the trainer painted one fewer shape than inference, silently.
  *
- *   This is a SHAPE test, not a gazetteer-membership test. A bare `68161` matches the US, German,
+ *   This is a SHAPE test rather than a gazetteer-membership test. A bare `68161` matches the US, German,
  *   French, Spanish and Italian 5-digit shapes; `./systems.ts` answers the membership
  *   question, and neither module reads the other.
  *
  *   REGEX DIALECT. The bodies are written in the subset both JavaScript `RegExp` and Python `re`
  *   accept, which is what lets one file serve both. A row needing different source text in the two
- *   dialects needs a second field and a stated reason, not a loosened comparison on either side.
+ *   dialects needs a second field and a stated reason rather than a loosened comparison on either side.
  */
 
 import postcodeShapeData from "./shapes.json" with { type: "json" }

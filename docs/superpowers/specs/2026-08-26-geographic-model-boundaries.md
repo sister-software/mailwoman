@@ -102,11 +102,11 @@ means unmapped, never surveyed-and-empty.
 **every one at `basis = source_present`**, `completeness` min and max both `1.0`. The writer says so
 in place — `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts` sets
 `basis: CoverageBasis.SourcePresent` on both the rows-derived and the override coverage sets, with a
-comment stating that the `1.0` means "Overture returned rows here", not "everything here is known".
+comment stating that the `1.0` means "Overture returned rows here" rather than "everything here is known".
 
 The consequence binds the increment in §4: **`supportsExclusion` is false for every cell of the shipped
 POI layer today.** Any coverage-aware negative fact the program authors is therefore inert against
-`poi.db` until that register is rebuilt with an earned basis. That is the correct behavior, not a
+`poi.db` until that register is rebuilt with an earned basis. That is the correct behavior rather than a
 defect to route around, and it is why the increment states the coverage rule as a check rather than as a
 capability.
 
@@ -213,11 +213,11 @@ Two dependency rules follow, and both are required:
   decision that demonstrates the direction is necessary. Core ships the pipeline contract and ~9 MB of
   reference data to every consumer; a world-semantics dependency there is a dependency every drop-in
   API inherits whether or not it asked for one.
-- **The geographic model and #1683 share identifiers, not statistics.** The geographic model owns
+- **The geographic model and #1683 share identifiers rather than statistics.** The geographic model owns
   `obtain_medication` as a stable identifier with provenance; #1683 owns whatever numbers get fitted
   against it. Neither re-declares the other's half. That split is what keeps an authored relationship
   from turning into a weight by adjacency.
-- **The ownership row states a category of record, not a license to author freely** (added 2026-08-27,
+- **The ownership row states a category of record rather than a license to author freely** (added 2026-08-27,
   #1961). Which concepts, activities, assertions and mappings the compiled model may carry is
   the frozen set in §4 plus whatever an amendment to it admits — today that is §4.1's wave-1 set and
   nothing else. A record outside both widens this table in passing, which stop condition 5 refuses.
@@ -231,7 +231,7 @@ contradiction, or a coverage-qualified absence. It may not create an imperative.
 ## 4. The frozen increment
 
 Verbatim from #1917. Every Phase B–F issue in the program is judged against this block, and any change
-to it is an explicit amendment to this record, not a widening in passing.
+to it is an explicit amendment to this record rather than a widening in passing.
 
 ```text
 entity kind: pharmacy
@@ -277,7 +277,7 @@ category above **and §4.1's wave-1 set**, and any production decoder integratio
 §4 froze one proposition. #1930 recorded GO, which allows mapping breadth to be _proposed_; stop
 condition 5 requires the boundary to be widened here, in a reviewed change, before a record is authored
 against it. This section is that widening, and it is exhaustive. #1963 may author what the admitted
-table names and nothing else; a later entry arrives as amendment 2, not as a second row appearing in
+table names and nothing else; a later entry arrives as amendment 2 rather than as a second row appearing in
 the data.
 
 Stop condition 4 binds every admitted row individually. Each names an attested target — a committed
@@ -301,7 +301,7 @@ expresses it with no new field**: one activity, two establishment concepts, one 
 assertion each. `ExternalMappingRecord` gains nothing multi-valued, and no field states a preference
 between `pharmacy` and `drugstore` — the schema has none to state one with.
 
-`drugstore` is a kind of `establishment` **directly**, not of `healthcare_facility`. The external
+`drugstore` is a kind of `establishment` **directly** rather than of `healthcare_facility`. The external
 hierarchy puts it under `retail`, disjoint from `health_and_medical`; `healthcare_facility` is defined
 as premises that exist to provide healthcare, which retail premises with a dispensing counter do not;
 and placing it there would give every later healthcare class a retail ancestor.
@@ -351,7 +351,7 @@ amendment admits that change. Three things about it:
 | Candidate                                                            | Excluded because                                                                                                                                                                                                                                                                                                                         |
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A second activity, any                                               | No committed input set holds an activity-phrased query for any activity but `obtain_medication`; the four rows that exist (`sem-act-us-01`, `sem-act-us-02`, `sem-act-fr-01`, `sem-act-mx-01`) all register that one. §5.5's first bound therefore still stands for every other activity: there is nothing committed to measure against. |
-| Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control, not a target — stop condition 4 wants a mechanism the observation can address, and nothing measures a missing `obtain_medication` affordance for a hospital.                                                                                                                       |
+| Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control rather than a target — stop condition 4 wants a mechanism the observation can address, and nothing measures a missing `obtain_medication` affordance for a hospital.                                                                                                                |
 | Concept `chemist` for en-GB / en-AU / en-NZ                          | Not a class. `curated-overlay.json` carries `{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] }`, and §5.2 measured `chemist near London` under `en-GB` reaching `cat=pharmacy` at confidence 1. The existing `pharmacy` concept and W1-3's sibling mapping already carry it.                     |
 | `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition; the phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. Minting a concept would not change that result.                                                                                                      |
 | Concepts `supermarket` / `convenience_store` as further afforders    | Plausible and unattested. Both ids exist in the table; neither has a committed row, a measurement, or a filed defect saying a dispensing counter is unreachable. Plausibility is the thing stop condition 4 exists to refuse.                                                                                                            |
@@ -361,7 +361,7 @@ amendment admits that change. Three things about it:
 | Board row `brand-us-02` (`applebee's near Dallas TX`) as a target    | The other pre-existing failure, also without affordance content. `docs/records/evals/2026-07-20-poi-query-board-v1.1-brand-lexicon.md` traces it: subject match and anchor both succeed, and the miss is `#searchKRing`'s `DEFAULT_MAX_RINGS = 12` (≈ 4 km) against a nearest matching row at 13.2 km. A reader search radius.           |
 | Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker is not semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry named `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                               |
 | A second relation — `isa` as a relation record, `partOf`, `sells`    | §4 keeps relations unminted until an executable need names one. Wave 1's need is one further asserting concept under the relation that already exists.                                                                                                                                                                                   |
-| A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands**, not concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                                |
+| A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands** rather than concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                         |
 | Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen increment named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                    |
 
 #### What this amendment does not change
@@ -376,7 +376,7 @@ amendment admits that change. Three things about it:
   evidence only where `supportsExclusion(...)` permits, which §2.3 measured as nothing against today's
   `poi.db`.
 - **The default path.** #1930's caveat 3 verified the semantic route is default-off everywhere. Wave 1
-  changes what the compiled artifact carries, not what the shipped pipeline reads.
+  changes what the compiled artifact carries rather than what the shipped pipeline reads.
 
 #### Re-measure before authoring
 
@@ -460,7 +460,7 @@ activity phrase, so anchor resolution is held constant and the subject is the on
 - `i need my prescription refilled near Tijuana`
 - `prescription near Denver CO`
 
-### 5.2 What the baseline does — measured, not reasoned
+### 5.2 What the baseline does — measured rather than reasoned
 
 Running the shipped `matchPOISubject` against the shipped `poiTaxonomyLookup`:
 
@@ -541,8 +541,7 @@ relation type, no country scope and no per-assertion provenance.
   met for §5.1 as the corpora stand. #1928 must either commit the rows to the POI board first (graded
   on OUTCOMES only, per the anti-Pelias commitment in
   `docs/superpowers/specs/2026-08-17-mechanism-accounts.md` §2), or pre-register on the §5.3 recall
-  gap, whose control rows are already committed. Manufacturing a passing fixture is a stop condition,
-  not a workaround.
+  gap, whose control rows are already committed. Manufacturing a passing fixture is a stop condition rather than a workaround.
 - **The board's grader cannot see the §5.3 gap.** `gradeCase` checks `results[0].categoryID` and the
   nearest distance; it never measures recall. `cat-us-05` passes today and would pass unchanged with
   every `drugstore` row missing. A probe on §5.3 needs a recall metric of its own.
@@ -555,12 +554,12 @@ relation type, no country scope and no per-assertion provenance.
 
 ## 6. Exclusions and stop conditions
 
-**Architectural exclusions.** These are properties of the program, not of a phase:
+**Architectural exclusions.** These are properties of the program rather than of a phase:
 
 - No OWL/DL reasoner, SPARQL endpoint, triplestore, or general-purpose knowledge-graph service.
 - No query-time traversal of authoring JSON, and no runtime dependency on thousands of authoring
   records. Authored records are source material compiled into deterministic runtime artifacts —
-  artifacts, not services.
+  artifacts rather than services.
 - No authored relevance weights, boosts, penalties, or candidate-ordering APIs anywhere in the
   geographic model.
 - No `@mailwoman/core` dependency on `@mailwoman/geographic-model` without a later integration

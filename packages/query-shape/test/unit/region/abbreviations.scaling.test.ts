@@ -73,7 +73,7 @@ test("computeQueryShape stays linear as segment count doubles", () => {
 	const { small, large } = bestOfBoth(4000, 8000)
 	const ratio = large / Math.max(small, 0.001)
 
-	// 3.5, not 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
+	// 3.5 rather than 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
 	// 3.13x, 15.3ms -> 48.0ms, best-of-three block design). Quadratic doubles to ~4x at these sizes —
 	// fixed overhead is <1ms against 15ms+ samples — so 3.5 still separates the real failure from a
 	// noisy neighbour.

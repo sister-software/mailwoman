@@ -11,7 +11,7 @@
  *   The slots are elements rather than icon names because a leading mark and a trailing control differ per app — a
  *   magnifier on one, a body glyph on another.
  *
- *   BUSY IS A LINE, NOT A SLOT. A spinner placed in the trailing slot changed the pill's height on every submit,
+ *   BUSY IS A LINE rather than A SLOT. A spinner placed in the trailing slot changed the pill's height on every submit,
  *   because a slot is laid out and an indicator is not part of the query. `busy` draws a hairline across the pill's
  *   lower edge instead, which costs no layout. A host that wants `type="search"` also gets the browser's own clear
  *   button in that corner, and two crosses side by side is one control too many.

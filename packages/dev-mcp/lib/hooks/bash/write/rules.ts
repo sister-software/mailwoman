@@ -168,7 +168,7 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
 	"which spawns the client in its own session and exits, so no signal aimed at this shell can reach it. Modal's `-d` " +
 	"does not make the client disposable: when the client dies Modal answers `Received a cancellation signal` and stops " +
-	"the container mid-training. Watch the run by polling the volume for its next checkpoint, not by holding the client " +
+	"the container mid-training. Watch the run by polling the volume for its next checkpoint rather than by holding the client " +
 	"open. A run that did die continues with `--resume auto` from its last save."
 
 /**
@@ -204,8 +204,7 @@ const REFUSED_SPELLINGS: ReadonlyArray<{
 	{
 		head: "modal",
 		// The 2026-07-15 spelling. `timeout` is a WRAPPER, so it is stripped before the head is read and the head here is
-		// `modal`; the segment still carries the wrapper, which is what this matches. Any timed Modal command is refused,
-		// not only a launch: the expiry kills the client either way, and a timeout is never how you bound a Modal run.
+		// `modal`; the segment still carries the wrapper, which is what this matches. Any timed Modal command is refused rather than only a launch: the expiry kills the client either way, and a timeout is never how you bound a Modal run.
 		pattern: /^\s*timeout\b/u,
 		because: "a shell `timeout` kills the `modal` client when it expires, which cancels whatever it was running",
 		guidance: DETACHED_LAUNCH_GUIDANCE,
@@ -311,7 +310,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 
 	const expanded = stripped
 		// A braced expansion collapses to a bare variable rather than to a spaced placeholder, so it stays glued to the
-		// word it belongs to: `FOO=${HOME}/data` is one assignment, not an assignment beside a command called `VAR`.
+		// word it belongs to: `FOO=${HOME}/data` is one assignment rather than an assignment beside a command called `VAR`.
 		.replaceAll(/\$\{[^}]*\}/gu, "$VAR")
 		// A redirect is not a command, and its `&` is not a separator: `2>&1` must not split into a segment headed by
 		// `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged
@@ -376,7 +375,7 @@ function workingDirectory(stripped: string, cwd: string): string {
 }
 
 /**
- * `~` is the shell's, not a path segment. It is read from the raw environment rather than through the typed view
+ * `~` is the shell's rather than a path segment. It is read from the raw environment rather than through the typed view
  * because this module is loaded by a hook that must answer in milliseconds and must not fail when a variable is unset:
  * an absent `HOME` leaves the path unexpanded, which then reads as relative and resolves under the repository — the
  * refusing direction.

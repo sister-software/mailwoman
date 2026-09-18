@@ -58,7 +58,7 @@ Concretely: a one-word slot with `phrase=0.85, classifier=0.7, resolver=0.9, con
 
 The `2.5` is empirical. `e` (≈ 2.718) is the natural-log analogue, equivalent to "a slot with `product > 1/e` survives". We landed on 2.5 after the kryptonite fixtures rather than 2.718 — slightly more permissive, slightly easier to reason about as "factors averaging above 0.4". Future tuning should be driven by an eval corpus large enough to justify a change.
 
-### Why per word, not per slot
+### Why per word rather than per slot
 
 The first implementation granted the bonus once per accepted slot. That carries two structural biases, both measured on the bare query `"New York City"` with no resolver wired (the live demo's configuration, 2026-06-11):
 
@@ -71,19 +71,19 @@ Word counting is whitespace-delimited with a floor of one — scripts without sp
 
 ## Why this knob is not public
 
-`INCLUSION_LOG_BONUS` is a **module-level constant**, not a configurable option. Reasons:
+`INCLUSION_LOG_BONUS` is a **module-level constant** rather than a configurable option. Reasons:
 
 - Exposing it as an opt invites callers to set it to `0`, which defeats the purpose of the reconciler — the empty parse comes back.
-- The sensible range is narrow. Below `log(2)` (≈ 0.693) the empty parse re-dominates on most inputs; above `log(4)` (≈ 1.386) the search starts accepting noise spans. Operators who want to tune this should be reading the reconciler's tests, not the public API.
+- The sensible range is narrow. Below `log(2)` (≈ 0.693) the empty parse re-dominates on most inputs; above `log(4)` (≈ 1.386) the search starts accepting noise spans. Operators who want to tune this should be reading the reconciler's tests rather than the public API.
 - A per-locale knob may justify itself later (Japanese vs English may have different "what counts as low-confidence evidence" floors). When the eval data exists to justify per-locale priors, we can expose this as a controlled knob. Today it would be premature.
 
 ## Adjacent pitfall — `kSpan` as a global cap
 
 The same file had a parallel bug worth knowing about. The first impl applied `kSpan = 3` as a **global** "top-k phrase proposals by confidence" cap. That silently dropped `Houston` at 0.65 confidence in `NY-NY Steakhouse, Houston, TX` because three other proposals had higher confidence elsewhere in the input.
 
-The right semantic is **per-start-position**: top-k overlapping proposals at each anchor, not a global cap across the whole input. Phrase proposals at offset 0 and offset 18 are not competing for the same slot; pruning them together throws away independent information.
+The right semantic is **per-start-position**: top-k overlapping proposals at each anchor rather than a global cap across the whole input. Phrase proposals at offset 0 and offset 18 are not competing for the same slot; pruning them together throws away independent information.
 
-This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that silently breaks the contract — and the same fix (anchor by structure, not by ranking).
+This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that silently breaks the contract — and the same fix (anchor by structure rather than by ranking).
 
 ## Forward-looking — anywhere this pattern recurs
 

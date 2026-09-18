@@ -269,7 +269,7 @@ data:
     synth-gb: 6.0
     synth-sub-venue: 12.0
     synth-suffix-boundary: 2.5
-  # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
+  # Reps per row rather than weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
   # 1.0*20460 + 1.0*16000 + 4.0*13740 = 508,759 draws, 6.6% of the run. The big register sources take
   # one pass each because they carry their diversity in the rows. the four-to-five-thousand-row ones

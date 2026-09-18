@@ -72,10 +72,10 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
  * Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those, and
  * `St`/`Dr` are ambiguous with Saint/Doctor).
  *
- * `Av` VIOLATES that criterion and is here anyway — a tracked defect, not an oversight. It was admitted on the claim
- * that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish input
- * through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros" →
- * "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
+ * `Av` VIOLATES that criterion and is here anyway — a tracked defect rather than an oversight. It was admitted on the
+ * claim that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish
+ * input through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros"
+ * → "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
  * (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
  * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
  * de la Convention" and an `address_point` tier, so it pins the current behaviour and a removal has to be measured on a

@@ -14,10 +14,10 @@
  *   whose assertion fields are `expectComponents` (a tag→value map), `expectLat`/`expectLon`,
  *   `expectToleranceM` and `expectTier` — the same four things, under the same vocabulary.
  *
- *   ORACLE, NOT TRUTH. Nothing here is authoritative. Google and the Census Bureau disagree with each
+ *   ORACLE rather than TRUTH. Nothing here is authoritative. Google and the Census Bureau disagree with each
  *   other, with the postal authority, and with the address as written, and both will confidently
  *   return a coordinate for an address that does not exist. The value of running one is that a HUMAN
- *   authoring a gauntlet case gets a second opinion with provenance attached, not that a case can be
+ *   authoring a gauntlet case gets a second opinion with provenance attached rather than that a case can be
  *   auto-generated. {@linkcode OracleGeocodeResult.raw} exists for exactly this reason: whenever the
  *   component mapping had to make a judgement call (see `google-parser.ts`'s region-form note), the
  *   provider's untouched answer is still in hand.
@@ -86,7 +86,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	partialMatch: boolean
 	/**
 	 * The provider's own stable identifier for the matched place, when it has one: a Google Place ID, or `null` for the
-	 * Census geocoder (whose `tigerLine.tigerLineId` identifies a street SEGMENT, not a place, and is carried on
+	 * Census geocoder (whose `tigerLine.tigerLineId` identifies a street SEGMENT rather than a place, and is carried on
 	 * {@linkcode OracleGeocodeResult.raw} instead).
 	 */
 	placeID: string | null

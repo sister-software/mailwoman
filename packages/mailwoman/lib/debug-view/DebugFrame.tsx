@@ -14,7 +14,7 @@
  *   moved those emissions are named on the decode row instead. The row vocabulary lives in `trace-rows.ts`, the output
  *   pane's line list in `output-lines.ts`; both are pure and unit-tested without a render.
  *
- *   Layout arithmetic (explicit, not measured after the fact — see AGENTS.md's "no post-hoc measurement" rule):
+ *   Layout arithmetic (explicit rather than measured after the fact — see AGENTS.md's "no post-hoc measurement" rule):
  *
  *   - Input area height is a fixed {@link INPUT_ROW_HEIGHT} (9): two border rows plus seven content rows — the input
  *     line, the span ribbon, then the five evidence rows (system, locale head, tokens, channels, decode). Each
@@ -91,8 +91,8 @@ export interface DebugFrameProps {
 	busy?: boolean
 	/**
 	 * A failed re-run's message, rendered red at the top of the output pane. The interactive session keeps the PREVIOUS
-	 * result on screen when a geocode rejects — the failure is one line of news, not a reason to blank three panes — so
-	 * the note needs a home that is neither the result nor the map. Static renders pass nothing.
+	 * result on screen when a geocode rejects — the failure is one line of news rather than a reason to blank three panes
+	 * — so the note needs a home that is neither the result nor the map. Static renders pass nothing.
 	 */
 	errorNote?: string | null
 	/**

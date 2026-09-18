@@ -269,7 +269,7 @@ def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> No
 def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch) -> None:
     # The corpus stores UTF-16 span offsets (#519); this consumer is code-point-native. An astral-
     # script row (Gothic — 2 UTF-16 units per code point) has span ends that exceed the code-point
-    # len(raw), so encode_row would raise span-out-of-bounds. iter_encoded must skip it, not crash.
+    # len(raw), so encode_row would raise span-out-of-bounds. iter_encoded must skip it rather than crash.
     astral = _row(
         raw="𐍃𐌿𐌽𐌸",  # 4 code points, 8 UTF-16 units
         tokens=["𐍃𐌿𐌽𐌸"],

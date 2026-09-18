@@ -44,7 +44,7 @@ class CaptureStream extends Duplex {
 		this.#frames = frames
 	}
 
-	// The base signature, not a narrowed one: `write(chunk: string)` is a different member from `WriteStream`'s
+	// The base signature rather than a narrowed one: `write(chunk: string)` is a different member from `WriteStream`'s
 	// overloaded `write`, and one mismatched member is enough to make the two mutually unassignable.
 	override write(chunk: unknown, encoding?: unknown, callback?: unknown): boolean {
 		void encoding

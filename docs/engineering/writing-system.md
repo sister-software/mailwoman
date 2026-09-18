@@ -49,7 +49,7 @@ recursive one-sentence hops, so understanding "geocoding" requires opening "lati
 
 [geocode.earth/docs](https://geocode.earth/docs/) runs one flat sidebar of roughly 25 pages, with pricing,
 attribution and terms kept structurally outside the docs tree. Reference is plain declarative; guides are
-warmer and first-person plural; the blog carries the most personality. Limits state their mechanism, not
+warmer and first-person plural; the blog carries the most personality. Limits state their mechanism rather than
 only their number: per-second rate limits exist "to guard our servers from momentary spikes in requests"
 and are "strictly enforced and are not averaged over multiple seconds"
 ([rate limits](https://geocode.earth/docs/intro/rate_limits/)). The authentication page names its own
@@ -84,7 +84,7 @@ split means a GIS analyst troubleshooting a shapefile upload never reads code-fl
 click through. Limits arrive as ceiling plus next action in one sentence pair ("up to 10,000 addresses per
 upload. If you need a higher limit, contact sales"), and hard constraints are stated ahead of the procedure
 they would break: [wms-wmts](https://help.felt.com/data-sources/cloud-sources/wms-wmts) says HTTP is
-unsupported before its six-step connect walkthrough, not partway through it.
+unsupported before its six-step connect walkthrough rather than partway through it.
 
 Take: caveats that carry a door as well as a wall; a small reused noun chain (source → layer → map) taught
 in the same words on every page that touches it; constraints before steps. Refuse: bare FAQ-fragment
@@ -111,8 +111,8 @@ Nine standards were assessed. The verdict column is binding.
 | [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Contract first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                     |
 | [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/)         | Adopt, primary style base        | Sentence-case headings, second person, contractions in guides, bias-free language              | Tie-breaker for anything the rules above leave open. It matches the observed field register across all five surveys.                                                                                                                               |
 | [Google developer style](https://developers.google.com/style)                     | Adapt, API-reference conventions | Placeholder style, code formatting, HTTP-reference patterns                                    | Secondary to Microsoft, consulted where Microsoft is silent.                                                                                                                                                                                       |
-| [Ordnance Survey](https://www.ordnancesurvey.co.uk/)                              | Reject as style authority        | GB place-name spellings only                                                                   | A lookup resource, not a register.                                                                                                                                                                                                                 |
-| [US Board on Geographic Names](https://www.usgs.gov/us-board-on-geographic-names) | Reject as style authority        | US place-name spellings only                                                                   | A lookup resource, not a register.                                                                                                                                                                                                                 |
+| [Ordnance Survey](https://www.ordnancesurvey.co.uk/)                              | Reject as style authority        | GB place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                          |
+| [US Board on Geographic Names](https://www.usgs.gov/us-board-on-geographic-names) | Reject as style authority        | US place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                          |
 
 Two notes on the adapted rows. STE100's value here is its sentence discipline, and that discipline costs a
 tutorial its warmth, so the adaptation is scoped by role rather than applied to the site. ISO 19100 is a
@@ -122,7 +122,7 @@ for the GeoJSON term when the wire format already uses it.
 ## Register by role
 
 The six roles are the ones the frontmatter contract enforces
-(`docs/scripts/docs/frontmatter/contract.ts`). Register is a property of the role, not of the author.
+(`docs/scripts/docs/frontmatter/contract.ts`). Register is a property of the role rather than of the author.
 
 | Role          | Person                 | Contractions | Sentence length    | Examples                                    |
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
@@ -135,7 +135,7 @@ The six roles are the ones the frontmatter contract enforces
 
 **`tutorial`.** Present tense. Scenario openers are allowed ("Let's say you have a CSV of customer
 addresses…"). Every superlative is cashed out by a checkable action in the same breath. Hard constraints go
-before the steps that would hit them, not inside them. A caveat states the ceiling and the next action in
+before the steps that would hit them rather than inside them. A caveat states the ceiling and the next action in
 one sentence pair. Put a reading-time estimate at the top. Run every command and paste the real output.
 
 **`guide`.** Same warmth, no scenario storytelling. State the outcome first, then a prerequisites block,
@@ -145,7 +145,7 @@ then the steps. No marketing language.
 Errors and statuses form one closed table with a stable grep-able code, a one-line meaning, and retry or
 next-step guidance; an entry that restates its own name is decoration. Show the full request and the full
 literal response together. On HTTP surfaces, curl first, then language tabs, every tab hitting the identical
-endpoint. On library surfaces, full-file runnable examples with their output or rendered result, not
+endpoint. On library surfaces, full-file runnable examples with their output or rendered result rather than
 fragments. Placeholders use `<CAPS_PLACEHOLDER>` with an inline replace-me comment. Give the HTTP API
 reference one URL-anatomy diagram. Facts before rationale.
 
@@ -234,7 +234,7 @@ structural, and a rule that matched them would also match correct prose.
    restates the first two. Fix: keep the one precise descriptor.
 3. **Vague attribution.** "Developers find", "it is widely considered". Fix: name who, or remove the sentence.
 4. **Filler intensifiers.** Words that prop up a claim the evidence does not carry. Vale catches the common
-   ones; the pattern is the target, not the token list.
+   ones; the pattern is the target rather than the token list.
 5. **Contrastive negation.** Introducing a topic by what it is not, especially when nobody proposed the
    negated thing. Fix: state the positive claim.
 6. **Manufactured cadence.** Strings of clipped sentences, or a paragraph ending on a quotable line rather
@@ -254,7 +254,7 @@ rhythm and no information should go.
 ## How Vale enforces the mechanical subset
 
 Vale checks the token-level subset of these rules. Everything structural — role, section order, example
-discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts`, not by
+discipline, the audit above — is enforced by review and by `docs/scripts/check/docs-structure.ts` rather than by
 Vale.
 
 | Rule file                     | Enforces                                                                    | Severity |
@@ -307,5 +307,5 @@ One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templ
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
 [evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the contract in
 `docs/scripts/docs/frontmatter/contract.ts`, the section order for its role, the opening move, and one
-exemplar paragraph in this voice. Start a new page by copying the template for its role, not by copying a
+exemplar paragraph in this voice. Start a new page by copying the template for its role rather than by copying a
 neighboring page.

@@ -15,7 +15,7 @@
  *     this recipe renders as a `venue` when it reads as a building rather than an estate.
  *
  *   Every value in `components` is a verbatim substring of `raw`, aligned by {@link alignAndWrite}. The floor-unit is
- *   SYNTHESIZED (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape, not a
+ *   SYNTHESIZED (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape rather than a
  *   real occupancy. `Blk` and the `S(` `)` around a postcode are untagged, as the board's `sg-cs-blk-12-kallang-ave`
  *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased. a third abbreviate the
  *   generic (`Avenue` → `Ave`, `Road` → `Rd`, …) the way a typed line does.

@@ -68,7 +68,7 @@ country search). So the asymmetry favors a high threshold, and **~0.9** sits whe
 (~85%) while the only thing we "lose" on in-map is some boosts we'd have applied — not correctness. (A
 _hard_-check design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
 
-## Validation — grade the ASSEMBLED pipeline, not the model
+## Validation — grade the ASSEMBLED pipeline rather than the model
 
 Per the reconcile-retirement lesson (grade the pipeline against truth, never a component's intrinsic F1):
 

@@ -18,7 +18,7 @@ libpostal but neural" or "it's a geocoder without Elasticsearch," you've felt
 the problem: both are true and neither is the thing. This page gives the
 project its name, its lineage, and the two failure modes it guards against.
 It's the page to read when the component count starts to feel like complexity
-instead of architecture — because the system is layered, not tangled, and the
+instead of architecture — because the system is layered rather than tangled, and the
 layers have a logic.
 
 ## The name
@@ -52,7 +52,7 @@ Every word matters:
   [Closed-vocab fields: model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx)
   for the night we learned the override version is wrong.)
 - **Calibrated.** The confidences are isotonic-calibrated against held-out
-  data, so "0.6" means right-about-60%-of-the-time, not "my rule was moderately
+  data, so "0.6" means right-about-60%-of-the-time rather than "my rule was moderately
   specific." See [Confidence calibration](./confidence-calibration.mdx).
 
 ## The division of labor
@@ -84,7 +84,7 @@ The systems Mailwoman replaces — elaborate regexes, cascading pattern
 matchers, libpostal's averaged perceptron, Pelias's rules — are **sieves**.
 Input either fits a slot or falls through to the next pattern, and what those
 systems call confidence is _rule specificity_: how tightly the template
-matched, not how likely the reading is to be correct. A sieve cannot say "I'm not sure." Novel
+matched rather than how likely the reading is to be correct. A sieve cannot say "I'm not sure." Novel
 input doesn't get a hedged answer; it gets a hole.
 
 A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
@@ -125,7 +125,7 @@ best architectural decision twice over:
    design work. And when capacity got tight, the small model surfaced root
    causes — corpus artifacts, boundary bugs, rendering-order confounds —
    instead of absorbing them into parameters. A bigger model would have
-   masked those bugs, not fixed them.
+   masked those bugs rather than fixed them.
 
 The cost: the _data_ doesn't fit the pocket even though the model
 does. So the constraint resolves into **two tiers, same code, different
@@ -133,7 +133,7 @@ payloads** — Tier A ("pocket"): parser + anchors + the slim hot gazetteer;
 full parse quality, coarse resolution, offline, address data never leaves the
 device. Tier B ("library"): the identical pipeline with full SQLite payloads
 on a server or desktop, where street-level data lives. The pocket claim stays
-true because it's scoped, not because we stopped checking. There is also
+true because it's scoped rather than because we stopped checking. There is also
 headroom: the model could grow severalfold before challenging a
 conservative mobile budget — the constraint that binds is iteration
 cost, and that's the one worth defending.

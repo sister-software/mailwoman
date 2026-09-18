@@ -18,7 +18,7 @@
  *   database never contributed a single row to any run since v1.9.0. The fix is #1145.
  *
  *   That makes the baseline unusually clean: shipped v310 has never seen one Norwegian address, so
- *   this board's v310 arm is a true zero-knowledge reading, not a weak-prior one. Register it before
+ *   this board's v310 arm is a true zero-knowledge reading rather than a weak-prior one. Register it before
  *   the retrain exists.
  *
  *   THE NEGATIVE CLASS IS THE POINT — the same lesson as board 2's `bare-locality`. Every positive

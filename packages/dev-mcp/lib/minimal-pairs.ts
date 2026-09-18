@@ -148,8 +148,8 @@ function diffRungs(previous: RungReading, current: RungReading): RungDelta {
 /**
  * The ladder as a table, with the input beside its own result on every line.
  *
- * The rendering is the deliverable, not a convenience: a reader deciding whether a defect is real needs the addresses
- * in view, and a JSON blob of component maps does not put them there.
+ * The rendering is the deliverable rather than a convenience: a reader deciding whether a defect is real needs the
+ * addresses in view, and a JSON blob of component maps does not put them there.
  */
 function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 	const tags = [...new Set(reading.rungs.flatMap((rung) => Object.keys(rung.components)))].toSorted()

@@ -163,7 +163,7 @@ export const RUNG_RADIUS_FLOOR_KM: Readonly<Record<string, number>> = {
 }
 
 /**
- * Two candidates closer than this are the same physical place, not namesakes — WOF stores a big city as both a
+ * Two candidates closer than this are the same physical place rather than namesakes — WOF stores a big city as both a
  * `locality` and a `localadmin`, at the same population. Collapsing them is a precondition of
  * {@linkcode DECISIVE_MARGIN_LOG10} meaning anything (see the module docstring: uncollapsed, Paris reads a 0.01
  * margin).
@@ -334,8 +334,9 @@ export function ablationLadderFromChain(
 }
 
 /**
- * The gazetteer probes this model needs. An interface, not a class, for one reason: {@linkcode deriveExpectedRung} is
- * the piece that must be provably non-circular, and it can only be TESTED that way against a fake.
+ * The gazetteer probes this model needs. An interface rather than a class, for one reason:
+ * {@linkcode deriveExpectedRung} is the piece that must be provably non-circular, and it can only be TESTED that way
+ * against a fake.
  */
 export interface AblationGazetteerProbe {
 	/**
@@ -348,8 +349,8 @@ export interface AblationGazetteerProbe {
 	lineage(id: number): AblationPlace[]
 	/**
 	 * The admin chain CONTAINING a coordinate, deepest first — a reverse geocode. This is what the ladder is built from,
-	 * and it is why the ladder owes nothing to the pipeline: the chain follows from the corpus's own asserted coordinate,
-	 * not from what the parser did with the address.
+	 * and it is why the ladder owes nothing to the pipeline: the chain follows from the corpus's own asserted coordinate
+	 * rather than from what the parser did with the address.
 	 */
 	containingChain(lat: number, lon: number): AblationPlace[]
 	/**
@@ -391,7 +392,7 @@ export function isDecisive(places: readonly AblationPlace[]): boolean {
  *
  * WHAT IT CANNOT DO: supply a ladder. A pin names a rung on the derived ladder, so a row whose ladder could not be
  * built at all — no asserted coordinate, no containing place, a containment country contradicting the corpus — stays
- * `ungraded` however it is pinned. Those rows need a coordinate in the corpus or a gazetteer fix, not a pin.
+ * `ungraded` however it is pinned. Those rows need a coordinate in the corpus or a gazetteer fix rather than a pin.
  */
 export type AblationExpectOverride = Record<string, string>
 
@@ -468,7 +469,7 @@ export function deriveExpectedRung(
 
 	// Evidence this model cannot evaluate. Three kinds, one consequence — it may not demand abstention:
 	//
-	//  - No index here. A venue resolves from `poi.db` (build-local, not a dependency of this layer) and a street from
+	//  - No index here. A venue resolves from `poi.db` (build-local rather than a dependency of this layer) and a street from
 	//    the address-point / street-centroid databases.
 	//  - A constraint that did not resolve. `cr-op3-san-jose` asserts the region as "San José Province" and WOF calls it
 	//    "San José", so the region lookup misses. the surviving region is real evidence the pipeline will use, and
@@ -800,7 +801,8 @@ export interface ExpectedRungDescription {
  * Build the degradation ladder for one corpus row.
  *
  * Rung 0 is the CORPUS's own asserted coordinate when the row has one, and the pipeline's undeleted answer only
- * otherwise. Rungs 1..n are the chain CONTAINING that coordinate — a reverse geocode, not the pipeline's hierarchy.
+ * otherwise. Rungs 1..n are the chain CONTAINING that coordinate — a reverse geocode rather than the pipeline's
+ * hierarchy.
  *
  * Both choices are the same lesson from the 2026-08-05 smoke run, which built ladders out of the anchor's resolved
  * hierarchy and produced two fictions. `bd-op2-ginza` (an `improvement_target` row, i.e. wrong on purpose) anchored at

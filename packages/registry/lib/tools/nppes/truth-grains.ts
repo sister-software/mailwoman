@@ -130,8 +130,9 @@ export function buildOrgNameCoordGrain(npiPrimary: Map<string, NPIPrimary>, npiC
  * The H3-cell org-name truth — the same building grain keyed on a cell instead of a radius, so co-location blocking is
  * O(n) rather than O(n²).
  *
- * A robustness check on the coordinate grain, not a replacement: a hard cell boundary can split a same-building pair
- * into adjacent cells, so this slightly UNDER-counts relative to the radius. Coarser resolutions absorb more of that.
+ * A robustness check on the coordinate grain rather than a replacement: a hard cell boundary can split a same-building
+ * pair into adjacent cells, so this slightly UNDER-counts relative to the radius. Coarser resolutions absorb more of
+ * that.
  */
 export function buildOrgNameH3Grain(
 	npiPrimary: Map<string, NPIPrimary>,

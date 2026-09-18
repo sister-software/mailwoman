@@ -50,10 +50,10 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * How far apart two artifacts may put the same place's centroid and still be read as the same place.
  *
- * MEASURED, not guessed (2026-08-10, `admin-global-priority.db` × `admin-global-priority-importance.db`; 4,476,245
- * current locality-tier places against 676,790 scored ones, 1,020,099 of which matched a scored group by `(name_key,
- * country, placetype)`). The nearest-centroid distance is **exactly 0.00 km for 577,080 of them (56.6%)** — the two
- * snapshots agree to the bit — and 656,755 (64.4%) are inside 500 m.
+ * MEASURED rather than guessed (2026-08-10, `admin-global-priority.db` × `admin-global-priority-importance.db`;
+ * 4,476,245 current locality-tier places against 676,790 scored ones, 1,020,099 of which matched a scored group by
+ * `(name_key, country, placetype)`). The nearest-centroid distance is **exactly 0.00 km for 577,080 of them (56.6%)** —
+ * the two snapshots agree to the bit — and 656,755 (64.4%) are inside 500 m.
  *
  * What sets the radius is where that mode ENDS, and the per-kilometre density states. It falls from 1,076 places/km
  * over 3–5 km to a trough of **441 places/km over 7–10 km**, then climbs back and flattens onto a plateau of 760–780
@@ -63,8 +63,8 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * km provides 8,722 more, and by then better than half of each additional kilometre is the wrong town.
  *
  * The four-row bare-GB board is insensitive across this whole range — 5 km and 25 km were both measured and select
- * identical rows — so the value is chosen by what the join means, not by what it scores. The radius is the definition
- * of "this is the same place"; widening it past the floor starts handing one town's fame to another.
+ * identical rows — so the value is chosen by what the join means rather than by what it scores. The radius is the
+ * definition of "this is the same place"; widening it past the floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 

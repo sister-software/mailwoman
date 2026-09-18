@@ -88,10 +88,10 @@ export async function loadContextTuples(
 /**
  * The street-side confound classes, mined from the leg's own address tuples.
  *
- * Real streets, not invented ones. The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate` streets,
- * 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>` population in both GB and US — small
- * absolute numbers, but every one of them a street somebody lives on, which is the property an invented list cannot
- * have.
+ * Real streets rather than invented ones. The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate`
+ * streets, 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>` population in both GB and
+ * US — small absolute numbers, but every one of them a street somebody lives on, which is the property an invented list
+ * cannot have.
  */
 export interface StreetNegatives {
 	designator: LocaleBaseTuple[]

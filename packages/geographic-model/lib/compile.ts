@@ -57,7 +57,7 @@ export const DERIVATION_ISA_INHERITANCE = "isa-assertion-inheritance"
  * Every way compilation can refuse a document the validator accepted.
  *
  * Both are discovered while writing derived records, which is why the validator cannot report them: they are properties
- * of what the compiler is about to write, not of what the author wrote.
+ * of what the compiler is about to write rather than of what the author wrote.
  */
 export const CompileIssueCode = {
 	/**

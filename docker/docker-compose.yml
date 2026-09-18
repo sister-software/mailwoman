@@ -1,14 +1,14 @@
 # Example compose for ghcr.io/sister-software/mailwoman.
 #
 # `docker compose up mailwoman` boots the native /v1 API (the default). The three drop-in services
-# (nominatim / photon / libpostal) are alternative front-ends over the SAME image + weights — enable
+# (nominatim / photon / libpostal) are alternative front-ends over the same image + weights — enable
 # one with `docker compose up nominatim` (etc.). All mount the gazetteer read-only at /data.
 #
 # The data volume is OPTIONAL for `mailwoman` and `libpostal` (both answer parse-level requests with
 # no data). `nominatim` and `photon` need a gazetteer to boot.
 #
 # Read-only-data note: point MAILWOMAN_CANDIDATE_DB at the candidate gazetteer file. Both backends
-# open SQLite read-only, so `:ro` is correct for either; only an explicit FTS index build opens
+# open SQLite read-only, so `:ro` is correct for either. only an explicit FTS index build opens
 # writable, and that is never a serve path. See docker/README.md.
 
 services:
@@ -20,7 +20,7 @@ services:
     volumes:
       - ${MAILWOMAN_DATA_HOST:-./data}:/data:ro
     environment:
-      # Set when your candidate.db is a symlink or lives under a non-default name; auto-detected at
+      # Set when your candidate.db is a symlink or lives under a non-default name. auto-detected at
       # /data/wof/candidate.db otherwise. Leave unset (and mount nothing) for a parse-only first run.
       MAILWOMAN_CANDIDATE_DB: /data/wof/candidate.db
 

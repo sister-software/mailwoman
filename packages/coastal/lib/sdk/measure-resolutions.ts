@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a MEASUREMENT this layer takes, not a number argued to.
+ *   The index resolution is a MEASUREMENT this layer takes rather than a number argued to.
  *
  *   The share of cells that come out `partial` decides whether the index answers most probes on its own or
  *   whether the ray cast is the common path, and it is a property of England's coastal-frontage geometry that

@@ -125,7 +125,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a probe that prints", `node -e "console.log(require('./package.json').version)"`],
 		["a module probe that prints", `node --input-type=module -e "import x from './a.ts'; console.log(x)"`],
 		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
 		// A patch is an artifact the author produced and can dry-run. it fails rather than clobbering when the context
 		// does not match, and it is the only exact way to land a bulk deletion without retyping every removed line.
@@ -149,9 +149,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
 		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
 		// headed by a digit, and refused a read-only command with "`1` is not on the admitted command list".
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["a reflog selector", `git rev-parse HEAD@{1}`],
-		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
+		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["an upstream selector", `git log @{upstream}..HEAD --oneline`],
 		["a brace expansion", `wc -l packages/core/lib/{env,paths}.ts`],
 		["switching branch", `git checkout -b feature/x`],

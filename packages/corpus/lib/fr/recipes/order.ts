@@ -20,7 +20,7 @@
  *
  *   The inline synthesis (the OA-CSV reader, the ordinal/all-caps tables, the canonical + reversed
  *   renderers) is ported faithfully from the root build script it replaced. This is a
- *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output, not
+ *   `generate`-mode recipe that still reads real tuples off disk — `--count` bounds the output rather than
  *   the input. The passed `random` (the framework LCG) is consumed in the exact call order the
  *   legacy script used.
  *

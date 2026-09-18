@@ -56,7 +56,7 @@ const G_PRECISION = 6
 
 /**
  * `%g`'s lower crossover exponent. C switches to scientific notation below 1e-4 and at or above `10 ** G_PRECISION`;
- * both bounds come from the format, not from anything about eval scores.
+ * both bounds come from the format rather than from anything about eval scores.
  */
 const G_MIN_FIXED_EXPONENT = -4
 

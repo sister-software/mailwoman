@@ -26,9 +26,9 @@ export interface ExhibitDocument {
  * Builds the archive folder URL for one accession. Uses `cik` UNPADDED (`Number(cik)` is what strips the zero-padding
  * `CIK` always carries) — EDGAR's archive paths spell the CIK bare (`.../data/18926/...`), the opposite convention from
  * {@linkcode submissionsURL} above, which zero-pads. Both are real EDGAR conventions and both appear in this file. a
- * caller reaching for the wrong one gets a 404, not a wrong-but-plausible document. `accessionNumber` is accepted
- * either dashed (`"0000018926-26-000014"`, the form every EDGAR-facing field spells it) or already undashed — the
- * archive path itself never carries the dashes.
+ * caller reaching for the wrong one gets a 404 rather than a wrong-but-plausible document. `accessionNumber` is
+ * accepted either dashed (`"0000018926-26-000014"`, the form every EDGAR-facing field spells it) or already undashed —
+ * the archive path itself never carries the dashes.
  */
 export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 	return `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accessionNumber.replaceAll("-", "")}`
@@ -37,8 +37,8 @@ export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
 /**
  * Matches every `TYPE` spelling EDGAR actually files an Exhibit 21 under (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase
  * `ex-21.2`, …) while rejecting a type that merely starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A`
- * are all distinct exhibits, not a spelling variant of Exhibit 21. The literal `21` must be the whole numeric part:
- * optionally followed by only a `.` and more digits, never another bare digit or letter.
+ * are all distinct exhibits rather than a spelling variant of Exhibit 21. The literal `21` must be the whole numeric
+ * part: optionally followed by only a `.` and more digits, never another bare digit or letter.
  */
 const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 
@@ -111,9 +111,9 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
 
 /**
  * Narrows one accession's full document manifest to its Exhibit 21 entries (see {@linkcode EXHIBIT_21_TYPE_PATTERN} for
- * the accepted spellings). Returns `[]` — NEVER throws — when the manifest has no Exhibit 21 at all, which is ordinary,
- * not exceptional: an absent exhibit is the FILER's choice (Consolidated Communications' and United States Cellular's
- * latest 10-Ks both carry none), not an upstream contract break. This is the opposite posture from
+ * the accepted spellings). Returns `[]` — NEVER throws — when the manifest has no Exhibit 21 at all, which is ordinary
+ * rather than exceptional: an absent exhibit is the FILER's choice (Consolidated Communications' and United States
+ * Cellular's latest 10-Ks both carry none) rather than an upstream contract break. This is the opposite posture from
  * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
  * SEC's own documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
  * 21 hasn't broken any contract. it's just a filer that didn't file one this cycle.
@@ -127,9 +127,9 @@ export function findExhibit21Documents(cik: CIK, accessionNumber: string, header
 /**
  * Fetches one filing's accession manifest (`{@linkcode accessionArchiveURL}(filing.cik, filing.accessionNumber)` joined
  * with `${filing.accessionNumber}-index-headers.html`, through the shared {@link SECDocumentClient} — `exhibit21.ts`'s
- * one-method structural type, not the concrete SEC client, so a test never needs an axios harness) and returns its
- * Exhibit 21 documents. See {@linkcode findExhibit21Documents} for why an absent exhibit is a `[]` result, not a thrown
- * error.
+ * one-method structural type rather than the concrete SEC client, so a test never needs an axios harness) and returns
+ * its Exhibit 21 documents. See {@linkcode findExhibit21Documents} for why an absent exhibit is a `[]` result rather
+ * than a thrown error.
  */
 export async function fetchExhibit21Documents(
 	client: SECDocumentClient,

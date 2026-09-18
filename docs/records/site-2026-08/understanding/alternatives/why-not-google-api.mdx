@@ -30,11 +30,11 @@ At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is
 
 Google claims coverage in 250+ countries and territories. Quality varies dramatically by region:
 
-| Region type                          | Quality                                                           |
-| ------------------------------------ | ----------------------------------------------------------------- |
-| US, Western Europe, Japan, Australia | Excellent — precise to rooftop or building entrance               |
-| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level, not building-level     |
-| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, measured gaps in rural areas |
+| Region type                          | Quality                                                              |
+| ------------------------------------ | -------------------------------------------------------------------- |
+| US, Western Europe, Japan, Australia | Excellent — precise to rooftop or building entrance                  |
+| India, Brazil, Southeast Asia        | Good — municipality or neighborhood level rather than building-level |
+| Sub-Saharan Africa, Central Asia     | Variable — region or locality level, measured gaps in rural areas    |
 
 The uneven coverage is not Google's fault — it reflects the quality of the underlying data sources in each country. But it means the API's "global" label masks measured regional variation.
 
@@ -84,7 +84,7 @@ If your application uses a different address model, you must translate Google's 
 
 Despite these limitations, Google's API is the right choice for:
 
-- **Prototypes and MVPs.** You need geocoding working today, not in six months. The API cost is negligible at prototype scale.
+- **Prototypes and MVPs.** You need geocoding working today rather than in six months. The API cost is negligible at prototype scale.
 - **One-shot batch processing.** You have a fixed set of addresses to geocode once. The one-time cost is lower than building infrastructure.
 - **Global coverage without a data team.** You do not have the resources to source and maintain gazetteers for 100+ countries.
 - **Integration with Google Maps.** If you are already rendering results on Google Maps, using Google's geocoder avoids coordinate-system mismatches.
@@ -101,7 +101,7 @@ Owning your parser is the right choice when:
 - **You need a specific address model.** If your downstream systems use ISO 19160 address components or a custom schema, translating Google's components is a recurring development cost.
 - **You handle guarded addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
 
-Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable, not a Google competitor.
+Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable rather than a Google competitor.
 
 ## See also
 

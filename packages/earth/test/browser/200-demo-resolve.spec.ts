@@ -26,12 +26,11 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("German address — postcode 10115 country-restricts into Berlin, not New York", async ({ demo }) => {
+	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
 		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
 		// (Berlin → DE by population) and country-restrict the postcode, so it resolves to the DE 10115 point —
-		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4,
-		// not Manhattan ≈ 40.8, -74.0.
+		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
 		await demo.submit()
 
@@ -55,7 +54,9 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("Russian address — Moscow resolves to Russia, not Moscow, Idaho (-20g world coverage)", async ({ demo }) => {
+	test("Russian address — Moscow resolves to Russia rather than Moscow, Idaho (-20g world coverage)", async ({
+		demo,
+	}) => {
 		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases. So
 		// the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop RU city outranks the
 		// 26k-pop US homonym. Grade the COORDINATE: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
@@ -116,7 +117,7 @@ test.describe("Demo — resolution cascade", () => {
 			lon: 14.45,
 			tolDeg: 0.15,
 			knownFailure:
-				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect, not a runtime one.",
+				"The v9.1.0 classifier tags `Praha` as a street and splits `100 00` into two house numbers, so the cascade has no locality or postcode to resolve and drops no marker. A model defect rather than a runtime one.",
 		},
 		{
 			name: "Australian postcode 2000 → Sydney",

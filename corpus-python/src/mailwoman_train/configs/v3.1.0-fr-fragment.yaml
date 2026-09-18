@@ -35,14 +35,14 @@
 #
 # THE SPLIT: the recipe excludes all 2,400 street surfaces reserved by the fragment board
 # (mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt) — source-disjoint by normalized
-# street SURFACE, not by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
+# street SURFACE rather than by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
 # recipe THROWS without the list rather than mint rows that train on their own eval set.
 #
 # THE CHECK (pre-registered. baselines.json profile fragment-fr-v264, registered against the SHIPPED
 # model at commit e45e0255):
 #   MOVE  : bare-street 0.215 · street-particle 0.273 · admin-street-homonym 0.087 · date-name 0.055
 #   GUARD : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a source that fixes
-#           fragments by degrading full addresses has moved the failure, not fixed it)
+#           fragments by degrading full addresses has moved the failure rather than fixed it)
 #   GUARD : bare-locality 0.980 — THE ONE TO WATCH. It may fall BY DESIGN. If it collapses while the
 #           bare classes rise, the source traded one default for another instead of teaching the
 #           distinction, and the counter-distribution ratio (--bare-prob) is the knob.

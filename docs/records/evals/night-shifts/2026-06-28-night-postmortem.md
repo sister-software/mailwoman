@@ -50,11 +50,11 @@ swap (`mailwoman gazetteer promote`) is the operator's morning call.
 
 Oracle-locality injection (PT/PL/AU, real-OA goldens, candidate backend). **First-pass error, caught by
 verify-before-verdict:** `loadFromWeights` graded **v180** — the `neural-weights-en-us/model.onnx` dev
-symlink points to v180 (a test side-effect), not the shipped v4.15.0 (v193a3). On v180 the model looked
+symlink points to v180 (a test side-effect) rather than the shipped v4.15.0 (v193a3). On v180 the model looked
 disastrous (PT p50 47 / PL 116 / AU 798 km). **Re-run on the shipped model**: PT **0.8 km**, PL **2.3 km**,
 AU **1.2 km** median — already tight. No parse-accuracy disaster. The remaining gap is a **recall/p90
 tail** (a perfect parse recovers PT +5 / PL +9 / AU +4 pp of unresolved), and **AU is gazetteer-bound**
-(oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal change on the shipped model, not the
+(oracle ceiling 80.6%, Δp50 −2% → NO-GO). So **#825 is a marginal change on the shipped model rather than the
 clean GO the v180 run implied** — frame any retrain as a tail/recall fix, and grade the shipped weights.
 (The street-as-locality mechanism is real on v180 but largely absent in v4.15.0.)
 

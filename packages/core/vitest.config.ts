@@ -7,7 +7,7 @@
  *   package.json `exports` field points at `./out/.../index.js` — those files don't exist until tsc
  *   has run. With these aliases vitest can run from a clean checkout.
  *
- *   A few subpaths are single files, not directories with an `index.ts` — `fs` is the node build
+ *   A few subpaths are single files rather than directories with an `index.ts` — `fs` is the node build
  *   (`fs/node.ts`), `objects` is a bare file (`objects.ts`), `coarse-placer`/`kysley/*` are single
  *   files. Those get explicit entries before the generic `<subpath> → <subpath>/index.ts` rule,
  *   which would otherwise resolve them to a non-existent `index.ts` (mirrors the root config).

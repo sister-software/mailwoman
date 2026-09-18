@@ -201,7 +201,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # zero-initialized in _init_weights so the model starts as the exact identity of an
         # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
         # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
-        # divergence (one new behaviour, introduced gently, not a cold-start architecture shock).
+        # divergence (one new behaviour, introduced gently rather than a cold-start architecture shock).
         self.locale_head: nn.Linear | None
         self.locale_film: nn.Linear | None
         if self.use_locale_conditioning:
@@ -214,7 +214,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
     def _init_weights(self) -> None:
         """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
 
-        Critical: ``nn.LayerNorm.weight`` (``gamma``) must be initialized to 1.0, not 0.
+        Critical: ``nn.LayerNorm.weight`` (``gamma``) must be initialized to 1.0 rather than 0.
         A previous version zeroed every 1D parameter, which collapsed every LN to a constant
         output (``gamma·normalized + beta`` = 0·anything + 0 = 0) and made the model
         predict the same class for every token regardless of input. Loss plateaued near

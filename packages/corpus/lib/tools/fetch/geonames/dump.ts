@@ -8,7 +8,7 @@
  *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `PPLC` national capital,
  *   `PPLA` first-order administrative seat), which is what the capitals reference build consumes (#1880).
  *
- *   The catalog question is answered by the SOURCE, not by an ISO list: `countryInfo.txt` in the same directory
+ *   The catalog question is answered by the SOURCE rather than by an ISO list: `countryInfo.txt` in the same directory
  *   enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and also names each country's
  *   capital — the cross-check the capitals build grades its `PPLC` extraction against. Fetch that first. derive
  *   the country set from it. then a dump absent from disk is a measured gap against the source's own catalog

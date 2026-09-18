@@ -58,7 +58,7 @@ of base street rows; a 4× boost on a majority tag risks over-fire). Check: the 
 unchanged, affix measured at 20k and 40k (stability is the claim under test), plus the consult
 watches (folded-street invariance, short-street recall, house_number→street_prefix transition).
 The expanded NAD-native affix eval re-baselines before the verdict; the 32-row result is recorded
-alongside, not substituted. All hold → v4.3.0 candidate.
+alongside rather than substituted. All hold → v4.3.0 candidate.
 
 ## Probe economics, for the record
 

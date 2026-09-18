@@ -64,8 +64,8 @@ function stripBIO(label: string): string {
 
 /**
  * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens (house_number / postcode)
- * are context-determined, not lexical vocab, so they're excluded. `\p{Nd}` covers the decimal digits these address
- * corpora actually contain.
+ * are context-determined rather than lexical vocab, so they're excluded. `\p{Nd}` covers the decimal digits these
+ * address corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)

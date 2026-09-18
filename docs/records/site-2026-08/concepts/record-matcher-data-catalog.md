@@ -7,13 +7,13 @@ sidebar_label: Data catalog
 
 The cross-dataset record-matcher resolves entities across several public datasets that share no common key — see [Geocode-first record matching](./geocode-first-record-matching.mdx) for how the matcher itself works. This page documents what each dataset is, where it lives, and how its columns map into the matcher — so a run is reproducible and the mappings are version-controlled rather than folklore.
 
-These are **public compliance and reporting datasets**, published per-program in a fragmented, non-deduplicated shape. The matcher's job is **entity resolution**: given the same place described by different publishers under different operational names, recognize that it's one place. Whether any resulting correlation means anything is the data consumer's call, not ours.
+These are **public compliance and reporting datasets**, published per-program in a fragmented, non-deduplicated shape. The matcher's job is **entity resolution**: given the same place described by different publishers under different operational names, recognize that it's one place. Whether any resulting correlation means anything is the data consumer's call rather than ours.
 
 The machine-readable catalog — provenance plus the `ColumnMapping` per source — is committed at [`registry/configs/record-matcher-sources.json`](https://github.com/sister-software/mailwoman/blob/main/registry/configs/record-matcher-sources.json). This page is its prose companion.
 
 ## Join model
 
-There is **no shared key across publishers**. The NPI is internal to NPPES; the HCP Number is internal to the FCC; the Facility ID is internal to TX HHSC. So the matcher doesn't join on an identifier — it joins on the **geocoded location** (each address goes through mailwoman's parser + resolver to a coordinate) plus **name/organization agreement**. That geocode-first, label-free approach is the premise of the contact/org matcher ([#598](https://github.com/sister-software/mailwoman/issues/598), [#615](https://github.com/sister-software/mailwoman/issues/615)): the resolved _place_ is the key, not the address string.
+There is **no shared key across publishers**. The NPI is internal to NPPES; the HCP Number is internal to the FCC; the Facility ID is internal to TX HHSC. So the matcher doesn't join on an identifier — it joins on the **geocoded location** (each address goes through mailwoman's parser + resolver to a coordinate) plus **name/organization agreement**. That geocode-first, label-free approach is the premise of the contact/org matcher ([#598](https://github.com/sister-software/mailwoman/issues/598), [#615](https://github.com/sister-software/mailwoman/issues/615)): the resolved _place_ is the key rather than the address string.
 
 ## Sources
 

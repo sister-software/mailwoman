@@ -302,7 +302,7 @@ describe("scoreLocalityPhrase", () => {
 	})
 
 	// #425 — all-caps intl place HEAD that matches the region-abbreviation shape ("SAN", "DI") must
-	// still form the multi-word locality, not get skipped as a US-state abbreviation.
+	// still form the multi-word locality rather than get skipped as a US-state abbreviation.
 	it("forms a locality from a region-abbrev-shaped head (SAN NAZARIO)", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("SAN NAZARIO", 0), "SAN NAZARIO", true).map((p) => p.span.body)
 		expect(bodies).toContain("SAN NAZARIO")

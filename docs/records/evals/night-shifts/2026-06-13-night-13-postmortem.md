@@ -42,7 +42,7 @@ Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked)
 
 ### v1.5.1 re-check result: ❌ WORSE — weight is not the change (REJECTED)
 
-The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house*number **84.7%** — \_below* v1.5.0's 87.4% (weight 3.0). More reversed-FR exposure made it worse, not better.
+The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house*number **84.7%** — \_below* v1.5.0's 87.4% (weight 3.0). More reversed-FR exposure made it worse rather than better.
 
 | Run           | synth-fr-order weight | fr.house_number (diversified golden) |
 | ------------- | --------------------: | -----------------------------------: |
@@ -54,13 +54,13 @@ The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house
 
 **Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did not transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
 
-**This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The change for a _future_ run is not weight — candidates: (a) more _real_ reversed-order data (BAN-sourced, not synth), (b) a postcode-anchor / position-aware signal that guards the postcode span, (c) accept ~87% as the direct intrinsic floor.
+**This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The change for a _future_ run is not weight — candidates: (a) more _real_ reversed-order data (BAN-sourced rather than synth), (b) a postcode-anchor / position-aware signal that guards the postcode span, (c) accept ~87% as the direct intrinsic floor.
 
 ### Ship decision — operator's call (flagged)
 
 The best recovery model is **v1.5.0 (87.4%)**: +32.9pp over v4.5.0 on the diversified golden, every other floor passing, bridge retirement intact, arena.perturb confirmed 78% (now that it's enforced — see check-integrity below). It misses the pre-registered `fr.house_number` floor of **91** by 3.6pp. Two direct options, both the operator's to choose (no silent re-baseline):
 
-1. **Ship v1.5.0 as v4.6.0 with a STATED floor re-baseline.** The 91 floor was inherited from v4.4.0, measured against the _easier_ pre-#563 golden (v4.5.0 itself scores only 54.5% on the new golden). The floor is arguably miscalibrated for the harder eval. Re-baselining is legitimate _if reasoned in the doc_ — but it's the operator's explicit decision, not a night-shift edit.
+1. **Ship v1.5.0 as v4.6.0 with a STATED floor re-baseline.** The 91 floor was inherited from v4.4.0, measured against the _easier_ pre-#563 golden (v4.5.0 itself scores only 54.5% on the new golden). The floor is arguably miscalibrated for the harder eval. Re-baselining is legitimate _if reasoned in the doc_ — but it's the operator's explicit decision rather than a night-shift edit.
 2. **Hold v4.5.0; pursue a different change next session.** Keep the shipped model, treat 87.4% as a documented way-station, and attack the plateau with real-data / position-aware approaches.
 
 My recommendation: **option 2 short-term** (don't ship a below-check model on a recovery that's still 8pp shy of target), unless the operator wants the +32.9pp in users' hands now and re-baselines the floor deliberately.
@@ -73,12 +73,12 @@ The threshold research (`docs/records/evals/experiments/2026-06-13-fr-house-numb
 
 ## Bonus — Phase-3 de-risk (the strategically bigger finding)
 
-With the centerpiece resolved and no GPU to spend, the idle hours went to mapping the forward path (`2026-06-13-FORWARD-SCHEDULE.md`) — and the diagnostic turned up something more important than the FR result: **the Phase-3 coordinate-truth layer is already built and verified, not greenfield as the #488 epic's unchecked boxes imply.**
+With the centerpiece resolved and no GPU to spend, the idle hours went to mapping the forward path (`2026-06-13-FORWARD-SCHEDULE.md`) — and the diagnostic turned up something more important than the FR result: **the Phase-3 coordinate-truth layer is already built and verified rather than greenfield as the #488 epic's unchecked boxes imply.**
 
 - **#483 house-number interpolation** — engine built (two merged PRs #533/#542, 21/21 unit tests). The "VT still-MISSES the check" status was **`--mode tiger`-only** (StreetInterpolator alone: ≤100m band p90 182m, opposite-side-fallback tail). Re-measured on the production **`--mode ladder`** cascade (Method 2 address-point bracketing → TIGER fallback), seeds 42+7: **passes every band** (≤100m p90 114–118m vs 150m bar, coverage 97.7%). Check met, matching Cook County. Recorded on #483.
 - **#484 reverse geocoding** — engine built (`reverse.ts`). The 4 production-conditional tests (skipped without real DBs) **PASS** against the real gazetteer (`admin-global-priority.db`, 2 GB) + `wof-polygons.db` — all 13 green. Recorded on #484.
 
-So both engines that turn the parser into a geocoder — street-level forward coordinates + coordinate→hierarchy reverse — **exist and work against real data today.** The remaining Phase-3 work is the **mechanical resolver-API wiring** (surface `resolution_tier: "interpolated"` / the reverse path in the public resolve API), not building or check-chasing. That's the single clean, low-risk centerpiece between here and a real geocoder. All diagnostic — no code changed.
+So both engines that turn the parser into a geocoder — street-level forward coordinates + coordinate→hierarchy reverse — **exist and work against real data today.** The remaining Phase-3 work is the **mechanical resolver-API wiring** (surface `resolution_tier: "interpolated"` / the reverse path in the public resolve API) rather than building or check-chasing. That's the single clean, low-risk centerpiece between here and a real geocoder. All diagnostic — no code changed.
 
 ## What went well
 
@@ -88,7 +88,7 @@ So both engines that turn the parser into a geocoder — street-level forward co
 - **Bridge retirement held clean.** po_box 90.3% with bridge off, every US floor passed — the v4.5.0 guardrail is solid.
 - **Actual-vs-actual grading revealed the golden shift.** The diversified golden (#563) changed the baseline: v4.5.0 at 54.5% (not 89.6%) on the same n=1546 set makes the +32.9pp gain visible and attributable.
 - **Caught a silent check-integrity bug.** `arena.perturb` (a pre-registered floor, 71.0) was reporting `NOT FOUND` on every v0.5.0 check — the compiled v0 arena parser couldn't find libpostal dicts (`core/out/data` vs `core/data` path mismatch). Root-caused, locally bridged (symlink + check-script guard, commit `ab2a029`), and re-measured: the real perturb pass-rate is **78%** (neural) vs 39% (v0) — a clean pass that had been masked. Order-robustness is _already_ paying off in the arena: the perturb arena is delimiter/case/order perturbation, and neural doubles the rules parser.
-- **The negative result is clean and attributable.** Two runs isolated one variable (weight 3.0 vs 6.0); the falsification is unambiguous and the failure mode (postcode fragmentation) is diagnosed, not mysterious. That's $-worth of signal: we now know weight is the wrong change and _why_.
+- **The negative result is clean and attributable.** Two runs isolated one variable (weight 3.0 vs 6.0); the falsification is unambiguous and the failure mode (postcode fragmentation) is diagnosed rather than mysterious. That's $-worth of signal: we now know weight is the wrong change and _why_.
 
 ## What could've gone better
 

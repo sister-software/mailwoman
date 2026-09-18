@@ -31,7 +31,7 @@ const session = await loadModel("path/to/model.onnx")
 | **`onnx-runner.ts`**              | ONNX Runtime Web inference session (WebGPU / WASM backends)                                                               |
 | **`classifier.ts`**               | `NeuralAddressClassifier` — tokenize → run → decode                                                                       |
 | **`scorer.ts`**                   | `createScorer` / `ProductionScorer` — canonical entry point that reads `requires` from `model-card.json` and fails closed |
-| **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel, not override)                                                            |
+| **`anchor-inference.ts`**         | Postcode anchor feature injection (soft channel rather than override)                                                     |
 | **`gazetteer-inference.ts`**      | Gazetteer lexicon soft-feature injection                                                                                  |
 | **`viterbi.ts`**                  | Viterbi decoder (linear-chain CRF) with BIO transition masks                                                              |
 | **`labels.ts`**                   | Label index ↔ `ComponentTag` mapping                                                                                      |

@@ -9,7 +9,7 @@
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
  *   code). A non-zero exit blocks the ship (RELEASING.md).
  *
- *   `--layer ablation` is the exception: it is a MEASUREMENT, not a check. It deletes each asserted
+ *   `--layer ablation` is the exception: it is a MEASUREMENT rather than a check. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
  *   required map. It never joins the combined verdict and cannot block a ship.
  *
@@ -99,7 +99,7 @@ const EvalGauntlet = harnessCommand(
 				// never becomes an empty filter — which would silently measure nothing and print a map of one
 				// header row.
 				...(components ? { components: extractDelimited(components) } : {}),
-				// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
+				// An UNSET flag must stay unset rather than become an explicit pin either way. The schema supplies its
 				// `false` default for both halves, and forwarding one verbatim would pin the change forever — which is
 				// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 				// flag set keeps "no flag" meaning "grade whatever production does".

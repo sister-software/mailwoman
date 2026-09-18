@@ -87,8 +87,8 @@ interface StyleLeg {
 	 */
 	cleanFixture: string
 	/**
-	 * The error-severity count the dirty fixture produces today (measured, not estimated). It is a `>=` bar, so adding a
-	 * rule plus its fixture line passes without a bump. Only a rule that STOPS firing fails.
+	 * The error-severity count the dirty fixture produces today (measured rather than estimated). It is a `>=` bar, so
+	 * adding a rule plus its fixture line passes without a bump. Only a rule that STOPS firing fails.
 	 */
 	minDirtyErrors: number
 	/**
@@ -122,6 +122,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Terms",
 			"styles.Weasel",
 			"styles.MedicalMetaphor",
+			"styles.Negation",
 		],
 		cleanCountsEverySeverity: false,
 	},
@@ -137,6 +138,7 @@ const LEGS: StyleLeg[] = [
 			"styles.ReifiedShorthand",
 			"styles.MedicalMetaphor",
 			"styles.CommentSemicolons",
+			"styles.Negation",
 		],
 		// Both rules this config runs are error-severity, so the exit code carries the whole
 		// verdict.
@@ -169,6 +171,7 @@ const LEGS: StyleLeg[] = [
 			"styles.VaguePraise",
 			"styles.WindDown",
 			"styles.MedicalMetaphor",
+			"styles.Negation",
 		],
 		cleanCountsEverySeverity: true,
 	},

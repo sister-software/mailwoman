@@ -15,7 +15,7 @@
 #   2. affix tag class-weights 2.0/4.0 -> 1.5/1.5 (v1.0.0 base). Suffix is no longer starved — it
 #      now appears on ~65% of base street rows. a 4x boost on a majority tag risks over-fire.
 # From scratch (--resume none, no init_from): the equilibrium claim is that a consistent mix
-# produces affix-stable weights natively, not that a rescued checkpoint can keep them.
+# produces affix-stable weights natively rather than that a rescued checkpoint can keep them.
 #
 # PRE-REGISTERED CHECK — the v4.2.0 ship-check floors, unchanged (scripts/eval/checks/v4.2.0-ship.json,
 # fp32-to-fp32, ship-config channels: gazetteer lexicon + suppress-gaz-near-postcode + anchor):
@@ -27,10 +27,10 @@
 #   - New watches (DeepSeek consult 2026-06-10): folded-street invariance, short-street ("Main St")
 #     recall, house_number->street_prefix CRF transition sanity. The EXPANDED affix eval (#511
 #     task: >=100 prefix / >=100 suffix instances from NAD native fields) re-baselines before the
-#     check verdict. the 32-row eval result is recorded alongside, not substituted.
+#     check verdict. the 32-row eval result is recorded alongside rather than substituted.
 #   DECISION: all hold -> ship candidate (int8 -> v4.3.0). Affix short at 2.0 -> one weight sweep
 #   (4.0), nothing else. Any spine regression -> STOP, the relabel pass gets re-audited before any
-#   weight surgery (a relabel bug presents as boundary noise, not as a dilution problem).
+#   weight surgery (a relabel bug presents as boundary noise rather than as a dilution problem).
 #
 # Requires on the volume: relabel.py + config.py + data_loader.py (synced 2026-06-10), the relabel
 # lexicon at /data/gazetteer/affix-relabel-lexicon-v1.json, corpus v0.4.12-consolidation.

@@ -55,7 +55,7 @@ kind-classifier → phrase-grouper → classifier (neural/rule-based) → ...
 
 ## Design
 
-- **Boundary discovery, not classification.** The phrase grouper answers "where
+- **Boundary discovery rather than classification.** The phrase grouper answers "where
   are the coherent units?" — the classifier answers "what _type_ is each unit?"
   This separation makes both problems easier.
 - **Bitter-lesson-safe:** uses only universal structural cues (proximity,

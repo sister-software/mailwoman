@@ -11,7 +11,7 @@ Mailwoman arrives in two halves, and they become available at different times. P
 as `npm install` finishes, because the model travels with the package. Geocoding does not, because
 the reference data it resolves against is far too large to ship on npm. By the end of this page
 you'll have run both checks, pulled that reference data, and geocoded a US address and a French one.
-About ten minutes, not counting the one-time gazetteer download.
+About ten minutes rather than counting the one-time gazetteer download.
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ mailwoman doctor
 PASS — core checks ok (weights + runtime); parse is ready
 ```
 
-Four red crosses and it still exits `0`. That is the contract, not a bug: the exit code tracks the
+Four red crosses and it still exits `0`. That is the contract rather than a bug: the exit code tracks the
 two core checks, weights and runtime. Everything marked `(optional)` is a data layer that parsing
 does not need, so a gap there is reported and costed rather than treated as a failure. The paths in
 your own output will name `$MAILWOMAN_DATA_ROOT`, which is wherever you point it.
@@ -187,7 +187,7 @@ npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
 
 `resolution_tier: "admin"` is what `candidate.db` alone can answer: it carries locality and region
-centroids, so the coordinate is New York's, not this specific rooftop. Street-level precision
+centroids, so the coordinate is New York's rather than this specific rooftop. Street-level precision
 (`resolution_tier: "address_point"` or `"interpolated"`) is a further, per-country download —
 `mailwoman data pull us` or `mailwoman data pull fr` — outside what this page covers.
 
@@ -262,7 +262,7 @@ rather than reproduce. Same input, same machine:
 ```
 
 Paris, Texas. The tempting reading is that the older backend ranks worse, and it is wrong. What
-produced Texas is the **country filter**, not the ranking: `--locale` defaults to `en-US`, `en-US`
+produced Texas is the **country filter** rather than the ranking: `--locale` defaults to `en-US`, `en-US`
 implies `--default-country US`, and that filter is applied on the older backend and not on this one.
 Cross the two changes and the confound comes apart (measured 2026-08-04, this gazetteer, this model):
 

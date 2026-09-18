@@ -54,10 +54,10 @@ const ARABIC_RANGES: ReadonlyArray<[number, number]> = [
  * they are for: the tokenizer breaks a token at a script transition and the decoder wants to know whether a run is
  * ideographic. They just cannot carry the distinction, and the ranges to carry it were already in the file, merged.
  *
- * MEASURED AGAINST UNICODE'S OWN PROPERTY, not eyeballed: `character-class.test.ts` walks every codepoint in every
- * range below and asserts the answer equals `\p{Script=…}`. Hand ranges are here for the reason the rest of this file
- * uses them — `computeQueryShape` promises microseconds and runs per keystroke — and the test is what keeps them honest
- * as Unicode moves.
+ * MEASURED AGAINST UNICODE'S OWN PROPERTY rather than eyeballed: `character-class.test.ts` walks every codepoint in
+ * every range below and asserts the answer equals `\p{Script=…}`. Hand ranges are here for the reason the rest of this
+ * file uses them — `computeQueryShape` promises microseconds and runs per keystroke — and the test is what keeps them
+ * honest as Unicode moves.
  *
  * Halfwidth and fullwidth forms split three ways rather than answering one script: fullwidth ASCII is Latin or common
  * by what it duplicates, halfwidth katakana is Kana, halfwidth jamo is Hangul.
@@ -180,7 +180,7 @@ const SCRIPT_RANGES: ReadonlyArray<readonly [ScriptCode, ReadonlyArray<[number, 
  * because both kana use it.
  */
 const COMMON_RANGES: ReadonlyArray<[number, number]> = [
-	[0x06_40, 0x06_40], // Arabic tatweel ـ — a letter-joining stretch, not a letter
+	[0x06_40, 0x06_40], // Arabic tatweel ـ — a letter-joining stretch rather than a letter
 	// CJK symbols and punctuation, MINUS the characters in that block Unicode assigns to Han: 々 (U+3005), 〇 (U+3007),
 	// the Hangzhou numerals (U+3021..3029) and the ideographic marks U+3038..303B. The first version of this list took
 	// the block whole and answered `Zyyy` for the iteration mark, which appears in 代々木 and 佐々木 and 酒々井町.
@@ -497,7 +497,7 @@ export function foldInputClass(tokens: ReadonlyArray<TokenClass>): CharacterClas
  * The answer for a whole string is not the answer for its parts, and for an address the parts are what a caller usually
  * has. `逊克二分场四队, HEILONGJIANG, CHINA` is `Latn` 0.71 / `Hani` 0.29 as a string, because the romanized province and
  * country outweigh the Han unit — but its first segment is `Hani`, its second and third are `Latn`, and a rule about
- * how to render or route the unit wants the first of those, not the average of all three.
+ * how to render or route the unit wants the first of those rather than the average of all three.
  *
  * Weighted by CODEPOINTS rather than by token count, so one long Han run is not outvoted by three short Latin ones, and
  * `Zyyy` tokens abstain: a range holding only a house number answers `Zyyy` rather than borrowing a neighbour's script.

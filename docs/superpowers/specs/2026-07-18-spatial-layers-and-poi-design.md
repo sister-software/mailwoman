@@ -11,7 +11,7 @@ Mailwoman today answers one question: "where is this address?" The operator's ta
 question class _around_ that one — physical-plausibility checks on broadband filings,
 infrastructure proximity ("how far is this fiber hut from a datacenter?"), build-out feasibility,
 market sizing. These are composite questions no single model answers. The consumer of these
-queries is an **agent** (an LLM with tools), not a search box. The agent supplies intent
+queries is an **agent** (an LLM with tools) rather than a search box. The agent supplies intent
 extraction, planning, and narrative; mailwoman supplies what the agent lacks: **deterministic,
 local, fast, provenance-tracked spatial ground truth.**
 
@@ -119,7 +119,7 @@ adds the amenity/brand/intent half and re-homes venue data as layer #1.
 - New scorer in `kind-classifier` (template: `scoreVenueLandmark`): lexicon hit on a
   category/brand phrase, with the already-reserved `locale` param blocking locale-specific
   aliases. The classifier's "no place-name dictionaries" docstring invariant is relaxed
-  deliberately: the lexicon lives in `variant-aliases` data and is injected, not hardcoded.
+  deliberately: the lexicon lives in `variant-aliases` data and is injected rather than hardcoded.
 - Anchor split: on a `poi_query` hit, the subject phrase is stripped and the remainder
   (`near Springfield IL`, `, Portland OR`) runs through the normal parse→resolve path.
   Two-stage, where stage 2 is the existing model.
@@ -191,7 +191,7 @@ then "requires the locally-built OSM layer," not a mangled parse.
 
 - Golden 2pp guard with the `poi_query` scorer live; byte-identical parses for non-POI queries.
 - Curated POI query board (the class-1/9 probe table + amenity/brand/infra fixtures) with
-  written floors set at Phase-1 baseline; graded on assembled answer (id + coordinate), not
+  written floors set at Phase-1 baseline; graded on assembled answer (id + coordinate) rather than
   label F1.
 - Full-address venue (class 2) non-regression.
 - Runtime-flag register rows for the new stage + scorer (invariant 5); flag-off = byte-identical.
@@ -226,7 +226,7 @@ into the existing `tiger/` workspace, H3 utilities into `@mailwoman/spatial`, fe
 
 Known gaps (new work): no ECFS/ULS clients, no CAF/RDOF/tribal ingest, H3-keyed storage is new
 (Nexus joined on GEOID). CostQuest fabric IDs are treated as opaque join keys; we work at the
-granularity the public filings support and grade claims against physics, not against
+granularity the public filings support and grade claims against physics rather than against
 the fabric's own map.
 
 Layers implied: `bdc.db` (shipped; US-gov public filings), `infra.db` (build-local, ODbL),
@@ -239,7 +239,7 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
 - Subsidy-program registry (churny; needs versioned-refresh discipline and a curator).
 - Zoning (per-municipality fragmentation; per-project build-local at best).
 - Officials/constituency directory beyond jurisdiction boundaries (TIGER districts are
-  shippable now; _people_ churn). Soft-power analysis stays in the conversation, not the
+  shippable now; _people_ churn). Soft-power analysis stays in the conversation rather than the
   artifact — mailwoman's layers stay public-record structure.
 - Free-form phrasing recall (→ pre-registered escalation, §1).
 - OverpassQL emitter can ship in any phase — it's a pure formatter; lowest priority.
@@ -264,7 +264,7 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
 - Lexicon home: split — general-purpose categories + synonyms in the new
   `@mailwoman/poi-taxonomy` data package; locale slang stays in `variant-aliases` (§3.3).
   Rationale: the taxonomy serves every category use case (trails, restaurants, ISP infra alike)
-  and refreshes on Overture's cadence, not curation cadence.
+  and refreshes on Overture's cadence rather than curation cadence.
 
 - poi.db H3 keying (resolved 2026-07-18, delegated to Claude): rows key on the **res-9 48-bit
   short cell** as the clustered probe prefix — matching `ADDRESS_H3_RESOLUTION = 9` in
@@ -273,6 +273,6 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
   profile: the browser/React-Native/web-worker path is byte-range probes over a remote sealed
   DB, and a res-9-clustered `WITHOUT ROWID` B-tree makes a neighborhood query one contiguous
   key range (few range requests, no joins) — the same access pattern as the candidate
-  gazetteer. `layer_coverage` cells sit at res 6 (epistemics, not lookups).
+  gazetteer. `layer_coverage` cells sit at res 6 (epistemics rather than lookups).
 
 Remaining open: when the demo pocket gets a slim POI extract (budget review at Phase-1 exit).

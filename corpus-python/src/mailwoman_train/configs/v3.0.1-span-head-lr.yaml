@@ -3,12 +3,12 @@
 # encoder stays at learning_rate 1e-5). Everything else — corpus, tokenizer, lexicons, the span
 # scorer itself, span_loss_weight 0.5, init_from, steps — is v3.0.0 verbatim.
 #
-# WHY: v3.0.0 was MIS-SPECIFIED, not falsified (docs/articles/evals/2026-07-15-v300-span-head-probe.md).
+# WHY: v3.0.0 was MIS-SPECIFIED rather than falsified (docs/articles/evals/2026-07-15-v300-span-head-probe.md).
 # It inherited lr 1e-5 from v2.6.4, a recipe that FINE-TUNES EXISTING weights, but the span head is
 # RANDOMLY INITIALIZED. At 2k it had barely moved: loss 26.4 -> 17.77 and STILL FALLING, raw span NLL
 # ~35 where a converged semi-CRF sits at O(1), and the decode emitted a random type per token. The
 # probe asked "does a barely-initialized head beat a fully-trained one" — a question with a known
-# answer. This is repairing the probe, not tuning toward a result: the treadmill is opposite-direction
+# answer. This is repairing the probe rather than tuning toward a result: the treadmill is opposite-direction
 # knob oscillation, and no knob has been pushed in two directions here.
 #
 # THE CHECK (unchanged from v3.0.0, pre-registered):

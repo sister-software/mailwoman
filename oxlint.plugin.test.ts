@@ -288,7 +288,7 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 	expect(reportsFor("prefer-home", forLoop({ body: scan }))).toEqual([])
 	// Ascending, so `sample`'s partial-Fisher-Yates and every forward loop are out of scope.
 	expect(reportsFor("prefer-home", forLoop({ update: "++", body: destructuredSwap("xs") }))).toEqual([])
-	// Runs to 0 rather than 1 — a full reverse walk, not a shuffle's arithmetic.
+	// Runs to 0 rather than 1 — a full reverse walk rather than a shuffle's arithmetic.
 	expect(reportsFor("prefer-home", forLoop({ until: -1, body: destructuredSwap("xs") }))).toEqual([])
 
 	// Two different arrays, so nothing is swapped in place.

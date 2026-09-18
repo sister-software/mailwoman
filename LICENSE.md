@@ -64,7 +64,7 @@ our General Public Licenses are intended to guarantee your freedom to
 share and change all versions of a program--to make sure it remains free
 software for all its users.
 
-When we speak of free software, we are referring to freedom, not
+When we speak of free software, we are referring to freedom rather than
 price.  Our General Public Licenses are designed to make sure that you
 have the freedom to distribute copies of free software (and charge for
 them if you wish), that you receive source code or can get it if you
@@ -96,7 +96,7 @@ code of the modified version.
 
 An older license, called the Affero General Public License and
 published by Affero, was designed to accomplish similar goals.  This is
-a different license, not a version of the Affero GPL, but Affero has
+a different license rather than a version of the Affero GPL, but Affero has
 released a new version of the Affero GPL which permits relicensing under
 this license.
 
@@ -513,7 +513,7 @@ make, use, sell, offer for sale, import and otherwise run, modify and
 propagate the contents of its contributor version.
 
 In the following three paragraphs, a “patent license” is any express
-agreement or commitment, however denominated, not to enforce a patent
+agreement or commitment, however denominated rather than to enforce a patent
 (such as an express permission to practice a patent or covenant not to
 sue for patent infringement).  To “grant” such a patent license to a
 party means to make such an agreement or commitment not to enforce a

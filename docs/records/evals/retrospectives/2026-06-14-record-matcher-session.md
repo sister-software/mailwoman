@@ -30,7 +30,7 @@ CSV / SQLite -ingest-> normalize (name, org, address) -[GeocodeAddress boundary]
 
 The thesis, proven in a capstone test: two records reading `123 main st` and
 `123 main street apt 2` — **different strings** — resolve to one entity because they
-share a **location** and a name. Blocking is geographic, not textual. That's why this
+share a **location** and a name. Blocking is geographic rather than textual. That's why this
 version works where the string-first v0 imploded.
 
 ## The four new workspaces (and what's in each file)
@@ -102,11 +102,11 @@ Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-toke
 
 ## Locked decisions (don't re-litigate)
 
-1. **Home:** new workspaces in `sister-software/mailwoman` (not isp-nexus, not a fresh
+1. **Home:** new workspaces in `sister-software/mailwoman` (not isp-nexus rather than a fresh
    repo). isp-nexus holds the legacy "bones" we ported from
    (`isp-nexus/universe/mailwoman/contacts`, `/organization`, `/postal`).
 2. **Matcher v1:** classical **Fellegi-Sunter core + EM (label-free)**, with models as
-   _selective_ additions — NOT model-first, not heuristics-only. Evidence-backed.
+   _selective_ additions — NOT model-first rather than heuristics-only. Evidence-backed.
 3. **Schema:** plain TS interfaces, no ORM/JSON-schema generation. Kysely if a DB is needed.
 4. **Address-first**, then org/contact normalization structured on top of it.
 

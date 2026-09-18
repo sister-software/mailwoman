@@ -10,7 +10,7 @@
  *   because the array had reached the size where "does GB assert dependent_locality anywhere?" was a scroll
  *   rather than a listing.
  *
- *   ORDER IS DEFINED, not incidental: country dir ascending, then case `id` ascending within the file. The
+ *   ORDER IS DEFINED rather than incidental: country dir ascending, then case `id` ascending within the file. The
  *   loader re-sorts rather than trusting file order, so a hand-appended row at the bottom of a file cannot
  *   change what the corpus IS — only what a text diff looks like. Nothing downstream depends on the old
  *   chronological array order. the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the

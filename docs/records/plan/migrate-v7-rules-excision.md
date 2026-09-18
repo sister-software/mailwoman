@@ -74,7 +74,7 @@ identifiers. Rename table for the exported/breaking ones:
 
 Unchanged on purpose: `JsonObject` (from `type-fest`), the `GeoJSON`/`toGeoJSON` family
 (`@mailwoman/spatial`, already correctly cased), and `.json`/`.jsonl` file paths and `"us"` locale
-codes (string contents, not identifiers).
+codes (string contents rather than identifiers).
 
 ## Summary
 

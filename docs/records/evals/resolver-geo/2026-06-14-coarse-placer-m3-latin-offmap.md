@@ -1,4 +1,4 @@
-# Coarse-placer M3: the Latin off-map residual is a data wall, not a method one
+# Coarse-placer M3: the Latin off-map residual is a data wall rather than a method one
 
 _2026-06-14. The #244 coarse-placer's M2 OTHER class was trained on non-Latin scripts (Cyrillic,
 Arabic, …), so it abstains well on those but still confidently mis-places off-map COUNTRIES written in
@@ -44,14 +44,14 @@ Pareto improvement.
 ## What this says
 
 The mechanism is real: train a country on other and it goes to **100%** handled, at **zero** in-map
-cost. But the model learns _those countries' n-grams → OTHER_, not a general "off my map" concept —
+cost. But the model learns _those countries' n-grams → OTHER_ rather than a general "off my map" concept —
 the held-out countries barely move (+1.7pp overall), and the near-twins (CA looks like US, and for a
 _coarse_ placer that's arguably not even wrong) stay where they are. General Latin off-map handling
-needs **broad country coverage** — dozens of off-map countries in the other class, not four.
+needs **broad country coverage** — dozens of off-map countries in the other class rather than four.
 
 That breadth is the wall. Of the 12 off-map countries requested from Overture's addresses theme
 (2026-05-20.0, ALPHA), only 5 returned rows (PL/BR/MX/PT/CZ); RO/TR/ID/SE/VN/HU/PH/AR were empty. So
-this is a **data-availability ceiling, not a method failure** — the same shape as #564's fr.house_number
+this is a **data-availability ceiling rather than a method failure** — the same shape as #564's fr.house_number
 plateau (real-data realism is the change; wedon't have enough of it yet).
 
 ## Decision
@@ -59,7 +59,7 @@ plateau (real-data realism is the change; wedon't have enough of it yet).
 - **Do not promote.** `model-m3` is a strict improvement but does not meet the ≥90% general target; the
   coarse-placer isn't bundled anywhere yet, so there's nothing to check — this is a recorded finding,
   and the canonical fp32 model stands.
-- **The next change is breadth, not weight or recipe.** Broad off-map address coverage — a full
+- **The next change is breadth rather than weight or recipe.** Broad off-map address coverage — a full
   OpenAddresses off-map pull, or a later Overture release once the addresses theme fills in — folded
   into OTHER, with the held-out-country probe as the check. Tracked as a follow-up to #244.
 

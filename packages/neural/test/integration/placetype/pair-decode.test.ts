@@ -10,7 +10,7 @@
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
  *
  *   Both fixtures below are the comma-free two-word "Shoreditch London" shape, which is decode-order
- *   plumbing, not a probe-mode test — `probeMode: "window"` is passed explicitly because the prior's
+ *   plumbing rather than a probe-mode test — `probeMode: "window"` is passed explicitly because the prior's
  *   default `"segment"` mode collapses this comma-free input to one inert segment, which would never
  *   reach the decode-order behavior these tests actually check.
  */

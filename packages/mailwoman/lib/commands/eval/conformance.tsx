@@ -10,7 +10,7 @@
  *   transformation. The laws are named by the register (`conformance/suites.ts`) rather than here: a list in
  *   this file is a second copy of it, and the copy is what goes stale.
  *
- *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades, not a
+ *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades rather than a
  *   second assembly of it. Rows are audited before the engine loads; `status: pass` rows check the exit
  *   code, tracked rows report without blocking, and a tracked row that starts holding prints a promotion
  *   instruction.

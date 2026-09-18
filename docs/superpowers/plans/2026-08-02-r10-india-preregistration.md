@@ -50,7 +50,7 @@ strict here, because the rows a rename leaves behind are exactly the non-officia
 - **B-R10.2 PASS** — 70-row confound board (40 directional-class surfaces from 665 available + 30
   others, each opening an Indian venue name): **0/70 false positives**.
 - **B-R10.3 PASS** — 60-row positive board: 60/60 emit, **59/60 tag-correct (98.3%)**. The single
-  miss is a trailing period (`Pimpale Bk` vs `Pimpale Bk.`) — a tokenization artifact, not a
+  miss is a trailing period (`Pimpale Bk` vs `Pimpale Bk.`) — a tokenization artifact rather than a
   retrieval failure.
 - **D-R10.4** — before/after on real addresses: `12 MG Road, Indiranagar, Bengaluru, Karnataka
 560038` fused the locality as `"Indiranagar Bengaluru Karnataka"` and emitted no dependent

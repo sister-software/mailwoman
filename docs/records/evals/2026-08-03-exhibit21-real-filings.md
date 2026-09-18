@@ -21,7 +21,7 @@ then the most recent 10-K's Exhibit 21.
 Three names produced no document to parse, all for ordinary reasons: Frontier Communications
 Parent has no 10-K on file under that CIK; Consolidated Communications and United States
 Cellular each filed a most-recent 10-K carrying no Exhibit 21. A filing without one is
-common, not an error.
+common rather than an error.
 
 The other 21 documents were fetched and parsed. Thirteen of them — chosen to cover every
 distinct layout in the set, and all under 25 KB — are vendored at
@@ -187,4 +187,4 @@ Lumen's manifest is vendored for that test. It carries 161 `<DOCUMENT>` blocks w
 
 Beyond that: the CIK corroboration rule, the share-class collapse, and the orchestrator that
 walks corroborated registrants into `filer_family` rows. Until those land, nothing from EDGAR
-reaches `filer.db` in production — this change makes the parser correct, not the ingest live.
+reaches `filer.db` in production — this change makes the parser correct rather than the ingest live.

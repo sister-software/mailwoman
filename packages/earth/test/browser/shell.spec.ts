@@ -24,7 +24,7 @@ test.describe("Mailwoman Earth shell", () => {
 	})
 
 	test("the footer carries the docs link and the commit the build was made from", async ({ page }) => {
-		// The real runtime's footer, not the canned one's. The app mounts two, and when each built its own the commit
+		// The real runtime's footer rather than the canned one's. The app mounts two, and when each built its own the commit
 		// link went into the fake path and rendered nowhere a visitor could see it — a smoke that checked the canned
 		// footer would have passed the whole time. `?runtime=fake` is absent here for that reason.
 		//

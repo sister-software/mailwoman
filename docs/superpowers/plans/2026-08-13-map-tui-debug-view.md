@@ -629,7 +629,7 @@ describe("fillPolygon", () => {
 })
 
 describe("drawCircle", () => {
-	it("draws a ring, not a disc", () => {
+	it("draws a ring rather than a disc", () => {
 		const grid = new RGBAGrid(16, 16)
 		drawCircle(grid, 8, 8, 5, [255, 255, 0])
 		const lit = litPixels(grid)
@@ -759,7 +759,7 @@ describe("overlayText", () => {
 
 - [ ] **Step 2: Run to verify failure.** — FAIL.
 
-- [ ] **Step 3: Implement.** `rasterizeToFrame` constructs a `FrameRasterizer` per call (cheap: two typed arrays), asserts `grid.width === columns * 2 && grid.height === rows * 4` (throw on mismatch — a sizing bug, not a clip). `frameToANSILines`: per row, walk cells; when `color` differs from the running color and the cell is inked, emit `[38;2;R;G;Bm`; append `String.fromCodePoint(char)` (0 → space); terminate each styled line with `[0m`. `overlayText`: bounds-clip; when `occupied` given, first check every target cell (+1 cell padding left/right) is free, return false on any hit, else write chars + colors and mark occupied.
+- [ ] **Step 3: Implement.** `rasterizeToFrame` constructs a `FrameRasterizer` per call (cheap: two typed arrays), asserts `grid.width === columns * 2 && grid.height === rows * 4` (throw on mismatch — a sizing bug rather than a clip). `frameToANSILines`: per row, walk cells; when `color` differs from the running color and the cell is inked, emit `[38;2;R;G;Bm`; append `String.fromCodePoint(char)` (0 → space); terminate each styled line with `[0m`. `overlayText`: bounds-clip; when `occupied` given, first check every target cell (+1 cell padding left/right) is free, return false on any hit, else write chars + colors and mark occupied.
 
 - [ ] **Step 4: Run to verify pass.** — PASS.
 
@@ -857,7 +857,7 @@ describe("MapRenderer", async () => {
 })
 ```
 
-On the first run the snapshots are created; **eyeball them** — the z14 frame must show the road grid as bright dot lines and the label text; the z11 frame must show the earth fill stipple and water along the west edge. A blank or solid frame is a bug, not a baseline.
+On the first run the snapshots are created; **eyeball them** — the z14 frame must show the road grid as bright dot lines and the label text; the z11 frame must show the earth fill stipple and water along the west edge. A blank or solid frame is a bug rather than a baseline.
 
 - [ ] **Step 2: Run to verify failure.** — FAIL (module not found).
 
@@ -1013,7 +1013,7 @@ export function resolveTilesPath(flagValue?: string): string | null {
 }
 ```
 
-- [ ] **Step 3: Lab convenience (manual, not in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s /mnt/playpen/protomaps/20260521.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
+- [ ] **Step 3: Lab convenience (manual rather than in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s /mnt/playpen/protomaps/20260521.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
 
 - [ ] **Step 4: Commit.** `geocode: tiles path resolution for the debug map pane`
 
@@ -1368,7 +1368,7 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 
 - [ ] **Step 3: Wire the TTY branch** in `command.tsx`: replace the Task 12 placeholder with `<DebugSessionApp initialInput={input} options={options} />`.
 
-- [ ] **Step 4: Manual verification on the lab host** (interactive TUIs get a human eye, not a unit test): `yarn compile && node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" --debug` with `$MAILWOMAN_TILES` set to the planet symlink. Check: three panels render; map shows Portland; Tab cycles focus; arrows pan; `+`/`-` zoom; editing the input to `"350 5th Ave, New York, NY"` + Enter re-renders all panes in ~a second; Esc restores the terminal with scrollback intact (`echo before-run` printed before the session must still be in scrollback after exit). Record observations in the PR.
+- [ ] **Step 4: Manual verification on the lab host** (interactive TUIs get a human eye rather than a unit test): `yarn compile && node mailwoman/out/cli.js geocode "3215 SE Clinton St, Portland OR" --debug` with `$MAILWOMAN_TILES` set to the planet symlink. Check: three panels render; map shows Portland; Tab cycles focus; arrows pan; `+`/`-` zoom; editing the input to `"350 5th Ave, New York, NY"` + Enter re-renders all panes in ~a second; Esc restores the terminal with scrollback intact (`echo before-run` printed before the session must still be in scrollback after exit). Record observations in the PR.
 
 - [ ] **Step 5: Re-run the pure-component tests** (`yarn vitest run mailwoman/debug-view/ mailwoman/commands/geocode.test.ts`) — PASS.
 
@@ -1398,10 +1398,10 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 
 ## Deviations from the spec (recorded, approved direction)
 
-1. **No `@mailwoman/spatial` dependency in map-tui.** The uncertainty ring needs only `metersPerPixel` (ground resolution), not haversine; cartographer/spatial both drag heavy transitive deps (maplibre-gl + tiger; core's shipped data). map-tui carries a local 40-line `mercator.ts` with the priced-and-declined note — the `nuts-lookup` precedent. Net: zero `@mailwoman/*` runtime deps, which also serves the phase-2 standalone `npx` story.
+1. **No `@mailwoman/spatial` dependency in map-tui.** The uncertainty ring needs only `metersPerPixel` (ground resolution) rather than haversine; cartographer/spatial both drag heavy transitive deps (maplibre-gl + tiger; core's shipped data). map-tui carries a local 40-line `mercator.ts` with the priced-and-declined note — the `nuts-lookup` precedent. Net: zero `@mailwoman/*` runtime deps, which also serves the phase-2 standalone `npx` story.
 2. **No `ink-testing-library`.** `renderInkToString` (Task 11) is both the static-path mechanism and the component-test harness — one less dev dep, and the test exercises the production capture path.
 3. **No graticule in the tile-less map pane.** Spec §3's degrade shape ("marker on a graticule") shipped as the note alone; the graticule is deferred to phase 2 with the standalone browser.
-4. **Fixed 12-px pan step.** The interactive pan step is a constant 12 device pixels per keypress (6 cells horizontal, 3 vertical), not the terminal-proportional step the plan sketched — same physical nudge at every terminal size.
+4. **Fixed 12-px pan step.** The interactive pan step is a constant 12 device pixels per keypress (6 cells horizontal, 3 vertical) rather than the terminal-proportional step the plan sketched — same physical nudge at every terminal size.
 
 ## Explicitly out of scope (phase 2+)
 

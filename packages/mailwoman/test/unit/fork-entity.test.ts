@@ -92,7 +92,7 @@ describe("probeForkEntity", () => {
 	})
 
 	it("collapses duplicate rows of ONE physical venue and keeps the more confident row", () => {
-		// Two ingest rows ~60 m apart — one venue, not two entities.
+		// Two ingest rows ~60 m apart — one venue rather than two entities.
 		const lookup = stubLookup([
 			{ name: "La Terraza", lat: 48.8773, lon: 2.3516, confidence: 0.7 },
 			{ name: "La Terraza", lat: 48.8778, lon: 2.3519, confidence: 0.95 },
@@ -198,7 +198,7 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
 		// The query's decoration exists on no row (the exact leg abstains), and the folded head matches
 		// both metro branches — a genuine ambiguity. A query naming an existing branch verbatim is the
-		// exact leg's win, not this leg's problem.
+		// exact leg's win rather than this leg's problem.
 		const lookup = stubLookup([
 			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },
 			{ name: "The North Face - Oxford Street", lat: 51.515, lon: -0.141, country: "GB" },

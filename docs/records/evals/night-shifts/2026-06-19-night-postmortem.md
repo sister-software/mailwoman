@@ -30,7 +30,7 @@ without operator GO (merge wall)._
    v0-only; the unifying failure is "fails to split locality from the adjacent admin token."
 3. **The anchor-positional enable:** the v0.9.2 "intl washes anchor-on" scar was _positional_
    (German leading postcode); AU/FR have _trailing_ postcodes like the US → the anchor reinforces
-   the split. Scar tissue is conditional, not universal (operator-named principle, now in memory).
+   the split. Scar tissue is conditional rather than universal (operator-named principle, now in memory).
 4. **Pre-GPU self-validation PASSED** (`db8ac933`): splitting the département reduces collision-commune
    coordinate error −61%, the merge resolves 0%. The resolver demonstrably uses the région tag → the
    change moves the anchor-ON coordinate. GPU justified before a minute was spent.
@@ -128,11 +128,11 @@ Per the merge wall this is **not auto-promoted** — the artifact is staged besi
 (int8 `model-v180-step-40000-int8.onnx`, md5 `d163396ce30869e117bf29ffb939177b`, on the volume +
 `./out/v180/`) and flagged for operator GO. The 2pp label check technically fired, but the coordinate
 (the canonical metric) is flat-to-better, so this is the "regression is coordinate-invisible — state
-the trade, operator promotes" path, not an experimental-as-cover ship.
+the trade, operator promotes" path rather than an experimental-as-cover ship.
 
 **Residual:** #727 diacritic is only _partially_ fixed — the break rate among emitted régions halved
 (2.8%→1.1%) but ~24 absolute cases remain; the residual is likely tokenizer-level (the accent strands
-a subword) and wants a separate decode/tokenizer look, not more extract data.
+a subword) and wants a separate decode/tokenizer look rather than more extract data.
 
 ## What went well
 
@@ -151,7 +151,7 @@ a subword) and wants a separate decode/tokenizer look, not more extract data.
   default instead of `--limit 2000`), costing a re-run. Don't filter+silence an eval you haven't seen
   the shape of; run it visible first, then filter.
 - **#727 only partially fixed by the extract** — the diacritic break is tokenizer-level, so more extract
-  data couldn't fully close it (diagnosis after the fact, not before).
+  data couldn't fully close it (diagnosis after the fact rather than before).
 
 ## Decisions made autonomously
 

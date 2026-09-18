@@ -19,7 +19,7 @@
  *       not used for Private Bags that do not have an identifier allocated by New Zealand Post".
  *       Examples: `PO Box 24999`, `Private Bag 106999`, `Response Bag 500999`, `CMB B99`, `Counter
  *       Delivery`, `Poste Restante`. The standard's incorrect-form examples show `P O Box 4 099`
- *       and `PB 39990` as wrong — `PB` is a common error, not a designator, so it is not in this
+ *       and `PB 39990` as wrong — `PB` is a common error rather than a designator, so it is not in this
  *       table.
  *   - The live addressing-standards page repeats the format rules: "PO Box and Private Bag numbers are
  *       space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and

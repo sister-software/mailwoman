@@ -11,7 +11,7 @@ import type { ServerHandle } from "@mailwoman/api-kit"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { availableParallelism } from "@mailwoman/core/utils/system"
-// Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
+// Default import rather than `* as process` — the ESM namespace object for `node:process` only reflects
 // the process object's own properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
 // `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
 // need `.once`, so this must be the real singleton.

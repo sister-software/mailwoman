@@ -16,16 +16,16 @@
 
 ## Pre-registered decisions (cite in commits)
 
-1. **3a's crosswalk core is Form 499 + the BDC provider list; CORES arrives as a bounded enrichment pass (Task 9), not via the Nexus scraper.** _Revised 2026-07-31 after operator pushback — the first draft deferred CORES entirely, which over-generalized from "the salvage has no bulk loader" to "no good source exists." That does not follow, and it was wrong._ What research established: the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call) returning company name **plus parent and subsidiary names**, and a Postman-documented Relationship-FRN endpoint. That is a supported interface, not an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b** — materially more valuable than the "enrichment" framing of the first draft.
-   Still true: no CORES **bulk** extract was found (the FCC's bulk downloads cover ULS and ASR, not CORES). But per-FRN calls are acceptable here precisely because 499 + the provider list first give us a **finite, enumerated FRN universe** — this is a bounded enrichment job over a known key set, not an unbounded crawl for discovery. Cache per FRN, rate-limit, identify the client.
-   **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs, and terms are UNVERIFIED. (`broadbandmap.fcc.gov` works fine with credentials, so this is host-specific, not a blanket block.) Task 9 opens with a verification step and stops if the interface is not what the documentation describes.
+1. **3a's crosswalk core is Form 499 + the BDC provider list; CORES arrives as a bounded enrichment pass (Task 9) rather than via the Nexus scraper.** _Revised 2026-07-31 after operator pushback — the first draft deferred CORES entirely, which over-generalized from "the salvage has no bulk loader" to "no good source exists." That does not follow, and it was wrong._ What research established: the FCC publishes a documented **FRN API** (`data.fcc.gov/api/frn`, the "FRN Conversions" GetInfo call) returning company name **plus parent and subsidiary names**, and a Postman-documented Relationship-FRN endpoint. That is a supported interface rather than an HTML scrape, and the parent/subsidiary fields make CORES a **family-edge source for 3b** — materially more valuable than the "enrichment" framing of the first draft.
+   Still true: no CORES **bulk** extract was found (the FCC's bulk downloads cover ULS and ASR rather than CORES). But per-FRN calls are acceptable here precisely because 499 + the provider list first give us a **finite, enumerated FRN universe** — this is a bounded enrichment job over a known key set rather than an unbounded crawl for discovery. Cache per FRN, rate-limit, identify the client.
+   **Blocked on verification:** `www.fcc.gov` and `data.fcc.gov` return 403 at the Akamai edge from the lab host, so the API's exact response shape, auth needs, and terms are UNVERIFIED. (`broadbandmap.fcc.gov` works fine with credentials, so this is host-specific rather than a blanket block.) Task 9 opens with a verification step and stops if the interface is not what the documentation describes.
 2. **`filer.db` is not a layer-contract artifact in 3a.** It has no coordinates (ASR is 3c) and `layer_coverage` is h3-keyed with no null path, so conforming would mean writing coverage rows that assert nothing — the exact dishonesty the meaning-of-zero rule exists to prevent. 3a ships its own `filer_manifest` table (name, version, source, source_vintage, build_cmd, build_sha, created_at — mirroring `LayerManifestTable`'s fields minus the spatial ones). Layer-contract conformance is deferred to 3c, when ASR structures give coordinates and coverage means something. **Do not geocode filer HQ addresses in 3a** to manufacture a spine.
 3. **FRN is a zero-padded 10-character branded string.** Nexus types it `Tagged<number>`; `BDCProviderTable.frn` is already `string | null`. Numeric storage loses leading zeros (same defect class as 2a's `location_id`). Provide `isFRN(value): value is FRN` with a real 10-digit check, unlike the Nexus guard.
 4. **Clustering runs with `learnedScorer: false`.** `resolveEntities` defaults to a GBT model trained on **NPPES healthcare dedup** whose threshold is not in Fellegi-Sunter weight units. Corporate-name linkage needs the direct FS path the spec describes. Revisit only with a corporate-trained model.
 5. **Authoritative and inferred edges never merge.** Entity clusters are connected components over **authoritative edges only**. Inferred edges are stored with their scores and are queryable, but a rollup that includes them must say so. This is §4.1 and it is a check.
 6. **Cardinality lives in the graph; `bdc_provider` is an explicitly lossy denormalization.** A `provider_id` can carry multiple FRNs and conflicting holding companies (Nexus warns-and-overwrites, last-wins — do not copy that). `filer.db` retains every edge. When `bdc_provider` is populated (task 8), the primary FRN is the one from the most recent 499 filing date, and that rule is documented in the schema docstring. `brand_name` stays NULL — no source in the provider list.
 7. **Temporal validity: `valid_from` is mandatory, `valid_to` nullable.** In 3a the only date source is the 499 `lastFiledAt`, so `valid_from` = filing date for 499-derived edges and the file vintage for provider-list edges. Transfer-of-control dates arrive in 3b. Every rollup query takes an `asOf` date.
-8. **Streaming, not whole-file reads.** The Nexus 499 loader reads the entire TSV into memory and silently truncates short rows (`relax_column_count_less`). Parse streaming, and a short row is a loud error naming the file and line — malformed input is never silently absorbed (the 2a `peekProviderID` discipline).
+8. **Streaming rather than whole-file reads.** The Nexus 499 loader reads the entire TSV into memory and silently truncates short rows (`relax_column_count_less`). Parse streaming, and a short row is a loud error naming the file and line — malformed input is never silently absorbed (the 2a `peekProviderID` discipline).
 
 ## Acceptance checks (§7-3a, pre-registered — Task 7 discharges them)
 
@@ -151,7 +151,7 @@ export interface FilerDatabase {
 export async function createFilerNodeTable(db): Promise<void> // + Edge, Attribute, Cluster, Manifest, and index builders
 ```
 
-Edge PK `(from_node_id, to_node_id, source, valid_from)` so the same relationship asserted by two sources or two vintages is two rows, not a clobber.
+Edge PK `(from_node_id, to_node_id, source, valid_from)` so the same relationship asserted by two sources or two vintages is two rows rather than a clobber.
 
 - [x] TDD: in-memory DatabaseClient, all tables created, a typed edge round-trips, and the manifest is single-row-enforced (copy `readLayerManifest`'s throw-unless-exactly-one discipline).
 - [x] Commit `feat(filer): filer.db schema — provenanced time-scoped crosswalk (3a task 4, decisions 2,7)`.
@@ -236,7 +236,7 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 
 **Files:** Modify `bdc/sdk/build-bdc.ts` (+ `BuildBDCOptions.providers?`), `bdc/schema.ts` (docstring only — the primary-FRN rule), `mailwoman/commands/gazetteer/build/bdc.tsx` (flag), tests.
 
-`bdc.db` is sealed and atomically swapped, so this is a **rebuild path**, not an in-place write (recon finding 4). Add an optional `providers?: Iterable<ProviderListRow>` to `BuildBDCOptions`; when present, populate `bdc_provider` during the build. Primary FRN = the one from the most recent 499 filing date; `brand_name` stays NULL (no source — document it). Verify the default path (no `providers`) produces byte-identical output to today.
+`bdc.db` is sealed and atomically swapped, so this is a **rebuild path** rather than an in-place write (recon finding 4). Add an optional `providers?: Iterable<ProviderListRow>` to `BuildBDCOptions`; when present, populate `bdc_provider` during the build. Primary FRN = the one from the most recent 499 filing date; `brand_name` stays NULL (no source — document it). Verify the default path (no `providers`) produces byte-identical output to today.
 
 - [x] TDD; assert default-path behavior unchanged and the lossy-denormalization rule is exercised by a multi-FRN fixture.
 - [x] Commit `feat(bdc): optional provider population during build (3a task 8, decision 6)`.
@@ -245,8 +245,8 @@ MCP: `mailwoman_filer_lookup` matching the house pattern exactly (snake_case zod
 
 **Step 0 outcome, recorded:** the stop check fired and the task was not implemented. Probes from the lab host, with an identifying User-Agent naming the project and a contact address:
 
-- `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` → **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block is host/IP-based, not agent-based.
-- `https://apps.fcc.gov/cores/api/frn/0001753557` → an HTML **"Invalid Request"** page, not JSON. That guessed path is not the documented interface.
+- `https://data.fcc.gov/api/frn/getInfo?frn=0001753557&format=json` → **403 Access Denied** at the Akamai edge (`errors.edgesuite.net` reference). The identifying UA did not change the outcome, so the block is host/IP-based rather than agent-based.
+- `https://apps.fcc.gov/cores/api/frn/0001753557` → an HTML **"Invalid Request"** page rather than JSON. That guessed path is not the documented interface.
 
 Per the check's own terms — _"if the host 403s from this machine, or the response does not carry the documented fields, STOP and report — do not fall back to the Nexus HTML scrape"_ — no fallback was attempted and no code was written. Note `broadbandmap.fcc.gov` continues to work with credentials, so this is specific to these hosts rather than a blanket FCC block.
 

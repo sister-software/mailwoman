@@ -8,7 +8,7 @@
  *   the postcode up in the databases, take the centroid for that country, and measure the haversine
  *   distance to the true point.
  *
- *   This measures the parent-borrow backfill, not rooftop accuracy. A backfilled centroid is the
+ *   This measures the parent-borrow backfill rather than rooftop accuracy. A backfilled centroid is the
  *   parent LOCALITY's centre, so the expected distance is "how far is this address from the middle
  *   of its town" — a few km in a city, more in a large rural postcode. That is exactly the
  *   resolution a "which city/region" anchor needs. the eval just confirms the borrow lands in the

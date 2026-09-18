@@ -58,7 +58,7 @@ packages/astrogeology/
     sdk/
       sources.ts        pinned source table: URL, expected sha256, version label, product ID, license
       nomenclature.ts   fetch + unzip the USGS GIS download per body
-      dem.ts            fetch the LOLA / MOLA mosaic; raw fetch streamed to disk (a file transfer, not an API request)
+      dem.ts            fetch the LOLA / MOLA mosaic; raw fetch streamed to disk (a file transfer rather than an API request)
     build/
       normalize.ts      source rows to PlanetaryNomenclatureFeature; coordinate normalization; stable IDs
       nomenclature.ts   features to GeoJSON, tippecanoe to <body>.pmtiles, metadata write
@@ -181,7 +181,7 @@ the `RADII` table becomes the Earth entry of a per-body table exported for the t
   build shells out to `tippecanoe` and `gdaldem`, both already required by `mailwoman coverage build`
   and `@mailwoman/spatial/tools/ogr`; a missing tool fails the test with the tool's name, never a skip.
 - The DEM round-trip test (decode error at representative elevations within a stated bound) lands with
-  the DEM product, not with v1.
+  the DEM product rather than with v1.
 
 ## Definition of done
 

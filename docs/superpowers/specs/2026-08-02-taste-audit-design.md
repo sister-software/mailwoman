@@ -76,7 +76,7 @@ already exists.
 2. **Orphan duplication** — the same logic in two or more places with no declared home. A finding on
    this axis is incomplete unless it names the module the logic should move to.
 
-3. **Idiom drift** — repo conventions the code violates: acronym casing (`parseJSON`, not
+3. **Idiom drift** — repo conventions the code violates: acronym casing (`parseJSON` rather than
    `parseJson`), `erasableSyntaxOnly` (no `enum`, no constructor parameter properties, no runtime
    namespaces), explicit `.ts` extensions on relative imports, raw DDL where the schema builder
    applies, re-hardcoded `/mnt/playpen`, raw `process.env` / `process.argv`.
@@ -87,12 +87,12 @@ already exists.
 ## Out of scope
 
 - **Bug hunting.** That is `/code-review`'s job. A duplicated function that is also wrong gets
-  reported as duplication; the wrongness is noted, not chased.
+  reported as duplication; the wrongness is noted rather than chased.
 - Performance work, prose and docs style, `data/`, generated model blobs, `corpus-python`.
 - Everything on the `AGENTS.md` "What deliberately stays raw" list. FTS5 `MATCH`, ogr2ogr dialect
   SQL, the hot positional INSERT loops, runtime-dynamic schemas, introspect-and-replay,
   async-into-sync walls, the sync-by-interface resolver readers. These are documented decisions with
-  reasons attached. Migrating one regresses it. They are an allowlist, not a backlog.
+  reasons attached. Migrating one regresses it. They are an allowlist rather than a backlog.
 
 ## Ranking
 

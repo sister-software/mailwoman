@@ -10,7 +10,7 @@
  *
  *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   over 813,627 polygons per candidate and produces a table, not an artifact.
+ *   over 813,627 polygons per candidate and produces a table rather than an artifact.
  *
  *   `--limit` IS THE SMOKE RUNG. It stops the ingest after N features, which builds a real artifact over a
  *   real prefix of the source — enough to exercise the field names, the value domain, the projection and

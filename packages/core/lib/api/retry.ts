@@ -44,7 +44,7 @@ const HTTP_SERVER_ERROR_MAX = 599
 export const MAX_RETRY_AFTER_MS = 60_000
 
 /**
- * Attempts a retrying client makes by default (INCLUDING the first) — a stated ceiling, not "until it works."
+ * Attempts a retrying client makes by default (INCLUDING the first) — a stated ceiling rather than "until it works."
  */
 export const DEFAULT_MAX_ATTEMPTS = 3
 
@@ -184,7 +184,7 @@ export function classifyAxiosFailure(error: unknown): RetryDirective {
  */
 export interface RetryOptions {
 	/**
-	 * Total attempts, INCLUDING the first, before giving up. A stated ceiling, not "until it works". Default
+	 * Total attempts, INCLUDING the first, before giving up. A stated ceiling rather than "until it works". Default
 	 * {@linkcode DEFAULT_MAX_ATTEMPTS}.
 	 */
 	maxAttempts?: number

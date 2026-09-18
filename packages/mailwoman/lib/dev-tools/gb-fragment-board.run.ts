@@ -12,7 +12,7 @@
  *   kind classifier calls it `formatted`, and the register check (Decision A, `classifier.ts`'s
  *   `evidenceOn`) withholds both evidence channels in that register by design. The board is blind to
  *   the change by construction, and reporting its byte-identity as a pass would be reporting the
- *   instrument, not the model.
+ *   instrument rather than the model.
  *
  *   So this projects each gb-golden row onto the register where the channels are live. Two fragment
  *   shapes per row, both drawn from the row's own gold components so the grading stays exact-match:
@@ -22,7 +22,7 @@
  *   - `place` — `dependent_locality, locality`. The locality-surface channel's register, and the one
  *     the shipped bundle's homonym wins were measured in.
  *
- *   Rows whose fragment does not classify as `fragmented` are SKIPPED and counted, not silently graded
+ *   Rows whose fragment does not classify as `fragmented` are SKIPPED and counted rather than silently graded
  *   in the wrong register — the mistake this file exists to correct.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>

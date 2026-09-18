@@ -89,7 +89,7 @@ That is the same shape as the two defects already on the board:
 
 **One defect, three components: the model will not read a component without its co-occurring
 partner.** It has learned the joint distribution and not the marginals. That is a training-data
-property, not an architecture property — and instance 1 was fixed with a phenomenon extract plus a
+property rather than an architecture property — and instance 1 was fixed with a phenomenon extract plus a
 counter-distribution, without touching the architecture at all.
 
 ## What this means for the architecture
@@ -97,11 +97,11 @@ counter-distribution, without touching the architecture at all.
 **Vindicating:**
 
 - The per-piece unit provides answers a word unit cannot represent, demonstrated (`Unit 12/345 Main St`).
-- Our ≥4-digit boundary is _learned_, not structural: on the 351/376 parity rows we get right, the
+- Our ≥4-digit boundary is _learned_ rather than structural: on the 351/376 parity rows we get right, the
   per-piece posterior tracks the length-conditioned corpus (2d continuation → postcode 0.0270 vs the
   corpus's 0.0427) and crosses over at 4 digits — the same boundary a word-unit tagger gets from its
   unit. We have it, from data. See [the H3 verdict](./2026-07-16-trackb-digit-ownership-h3-verdict.md).
-- The incoherence is a **tail** (25/376), not the general behaviour of digit runs. "Every multi-piece
+- The incoherence is a **tail** (25/376) rather than the general behaviour of digit runs. "Every multi-piece
   digit run gets dragged to postcode by its continuations" is refuted at 0.0270.
 
 **Villainizing, and must be explicit:**
@@ -118,12 +118,12 @@ counter-distribution, without touching the architecture at all.
 **Not settled here:** the arc's own research says a lower-fertility vocab is _upstream_ of any span
 head, and the span head was built and closed first — a conditional verdict flagged on its parked PR.
 Nothing on this page re-opens it. But note the direction: if the license defect is a data property
-and the extract fixes it, the vocab work is an optimization, not a prerequisite.
+and the extract fixes it, the vocab work is an optimization rather than a prerequisite.
 
 ## Caveats
 
 - The control set is 16 hand-built rows plus 6 minimal pairs. It is an **existence proof and a
-  mechanism probe, not a score.** No CI is quoted and none should be.
+  mechanism probe rather than a score.** No CI is quoted and none should be.
 - Three rows are marked `contested` (`Apt4B`, `1-2-3 Chome`, `Eberswalder Straße 100 104`) — each
   turns on a schema call we have not made — and are excluded from every count above.
 - deepparse is good research and this is not a scoreboard. It ties us where the schemas overlap and

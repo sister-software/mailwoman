@@ -13,7 +13,7 @@
  *   authoritative same-entity edge is never in doubt, so any finite `threshold` unions it. The resulting
  *   connected components are written to `filer_cluster` with `assertion: "authoritative"`.
  *
- *   **The `relationship` filter is required, not incidental.** `assertion` grades
+ *   **The `relationship` filter is required rather than incidental.** `assertion` grades
  *   evidence strength (authoritative vs. inferred); `relationship` grades what the edge means
  *   (`same_entity` vs. `holding_company` vs. `management_company` — `schema.ts`'s {@link
  *   FilerRelationship}) — the two columns are orthogonal by design, and entity clustering
@@ -68,19 +68,19 @@
  *   comparisons are what actually makes a link SAFE. "Two different FRNs" is treated as
  *   authoritative ground truth in this domain: full stop, no name match overrides it.
  *
- *   **Degenerate discovery scope — accepted for 3a, a coordinator decision, not a defect.**
+ *   **Degenerate discovery scope — accepted for 3a, a coordinator decision rather than a defect.**
  *   Because `attributes.frn`/`.form499ID`/`.providerID` are derived PER AUTHORITATIVE
  *   COMPONENT (every member of one component carries the identical code-set strings — see the field
  *   list above), {@linkcode hasSharedIdentifier} finding any overlap is, by construction, exactly
  *   equivalent to "these two nodes are already in the same authoritative component." Consequently, pass
  *   (b) as it stands cannot discover a link between two nodes that pass (a) doesn't already connect —
  *   it can only ever CONFIRM/re-surface an existing authoritative grouping via name matching, never
- *   bridge two genuinely separate ones. This is intentional, not a bug to chase: a linker that discovers
+ *   bridge two genuinely separate ones. This is intentional rather than a bug to chase: a linker that discovers
  *   nothing is safe. a linker that discovers FALSE links (what the identifier veto above exists to
  *   prevent) is not — and 3a's decision 5 scope was authoritative-only anyway. Restoring genuine
  *   cross-component discovery power requires corroborating evidence BEYOND the canonical name (e.g. a
  *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
- *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there, not attempted here.
+ *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there rather than attempted here.
  *
  *   **Decision 5 / criterion 2, binding and required:** an inferred link must never alter an
  *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output — it
@@ -108,7 +108,7 @@
  *   **`sourceVintage` vs `validFrom` — NEVER the same field.**
  *   {@link ClusterFilersOptions.sourceVintage} is a free-text human vintage LABEL (`"2026-cluster-v1"`)
  *   and {@link ClusterFilersOptions.validFrom} is a SEPARATE, always-ISO `YYYY-MM-DD` date
- *   ({@linkcode assertISODate}, imported from `guards.ts` — it lives there, not in the builder, so every
+ *   ({@linkcode assertISODate}, imported from `guards.ts` — it lives there rather than in the builder, so every
  *   writer of a `valid_from` shares one implementation of the rule and none of them drift).
  *   `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
  *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
@@ -137,21 +137,21 @@
  *   permanently mislabeling a still-valid link "closed":
  *
  *   1. **DELETE** every inferred `filer_edge` row at this run's own `sourceVintage` (`source_vintage =
- *      sourceVintage` — the run's label identity, not its date). A same-vintage rebuild has no
+ *      sourceVintage` — the run's label identity rather than its date). A same-vintage rebuild has no
  *      meaningful "historical" state to preserve at a vintage that, by definition, hasn't changed
  *      identity — full replace, mirroring `filer_cluster`'s own clear-and-rewrite discipline for this
  *      same pass.
  *   2. **CLOSE** (`SET valid_to = validFrom`) every still-open (`valid_to IS NULL`) inferred edge from a
- *      STRICTLY EARLIER run (`valid_from < validFrom` — real ISO-date ordering, not label ordering).
+ *      STRICTLY EARLIER run (`valid_from < validFrom` — real ISO-date ordering rather than label ordering).
  *      This is genuine history (decision 7's provenance-plurality) — a link asserted at an earlier
- *      vintage that no longer holds becomes a closed row, not an erased one, and a link that does
+ *      vintage that no longer holds becomes a closed row rather than an erased one, and a link that does
  *      persist gets a new, separate row at the new vintage rather than an update-in-place.
  *
  *   **Scope note:** only `form499_id` nodes carry a `legal_name` attribute (`build-filer.ts` never
  *   attaches attributes to `frn` / `bdc_provider_id` / holding- or management-company nodes), so
  *   those are the only nodes pass (b) can name-match. A provider that only ever appears in the BDC
  *   provider list (no corresponding Form 499 filing) has no legal name in this crosswalk and is
- *   invisible to the inferred pass — a real, documented gap, not an oversight.
+ *   invisible to the inferred pass — a real, documented gap rather than an oversight.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -197,8 +197,8 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  * verified against `buildDefaultModel`'s current seed `m`/`u` constants) while staying above the zero-evidence floor
  * (`-13.29`, reachable only by a pair with no organization match at all — impossible here, since the blocking key is
  * the organization match). Revisit this constant if `NAME_LEVELS`/`CODE_SET_LEVELS` (`registry/resolve.ts`) or
- * `buildDefaultModel`'s `lambda` change, or once EM/real filer data can calibrate it properly (seed, not a universal
- * constant — same caveat the library's own `ComparisonLevel`s carry).
+ * `buildDefaultModel`'s `lambda` change, or once EM/real filer data can calibrate it properly (seed rather than a
+ * universal constant — same caveat the library's own `ComparisonLevel`s carry).
  */
 export const INFERRED_LINK_THRESHOLD = -13
 
@@ -418,7 +418,7 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
 	const groups = await readAuthoritativeGroups(db)
 
 	const rows: FilerClusterTable[] = groups.flatMap((group) => {
-		// Content-derived, not index-derived — stable across reruns regardless of `cluster()`'s internal iteration
+		// Content-derived rather than index-derived — stable across reruns regardless of `cluster()`'s internal iteration
 		// order (see the module docstring's idempotency section).
 		const clusterID = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
 
@@ -445,16 +445,17 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
 /**
  * Read every `filer_attribute` row keyed `legal_name`, keeping — per `node_id` — the value from the LATEST
  * `source_vintage`. A `form499_id` node re-filing under a new legal name over time is real (a rename, a DBA change);
- * this module scores the CURRENT name, not an arbitrary historical one.
+ * this module scores the CURRENT name rather than an arbitrary historical one.
  *
- * **Constraint (documented, not enforced):** "latest" is a plain STRING comparison (`>`), not a date parse. This is
- * safe in practice because `legal_name` is exclusively `form-499`-sourced (`build-filer.ts` never attaches it from
- * `bdc-provider-list`), and `source_vintage` for every `form-499` row is the row's own `lastFiledAt` — a real
- * filing-date string, not a synthetic label like `bdc-provider-list` edges' `"2026-Q1"`. As long as every `legal_name`
- * vintage for one node is drawn from that same lexicographically-sortable date scheme (the assumption this whole module
- * makes about `filer.db`), `>` and "chronologically later" agree. This breaks if that assumption is ever violated (e.g.
- * a future source starts writing `legal_name` with a differently formatted or non-chronological `source_vintage`) — at
- * that point "latest" here means "lexicographically greatest", silently, not "chronologically latest".
+ * **Constraint (documented rather than enforced):** "latest" is a plain STRING comparison (`>`) rather than a date
+ * parse. This is safe in practice because `legal_name` is exclusively `form-499`-sourced (`build-filer.ts` never
+ * attaches it from `bdc-provider-list`), and `source_vintage` for every `form-499` row is the row's own `lastFiledAt` —
+ * a real filing-date string rather than a synthetic label like `bdc-provider-list` edges' `"2026-Q1"`. As long as every
+ * `legal_name` vintage for one node is drawn from that same lexicographically-sortable date scheme (the assumption this
+ * whole module makes about `filer.db`), `>` and "chronologically later" agree. This breaks if that assumption is ever
+ * violated (e.g. a future source starts writing `legal_name` with a differently formatted or non-chronological
+ * `source_vintage`) — at that point "latest" here means "lexicographically greatest", silently rather than
+ * "chronologically latest".
  */
 async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<string, string>> {
 	const rows = await db
@@ -585,7 +586,7 @@ export async function clusterInferredLinks(
 		// the default would propose zero candidate pairs. Block on the exact canonicalized organization name instead.
 		blockingKeys: [exactKey((record: SourceRecord) => record.organization?.canonical)],
 		// Wired through for documentation/config parity (and in case `requireCorroboration`/`trainEM` are ever
-		// enabled here) — but note the ACTUAL weight for every pair comes from `scorer` below, not from
+		// enabled here) — but note the ACTUAL weight for every pair comes from `scorer` below rather than from
 		// resolveEntities' own internal model built from this config (see scoreWithIdentifierVeto's docstring).
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
 		// Decision 4, BINDING: the bundled GBT is trained on NPPES healthcare dedup. its calibrated threshold isn't in
@@ -607,7 +608,7 @@ export async function clusterInferredLinks(
 		// Cross-vintage supersession (see the module docstring). Two cases, handled separately because
 		// they mean different things and key on different columns:
 		//
-		// 1. SAME-vintage rebuild (`source_vintage = sourceVintage` — the run's LABEL identity) — DELETE, not
+		// 1. SAME-vintage rebuild (`source_vintage = sourceVintage` — the run's LABEL identity) — DELETE rather than
 		//    close. This run's own prior output at this exact vintage is being fully superseded (e.g. filer.db was
 		//    rebuilt with corrected input under the same clustering vintage label) — there is no meaningful
 		//    "historical" state to preserve at a vintage that, by definition, hasn't changed identity, and closing
@@ -620,7 +621,7 @@ export async function clusterInferredLinks(
 		//    today's date on a same-label correction run) without being "later vintage" history.
 		// 2. EARLIER-run edges (`valid_from < validFrom` — real ISO-date ordering) — CLOSE (`SET valid_to`), not
 		//    delete. These are genuine history (decision 7's provenance-plurality): a link asserted at an earlier
-		//    vintage that no longer holds becomes a closed row, not an erased one.
+		//    vintage that no longer holds becomes a closed row rather than an erased one.
 		await trx
 			.deleteFrom("filer_edge")
 			.where("assertion", "=", FilerEdgeAssertion.Inferred)
@@ -664,7 +665,7 @@ export async function clusterInferredLinks(
 						assertion: FilerEdgeAssertion.Inferred,
 						// This pass links two form499_id nodes that are the same underlying filer (a re-filing
 						// under one FRN with a drifted legal name — see the module docstring), so SameEntity is
-						// the literal claim being made here, not a default stand-in for an untyped relationship.
+						// the literal claim being made here rather than a default stand-in for an untyped relationship.
 						relationship: FilerRelationship.SameEntity,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,

@@ -73,7 +73,7 @@ what is reported is parity's own metric.
 
 The register's `fst` row records that the pipeline ships the street-context check with the emission
 prior **zeroed**, because unconditional it measured **US-golden −48**. That number is about the
-**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`), not the gazetteer FST, and it is unaffected
+**street-morphology** prior (`ZEROED_MORPHOLOGY_OPTS`) rather than the gazetteer FST, and it is unaffected
 here: `geocode-core.ts` already calls `streetContextRequirementFor` — the same helper `runPipeline` calls, on
 purpose, so the two paths cannot drift (#1669) — so both ship `fstStreetContextPositiveScale = 0`
 identically. Turning the gazetteer prior on does not re-open the morphology question.
@@ -85,5 +85,5 @@ The change is now visible to the gauntlet and to the parity corpus. It remains i
 bounded by those two batteries. Closing that is the remainder of #1497.
 
 Five shipped overlays still carry no FST at all (`es-es` and `it-it` were built 2026-08-16 but are
-staged, not promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the
+staged rather than promoted; `en-au`, `en-in`, `en-nz` have none), so the prior is inert for them and the
 gauntlet now says so out loud per locale. See #1705.

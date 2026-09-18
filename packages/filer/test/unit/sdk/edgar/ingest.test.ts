@@ -63,7 +63,7 @@ async function stubClient(
 		},
 		getDocument: (input: string | URL): Promise<string> => {
 			const url = String(input)
-			// The URL's filename comes from the scripted document manifest, not from the fixture name, so
+			// The URL's filename comes from the scripted document manifest rather than from the fixture name, so
 			// match on the CIK in the archive path instead.
 			const bare = /edgar\/data\/(\d+)\//.exec(url)?.[1] ?? ""
 			const entry = Object.values(script).find((candidate) => candidate.cikPath === bare) ?? Object.values(script)[0]
@@ -193,7 +193,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 
 		const { rows, report } = await collectEdgarSubsidiaryRows(client, ["American Broadband"], tickers)
 
-		// Picking one here would relocate the false-identity-link decision, not avoid it.
+		// Picking one here would relocate the false-identity-link decision rather than avoid it.
 		expect(rows).toHaveLength(0)
 		expect(report.skipped[EdgarSkipReason.AmbiguousCIK]).toBe(1)
 	})

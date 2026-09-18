@@ -52,7 +52,7 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	spr.run(12, 1, "California", "region", "US", 36.7, -119.4, 32.5, 42, -124.4, -114.1)
 	spr.run(13, 1, "District of Columbia", "region", "US", 38.9, -77, 38.8, 39, -77.1, -76.9)
 	spr.run(14, 1, "Puerto Rico", "region", "US", 18.2, -66.5, 17.9, 18.5, -67.3, -65.2)
-	// Counties — in US WOF a locality's direct parent is a county, not the region (the gap the
+	// Counties — in US WOF a locality's direct parent is a county rather than the region (the gap the
 	// ancestry backfill bridges).
 	spr.run(20, 10, "Franklin County", "county", "US", 44.9, -72.9, 44.7, 45, -73.1, -72.5)
 	spr.run(21, 11, "O'Brien County", "county", "US", 43.1, -95.6, 43, 43.3, -95.9, -95.4)

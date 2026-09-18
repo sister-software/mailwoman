@@ -5,7 +5,7 @@ the stale `46/51` in circulation is dead: on current main the POI board reads **
 50/51**. But the A/B that motivated this investigation measures the wrong thing. Selecting the
 candidate backend also silently drops the locale-derived country filter, so
 `12 Rue de Rivoli, 75001 Paris` resolving to Paris TX on FTS and Paris FR on candidate is **entirely
-the country filter, not the backend** — FTS with `--default-country none` returns Paris FR, and
+the country filter rather than the backend** — FTS with `--default-country none` returns Paris FR, and
 candidate with `--default-country US` returns Dallas TX. Isolating the two: on 40 gold rows the
 country filter is worth **+10 cases**, the backend **+1**. At scale on 1050 real international
 addresses the candidate backend fixes 66 gross errors and breaks 16 (net **+4.8pp** inside 25 km);
@@ -30,7 +30,7 @@ node mailwoman/out/cli.js parse "…" --resolve --resolve-db $WOF               
 MAILWOMAN_CANDIDATE_DB=… node mailwoman/out/cli.js parse "…" --resolve …      # candidate, dc=none
 ```
 
-— changes two variables at once. Cross them and the effect lands on the filter, not the backend:
+— changes two variables at once. Cross them and the effect lands on the filter rather than the backend:
 
 | arm                             | `12 Rue de Rivoli, 75001 Paris`       | verdict |
 | ------------------------------- | ------------------------------------- | ------- |
@@ -133,7 +133,7 @@ build, so **ID-equality grading is invalid across backends and across builds** f
 scored the row as a pass for all four arms.
 
 **`brooklyn, new york, ny` fails on all four arms** — both backends return the New York _region_,
-288 km out. Backend-independent; a parse/cascade defect, not in scope here.
+288 km out. Backend-independent; a parse/cascade defect rather than in scope here.
 
 ## Instrument B — the POI board, 51 cases (the historical instrument)
 
@@ -150,7 +150,7 @@ Both clear every pre-registered floor. On 36 of the 37 anchored cases the two ar
 identical to 3 decimal places.
 
 The single failure is `cat-ca-02`, `"gas station near Ottawa ON"` — candidate anchors on Ottawa,
-**Illinois**, 1151 km out. It is a singleton, not a class:
+**Illinois**, 1151 km out. It is a singleton rather than a class:
 
 | case          | query                         |         candidate |
 | ------------- | ----------------------------- | ----------------: |
@@ -183,7 +183,7 @@ Four query classes, gold coordinates taken from WOF itself, both backends at `dc
 The candidate advantage is **entirely the exonym class** and nothing else. Endonyms, province
 abbreviations and state abbreviations are byte-identical — including identical _failures_
 (`Winnipeg MB` no-hit on both, `Edmonton AB` → Alberta region on both, `London ON` → London GB on
-both, `Perth WA` → Perth US on both). Those are shared defects of the resolution path, not backend
+both, `Perth WA` → Perth US on both). Those are shared defects of the resolution path rather than backend
 differences.
 
 The exonym wins, each one FTS landing on a US homonym:
@@ -294,7 +294,7 @@ in the measured sets tripped on it, but a thin-tail rural probe would be the way
 
 ## Verdict
 
-**The candidate backend is ahead, not behind.** Consolidated, every case run at matched country
+**The candidate backend is ahead rather than behind.** Consolidated, every case run at matched country
 policy:
 
 | instrument                             | cases |    FTS | candidate |
@@ -313,7 +313,7 @@ p50 cost (1.5 → 2.4 km international) is real but small next to the coordinate
 
 **Two caveats on the way the flip is framed.** First, ship the backend flip _without_ also flipping
 the country filter, or the change is untestable against these numbers — they are separate changes
-with separate risk, and it is the filter, not the backend, that carries the +10 on bare
+with separate risk, and it is the filter rather than the backend, that carries the +10 on bare
 international city names. Second, `mailwoman/resolver-backend.ts` currently makes them one change;
 splitting `resolverDefaultCountry`'s `candidateActive` branch from the backend selection is a
 prerequisite for shipping either independently.
@@ -329,8 +329,7 @@ prerequisite for shipping either independently.
   I ran no benchmark and report no p50/p99 timings.
 - **Postcode-only queries**, despite candidate holding 3.66M postcodes and FTS none. A likely large
   candidate win, entirely unquantified.
-- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point`,
-  not `node.lat`; my walker reads admin-grade coordinates only. Nothing here speaks to
+- **The rooftop / street tier.** Street-tier coordinates land in `street.metadata.address_point` rather than `node.lat`; my walker reads admin-grade coordinates only. Nothing here speaks to
   address-point or interpolation resolution.
 - **`node.interpretations[]`.** Dual-role places (city-states) carry a second resolved place there
   which my primary-node pick ignores. Berlin-class rows may hide a second answer.

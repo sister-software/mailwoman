@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Render a self-contained Plotly HTML to a PNG via headless Chromium — the shared renderer behind
- *   the `registry viz` figures (an internal helper, not a command).
+ *   the `registry viz` figures (an internal helper rather than a command).
  *
  *   Plotly 3D (`surface`/`scatter3d`) needs a real WebGL context, which the shared harness
  *   (`./browser.ts`) provides through SwiftShader. 2D traces (`contour`/`heatmap`) render on the 2D

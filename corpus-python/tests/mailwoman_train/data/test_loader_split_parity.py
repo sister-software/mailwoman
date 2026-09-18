@@ -4,7 +4,7 @@ Every stage of this pipeline draws from one `random.Random`: the parquet-file or
 the row order inside a group, the country-acceptance test, the source multinomial, the shuffle
 buffer, and each augmentation. They share a stream, so a split that reorders two calls — or adds a
 draw, or skips one — reshuffles the corpus a run trains on while every existing test still passes:
-the suite asserts that rows are well-formed and that mixtures are stationary, not that a seeded run
+the suite asserts that rows are well-formed and that mixtures are stationary rather than that a seeded run
 yields these rows in this order.
 
 So this pins the sequence. `iter_rows` carries the sampling. the char path carries `iter_encoded`
@@ -292,7 +292,7 @@ def test_source_row_counts_match_the_committed_reference(corpus: Path) -> None:
 
 
 def test_collate_keys_match_the_committed_reference(corpus: Path, tmp_path: Path) -> None:
-    """A channel dropped from `collate` reaches the model as an absent tensor, not an error."""
+    """A channel dropped from `collate` reaches the model as an absent tensor rather than an error."""
     if not REFERENCE.is_file():
         pytest.skip(f"no reference at {REFERENCE}; generate it before splitting")
     expected = json.loads(REFERENCE.read_text())["collate_keys"]

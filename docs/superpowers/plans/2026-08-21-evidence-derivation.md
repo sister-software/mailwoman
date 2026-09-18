@@ -14,7 +14,7 @@
 
 - **`erasableSyntaxOnly: true`** — no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - **Relative imports use explicit `.ts` extensions.** Each workspace tsconfig sets `rewriteRelativeImportExtensions: true`.
-- **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core`, not `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
+- **`@mailwoman/evidence` has zero runtime dependencies.** Not `@mailwoman/core` rather than `@mailwoman/spatial`. Adding one defeats the reason the workspace exists.
 - **Acronym casing:** whole camelCase components — `parseJSON`, `readID`, `POILookup`. `ID` never `Id`. Enforced by `sister-software/no-title-case-acronym` in `yarn lint:oxlint`.
 - **No raw `process.env` / `process.argv`** — CI-enforced. Use `core/env/schema.ts` + `env-paths`.
 - **Data-root paths go through `@mailwoman/core/utils`** (`dataRootPath`, `mailwomanDataRoot`). Never hard-code `/mnt/playpen/mailwoman-data`.
@@ -30,7 +30,7 @@
 
 **Files:**
 
-- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record, not code)
+- Create: `scratchpad/2026-08-21-coverage-miss-decomposition.md` (the verdict — a record rather than code)
 - Read only: `packages/dev-mcp/lib/constraint-census.ts`
 
 **Interfaces:**
@@ -85,7 +85,7 @@ that produces three distinct failures. Record which one each row is:
 | `fold_admin_suffix` | `São Paulo - SP` | `sao paulo - sp` | `sao paulo`           |
 | `fold_designator`   | `Co. Westmeath`  | `co westmeath`   | `westmeath`           |
 
-For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown`, not `fold_failure` — a magnitude never carries its own absence.
+For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown` rather than `fold_failure` — a magnitude never carries its own absence.
 
 - [ ] **Step 5: Write the verdict**
 
@@ -282,7 +282,7 @@ export const EpistemicStatus = {
 	Derived: "derived",
 	/** No row matched; the value is the intersection of stated constraints. Never presentable as retrieved. */
 	Inferred: "inferred",
-	/** The evidence does not support a claim. The honest answer, not a failure to try. */
+	/** The evidence does not support a claim. The honest answer rather than a failure to try. */
 	Unresolved: "unresolved",
 } as const
 
@@ -363,7 +363,7 @@ export function relation(input: {
 }): Relation {
 	if (input.assertion === Assertion.Authoritative && input.score !== undefined) {
 		throw new Error(
-			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded, not stated`
+			`authoritative relation cannot carry a score (${input.relationship} from ${input.source}): a score means the link was concluded rather than stated`
 		)
 	}
 
@@ -585,7 +585,7 @@ Create `packages/evidence/coverage.ts`:
  *   the only one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and
  *   it refuses far more often than it admits.
  *
- *   FOLD PARITY IS A PRECONDITION, not a detail. A key that "exists nowhere" may simply exist under a
+ *   FOLD PARITY IS A PRECONDITION rather than a detail. A key that "exists nowhere" may simply exist under a
  *   surface we did not probe. The 2026-08-21 board decomposition found this class directly — `Tel Aviv-Yafo`,
  *   `São Paulo - SP`, `Co. Westmeath` are all real places reported as coverage misses — and it is
  *   indistinguishable from a true absence at the decision point. `street-evidence.ts` carries the same scar
@@ -754,7 +754,7 @@ yarn vitest run packages/core/lib/layers
 
 Expected: pass. `packages/core/lib/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
 
-- [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes, not what it is called**
+- [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes rather than what it is called**
 
 Three packages export a function named `foldName` and no two agree. Measured:
 
@@ -794,7 +794,7 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
  * Identify a fold by its BEHAVIOUR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity, which is the property
- * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine", not "were these
+ * the exclusion check needs: it is asking "was this key built by a fold equivalent to mine" rather than "were these
  * two functions written in the same file".
  *
  * Deliberately NOT a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a
@@ -1006,7 +1006,7 @@ The probe already exists. `packages/resolver-wof-sqlite/lib/uprn-lookup.ts` ship
 capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000`, with an integration test. Its own docstring already states
 this task's requirement:
 
-> callers building negative evidence must consult `readLayerCoverage`, not this reader alone.
+> callers building negative evidence must consult `readLayerCoverage` rather than this reader alone.
 
 So this task does not build a probe. It does the consult, and it puts the answer in the type so a caller
 cannot skip it.
@@ -1113,7 +1113,7 @@ describe("uprnAbsenceAt", () => {
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250 })).toBeNull()
 	})
 
-	it("a point outside any covered cell yields null — unsurveyed is unknown, not absence", async () => {
+	it("a point outside any covered cell yields null — unsurveyed is unknown rather than absence", async () => {
 		using lookup = new UPRNLookup(fixture("outside.db", CoverageBasis.Designated))
 
 		expect(await uprnAbsenceAt({ ...deps(lookup), ...NEW_YORK, radiusM: 250 })).toBeNull()
@@ -1149,7 +1149,7 @@ search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does
  * @author Teffen Ellis, et al.
  *
  *   The consult `uprn-lookup.ts`'s docstring instructs: "callers building negative evidence must consult
- *   `readLayerCoverage`, not this reader alone." A bare `null` from `nearestUPRN` is two different facts —
+ *   `readLayerCoverage` rather than this reader alone." A bare `null` from `nearestUPRN` is two different facts —
  *   no UPRN here, or nobody surveyed here — and this is the only place that separates them.
  *
  *   `radiusM` is a CALLER'S parameter with no default. There is no radius that is correct for both "which
@@ -1160,7 +1160,7 @@ search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 ```
 
-`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE, not a name, so
+`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE rather than a name, so
 there is no string folding to disagree about. Passing the same identity as both `probeFold` and `layerFold`
 records that the fold axis is not in play here, rather than silently omitting the check. Say so in the
 comment — a future reader will otherwise read it as a stub.
@@ -1321,7 +1321,7 @@ Add to `StreetEvidencePick`:
 	demoted: number[]
 ```
 
-In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`** — the anti-Pelias rule is one bit, not a weight.
+In the body: build the demoted index set first, then run the existing G1/G2 loop over the un-excluded candidates in their original order; if that finds no pick, run it again over the excluded ones; if still none, return rank-1. **Do not blend the exclusion into `score`** — the anti-Pelias rule is one bit rather than a weight.
 
 - [ ] **Step 5: Run the test to verify it passes**
 
@@ -1707,7 +1707,7 @@ the ingester, the GEOID join and the cache were already here."
 
 ## Task 10: FR probe — does BAN support a per-commune designation claim?
 
-**This task's deliverable is an answer, not a coverage table.** Do not write `layer_coverage` onto `street-centroids-fr.db` inside this task.
+**This task's deliverable is an answer rather than a coverage table.** Do not write `layer_coverage` onto `street-centroids-fr.db` inside this task.
 
 **Files:**
 
@@ -1737,7 +1737,7 @@ Write `scratchpad/2026-08-21-ban-designation-probe.md` stating one of:
 - **DESIGNATED, per commune** — the signal exists and is carried or recoverable. Name the field, the communes it covers, and the ones it does not. A follow-up task writes `layer_coverage` with `basis: designated` for the covered communes only, and no row for the rest (absent is unknown; never a zero-completeness row).
 - **SOURCE_PRESENT only** — no per-commune signal exists. The FR lexical arm does not ship. Record this as a closed negative result so it is not re-proposed.
 
-Either verdict must state what was measured, not what was assumed.
+Either verdict must state what was measured rather than what was assumed.
 
 - [ ] **Step 4: Commit**
 

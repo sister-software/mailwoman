@@ -41,10 +41,9 @@ This document defines the canonical `ComponentTag` union. Where another document
 > Preserve post-directionals separately. So `Finel Hollow Road` → street `Finel Hollow` + suffix `Road`,
 > while `Sutton Hollow` → street `Sutton` + suffix `Hollow` (terminal there) — the arrival of a later
 > suffix reverts the earlier ambiguous token to the name. Suffix spans never extend beyond one word;
-> a model emitting `Hollow Road` as a suffix is making a suffix-BOUNDARY error, not a recognition error.
+> a model emitting `Hollow Road` as a suffix is making a suffix-BOUNDARY error rather than a recognition error.
 
-For a **US** address the street type is a SEPARATE span. `6220 SE Salmon St` is four components,
-not two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
+For a **US** address the street type is a SEPARATE span. `6220 SE Salmon St` is four components rather than two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
 `street_suffix: "St"`. `street` never carries the type.
 
 The instrument is the USPS Publication 28 Appendix C table in
@@ -79,7 +78,7 @@ This convention is one contract with three readers, and they are only useful in 
 
 Golden v0.1.2 and earlier FOLDED, and per-locale-f1 glued the model's spans together to match. That
 gap cost a real verdict: the v9.0.0 candidate read `us.street` 87.4 against a 87.8 floor and failed
-the eval floor on a convention disagreement, not a model regression. On v0.1.3 the same two models read
+the eval floor on a convention disagreement rather than a model regression. On v0.1.3 the same two models read
 71.7 (shipped 7.0.0) and 75.2 (candidate) — the sign of the delta flips.
 
 ### Venue-level (Phase 3)
@@ -204,6 +203,6 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 **Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). Modeling it explicitly is better than forcing it into `region` or `locality`.
 
-**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction, not a postcode. Treating it as one corrupts FR postcode statistics.
+**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction rather than a postcode. Treating it as one corrupts FR postcode statistics.
 
 **Why were the JP tags listed years-of-phases before activation?** The declarations forced Phase-0 type design to handle them — and it worked: activation at CJK Phase 2 touched no core types, exactly as the schema-first principle intended.

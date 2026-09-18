@@ -188,9 +188,9 @@ export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformatio
  * Every letter, digit, combining mark and whitespace character survives in its original order, so this is the strongest
  * available statement of the scope rule: a punctuation transformation preserves token order, spacing and every
  * non-punctuation codepoint. `\p{P}` rather than the four marks the transformations act on, for the same reason the
- * spacing law's key takes all of `\s`: the key is a comparison surface, not a transformation, and a pair that swapped a
- * hyphen for a dash must still come out equal here so {@linkcode classifyPunctuationTransformation} can refuse it BY
- * NAME rather than by looking like a different law.
+ * spacing law's key takes all of `\s`: the key is a comparison surface rather than a transformation, and a pair that
+ * swapped a hyphen for a dash must still come out equal here so {@linkcode classifyPunctuationTransformation} can
+ * refuse it BY NAME rather than by looking like a different law.
  */
 export function punctuationBlindKey(text: string): string {
 	return text.replaceAll(/\p{P}/gu, "")
@@ -349,8 +349,8 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
  *
  * Applicability is re-checked here, unlike the spacing law's audit, because two of this law's three rules can refuse a
  * pair that classifies perfectly well: a `period-removed` arm on a component comparator moves real text and is still
- * unstateable. Only the declared half runs — the audit reads a fixture, not the corpus — and the suite test supplies
- * the row's asserted spans for the other half.
+ * unstateable. Only the declared half runs — the audit reads a fixture rather than the corpus — and the suite test
+ * supplies the row's asserted spans for the other half.
  */
 export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, PUNCTUATION_LAW, (fixture, label, problems) => {

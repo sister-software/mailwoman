@@ -4,7 +4,7 @@
 #   1. lr=5e-4 / 3e-4 / 1.5e-4 with full v0.4.0 (§1 per_token CRF + §3 class_weights
 #      + §4 source rebalance) — all diverged through warmup + post-warmup.
 #   2. lr=5e-4 ablations (ablate-crf, ablate-cw) — both failed → lr=5e-4 itself
-#      is unreachable for this codebase, not a single-change issue.
+#      is unreachable for this codebase rather than a single-change issue.
 #   3. Stable-LR matrix at lr=1.5e-4:
 #        source-only (§4) passed: peak macro_f1=0.4190, plateau 0.4144
 #        cw-only (§3+§4) passed: peak macro_f1=0.4279, plateau 0.4243, the winner

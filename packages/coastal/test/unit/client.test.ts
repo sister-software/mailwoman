@@ -5,7 +5,7 @@
  *
  *   The attribution parse, pinned against the record's own malformed text.
  *
- *   THIS IS A MEASURED TRAP, NOT A HYPOTHETICAL ONE. The 2024 record's abstract carries the attribution
+ *   THIS IS A MEASURED TRAP rather than A HYPOTHETICAL ONE. The 2024 record's abstract carries the attribution
  *   statement twice, and the first copy — inherited from the superseded 2018–2021 record — has no year. OGL
  *   v3.0 makes the statement a licence condition, so a parse taking the first match ships a licence condition
  *   stated incorrectly. The fixture below is the real text, read from the Environment Agency's CSW.

@@ -118,7 +118,7 @@ const WORKSPACES: Record<string, string> = {
 	// the installed bin — instead of only transitively via the closure-wide npm install.
 	"@mailwoman/mcp": "packages/mcp",
 	// BDC + filer (2026-07-31): runtime deps of mailwoman + @mailwoman/mcp — the closure guard
-	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
+	// flagged both missing on the first PR after their merge (pre-existing gap rather than that PR's).
 	"@mailwoman/bdc": "packages/bdc",
 	"@mailwoman/filer": "packages/filer",
 	// The flood layer reader is a hard dependency of `mailwoman`: `geocode-session` imports the
@@ -201,7 +201,7 @@ async function firstPartyClosure(repoRoot: string, leaf: string): Promise<string
 
 /**
  * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31). The bin-exec leg asserts
- * exactly this set — a name list, not a count, so drift names the missing or unexpected tool instead of printing
+ * exactly this set — a name list rather than a count, so drift names the missing or unexpected tool instead of printing
  * "expected N, got M".
  */
 const MCP_EXPECTED_TOOLS = [
@@ -236,7 +236,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	})
 
 	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write. swallow it so
-	// the real failure surfaces via the `error`/`exit` events below, not an uncaught stream error.
+	// the real failure surfaces via the `error`/`exit` events below rather than an uncaught stream error.
 	child.stdin.on("error", () => {})
 
 	// Parse newline-delimited JSON-RPC frames off stdout. resolve a waiter when its id's response lands.

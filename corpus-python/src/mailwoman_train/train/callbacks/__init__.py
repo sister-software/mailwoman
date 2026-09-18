@@ -2,7 +2,7 @@
 
 The loop runs the steps and decides when to evaluate. these four write what happened. The order in
 `default_callbacks` is the order a reader of the log sees, so it is the order the run's output is
-composed in, not an implementation detail.
+composed in rather than an implementation detail.
 
 A callback observes and never steers. One that must stop a run raises — there is no return value
 the loop reads.

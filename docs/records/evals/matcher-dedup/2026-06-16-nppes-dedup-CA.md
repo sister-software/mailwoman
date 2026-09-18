@@ -23,7 +23,7 @@ Inverse-frequency weighting uses the corpus-wide table (3,317,267 distinct addre
 |                    16 |     45.5% |  38.0% |    **41.4%** | 0.413 |      512 |          33 |
 |                    20 |     46.5% |  38.0% |    **41.8%** | 0.417 |      515 |          32 |
 
-Best F1 is at the **default threshold** (58.6%): raising it only trades recall away faster than it provides precision. So the threshold knob alone can't separate co-located distinct providers — the over-merge is structural, in the comparison model, not the cutoff.
+Best F1 is at the **default threshold** (58.6%): raising it only trades recall away faster than it provides precision. So the threshold knob alone can't separate co-located distinct providers — the over-merge is structural, in the comparison model rather than the cutoff.
 
 ## Shape + where the errors are (at the default threshold)
 
@@ -36,4 +36,4 @@ Best F1 is at the **default threshold** (58.6%): raising it only trades recall a
 
 The geocode-first **foundation works**: **100.0%** of addresses placed, blocking + clustering clean — the geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model changes above moved F1 45.0% → **58.6%** (+13.6pp): inverse-frequency weighting restores full weight to a _rare_ shared address (stitching a provider's name-drifted records together — mostly recall) while down-weighting a _crowded_ one, and the collapsed spatial signal (A1) drops the address+distance double-count. What remains is **precision / over-merge** — 36 clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a disagreeing name. A name/org/phone **corroboration check** (A2/A3) was investigated and does not beat this baseline on NPPES: phone is an unreliable secondary identifier here (shared institutional switchboard lines), so it over-links via blocking and falsely corroborates co-phone distinct providers — a documented negative (#625). The real over-merge change is therefore **average-linkage clustering (A4)** replacing fragile connected-components, plus a more reliable secondary identifier (authorized-official, taxonomy). Config dominates the model (the pre-registered finding) — tracked as #625 / the auto-tuning + selective-model work (#602 / #603).
 
-NPI-as-truth is **conservative**: a cluster fusing two NPIs is a candidate "same entity, two NPIs" surfaced for review, not an adjudicated error; an NPI split across distant addresses is geo-first behaving correctly, counted here as a recall miss. We resolve and report; interpretation is the consumer's.
+NPI-as-truth is **conservative**: a cluster fusing two NPIs is a candidate "same entity, two NPIs" surfaced for review rather than an adjudicated error; an NPI split across distant addresses is geo-first behaving correctly, counted here as a recall miss. We resolve and report; interpretation is the consumer's.

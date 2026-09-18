@@ -12,7 +12,7 @@ tags:
 
 # What is a postcode?
 
-A postcode is a **routing instruction**, not a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. Confusing these two things is the most common error in address geocoding — and the source of a surprising fraction of production bugs.
+A postcode is a **routing instruction** rather than a geographic area. It tells a postal service how to sort and deliver mail. It does not tell a geocoder where a building is, what municipality it belongs to, or what polygon contains it. Confusing these two things is the most common error in address geocoding — and the source of a surprising fraction of production bugs.
 
 ## What postcodes encode
 
@@ -27,28 +27,28 @@ Every postal system uses postcodes differently, but the common thread is **hiera
 | Ireland (Eircode) | `D02 X285`   | Unique per delivery point. The postcode is the address.                                                |
 | Japan             | `100-0001`   | 3-digit regional + 4-digit local. Coarser than US +4; municipality is the finer unit.                  |
 
-The hierarchy is for sorting mail, not for describing geography. A US 5-digit ZIP gets a letter to the right post office — that's it. The carrier who delivers it knows which streets are in their route. The ZIP doesn't encode that information explicitly.
+The hierarchy is for sorting mail rather than for describing geography. A US 5-digit ZIP gets a letter to the right post office — that's it. The carrier who delivers it knows which streets are in their route. The ZIP doesn't encode that information explicitly.
 
 ## Why postcodes are not polygons
 
-The US Postal Service does not publish ZIP code boundaries. The ZIP code is a route, not a shape. A single ZIP can contain:
+The US Postal Service does not publish ZIP code boundaries. The ZIP code is a route rather than a shape. A single ZIP can contain:
 
 - Multiple municipalities (a rural route that crosses town lines).
 - Gaps (a building served by a different post office than the surrounding area).
 - Overlaps (different carriers serve different sides of the same street).
 - Non-geographic assignments (PO boxes, military APO/FPO addresses, unique large-volume mailers).
 
-When you see a ZIP code displayed as a polygon on a map, you are almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks, not from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation says ZCTAs "are not exact representations of USPS ZIP Code service areas."
+When you see a ZIP code displayed as a polygon on a map, you are almost certainly looking at a **ZIP Code Tabulation Area** (ZCTA) — a statistical approximation produced by the US Census Bureau. ZCTAs are generalized from census blocks rather than from USPS delivery routes. USPS explicitly disclaims them. The Census Bureau's own documentation says ZCTAs "are not exact representations of USPS ZIP Code service areas."
 
 This matters because the errors are systematic:
 
 - **Rural areas are the worst.** A rural ZIP may cover hundreds of square miles. The ZCTA centroid can be 10+ miles from any actual delivery point. Geocoding a rural address to its ZIP centroid routinely produces errors of 5-15 miles.
 - **New development is invisible.** When a new subdivision is built and assigned a new ZIP+4, the ZCTA won't reflect it until the next decennial census — up to 10 years.
-- **PO boxes cluster at post offices.** A ZIP code used primarily for PO boxes (common in small towns) will produce a centroid at the post office building, not at the residences the PO box holders live in.
+- **PO boxes cluster at post offices.** A ZIP code used primarily for PO boxes (common in small towns) will produce a centroid at the post office building rather than at the residences the PO box holders live in.
 
 ## What to do with a postcode in a geocoder
 
-A geocoder should treat a postcode as **supplementary evidence**, not as a primary locator:
+A geocoder should treat a postcode as **supplementary evidence** rather than as a primary locator:
 
 1. Use the postcode to narrow the resolver's search space (limit gazetteer lookups to places within the postcode's rough region).
 2. Use the postcode to validate the parse (if the parsed locality and the postcode's known municipality disagree, flag the ambiguity).
@@ -58,13 +58,13 @@ A user who types `90210` into a geocoder is not asking "where is ZIP code 90210?
 
 ## Why the postal system does this
 
-Postcodes are designed for sorting machines and carrier routes, not for maps. Every design choice follows from this:
+Postcodes are designed for sorting machines and carrier routes rather than for maps. Every design choice follows from this:
 
 - **They change.** When a carrier retires and routes are redrawn, postcodes can split or merge. The USPS changes approximately 5,000 ZIP codes per year (additions, deletions, boundary adjustments).
 - **They prioritize delivery efficiency over geographic coherence.** A postcode boundary that follows a creek saves the carrier a bridge crossing. It makes no geographic sense on a map, but it saves 20 minutes of driving per day.
 - **They serve multiple delivery modes.** The same ZIP code can include street addresses, PO boxes, and general-delivery addresses, all routed to different places at the same post office.
 
-A postcode is built to move mail, not to locate things. The geocoder's job is to treat it as a spatial hint for the resolver, not as a spatial fact on its own.
+A postcode is built to move mail rather than to locate things. The geocoder's job is to treat it as a spatial hint for the resolver rather than as a spatial fact on its own.
 
 ## See also
 

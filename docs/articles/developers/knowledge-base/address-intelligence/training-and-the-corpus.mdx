@@ -103,7 +103,7 @@ identifier, and everything else trains.
 
 Split at random instead and the arithmetic flatters you, because addresses leak by neighborhood.
 `13 Main St, Springfield, IL` in training and `15 Main St, Springfield, IL` in evaluation scores well
-by recalling `Springfield`, not by reading the address — and a model can look like it generalizes
+by recalling `Springfield` rather than by reading the address — and a model can look like it generalizes
 while doing nothing but remembering place names. Holding out the whole region closes that path, and
 it makes the measurement answer the question a deployment asks on most of its input: what happens on
 a place the model has never met.
@@ -117,14 +117,14 @@ were meant to be unseen.
 
 A training run produces a checkpoint and a number. Neither is a reason to ship.
 
-The evaluation is per tag and per locale, not aggregate. An aggregate score moves when one large category
+The evaluation is per tag and per locale rather than aggregate. An aggregate score moves when one large category
 moves, and it is unmoved when a small one collapses — which means shipping on an aggregate is
 shipping without having looked at the categories the aggregate is made of. First-class locales carry
 per-tag floors that block a release when a tag falls below them; other locales are measured, recorded
 and argued about rather than blocking a release.
 [Locales and tiers](../../reference/locales-and-tiers.mdx) states which locales are in which tier and
 what the tier means, and the distinction it draws is the one that matters here: a locale is claimed
-when there is a graded evaluation behind it, not when there is training data for it.
+when there is a graded evaluation behind it rather than when there is training data for it.
 
 Two habits go with the evaluation.
 
@@ -133,7 +133,7 @@ the label set, the architecture, the calibration measurements, the data attribut
 scores by locale. It ships to the registry with the model, so the claim and the artifact cannot drift
 apart — you can read what the model you installed was measured at, from the package you installed.
 
-**Numbers are recorded per version, not overwritten.** A per-version ledger is what makes a
+**Numbers are recorded per version rather than overwritten.** A per-version ledger is what makes a
 regression detectable at all: without the previous version's numbers, measured the same way, "better"
 has no referent.
 

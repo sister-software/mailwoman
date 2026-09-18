@@ -86,7 +86,7 @@ summary both its consumers read. The rule above still decides it — the key nam
 JOINS on — and here that is `soil_capability_cell.h3_cell`: single-resolution, one row per cell, and
 the only one of the three a bulk reader can key against. The containment index is keyed
 `(h3_cell, area_id)` and is mixed-resolution by construction, so it is a tier the layer's own reader
-walks, not an addressing scheme a consumer joins. A layer with no reduction, like the flood zones,
+walks rather than an addressing scheme a consumer joins. A layer with no reduction, like the flood zones,
 names its index because that is the only cell-keyed table it has.
 
 Two consequences a consumer must carry, and neither is optional.
@@ -114,12 +114,12 @@ is a property of the tool rather than of that product.
 null pointer, and in WASM address zero is ordinary writable memory — so the call reports success and
 the reader hands back an array of zeros. An exhausted allocator therefore answers "no cells" rather
 than raising. h3-js frees every buffer it allocates, so what accumulates over millions of calls is
-fragmentation, not a leak.
+fragmentation rather than a leak.
 
 Two consequences, and both are requirements rather than advice.
 
 1. **Refuse a per-PART empty answer.** A part with a non-degenerate bounding box touches at least one
-   cell, so zero is not an answer it can have. Check it per part, not per feature: a per-feature check
+   cell, so zero is not an answer it can have. Check it per part rather than per feature: a per-feature check
    passes any multi-part feature whose other parts answered, and indexes it short with no error
    anywhere. That is the silent-absence shape the coverage rule exists to refuse, arriving through the
    index instead of through the data.
@@ -153,7 +153,7 @@ Two requirements follow, and the second is what makes the first checkable.
 1. **Choose a transport that preserves what the source encoded**, and say in the ingest which
    property it is preserving. A reprojection is not a neutral operation on a geometry whose meaning
    is carried in its winding.
-2. **Compare the built area against the PUBLISHER'S OWN figure, not against the archive's.** Ireland
+2. **Compare the built area against the PUBLISHER'S OWN figure rather than against the archive's.** Ireland
    publishes `Shape__Area` on the service and drops it from the bulk export, which is what makes the
    comparison a second path rather than a file agreeing with itself: read with their holes the rings
    total 5,444.5 km² and the publisher's column sums to 5,444.5 km²; read without them, 5,666.6 km².
@@ -213,7 +213,7 @@ A builder that had generalized the first rule to either of the others would have
 risk" over the whole of England, or "no restriction applies" over most of a country's land, on a
 well-formed artifact that passed every structural check.
 
-**So the basis is a checked condition, at both ends, not a convention the builder follows.** A layer
+**So the basis is a checked condition, at both ends rather than a convention the builder follows.** A layer
 whose source publishes no footprint refuses to WRITE a coverage row that would support an exclusion,
 and refuses to OPEN an artifact carrying one — `supportsExclusion` is called over the distinct bases
 at construction, and a stronger one throws with the sentence saying why. That is what makes the
@@ -351,7 +351,7 @@ import {
   `CoverageCell` or `undefined` — honor the meaning-of-zero rule on the `undefined`.
 
 Validation runs at **both** ends deliberately: a hand-built or corrupted layer fails at open
-time, not three joins downstream.
+time rather than three joins downstream.
 
 ## Authoring checklist
 

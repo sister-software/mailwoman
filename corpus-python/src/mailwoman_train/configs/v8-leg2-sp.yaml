@@ -1,4 +1,4 @@
-# === v8-leg2-sp — CJK Leg 2 B (bare SP): the unification bake-off (checks v9's shape, not v8). ===
+# === v8-leg2-sp — CJK Leg 2 B (bare SP): the unification bake-off (checks v9's shape rather than v8). ===
 # Controlled encoder pair on the PRODUCTION latam feed: identical data block (v385's mixture +
 # augmentations + affix relabel, channel painting STRIPPED from both legs), identical geometry
 # (384/4, the Leg-1 substrate), identical schedule — the one delta between v8-leg2-charword and

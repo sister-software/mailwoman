@@ -49,8 +49,8 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the same directory — a symlink, not a second checkout. The ingest does not follow
-	 * the alias, and one directory can never diverge from itself.
+	 * True when the layouts resolve to the same directory — a symlink rather than a second checkout. The ingest does not
+	 * follow the alias, and one directory can never diverge from itself.
 	 */
 	aliased: boolean
 	/**

@@ -9,7 +9,7 @@
  *   against OS's published md5, and writes a sealed, atomically-swapped artifact. The layer is an
  *   interoperability key source — nothing on the parse/resolve path reads it.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer, not
+ *   Coverage is England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer rather than
  *   any OS OpenData product, and the layer's own coverage rows say so. See
  *   `gazetteer-pipeline/uprn-layer.ts` for the checks (md5, exact header, accounting identity, row
  *   floor).

@@ -184,7 +184,7 @@ export async function scorerCrossStateEval(
 		threshold: t,
 	}))
 
-	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL, not a fresh per-run TX
+	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL rather than a fresh per-run TX
 	// fit. This is the arm that justifies flipping `learnedScorer` default-on — the actual artifact every
 	// caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })

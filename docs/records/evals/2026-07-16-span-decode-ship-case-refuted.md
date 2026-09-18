@@ -42,8 +42,8 @@ worse one.
 §6 recommended the flag on the belief that the span decode **owned** the bare-fragment class — that
 the +23.8pp was the span head's to give. T1c and T2 falsified the belief:
 
-- **T1c** found the cause: the house number is a **license**, not a hint. Bare streets read as
-  localities because the training distribution taught that, not because the decode couldn't express
+- **T1c** found the cause: the house number is a **license** rather than a hint. Bare streets read as
+  localities because the training distribution taught that rather than because the decode couldn't express
   the span.
 - **T2** fixed the distribution. The class the span decode was ordered to rescue got rescued by
   data — further, and without a decode change.

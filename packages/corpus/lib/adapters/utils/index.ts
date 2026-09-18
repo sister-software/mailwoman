@@ -121,7 +121,7 @@ export function stableSourceIDFromParts(
 ): string {
 	const sortedKeys = Object.keys(parts).toSorted()
 	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")
-	// One `update` over the joined string, not three chained ones — identical byte stream either way,
+	// One `update` over the joined string rather than three chained ones — identical byte stream either way,
 	// but the separator has to stay inline or every id in every built corpus changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 

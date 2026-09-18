@@ -9,7 +9,7 @@
  *   to house_number, recovering CASE-H but ERODING CASE-P — postcode F1 99.3→86.5 on
  *   leading-postcode rows like "05764 Finel Hollow Road, VT").
  *
- *   The discriminator the model must learn (from the CASE-H vs CASE-P contrast, not a flipped
+ *   The discriminator the model must learn (from the CASE-H vs CASE-P contrast rather than a flipped
  *   default):
  *
  *   - A leading 5-digit with a trailing postcode + street context → it is the house number (CASE-H)
@@ -38,7 +38,7 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { sample } from "@mailwoman/core/random"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
+   cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
    output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */

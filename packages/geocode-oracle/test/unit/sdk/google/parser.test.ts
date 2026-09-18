@@ -54,7 +54,7 @@ describe("buildGoogleComponents", () => {
 
 		expect(components).toEqual({
 			house_number: "1600",
-			// `route` takes the LONG name — the abbreviation is Google's display convenience, not the
+			// `route` takes the LONG name — the abbreviation is Google's display convenience rather than the
 			// form a parser sees in input.
 			street: "Amphitheatre Parkway",
 			locality: "Mountain View",

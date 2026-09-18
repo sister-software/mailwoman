@@ -78,9 +78,9 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 /**
  * #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering costs no recall
  * — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter "miss → unresolved" is rare and
- * almost always a genuine non-match, not a coverage gap. A confident placement outside this set stays on the soft
- * prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered countries
- * get the hard filter's precision, and the rest keep their recall.
+ * almost always a genuine non-match rather than a coverage gap. A confident placement outside this set stays on the
+ * soft prior, so the low-coverage tail (FI/PL/…) keeps its recall until its gazetteer is filled (#193): covered
+ * countries get the hard filter's precision, and the rest keep their recall.
  *
  * FALLBACK ROLE (survey candidate #2, 2026-07-26): this set is now the FALLBACK for gazetteer artifacts that predate
  * the coverage manifest. Facts about the artifact live IN the artifact — the candidate gazetteer's `country_coverage`
@@ -333,7 +333,7 @@ export async function runPipeline(
 			// caller opts in, the confidence clears the bar, and the country is in the coverage safelist. The
 			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
 			// even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔NO stay
-			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
+			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match rather than a
 			// coverage gap — hard-filter. the low-coverage tail keeps its recall on the soft path), and the
 			// caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call
 			// `hardCountrySafelist` override (the eval measures unrestricted to grow it) → the loaded gazetteer

@@ -87,7 +87,7 @@ export interface MapPlaceRenderSpec {
 }
 
 /**
- * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent, not magic numbers.
+ * Zoom levels the imperative effect flew to, kept named so the cascade reads as intent rather than magic numbers.
  */
 const ZOOM = {
 	addressPoint: 17,

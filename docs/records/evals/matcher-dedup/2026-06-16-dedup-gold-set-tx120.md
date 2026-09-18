@@ -40,10 +40,10 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, nott
    over-merge to reduce. Optimizing the model for precision here optimizes a phantom; cost-sensitive
    training would only _hurt_ (un-merge correct same-org pairs).
 
-2. **The real dedup change is the YARDSTICK, not the model.** A better entity-truth that collapses
+2. **The real dedup change is the YARDSTICK rather than the model.** A better entity-truth that collapses
    same-org-same-address NPIs by org-name lifts the _measured_ F1 toward the real ceiling (the ceiling
    doc's ~1.6% irreducible) — because it stops charging correct merges as errors. The next build is an
-   org-name-aware entity truth + re-scoring at that grain, not more scorer features.
+   org-name-aware entity truth + re-scoring at that grain rather than more scorer features.
 
 3. **The model is already good at this.** Site-grain recall is ~96% and the over-merges are correct.
    The dedup objective is closer to solved than NPI-truth's ~54% F1 suggests; that number is mostly
@@ -51,7 +51,7 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, nott
 
 ## Caveats
 
-- LLM-adjudicated (one judge), TX, 120 pairs — a first frozen gold set, not a multi-rater gold
+- LLM-adjudicated (one judge), TX, 120 pairs — a first frozen gold set rather than a multi-rater gold
   standard. The frozen JSONL is committed for the operator (or a second rater) to spot-check.
 - The ~6 Concentra-HQ pairs are same-**parent**, different operating brand at a shared corporate
   address — judged same-entity at the org level; a stricter site/brand grain could split them. They do

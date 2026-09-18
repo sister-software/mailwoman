@@ -77,8 +77,8 @@ export interface AdminCoherenceReport {
 }
 
 /**
- * The parsed admin qualifiers — the raw spans off the address tree's `region` / `country` nodes (the parse view, not
- * the resolved view). Empty / whitespace-only reads as absent.
+ * The parsed admin qualifiers — the raw spans off the address tree's `region` / `country` nodes (the parse view rather
+ * than the resolved view). Empty / whitespace-only reads as absent.
  */
 export interface ParsedAdminQualifiers {
 	region?: string | undefined
@@ -111,7 +111,7 @@ export interface AdminCoherenceWinner {
  *
  * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES}) moved down to
  * `@mailwoman/resolver-wof-sqlite/region-keys` when the #1717 stage-2 containment re-rank became their second consumer
- * — the dependency points that way, and the #861 rule wants one function, not a mirrored copy.
+ * — the dependency points that way, and the #861 rule wants one function rather than a mirrored copy.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)

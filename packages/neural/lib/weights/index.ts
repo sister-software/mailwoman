@@ -480,7 +480,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		? PathBuilder.from(resolvePath(opts.overlayRoot, locale))
 		: weightsOverlayDir(locale)
 
-	// Probed whenever the directory exists, not only when it holds both binaries. An overlay for a locale
+	// Probed whenever the directory exists rather than only when it holds both binaries. An overlay for a locale
 	// that declares `mailwoman.baseWeights` deliberately carries no model — en-nz's linker removes one to
 	// prove the fallback engages — so a precondition demanding the binaries skips exactly the locales the
 	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself. a genuinely empty overlay
@@ -631,7 +631,7 @@ async function resolveFromPackageDir(
 
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
 	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them) —
-	// except that which generation to resolve now comes from the card, not a hard-coded filename (#1510).
+	// except that which generation to resolve now comes from the card rather than a hard-coded filename (#1510).
 	const streetTypeLexiconPath =
 		opts.tier === "pocket" ? undefined : await resolveEvidenceLexicon("street_type", packageDir, modelCardPath)
 
@@ -757,7 +757,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  *
  * WHY THIS ONE DOES NOT TAKE A `packageDir`, unlike every other resolver in this file. The census is a build-local
  * artifact: it lives under `$MAILWOMAN_DATA_ROOT/wof/`, exactly where `fst-street-morphology.bin` and the pair-index
- * probe outputs live, and it ships in no weights tarball. That is a deliberate deferral, not an oversight. The
+ * probe outputs live, and it ships in no weights tarball. That is a deliberate deferral rather than an oversight. The
  * 2026-08-04 wiring assessment ruled that the census gets no decode wiring until a calibration rung measures a δ (the
  * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime reads it,
  * adding 137–165 KB per locale to a published package adds nothing. When a calibration rung warrants that cost, this
@@ -775,7 +775,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * evidence alone cannot tell "East Acton" the place from "East Acton" opening a venue name — it fails the same
  * venue-confound board that pinned window mode at a 52.1% false-positive rate and forced the pair prior's segment
  * default. Composition with span evidence (the parent-span probe chain this rides, plus whatever span-boundary signal
- * the calibration rung finds) is the open design question, not a δ sweep.
+ * the calibration rung finds) is the open design question rather than a δ sweep.
  *
  * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
  * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
@@ -837,7 +837,7 @@ async function resolveBaseWeightsDir(
 	cacheRootIsExplicit = false
 ): Promise<PathBuilder | null> {
 	try {
-		// An OVERLAY directory carries no package.json — it is a materialization target, not a package — so the
+		// An OVERLAY directory carries no package.json — it is a materialization target rather than a package — so the
 		// `baseWeights` declaration is read from the WORKSPACE for the same locale. Without this the #1177 dedup
 		// stops working the moment the dev linkers write outside the package: an overlay locale that
 		// deliberately removes its own model (en-nz does exactly that, to prove the fallback engages) would

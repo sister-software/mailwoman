@@ -19,7 +19,7 @@ Seven new npm packages, all live, tested, and publish-safe (in `.release-it.json
 Mercator, geohash, qibla, sun, callingcode, currency, flag, timezone, NUTS, UN_LOCODE. Only what3words
 (proprietary) is excluded.
 
-**Two real bugs found and fixed by the new harness, not by guessing:**
+**Two real bugs found and fixed by the new harness rather than by guessing:**
 
 - `defaultCountry="US"` is a hard override (geocode-core.ts:102), inherited from GeocodeRouter's
   no-candidate-DB fallback. It beat the default-on placer, so every non-US query resolved to its US
@@ -72,7 +72,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   before declaring victory is what caught it.
 - **Probe before fix.** Every behavior change (drop defaultCountry, wire countrycodes) was preceded by a
   direct `geocodeAddress` probe that proved the hypothesis and bounded the blast on US queries. The
-  defaultCountry removal shipped with measured evidence, not a guess.
+  defaultCountry removal shipped with measured evidence rather than a guess.
 - **Verify-before-verdict fired repeatedly and correctly:** caught the countrycodes no-op against the
   guide's own claim; caught a stale-buildinfo compile that would have validated the wrong binary; caught
   the placer-vs-safelist distinction (the wide-safelist probe changed nothing).
@@ -88,11 +88,11 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   countrycodes against the old binary. Grepping the compiled output for the new symbol saved it. Lesson
   re-learned: grade the compiled tree, confirm the symbol is in `out/` before testing.
 - **Over-checkpointed early.** Spent too much attention pacing to the hourly cron until DeepSeek
-  relayed the operator's intent — continuous momentum, not cron-paced. Corrected and drove the list.
+  relayed the operator's intent — continuous momentum rather than cron-paced. Corrected and drove the list.
 - **Published the frontier numbers before checking the resolver config.** The diagnostic ran on the
   default drop-in (no candidate DB) but I framed the percentages as the general non-US recall truth, and
   committed the report + commented #822/#823 before realizing resolution is config-dependent. A probe
-  ("does a candidate DB change this?") would have caught it _before_ publishing, not after. Caught it on
+  ("does a candidate DB change this?") would have caught it _before_ publishing rather than after. Caught it on
   the exonym follow-up (a false "Poland = absence" against the proven Warszawa result was the thread to
   pull), corrected the report + both issues + this doc. Lesson: for a measured claim about the engine,
   pin and state the data/config it ran on _before_ treating the numbers as settled — the same
@@ -108,9 +108,9 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
   change.
 - **Left photon lean** — no street parse / country backfill on the per-keystroke autocomplete path. The
   rich enrichment belongs on nominatim (the structured-lookup surface), per the architectural split.
-- **Docs in `concepts/`, not `recipes/`** — the operator's untracked `recipes/` WIP has broken
+- **Docs in `concepts/` rather than `recipes/`** — the operator's untracked `recipes/` WIP has broken
   `commercial.md` links that will fail docs CI when committed. Kept my docs out of that path.
-- **Parked the 3 cartographer DEM/terrain tests** (commented, not deleted) — DeepSeek relayed that the
+- **Parked the 3 cartographer DEM/terrain tests** (commented rather than deleted) — DeepSeek relayed that the
   operator disabled DEM sources for mobile performance.
 
 ## Open questions for the operator

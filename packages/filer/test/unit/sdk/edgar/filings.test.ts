@@ -220,7 +220,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0000320193")!, ticker: "AAPL", title: "Apple Inc." },
 			// Shares the "apple" token but is not the same canonical string, so it scores below the exact match
-			// (but still above minScore) — a genuine ranking, not a tie, so `limit` may safely trim it.
+			// (but still above minScore) — a genuine ranking rather than a tie, so `limit` may safely trim it.
 			{ cik: toCIK("0000320194")!, ticker: "AAPQ", title: "Apple Group Holdings Inc" },
 		]
 

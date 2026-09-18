@@ -6,7 +6,7 @@
  *   Release-train version-parity check (#894, the structural fix for #203's class).
  *
  *   The demo repoint is deliberately a separate step from the npm publish (mailwoman-release
- *   Step 5), so demo-vs-npm drift is structural, not accidental — which is why this check must be
+ *   Step 5), so demo-vs-npm drift is structural rather than accidental — which is why this check must be
  *   structural too. #203 (demo silently two model versions behind npm) was fixed as an instance.
  *   this operation fails the day the drift reappears, anywhere it can appear:
  *
@@ -30,8 +30,8 @@ import { currentMatrixVersion } from "#release/verify-metadata"
 const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 /**
  * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`, mounted by
- * docs/src/contexts/RuntimeEmbed.tsx and the Earth app) — check what the runtime actually reads, not what the publisher
- * believes it wrote.
+ * docs/src/contexts/RuntimeEmbed.tsx and the Earth app) — check what the runtime actually reads rather than what the
+ * publisher believes it wrote.
  */
 const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
@@ -126,7 +126,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const checks: ParityCheck[] = []
 
 	// Two version series (see releases.mdx's "Two version series" intro): the demo serves models, so its
-	// `defaultVersion` carries the model-card lineage number, not the npm package number — comparing it
+	// `defaultVersion` carries the model-card lineage number rather than the npm package number — comparing it
 	// against npm latest went permanently red the moment a code-only release shipped. The demo leg
 	// compares against the shipped model identity: `packages/neural-weights-en-us/model-card.json#version`
 	// (the same source verify-metadata keys off). The docs matrix row stays vs npm latest — that surface
@@ -140,7 +140,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	const demoDefault = await readDemoDefaultVersion()
 
-	// The demo's parity contract is model bytes, not the bundle number. Bundle revisions that change only
+	// The demo's parity contract is model bytes rather than the bundle number. Bundle revisions that change only
 	// decode-side artifacts move the card version with zero model.onnx change — the demo serving the
 	// previous bundle serves the identical model, and can't even use the new artifacts until the web loader
 	// grows pair-prior wiring (#1278). So a trailing defaultVersion passes IFF the trailing version's

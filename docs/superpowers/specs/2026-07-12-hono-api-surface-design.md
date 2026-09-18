@@ -16,7 +16,7 @@ Root cause: the spec is written downstream of the code, and clients are vendored
 
 ### The isp-nexus lesson
 
-`@isp.nexus/schema` tried code-first schema derivation and drowned — not because code-first was wrong, but because it required **owning a compiler**: a 1,633-line bespoke TS→JSON-schema generator whose feature coverage had to grow with every TypeScript construct used, emitting `generated/*.json` as a second authoritative record. The failure mode to avoid is _generator ownership_ and _artifact round-tripping_, not code-first itself. Zod 4's native `z.toJSONSchema()` and route-level OpenAPI emitters make the generator a library call.
+`@isp.nexus/schema` tried code-first schema derivation and drowned — not because code-first was wrong, but because it required **owning a compiler**: a 1,633-line bespoke TS→JSON-schema generator whose feature coverage had to grow with every TypeScript construct used, emitting `generated/*.json` as a second authoritative record. The failure mode to avoid is _generator ownership_ and _artifact round-tripping_ rather than code-first itself. Zod 4's native `z.toJSONSchema()` and route-level OpenAPI emitters make the generator a library call.
 
 ## Decisions (settled 2026-07-12)
 
@@ -96,7 +96,7 @@ Native responses use the api-kit error envelope and camelCase field conventions 
 
 ### `mailwoman serve`
 
-~~Mounts all four sub-apps at prefixes (`/photon`, `/nominatim`, `/libpostal`, `/` native).~~ **(2026-07-12 amendment, Task 3 of the 4b cutover plan):** this doesn't ship as designed. The drop-in packages depend on `mailwoman` (their CLIs wire engines from `mailwoman/geocode-core`), so `mailwoman serve` importing `createPhotonApp`/`createNominatimApp`/`createLibpostalApp` would create a dependency cycle. `mailwoman serve` therefore serves the **native `/v1` surface only**. Every surface app and its engine wiring stays exportable, so a unified process (all four mounted together) is a compose-your-own script the operator writes against those exports — documented as an example, not shipped as a command. Per-package `npx @mailwoman/<x> serve` CLIs remain the deployment story.
+~~Mounts all four sub-apps at prefixes (`/photon`, `/nominatim`, `/libpostal`, `/` native).~~ **(2026-07-12 amendment, Task 3 of the 4b cutover plan):** this doesn't ship as designed. The drop-in packages depend on `mailwoman` (their CLIs wire engines from `mailwoman/geocode-core`), so `mailwoman serve` importing `createPhotonApp`/`createNominatimApp`/`createLibpostalApp` would create a dependency cycle. `mailwoman serve` therefore serves the **native `/v1` surface only**. Every surface app and its engine wiring stays exportable, so a unified process (all four mounted together) is a compose-your-own script the operator writes against those exports — documented as an example rather than shipped as a command. Per-package `npx @mailwoman/<x> serve` CLIs remain the deployment story.
 
 ### Clients + release workflow
 
@@ -111,7 +111,7 @@ Response schemas validate in dev/test; production is pass-through (the per-keyst
 
 ## Error handling
 
-- Drop-ins: **exact legacy error wire shapes**, including validation-failure bodies. Zod failures map per-surface, not globally.
+- Drop-ins: **exact legacy error wire shapes**, including validation-failure bodies. Zod failures map per-surface rather than globally.
 - Native: uniform api-kit error envelope.
 
 ## Testing
@@ -138,6 +138,6 @@ Response schemas validate in dev/test; production is pass-through (the per-keyst
 
 ## Out of scope
 
-- Edge/Workers deployment (kept possible, not built).
+- Edge/Workers deployment (kept possible rather than built).
 - TS client packaging (Hono RPC types come free with the sub-apps; publishing a dedicated TS client is a later decision).
 - Any change to engine implementations or the parse/resolve pipeline.

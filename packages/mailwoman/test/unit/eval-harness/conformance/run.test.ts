@@ -294,10 +294,10 @@ describe("gauntletObserver", () => {
 		expect(outcome.result.country).toBe("United Kingdom")
 		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
 		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace, so a shape-carrying
-		// observer is the caller's to supply. Absent, not empty.
+		// observer is the caller's to supply. Absent rather than empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
 		// And no resolver trace either: the walk records nothing unless a sink asks it to, and this observer does
-		// not ask. Absent, not an empty walk — the distinction `candidate_admissibility` reads.
+		// not ask. Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
 		expect(outcome.candidates).toBeUndefined()
 	})
 })

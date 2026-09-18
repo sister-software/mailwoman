@@ -321,8 +321,8 @@ export function soilCapabilityMarker(
  * flood and soil markers because all three report what an authority designates at a resolved coordinate. The rule half
  * names the layer, so a reader meeting several designation markers on one answer can tell which authority spoke.
  *
- * THE SCENARIO TRAVELS IN THE MESSAGE, NOT ONLY IN THE EVIDENCE. NCERM publishes twelve erosion-zone layers and they
- * answer twelve different questions. a message reading "at erosion risk" without naming which one would let a 2105
+ * THE SCENARIO TRAVELS IN THE MESSAGE rather than ONLY IN THE EVIDENCE. NCERM publishes twelve erosion-zone layers and
+ * they answer twelve different questions. a message reading "at erosion risk" without naming which one would let a 2105
  * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
  * and its plain-language label are in the sentence itself.
  *

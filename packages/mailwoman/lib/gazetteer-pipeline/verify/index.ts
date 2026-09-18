@@ -13,7 +13,7 @@
  *   - `coverage-floor`: gross truncation.
  *   - `region-abbrevs` + `place-abbr` (#440 / the #1015 missed post-build steps): VT→Vermont resolves.
  *   - `fts-bbox`: place_search + place_bbox exist and cover spr (a build that skipped the FTS step).
- *   - `bbox-extents` (#1015): Overture-backfilled regions carry real extents, not label points.
+ *   - `bbox-extents` (#1015): Overture-backfilled regions carry real extents rather than label points.
  *
  *   The reverse panel (`verifyReversePanel`) is the end-to-end leg: EU capitals + border cities must
  *   land in the right country — border towns are the hard class by construction.
@@ -64,7 +64,7 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 
 	// 1. node-census (#1026): every required (country, placetype) node exists.
 	{
-		// One grouped read, not one probe per (country, placetype): the baseline names ~200 countries,
+		// One grouped read rather than one probe per (country, placetype): the baseline names ~200 countries,
 		// most with two placetypes.
 		const present = new Set<string>()
 
@@ -246,7 +246,7 @@ export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 
 	return {
 		requiredNodes,
-		// 2% slack under the observed values — the floor catches truncation, not churn.
+		// 2% slack under the observed values — the floor catches truncation rather than churn.
 		minRows: Math.floor(c.rows * 0.98),
 		minCountries: c.countries,
 	}

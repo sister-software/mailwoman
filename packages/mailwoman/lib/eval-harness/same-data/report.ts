@@ -237,7 +237,7 @@ export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]
  * The rows the baseline got right and Mailwoman did not, with the query in view.
  *
  * A record that prints only aggregates cannot be audited, and these are the rows worth reading: a deterministic
- * resolver with no fame term beating the production one names a mechanism, not a rounding difference.
+ * resolver with no fame term beating the production one names a mechanism rather than a rounding difference.
  */
 export function renderLosses(
 	panel: readonly SameDataPanelRow[],

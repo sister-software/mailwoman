@@ -337,7 +337,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 			version: String(options.release),
 			schemaVersion: 1,
 			// US Census TIGER/Line is public domain, so unlike the ODbL layers this one could ship. It is
-			// build-local because nothing publishes it today, not because the licence forbids it.
+			// build-local because nothing publishes it today rather than because the licence forbids it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",
 			attribution: "US Census Bureau TIGER/Line",

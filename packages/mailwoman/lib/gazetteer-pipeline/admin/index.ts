@@ -10,7 +10,7 @@
  *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → VACUUM INTO → FTS → VERIFY → SEAL.
  *
  *   A failed verify THROWS and leaves the artifact UNSEALED for inspection — do not swap it. On
- *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG, not
+ *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG rather than
  *   a recipe. the recipe is `../defaults.ts`).
  */
 
@@ -108,7 +108,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// Before the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
+	// Before the WOF ingest rather than at `fold-overture` where the release is first read: a pruned pin is a one-request
 	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
@@ -236,7 +236,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await stampLayerManifest(
 		out,
 		adminLayerManifest({
-			// The counts the build actually produced, not the lists it was given. A fold that ingested
+			// The counts the build actually produced rather than the lists it was given. A fold that ingested
 			// nothing must not appear as a source — see manifest.ts.
 			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
 			buildSHA: sha,

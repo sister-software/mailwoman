@@ -8,7 +8,7 @@
  *   V1 strategy: fetch the whole file (~35 MB for the default top-1k US slim) and open it via the OO1
  *   API's "OPFS"-flavored constructor in transient mode. The full-fetch approach is fine for a
  *   bundle this size — the slim DB is what the browser holds in RAM for the duration of the session
- *   anyway, and HTTP/2 + gzip make the 35 MB transfer pay one RTT + transfer time, not the
+ *   anyway, and HTTP/2 + gzip make the 35 MB transfer pay one RTT + transfer time rather than the
  *   "hundreds of byte-range requests" cost a HTTP-VFS approach would incur.
  *
  *   When we eventually want incremental loading (Phase B.x), this is the point to swap — keep

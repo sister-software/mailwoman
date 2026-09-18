@@ -136,8 +136,8 @@ export function readCNUnits(span: string): CNUnit[] {
  * Split a CJK run into the named head and the trailing organizational chain, for the corpus labeler.
  *
  * `孟定农场三分场二队` → head `孟定农场`, chain `三分场二队`; `八场八队` → head empty, chain `八场八队`. A generic with no ordinal in front of it
- * is part of a NAME, not a rung: `红卫大队` is a brigade-era toponym that survives as a village name, so it carries no
- * chain and the whole run stays the head. `null` when the run carries no chain at all.
+ * is part of a NAME rather than a rung: `红卫大队` is a brigade-era toponym that survives as a village name, so it carries
+ * no chain and the whole run stays the head. `null` when the run carries no chain at all.
  */
 export function splitCNUnitChain(run: string): { head: string; chain: string } | null {
 	const match = TRAILING_CHAIN.exec(run)

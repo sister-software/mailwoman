@@ -30,18 +30,18 @@ wiring): `.superpowers/sdd/task-8-prep-report.md`.
 ## Digit check revision (operator-ratified 2026-07-23, Teffen Ellis)
 
 The pre-registered digit bar above (`flat vs 0.902`) was written against the sibling en-gb-locale
-probe lineage's own 8k checkpoint (`v3.10.1-gb-probe2`) — a same-lineage probe number, not a real
+probe lineage's own 8k checkpoint (`v3.10.1-gb-probe2`) — a same-lineage probe number rather than a real
 ship baseline for a checkpoint forked from v385. That comparison is not apples-to-apples for
 `v3.11.0-deploc-feed`, which forks from v385 (6.6.0) directly. The bar is **restated** against
 v385's own fresh-measured baseline, taken in the same session on the same board:
 
-|                                      |                                                        value |
-| ------------------------------------ | -----------------------------------------------------------: |
-| v385 fresh baseline (bare-street-hn) |                                                        0.755 |
-| feed-8k (candidate)                  |                                         0.868 [0.831, 0.897] |
-| Δ                                    |                                                  **+11.3pp** |
-| old bar (0.902, probe-anchor)        | historical context only — CI excludes it, not the active bar |
-| **result**                           |                        **pass** (bar restated against 0.755) |
+|                                      |                                                               value |
+| ------------------------------------ | ------------------------------------------------------------------: |
+| v385 fresh baseline (bare-street-hn) |                                                               0.755 |
+| feed-8k (candidate)                  |                                                0.868 [0.831, 0.897] |
+| Δ                                    |                                                         **+11.3pp** |
+| old bar (0.902, probe-anchor)        | historical context only — CI excludes it rather than the active bar |
+| **result**                           |                               **pass** (bar restated against 0.755) |
 
 The 0.902 probe-anchor number is retained in this record as historical context; it is not the bar
 this ship decision was graded against.
@@ -126,7 +126,7 @@ multi-locale resurrection, the actual reason these extracts were fed into this t
 **GB recall is tied between checkpoints (67/69 both)** — the same two rows miss under both
 (`"Goulbourne Road, St Georges, Telford, TF2 9LE"` — word-boundary, wrong-value; and `"101
 Coniston Avenue, Knott End on Sea, Poulton-le-Fylde"` — pre-existing model-level miss). This is
-the arc's central structural finding: **the pair-index prior, not the checkpoint's own
+the arc's central structural finding: **the pair-index prior rather than the checkpoint's own
 resurrected classifier row, carries nearly all of GB's dependent_locality recall** — see the
 ablation table below. NZ shows **zero** decode-layer recovery at either checkpoint, despite being
 the arc's original target locale (the sibling en-gb-locale-arc's independent checkpoint sweep
@@ -170,7 +170,7 @@ number.
 |                                    7 |               98.9% |       2.062% |
 
 FP grows **monotonically** with δ for both checkpoints (roughly 6–10× from δ=3 to δ=7) — δ is a
-actual recall/FP dial, not a free lunch; the smallest δ clearing the recall bar is required.
+actual recall/FP dial rather than a free lunch; the smallest δ clearing the recall bar is required.
 
 ### 6 demo presets
 
@@ -210,7 +210,7 @@ winning, the prior supplies the calibrated final push. Neither alone reaches pro
 recall.
 
 > **CORRECTION + SUPERSESSION (2026-07-23, Option-A δ-sweep — later the same day).** Two fixes to
-> the table above. (1) The 3/69 "v385 + prior" row was a rung-3 hand-rolled probe at δ=6, not a
+> the table above. (1) The 3/69 "v385 + prior" row was a rung-3 hand-rolled probe at δ=6 rather than a
 > production-decode measurement — the production number is **0/69 at δ=5–6's low end** (δ=5: 0/69;
 > δ=6: 6/69). (2) The conclusion "neither alone reaches production-usable recall" was
 > **δ-conditional and is now falsified**: sweeping δ on the untouched v385 shows both curves
@@ -239,14 +239,14 @@ Not run by Task 6 or Task 7; this task closed that gap and found a real ship blo
 violations: `BAND[num-ordinal]` and `INV[comma-drop]`/`INV[abbrev]` all mis-resolve `"350 Fifth
 Avenue, New York, NY"` 283.5km away (a different state entirely). Two different checkpoints from
 the same training lineage, two different NY/DC-class admin-resolution robustness regressions — the
-pattern reads as a lineage-wide `v3.11.0-deploc-feed` cost, not a single-step artifact. Full
+pattern reads as a lineage-wide `v3.11.0-deploc-feed` cost rather than a single-step artifact. Full
 transcripts: `.superpowers/sdd/task-8-prep-report.md`.
 
 **Ship-checkpoint choice is unaffected by this finding** — the operator-ratified reasoning
 (feed-2k's FR-fragment failure is the more dangerous, unbounded class; feed-8k's digit miss is
 narrower and now covered by the check revision) stands regardless of which checkpoint also happens
 to fail the Gauntlet. Both do. The Gauntlet failure blocks promotion of **either** checkpoint until
-triaged — it is a new, independent finding layered on top of the existing checkpoint decision, not
+triaged — it is a new, independent finding layered on top of the existing checkpoint decision rather than
 a tiebreaker between the two.
 
 ---
@@ -290,7 +290,7 @@ a tiebreaker between the two.
 **Ship checkpoint (operator-ratified 2026-07-23): feed-8k.** Reasoning carried from Task 7 — the
 FR-fragment miss is the more dangerous failure class (fires on any bare-locality input, any
 locale), while feed-8k's digit miss is narrower and now clears the revised bar. GB dep-loc recall
-doesn't differentiate the checkpoints (the prior carries it, not either checkpoint). **Promotion
+doesn't differentiate the checkpoints (the prior carries it rather than either checkpoint). **Promotion
 itself remains blocked** — not by the checkpoint choice, but by the Gauntlet finding above, which
 applies to both candidates and was not part of the original six pre-registered guards.
 
@@ -300,7 +300,7 @@ applies to both candidates and was not part of the original six pre-registered g
 
 - **The Gauntlet metamorphic-layer regression is unresolved.** Both checkpoints fail it, with
   different specific violations. This blocks promotion of either one until triaged — root-causing
-  it is out of this task's scope (ship-prep, not model debugging).
+  it is out of this task's scope (ship-prep rather than model debugging).
 - **val macro_f1 for feed-2k remains unrecoverable** from any log or doc found.
 - **`neural-weights-en-gb` has not shipped to npm.** This entire arc, prior included, is
   pre-promotion; the `runtime-flags.mdx` `placetypePair` row stays Default-OFF.
@@ -318,7 +318,7 @@ feed-8k +2k steps at a damped classifier learning rate, targeting the comma-drop
 mechanistically (the resurrection change that likely over-fit the comma-structured dep-loc extracts).
 
 **CONSOLIDATION VERDICT: NOT CLEAN.** The comma-drop break is byte-identical between the 8k and
-10k checkpoints — a stable learned behavior, not training-run churn that a couple more steps would
+10k checkpoints — a stable learned behavior rather than training-run churn that a couple more steps would
 wash out. Every other guard still passes at 10k, including golden-us (at a 0.06pp margin), but the
 one regression this run existed to fix did not move at all.
 
@@ -354,7 +354,7 @@ lockstep — read it, notthis scorecard, for the authoritative current status.
 
 The correction above turned out to be the hinge. Follow-through, all zero-GPU, all pre-registered
 (bars in the ledger before each run): the ship battery caught segment mode fully inert on
-comma-free input (0/69 — structural, not statistical); the window-mode re-sweep confirmed the
+comma-free input (0/69 — structural rather than statistical); the window-mode re-sweep confirmed the
 historical FP verdict and located the real flaw in the any-to-any pair GEOMETRY (79% venue FP at
 δ=10); the brainstorm-response design (anchored adjacent-pair candidates, post-town-anchored,
 probe chain segment→anchored) was built and passed every bar first try: comma-stripped 50/69 emit
@@ -378,7 +378,7 @@ Mangawhai" — 21.6% of NZ register names carry identity pairs; GB has zero, ver
 registry, both probe paths. Venue precision on real data (6,500 Overture NZ rows, synthetic
 interim retired): segment 3.569%, anchored 1.354% in the shipped no-anchor-bin configuration
 (corrected same-night from a borrowed-cache 0.862% — measurement context matters and gets
-documented, not buried).
+documented rather than buried).
 
 **The generalization map** (the operator's "full use of the gazetteer" question): healthy-tag
 reassignment (namesakes) FALSIFIED — the parse was never wrong there (189/189 region tagging);

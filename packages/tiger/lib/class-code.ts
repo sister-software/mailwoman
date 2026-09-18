@@ -529,7 +529,7 @@ export const TIGERClassCode = {
 	FederalPenitentiaryStatePrisonPrisonFarm: "K1237",
 
 	/**
-	 * A facility that serves as a place for the confinement of adult persons in lawful detention, not elsewhere
+	 * A facility that serves as a place for the confinement of adult persons in lawful detention rather than elsewhere
 	 * classified or administered by a government of unknown jurisdiction.
 	 */
 	OtherCorrectionalInstitution: "K1238",

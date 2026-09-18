@@ -12,7 +12,7 @@ out the corpus a from-scratch CJK run reads instead:
   ``span_ends`` / ``span_tags`` over a per-character tokenization); this builder re-validates every row through the
   training consumer (``char_label_array_from_spans``) against the ``stage3-cjk`` label set and writes ``train/`` and
   ``val/`` parts with ``register = "cn-units"``. The CN test rows become ``cn-board.jsonl`` beside ``jp-board.jsonl``'s
-  role: a held-out set for the CN per-tag read, not a coordinate board — no gazetteer carries these units.
+  role: a held-out set for the CN per-tag read rather than a coordinate board — no gazetteer carries these units.
 - **A re-sealed char vocabulary.** The JP vocabulary was sealed from the JP train split at ``min_count=2``. A CN
   character that appears once in 126 rows would be ``<unk>`` under that rule, so the CN train characters join at
   ``min_count=1`` and the union is re-sorted by code point — the same deterministic ordering ``build_char_vocab`` uses.

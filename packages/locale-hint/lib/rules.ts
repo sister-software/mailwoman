@@ -31,7 +31,7 @@ export interface LocaleCandidate {
  *   family (`@mailwoman/neural-weights-cjk`, with `ja-jp` and `zh-cn` data-only overlays): the char encoder collapses
  *   `ja`/`zh`/`ko` to that family, so the model loaded is the same whichever tag stands here. What this tag does decide
  *   is the LABEL a consumer reads off the hint — a Chinese-script address reports `ja-JP` — and that is a known limit
- *   of the hint's contract, not a routing choice.
+ *   of the hint's contract rather than a routing choice.
  * - Cyrillic → ru-RU (not currently shipped. signal is still useful)
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)

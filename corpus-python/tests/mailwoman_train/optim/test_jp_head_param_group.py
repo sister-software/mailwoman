@@ -1,4 +1,4 @@
-"""The JP 47-label head gets its own param group — proved on the shipped config, not a fixture.
+"""The JP 47-label head gets its own param group — proved on the shipped config rather than a fixture.
 
 The v8 plans all carry the #727 head-expansion rule ("a freshly-added head/label group needs its own
 param-group LR… bake this into the JP training config"). ``test_resurrection.py`` already pins the
@@ -104,7 +104,7 @@ def test_every_trainable_param_lands_in_exactly_one_group():
 
 def test_the_fourteen_fresh_rows_share_one_tensor_with_the_other_thirty_three():
     """Why the group is the whole head: `stage3-jp` appends its 7 tags, so the 14 fresh BIO rows are
-    ids 33..46 of a SINGLE `nn.Linear` weight. Param groups own tensors, not rows."""
+    ids 33..46 of a SINGLE `nn.Linear` weight. Param groups own tensors rather than rows."""
     jp = resolve_label_set("stage3-jp")
     fresh = [jp.label_to_id[f"{prefix}-{tag}"] for tag in JP_FINE_TAGS for prefix in ("B", "I")]
 
@@ -139,7 +139,7 @@ def test_the_scheduler_scales_both_groups_and_preserves_their_ratio():
     for base_lr, head_lr in seen:
         assert base_lr > 0 and head_lr > 0
         assert head_lr == 2 * base_lr  # 1e-3 / 5e-4, held across the whole schedule
-    # Still inside warmup (200 < 1000 steps), so the LR is climbing, not annealing.
+    # Still inside warmup (200 < 1000 steps), so the LR is climbing rather than annealing.
     assert seen[-1][0] > seen[0][0]
 
 

@@ -11,7 +11,7 @@ status: "COMPLETE — verdict: drop pretraining (no ceiling benefit). v0.7.2 sta
 Does masked-language-model **pre-training** of the encoder improve the supervised parser
 **at the task ceiling**? The 40k round (lr 5e-5 cosine) showed pretraining's secondary
 gains (calibration +2.0pp, harness +4.8pp) but both arms under-trained the product metric
-(resolver 48–50% vs shipped 96.1%) — a broken recipe, not an init verdict. This round
+(resolver 48–50% vs shipped 96.1%) — a broken recipe rather than an init verdict. This round
 re-runs the A/B at the **v0.7.2-proven recipe** so the comparison happens where the model
 can reach ~96% resolver.
 
@@ -85,7 +85,7 @@ percentile and has been corrected. Either way the init-attributable calibration 
 
 At the **task ceiling**, MLM pre-training of the encoder adds nothing:
 
-- **Product metric (resolver): a tie** (−0.20pp, 0.9σ). Pre-training is neutral, not harmful.
+- **Product metric (resolver): a tie** (−0.20pp, 0.9σ). Pre-training is neutral rather than harmful.
 - **Harness:** scratch is ahead by 7 assertions (−1.69pp) — small, but the wrong _direction_
   for pre-training.
 - **Calibration:** flat (identical wrong-pred confidence distribution).

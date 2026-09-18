@@ -44,8 +44,7 @@ addresses the only remaining regression.
 ## Training curves
 
 The val_loss and macro_f1 over training steps (v0.6.2 full-weight run alongside
-the v0.6.2b half-weight parallel). The val_loss bouncing was per-batch noise,
-not a structural overconfidence pattern — macro_f1 stayed remarkably flat.
+the v0.6.2b half-weight parallel). The val_loss bouncing was per-batch noise rather than a structural overconfidence pattern — macro_f1 stayed remarkably flat.
 
 ![v0.6.2 vs v0.6.2b val_loss](../charts/v06x-val-loss.svg)
 
@@ -54,7 +53,7 @@ not a structural overconfidence pattern — macro_f1 stayed remarkably flat.
 ### Per-tag F1 over training
 
 Macro F1 hides per-tag dynamics. The training-time per-tag F1 (computed on
-the val set, not the golden set) shows how each tag's quality evolved. Note
+the val set rather than the golden set) shows how each tag's quality evolved. Note
 that val-set F1 is consistently higher than the harsher golden-set recall
 numbers in the check report below — the val set is closer to the training
 distribution.

@@ -8,7 +8,7 @@ measurements, so the next person who reaches for a batch path finds the receipts
 
 Measured 2026-07-16 against the then-shipped v6.3.0 model (`v264-country-softguard`, int8), 16-core box.
 The numbers carry to the current 6.5.0: every release since has been weights-only on the same int8 graph
-shape, so throughput is unchanged (parse latency is graph-bound, not weights-bound).
+shape, so throughput is unchanged (parse latency is graph-bound rather than weights-bound).
 
 ## Where the time goes
 
@@ -99,7 +99,7 @@ dummy_batch=2  logits_out=['batch', 'sequence', 33]  B=4:OK  B=32:OK
 
 Hence `export_to_onnx(..., dummy_batch=2)`. It defaults to 1, so the shipped artifact is unchanged —
 the batch=2 re-export reproduces it byte-for-byte at 39.4 MB. The fix is in the tree because an
-artifact that advertises a capability it doesn't have is a trap for whoever trusts the metadata, not
+artifact that advertises a capability it doesn't have is a trap for whoever trusts the metadata rather than
 because batching is coming.
 
 Don't try to reproduce the specialization with a small model. A minimal reshape repro exports fine at
@@ -177,4 +177,4 @@ hyperfine --runs 5 \
   './node_modules/.bin/mw geocode --stdin < addresses.txt >/dev/null'
 ```
 
-`xargs -P` is a separate capacity/concurrency measurement, not warm sequential throughput.
+`xargs -P` is a separate capacity/concurrency measurement rather than warm sequential throughput.

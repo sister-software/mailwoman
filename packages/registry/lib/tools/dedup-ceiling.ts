@@ -12,7 +12,7 @@
  *   floor caps PRECISION.
  *
  *   This measures it directly and label-free, using NPI as the distinctness truth (different NPI =
- *   different provider). Geocode-free on purpose: the question is the DATA's separability, not the
+ *   different provider). Geocode-free on purpose: the question is the DATA's separability rather than the
  *   geocoder — so we can run at large N (tens of thousands of TX providers) in seconds. We key
  *   "same address" with the matcher's own `addressFrequencyKey`, and "same name" with a normalized
  *   token Jaccard over the legal business name.

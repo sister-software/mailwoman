@@ -15,7 +15,7 @@
  *   the pattern` — a message that reads like a network fault rather than an expired pin. The bucket listing answers in
  *   one request.
  *
- *   Anonymous HTTP against the public bucket, not the S3 SDK or DuckDB: this must be answerable before any heavy
+ *   Anonymous HTTP against the public bucket rather than the S3 SDK or DuckDB: this must be answerable before any heavy
  *   optional dependency loads and the same listing a human would check.
  */
 

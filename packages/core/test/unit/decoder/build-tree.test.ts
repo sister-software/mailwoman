@@ -155,7 +155,7 @@ describe("buildAddressTree — boundary trim", () => {
 
 	test("preserves trailing abbreviation period (#1519 trailing-dot fix)", () => {
 		// "Neusser Str." — model correctly labels the dot as I-street.
-		// The period is an abbreviation marker, not a punctuation slip.
+		// The period is an abbreviation marker rather than a punctuation slip.
 		const raw = "Neusser Str. 12"
 
 		const tokens: DecoderToken[] = [

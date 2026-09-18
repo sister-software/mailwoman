@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does the comma-free register still find the locality? A RATE, not an anecdote.
+ *   Does the comma-free register still find the locality? A RATE rather than an anecdote.
  *
  *   Built for the v4.2.0-base-anchor-v2 (Run B) triage. The invariance suite reported one new comma-drop
  *   loss (`fr-montmartre`, `street: "Montmartre" -> "Montmartre Paris"`), while the metamorphic layer
  *   reported the same transform on the same shape newly passing (`181 Rue du Chevaleret, Paris`). One row
- *   each way is churn, not a capability claim, and neither number can settle the other. This walks every
+ *   each way is churn rather than a capability claim, and neither number can settle the other. This walks every
  *   fixture row that carries both a `street` and a `locality`, drops the commas, and asks whether the gold
  *   locality still lands in the locality slot — so "the comma-free register regressed" becomes a
  *   measurement with a denominator.

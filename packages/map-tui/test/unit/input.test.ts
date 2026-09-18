@@ -125,7 +125,7 @@ describe("decodeInputChunk", () => {
 			expect(first.events).toEqual([])
 			expect(first.pending).toBe(ESC)
 
-			// The next chunk finishes it — an arrow, not a quit.
+			// The next chunk finishes it — an arrow rather than a quit.
 			expect(decodeInputChunk("[A", first.pending).events).toEqual([{ kind: "pan", dx: 0, dy: -1 }])
 		})
 

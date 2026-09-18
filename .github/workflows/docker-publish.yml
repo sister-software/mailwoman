@@ -1,9 +1,9 @@
 # Build + push the ghcr.io/sister-software/mailwoman container image.
 #
-# What this ships: the "docker run → geocoding endpoint" image for non-JS stacks. It does NOT build
+# What this ships: the "docker run → geocoding endpoint" image for non-JS stacks. It does not build
 # the monorepo — the Dockerfile's install stage pulls the PUBLISHED @mailwoman/* packages from npm
 # (see docker/package.json + the root Dockerfile), so a build here doubles as an integration test of
-# the published artifacts. Model weights are baked in; the gazetteer is volume-mounted at /data.
+# the published artifacts. Model weights are baked in. the gazetteer is volume-mounted at /data.
 #
 # Triggers:
 #   - workflow_dispatch: manual run with an explicit `tag` input (e.g. "7.2.1"). Use this to (re)build
@@ -11,8 +11,8 @@
 #   - release published: an automatic rebuild whenever a GitHub release goes out, tagging the image
 #     with that release's version so ghcr tracks the npm line.
 #
-# Tags pushed: the resolved version AND `latest`. linux/amd64 only for now — onnxruntime-node ships
-# glibc x64 prebuilds; arm64 is a follow-up (needs the arm64 ORT prebuild + an emulated/native build
+# Tags pushed: the resolved version and `latest`. linux/amd64 only for now — onnxruntime-node ships
+# glibc x64 prebuilds. arm64 is a follow-up (needs the arm64 ORT prebuild + an emulated/native build
 # leg). Auth is the runtime GITHUB_TOKEN with packages:write — no PAT, no external secret.
 
 name: Docker publish

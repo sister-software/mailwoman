@@ -36,6 +36,5 @@ No dedup-GBT collapse signature (its arms sit at 106 entities or 0 links).
 
 **Reading:** the org-cross-GBT is the first scorer to EXCEED FS's link discovery on the org flows
 without over-merging. It misses STRICT dominance only on the noisy proxy's rate. Recommendation:
-un-pin FS for the org-level cross-dataset flows as an operator decision (the flip is a config default,
-not this eval's to make); alternatively hold FS pinned and re-judge after widening the label set with
+un-pin FS for the org-level cross-dataset flows as an operator decision (the flip is a config default rather than this eval's to make); alternatively hold FS pinned and re-judge after widening the label set with
 the other Care Compare families (dialysis/hospice/SNF/HHA), which should tighten the proxy's n.

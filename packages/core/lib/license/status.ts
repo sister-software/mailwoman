@@ -5,7 +5,7 @@
  *
  *   The client for the license worker's two customer routes: the per-license status a lid answers, and the refresh that
  *   trades a lid and its secret for the current token. Kept outside the `license` barrel like `publication.ts`, because
- *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer, not a
+ *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
  *   verdict: offline verification stands, and every caller says so.
  */
 

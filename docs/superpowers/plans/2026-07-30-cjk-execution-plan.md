@@ -39,7 +39,7 @@ that convert the design into a verdict were never launched. That is what changes
   municipality bucket, scored on JP coordinate-acceptability. **Pre-registered check: ≥ 0.70**
   (the bare-Latin substrate floor). The fail ladder is written (per-tag split → boundary audit →
   collapse check) and _cannot_ indict alignment — Phase 0 retired that.
-- **Leg 2 (unification bake-off, checks v9's shape, not v8):** the same bare char model on the
+- **Leg 2 (unification bake-off, checks v9's shape rather than v8):** the same bare char model on the
   Latin corpus vs bare SP on the Latin coord boards. Run in the same session; record the delta.
 - Plumbing owed before launch (the one real code item): the `data_loader.py` char path
   (`char_mode` config, `encode_row_units`, char-vocab build) per the contract note's D1/D6.
@@ -71,4 +71,4 @@ stands as the operator's headline preference unless reprioritized at the Leg-1 v
 East-Asian address stock is a validation/record-matching segment no in-process competitor serves;
 the char model is _small_ (the 28M SP embedding table collapses to ~0.3M), so the pocket/browser
 the result. A JP-capable base extends the B11 surface to JP-market customers with the same
-fine-tune template — one more reason Arc 2 is foundation work, not a side quest.
+fine-tune template — one more reason Arc 2 is foundation work rather than a side quest.

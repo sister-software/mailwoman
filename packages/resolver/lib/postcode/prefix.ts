@@ -69,7 +69,7 @@ export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat
 
 /**
  * The MINIMUM compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
- * is a GB area, not a unit-containing code).
+ * is a GB area rather than a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 

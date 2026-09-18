@@ -28,7 +28,7 @@
  *   Those are reported as `boundary_tolerance` with their distance to the nearest edge, and the count is part
  *   of the receipt.
  *
- *   THE DISTANCE IS TO THE EDGE, NOT TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
+ *   THE DISTANCE IS TO THE EDGE rather than TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
  *   metres from every vertex of it — a sibling layer's one near-miss read 1.58 m to vertices and 0.009 m to
  *   edges, an overstatement of 175-fold — so measuring vertices makes the boundary tolerance far stricter than
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
@@ -111,8 +111,8 @@ export interface VerifyZoningResult {
 }
 
 /**
- * Points this product's publication does not reach, named. Each is a place, not a bare pair of numbers: a coordinate a
- * reader cannot name is a coordinate nobody can check.
+ * Points this product's publication does not reach, named. Each is a place rather than a bare pair of numbers: a
+ * coordinate a reader cannot name is a coordinate nobody can check.
  *
  * TWO POPULATIONS, AND BOTH ARE required. The Donegal points are the case this layer's coverage posture exists for —
  * the Department has not published that authority's zoning, and a builder that read absence as "unrestricted" would
@@ -165,9 +165,9 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
 /**
  * The reader the live check uses: a bounding-box query against the Department's own service.
  *
- * The service answers a BOX, not a point, so this returns what it published nearby and the containment decision is made
- * in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the service
- * returned something here" would pass on any polygon within eleven metres.
+ * The service answers a BOX rather than a point, so this returns what it published nearby and the containment decision
+ * is made in {@link readServiceContainment} against those rings — comparing the artifact's verdict against a bare "the
+ * service returned something here" would pass on any polygon within eleven metres.
  */
 export function createServiceReader(client: Pick<GZTClient, "readFeaturesNear">): ServiceFeatureReader {
 	return async (latitude, longitude) => client.readFeaturesNear(latitude, longitude, PROBE_HALF_WIDTH_DEGREES)

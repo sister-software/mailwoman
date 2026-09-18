@@ -91,7 +91,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
             pool_counts[prefecture] += 1
     print(f"pass 1: {scanned:,} eligible rows · {len(pool_counts)} prefectures · board pool {board_count:,}")
     print(f"pass 1: dropped {dict(dropped)}")
-    # A drop rate this filter was not designed for means the source changed shape, not that the tail
+    # A drop rate this filter was not designed for means the source changed shape rather than that the tail
     # got longer — surface it rather than quietly shipping a differently-composed corpus.
     drop_rate = sum(dropped.values()) / max(scanned + sum(dropped.values()), 1)
     if drop_rate > 0.02:

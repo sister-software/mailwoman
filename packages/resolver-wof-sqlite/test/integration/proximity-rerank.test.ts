@@ -30,7 +30,7 @@ function contestedPair(): ProximityRerankable[] {
 describe("applyProximityRerank", () => {
 	it("reads the penalized prominence, so a demoted alias does not ride population back over a primary", () => {
 		const [primary, demoted] = contestedPair()
-		// A viewport ~10 km off the alias — the ordinary case, not the degenerate one. At distance 0 the nearness
+		// A viewport ~10 km off the alias — the ordinary case rather than the degenerate one. At distance 0 the nearness
 		// term saturates at BIAS_BOOST and outruns the whole population range either way, so the field the
 		// population term reads only decides the answer at real viewport distances. It decides it over a wide band:
 		// the alias wins out to ~59 km on raw score and only to ~2.6 km on the penalized value.

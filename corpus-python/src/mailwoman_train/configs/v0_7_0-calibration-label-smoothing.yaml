@@ -3,7 +3,7 @@
 # Task #31 (v0.7 P0). The v0.6.x retrospective traced the cycle's failures to
 # OVERCONFIDENCE: the model emits high-probability hallucinations (locality/
 # dep_locality) that survive decoding. The 2026-05-29 postcode diagnostic and
-# the harness-vs-per-tag divergence both point at calibration, not corpus recipe,
+# the harness-vs-per-tag divergence both point at calibration rather than corpus recipe,
 # as the binding constraint.
 #
 # SINGLE-VARIABLE CHANGE vs v0_6_0-stage3.yaml:

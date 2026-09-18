@@ -7,7 +7,7 @@ chrome, and repairs the rendering defects measured below.
 
 ## Measured state
 
-Every number here was read from the deployed apps or from the tracked source, not inferred.
+Every number here was read from the deployed apps or from the tracked source rather than inferred.
 
 ### The stylesheet reads a vocabulary it does not own
 
@@ -156,7 +156,7 @@ address field. The right-hand panel lists internal style-layer counts (`Roads (3
 4. **Aesthetic: Apple materials, Google density.** Translucent glass chrome, neutral by default, in the
    restrained Apple register. Map content carries the richness — label hierarchy, category color,
    icon markers — in the Google Maps register.
-5. **Magenta is an accent, not a theme.** `#ff00b0` appears in exactly three roles: the primary action
+5. **Magenta is an accent rather than a theme.** `#ff00b0` appears in exactly three roles: the primary action
    fill, the focus and selection ring, and the selected-feature marker. Everything else is neutral. This
    is a rule a reviewer can check by grepping the compiled CSS.
 6. **`#e0367c` is retired.** It is Infima-era drift from `#ff00b0`, which `docs/src/css/theme-light.css`
@@ -215,7 +215,7 @@ State colors keep their own names (`color.state.success`, `.warning`, `.danger`,
 
 ### Material layer
 
-Glass is a composition, not a background color:
+Glass is a composition rather than a background color:
 
 ```
 material.glass.background      material.glass.blur
@@ -286,7 +286,7 @@ Each names a face role and carries size, line height and weight. Apple's iOS met
 
 `<button>` inherits the family. That single omission is why the deployed page renders Arial.
 
-### Icons are SVG, not a font
+### Icons are SVG rather than a font
 
 A control glyph is typeset — it inherits color and size and aligns to the baseline, so it belongs to a
 face role. An icon is artwork: the category markers in the reference are a colored disc carrying a white
@@ -301,7 +301,7 @@ first thing the glyph role replaces.
 
 ### Map labels are a separate binding
 
-A map label is drawn by MapLibre from a signed-distance-field glyph range, not by the browser from a
+A map label is drawn by MapLibre from a signed-distance-field glyph range rather than by the browser from a
 `@font-face`. So `font.family.*` does not reach the map, and a face bound in the DOM does not appear on
 the globe until an SDF range for it exists in the bucket. Map labels therefore carry their own token,
 `font.family.map`, whose value must name a stack the bucket serves.
@@ -323,7 +323,7 @@ right-hand column, footer near the bottom.
 A result view arrives as a bottom sheet with a drag handle and rounded top corners, translucent over the
 map, rather than inside a full-height panel.
 
-Safe-area insets (`env(safe-area-inset-*)`) are semantic tokens consumed by the chrome, not repeated per
+Safe-area insets (`env(safe-area-inset-*)`) are semantic tokens consumed by the chrome rather than repeated per
 component. Both apps ship as installable PWAs through `vite-plugin-pwa` and neither handles insets today.
 
 ## Cartography

@@ -12,7 +12,7 @@
  *   shipped `poi.db`, `matchPOISubject` probes the prefix before ` to `, the name rung claims it, and the answer is a
  *   womens_clothing_store 211.75 km from Toulouse.
  *
- *   THE PROBE SET IS WHAT `matchPOISubject` WOULD ACTUALLY MEET, not what the lexicon literally declares. That routine
+ *   THE PROBE SET IS WHAT `matchPOISubject` WOULD ACTUALLY MEET rather than what the lexicon literally declares. That routine
  *   probes the whole input and then each prefix before an anchor separator, so the strings a phrase is met through are
  *   longer than the phrase. Rather than restate its enumeration — two copies of a rule that must agree — the census
  *   DRIVES the shipped routine with a recording lookup that answers nothing, and keeps every string it was asked about.
@@ -534,8 +534,8 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 const PRINTED_CONTAINMENT_ROWS = 40
 
 /**
- * The census as a reader reads it. Every colliding name is printed, not a count of them: the decision the census feeds
- * is about which names are query-shaped, and a total cannot be re-adjudicated.
+ * The census as a reader reads it. Every colliding name is printed rather than a count of them: the decision the census
+ * feeds is about which names are query-shaped, and a total cannot be re-adjudicated.
  */
 export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void {
 	console.log(

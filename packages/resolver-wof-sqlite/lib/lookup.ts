@@ -191,7 +191,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #strategies: Map<string, Strategy>
 	readonly #countryWOFIdCache = new Map<string, number | null>()
 	/**
-	 * Strategy names already warned about — so an unknown name surfaces once, not once per query.
+	 * Strategy names already warned about — so an unknown name surfaces once rather than once per query.
 	 */
 	readonly #warnedUnknownStrategies = new Set<string>()
 	/**
@@ -337,7 +337,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// The Geographic Rule Engine convention source. Precedence: an explicit `opts.conventions`
 		// (a ready source or a seed map) wins. else the build-from-source convention asset if one is
 		// attached (auto-detected, like the postcode_locality extract — adding conventions.db to
-		// databasePath enables it. queried on demand, not paged into memory). else empty, so EU rides
+		// databasePath enables it. queried on demand rather than paged into memory). else empty, so EU rides
 		// WORLD_DEFAULT. The registry binds strategy NAMES to the SQL-bound primitives — adding a
 		// strategy is registering it here.
 		const conventionExtract =
@@ -520,7 +520,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		// Expand the placetype filter through the shared equivalence table (core/resolver): a
 		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough
-		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
+		// (pop 2.5M) is a borough rather than a locality, and a strict filter made it unreachable so the
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the first entry stays the
 		// requested placetype, which is what extract routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null

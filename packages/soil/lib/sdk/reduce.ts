@@ -29,7 +29,7 @@
  *   number, which is the one thing this schema exists to prevent. The five shares are normalized over the
  *   mapped part, so they sum to 1 exactly, and `mapped_share` says how much of the cell that was.
  *
- *   CLASS 8 IS A CLASS SHARE, NOT AN ABSENCE. It is a determination — the survey looked and rated the land
+ *   CLASS 8 IS A CLASS SHARE rather than AN ABSENCE. It is a determination — the survey looked and rated the land
  *   as precluding commercial plant production, and 67,547 national components carry it. Folding it in with
  *   `NOTCOM`, a water body and an unrated series would produce a well-formed wrong answer, and separating
  *   the four absences from the one positive negative is the whole reason this table has five columns rather

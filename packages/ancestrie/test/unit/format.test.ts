@@ -48,7 +48,7 @@ describe("serialize round-trip", () => {
 		expect(city.parentIDs).toEqual([10])
 		expect(city.payload).toEqual({ name: "New York City" })
 
-		// A bytes payload comes back verbatim as bytes, not JSON.
+		// A bytes payload comes back verbatim as bytes rather than JSON.
 		const albany = trie.getEntry(12)!
 		expect(albany.payload).toBeInstanceOf(Uint8Array)
 		expect([...(albany.payload as Uint8Array)]).toEqual([1, 2, 3])
