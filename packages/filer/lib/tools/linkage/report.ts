@@ -281,7 +281,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 function renderWhatWouldMoveItSection(): string {
 	return (
 		"It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
-		"code does, and an earlier version of this page said it anyway. Two probes establish the behavior.\n\n" +
+		"code does, and an earlier version of this page said it anyway. Two probes show the actual pipeline output.\n\n" +
 		"**Populating the address and contact columns changes nothing.** Fill `hqAddress`, " +
 		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
 		"in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those " +
