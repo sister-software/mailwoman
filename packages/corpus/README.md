@@ -9,12 +9,13 @@ the data that trains `@mailwoman/neural-weights-*`.
 
 ```ts
 // The corpus pipeline is primarily build-time CLI tooling.
-// Key entry points:
-import { expandGolden } from "@mailwoman/corpus" // Expand reference addresses
-import { buildCorpus } from "@mailwoman/corpus" // Drive the end-to-end corpus build
-import { alignRow } from "@mailwoman/corpus" // Align raw address → BIO tokens
-import { validateCorpus } from "@mailwoman/corpus" // Validate corpus integrity
+import { buildCorpus, RECIPES_BY_NAME, runAdapter } from "@mailwoman/corpus"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 ```
+
+`alignRow` lives on `./utils` rather than the barrel; the barrel re-exports `#adapters`,
+`#build`, `#runner`, `#recipes/index` and `#types` only.
 
 ## What it produces
 
@@ -34,15 +35,16 @@ training pipeline (`corpus-python/`).
 
 ## Key modules
 
-| Module                  | Purpose                                                          |
-| ----------------------- | ---------------------------------------------------------------- |
-| **`expand-golden.ts`**  | Expand reference addresses into training rows with alignment     |
-| **`align.ts`**          | Tokenize raw address → BIO label sequence                        |
-| **`validate.ts`**       | Validate corpus integrity, label coverage, subset balance        |
-| **`synthesizers/*.ts`** | Synthetic row generators (boundary stress, order variants, etc.) |
-| **`ingest/`**           | Overture Maps + NAD ingestion                                    |
-| **`recipes/index.ts`**  | The synthetic-corpus recipe registry (`CorpusRecipe` by name)    |
-| **`stats.ts`**          | Per-subset and per-tag statistics                                |
+| Module                      | Purpose                                                                |
+| --------------------------- | ---------------------------------------------------------------------- |
+| **`types.ts`**              | `CanonicalRow`, `LabeledRow`, `SourceProvenance`, `CorpusAdapter`      |
+| **`utils/align.ts`**        | Tokenize raw address → BIO label sequence; quarantine what refuses     |
+| **`build.ts`**              | Drive the end-to-end build, write `labeled.jsonl` + `quarantine.jsonl` |
+| **`runner.ts`**             | Run one adapter or all of them, and emit the run manifest              |
+| **`synthesizers/*.ts`**     | Synthetic row generators (boundary stress, order variants, etc.)       |
+| **`recipes/index.ts`**      | The synthetic-corpus recipe registry (`CorpusRecipe` by name)          |
+| **`tools/fetch/index.ts`**  | The acquisition registry — one entry per external source               |
+| **`tools/corpus-stats.ts`** | Per-source and per-tag statistics                                      |
 
 ## Layout
 
@@ -61,17 +63,15 @@ the same pattern. Public subpaths use this same locale-first layout.
 
 ## Build-time tooling
 
-The corpus is assembled via scripts in `scripts/`:
+Every entry point is a `mailwoman` command. This package has no `scripts/` directory, and the
+`no-root-scripts` health check refuses a path that names one.
 
 ```bash
-# Validate the corpus
-node scripts/validate-corpus.mjs
-
 # Build one recipe's output
 mailwoman corpus slice boundary-stress --count 10000 --out /tmp/boundary-stress.jsonl
 
-# Corpus statistics
-node scripts/corpus-stats.mjs
+# Acquire a source named in the fetch registry
+mailwoman corpus fetch geonames-postal
 ```
 
 ## Design
@@ -81,6 +81,41 @@ node scripts/corpus-stats.mjs
   normalized form, so the model learns real input distributions.
 - **Source-homogeneous subsets** — each training-data subset comes from one source, ordered by
   type, so eval splits are clean (no bleed between train and held-out).
+
+## Source provenance
+
+`SourceProvenance` (`lib/types.ts`) stamps four fields on every row: `source`, `source_id`,
+`corpus_version`, `license`. The acceptance rules in the global address corpus specification
+require thirteen before a source enters the training set. Three of the absences change what a
+row teaches, so read them before writing an adapter
+([#2323](https://github.com/sister-software/mailwoman/issues/2323)).
+
+**No address role.** A registered-office string and a premise string land in the same
+`CanonicalRow.components` with nothing separating them. Taiwan's company register carries both
+on one row in separate columns — the registered company address (公司地址) and the business
+address the economic ministry records for companies (營業地址) — so an adapter that reads the
+file without a role field teaches the premise parser registered-office grammar. Most
+functional-authority sources (company, health, education, telecom, procurement registers) emit a
+non-premise role.
+
+**No assertion per field.** A company register can be authoritative for entity identity while the
+registered-office string it holds is an operational observation somebody filed. One verdict for
+the whole source cannot say both.
+
+**No license decision, only a label.** `license` holds a string, and `utils/license.ts` filters on
+its prefix. A dual-licensed source needs a record of which terms the build elects and why — BAN is
+`Licence Ouverte` or ODbL, and this project elects the former, which is why that reasoning sits in
+a docstring rather than in the data.
+
+`lib/tools/fetch/index.ts` grades each acquisition source `LABEL` or `NOISY`. That is one verdict
+per source, and it is being replaced by per-field assertion plus address role. The Korean permit
+registry (지방행정인허가데이터) shows why: it assigns permit identity with authority, and its
+address string is what a clerk typed in two address systems with no validation.
+
+Where the ledger overlaps an existing contract, reuse that shape rather than writing a second
+provenance vocabulary. A layer database already embeds `layer_manifest` (`source`,
+`source_vintage`, `build_sha`, `license`, `attribution`, `tier`) and `layer_coverage` — see
+[the layer contract](../../docs/engineering/reference/layer-contract.mdx).
 
 ## Related
 

@@ -238,6 +238,45 @@ the second character, so the code says which before any lookup runs. The pooled 
 number reads 0.10 km and looks like a uniform win; it is two populations, and a tier claim
 that averages two granularities is exactly what these tables exist to prevent.
 
+## Layout and convention coverage
+
+The layouts and the parsing conventions cover different numbers of places, and the gap is
+deliberate rather than a backlog.
+
+| Table                                                         | Keyed by     | Coverage                                         |
+| ------------------------------------------------------------- | ------------ | ------------------------------------------------ |
+| `ADDRESS_LAYOUTS` (`./address-layouts`)                       | country code | 197 countries; 55 of 252 records carry no layout |
+| `ADDRESS_SYSTEM_CONVENTIONS` (`./address-system-conventions`) | `SystemCode` | two rows: `fr`, `gb`                             |
+| `SystemCode` (`./postcode-systems`)                           | —            | ten: `us de fr es it ca gb jp au nz`             |
+
+A layout says how to print an address, so a country needs one to be served at all. A conventions
+row says what is ungrammatical in that system, and the decoder applies it as a hard mask before
+Viterbi — so a wrong row destroys parses that currently work. Each row therefore carries the
+measurement that earned it, and an absent row means "no constraints known", never "no constraints
+exist". Adding a country to the layouts is ordinary work; adding a conventions row requires a
+measured receipt.
+
+### Postal regimes the country code does not name
+
+Three families need a unit finer or other than the ISO country code. codex cannot express any of
+them today ([#2323](https://github.com/sister-software/mailwoman/issues/2323)):
+
+- **One code, several postal regimes.** `SH` covers Saint Helena, Ascension Island and Tristan da
+  Cunha, which address differently.
+- **Routing that is not geography.** BFPO identifiers are routing instructions, not a GB locality
+  plus postcode. The American half of this family is modeled — see `lib/us/military-address.ts`
+  for APO/FPO/DPO and the `AA`/`AE`/`AP` pseudo-states — and the British half is not.
+- **Narrative addresses.** Costa Rica, Nicaragua and parts of Panama and the Caribbean build an
+  address from landmark, direction and distance. That is a different grammar, not a variant of the
+  street grammar the layouts assume.
+
+### Out of scope
+
+Research state, source URLs and license terms for address data do not belong here. Whether this
+project has verified an open national address register for Chile is a fact about the data backlog,
+not about how Chileans write an address. That register lives in
+[`@mailwoman/corpus`](../corpus#source-provenance).
+
 ## What this package does not do
 
 It does not **parse**. Turning `"1600 Amphitheatre Pkwy, Mountain View CA"` into components is
