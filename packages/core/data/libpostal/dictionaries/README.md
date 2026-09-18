@@ -79,7 +79,7 @@ Most of the dictionaries have been derived using the following process:
 
 ## Contributing
 
-If you're a native speaker of one or more languages in libpostal, we'd love your contribution! It's as simple as editing the text files under this directory and submitting a pull request. Dictionaries are organized by [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), so feel free to find any language you speak and start editing! If you don't see your language, just add a directory - there's no additional configuration needed.
+If you're a native speaker of one or more languages in libpostal, we'd love your contribution. Edit the text files under this directory and open a pull request; there are no other steps. Dictionaries are organized by [language code](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), so find the language you speak and start editing. If your language has no directory yet, add one — it needs no additional configuration.
 
 To get started adding new language dictionaries or improving support for existing languages, check out the [address_languages](https://github.com/openvenues/address_languages) repo, where we've published lists of 1-5 word phrases found in street/venue names in every language in OSM.
 

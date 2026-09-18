@@ -137,7 +137,7 @@ jobs:
           if git tag -l "v${VERSION}" | grep -q .; then
             echo "::error::tag v${VERSION} already exists — pick a different version"; exit 1
           fi
-          if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1. then
+          if npm view "mailwoman@${VERSION}" version >/dev/null 2>&1; then
             echo "::error::mailwoman@${VERSION} is already on npm — pick a different version"; exit 1
           fi
           yarn oxfmt package.json '**/package.json'
@@ -325,7 +325,7 @@ jobs:
             git tag -a "v${VERSION}" -m "Release v${VERSION}"
             git push origin "v${VERSION}"
           fi
-          if gh release view "v${VERSION}" >/dev/null 2>&1. then
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
             echo "GitHub release v${VERSION} already exists (recovery re-run) — skipping"
           else
             gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes

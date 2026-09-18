@@ -146,7 +146,7 @@ jobs:
 
           if [ -n "${OVERRIDE:-}" ]; then
             echo "::notice::vars.DATA_FLEET is set — using it verbatim: ${OVERRIDE}"
-            if [ "$OVERRIDE" = "down" ]. then emit false. else emit true. fi
+            if [ "$OVERRIDE" = "down" ]; then emit false; else emit true; fi
             exit 0
           fi
 
@@ -468,7 +468,7 @@ jobs:
       - name: Symlink base-latn model (en-us already materialized)
         run: |
           mkdir -p packages/neural-weights-base-latn
-          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json. do
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 
@@ -949,7 +949,7 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: |
           mkdir -p packages/neural-weights-base-latn
-          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json. do
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
             [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
           done
 

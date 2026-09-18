@@ -149,7 +149,7 @@ jobs:
         env:
           RECEIPT: ${{ matrix.receipt }}
         run: |
-          for attempt in 1 2 3 4 5 6. do
+          for attempt in 1 2 3 4 5 6; do
             if body=$(curl -fsS --max-time 30 "$RECEIPT"); then
               echo "$RECEIPT"
               echo "$body" | head -c 400

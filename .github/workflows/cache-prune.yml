@@ -84,7 +84,7 @@ jobs:
           seen=""
           deleted=0
 
-          while IFS=$'\t' read -r id accessed lang size key. do
+          while IFS=$'\t' read -r id accessed lang size key; do
             [ -n "${id:-}" ] || continue
 
             # Belt on the prefix a second time: the jq filter above already restricts the set, but a
