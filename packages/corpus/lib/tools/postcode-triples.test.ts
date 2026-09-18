@@ -120,6 +120,21 @@ describe("readTriplesFromGeonames", () => {
 		expect(row?.locale).toBe("en-IN")
 	})
 
+	it("reads BR from the default column, where the municipality sits in column 3 and admin2 alike", async () => {
+		// `BR 69945-000 Acrelândia Acre 01 Acrelândia 1200013` — the municipality is written twice and the state is
+		// admin1, so the US `place` override would be a no-op here and the default is already right. Placement is
+		// attested by two `br_*` board rows carrying locality, region and CEP in that order —
+		// `Caxias do Sul, RS 95090-020, Brazil` and `Brasília - Federal District, 70390-100, Brazil`.
+		const path = await writeExport("br.txt", [["BR", "69945-000", "Acrelândia", "Acre", "Acrelândia"]])
+
+		const [row] = await readTriplesFromGeonames("BR", path, "Brazil", acceptAll)
+
+		expect(row?.locality).toBe("Acrelândia")
+		expect(row?.region).toBe("Acre")
+		expect(row?.postcodePlacement).toBe("after_region")
+		expect(row?.locale).toBe("pt-BR")
+	})
+
 	it("takes the CITY from the column that country's export puts it in, which is inverted for the US", async () => {
 		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the COUNTY, the inverse of
 		// PT/MX/IN. The default mapping would emit `Marin` as the locality and train a county as a city, which is the

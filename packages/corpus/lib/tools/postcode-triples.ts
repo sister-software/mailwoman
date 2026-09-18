@@ -132,6 +132,14 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	// recipe emitted a US city in front of a state code and a ZIP without a street ahead of it, and the model reads
 	// the bare city as a street 45.7% of the time. `localityColumn` is what keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
+	// `SHCS Superquadra Sul 308 - Asa Sul, Brasília - Federal District, 70390-100, Brazil` and
+	// `Estrada do Imigrante, s/n — 3ª Légua / Galópolis — Caxias do Sul, RS 95090-020, Brazil` — two
+	// `br_*` rows, each carrying locality, region and CEP in that order, which is the bar. The default
+	// `admin2` column is right here and the US override would be wrong: BR's export writes the
+	// municipality in column 3 and admin2 alike, with the state in admin1.
+	//
+	//     BR  69945-000  Acrelândia  Acre  01  Acrelândia  1200013
+	["BR", { placement: "after_region", locale: "pt-BR" }],
 ])
 
 /**
