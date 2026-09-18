@@ -1,5 +1,103 @@
 # `corpus/data/` provenance
 
+## `address-source-register.json` — the address-source register (#2323)
+
+Which jurisdictions exist, what research has resolved for each, and what is known about every
+source's terms. Generated, **not hand-edited**.
+
+### Regenerate
+
+```sh
+mailwoman corpus source-register \
+  --inventory      .notes/global-address-jurisdiction-inventory-v3.csv \
+  --sources        .notes/global-functional-authority-corpora-v2.csv \
+  --register-version 0.1.0 \
+  --authored-at    2026-09-18 \
+  --source-version global-address-corpus-spec-v3
+yarn format
+```
+
+That is the command that produced the committed copy. The two CSVs are research working documents
+under `.notes/`, which is not committed — the same arrangement as the sub-venue lexicon, whose
+`.osm.pbf` inputs are not committed either. The register is the committed record, and it carries
+every field a reader needs to check a row: the publisher, the retrieved URL, and the research pass.
+
+The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
+reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
+
+### Inputs, as of the committed build
+
+| file                                           |  rows | what is read                                                           |
+| ---------------------------------------------- | ----: | ---------------------------------------------------------------------- |
+| `global-address-jurisdiction-inventory-v3.csv` |   250 | all 250 rows — every ISO 3166-1 alpha-2 code plus the operational `XK` |
+| `global-functional-authority-corpora-v2.csv`   | 2,389 | the 389 rows naming a national source; 2,000 are dropped               |
+
+The 2,000 dropped rows carry `origin = global_research_rail`: eight global discovery lookups the
+pass repeated once per jurisdiction, which collapse to eight distinct row bodies ignoring the `iso2`
+and `jurisdiction` columns. They name a lookup to perform rather than a source, so they are the
+README's procedure and not rows here.
+
+### What the register carries
+
+Two tables rather than one nested list. The jurisdiction table is a complete 250-row enumeration;
+the source table is zero or more rows per jurisdiction, 389 over 240 of them. Nesting the second
+inside the first would make a jurisdiction nobody researched structurally identical to one whose
+list happens to be empty, and no reader could tell which they were looking at.
+
+| research state | jurisdictions | meaning                                                       |
+| -------------- | ------------: | ------------------------------------------------------------- |
+| `seeded`       |           240 | at least one national source resolved                         |
+| `exception`    |             7 | somebody looked and recorded that no ordinary registry exists |
+| `unexamined`   |             3 | nothing resolved and nothing ruled out                        |
+
+`exception` and `unexamined` are separate values on purpose: a researched absence is a finding and
+an unexamined jurisdiction is not, and collapsing them would let a consumer read "we could not look"
+as "there is nothing there". Every non-`seeded` row carries a `stateReason`, and the audit refuses
+one that does not.
+
+| source status           | rows | meaning                                                                 |
+| ----------------------- | ---: | ----------------------------------------------------------------------- |
+| `verified-authority`    |  221 | register confirmed; address fields, bulk access and terms not inspected |
+| `retained-original`     |  142 | carried from the earlier memo without recheck; no publisher, no URL     |
+| `verified-corpus`       |   25 | a bulk corpus confirmed reachable                                       |
+| `verified-corpus-stale` |    1 | reachable, and the copy examined has stopped being updated              |
+
+The `A`/`A~`/`B`/`C`/`D` column is `backboneState`, and it is deliberately not called a tier: this
+repository already has locale tiers 1 through 5 in `scope.config.json` and the
+`shipped` / `build-local` / `private` tiers in the layer contract.
+
+### Three things the research pass did not resolve, on any row
+
+Say this plainly rather than making a reader discover it by querying:
+
+- **`addressRole` — 0 of 389.** Every row reads `varies`. The specification's section 2 asks for a
+  role per source and the pass recorded none, so the register cannot say whether any of these
+  sources holds premises, registered offices or mailing addresses.
+- **`upstreamLineage` — 0 of 389.** No row records what it was copied from, so two databases carrying
+  one upstream submission cannot yet be collapsed into the single observation they are.
+- **`coverage` — 0 of 389.** Every row reads `country-specific`, which is a scope rather than a
+  measurement. A national portal is not evidence of national coverage.
+
+The register declares all three in its `unresolved` array and the audit checks the claim in both
+directions: a field listed there must be absent from every row, and a field not listed must be
+present on at least one.
+
+**No row is ingest-eligible.** Ask `ingestEligibilityProblems()` rather than reading a status as
+permission; today it answers with reasons for all 389.
+
+### Licences: every one unchecked
+
+All 389 rows point at one of twelve decision records, and every one is `state: "unchecked"`. That is
+a finding, not a placeholder. The 247 web-researched rows read `CHECK NATIONAL / DATASET TERMS`
+verbatim. The other 142 carry an access label from the original memo — `Free`, `Free-reg`, `Gated`,
+`Licensed` — which says what the download costs and grants nothing, so treating one as permissive
+would admit a source on a sentence about price.
+
+`unchecked` is a first-class value distinct from a licence reviewed and found permissive, which is
+what `elected` records: the terms, the retrieved copy, the version, and why that grant rather than
+another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
+and it answers `undefined` for anything not elected.
+
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
 Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona

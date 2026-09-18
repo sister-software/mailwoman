@@ -350,6 +350,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	[SELF, "the pattern above has to spell the words it bans"],
 	["config/vale/styles/", "the Vale rules that REFUSE the word must name it"],
 	[
+		"packages/corpus/lib/tools/source-register/build.ts",
+		"the substitution that keeps the word out of the address-source register must name what it replaces",
+	],
+	[
 		"packages/repo-health/lib/checks/vocab-census.ts",
 		"the ambiguous-shorthand census files a match under one of four words and must name each",
 	],

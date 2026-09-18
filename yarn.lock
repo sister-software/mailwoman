@@ -5859,6 +5859,7 @@ __metadata:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/evidence": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/record": "workspace:*"

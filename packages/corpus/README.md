@@ -124,6 +124,45 @@ provenance vocabulary. A layer database already embeds `layer_manifest` (`source
 `source_vintage`, `build_sha`, `license`, `attribution`, `tier`) and `layer_coverage` — see
 [the layer contract](../../docs/engineering/reference/layer-contract.mdx).
 
+## The address-source register
+
+`data/address-source-register.json`, read through `@mailwoman/corpus/source-register`, records which
+jurisdictions exist, what research has resolved for each, and what is known about every source's
+terms. It is a backlog made checkable: **no row in it is ingest-eligible today**, and
+`ingestEligibilityProblems()` answers with the reasons rather than a bare `false`.
+
+Two tables. The jurisdiction table enumerates all 250 — every ISO 3166-1 alpha-2 code plus the
+operational `XK` — whether or not anybody found a source; the source table holds 389 rows across 240
+of them. A jurisdiction with no sources states `researchState` and a `stateReason`, so "nobody has
+looked yet" is written down rather than inferred from an empty list.
+
+`readAddressSourceRegister()` refuses a register that fails its audit. Regenerate it with
+`mailwoman corpus source-register`; `data/PROVENANCE.md` carries the command, the input row counts,
+and the three fields no row resolved.
+
+### When a jurisdiction has no row yet
+
+The research pass recorded eight global discovery lookups once per jurisdiction — 2,000 of the
+2,389 rows it produced, collapsing to eight distinct bodies. They name a lookup to perform rather
+than a national source, so they are this procedure and not register rows. Work them in order for a
+jurisdiction the register calls `unexamined`, and promote what you resolve into a source row.
+
+| Sector               | Lookup                                                                                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| business/legal       | GLEIF Global LEI Index, the jurisdiction's own slice                                                                                           |
+| business register    | GLEIF Registration Authorities List, for the local official register                                                                           |
+| health               | the national Health Facility Master List, discovered or validated through the WHO's geolocated health-facility data                            |
+| education            | the national school register or EMIS, with Giga Maps' government-sourced records as a discovery layer                                          |
+| telecom              | the national regulator's licensee and spectrum or operator registers, located through the ITU's member-state entities                          |
+| universal service    | national universal-service project, beneficiary and award records, with fund status through the ITU DataHub                                    |
+| procurement/grants   | the national e-procurement, supplier or award register, and the Open Contracting Partnership's data registry where the country publishes to it |
+| environment/industry | the national pollutant-release register or industrial permit register, located through PRTR.net or the OECD                                    |
+
+A global aggregator is a locator, never the source. When one carries a national official record,
+keep the national publisher's provenance — the register has `publisher` and `sourceURL` fields for
+exactly that, and the one `verified-corpus-stale` row is what happens when an aggregator's copy
+stops and nobody checked the national portal behind it.
+
 ## Related
 
 - [`@mailwoman/neural`](../neural) — the runtime that loads and runs the trained model
