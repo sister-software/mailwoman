@@ -7,7 +7,9 @@ Pre-registered 2026-09-18, before the run reported. Config:
 [#2311](https://github.com/sister-software/mailwoman/issues/2311) left open at the end of
 [the v5.8.0 record](./2026-09-18-gazetteer-choreography-off.md).
 
-Every number below was measured before the run launched. The result section is empty on purpose.
+Every number below was measured before any result was read. Bar 5 and the donor-code swap it rests
+on were added after the run launched, which is stated where they appear. The result section is empty
+on purpose.
 
 ## What is being tested
 
@@ -66,17 +68,37 @@ Read through `diagnoseParse`, the leading token of every failure carries `B-stre
 | `Burlington, VT 05401`   | `▁Burlington` | `B-locality` |       0.91 | `Burlington`    |
 
 Word count does not separate the groups: `Sparta` and `Oxford` are single words and fail,
-`Forrest City` is two words and passes at 0.10. Every failing name is also a common US street name.
-The suffix-word bucket is a partial reading of that ambiguity — it catches `Orland Park` and misses
-`Sparta` — which is why this arm is a partial treatment by construction and why bar 2 exists.
+`Forrest City` is two words and passes at 0.10. Neither does the suffix word, which `Sparta`,
+`Oxford` and `Saint Louis` do not carry. What the table establishes is the competing label: the
+decode is choosing `B-street` confidently rather than failing to choose. The next section separates
+the two candidate causes it cannot.
 
-### Two readings ruled out
+### The region code carries it, and the name does not
 
-A per-state cross of the same probe showed TN, MO and AR at 2/67 pooled on the bare arm, including
-0/19 on single-word localities against 321/395 (81.3%) single-word pooled. That is the same
-name-level effect measured too narrowly rather than a regional one: `synth-trailing-region-us`
-gives TN 347 rows, MO 347 and AR 347 of 16,000, the same allocation Illinois gets, because
-`applyCountryBudget` already round-robins over `(cc, region)`.
+The table above was read from twelve addresses whose names and regions are confounded: every
+failure is a name in a low-scoring state and every pass is a name in a high-scoring one. Holding the
+name and the postcode fixed and swapping only the region code separates them, and the label flips on
+every name:
+
+| name          | TN          | AR          | MO          | VT            | ME            | MA            | TX            |
+| ------------- | ----------- | ----------- | ----------- | ------------- | ------------- | ------------- | ------------- |
+| `Sparta`      | street 0.88 | street 0.90 | street 0.90 | locality 0.43 | locality 0.36 | locality 0.43 | street 0.80   |
+| `Oxford`      | street 0.73 | street 0.78 | street 0.79 | locality 0.72 | locality 0.67 | locality 0.67 | locality 0.27 |
+| `Midway`      | street 0.88 | street 0.88 | street 0.90 | locality 0.75 | locality 0.69 | locality 0.76 | locality 0.16 |
+| `Richland`    | street 0.87 | street 0.88 | street 0.89 | locality 0.75 | locality 0.67 | locality 0.73 | street 0.75   |
+| `Saint Louis` | street 0.91 | street 0.90 | street 0.92 | locality 0.56 | locality 0.52 | locality 0.49 | street 0.90   |
+| `Little Rock` | street 0.93 | street 0.92 | street 0.93 | locality 0.67 | locality 0.48 | locality 0.43 | street 0.89   |
+
+`Sparta` reads as a street before `TN` and as a locality before `VT`, so the name is not what decides
+it. This reproduces the donor-code swap already recorded on
+[#2311](https://github.com/sister-software/mailwoman/issues/2311), which measured the raw emission
+3.79 logits behind in Arkansas against 0.000 in Vermont with `B-street` as the competing label. The
+per-region rate on this panel carries a 96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS
+24/24 (100.0%), over the 23 states holding 20 or more rows.
+
+The reading that is ruled out is corpus coverage: `synth-trailing-region-us` gives TN 347 rows,
+MO 347 and AR 347 of 16,000, the same allocation Illinois gets, because `applyCountryBudget` already
+round-robins over `(cc, region)`.
 
 The locality-surface lexicon does not separate the groups either, and its direction is inverted, so
 extending it is not the action this reading calls for:
@@ -106,7 +128,7 @@ sampling noise:
 | us-secondary-unit-current-generation |        8,709 |        8,739 |   +30 |
 | fr-bare-street-current-generation    |       69,653 |       69,813 |  +160 |
 
-## The four bars
+## The five bars
 
 Baselines measured under the v5.7.0 candidate (`candidates/v570-cache`, `model.onnx` md5
 `e72b0cbb`) with `packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts`.
@@ -124,6 +146,10 @@ Both panels are build-local. `us-shape-stratified.jsonl` rebuilds byte for byte 
 | 3   | same panel, `street_only` reverse arm     | 594/603         | may not fall |
 | 4   | US `postcode` per-tag F1, n=2,660         | 95.6%           | must hold    |
 | 4   | D-rule regressions on FR, GB, DE          | —               | none         |
+| 5   | shape panel, bare arm, MO                 | 1/29 (3.4%)     | must rise    |
+| 5   | same panel, AR                            | 1/23 (4.3%)     | must rise    |
+| 5   | same panel, TX                            | 11/53 (20.8%)   | must rise    |
+| 5   | same panel, MA and KS                     | 21/21 and 24/24 | may not fall |
 
 Bar 2 is what separates a shape result from a row-count result. The corpus change adds 1,922
 suffix-word rows and nothing for the other two buckets, so if all three rise by as much, the arm
@@ -131,6 +157,14 @@ measured the extra rows rather than their shape and the stratification carries n
 
 Bar 4 names the two readings v5.8.0 failed at: US postcode F1 95.6% → 95.2%, and 10 regressions
 across FR, GB and DE.
+
+Bar 5 was added after the run launched and before any result was read, once the donor-code swap
+above showed the region code decides the label. [#2311](https://github.com/sister-software/mailwoman/issues/2311)
+requires a corpus arm on this surface to state the per-region effect before the run and to grade per
+region rather than on a pooled rate; bars 1 through 4 are all per-shape or pooled, so without bar 5
+this arm could pass every one of them while the three states that read under 21% stayed there. The
+four named states span the panel's 96.6-point interior spread. A pooled rise with MO, AR and TX flat
+is the outcome bar 5 exists to make visible.
 
 The shape panel carries no streets, so its `street_only` arm reads 0/0 and the reverse risk is read
 on the 603-city panel alone.
