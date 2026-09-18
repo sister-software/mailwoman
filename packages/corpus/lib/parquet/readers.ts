@@ -4,11 +4,14 @@
  * @author Teffen Ellis, et al.
  * @file Parquet reads that answer a promise, beside `./streams`, which answers an iterator.
  *
- *   The name carries the contract wherever two helpers differ only in what they forgive, the way `statPath` and
- *   `tryStat` do in `@mailwoman/core/fs`: {@linkcode readParquetRows} raises on a file that is absent or unreadable,
- *   {@linkcode tryReadParquetRows} answers `null`. A caller that treats a missing file as an empty corpus writes
- *   `?? []` over the raising one and gets the same silent zero this split exists to prevent, so the forgiving name is
- *   the one that says so out loud.
+ *   {@linkcode readParquetRows} raises on a file that is absent or unreadable; {@linkcode tryReadParquetRows} answers
+ *   `null` for an absent one. The `try` prefix is the only difference between the two names, and it is what tells a
+ *   reader at the call site which of them forgives — the same distinction `statPath` and `tryStat` draw in
+ *   `@mailwoman/core/fs`.
+ *
+ *   Both exist because `?? []` over the raising one turns "I could not read this" into "there is none of it", which is
+ *   the silent zero a corpus census reports as a country training on nothing. A caller that wants an absent file to
+ *   read as an empty list asks for it by name.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -54,6 +57,10 @@ export async function tryReadParquetRows<T>(
  * DuckDB answers this from the file's own metadata, so the cost does not grow with the row count. Raises on an absent
  * file for the reason above: a count is a measurement, and `0` from a file nobody wrote is a different statement than
  * `0` from a file that holds no rows.
+ *
+ * Takes a PATH rather than a connection, so a caller already holding one pays a second. That is the trade the shared
+ * name is worth: the query is `count(*)` over `read_parquet`, and a caller that writes it inline writes the escaping
+ * inline with it.
  */
 export async function countParquetRows(path: PathBuilderLike): Promise<number> {
 	if (!(await pathExists(path))) {
@@ -77,6 +84,10 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
  *
  * Read this before a projection when the file's schema is in question — it answers what is there, where a failed
  * projection only says that something asked for is missing.
+ *
+ * Asks `DESCRIBE`, which names the LOGICAL columns. `parquet_schema` walks the physical tree instead, where a LIST
+ * column's leaf is its `element` child: filtering that tree to leaves answers `element` once per list and never names
+ * `tokens`, `labels` or the span triple, so a caller checking whether the file carries one is told it does not.
  */
 export async function parquetColumnNames(path: PathBuilderLike): Promise<string[]> {
 	if (!(await pathExists(path))) {
@@ -86,11 +97,9 @@ export async function parquetColumnNames(path: PathBuilderLike): Promise<string[
 	const db = await connectDuckDB()
 
 	try {
-		const result = await db.runAndReadAll(
-			`SELECT name FROM parquet_schema('${escapeSQLString(String(path))}') WHERE num_children IS NULL`
-		)
+		const result = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${escapeSQLString(String(path))}')`)
 
-		return (result.getRowObjects() as Array<{ name: unknown }>).map((row) => String(row.name))
+		return (result.getRowObjects() as Array<{ column_name: unknown }>).map((row) => String(row.column_name))
 	} finally {
 		db.closeSync()
 	}

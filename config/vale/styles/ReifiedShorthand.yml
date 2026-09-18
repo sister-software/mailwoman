@@ -37,6 +37,15 @@
 ##   REJECTED: "the cost was carried entirely by the 4-5 digit pieces"
 ##      -> "the 4-5 digit pieces account for the whole postcode drop (-9.7pp)"
 ##
+##   REJECTED: "the name carries the contract"
+##      -> "`statPath` raises ENOENT where `tryStat` answers null; the `try`
+##          prefix is the only difference between the two names, and it is what
+##          tells a reader which one forgives"
+##
+##      The object form reads as a maxim rather than as a claim, so a reader
+##      cannot tell which contract, or what it requires. Both directions are
+##      refused: an abstract noun as the SUBJECT of `carries` and as its OBJECT.
+##
 ##   REJECTED: "3-digit is the reduce"
 ##      -> "the 100-999 range is the one to keep"
 ##
@@ -69,7 +78,7 @@ tokens:
   # "Cost"/regression language that replaces a measured delta with a metaphor.
   - '\b(?:cost|loss|regression) (?:was|is|were|are) carried\b'
   - '\bcarried entirely by\b'
-  - '\bcarr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression)\b'
+  - '\bcarr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression|contract|invariant|rule)\b'
   # Training shorthand that omits the actual operation.
   - '\btake (?:this|it|that|the [\w-]+) to \d+k\b'
   # Protection language hides the concrete behavior or invariant being maintained.

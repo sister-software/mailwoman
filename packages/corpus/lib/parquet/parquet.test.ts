@@ -11,6 +11,12 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
+	countParquetRows,
+	parquetColumnNames,
+	readParquetRows,
+	tryReadParquetRows,
+} from "@mailwoman/corpus/parquet/readers"
+import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
 	PARQUET_COMPRESSION,
@@ -48,15 +54,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 /**
  * Read every row from a `.parquet` file in on-disk order.
  */
-async function readParquet(path: string): Promise<ParquetRow[]> {
-	const rows: ParquetRow[] = []
-
-	for await (const row of openParquetRowStream<ParquetRow>(path)) {
-		rows.push(row)
-	}
-
-	return rows
-}
+const readParquet = (path: string): Promise<ParquetRow[]> => readParquetRows<ParquetRow>(path)
 
 let scratch: TemporaryDirectory
 
@@ -155,6 +153,60 @@ describe("LABELED_ROW_SCHEMA", () => {
 		for (const def of Object.values(LABELED_ROW_SCHEMA)) {
 			expect(def.compression).toBe(PARQUET_COMPRESSION)
 		}
+	})
+})
+
+describe("readers", () => {
+	/**
+	 * One parquet file with `rows` rows, at a path the caller owns.
+	 */
+	async function written(rows: readonly LabeledRow[]): Promise<string> {
+		const manifest = await writeParquetSplits(
+			{ train: asyncFrom(rows) },
+			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
+		)
+
+		return manifest.slices[0]!.path
+	}
+
+	it("readParquetRows returns every row, and honours a projection", async () => {
+		const path = await written([labeled({ source_id: "r-1" }), labeled({ source_id: "r-2" })])
+
+		expect(await readParquetRows<ParquetRow>(path)).toHaveLength(2)
+
+		const projected = await readParquetRows<Pick<ParquetRow, "country">>(path, { columns: ["country"] })
+		expect(projected.map((row) => row.country)).toEqual(["FR", "FR"])
+	})
+
+	it("readParquetRows raises on a file nobody wrote, where tryReadParquetRows answers null", async () => {
+		// The whole reason the two names exist. A caller that wants "no corpus yet" to read as an empty list must ASK
+		// for that, because `?? []` over the raising one produces the silent zero this package exists to prevent.
+		const absent = scratch.resolve("nothing-here.parquet")
+
+		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
+		expect(await tryReadParquetRows(absent)).toBeNull()
+	})
+
+	it("tryReadParquetRows forgives ONLY the missing file — a bad projection still raises", async () => {
+		const path = await written([labeled({ source_id: "r-3" })])
+
+		await expect(tryReadParquetRows(path, { columns: ["no_such_column"] })).rejects.toThrow(
+			/absent from the file schema: no_such_column/
+		)
+	})
+
+	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
+		// `0` from a file nobody wrote and `0` from a file holding no rows are different statements, and a count is a
+		// measurement — so absence raises here rather than returning the number that reads like data.
+		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
+			2
+		)
+
+		await expect(countParquetRows(scratch.resolve("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
+	})
+
+	it("parquetColumnNames answers the file's own schema, in PARQUET_COLUMNS order", async () => {
+		expect(await parquetColumnNames(await written([labeled({ source_id: "r-6" })]))).toEqual([...PARQUET_COLUMNS])
 	})
 })
 
